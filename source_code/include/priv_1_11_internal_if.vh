@@ -46,6 +46,10 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic breakpoint, env_m, timer_int, soft_int, ext_int; // breakpoint within the code, env_m is an e-call instruction
   logic insert_pc; // insert the pc either when an instruction is a ret instruction, or pipeline is clear and a proper instruction
   logic swap, clr, set; // these signals will denote whether an instruction is an r-type and its 3rd function op is equal to CSRRW, CSRRC, and CSRRS respectively
+
+  // These three signals come from the output of the control unit and will be asserted based on the type of R-type instruction in "standard_core/control_unit.sv" file
+  
+
   logic valid_write, invalid_csr; // valid write occurs with an r type instruction that does not have any pipeline stalls; invalid_csr
   logic instr_retired; // instruction is done (retired) when there is a write back enable and there is a proper instruction
 
