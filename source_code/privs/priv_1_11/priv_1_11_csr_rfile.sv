@@ -65,39 +65,47 @@ module priv_1_11_csr_rfile (
   mie_t     mie, mie_next;
   mtvec_t   mtvec, mtvec_next;
 
-  assign mstatus.zero = '0;
-
-  // mstatus bits set due to only Machine Mode Implemented
-  assign mstatus.prv   = M_MODE;
-  assign mstatus.prv1  = M_MODE;
-  assign mstatus.ie1    = 1'b0;
-  assign mstatus.prv2 = M_MODE;
-  assign mstatus.ie2    = 1'b0;
-  assign mstatus.prv3 = M_MODE;
-  assign mstatus.ie3    = 1'b0;
+  // Privilege and Global Interrupt-Enable Stack
+  assign mstatus.uie          = 1'b0;
+  assign mstatus.sie   	      = 1'b0;
+  assign mstatus.reserved_0   = 1'b0;
+  assign mstatus.upie	      = 1'b0;
+  assign mstatus.spie	      = 1'b0;
+  assign mstatus.reserved_1   = 1'b0;
+  assign mstatus.spp	      = 1'b0;
+  assign mstatus.reserved_2   = 2'b0;
 
   // No memory protection
-  assign mstatus.vm     = VM_MBARE;
   assign mstatus.mprv   = 1'b0;
+  assign mstatus.sum = 1'b0;
+  assign mstatus.mxr    = 1'b0;
+
+  // No virtualization protection
+  assign mstatus.tvm = 1'b0;
+  assign mstatus.tw = 1'b0;
+  assign mstatus.tsr = 1'b0;
 
   // No FPU or Extensions
   assign mstatus.xs     = XS_ALL_OFF;
   assign mstatus.fs     = FS_OFF;
-  assign mstatus.sd     = 1'b0;
+  assign mstatus.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
+  assign mstatus.reserved_3 = '0;
+
+
 
   // Deleg Register Zero in Machine Mode Only (Should be removed)
   assign medeleg = '0;
   assign mideleg = '0;
 
-  assign mie.zero_0 = '0;
-  assign mie.zero_1 = '0;
-  assign mie.zero_2 = '0;
-  assign mie.zero_3 = '0;
-  assign mie.htie = 1'b0;
+  assign mie.reserved_0 = '0;
+  assign mie.reserved_1 = '0;
+  assign mie.reserved_2 = '0;
+  assign mie.reserved_3 = '0;
+  assign mie.utie = 1'b0;
   assign mie.stie = 1'b0;
-  assign mie.hsie = 1'b0;
+  assign mie.usie = 1'b0;
   assign mie.ssie = 1'b0;
-  assign mie.heie = 1'b0;
+  assign mie.ueie = 1'b0;
   assign mie.seie = 1'b0;
 
  /* Machine Trap Handling */
@@ -108,15 +116,15 @@ module priv_1_11_csr_rfile (
   mtval_t     mtval, mtval_next;
   mip_t       mip, mip_next;
  
-  assign mip.zero_0 = '0;
-  assign mip.zero_1 = '0;
-  assign mip.zero_2 = '0;
-  assign mip.zero_3 = '0;
-  assign mip.htip = 1'b0;
+  assign mip.reserved_0 = '0;
+  assign mip.reserved_1 = '0;
+  assign mip.reserved_2 = '0;
+  assign mip.reserved_3 = '0;
+  assign mip.utip = 1'b0;
   assign mip.stip = 1'b0;
-  assign mip.hsip = 1'b0;
+  assign mip.usip = 1'b0;
   assign mip.ssip = 1'b0;
-  assign mip.heip = 1'b0;
+  assign mip.ueip = 1'b0;
   assign mip.seip = 1'b0;
 
 
@@ -132,7 +140,7 @@ module priv_1_11_csr_rfile (
   assign mtime          = mtimefull[31:0];
   assign mtimeh         = mtimefull[63:32];
   assign mtimefull_next = mtimefull + 1;
-  assign prv_intern_if.timer_int      = (mtime == mtimecmp);
+  assign prv_intern_if.timer_int_m      = (mtime == mtimecmp);
   assign prv_intern_if.clear_timer_int = (prv_intern_if.addr == MTIMECMP_ADDR) &
                                       prv_intern_if.valid_write;
 
@@ -164,7 +172,7 @@ module priv_1_11_csr_rfile (
  
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      mstatus.ie  <= 1'b1;
+      //mstatus.ie  <= 1'b1;
       mie.mtie    <= 1'b0;
       mie.msie    <= 1'b0;
       mip.msip    <= 1'b0;
@@ -185,7 +193,7 @@ module priv_1_11_csr_rfile (
       cyclefull   <= '0;
       instretfull <= '0;
     end else if (prv_intern_if.addr == MTIMEH_ADDR)begin
-      mstatus.ie  <= mstatus_next.ie;
+      // mstatus.ie  <= mstatus_next.ie;
       mie.mtie    <= mie_next.mtie; // timer interrupt enable
       mie.msie    <= mie_next.msie; // software interrupt enable
       mie.meie    <= mie_next.meie; // external interrupt enable
@@ -206,7 +214,7 @@ module priv_1_11_csr_rfile (
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
     end else if (prv_intern_if.addr == MTIME_ADDR) begin
-      mstatus.ie  <= mstatus_next.ie;
+      //mstatus.ie  <= mstatus_next.ie;
       mie.mtie    <= mie_next.mtie; // timer interrupt enable
       mie.msie    <= mie_next.msie; // software interrupt enable
       mie.meie    <= mie_next.meie; // external interrupt enable
@@ -227,7 +235,7 @@ module priv_1_11_csr_rfile (
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
     end else begin      
-      mstatus.ie  <= mstatus_next.ie;
+      //mstatus.ie  <= mstatus_next.ie;
       mie.mtie    <= mie_next.mtie; // timer interrupt enable
       mie.msie    <= mie_next.msie; // software interrupt enable
       mie.meie    <= mie_next.meie; // external interrupt enable

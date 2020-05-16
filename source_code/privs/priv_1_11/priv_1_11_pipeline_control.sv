@@ -33,23 +33,14 @@ module priv_1_11_pipeline_control
   import rv32i_types_pkg::*;
   logic interrupt_pending;
  
-  assign prv_intern_if.insert_pc = prv_intern_if.ret | (prv_intern_if.pipe_clear & prv_intern_if.intr); // only need to insert the Program Counter if 
+  assign prv_intern_if.insert_pc = prv_intern_if.mret | (prv_intern_if.pipe_clear & prv_intern_if.intr); // only need to insert the Program Counter if 
  
   always_comb begin
     if(prv_intern_if.intr)
-      case(prv_intr)
-        2'b00:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b00];
-        2'b01:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b01];
-        2'b10:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b10];
-        2'b11:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b11]; 
-      endcase
-    else if (prv_intern_if.ret)
-      case(prv_ret)
-        2'b00:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b00];
-        2'b01:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b01];
-        2'b10:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b10];
-        2'b11:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b11];
-      endcase
+      prv_intern_if.priv_pc = prv_intern_if.xtvec[prv_intr];
+
+    else if (prv_intern_if.mret) // TODO: Change the logic so that we can point to the vector according to mret, sret, or uret, may need another package structure for this
+      prv_intern_if.priv_pc = prv_intern_if.xtvec[prv_ret];
     else
       prv_intern_if.priv_pc = 32'b0;
   end

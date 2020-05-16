@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     basic_ext_interrupt.S
+*   Filename:     ext_interrupt.S
 *
 *   Created by:   Enes Shaltami
 *   Email:        ashaltam@purdue.edu
@@ -52,8 +52,12 @@ main:
 
 
   csrw mip, x3 
-  csrw mie, x4 // Write value of 0x800 into mie, external interrupt enable for M-mode (machine mode, bootloader firmware)
+  csrw mie, x4 // Write value of 0x800 into mie, external interrupt enable for M-mode
 
+  RVTEST_PASS
+
+// Loop is commented out to analyze the structure prior
+/*
 idle_loop: // infinite while loop to wait until interrupt passes
   //la x1, mcause
   //lw x2, 0(x1)
@@ -65,6 +69,10 @@ idle_loop: // infinite while loop to wait until interrupt passes
   beq x5, x0, idle_loop // keep looping until an interrupt is received
 
   RVTEST_PASS // denote this as a passed test
+*/
+
+
+
 
 .align 2
 mtvec_handler: // TODO: What is mtvec_handler??
@@ -73,9 +81,10 @@ mtvec_handler: // TODO: What is mtvec_handler??
   # Actually write to mtimecmp
   # Check that the interrupt cleared
   # Change sigil to show interrupt was entered
-  ori x6, x0, 0x0F
+  //ori x6, x0, 0x0F
   # Return
   mret
+
 
 RVTEST_CODE_END
 

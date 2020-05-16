@@ -42,15 +42,24 @@ module priv_1_11_block (
   assign prv_intr = 2'b11;
   assign prv_ret  = 2'b11;
 
-  assign prv_intern_if.soft_int = 1'b0;
-  //TODO: PIC (Programmable Interrupt Controller) 
+  // Disable interrupt bits that will not be used
+  assign prv_intern_if.timer_int_u = 1'b0;
+  assign prv_intern_if.timer_int_s = 1'b0;
+  assign prv_intern_if.soft_int_u = 1'b0;
+  assign prv_intern_if.soft_int_s = 1'b0;
+  assign prv_intern_if.soft_int_m = 1'b0; // software interrupts are not currently enabled
+  assign prv_intern_if.ext_int_u = 1'b0;
+  assign prv_intern_if.ext_int_s = 1'b0;
+  assign prv_intern_if.reserved_0 = 1'b0;
+  assign prv_intern_if.reserved_1 = 1'b0;
+  assign prv_intern_if.reserved_2 = 1'b0;
   // assign prv_intern_if.ext_int =  1'b1; // NOTE: This is only being asserted to test what happens with an external interrupt
 
   // Assign inputs to the prv_block to the corresponding internal signals
   assign prv_intern_if.pipe_clear   = prv_pipe_if.pipe_clear;
-  assign prv_intern_if.ret          = prv_pipe_if.ret; 
+  assign prv_intern_if.mret          = prv_pipe_if.ret; 
   assign prv_intern_if.epc          = prv_pipe_if.epc;
-  assign prv_intern_if.fault_insn   = prv_pipe_if.fault_insn;
+  assign prv_intern_if.fault_insn_access   = prv_pipe_if.fault_insn;
   assign prv_intern_if.mal_insn = prv_pipe_if.mal_insn;
   assign prv_intern_if.illegal_insn = prv_pipe_if.illegal_insn;
   assign prv_intern_if.fault_l      = prv_pipe_if.fault_l;
@@ -59,6 +68,11 @@ module priv_1_11_block (
   assign prv_intern_if.mal_s        = prv_pipe_if.mal_s;
   assign prv_intern_if.breakpoint   = prv_pipe_if.breakpoint;
   assign prv_intern_if.env_m        = prv_pipe_if.env_m;
+  assign prv_intern_if.env_s	    = 1'b0;
+  assign prv_intern_if.env_u	    = 1'b0;
+  assign prv_intern_if.fault_insn_page = 1'b0;
+  assign prv_intern_if.fault_load_page = 1'b0;
+  assign prv_intern_if.fault_store_page	= 1'b0;
   assign prv_intern_if.mtval        = prv_pipe_if.badaddr;
   assign prv_intern_if.swap         = prv_pipe_if.swap;
   assign prv_intern_if.clr          = prv_pipe_if.clr;

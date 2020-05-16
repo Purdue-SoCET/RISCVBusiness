@@ -28,6 +28,7 @@
 
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
+`include "priv_1_11_internal_if.vh"
 
 `define OUTPUT_FILE_NAME "cpu.hex"
 `define STATS_FILE_NAME "stats.txt"
@@ -146,7 +147,7 @@ module tb_RISCVBusiness_self_test ();
     @(posedge CLK);
 
     nRST = 1;
-     prv_intern_if.ext_int = 1'b0;
+     prv_intern_if.ext_int_m = 1'b0;
 
     // FIXME: FIXME: insert external interrupt signal here
     // Assert the ext_int signal for the prv_control, probably csr is where I should look
@@ -157,7 +158,7 @@ module tb_RISCVBusiness_self_test ();
     // Spend some time to better understand mcause
 
      #(PERIOD * 20);
-     prv_intern_if.ext_int = 1'b1;
+     prv_intern_if.ext_int_m = 1'b1;
      // TODO: Only move on if you receive a response back? What would that response be? Verify from the waveforms.
     
     

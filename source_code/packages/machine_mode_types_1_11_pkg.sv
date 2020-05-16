@@ -73,13 +73,13 @@ package machine_mode_types_1_11_pkg;
     MINSTRETH_ADDR   = 12'hB82
   } csr_addr_t;
 
-  /* Priv Levels */
+  /* Priv Levels 
   typedef enum logic [1:0] {
     U_MODE = 2'b00,
     S_MODE = 2'b01,
     H_MODE = 2'b10,
     M_MODE = 2'b11
-  } prv_lvl_t;
+  } prv_lvl_t; */
   
   /* Machine Mode Register Types */
 
@@ -125,7 +125,7 @@ package machine_mode_types_1_11_pkg;
   parameter MISAID_EXT_Z   = 26'h1 << 25;
 
   /* mstatus types */
-
+/*
   typedef enum logic [4:0] {
     VM_MBARE  = 5'h0,
     VM_MBB    = 5'h1,
@@ -135,7 +135,7 @@ package machine_mode_types_1_11_pkg;
     VM_SV48   = 5'ha,
     VM_SV57   = 5'hb,
     VM_SV64   = 5'hc
-  } vm_t;
+  } vm_t; */
 
   typedef enum logic [1:0] {
     FS_OFF = 2'h0,
@@ -153,53 +153,60 @@ package machine_mode_types_1_11_pkg;
   
   typedef struct packed {
     logic       sd;    
-    logic [8:0] zero;
-    vm_t        vm; 
+    logic [7:0] reserved_3;
+    logic	tsr;
+    logic	tw;
+    logic	tvm;
+    logic	mxr;
+    logic	sum; 
     logic       mprv;
     xs_t        xs;
-    fs_t        fs;
-    prv_lvl_t   prv3;
-    logic       ie3; 
-    prv_lvl_t   prv2;
-    logic       ie2;
-    prv_lvl_t   prv1;
-    logic       ie1;
-    prv_lvl_t   prv;
-    logic       ie;
+    fs_t	fs;
+    logic [1:0] mpp;
+    logic [1:0] reserved_2;
+    logic	spp;
+    logic       mpie;
+    logic	reserved_1;
+    logic       spie;
+    logic 	upie;
+    logic       mie;
+    logic	reserved_0;
+    logic 	sie;
+    logic       uie;
   } mstatus_t;
 
   /* mip and mie types */
 
   typedef struct packed { // total size for xlen (or mxlen) is 32 bits for our processor
-    logic [19:0]  zero_3;
+    logic [19:0]  reserved_3;
     logic         meip;
-    logic         heip;
+    logic         reserved_2;
     logic         seip;
-    logic         zero_2;
+    logic         ueip;
     logic         mtip;
-    logic         htip;
+    logic         reserved_1;
     logic         stip;
-    logic         zero_1;
+    logic         utip;
     logic         msip;
-    logic         hsip;
+    logic         reserved_0;
     logic         ssip;
-    logic         zero_0; 
+    logic         usip; 
   } mip_t;
 
   typedef struct packed {
-    logic [19:0]  zero_3;
+    logic [19:0]  reserved_3;
     logic         meie;
-    logic	  heie;
+    logic	  reserved_2;
     logic         seie;
-    logic 	  zero_2;
+    logic 	  ueie;
     logic         mtie;
-    logic         htie;
+    logic         reserved_1;
     logic         stie;
-    logic         zero_1;
+    logic         utie;
     logic         msie;
-    logic         hsie;
+    logic         reserved_0;
     logic         ssie;
-    logic         zero_0; 
+    logic         usie; 
   } mie_t;
 
   /* mcause register variables */
@@ -212,24 +219,38 @@ package machine_mode_types_1_11_pkg;
   // ex_code_t should be cast from an 
   // instantiation of mcause_t
   typedef enum logic [30:0] {
-    INSN_MAL      = 31'h0,
-    INSN_FAULT    = 31'h1,
-    ILLEGAL_INSN  = 31'h2,
-    BREAKPOINT    = 31'h3,
-    L_ADDR_MAL    = 31'h4,
-    L_FAULT       = 31'h5,
-    S_ADDR_MAL    = 31'h6,
-    S_FAULT       = 31'h7,
-    ENV_CALL_U    = 31'h8,
-    ENV_CALL_S    = 31'h9,
-    ENV_CALL_H    = 31'ha, 
-    ENV_CALL_M    = 31'hb
+    INSN_MAL      = 31'd0,
+    INSN_ACCESS   = 31'd1,
+    ILLEGAL_INSN  = 31'd2,
+    BREAKPOINT    = 31'd3,
+    L_ADDR_MAL    = 31'd4,
+    L_FAULT       = 31'd5,
+    S_ADDR_MAL    = 31'd6,
+    S_FAULT       = 31'd7,
+    ENV_CALL_U    = 31'd8,
+    ENV_CALL_S    = 31'd9,
+    RESERVED_0    = 31'd10, 
+    ENV_CALL_M    = 31'd11,
+    INSN_PAGE     = 31'd12,
+    LOAD_PAGE     = 31'd13, 
+    RESERVED_1    = 31'd14,
+    STORE_PAGE    = 31'd15,
+    RESERVED_2    = 31'd16
   } ex_code_t;
 
   typedef enum logic [30:0] {
-    SOFT_INT          = 31'h0,
-    TIMER_INT         = 31'h1,
-    EXT_INT           = 31'hb //NON-STANDARD in priv-1.7
+    SOFT_INT_U          = 31'd0,
+    SOFT_INT_S          = 31'd1,
+    RESERVED_4          = 31'd2,
+    SOFT_INT_M          = 31'd3,
+    TIMER_INT_U         = 31'd4,
+    TIMER_INT_S         = 31'd5,
+    RESERVED_5          = 31'd6,
+    TIMER_INT_M         = 31'd7,
+    EXT_INT_U           = 31'd8,
+    EXT_INT_S           = 31'd9,
+    RESERVED_6          = 31'd10,
+    EXT_INT_M           = 31'd11 
   } int_code_t;
 
   /* Simple registers */

@@ -31,7 +31,7 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   import machine_mode_types_1_11_pkg::*;
   import rv32i_types_pkg::*;
 
-  // Signals that are not being used: clear_timer_int, timer_int, soft_int, ext_int, invalid_csr
+  // Machine registers are being ruptured (activated) to denote when to register this value
 
   logic mip_rup; // interrupt has occurred or the clear timer int signal has gone high
   logic mtval_rup; // denotes any pipeline hazard
@@ -41,9 +41,19 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic clear_timer_int; // 
   logic intr; // denote whether an exception or interrupt register
   logic pipe_clear; // e_ex_stage is where you check what type of hazard unit instruction you are receiving. Simply, checking whether or not the pipeline is clear of any hazards
-  logic ret; //declares whether an instruction is a ret instruction
-  logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s; // fault_insn never occurs, mal_insn only occurs when there is a bad address, illegal_insn only occurs if the actual instruction is illegal, faults are not considered, mal_l occurs for a bad address and read enable is high, mal_s occurs for a bad address and write enable is high
-  logic breakpoint, env_m, timer_int, soft_int, ext_int; // breakpoint within the code, env_m is an e-call instruction
+  logic mret, sret, uret; //returns after handling a trap instruction
+
+
+  // sources for interrupts
+  logic timer_int_u, timer_int_s, timer_int_m;
+  logic soft_int_u, soft_int_s, soft_int_m;
+  logic ext_int_u, ext_int_s, ext_int_m;
+  logic reserved_0, reserved_1, reserved_2;
+
+  // sources for exceptions
+  logic mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s; 
+  logic env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page;
+
   logic insert_pc; // insert the pc either when an instruction is a ret instruction, or pipeline is clear and a proper instruction
   logic swap, clr, set; // these signals will denote whether an instruction is an r-type and its 3rd function op is equal to CSRRW, CSRRC, and CSRRS respectively
 
@@ -76,26 +86,27 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
     input mip_rup, mtval_rup, mcause_rup, mepc_rup, mstatus_rup,
       mip_next, mtval_next, mcause_next, mepc_next, mstatus_next,
       swap, clr, set, wdata, addr, valid_write, instr_retired, 
-    output mtvec, mepc, mie, timer_int, mip, mcause, mstatus, clear_timer_int,
+    output mtvec, mepc, mie, timer_int_m, mip, mcause, mstatus, clear_timer_int,
       rdata, invalid_csr, xtvec, xepc_r
   );
 
   modport prv_control (
     output mip_rup, mtval_rup, mcause_rup, mepc_rup, mstatus_rup,
       mip_next, mcause_next, mepc_next, mstatus_next, mtval_next, intr, 
-    input mepc, mie, mip, mcause, mstatus, clear_timer_int, pipe_clear, ret,
-      epc, fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-      breakpoint, env_m, timer_int, soft_int, ext_int, mtval, ex_rmgmt, 
-      ex_rmgmt_cause
+    input mepc, mie, mip, mcause, mstatus, clear_timer_int, pipe_clear, mret,
+      epc, fault_insn_access, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
+      breakpoint, env_m, env_s, env_u, fault_insn_page, fault_load_page, fault_store_page, 
+      timer_int_u, timer_int_s, timer_int_m, soft_int_u, soft_int_s, soft_int_m, ext_int_u, 
+      ext_int_s, ext_int_m, mtval, ex_rmgmt, ex_rmgmt_cause
   );
 
   modport pipe_ctrl (
-    input intr, ret, pipe_clear, xtvec, xepc_r,
+    input intr, mret, pipe_clear, xtvec, xepc_r,
     output insert_pc, priv_pc
   );
 
   modport tb (
-    output ext_int
+    output ext_int_m
   );
 
 endinterface

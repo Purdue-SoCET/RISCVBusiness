@@ -78,6 +78,7 @@ module tb_priv_1_11_control ();
 
     nRST = 1'b1;
 
+/* Commenting out because package change made some signals unusable. Can be deleted later
    // Resetting all of the inputs for the priv_block unit
     prv_internal_if.pipe_clear = '0;
     prv_internal_if.ret = '0;
@@ -121,7 +122,7 @@ module tb_priv_1_11_control ();
     tb_expected_mepc_next = 1'b0; // takes on value of epc
     tb_expected_mstatus_next.ie = 1'b0;
     tb_expected_mtval_next = 1'b0;
-    tb_expected_intr = 1'b0;
+    tb_expected_intr = 1'b0; */
 
    endtask
 
