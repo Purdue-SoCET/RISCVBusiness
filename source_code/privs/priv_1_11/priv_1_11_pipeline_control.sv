@@ -31,18 +31,20 @@ module priv_1_11_pipeline_control
 );
   import machine_mode_types_1_11_pkg::*;
   import rv32i_types_pkg::*;
-  //logic interrupt_pending;
+  logic interrupt_pending;
  
   assign prv_intern_if.insert_pc = prv_intern_if.mret | (prv_intern_if.pipe_clear & prv_intern_if.intr); // insert the PC
 
   
   always_comb begin
-    prv_intern_if.priv_pc = 32'b0;
+    prv_intern_if.priv_pc = 32'h4;
+    interrupt_pending = 1'b0;
 
     if(prv_intern_if.intr) begin
-      if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) // vectored mode based on the interrupt source
-        prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2 + (prv_intern_if.mcause.cause << 2);
-      else
+      if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) begin // vectored mode based on the interrupt source
+        prv_intern_if.priv_pc = (prv_intern_if.mtvec.base << 2) + (prv_intern_if.mcause.cause << 2);
+        interrupt_pending = 1'b1;
+      end else
         prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2;
       
     end else if (prv_intern_if.mret) 

@@ -27,12 +27,8 @@
 // NOTE: You should modify this code to make it for external interrupts
 
 RVTEST_RV32U
-
-// TODO: Comment more to understand where these packages come from
-
 RVTEST_CODE_BEGIN
 
-// xlen is 32 bits since each instruction has a size of 32 bits
 main:
   la t0, mtvec_handler // load in address of mtvec_handler
   ori t0, t0, 0x1 // or in the MODE (Vectored)
@@ -48,7 +44,8 @@ main:
   csrw mstatus, x4 // turn on the mie bit within mstatus
 
 idle_loop:
-  beq x6, x7, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
+  bne x6, x7, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
+  
 
   RVTEST_PASS
 
@@ -56,7 +53,7 @@ idle_loop:
 mtvec_handler: // General vector table for all exceptions and interrupts
   // Interrupts must be disabled at entry to handler, could have jumps to different parts of code, potentially
 IRQ_0:
-  j exception_handler // FIXME: PC for exception handler and user software interrupt handler are the same!!
+  j exception_handler // FIXME: PC for exception handler and user software interrupt handler are the same
 IRQ_1:
   j supervisor_software_interrupt_handler
 IRQ_2:
@@ -85,6 +82,7 @@ supervisor_external_interrupt_handler:
     mret
 
 machine_external_interrupt_handler:
+    ori x10, x0, 10 // FIXME: Pipeline always skips the first instruction
     ori x6, x0, 0xAB
     mret
 

@@ -157,7 +157,7 @@ module priv_1_11_control (
 
   // Update EPC as soon as interrupt or exception is found 
   assign prv_intern_if.mepc_rup = exception | interrupt_fired;
-  assign prv_intern_if.mepc_next = (prv_intern_if.mret)? prv_intern_if.epc : prv_intern_if.mepc;
+  assign prv_intern_if.mepc_next = (prv_intern_if.intr)? prv_intern_if.epc : prv_intern_if.mepc; // change the mepc only when visiting the interrupt handler
 
 
   assign prv_intern_if.mtval_rup = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s | 
