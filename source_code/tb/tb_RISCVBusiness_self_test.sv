@@ -157,7 +157,7 @@ module tb_RISCVBusiness_self_test ();
     // TODO: When this gets asserted, then the mcause register's cause parameter is set
     // Spend some time to better understand mcause
 
-     #(PERIOD * 20);
+     #(PERIOD * 100);
      prv_intern_if.ext_int_m = 1'b1;
      // TODO: Only move on if you receive a response back? What would that response be? Verify from the waveforms.
     

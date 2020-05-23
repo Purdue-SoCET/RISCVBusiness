@@ -138,20 +138,27 @@ module priv_1_11_control (
 
   assign prv_intern_if.mstatus_rup = exception | interrupt_fired;
 
-  always_comb begin // TODO: intr is general for all interrupts or exceptions, different signals may need to be split up to allow Supervisor and User modes
-    if (prv_intern_if.intr) begin
-      prv_intern_if.mstatus_next.mie = 1'b0; 
-    end else if (prv_intern_if.mret) begin
-      prv_intern_if.mstatus_next.mie = 1'b1;
-    end
-    else begin
-      prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mie;
+  always_comb begin // FIXME: Software should be able to set mstatus.mie but hardware will disable it.
+    prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mie;
+    prv_intern_if.mstatus_next.mpie = prv_intern_if.mstatus.mpie;
+
+    if (prv_intern_if.intr) begin // interrupt has truly been registered and it is time to go to the vector table
+      prv_intern_if.mstatus_next.mpie = prv_intern_if.mstatus.mie; // when a trap is taken mpie is set to the current mie
+      prv_intern_if.mstatus_next.mie = 1'b0; // disable the interrupt once it enters the handler
+
+    end else if (prv_intern_if.mret) begin // leaving the vector table
+      prv_intern_if.mstatus_next.mpie = 1'b1;
+      prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mpie;
+    //end else if (prv_intern_if.mie.meie | prv_intern_if.mie.mtie | prv_intern_if.mie.msie) begin // recognizing the interrupt
+     // prv_intern_if.mstatus_next.mie = 1'b1;
     end
   end
 
+
   // Update EPC as soon as interrupt or exception is found 
   assign prv_intern_if.mepc_rup = exception | interrupt_fired;
-  assign prv_intern_if.mepc_next = prv_intern_if.epc;
+  assign prv_intern_if.mepc_next = (prv_intern_if.mret)? prv_intern_if.epc : prv_intern_if.mepc;
+
 
   assign prv_intern_if.mtval_rup = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s | 
                                   prv_intern_if.illegal_insn | prv_intern_if.fault_insn_access | prv_intern_if.mal_insn | prv_intern_if.ex_rmgmt) 
@@ -170,4 +177,5 @@ module priv_1_11_control (
     else if (prv_intern_if.pipe_clear)
       interrupt_reg <= '0;
   end 
+
 endmodule

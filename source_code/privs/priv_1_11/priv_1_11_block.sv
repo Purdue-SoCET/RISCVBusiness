@@ -30,17 +30,17 @@ module priv_1_11_block (
   prv_pipeline_if.priv_block prv_pipe_if, //
   priv_1_11_internal_if prv_intern_if
 );
-  //priv_1_11_internal_if prv_intern_if(); NOTE: This is not necessary because this module is being passed all the way from the top level test bench
+  import machine_mode_types_1_11_pkg::*;
 
-  logic [1:0] prv_intr, prv_ret;
+  //priv_level_t prv_intr, prv_ret;
   
   priv_1_11_csr_rfile csr_rfile_i(.*, .prv_intern_if(prv_intern_if));
   priv_1_11_control prv_control_i(.*, .prv_intern_if(prv_intern_if));
   priv_1_11_pipeline_control pipeline_control_i(.*, .prv_intern_if(prv_intern_if));
 
   //Machine Mode Only
-  assign prv_intr = 2'b11;
-  assign prv_ret  = 2'b11;
+  //assign prv_intr = M_LEVEL;
+  //assign prv_ret  = M_LEVEL;
 
   // Disable interrupt bits that will not be used
   assign prv_intern_if.timer_int_u = 1'b0;
@@ -53,9 +53,8 @@ module priv_1_11_block (
   assign prv_intern_if.reserved_0 = 1'b0;
   assign prv_intern_if.reserved_1 = 1'b0;
   assign prv_intern_if.reserved_2 = 1'b0;
-  // assign prv_intern_if.ext_int =  1'b1; // NOTE: This is only being asserted to test what happens with an external interrupt
 
-  // Assign inputs to the prv_block to the corresponding internal signals
+  // from pipeline to the priv unit
   assign prv_intern_if.pipe_clear   = prv_pipe_if.pipe_clear;
   assign prv_intern_if.mret          = prv_pipe_if.ret; 
   assign prv_intern_if.epc          = prv_pipe_if.epc;
@@ -85,8 +84,8 @@ module priv_1_11_block (
   assign prv_intern_if.ex_rmgmt = prv_pipe_if.ex_rmgmt;
   assign prv_intern_if.ex_rmgmt_cause = prv_pipe_if.ex_rmgmt_cause;
 
-  // Assign outputs from internal signals to the outputs of the priv block
-  assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc;
+  // from priv unit to pipeline
+  assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc; // TODO: Figure out the uses for these signals.
   assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
   assign prv_pipe_if.intr        = prv_intern_if.intr;
   assign prv_pipe_if.rdata       = prv_intern_if.rdata;

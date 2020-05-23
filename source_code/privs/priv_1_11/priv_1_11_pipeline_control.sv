@@ -27,22 +27,28 @@
 
 module priv_1_11_pipeline_control
 (
-  input logic [1:0] prv_intr, prv_ret,
   priv_1_11_internal_if.pipe_ctrl prv_intern_if // interface for pipeline control
 );
+  import machine_mode_types_1_11_pkg::*;
   import rv32i_types_pkg::*;
-  logic interrupt_pending;
+  //logic interrupt_pending;
  
-  assign prv_intern_if.insert_pc = prv_intern_if.mret | (prv_intern_if.pipe_clear & prv_intern_if.intr); // only need to insert the Program Counter if 
- 
-  always_comb begin
-    if(prv_intern_if.intr)
-      prv_intern_if.priv_pc = prv_intern_if.xtvec[prv_intr];
+  assign prv_intern_if.insert_pc = prv_intern_if.mret | (prv_intern_if.pipe_clear & prv_intern_if.intr); // insert the PC
 
-    else if (prv_intern_if.mret) // TODO: Change the logic so that we can point to the vector according to mret, sret, or uret, may need another package structure for this
-      prv_intern_if.priv_pc = prv_intern_if.xtvec[prv_ret];
-    else
-      prv_intern_if.priv_pc = 32'b0;
-  end
+  
+  always_comb begin
+    prv_intern_if.priv_pc = 32'b0;
+
+    if(prv_intern_if.intr) begin
+      if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) // vectored mode based on the interrupt source
+        prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2 + (prv_intern_if.mcause.cause << 2);
+      else
+        prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2;
+      
+    end else if (prv_intern_if.mret) 
+      prv_intern_if.priv_pc = prv_intern_if.mepc; // when leaving the ISR, restore to the original PC
+
+  end 
+
 
 endmodule

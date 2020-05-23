@@ -150,6 +150,23 @@ package machine_mode_types_1_11_pkg;
     XS_NONE_D   = 2'h2,
     XS_SOME_D   = 2'h3
   } xs_t;
+
+  typedef enum logic [1:0] {
+    U_LEVEL  = 2'h0,
+    S_LEVEL  = 2'h1,
+    RESERVED_LEVEL   = 2'h2,
+    M_LEVEL   = 2'h3
+  } priv_level_t;
+
+  typedef enum logic [1:0] {
+    DIRECT   = 2'h0,
+    VECTORED = 2'h1
+  } vector_modes_t;
+
+  typedef struct packed {
+    logic [29:0] base;
+    vector_modes_t mode;
+  } mtvec_t;
   
   typedef struct packed {
     logic       sd;    
@@ -162,7 +179,7 @@ package machine_mode_types_1_11_pkg;
     logic       mprv;
     xs_t        xs;
     fs_t	fs;
-    logic [1:0] mpp;
+    priv_level_t mpp;
     logic [1:0] reserved_2;
     logic	spp;
     logic       mpie;
@@ -219,38 +236,38 @@ package machine_mode_types_1_11_pkg;
   // ex_code_t should be cast from an 
   // instantiation of mcause_t
   typedef enum logic [30:0] {
-    INSN_MAL      = 31'd0,
-    INSN_ACCESS   = 31'd1,
-    ILLEGAL_INSN  = 31'd2,
-    BREAKPOINT    = 31'd3,
-    L_ADDR_MAL    = 31'd4,
-    L_FAULT       = 31'd5,
-    S_ADDR_MAL    = 31'd6,
-    S_FAULT       = 31'd7,
-    ENV_CALL_U    = 31'd8,
-    ENV_CALL_S    = 31'd9,
-    RESERVED_0    = 31'd10, 
-    ENV_CALL_M    = 31'd11,
-    INSN_PAGE     = 31'd12,
-    LOAD_PAGE     = 31'd13, 
-    RESERVED_1    = 31'd14,
-    STORE_PAGE    = 31'd15,
-    RESERVED_2    = 31'd16
+    INSN_MAL      = 31'h0,
+    INSN_ACCESS   = 31'h1,
+    ILLEGAL_INSN  = 31'h2,
+    BREAKPOINT    = 31'h3,
+    L_ADDR_MAL    = 31'h4,
+    L_FAULT       = 31'h5,
+    S_ADDR_MAL    = 31'h6,
+    S_FAULT       = 31'h7,
+    ENV_CALL_U    = 31'h8,
+    ENV_CALL_S    = 31'h9,
+    RESERVED_0    = 31'hA, 
+    ENV_CALL_M    = 31'hB,
+    INSN_PAGE     = 31'hC,
+    LOAD_PAGE     = 31'hD, 
+    RESERVED_1    = 31'hE,
+    STORE_PAGE    = 31'hF,
+    RESERVED_2    = 31'h10
   } ex_code_t;
 
   typedef enum logic [30:0] {
-    SOFT_INT_U          = 31'd0,
-    SOFT_INT_S          = 31'd1,
-    RESERVED_4          = 31'd2,
-    SOFT_INT_M          = 31'd3,
-    TIMER_INT_U         = 31'd4,
-    TIMER_INT_S         = 31'd5,
-    RESERVED_5          = 31'd6,
-    TIMER_INT_M         = 31'd7,
-    EXT_INT_U           = 31'd8,
-    EXT_INT_S           = 31'd9,
-    RESERVED_6          = 31'd10,
-    EXT_INT_M           = 31'd11 
+    SOFT_INT_U          = 31'h11,
+    SOFT_INT_S          = 31'h12,
+    RESERVED_4          = 31'h13,
+    SOFT_INT_M          = 31'h14,
+    TIMER_INT_U         = 31'h15,
+    TIMER_INT_S         = 31'h16,
+    RESERVED_5          = 31'h17,
+    TIMER_INT_M         = 31'h18,
+    EXT_INT_U           = 31'h19,
+    EXT_INT_S           = 31'h20,
+    RESERVED_6          = 31'h21,
+    EXT_INT_M           = 31'h22 
   } int_code_t;
 
   /* Simple registers */
@@ -265,7 +282,7 @@ package machine_mode_types_1_11_pkg;
   typedef logic [31:0] mhartid_t;
   typedef logic [31:0] medeleg_t;
   typedef logic [31:0] mideleg_t;
-  typedef logic [31:0] mtvec_t;
+  //typedef logic [31:0] mtvec_t;
   typedef logic [31:0] mepc_t;
   typedef logic [31:0] mtime_t;
   typedef logic [31:0] mtimeh_t;

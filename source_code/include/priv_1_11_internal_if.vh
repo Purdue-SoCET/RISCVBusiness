@@ -54,7 +54,7 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s; 
   logic env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page;
 
-  logic insert_pc; // insert the pc either when an instruction is a ret instruction, or pipeline is clear and a proper instruction
+  logic insert_pc; // inform pipeline that the pc will need to be changed. either when an instruction is a ret instruction, or pipeline is clear and a proper instruction
   logic swap, clr, set; // these signals will denote whether an instruction is an r-type and its 3rd function op is equal to CSRRW, CSRRC, and CSRRS respectively
 
   // These three signals come from the output of the control unit and will be asserted based on the type of R-type instruction in "standard_core/control_unit.sv" file
@@ -67,14 +67,15 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic ex_rmgmt;
   logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
 
-  word_t epc, mtval, priv_pc;
-  word_t [3:0] xtvec, xepc_r;
+  word_t epc; // pc of the instruction prior to the exception 
+  word_t priv_pc; // pc that would need to be changed for pipeline
   word_t wdata, rdata;
+  word_t mtval;
 
   mip_t       mip, mip_next;
   mtval_t     mtval_next;
   mcause_t    mcause, mcause_next;
-  mepc_t      mepc, mepc_next;
+  mepc_t      mepc, mepc_next; // holds pc of interrupted instruction
   mstatus_t   mstatus, mstatus_next;
 
   mtvec_t     mtvec;
@@ -87,7 +88,7 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
       mip_next, mtval_next, mcause_next, mepc_next, mstatus_next,
       swap, clr, set, wdata, addr, valid_write, instr_retired, 
     output mtvec, mepc, mie, timer_int_m, mip, mcause, mstatus, clear_timer_int,
-      rdata, invalid_csr, xtvec, xepc_r
+      rdata, invalid_csr // xtvec, xepc_r
   );
 
   modport prv_control (
@@ -101,7 +102,7 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   );
 
   modport pipe_ctrl (
-    input intr, mret, pipe_clear, xtvec, xepc_r,
+    input intr, mret, pipe_clear, mtvec, mcause, mepc, //xtvec, xepc_r,
     output insert_pc, priv_pc
   );
 

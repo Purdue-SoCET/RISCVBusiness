@@ -30,3 +30,4 @@ source_code/fpga/output_files
 mitll*
 # Ignore temporary files created by gedit
 *~
+open_files.sh

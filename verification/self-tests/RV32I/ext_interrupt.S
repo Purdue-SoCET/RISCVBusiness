@@ -34,56 +34,59 @@ RVTEST_CODE_BEGIN
 
 // xlen is 32 bits since each instruction has a size of 32 bits
 main:
-  li TESTNUM, 1 // load the global test num value
-  la t0, mtvec_handler # load in address of mtvec_handler
-  csrw mtvec, t0 # encoded as csrrw x0, csr(mtvec), rs1(t0). write t0 into mtvec
-// mtvec stands for Machine Trap-Vector Base-Address Register
-
-  addi x6, x0, 0xFF // store FF into x6
-  addi x7, x0, 0xFF // store FF into x7
-  addi x3, x0, 0x1 // store 1 into x3
-  csrw mstatus, x3 // write value of 1 into mstatus register, enable the current interrupt via UIE
-
+  la t0, mtvec_handler // load in address of mtvec_handler
+  ori t0, t0, 0x1 // or in the MODE (Vectored)
+  csrw mtvec, t0 // assign the supported vector handler into mtvec
 
   addi x3, x0, 0x1
-  addi x4, x0, 0x1
   slli x3, x3, 11 // store 0x800 into x3 and x4
-  slli x4, x4, 11
+  csrw mie, x3 // Write value of 0x800 into mie, external interrupt enable for M-mode
+  ori x7, x0, 0xAB
 
+  ori x4, x0, 0x1
+  slli x4, x4, 3
+  csrw mstatus, x4 // turn on the mie bit within mstatus
 
-  csrw mip, x3 
-  csrw mie, x4 // Write value of 0x800 into mie, external interrupt enable for M-mode
+idle_loop:
+  beq x6, x7, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
 
   RVTEST_PASS
 
-// Loop is commented out to analyze the structure prior
-/*
-idle_loop: // infinite while loop to wait until interrupt passes
-  //la x1, mcause
-  //lw x2, 0(x1)
-  li TESTNUM, 0
-  csrs mcause, x2
-  srli x5, x2, 0x1F // obtain the MSB to determine if it was an interrupt instead of an exception
-  andi x6, x2, 0xB // find the source which should be EXT_INT (or hex value of 0xB)
-  li TESTNUM, 1
-  beq x5, x0, idle_loop // keep looping until an interrupt is received
-
-  RVTEST_PASS // denote this as a passed test
-*/
-
-
-
-
 .align 2
-mtvec_handler: // TODO: What is mtvec_handler??
-  # Write to mtimecmp using the zero register
-  # Check that nothing happened to interrupt
-  # Actually write to mtimecmp
-  # Check that the interrupt cleared
-  # Change sigil to show interrupt was entered
-  //ori x6, x0, 0x0F
-  # Return
-  mret
+mtvec_handler: // General vector table for all exceptions and interrupts
+  // Interrupts must be disabled at entry to handler, could have jumps to different parts of code, potentially
+IRQ_0:
+  j exception_handler // FIXME: PC for exception handler and user software interrupt handler are the same!!
+IRQ_1:
+  j supervisor_software_interrupt_handler
+IRQ_2:
+  j machine_software_interrupt_handler
+IRQ_3:
+  j user_timer_interrupt_handler
+IRQ_4:
+  j supervisor_timer_interrupt_handler
+IRQ_5:
+  j machine_timer_interrupt_handler
+IRQ_6:
+  j user_external_interrupt_handler
+IRQ_7:
+  j supervisor_external_interrupt_handler
+IRQ_8:
+  j machine_external_interrupt_handler
+
+exception_handler: // manage all exceptions here
+supervisor_software_interrupt_handler: 
+machine_software_interrupt_handler:
+user_timer_interrupt_handler:
+supervisor_timer_interrupt_handler:
+machine_timer_interrupt_handler:
+user_external_interrupt_handler: 
+supervisor_external_interrupt_handler:
+    mret
+
+machine_external_interrupt_handler:
+    ori x6, x0, 0xAB
+    mret
 
 
 RVTEST_CODE_END

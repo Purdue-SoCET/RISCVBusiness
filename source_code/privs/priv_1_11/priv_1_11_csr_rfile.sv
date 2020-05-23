@@ -74,10 +74,11 @@ module priv_1_11_csr_rfile (
   assign mstatus.reserved_1   = 1'b0;
   assign mstatus.spp	      = 1'b0;
   assign mstatus.reserved_2   = 2'b0;
+  assign mstatus.mpp          = M_LEVEL;
 
   // No memory protection
   assign mstatus.mprv   = 1'b0;
-  assign mstatus.sum = 1'b0;
+  assign mstatus.sum    = 1'b0;
   assign mstatus.mxr    = 1'b0;
 
   // No virtualization protection
@@ -140,7 +141,7 @@ module priv_1_11_csr_rfile (
   assign mtime          = mtimefull[31:0];
   assign mtimeh         = mtimefull[63:32];
   assign mtimefull_next = mtimefull + 1;
-  assign prv_intern_if.timer_int_m      = (mtime == mtimecmp);
+  assign prv_intern_if.timer_int_m      = (mtime == mtimecmp) & (mtimecmp != '0);
   assign prv_intern_if.clear_timer_int = (prv_intern_if.addr == MTIMECMP_ADDR) &
                                       prv_intern_if.valid_write;
 
@@ -172,7 +173,8 @@ module priv_1_11_csr_rfile (
  
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      //mstatus.ie  <= 1'b1;
+      mstatus.mie <= 1'b0;
+      mstatus.mpie <= 1'b0;
       mie.mtie    <= 1'b0;
       mie.msie    <= 1'b0;
       mip.msip    <= 1'b0;
@@ -193,13 +195,14 @@ module priv_1_11_csr_rfile (
       cyclefull   <= '0;
       instretfull <= '0;
     end else if (prv_intern_if.addr == MTIMEH_ADDR)begin
-      // mstatus.ie  <= mstatus_next.ie;
-      mie.mtie    <= mie_next.mtie; // timer interrupt enable
-      mie.msie    <= mie_next.msie; // software interrupt enable
-      mie.meie    <= mie_next.meie; // external interrupt enable
-      mip.msip    <= mip_next.msip; // software interrupt pending
-      mip.mtip    <= mip_next.mtip; // timer interrupt pending
-      mip.meip    <= mip_next.meip; // external interrupt pending
+      mstatus.mie  <= mstatus_next.mie;
+      mstatus.mpie <= mstatus_next.mpie;
+      mie.mtie    <= mie_next.mtie;
+      mie.msie    <= mie_next.msie;
+      mie.meie    <= mie_next.meie;
+      mip.msip    <= mip_next.msip;
+      mip.mtip    <= mip_next.mtip;
+      mip.meip    <= mip_next.meip;
       mtvec       <= mtvec_next;
       mcause      <= mcause_next;
       mepc        <= mepc_next;
@@ -214,13 +217,14 @@ module priv_1_11_csr_rfile (
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
     end else if (prv_intern_if.addr == MTIME_ADDR) begin
-      //mstatus.ie  <= mstatus_next.ie;
-      mie.mtie    <= mie_next.mtie; // timer interrupt enable
-      mie.msie    <= mie_next.msie; // software interrupt enable
-      mie.meie    <= mie_next.meie; // external interrupt enable
-      mip.msip    <= mip_next.msip; // software interrupt pending
-      mip.mtip    <= mip_next.mtip; // timer interrupt pending
-      mip.meip    <= mip_next.meip; // external interrupt pending
+      mstatus.mie  <= mstatus_next.mie;
+      mstatus.mpie <= mstatus_next.mpie;
+      mie.mtie    <= mie_next.mtie;
+      mie.msie    <= mie_next.msie;
+      mie.meie    <= mie_next.meie;
+      mip.msip    <= mip_next.msip;
+      mip.mtip    <= mip_next.mtip;
+      mip.meip    <= mip_next.meip;
       mtvec       <= mtvec_next;
       mcause      <= mcause_next;
       mepc        <= mepc_next;
@@ -235,13 +239,14 @@ module priv_1_11_csr_rfile (
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
     end else begin      
-      //mstatus.ie  <= mstatus_next.ie;
-      mie.mtie    <= mie_next.mtie; // timer interrupt enable
-      mie.msie    <= mie_next.msie; // software interrupt enable
-      mie.meie    <= mie_next.meie; // external interrupt enable
-      mip.msip    <= mip_next.msip; // software interrupt pending
-      mip.mtip    <= mip_next.mtip; // timer interrupt pending
-      mip.meip    <= mip_next.meip; // external interrupt pending
+      mstatus.mie  <= mstatus_next.mie;
+      mstatus.mpie <= mstatus_next.mpie;
+      mie.mtie    <= mie_next.mtie;
+      mie.msie    <= mie_next.msie;
+      mie.meie    <= mie_next.meie;
+      mip.msip    <= mip_next.msip;
+      mip.mtip    <= mip_next.mtip;
+      mip.meip    <= mip_next.meip;
       mtvec       <= mtvec_next;
       mcause      <= mcause_next;
       mepc        <= mepc_next;
@@ -279,10 +284,12 @@ module priv_1_11_csr_rfile (
                       prv_intern_if.rdata
                       );
 
-  // Readonly by pipeline, rw by prv
+  // Readonly by pipeline, rw by prv, controlled by hardware
   assign mip_next       = prv_intern_if.mip_rup ? prv_intern_if.mip_next : mip;
   assign mtval_next     = prv_intern_if.mtval_rup ? prv_intern_if.mtval_next : mtval;
   assign mcause_next    = prv_intern_if.mcause_rup ? prv_intern_if.mcause_next : mcause;
+  //assign mstatus_next   = prv_intern_if.mstatus_rup ? prv_intern_if.mstatus_next : mstatus;
+  assign mepc_next      = prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : mepc;
 
   // Read and write by pipeline and prv
   //TODO: Waveforms for this look wrong, potential bug
@@ -290,13 +297,13 @@ module priv_1_11_csr_rfile (
                             prv_intern_if.mstatus_rup ? prv_intern_if.mstatus_next :
                             mstatus
                           );
+ // assign mepc_next      = (prv_intern_if.addr == MEPC_ADDR)  ? mepc_t'(rup_data) : (
+  //                          prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : 
+  //                          mepc
+ //                         );
 
-  assign mepc_next      = (prv_intern_if.addr == MEPC_ADDR)  ? mepc_t'(rup_data) : (
-                            prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : 
-                            mepc
-                          );
 
-  // Read and write by pipeline
+  // Readonly by priv, rw by pipeline, assigned based on csrw instructions
   assign mie_next       = (prv_intern_if.addr == MIE_ADDR) ? mie_t'(rup_data) : mie;
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;
@@ -369,7 +376,5 @@ module priv_1_11_csr_rfile (
   assign prv_intern_if.mcause    = mcause;
   assign prv_intern_if.mip       = mip;
 
-  assign prv_intern_if.xtvec[2'b11]   = mtvec;
-  assign prv_intern_if.xepc_r[2'b11]  = mepc;
 
 endmodule
