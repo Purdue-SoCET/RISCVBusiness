@@ -288,22 +288,19 @@ module priv_1_11_csr_rfile (
   assign mip_next       = prv_intern_if.mip_rup ? prv_intern_if.mip_next : mip;
   assign mtval_next     = prv_intern_if.mtval_rup ? prv_intern_if.mtval_next : mtval;
   assign mcause_next    = prv_intern_if.mcause_rup ? prv_intern_if.mcause_next : mcause;
-  //assign mstatus_next   = prv_intern_if.mstatus_rup ? prv_intern_if.mstatus_next : mstatus;
-  assign mepc_next      = prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : mepc;
 
   // Read and write by pipeline and prv
-  //TODO: Waveforms for this look wrong, potential bug
   assign mstatus_next   = (prv_intern_if.addr == MSTATUS_ADDR) ? mstatus_t'(rup_data) : (
                             prv_intern_if.mstatus_rup ? prv_intern_if.mstatus_next :
                             mstatus
                           );
- // assign mepc_next      = (prv_intern_if.addr == MEPC_ADDR)  ? mepc_t'(rup_data) : (
-  //                          prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : 
-  //                          mepc
- //                         );
+  assign mepc_next      = (prv_intern_if.addr == MEPC_ADDR)  ? mepc_t'(rup_data) : (
+                            prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : 
+                            mepc
+                          );
 
 
-  // Readonly by priv, rw by pipeline, assigned based on csrw instructions
+  // Readonly by priv, rw by pipeline, assigned based on csr instructions
   assign mie_next       = (prv_intern_if.addr == MIE_ADDR) ? mie_t'(rup_data) : mie;
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;

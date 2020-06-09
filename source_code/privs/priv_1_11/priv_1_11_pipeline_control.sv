@@ -38,12 +38,12 @@ module priv_1_11_pipeline_control
   
   always_comb begin
     prv_intern_if.priv_pc = 32'h4;
-    interrupt_pending = 1'b0;
+    //interrupt_pending = 1'b0;
 
     if(prv_intern_if.intr) begin
       if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) begin // vectored mode based on the interrupt source
         prv_intern_if.priv_pc = (prv_intern_if.mtvec.base << 2) + (prv_intern_if.mcause.cause << 2);
-        interrupt_pending = 1'b1;
+        //interrupt_pending = 1'b1;
       end else
         prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2;
       

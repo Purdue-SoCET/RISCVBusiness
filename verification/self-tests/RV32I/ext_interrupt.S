@@ -24,67 +24,133 @@
 
 #include "riscv_test.h"
 #include "test_macros.h"
-// NOTE: You should modify this code to make it for external interrupts
 
 RVTEST_RV32U
 RVTEST_CODE_BEGIN
 
+
 main:
   la t0, mtvec_handler // load in address of mtvec_handler
   ori t0, t0, 0x1 // or in the MODE (Vectored)
+  li TESTNUM, 0 // initialize TESTNUM (x28)
   csrw mtvec, t0 // assign the supported vector handler into mtvec
 
   addi x3, x0, 0x1
   slli x3, x3, 11 // store 0x800 into x3 and x4
   csrw mie, x3 // Write value of 0x800 into mie, external interrupt enable for M-mode
-  ori x7, x0, 0xAB
 
   ori x4, x0, 0x1
   slli x4, x4, 3
   csrw mstatus, x4 // turn on the mie bit within mstatus
 
-idle_loop:
-  bne x6, x7, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
-  
+  ori x6, x0, 0xAB
+  ori x7, x0, 0xCD
 
-  RVTEST_PASS
+idle_loop:
+  beq TESTNUM, x0, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
+
+  addi x10, x0, 10
+  addi x11, x0, 11
+  addi x12, x0, 12
+  addi x13, x0, 13
+
+  j done // jump to outside subroutine which will halt
+  //RVTEST_PASS
 
 .align 2
 mtvec_handler: // General vector table for all exceptions and interrupts
   // Interrupts must be disabled at entry to handler, could have jumps to different parts of code, potentially
 IRQ_0:
-  j exception_handler // FIXME: PC for exception handler and user software interrupt handler are the same
+  j exception_handler // NOTE: PC for exception handler and user software interrupt handler are the same
 IRQ_1:
   j supervisor_software_interrupt_handler
 IRQ_2:
-  j machine_software_interrupt_handler
+  j reserved_software_interrupt_handler
 IRQ_3:
-  j user_timer_interrupt_handler
+  j machine_software_interrupt_handler
 IRQ_4:
-  j supervisor_timer_interrupt_handler
+  j user_timer_interrupt_handler
 IRQ_5:
-  j machine_timer_interrupt_handler
+  j supervisor_timer_interrupt_handler
 IRQ_6:
-  j user_external_interrupt_handler
+  j reserved_timer_interrupt_handler
 IRQ_7:
-  j supervisor_external_interrupt_handler
+  j machine_timer_interrupt_handler
 IRQ_8:
+  j user_external_interrupt_handler
+IRQ_9:
+  j supervisor_external_interrupt_handler
+IRQ_10:
+  j reserved_external_interrupt_handler
+IRQ_11:
   j machine_external_interrupt_handler
 
 exception_handler: // manage all exceptions here
 supervisor_software_interrupt_handler: 
+reserved_software_interrupt_handler: 
 machine_software_interrupt_handler:
 user_timer_interrupt_handler:
 supervisor_timer_interrupt_handler:
+reserved_timer_interrupt_handler:
 machine_timer_interrupt_handler:
 user_external_interrupt_handler: 
 supervisor_external_interrupt_handler:
+reserved_external_interrupt_handler:
+    jal x1, push_registers
+    nop
+    jal x1, pop_registers
     mret
 
 machine_external_interrupt_handler:
-    ori x10, x0, 10 // FIXME: Pipeline always skips the first instruction
-    ori x6, x0, 0xAB
+    jal x1, push_registers
+    li TESTNUM, 1
+    jal x1, pop_registers
     mret
+
+push_registers:
+    // push RISC-V ABI registers
+    lui x2, 0x8
+    ori x2, x2, 0x3FC
+    addi x2, x2, -64 // stack pointer
+    //sw x1, 4(x2) // return address
+    sw x5, 8(x2) // temporary registers
+    sw x6, 12(x2)
+    sw x7, 16(x2)
+    //sw x28, 20(x2) // disclude TESTNUM
+    sw x29, 24(x2)
+    sw x30, 28(x2)
+    sw x31, 32(x2)
+    sw x10, 36(x2) // function arguments
+    sw x11, 40(x2)
+    sw x12, 44(x2)
+    sw x13, 48(x2)
+    sw x14, 52(x2)
+    sw x15, 56(x2)
+    sw x16, 60(x2)
+    sw x17, 64(x2)
+    jr x1
+
+pop_registers:
+    // pop registers
+    //lw x1, 4(x2)
+    lw x5, 8(x2)
+    lw x6, 12(x2)
+    lw x7, 16(x2)
+    //lw x28, 20(x2)
+    lw x29, 24(x2)
+    lw x30, 28(x2)
+    lw x31, 32(x2)
+    lw x10, 36(x2)
+    lw x11, 40(x2)
+    lw x12, 44(x2)
+    lw x13, 48(x2)
+    lw x14, 52(x2)
+    lw x15, 56(x2)
+    lw x16, 60(x2)
+    lw x17, 64(x2)
+    addi x2, x2, 64
+    jr x1
+   
 
 
 RVTEST_CODE_END

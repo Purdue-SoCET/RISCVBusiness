@@ -560,7 +560,7 @@ def run_selfasm():
     print "Starting self tests..."
     for f in files:
         # TODO: Fix timer error
-        if 'timer' in f: continue
+        #if 'timer' in f: continue
 
         if 'asicfab' in os.environ['HOSTNAME']:
             # Do work remotely
