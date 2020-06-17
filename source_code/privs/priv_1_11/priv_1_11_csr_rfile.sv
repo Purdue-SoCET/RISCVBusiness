@@ -142,7 +142,7 @@ module priv_1_11_csr_rfile (
   assign mtimeh         = mtimefull[63:32];
   assign mtimefull_next = mtimefull + 1;
   assign prv_intern_if.timer_int_m      = (mtime == mtimecmp) & (mtimecmp != '0);
-  assign prv_intern_if.clear_timer_int = (prv_intern_if.addr == MTIMECMP_ADDR) &
+  assign prv_intern_if.clear_timer_int_m = (prv_intern_if.addr == MTIMECMP_ADDR) &
                                       prv_intern_if.valid_write;
 
   /* Machine Counter Delta Registers */
@@ -305,11 +305,11 @@ module priv_1_11_csr_rfile (
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;
   assign mtohost_next   = (prv_intern_if.addr == MTOHOST_ADDR) ? mtohost_t'(rup_data) : mtohost;
-  assign mtime_next     = (prv_intern_if.addr == MTIME_ADDR) ? mtime_t'(rup_data) : mtime;
+  assign mtime_next     = (prv_intern_if.addr == MTIME_ADDR) ? mtime_t'(rup_data) : mtime; // TODO: MTIME_ADDR no longer exists!
   assign mtimeh_next    = (prv_intern_if.addr == MTIMEH_ADDR) ? mtimeh_t'(rup_data) : mtimeh;
   assign mtimecmp_next  = (prv_intern_if.addr == MTIMECMP_ADDR) ? mtimecmp_t'(rup_data) : mtimecmp;
 
-  always_comb begin
+  always_comb begin // value to send to pipeline based on the address
     valid_csr_addr = 1'b1;
     casez (prv_intern_if.addr)
       MVENDORID_ADDR  : prv_intern_if.rdata = mvendorid;

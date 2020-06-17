@@ -73,14 +73,6 @@ package machine_mode_types_1_11_pkg;
     MINSTRETH_ADDR   = 12'hB82
   } csr_addr_t;
 
-  /* Priv Levels 
-  typedef enum logic [1:0] {
-    U_MODE = 2'b00,
-    S_MODE = 2'b01,
-    H_MODE = 2'b10,
-    M_MODE = 2'b11
-  } prv_lvl_t; */
-  
   /* Machine Mode Register Types */
 
   /* misaid types */
@@ -125,17 +117,6 @@ package machine_mode_types_1_11_pkg;
   parameter MISAID_EXT_Z   = 26'h1 << 25;
 
   /* mstatus types */
-/*
-  typedef enum logic [4:0] {
-    VM_MBARE  = 5'h0,
-    VM_MBB    = 5'h1,
-    VM_MBBID  = 5'h2,
-    VM_SV32   = 5'h8,
-    VM_SV39   = 5'h9,
-    VM_SV48   = 5'ha,
-    VM_SV57   = 5'hb,
-    VM_SV64   = 5'hc
-  } vm_t; */
 
   typedef enum logic [1:0] {
     FS_OFF = 2'h0,

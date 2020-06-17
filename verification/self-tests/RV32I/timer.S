@@ -40,10 +40,19 @@ main:
   addi x6, x0, 0xFF
   addi x7, x0, 0xFF
   addi x3, x0, 0x1
+  slli x3, x3, 3
   csrw mstatus, x3
+  nop
+  nop
+  nop
+  nop
   la x1, mtime
   lw x2, 0(x1)
-  addi x2, x2, 50 
+  nop
+  nop
+  nop
+  nop
+  addi x2, x2, 50 // NOTE: Potential data hazard with lw instruction
   la x1, mtimecmp
   sw x2, 0(x1)
   ori x3, x0, 0x80

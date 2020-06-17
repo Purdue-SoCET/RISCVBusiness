@@ -38,7 +38,6 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic mcause_rup; //denotes either an exception or interrupt fired
   logic mepc_rup; //denotes either an exception or interrupt fired
   logic mstatus_rup; // denotes either an exception or interrupt fired (same as above)
-  logic clear_timer_int; // 
   logic intr; // denote whether an exception or interrupt register
   logic pipe_clear; // e_ex_stage is where you check what type of hazard unit instruction you are receiving. Simply, checking whether or not the pipeline is clear of any hazards
   logic mret, sret, uret; //returns after handling a trap instruction
@@ -49,6 +48,12 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic soft_int_u, soft_int_s, soft_int_m;
   logic ext_int_u, ext_int_s, ext_int_m;
   logic reserved_0, reserved_1, reserved_2;
+
+  // signals to clear the pending interrupt
+  logic clear_timer_int_u, clear_timer_int_s, clear_timer_int_m;
+  logic clear_soft_int_u, clear_soft_int_s, clear_soft_int_m;
+  logic clear_ext_int_u, clear_ext_int_s, clear_ext_int_m;
+
 
   // sources for exceptions
   logic mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s; 
@@ -81,33 +86,34 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   mtvec_t     mtvec;
   mie_t       mie;
 
-  csr_addr_t addr;
+  csr_addr_t addr; // 12-bit address for CSR instructions
 
   modport csr (
     input mip_rup, mtval_rup, mcause_rup, mepc_rup, mstatus_rup,
       mip_next, mtval_next, mcause_next, mepc_next, mstatus_next,
       swap, clr, set, wdata, addr, valid_write, instr_retired, 
-    output mtvec, mepc, mie, timer_int_m, mip, mcause, mstatus, clear_timer_int,
+    output mtvec, mepc, mie, timer_int_m, mip, mcause, mstatus, clear_timer_int_m,
       rdata, invalid_csr // xtvec, xepc_r
   );
 
   modport prv_control (
     output mip_rup, mtval_rup, mcause_rup, mepc_rup, mstatus_rup,
       mip_next, mcause_next, mepc_next, mstatus_next, mtval_next, intr, 
-    input mepc, mie, mip, mcause, mstatus, clear_timer_int, pipe_clear, mret,
-      epc, fault_insn_access, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-      breakpoint, env_m, env_s, env_u, fault_insn_page, fault_load_page, fault_store_page, 
-      timer_int_u, timer_int_s, timer_int_m, soft_int_u, soft_int_s, soft_int_m, ext_int_u, 
-      ext_int_s, ext_int_m, mtval, ex_rmgmt, ex_rmgmt_cause
+    input mepc, mie, mip, mcause, mstatus, clear_timer_int_m, clear_ext_int_m, clear_soft_int_m, 
+      clear_timer_int_u, clear_ext_int_u, clear_soft_int_u, clear_timer_int_s, clear_ext_int_s, 
+      clear_soft_int_s, pipe_clear, mret, epc, fault_insn_access, mal_insn, illegal_insn, fault_l, 
+      mal_l, fault_s, mal_s, breakpoint, env_m, env_s, env_u, fault_insn_page, fault_load_page, 
+      fault_store_page, timer_int_u, timer_int_s, timer_int_m, soft_int_u, soft_int_s, soft_int_m, 
+      ext_int_u, ext_int_s, ext_int_m, mtval, ex_rmgmt, ex_rmgmt_cause
   );
 
   modport pipe_ctrl (
-    input intr, mret, pipe_clear, mtvec, mcause, mepc, //xtvec, xepc_r,
+    input intr, mret, pipe_clear, mtvec, mcause, mepc,
     output insert_pc, priv_pc
   );
 
   modport tb (
-    output ext_int_m
+    output ext_int_m, clear_ext_int_m
   );
 
 endinterface

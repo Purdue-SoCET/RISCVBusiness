@@ -32,17 +32,12 @@ module priv_1_11_block (
 );
   import machine_mode_types_1_11_pkg::*;
 
-  //priv_level_t prv_intr, prv_ret;
   
   priv_1_11_csr_rfile csr_rfile_i(.*, .prv_intern_if(prv_intern_if));
   priv_1_11_control prv_control_i(.*, .prv_intern_if(prv_intern_if));
   priv_1_11_pipeline_control pipeline_control_i(.*, .prv_intern_if(prv_intern_if));
 
-  //Machine Mode Only
-  //assign prv_intr = M_LEVEL;
-  //assign prv_ret  = M_LEVEL;
-
-  // Disable interrupt bits that will not be used
+  // Disable interrupts that will not be used
   assign prv_intern_if.timer_int_u = 1'b0;
   assign prv_intern_if.timer_int_s = 1'b0;
   assign prv_intern_if.soft_int_u = 1'b0;
@@ -53,6 +48,16 @@ module priv_1_11_block (
   assign prv_intern_if.reserved_0 = 1'b0;
   assign prv_intern_if.reserved_1 = 1'b0;
   assign prv_intern_if.reserved_2 = 1'b0;
+
+  // Disable clear interrupts that will not be used
+  assign prv_intern_if.clear_timer_int_u = 1'b0;
+  assign prv_intern_if.clear_timer_int_s = 1'b0;
+  assign prv_intern_if.clear_soft_int_u = 1'b0;
+  assign prv_intern_if.clear_soft_int_s = 1'b0;
+  assign prv_intern_if.clear_soft_int_m = 1'b0;
+  assign prv_intern_if.clear_ext_int_u = 1'b0;
+  assign prv_intern_if.clear_ext_int_s = 1'b0;
+
 
   // from pipeline to the priv unit
   assign prv_intern_if.pipe_clear   = prv_pipe_if.pipe_clear;
@@ -85,7 +90,7 @@ module priv_1_11_block (
   assign prv_intern_if.ex_rmgmt_cause = prv_pipe_if.ex_rmgmt_cause;
 
   // from priv unit to pipeline
-  assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc; // TODO: Figure out the uses for these signals.
+  assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc;
   assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
   assign prv_pipe_if.intr        = prv_intern_if.intr;
   assign prv_pipe_if.rdata       = prv_intern_if.rdata;

@@ -1,4 +1,4 @@
-# SimVision Command Script (Fri May 22 11:36:30 PM EDT 2020)
+# SimVision Command Script (Mon Jun 15 08:12:32 PM EDT 2020)
 #
 # Version 15.20.s030
 #
@@ -71,6 +71,7 @@ catch {group new -name {Time Registers} -overlay 0}
 catch {group new -name Assem_Instructions -overlay 0}
 catch {group new -name Comm_Pipeline -overlay 0}
 catch {group new -name Control_Unit -overlay 0}
+catch {group new -name {Clear Interrupts} -overlay 0}
 group using {Instruction Types}
 group set -overlay 0
 group set -comment {}
@@ -109,8 +110,7 @@ group clear 0 end
 group insert \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_m}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_u}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.clear_timer_int}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_u}]} ]
 group using {Software Interrupts}
 group set -overlay 0
 group set -comment {}
@@ -227,6 +227,7 @@ group clear 0 end
 
 group insert \
     {Interrupt Sources} \
+    {Clear Interrupts} \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_control_i.interrupt}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_control_i.interrupt_fired}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_control_i.interrupt_reg}]} ] \
@@ -271,7 +272,8 @@ group insert \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.cu_if.control_unit.instr[31:0]}]} ] \
     {Instruction Types} \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.fetch_stage_i.pc[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.fetch_stage_i.npc[31:0]}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.fetch_stage_i.npc[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.addr[11:0]}]} ]
 group using Control_Unit
 group set -overlay 0
 group set -comment {}
@@ -314,6 +316,21 @@ group insert \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.cu_if.w_sel[2:0]}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.cu_if.wen}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.cu_if.zimm[4:0]}]} ]
+group using {Clear Interrupts}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_ext_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_ext_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_ext_int_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_soft_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_soft_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_soft_int_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_timer_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_timer_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_timer_int_u}]} ]
 
 #
 # Mnemonic Maps
@@ -333,10 +350,10 @@ if {[catch {window new WatchList -name "Design Browser 1" -geometry 730x500+906+
 }
 window target "Design Browser 1" on
 browser using {Design Browser 1}
-browser set -scope [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.rf}]} ]
+browser set -scope [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i}]} ]
 browser set \
     -signalsort name
-browser yview see [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.rf}]} ]
+browser yview see [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i}]} ]
 browser timecontrol set -lock 0
 
 #
@@ -366,6 +383,7 @@ set id [waveform add -signals [subst  {
 set groupId0 [waveform add -groups {{Machine Registers}}]
 
 set groupId1 [waveform find -name {Enable Register}]
+waveform hierarchy collapse $groupId1
 
 
 set groupId1 [waveform find -name {Pending Register}]
@@ -403,7 +421,12 @@ waveform hierarchy collapse $groupId2
 
 
 set groupId2 [waveform find -name {External Interrupts}]
+waveform hierarchy collapse $groupId2
 
+
+
+set groupId1 [waveform find -name {Clear Interrupts}]
+waveform hierarchy collapse $groupId1
 
 waveform hierarchy collapse $groupId0
 
@@ -415,6 +438,7 @@ waveform hierarchy collapse $groupId1
 
 
 set groupId1 [waveform find -name {Exception PC}]
+waveform hierarchy collapse $groupId1
 
 waveform hierarchy collapse $groupId0
 
@@ -436,9 +460,8 @@ waveform hierarchy collapse $groupId0
 set id [waveform add -signals [subst  {
 	{simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.rf.registers[31:0]}]}
 	} ]]
-waveform hierarchy collapse $id
 
-waveform xview limits 3362730ps 4813930ps
+waveform xview limits 0 16678880ps
 
 #
 # Waveform Window Links
@@ -448,7 +471,7 @@ waveform xview limits 3362730ps 4813930ps
 # Console windows
 #
 console set -windowname Console
-window geometry Console 730x250+793+972
+window geometry Console 730x250+863+836
 
 #
 # Layout selection

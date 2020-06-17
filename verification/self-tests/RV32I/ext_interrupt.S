@@ -43,9 +43,6 @@ main:
   slli x4, x4, 3
   csrw mstatus, x4 // turn on the mie bit within mstatus
 
-  ori x6, x0, 0xAB
-  ori x7, x0, 0xCD
-
 idle_loop:
   beq TESTNUM, x0, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
 
@@ -53,9 +50,15 @@ idle_loop:
   addi x11, x0, 11
   addi x12, x0, 12
   addi x13, x0, 13
+  nop
+  nop
+  nop
+  nop
+  nop
 
   j done // jump to outside subroutine which will halt
   //RVTEST_PASS
+
 
 .align 2
 mtvec_handler: // General vector table for all exceptions and interrupts

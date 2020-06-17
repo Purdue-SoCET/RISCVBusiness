@@ -61,7 +61,7 @@ module tb_RISCVBusiness_self_test ();
     .CLK(CLK),
     .nRST(nRST),
     .halt(halt),
-    .gen_bus_if(rvb_gen_bus_if), // TODO: Look into adding interrupt signals potentially
+    .gen_bus_if(rvb_gen_bus_if),
     .prv_intern_if(prv_intern_if)
   );
 
@@ -128,6 +128,7 @@ module tb_RISCVBusiness_self_test ();
   assign tb_gen_bus_if.rdata   = gen_bus_if.rdata;
   assign tb_gen_bus_if.busy    = gen_bus_if.busy;
 
+
   //Clock generation
   initial begin : INIT
     CLK = 0;
@@ -148,18 +149,33 @@ module tb_RISCVBusiness_self_test ();
 
     nRST = 1;
      prv_intern_if.ext_int_m = 1'b0;
+     prv_intern_if.clear_ext_int_m = 1'b0;
+     
+     #(PERIOD * 200);
+     prv_intern_if.ext_int_m = 1'b1; // first external interrupt
 
-    // FIXME: FIXME: insert external interrupt signal here
-    // Assert the ext_int signal for the prv_control, probably csr is where I should look
-    // I will be assigning the ext_int signal similar to how the timer_int signal is asserted in hte priv_1_11_csr_rfile.sv
-    // Create a modport for the priv_1_11_interal_if and see how you can assert the ext_int signal
-    // TODO: Scratch that! Just directly assert it within the priv_1_11_block.sv file
-    // TODO: When this gets asserted, then the mcause register's cause parameter is set
-    // Spend some time to better understand mcause
+     #(PERIOD * 2);
+     prv_intern_if.clear_ext_int_m = 1'b1; // claim response (clear pending interrupt)
+
+     #(PERIOD * 5);
+     prv_intern_if.ext_int_m = 1'b0;
+
+     #(PERIOD * 10);
+     prv_intern_if.clear_ext_int_m = 1'b0;
+
+     #(PERIOD * 50);
+     prv_intern_if.ext_int_m = 1'b1; // second external interrupt
 
      #(PERIOD * 200);
-     prv_intern_if.ext_int_m = 1'b1;
-     // TODO: Only move on if you receive a response back? What would that response be? Verify from the waveforms.
+     prv_intern_if.clear_ext_int_m = 1'b1; // claim response
+
+     #(PERIOD * 5);
+     prv_intern_if.ext_int_m = 1'b0;
+
+     #(PERIOD * 10);
+     prv_intern_if.clear_ext_int_m = 1'b0;
+
+     #(PERIOD * 10);
     
     
     while (halt == 0 && clk_count != `RVBSELF_CLK_TIMEOUT) begin
