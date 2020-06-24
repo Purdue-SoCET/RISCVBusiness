@@ -53,7 +53,6 @@ module priv_1_11_csr_rfile (
   assign mvendorid        = '0;
   assign marchid          = '0;
   assign mimpid           = '0;
-
   assign mhartid          = '0; 
 
   
@@ -128,23 +127,6 @@ module priv_1_11_csr_rfile (
   assign mip.ueip = 1'b0;
   assign mip.seip = 1'b0;
 
-
-  /* Machine Protection and Translation */
-  // Unimplemented, only MBARE supported
- 
- 
-  /* Machine Timers and Counters */
-  mtimecmp_t    mtimecmp, mtimecmp_next;
-  mtime_t       mtime, mtime_next;
-  mtimeh_t      mtimeh, mtimeh_next;
-  logic [63:0]  mtimefull, mtimefull_next;
-  assign mtime          = mtimefull[31:0];
-  assign mtimeh         = mtimefull[63:32];
-  assign mtimefull_next = mtimefull + 1;
-  assign prv_intern_if.timer_int_m      = (mtime == mtimecmp) & (mtimecmp != '0);
-  assign prv_intern_if.clear_timer_int_m = (prv_intern_if.addr == MTIMECMP_ADDR) &
-                                      prv_intern_if.valid_write;
-
   /* Machine Counter Delta Registers */
   // Unimplemented, only Machine Mode Supported
 
@@ -188,56 +170,9 @@ module priv_1_11_csr_rfile (
       mscratch    <= '0;
       mtohost     <= '0;
       mfromhost   <= '0;
-      mtimecmp    <= '0;
-      mtimefull   <= '0;
-      /* Performance Counters */
       timefull    <= '0;
       cyclefull   <= '0;
       instretfull <= '0;
-    end else if (prv_intern_if.addr == MTIMEH_ADDR)begin
-      mstatus.mie  <= mstatus_next.mie;
-      mstatus.mpie <= mstatus_next.mpie;
-      mie.mtie    <= mie_next.mtie;
-      mie.msie    <= mie_next.msie;
-      mie.meie    <= mie_next.meie;
-      mip.msip    <= mip_next.msip;
-      mip.mtip    <= mip_next.mtip;
-      mip.meip    <= mip_next.meip;
-      mtvec       <= mtvec_next;
-      mcause      <= mcause_next;
-      mepc        <= mepc_next;
-      mtval       <= mtval_next;
-      mscratch    <= mscratch_next;
-      mtohost     <= mtohost_next;
-      mfromhost   <= mfromhost_next;
-      mtimecmp    <= mtimecmp_next;
-      mtimefull   <= {mtimeh_next, mtimefull_next[31:0]};
-      /* Performance Counters */
-      timefull    <= timefull_next;
-      cyclefull   <= cyclefull_next;
-      instretfull <= instretfull_next;
-    end else if (prv_intern_if.addr == MTIME_ADDR) begin
-      mstatus.mie  <= mstatus_next.mie;
-      mstatus.mpie <= mstatus_next.mpie;
-      mie.mtie    <= mie_next.mtie;
-      mie.msie    <= mie_next.msie;
-      mie.meie    <= mie_next.meie;
-      mip.msip    <= mip_next.msip;
-      mip.mtip    <= mip_next.mtip;
-      mip.meip    <= mip_next.meip;
-      mtvec       <= mtvec_next;
-      mcause      <= mcause_next;
-      mepc        <= mepc_next;
-      mtval       <= mtval_next;
-      mscratch    <= mscratch_next;
-      mtohost     <= mtohost_next;
-      mfromhost   <= mfromhost_next;
-      mtimecmp    <= mtimecmp_next;
-      mtimefull   <= {mtimefull_next[63:32], mtime_next};
-      /* Performance Counters */
-      timefull    <= timefull_next;
-      cyclefull   <= cyclefull_next;
-      instretfull <= instretfull_next;
     end else begin      
       mstatus.mie  <= mstatus_next.mie;
       mstatus.mpie <= mstatus_next.mpie;
@@ -254,9 +189,6 @@ module priv_1_11_csr_rfile (
       mscratch    <= mscratch_next;
       mtohost     <= mtohost_next;
       mfromhost   <= mfromhost_next;
-      mtimecmp    <= mtimecmp_next;
-      mtimefull   <= mtimefull_next;
-      /* Performance Counters */
       timefull    <= timefull_next;
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
@@ -305,11 +237,8 @@ module priv_1_11_csr_rfile (
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;
   assign mtohost_next   = (prv_intern_if.addr == MTOHOST_ADDR) ? mtohost_t'(rup_data) : mtohost;
-  assign mtime_next     = (prv_intern_if.addr == MTIME_ADDR) ? mtime_t'(rup_data) : mtime; // TODO: MTIME_ADDR no longer exists!
-  assign mtimeh_next    = (prv_intern_if.addr == MTIMEH_ADDR) ? mtimeh_t'(rup_data) : mtimeh;
-  assign mtimecmp_next  = (prv_intern_if.addr == MTIMECMP_ADDR) ? mtimecmp_t'(rup_data) : mtimecmp;
 
-  always_comb begin // value to send to pipeline based on the address
+  always_comb begin // register to send to pipeline based on the address
     valid_csr_addr = 1'b1;
     casez (prv_intern_if.addr)
       MVENDORID_ADDR  : prv_intern_if.rdata = mvendorid;
@@ -330,33 +259,10 @@ module priv_1_11_csr_rfile (
       MTVAL_ADDR      : prv_intern_if.rdata = mtval;
       MIP_ADDR        : prv_intern_if.rdata = mip; 
 
-      //machine protection and translation not present 
-      MBASE_ADDR      : prv_intern_if.rdata = '0;
-      MBOUND_ADDR     : prv_intern_if.rdata = '0;
-      MIBASE_ADDR     : prv_intern_if.rdata = '0;
-      MIBOUND_ADDR    : prv_intern_if.rdata = '0;
-      MDBASE_ADDR     : prv_intern_if.rdata = '0;
-      MDBOUND_ADDR    : prv_intern_if.rdata = '0;
-
-      //only machine mode
-      HTIMEW_ADDR     : prv_intern_if.rdata = '0;
-      HTIMEHW_ADDR    : prv_intern_if.rdata = '0;
-
-      //Timers
-      MTIMECMP_ADDR   : prv_intern_if.rdata = mtimecmp;
-      MTIME_ADDR      : prv_intern_if.rdata = mtime;
-      MTIMEH_ADDR     : prv_intern_if.rdata = mtimeh;
-
-      // Non-Standard mtohost/mfromhost
-      MTOHOST_ADDR    : prv_intern_if.rdata = mtohost;
-      MFROMHOST_ADDR  : prv_intern_if.rdata = mfromhost;
-
       // Performance counters
       MCYCLE_ADDR      : prv_intern_if.rdata = cycle;
-      MTIME_ADDR       : prv_intern_if.rdata = _time;
       MINSTRET_ADDR    : prv_intern_if.rdata = instret;
       MCYCLEH_ADDR     : prv_intern_if.rdata = cycleh;
-      MTIMEH_ADDR      : prv_intern_if.rdata = timeh;
       MINSTRETH_ADDR   : prv_intern_if.rdata = instreth;
 
       default : begin

@@ -40,7 +40,6 @@ package machine_mode_types_1_11_pkg;
     MIDELEG_ADDR    = 12'h303,
     MIE_ADDR        = 12'h304,
     MTVEC_ADDR      = 12'h305,
-    //TODO: MCOUNTEREN AND ASSOCIATED REGS/CONTGROL (e.g. cycle/time)
     MCOUNTEREN_ADDR = 12'h306,
  
     MSCRATCH_ADDR   = 12'h340,
@@ -48,24 +47,6 @@ package machine_mode_types_1_11_pkg;
     MCAUSE_ADDR     = 12'h342,
     MTVAL_ADDR      = 12'h343,
     MIP_ADDR        = 12'h344,
-
-    // TODO: MAY BE ABLE TO REMOVE BELOW
-    MBASE_ADDR      = 12'h380,
-    MBOUND_ADDR     = 12'h381,
-    MIBASE_ADDR     = 12'h382,
-    MIBOUND_ADDR    = 12'h383,
-    MDBASE_ADDR     = 12'h384,
-    MDBOUND_ADDR    = 12'h385,
-    // TODO: MAY BE ABLE TO REMOVE ABOVE
-    // TODO: BELOW MUST BE REMOVED
-    MTOHOST_ADDR    = 12'h780,
-    MFROMHOST_ADDR  = 12'h781,
-    HTIMEW_ADDR     = 12'hB01,
-    HTIMEHW_ADDR    = 12'hB81,
-    MTIMECMP_ADDR   = 12'h321,
-    MTIME_ADDR      = 12'h701,
-    MTIMEH_ADDR     = 12'h741,
-    // TODO: ABOVE MUST BE REMOVED
 
     MCYCLE_ADDR      = 12'hB00,
     MINSTRET_ADDR    = 12'hB02,

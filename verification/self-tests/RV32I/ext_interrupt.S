@@ -46,16 +46,6 @@ main:
 idle_loop:
   beq TESTNUM, x0, idle_loop // infinite loop will only finish once the external interrupt ISR has completed properly
 
-  addi x10, x0, 10
-  addi x11, x0, 11
-  addi x12, x0, 12
-  addi x13, x0, 13
-  nop
-  nop
-  nop
-  nop
-  nop
-
   j done // jump to outside subroutine which will halt
   //RVTEST_PASS
 

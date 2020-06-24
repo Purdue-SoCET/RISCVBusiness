@@ -1,4 +1,4 @@
-# SimVision Command Script (Mon Jun 15 08:12:32 PM EDT 2020)
+# SimVision Command Script (Sat Jun 20 04:37:56 PM EDT 2020)
 #
 # Version 15.20.s030
 #
@@ -72,6 +72,7 @@ catch {group new -name Assem_Instructions -overlay 0}
 catch {group new -name Comm_Pipeline -overlay 0}
 catch {group new -name Control_Unit -overlay 0}
 catch {group new -name {Clear Interrupts} -overlay 0}
+catch {group new -name {Machine Timers} -overlay 0}
 group using {Instruction Types}
 group set -overlay 0
 group set -comment {}
@@ -90,67 +91,67 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mstatus}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mstatus_next}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mstatus_rup}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mstatus}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mstatus_next}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mstatus_rup}]} ]
 group using {Trap Value Register}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mtval[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mtval_next[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mtval_rup}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mtval[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mtval_next[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mtval_rup}]} ]
 group using {Timer Interrupts}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.timer_int_u}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.timer_int_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.timer_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.timer_int_m}]} ]
 group using {Software Interrupts}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.soft_int_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.soft_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.soft_int_u}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.soft_int_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.soft_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.soft_int_m}]} ]
 group using {External Interrupts}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.ext_int_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.ext_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.ext_int_u}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.ext_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.ext_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.ext_int_u}]} ]
 group using {Exception Sources}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.fault_insn_access}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.fault_insn_page}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.fault_l}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.fault_load_page}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.fault_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.fault_store_page}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.illegal_insn}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mal_insn}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mal_l}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mal_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.breakpoint}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.env_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.env_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.env_u}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.ex_rmgmt}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.ex_rmgmt_cause[-1:0]}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.fault_insn_access}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.fault_insn_page}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.fault_l}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.fault_load_page}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.fault_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.fault_store_page}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.illegal_insn}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.ex_rmgmt}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.ex_rmgmt_cause[-1:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.env_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.env_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.env_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.breakpoint}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mal_insn}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mal_l}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mal_s}]} ]
 group using {Interrupt Sources}
 group set -overlay 0
 group set -comment {}
@@ -166,28 +167,28 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mcause}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mcause_next}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mcause_rup}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mcause}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mcause_next}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mcause_rup}]} ]
 group using {Exception PC}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mepc[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mepc_next[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mepc_rup}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.epc[31:0]}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mepc[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mepc_next[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mepc_rup}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.epc[31:0]}]} ]
 group using {Pending Register}
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mip}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mip_next}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mip_rup}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mip}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mip_next}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mip_rup}]} ]
 group using {Machine Registers}
 group set -overlay 0
 group set -comment {}
@@ -196,7 +197,6 @@ group clear 0 end
 group insert \
     {Enable Register} \
     {Pending Register} \
-    {Time Registers} \
     {Trap Value Register} \
     {Status Register} \
     {Cause Register}
@@ -206,9 +206,9 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mret}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.intr}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.mie}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.intr}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mret}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.mie}]} ]
 group using Exception
 group set -overlay 0
 group set -comment {}
@@ -217,7 +217,7 @@ group clear 0 end
 group insert \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_control_i.exception}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_control_i.ex_src[30:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.pipe_clear}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.pipe_clear}]} ] \
     {Exception Sources} \
     {Exception PC}
 group using Interrupt
@@ -237,22 +237,18 @@ group set -overlay 0
 group set -comment {}
 group clear 0 end
 
-group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.mtime[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.mtime_next[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.mtimecmp[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.mtimecmp_next[31:0]}]} ]
+
 group using Assem_Instructions
 group set -overlay 0
 group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.swap}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.set}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clr}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.wdata[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.prv_pipe_if.priv_block.swap}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.prv_pipe_if.priv_block.clr}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.prv_pipe_if.priv_block.set}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.prv_pipe_if.priv_block.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.prv_pipe_if.priv_block.rdata[31:0]}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.rup_data[31:0]}]} ]
 group using Comm_Pipeline
 group set -overlay 0
@@ -260,20 +256,20 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.pipe_ctrl.mtvec}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.pipe_ctrl.insert_pc}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.pipe_ctrl.intr}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.prv_control.epc[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.pipe_ctrl.mepc[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.mepc_next[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.mepc_rup}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.pipe_ctrl.priv_pc[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.mtvec}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.insert_pc}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.priv_pc[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.intr}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.epc[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.mepc[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.mepc_next[31:0]}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.mepc_rup}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.cu_if.control_unit.opcode[6:0]}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.cu_if.control_unit.instr[31:0]}]} ] \
     {Instruction Types} \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.fetch_stage_i.pc[31:0]}]} ] \
     [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.fetch_stage_i.npc[31:0]}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.addr[11:0]}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.addr[11:0]}]} ]
 group using Control_Unit
 group set -overlay 0
 group set -comment {}
@@ -322,15 +318,20 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_ext_int_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_ext_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_ext_int_u}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_soft_int_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_soft_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_soft_int_u}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_timer_int_m}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_timer_int_s}]} ] \
-    [subst  {simulator::[format {tb_RISCVBusiness_self_test.prv_intern_if.clear_timer_int_u}]} ]
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_ext_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_ext_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_ext_int_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_soft_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_soft_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_soft_int_u}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_timer_int_m}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_timer_int_s}]} ] \
+    [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if.prv_control.clear_timer_int_u}]} ]
+group using {Machine Timers}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
 
 #
 # Mnemonic Maps
@@ -345,15 +346,15 @@ mmap new -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor ora
 #
 # Design Browser windows
 #
-if {[catch {window new WatchList -name "Design Browser 1" -geometry 730x500+906+52}] != ""} {
-    window geometry "Design Browser 1" 730x500+906+52
+if {[catch {window new WatchList -name "Design Browser 1" -geometry 1920x953+-1+26}] != ""} {
+    window geometry "Design Browser 1" 1920x953+-1+26
 }
 window target "Design Browser 1" on
 browser using {Design Browser 1}
-browser set -scope [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i}]} ]
+browser set -scope [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if}]} ]
 browser set \
     -signalsort name
-browser yview see [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i}]} ]
+browser yview see [subst  {simulator::[format {tb_RISCVBusiness_self_test.DUT.priv_wrapper_i.priv_block_i.prv_intern_if}]} ]
 browser timecontrol set -lock 0
 
 #
@@ -370,7 +371,7 @@ waveform set \
     -signalnames name \
     -signalwidth 175 \
     -units ps \
-    -valuewidth 75
+    -valuewidth 155
 waveform baseline set -time 0
 
 set id [waveform add -signals [subst  {
@@ -387,10 +388,6 @@ waveform hierarchy collapse $groupId1
 
 
 set groupId1 [waveform find -name {Pending Register}]
-waveform hierarchy collapse $groupId1
-
-
-set groupId1 [waveform find -name {Time Registers}]
 waveform hierarchy collapse $groupId1
 
 
@@ -428,7 +425,6 @@ waveform hierarchy collapse $groupId2
 set groupId1 [waveform find -name {Clear Interrupts}]
 waveform hierarchy collapse $groupId1
 
-waveform hierarchy collapse $groupId0
 
 
 set groupId0 [waveform add -groups Exception]
@@ -461,7 +457,7 @@ set id [waveform add -signals [subst  {
 	{simulator::[format {tb_RISCVBusiness_self_test.DUT.pipeline.tspp_pipeline.execute_stage_i.rf.registers[31:0]}]}
 	} ]]
 
-waveform xview limits 0 16678880ps
+waveform xview limits 0 21117620ps
 
 #
 # Waveform Window Links

@@ -92,7 +92,7 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
     input mip_rup, mtval_rup, mcause_rup, mepc_rup, mstatus_rup,
       mip_next, mtval_next, mcause_next, mepc_next, mstatus_next,
       swap, clr, set, wdata, addr, valid_write, instr_retired, 
-    output mtvec, mepc, mie, timer_int_m, mip, mcause, mstatus, clear_timer_int_m,
+    output mtvec, mepc, mie, mip, mcause, mstatus,
       rdata, invalid_csr // xtvec, xepc_r
   );
 

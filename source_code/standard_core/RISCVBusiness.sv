@@ -28,12 +28,11 @@
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
 
-`include "priv_1_11_internal_if.vh"
 
 module RISCVBusiness (
   input logic CLK, nRST,
   output logic halt,
-  priv_1_11_internal_if prv_intern_if,
+  input logic plic_ext_int_m, plic_clear_ext_int_m,
 
   `ifdef BUS_INTERFACE_GENERIC_BUS
   generic_bus_if.cpu gen_bus_if
@@ -78,7 +77,8 @@ module RISCVBusiness (
     .CLK(CLK),
     .nRST(nRST),
     .prv_pipe_if(prv_pipe_if),
-    .prv_intern_if(prv_intern_if)
+    .plic_ext_int_m(plic_ext_int_m),
+    .plic_clear_ext_int_m(plic_clear_ext_int_m)
   );
 
   risc_mgmt_wrapper rmgmt (

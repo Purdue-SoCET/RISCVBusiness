@@ -28,7 +28,6 @@
 
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
-`include "priv_1_11_internal_if.vh"
 
 `define OUTPUT_FILE_NAME "cpu.hex"
 `define STATS_FILE_NAME "stats.txt"
@@ -46,6 +45,7 @@ module tb_RISCVBusiness_self_test ();
   logic [7:0] checksum;
   integer fptr, stats_ptr;
   integer clk_count;
+  logic plic_ext_int_m, plic_clear_ext_int_m;
 
   //Interface Instantiations
   generic_bus_if gen_bus_if();
@@ -53,7 +53,6 @@ module tb_RISCVBusiness_self_test ();
   generic_bus_if tb_gen_bus_if();
   
   // additional instantiation for the priv unit to control the external interrupt signal
-  priv_1_11_internal_if prv_intern_if();
 
   //Module Instantiations
 
@@ -62,7 +61,8 @@ module tb_RISCVBusiness_self_test ();
     .nRST(nRST),
     .halt(halt),
     .gen_bus_if(rvb_gen_bus_if),
-    .prv_intern_if(prv_intern_if)
+    .plic_ext_int_m(plic_ext_int_m),
+    .plic_clear_ext_int_m(plic_clear_ext_int_m)
   );
 
   ram_wrapper ram (
@@ -148,32 +148,32 @@ module tb_RISCVBusiness_self_test ();
     @(posedge CLK);
 
     nRST = 1;
-     prv_intern_if.ext_int_m = 1'b0;
-     prv_intern_if.clear_ext_int_m = 1'b0;
+     plic_ext_int_m = 1'b0;
+     plic_clear_ext_int_m = 1'b0;
      
      #(PERIOD * 200);
-     prv_intern_if.ext_int_m = 1'b1; // first external interrupt
+     plic_ext_int_m = 1'b1; // first external interrupt
 
      #(PERIOD * 2);
-     prv_intern_if.clear_ext_int_m = 1'b1; // claim response (clear pending interrupt)
+     plic_clear_ext_int_m = 1'b1; // claim response (clear pending interrupt)
 
      #(PERIOD * 5);
-     prv_intern_if.ext_int_m = 1'b0;
+     plic_ext_int_m = 1'b0;
 
      #(PERIOD * 10);
-     prv_intern_if.clear_ext_int_m = 1'b0;
+     plic_clear_ext_int_m = 1'b0;
 
      #(PERIOD * 50);
-     prv_intern_if.ext_int_m = 1'b1; // second external interrupt
+     plic_ext_int_m = 1'b1; // second external interrupt
 
      #(PERIOD * 200);
-     prv_intern_if.clear_ext_int_m = 1'b1; // claim response
+     plic_clear_ext_int_m = 1'b1; // claim response
 
      #(PERIOD * 5);
-     prv_intern_if.ext_int_m = 1'b0;
+     plic_ext_int_m = 1'b0;
 
      #(PERIOD * 10);
-     prv_intern_if.clear_ext_int_m = 1'b0;
+     plic_clear_ext_int_m = 1'b0;
 
      #(PERIOD * 10);
     
