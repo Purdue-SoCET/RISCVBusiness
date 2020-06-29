@@ -31,13 +31,8 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   import machine_mode_types_1_11_pkg::*;
   import rv32i_types_pkg::*;
 
-  // Machine registers are being ruptured (activated) to denote when to register this value
-
-  logic mip_rup; // interrupt has occurred or the clear timer int signal has gone high
-  logic mtval_rup; // denotes any pipeline hazard
-  logic mcause_rup; //denotes either an exception or interrupt fired
-  logic mepc_rup; //denotes either an exception or interrupt fired
-  logic mstatus_rup; // denotes either an exception or interrupt fired (same as above)
+  // Machine registers are being ruptured (activated) to denote when to change the value of this register for hardware
+  logic mip_rup, mtval_rup, mcause_rup, mepc_rup, mstatus_rup;
   logic intr; // denote whether an exception or interrupt register
   logic pipe_clear; // e_ex_stage is where you check what type of hazard unit instruction you are receiving. Simply, checking whether or not the pipeline is clear of any hazards
   logic mret, sret, uret; //returns after handling a trap instruction
@@ -60,10 +55,8 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
   logic env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page;
 
   logic insert_pc; // inform pipeline that the pc will need to be changed. either when an instruction is a ret instruction, or pipeline is clear and a proper instruction
-  logic swap, clr, set; // these signals will denote whether an instruction is an r-type and its 3rd function op is equal to CSRRW, CSRRC, and CSRRS respectively
+  logic swap, clr, set; // activated for CSR Assembly instructions
 
-  // These three signals come from the output of the control unit and will be asserted based on the type of R-type instruction in "standard_core/control_unit.sv" file
-  
 
   logic valid_write, invalid_csr; // valid write occurs with an r type instruction that does not have any pipeline stalls; invalid_csr
   logic instr_retired; // instruction is done (retired) when there is a write back enable and there is a proper instruction
@@ -93,7 +86,7 @@ interface priv_1_11_internal_if; // also labeled as prv_intern_if in most module
       mip_next, mtval_next, mcause_next, mepc_next, mstatus_next,
       swap, clr, set, wdata, addr, valid_write, instr_retired, 
     output mtvec, mepc, mie, mip, mcause, mstatus,
-      rdata, invalid_csr // xtvec, xepc_r
+      rdata, invalid_csr
   );
 
   modport prv_control (

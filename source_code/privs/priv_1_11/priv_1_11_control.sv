@@ -38,7 +38,7 @@ module priv_1_11_control (
   logic interrupt, clear_interrupt;
   logic interrupt_reg, interrupt_fired;
 
-  always_comb begin 
+  always_comb begin // determine the source of the interrupt to be stored in the mcause register
     interrupt = 1'b1;
     intr_src = SOFT_INT_M;
 
@@ -77,7 +77,8 @@ module priv_1_11_control (
   assign clear_interrupt = (prv_intern_if.clear_timer_int_m || prv_intern_if.clear_soft_int_m || prv_intern_if.clear_ext_int_m || prv_intern_if.clear_timer_int_u || prv_intern_if.clear_soft_int_u || prv_intern_if.clear_ext_int_u || prv_intern_if.clear_timer_int_s || prv_intern_if.clear_soft_int_s || prv_intern_if.clear_ext_int_s);
 
   assign prv_intern_if.mip_rup = interrupt || clear_interrupt; 
-  always_comb begin
+
+  always_comb begin // modify the pending status register 
     prv_intern_if.mip_next = prv_intern_if.mip;
 
     if (prv_intern_if.ext_int_m) prv_intern_if.mip_next.meip = 1'b1;
