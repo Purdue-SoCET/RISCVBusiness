@@ -148,10 +148,6 @@ module priv_1_11_csr_rfile (
   assign instretfull_next = (prv_intern_if.instr_retired == 1'b1) ?
                             instretfull + 1 : instretfull;
 
-  //Non Standard Extensions, used for testing 
-  //mtohost_t   mtohost, mtohost_next;
-  mfromhost_t mfromhost, mfromhost_next;
-
  
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
@@ -167,9 +163,6 @@ module priv_1_11_csr_rfile (
       mcause      <= '0;
       mepc        <= '0;
       mtval       <= '0;
-      mscratch    <= '0;
-      //mtohost     <= '0;
-      mfromhost   <= '0;
       timefull    <= '0;
       cyclefull   <= '0;
       instretfull <= '0;
@@ -187,8 +180,6 @@ module priv_1_11_csr_rfile (
       mepc        <= mepc_next;
       mtval       <= mtval_next;
       mscratch    <= mscratch_next;
-      //mtohost     <= mtohost_next;
-      mfromhost   <= mfromhost_next;
       timefull    <= timefull_next;
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
@@ -236,7 +227,6 @@ module priv_1_11_csr_rfile (
   assign mie_next       = (prv_intern_if.addr == MIE_ADDR) ? mie_t'(rup_data) : mie;
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;
-  //assign mtohost_next   = (prv_intern_if.addr == MTOHOST_ADDR) ? mtohost_t'(rup_data) : mtohost;
 
   always_comb begin // register to send to pipeline based on the address
     valid_csr_addr = 1'b1;

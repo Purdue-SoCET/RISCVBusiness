@@ -28,7 +28,7 @@
 module priv_1_11_block (
   input logic CLK, nRST,
   prv_pipeline_if.priv_block prv_pipe_if, 
-  input logic plic_ext_int_m, plic_clear_ext_int_m
+  input logic plic_ext_int
 );
   import machine_mode_types_1_11_pkg::*;
 
@@ -48,7 +48,7 @@ module priv_1_11_block (
   assign prv_intern_if.soft_int_m = 1'b0; // software interrupts are not currently enabled
   assign prv_intern_if.ext_int_u = 1'b0;
   assign prv_intern_if.ext_int_s = 1'b0;
-  assign prv_intern_if.ext_int_m = plic_ext_int_m;
+  assign prv_intern_if.ext_int_m = plic_ext_int;
   assign prv_intern_if.reserved_0 = 1'b0;
   assign prv_intern_if.reserved_1 = 1'b0;
   assign prv_intern_if.reserved_2 = 1'b0;
@@ -62,7 +62,7 @@ module priv_1_11_block (
   assign prv_intern_if.clear_soft_int_m = 1'b0;
   assign prv_intern_if.clear_ext_int_u = 1'b0;
   assign prv_intern_if.clear_ext_int_s = 1'b0;
-  assign prv_intern_if.clear_ext_int_m = plic_clear_ext_int_m;
+  assign prv_intern_if.clear_ext_int_m = 1'b0;
 
 
   // from pipeline to the priv unit

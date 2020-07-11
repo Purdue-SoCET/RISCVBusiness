@@ -27,7 +27,7 @@
 module priv_wrapper (
   input logic CLK, nRST,
   prv_pipeline_if.priv_block prv_pipe_if,
-  input logic plic_ext_int_m, plic_clear_ext_int_m
+  input logic plic_ext_int
 );
 
   //TODO: Select different priv blocks for backwards compatibility

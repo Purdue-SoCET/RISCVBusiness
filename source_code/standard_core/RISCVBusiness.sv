@@ -32,7 +32,7 @@
 module RISCVBusiness (
   input logic CLK, nRST,
   output logic halt,
-  input logic plic_ext_int_m, plic_clear_ext_int_m,
+  input logic plic_ext_int,
 
   `ifdef BUS_INTERFACE_GENERIC_BUS
   generic_bus_if.cpu gen_bus_if
@@ -77,8 +77,7 @@ module RISCVBusiness (
     .CLK(CLK),
     .nRST(nRST),
     .prv_pipe_if(prv_pipe_if),
-    .plic_ext_int_m(plic_ext_int_m),
-    .plic_clear_ext_int_m(plic_clear_ext_int_m)
+    .plic_ext_int(plic_ext_int)
   );
 
   risc_mgmt_wrapper rmgmt (
