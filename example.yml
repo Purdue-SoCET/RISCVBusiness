@@ -14,7 +14,7 @@ microarch_params:
   
   # Bus configurations
   bus_endianness      : "big"
-  bus_interface_type  : "generic_bus_if"
+  bus_interface_type  : "ahb_if"
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
