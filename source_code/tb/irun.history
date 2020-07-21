@@ -1,0 +1,1 @@
+s1(23Jun2020:20:11:08):  irun -incdir source_code/include/ source_code/packages/rv32i_types_pkg.sv source_code/bus_bridges/ahb.sv source_code/standard_core/memory_controller.sv source_code/tb/tb_memory_controller.sv 
