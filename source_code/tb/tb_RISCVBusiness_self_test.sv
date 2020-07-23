@@ -51,6 +51,7 @@ module tb_RISCVBusiness_self_test ();
   generic_bus_if gen_bus_if();
   generic_bus_if rvb_gen_bus_if();
   generic_bus_if tb_gen_bus_if();
+  ahb_if ahb_bus_if();
   
   // additional instantiation for the priv unit to control the external interrupt signal
 
@@ -60,7 +61,7 @@ module tb_RISCVBusiness_self_test ();
     .CLK(CLK),
     .nRST(nRST),
     .halt(halt),
-    .gen_bus_if(rvb_gen_bus_if),
+    .ahb_master(ahb_bus_if),
     .plic_ext_int(plic_ext_int)
     //plic_clear_ext_int_m(//plic_clear_ext_int_m)
   );
@@ -108,11 +109,11 @@ module tb_RISCVBusiness_self_test ();
   always_comb begin
     if(ram_control) begin
       /* No actual bus, so directly connect ram to generic bus interface */
-      gen_bus_if.addr    =   rvb_gen_bus_if.addr;
-      gen_bus_if.ren     =   rvb_gen_bus_if.ren;
-      gen_bus_if.wen     =   rvb_gen_bus_if.wen;
-      gen_bus_if.wdata   =   rvb_gen_bus_if.wdata;
-      gen_bus_if.byte_en =   rvb_gen_bus_if.byte_en;
+      gen_bus_if.addr    =   ahb_bus_if.HADDR;
+      gen_bus_if.ren     =   ~ahb_bus_if.HWRITE;
+      gen_bus_if.wen     =   ahb_bus_if.HWRITE;
+      gen_bus_if.wdata   =   ahb_bus_if.HWDATA;
+      gen_bus_if.byte_en =   1'b1; //ahb_bus_if.byte_en;
     end else begin
       gen_bus_if.addr    =   tb_gen_bus_if.addr;
       gen_bus_if.ren     =   tb_gen_bus_if.ren;
@@ -123,8 +124,8 @@ module tb_RISCVBusiness_self_test ();
   end
 
   /* No actual bus, so directly connect ram to generic bus interface */
-  assign rvb_gen_bus_if.rdata  = gen_bus_if.rdata;
-  assign rvb_gen_bus_if.busy   = gen_bus_if.busy;
+  assign ahb_bus_if.HRDATA  = gen_bus_if.rdata;
+  //assign ahb_bus_if.busy   = gen_bus_if.busy;
   assign tb_gen_bus_if.rdata   = gen_bus_if.rdata;
   assign tb_gen_bus_if.busy    = gen_bus_if.busy;
 
