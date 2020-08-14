@@ -36,7 +36,7 @@ module ahb (
     IDLE,
     DATA
   } state_t;
-
+  
   state_t state, n_state;
 
   always_ff @ (posedge CLK, negedge nRST) begin
@@ -45,15 +45,12 @@ module ahb (
     else 
       state <= n_state;
   end
-
+  
   always_comb begin
-    
-  if (state == IDLE)
-      n_state = out_gen_bus_if.ren | out_gen_bus_if.wen ? DATA : IDLE;
-  else if ((state == DATA) && ahb_m.HREADY)
-      n_state = out_gen_bus_if.ren | out_gen_bus_if.wen ? DATA : IDLE;
-  else
+    if((state == DATA) & !(ahb_m.HREADY))
       n_state = state;
+    else	
+      n_state = out_gen_bus_if.ren | out_gen_bus_if.wen ? DATA : IDLE;
   end
 
   always_comb begin
@@ -64,45 +61,55 @@ module ahb (
     else 
       ahb_m.HSIZE = 3'b000; // byte
   end
-
-  always_comb 
-  begin 
-    //-- Read Request --// 
-    if ( out_gen_bus_if.ren ) 
-    begin
-      ahb_m.HTRANS = 2'b10;  
-      ahb_m.HWRITE = 1'b0;  
-      ahb_m.HADDR = out_gen_bus_if.addr;  
-      ahb_m.HWDATA = out_gen_bus_if.wdata;  
-      ahb_m.HBURST = 0;  
-      ahb_m.HPROT = 0;  
-      ahb_m.HMASTLOCK = 0; 
-    end 
-    //-- Write Request --// 
-    else if ( out_gen_bus_if.wen ) 
-    begin 
-      ahb_m.HTRANS = 2'b10;  
-      ahb_m.HWRITE = 1'b1;  
-      ahb_m.HADDR = out_gen_bus_if.addr;  
-      ahb_m.HWDATA = out_gen_bus_if.wdata;  
-      ahb_m.HBURST = 0;  
-      ahb_m.HPROT = 0;  
-      ahb_m.HMASTLOCK = 0;  
+  
+  reg[1:0] haddr_reg;
+  always_comb
+  begin
+    if((state == DATA) & !(ahb_m.HREADY)) begin
+      ahb_m.HTRANS = 2'b10;
+      ahb_m.HWRITE = 1'b0;
+      ahb_m.HADDR = haddr_reg;
+      ahb_m.HWDATA = out_gen_bus_if.wdata;
+      ahb_m.HBURST = 0;
+      ahb_m.HPROT = 0;
+      ahb_m.HMASTLOCK = 0;
     end
-    //-- Default : Not reading / writing --// 
-    else 
-    begin 
-      ahb_m.HTRANS = 2'b00;  
-      ahb_m.HWRITE = 1'b0;  
-      ahb_m.HADDR = 0; 
-      ahb_m.HWDATA = 0;  
-      ahb_m.HBURST = 0;  
-      ahb_m.HPROT = 0;  
-      ahb_m.HMASTLOCK = 0;  
-    end 
-  end 
+    else begin
+      if(out_gen_bus_if.ren) begin
+        ahb_m.HTRANS = 2'b10;
+        ahb_m.HWRITE = 1'b0;
+        ahb_m.HADDR = out_gen_bus_if.addr;
+        ahb_m.HWDATA = out_gen_bus_if.wdata;
+        ahb_m.HBURST = 0;
+        ahb_m.HPROT = 0;
+        ahb_m.HMASTLOCK = 0;
+        haddr_reg = 2'b10;
+      end
+      else if(out_gen_bus_if.wen) begin
+        ahb_m.HTRANS = 2'b10;
+        ahb_m.HWRITE = 1'b1;
+        ahb_m.HADDR = out_gen_bus_if.addr;
+        ahb_m.HWDATA = out_gen_bus_if.wdata;
+        ahb_m.HBURST = 0;
+        ahb_m.HPROT = 0;
+        ahb_m.HMASTLOCK = 0;
+        haddr_reg = 2'b10;
+      end
+      else begin
+	ahb_m.HTRANS = 2'b0;
+        ahb_m.HWRITE = 1'b0;
+        ahb_m.HADDR = 0;
+        ahb_m.HWDATA = 0;
+        ahb_m.HBURST = 0;
+        ahb_m.HPROT = 0;
+        ahb_m.HMASTLOCK = 0;
+        haddr_reg = 2'b0;
+      end
+    end
+  end
 
-  assign out_gen_bus_if.busy = ~(ahb_m.HREADY & (state == DATA));
+
+  assign out_gen_bus_if.busy = ~(state == IDLE | (ahb_m.HREADY & (state == DATA)));
   assign out_gen_bus_if.rdata = ahb_m.HRDATA; 
 
 endmodule
