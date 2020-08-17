@@ -24,6 +24,7 @@
 
 `ifndef GENERIC_BUS_IF_VH
 `define GENERIC_BUS_IF_VH
+`include "rv32i_types_pkg.sv" //for testbench purpose
 
 interface generic_bus_if (input logic clk);
   import rv32i_types_pkg::*;
