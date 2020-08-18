@@ -31,22 +31,17 @@ endclass //transaction
 
 
 
-class sim_mem;
+class sim_mem extends uvm_object;
   parameter SIZE = 4;
-  rand bit [7:0] registers[SIZE - 1:0];
+  rand bit [7:0] registers[2 ** SIZE  - 1:0];
   
-  function void print();
-    for (int lcv = 0; lcv <= 4'hf; lcv++) begin
-      $display("%h",registers[lcv]);
-    end
-    
-  endfunction
+  `uvm_object_utils_begin(sim_mem)
+    `uvm_field_sarray_int(registers, UVM_DEFAULT)
+  `uvm_object_utils_end
 
-  function new();
-    for (int lcv = 0; lcv <= 4'hf; lcv++) begin
-      registers[lcv] = $urandom();
-    end
-  endfunction
+  function new(string name = "sim_mem");
+    super.new(name);
+  endfunction: new
 
   function void write_byte(logic[SIZE - 1:0] addr, logic[31:0] HWDATA);
     registers[addr] = HWDATA[7:0];
@@ -94,7 +89,8 @@ endclass //sim_mem
 
 class sim_slave extends uvm_monitor;
   `uvm_component_utils(sim_slave)
-  sim_mem mem;
+  sim_mem slave_mem;
+  sim_mem input_mem;
   logic rand_ready; //randomized waite between transactions
   virtual ahb_if ahbif;
   transaction prev_tx;
@@ -121,12 +117,19 @@ class sim_slave extends uvm_monitor;
   endtask
 
   virtual function void build_phase(uvm_phase phase);
-    mem = new();
-    mem.print(); //debug
+    slave_mem = sim_mem::type_id::create("slave_mem");
     prev_tx = transaction::type_id::create("prev_tx");
+    
+    // get interface
     if (!uvm_config_db#(virtual ahb_if)::get(this, "", "ahb_vif", ahbif)) begin
       `uvm_fatal("sim_slave", "No virtual interface specified for this monitor instance")
     end
+
+    // get sim_mem
+    if (!uvm_config_db#(sim_mem)::get(this, "", "slave_mem", input_mem)) begin
+      `uvm_fatal("sim_slave", "No input mem")
+    end
+    slave_mem.copy(input_mem);
   endfunction
 
   task run_phase(uvm_phase phase);
@@ -142,17 +145,17 @@ class sim_slave extends uvm_monitor;
       else if(prev_tx.trans == prev_tx.WRITE) begin
         random_wait();
         case(prev_HSIZE) 
-          3'b000: mem.write_byte(prev_tx.addr, prev_tx.wdata); //byte
-          3'b001: mem.write_half(prev_tx.addr, prev_tx.wdata); //half word
-          3'b010: mem.write_word(prev_tx.addr, prev_tx.wdata); //word
+          3'b000: slave_mem.write_byte(prev_tx.addr, prev_tx.wdata); //byte
+          3'b001: slave_mem.write_half(prev_tx.addr, prev_tx.wdata); //half word
+          3'b010: slave_mem.write_word(prev_tx.addr, prev_tx.wdata); //word
         endcase
       end
       else begin
         random_wait();
         case(prev_HSIZE) 
-          3'b000: ahbif.HRDATA = mem.read_byte(prev_tx.addr); //byte
-          3'b001: ahbif.HRDATA = mem.read_half(prev_tx.addr); //half word
-          3'b010: ahbif.HRDATA = mem.read_word(prev_tx.addr); //word
+          3'b000: ahbif.HRDATA = slave_mem.read_byte(prev_tx.addr); //byte
+          3'b001: ahbif.HRDATA = slave_mem.read_half(prev_tx.addr); //half word
+          3'b010: ahbif.HRDATA = slave_mem.read_word(prev_tx.addr); //word
         endcase
       end
 
@@ -355,33 +358,72 @@ class ahb_agent extends uvm_agent;
   endfunction
 endclass //ahb_agent
 
+class predictor extends uvm_subscriber #(transaction);
+  `uvm_component_utils(predictor) 
+  uvm_analysis_port #(transaction) pred_ap;
+  sim_mem mem;
+  logic [2:0] HSIZE;
+
+  function new(string name, uvm_component parent = null);
+    super.new(name, parent);
+  endfunction: new
+
+  function void build_phase(uvm_phase phase);
+    pred_ap = new("pred_ap", this);
+  endfunction
+
+  function void write(transaction t);
+    //TODO: need to verify
+    if(t.byte_en == 4'b1111)
+      HSIZE = 3'b010; // word
+    else if(t.byte_en == 4'b1100 || t.byte_en == 4'b0011)
+      HSIZE = 3'b001; // half word
+    else 
+      HSIZE = 3'b000; // byte
+
+    
+    if(t.trans == t.WRITE) begin
+      case(HSIZE) 
+        3'b000: mem.write_byte(t.addr, t.wdata); //byte
+        3'b001: mem.write_half(t.addr, t.wdata); //half word
+        3'b010: mem.write_word(t.addr, t.wdata); //word
+      endcase
+    end
+  endfunction
+endclass //predictor
+
 
 class ahb_env extends uvm_env;
   `uvm_component_utils(ahb_env)
   ahb_agent agt;
   // comparator comp; // scoreboard
-  // sim_mem mem;
+  predictor pred;
+  sim_mem mem;
 
   function new(string name = "env", uvm_component parent = null);
 		super.new(name, parent);
 	endfunction
 
   function void build_phase(uvm_phase phase);
-    // instantiate all the components through factory method
     agt = ahb_agent::type_id::create("agt", this);
     // comp = comparator::type_id::create("comp", this);
-    // mem = new();
-    // if(!mem.randomize()) begin
-    //   `uvm_fatal("environment", "not able to randomize mem")
-    // end
+    pred = predictor::type_id::create("pred", this);
+
+    mem = new();
+    if(!mem.randomize()) begin
+      `uvm_fatal("environment", "not able to randomize mem")
+    end
+    pred.mem = mem;
+    uvm_config_db#(sim_mem)::set( null, "", "slave_mem", mem);
   endfunction
 
   //TODO
-  // function void connect_phase(uvm_phase phase);
+  function void connect_phase(uvm_phase phase);
+  agt.cpu.cpu_ap.connect(pred.analysis_export);
   //   agt.mon.counter_ap.connect(pred.analysis_export); // connect monitor to predictor
   //   pred.pred_ap.connect(comp.expected_export); // connect predictor to comparator
   //   agt.mon.result_ap.connect(comp.actual_export); // connect monitor to comparator
-  // endfunction
+  endfunction
 
 endclass //ahb_env
 
