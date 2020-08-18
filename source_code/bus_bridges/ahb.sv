@@ -83,7 +83,7 @@ module ahb (
         ahb_m.HBURST = 0;
         ahb_m.HPROT = 0;
         ahb_m.HMASTLOCK = 0;
-        haddr_reg = 2'b10;
+        haddr_reg = out_gen_bus_if.addr;
       end
       else if(out_gen_bus_if.wen) begin
         ahb_m.HTRANS = 2'b10;
@@ -93,17 +93,17 @@ module ahb (
         ahb_m.HBURST = 0;
         ahb_m.HPROT = 0;
         ahb_m.HMASTLOCK = 0;
-        haddr_reg = 2'b10;
+        haddr_reg = out_gen_bus_if.addr;
       end
       else begin
-	ahb_m.HTRANS = 2'b0;
+	      ahb_m.HTRANS = 2'b0;
         ahb_m.HWRITE = 1'b0;
         ahb_m.HADDR = 0;
         ahb_m.HWDATA = 0;
         ahb_m.HBURST = 0;
         ahb_m.HPROT = 0;
         ahb_m.HMASTLOCK = 0;
-        haddr_reg = 2'b0;
+        haddr_reg = out_gen_bus_if.addr;
       end
     end
   end
