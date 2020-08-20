@@ -31,6 +31,104 @@ endclass //transaction
 
 
 
+class transactionSeq; //transaction sequence
+  localparam MAX_SIZE = 4000;
+  transaction arr[MAX_SIZE - 1:0];
+  integer time_arr[MAX_SIZE - 1:0];
+  int index; //points to most recent transactoin
+  function new();
+    index = -1;
+  endfunction //new()
+
+  //push one transaction into the arr
+  function void push(transaction item);
+    if(index == MAX_SIZE) begin //can be implemented as a queue is needed in the future
+      $fatal("transactionSeq: sequence cannot hold more items"); 
+    end
+    index++;
+    arr[index] = item;
+    time_arr[index] = $time();
+  endfunction
+
+  //search for the most recent transaction that used dest as f_rd
+  function transaction search(logic[31:0] addr);
+    transaction item;
+    for(int lcv = index; lcv > 0; lcv--) begin
+      item = arr[lcv];
+      //if not WRITE, pass
+      if (item.trans != item.WRITE) begin
+        continue;
+      end
+      if(item.byte_en == 4'b1111) begin
+        if (addr == item.addr || addr == (item.addr - 1) || addr == (item.addr - 2)  || addr == (item.addr - 3)) begin
+          return item;
+        end
+      end else if(item.byte_en == 4'b1100 || item.byte_en == 4'b0011) begin
+        if (addr == item.addr || addr == (item.addr - 1)) begin
+          return item;
+        end
+      end else begin
+        if (addr == item.addr) begin
+          return item;
+        end
+      end
+    end
+    $fatal("transaction not found!\n");
+  endfunction
+
+  function int search_index(logic[31:0] addr);
+    transaction item;
+    for(int lcv = index; lcv > 0; lcv--) begin
+      item = arr[lcv];
+      //if not WRITE, pass
+      if (item.trans != item.WRITE) begin
+        continue;
+      end
+      if(item.byte_en == 4'b1111) begin
+        if (addr == item.addr || addr == (item.addr - 1) || addr == (item.addr - 2)  || addr == (item.addr - 3)) begin
+          return lcv;
+        end
+      end else if(item.byte_en == 4'b1100 || item.byte_en == 4'b0011) begin
+        if (addr == item.addr || addr == (item.addr - 1)) begin
+          return lcv;
+        end
+      end else begin
+        if (addr == item.addr) begin
+          return lcv;
+        end
+      end
+    end
+    $fatal("transaction not found!\n");
+  endfunction
+
+  function int search_time(logic[31:0] addr);
+    transaction item;
+    for(int lcv = index; lcv > 0; lcv--) begin
+      item = arr[lcv];
+      //if not WRITE, pass
+      if (item.trans != item.WRITE) begin
+        continue;
+      end
+      if(item.byte_en == 4'b1111) begin
+        if (addr == item.addr || addr == (item.addr - 1) || addr == (item.addr - 2)  || addr == (item.addr - 3)) begin
+          return time_arr[lcv];
+        end
+      end else if(item.byte_en == 4'b1100 || item.byte_en == 4'b0011) begin
+        if (addr == item.addr || addr == (item.addr - 1)) begin
+          return time_arr[lcv];
+        end
+      end else begin
+        if (addr == item.addr) begin
+          return time_arr[lcv];
+        end
+      end
+    end
+    // $fatal("transaction not found!\n");
+  endfunction
+endclass //transactionSeq
+
+
+
 class sim_mem extends uvm_object;
   parameter SIZE = 4;
   rand bit [7:0] registers[2 ** SIZE  - 1:0];
@@ -149,7 +247,7 @@ class sim_slave extends uvm_monitor;
       else if(prev_tx.trans == prev_tx.WRITE) begin
         random_wait();
         #2;
-        $info("SLAVE DEBUG write add: %h    value: %h",prev_tx.addr, ahbif.HWDATA);
+        $info("SLAVE DEBUG write addr: %h    value: %h",prev_tx.addr, ahbif.HWDATA);
         case(prev_HSIZE) 
           3'b000: slave_mem.write_byte(prev_tx.addr, ahbif.HWDATA); //byte
           3'b001: slave_mem.write_half(prev_tx.addr, ahbif.HWDATA); //half word
@@ -222,41 +320,34 @@ class sim_cpu extends uvm_driver#(transaction);
     transaction prev;
     transaction response;
     bit immediate_busy = 0;
+    bit this_busy = 0;
     
     prev = transaction::type_id::create("prev");
     response = transaction::type_id::create("response");
 
     forever begin
       seq_item_port.get_next_item(req_item);
-      cpu_ap.write(req_item);
-      if(!immediate_busy) begin
+      if(!immediate_busy)
         @(posedge bus_if.clk); 
-        #1;
-      end else begin
+      else
         immediate_busy = 0;
-      end
-      $info("CPU DEBUG busy: %d",bus_if.busy);
-      while (bus_if.busy) begin
-        // $info("CPU DEBUG busy wait"); //DEBUG
-        @(posedge bus_if.clk); 
-        // additional_wait = 1;
-      end
-      $info("CPU DEBUG busy end");
+      if(prev.addr !== 'x) 
+        cpu_ap.write(prev);
+      $info("DBUG CPU transaction");
+      req_item.print();
 
-      // if(additional_wait) begin //TODO:error
-      //   $info("CPU DEBUG additional busy wait"); //DEBUG
-      //   @(posedge bus_if.clk); 
-      //   additional_wait = 0;
-      // end
-      
       if(req_item.trans == req_item.IDLE) begin
         bus_if.ren = 0;
         bus_if.wen = 0;
+        // bus_if.addr = req_item.addr;
+        // bus_if.wdata = req_item.wdata;
+        // bus_if.byte_en = req_item.byte_en;
       end
       else if(req_item.trans == req_item.READ) begin
         bus_if.ren = 1;
         bus_if.wen = 0;
         bus_if.addr = req_item.addr;
+        // bus_if.wdata = req_item.wdata;
         bus_if.byte_en = req_item.byte_en;
       end
       else if(req_item.trans == req_item.WRITE) begin
@@ -272,20 +363,39 @@ class sim_cpu extends uvm_driver#(transaction);
       end
 
       #1;
-      if(prev.trans == req_item.READ) begin
-        response.copy(prev);
-        response.wdata = bus_if.rdata;
-        response_ap.write(response);
+      if(!bus_if.busy) begin
+        if(prev.trans == req_item.READ) begin
+          response.copy(prev);
+          response.wdata = bus_if.rdata;
+          response_ap.write(response);
+        end
+      end
+
+
+      // #1;
+      while (bus_if.busy) begin
+        $info("CPU DEBUG rear busy wait"); //DEBUG
+        @(posedge bus_if.clk); 
+        immediate_busy = 1;
+        if(prev.trans == req_item.READ) begin
+          #1;
+          if(!bus_if.busy) begin
+            $info("CPU DEBUG rear busy reading point"); //DEBUG
+            response.copy(prev);
+            response.wdata = bus_if.rdata;
+            response_ap.write(response);
+            @(posedge bus_if.clk); 
+          end
+        end
       end
       prev.copy(req_item);
       seq_item_port.item_done();
-
       // immediate another busy
-      while (bus_if.busy) begin
-        $info("CPU DEBUG immediate busy wait"); //DEBUG
-        @(posedge bus_if.clk); 
-        immediate_busy = 1;
-      end
+      // while (bus_if.busy) begin
+      //   $info("CPU DEBUG immediate busy wait"); //DEBUG
+      //   @(posedge bus_if.clk); 
+      //   immediate_busy = 1;
+      // end
     end
   endtask
 
@@ -367,7 +477,7 @@ class ahb_seq extends uvm_sequence #(transaction);
       req_item.trans = req_item.IDLE;
     finish_item(req_item);
 
-    repeat(30) begin
+    repeat(3000) begin
       start_item(req_item);
       if(!req_item.randomize()) begin
         // if the transaction is unable to be randomized, send a fatal message
@@ -417,6 +527,7 @@ class predictor extends uvm_subscriber #(transaction);
   uvm_analysis_port #(transaction) pred_ap;
   sim_mem mem;
   logic [2:0] HSIZE;
+  transactionSeq tx_seq;
 
   function new(string name, uvm_component parent = null);
     super.new(name, parent);
@@ -427,6 +538,7 @@ class predictor extends uvm_subscriber #(transaction);
   endfunction
 
   function void write(transaction t);
+    tx_seq.push(t);
     //TODO: need to verify
     if(t.byte_en == 4'b1111)
       HSIZE = 3'b010; // word
@@ -443,6 +555,8 @@ class predictor extends uvm_subscriber #(transaction);
         3'b010: mem.write_word(t.addr, t.wdata); //word
       endcase
 
+      $info("PREDICTOR DEBUG write addr: %h    value: %h  size: %h",t.addr, t.wdata, HSIZE);
+      
       $display("predictor");
       $display("predictor mem");
       mem.print_all();
@@ -461,7 +575,8 @@ class comparator extends uvm_scoreboard;
   logic [2:0] HSIZE;
   transaction response;
   logic [31:0] expected;
-  
+  transactionSeq tx_seq;
+
   int m_matches, m_mismatches; // records number of matches and mismatches
 
   function new( string name , uvm_component parent) ;
@@ -480,7 +595,7 @@ class comparator extends uvm_scoreboard;
 	endfunction
 
   task run_phase(uvm_phase phase);
-  
+  int error_tx_time; //time that error write transaction happens
   forever begin
     response_fifo.get(response);
     if(response.byte_en == 4'b1111)
@@ -505,8 +620,10 @@ class comparator extends uvm_scoreboard;
 
       $display("comparator");
       $info("response: %h", response.wdata);
-      $display("expected addr:%h  value: %h", response.addr , expected);
-      // mem.print_all();
+      $display("expected addr:%h  value: %h  size: %h  byte_en: %b", response.addr , expected, HSIZE, response.byte_en);
+
+      error_tx_time = tx_seq.search_time(response.addr);
+      $info("error transaction happens at %d", error_tx_time);
     end
   end
   endtask
@@ -524,6 +641,7 @@ class ahb_env extends uvm_env;
   comparator comp; // scoreboard
   predictor pred;
   sim_mem mem;
+  transactionSeq tx_seq; //to record and lookup transactions
 
   function new(string name = "env", uvm_component parent = null);
 		super.new(name, parent);
@@ -533,15 +651,16 @@ class ahb_env extends uvm_env;
     agt = ahb_agent::type_id::create("agt", this);
     comp = comparator::type_id::create("comp", this);
     pred = predictor::type_id::create("pred", this);
-
+    tx_seq = new();
     mem = new();
     if(!mem.randomize()) begin
       `uvm_fatal("environment", "not able to randomize mem")
     end
     pred.mem = mem;
     comp.mem = mem;
-    mem.print_all();
     uvm_config_db#(sim_mem)::set( null, "", "slave_mem", mem);
+    pred.tx_seq = tx_seq;
+    comp.tx_seq = tx_seq;
   endfunction
 
   //TODO
