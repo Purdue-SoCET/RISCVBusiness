@@ -1,3 +1,7 @@
+//By            : Zhengsen Fu
+//Description   : all the UVM components needed in tb_ahb.sv
+//Last Updated  : 8/21/20
+
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
@@ -8,7 +12,7 @@ class transaction extends uvm_sequence_item;
   localparam READ = 2'b01;
   localparam WRITE = 2'b10;
   
-  rand bit[1:0] trans;
+  rand bit[1:0] trans; //trasaction type. Possible values indicated above
   rand logic [31:0] wdata;
   rand logic [31:0] addr;
   rand logic [3:0] byte_en;
@@ -23,18 +27,20 @@ class transaction extends uvm_sequence_item;
   constraint address_limit {byte_en == 4'b1111 -> addr <= 4'hf - 3;
                             byte_en == 4'b0011 || byte_en == 4'b1100 -> addr <= 4'hf - 1;}
   constraint trans_constraint {trans == IDLE || trans == READ || trans == WRITE;}
-  constraint addr_size {addr <= 4'hf;}
+  constraint addr_size {addr <= 4'hf;} //testing with a simulated memory smaller than 16 registers
+  
   function new(string name = "transaction");
     super.new(name);
   endfunction: new
 endclass //transaction
 
 
-
+//a queue that record all the transactions.
+//search function still needs debugging
 class transactionSeq; //transaction sequence
   localparam MAX_SIZE = 4000;
   transaction arr[MAX_SIZE - 1:0];
-  integer time_arr[MAX_SIZE - 1:0];
+  integer time_arr[MAX_SIZE - 1:0]; //arr which recording the time that the transaction has happened
   int index; //points to most recent transactoin
   function new();
     index = -1;
@@ -50,7 +56,7 @@ class transactionSeq; //transaction sequence
     time_arr[index] = $time();
   endfunction
 
-  //search for the most recent transaction that used dest as f_rd
+  //search for the most recent transaction that write to an addr
   function transaction search(logic[31:0] addr);
     transaction item;
     for(int lcv = index; lcv > 0; lcv--) begin
@@ -76,6 +82,7 @@ class transactionSeq; //transaction sequence
     $fatal("transaction not found!\n");
   endfunction
 
+  //search for the index of the most recent transaction that write to an addr 
   function int search_index(logic[31:0] addr);
     transaction item;
     for(int lcv = index; lcv > 0; lcv--) begin
@@ -101,6 +108,7 @@ class transactionSeq; //transaction sequence
     $fatal("transaction not found!\n");
   endfunction
 
+  //search for the time of the most recent transaction that write to an addr 
   function int search_time(logic[31:0] addr);
     transaction item;
     for(int lcv = index; lcv > 0; lcv--) begin
@@ -129,8 +137,9 @@ endclass //transactionSeq
 
 
 
+//simulated memory that is used in the simulated slave
 class sim_mem extends uvm_object;
-  parameter SIZE = 4;
+  parameter SIZE = 4; //the number of bits in the addr
   rand bit [7:0] registers[2 ** SIZE  - 1:0];
   
   `uvm_object_utils_begin(sim_mem)
@@ -141,6 +150,7 @@ class sim_mem extends uvm_object;
     super.new(name);
   endfunction: new
 
+  //print the value in all registers for debugging purpose
   function void print_all();
     for (int lcv = 0; lcv < 2**SIZE; lcv++) begin
       $display("%h: %h",lcv, registers[lcv]);
@@ -148,15 +158,18 @@ class sim_mem extends uvm_object;
     
   endfunction
 
+  //write the least significant byte in HWDATA to addr
   function void write_byte(logic[SIZE - 1:0] addr, logic[31:0] HWDATA);
     registers[addr] = HWDATA[7:0];
   endfunction
 
+  //write two least significant bytes in HWDATA to addr
   function void write_half(logic[SIZE - 1:0] addr, logic[31:0] HWDATA);
     registers[addr++] = HWDATA[7:0];
     registers[addr] = HWDATA[15:8];
   endfunction
 
+  //write four least significant bytes in HWDATA to addr
   function void write_word(logic[SIZE - 1:0] addr, logic[31:0] HWDATA);
     registers[addr++] = HWDATA[7:0];
     registers[addr++] = HWDATA[15:8];
@@ -164,6 +177,7 @@ class sim_mem extends uvm_object;
     registers[addr] = HWDATA[31:24];
   endfunction
 
+  //read a byte stored in addr to the least significant byte to HRDATA
   function logic[31:0] read_byte(logic[SIZE - 1:0] addr);
     logic[31:0] result;
     result = '0;
@@ -171,6 +185,7 @@ class sim_mem extends uvm_object;
     return result;
   endfunction
 
+  //read two bytes stored in addr to the least significant byte to HRDATA
   function logic[31:0] read_half(logic[SIZE - 1:0] addr);
     logic[31:0] result;
     result = '0;
@@ -179,6 +194,7 @@ class sim_mem extends uvm_object;
     return result;
   endfunction
 
+  //read four bytes stored in addr to the least significant byte to HRDATA
   function logic[31:0] read_word(logic[SIZE - 1:0] addr);
     logic[31:0] result;
     result = '0;
@@ -192,23 +208,24 @@ endclass //sim_mem
 
 
 
+// simulated slave interface
 class sim_slave extends uvm_monitor;
   `uvm_component_utils(sim_slave)
   sim_mem slave_mem;
-  sim_mem input_mem;
-  logic rand_ready; //randomized waite between transactions
+  sim_mem input_mem; //simulated memory from ahb_env
+  logic rand_ready; //randomized wait between transactions
   virtual ahb_if ahbif;
-  transaction prev_tx;
-  logic [2:0] prev_HSIZE;
+  transaction prev_tx; //transaction in the previous clk cycle
+  logic [2:0] prev_HSIZE; //HSIZE in the previous clk cycle
 
   function new(string name, uvm_component parent = null);
     super.new(name, parent);
   endfunction: new
 
+  //randomly generate a slave busy of random length
   task random_wait();
     rand_ready = $urandom();
     while(rand_ready) begin
-      // #1;
       ahbif.HREADY = 0;
       @(posedge ahbif.HCLK);
       rand_ready = $urandom();
@@ -225,10 +242,11 @@ class sim_slave extends uvm_monitor;
       `uvm_fatal("sim_slave", "No virtual interface specified for this monitor instance")
     end
 
-    // get sim_mem
+    // get sim_mem from ahb_slave
     if (!uvm_config_db#(sim_mem)::get(this, "", "slave_mem", input_mem)) begin
       `uvm_fatal("sim_slave", "No input mem")
     end
+    //copy so that they will have the same initial value
     slave_mem.copy(input_mem);
   endfunction
 
@@ -241,23 +259,20 @@ class sim_slave extends uvm_monitor;
       @(posedge ahbif.HCLK);
       $info("SLAVE DEBUG prev trans: %h  addr: %h", prev_tx.trans, prev_tx.addr);
 
-      if(prev_tx.trans == '0) begin
+      //data phase: responses from the slave
+      if(prev_tx.trans == '0) begin //if previous transaction is IDLE, do nothing
         ;
-      end
-      else if(prev_tx.trans == prev_tx.WRITE) begin
+      end else if(prev_tx.trans == prev_tx.WRITE) begin //if previous transaction is WRITE, write HWDATA to mem
         random_wait();
-        #2;
+        #2; // wait two nano seconds before sample HWDATA
         $info("SLAVE DEBUG write addr: %h    value: %h",prev_tx.addr, ahbif.HWDATA);
         case(prev_HSIZE) 
           3'b000: slave_mem.write_byte(prev_tx.addr, ahbif.HWDATA); //byte
           3'b001: slave_mem.write_half(prev_tx.addr, ahbif.HWDATA); //half word
           3'b010: slave_mem.write_word(prev_tx.addr, ahbif.HWDATA); //word
         endcase
-
-      end
-      else begin
+      end else begin //if previous transaction is READ, put the data onto HRDATA
         random_wait();
-        // #1;
         case(prev_HSIZE) 
           3'b000: ahbif.HRDATA = slave_mem.read_byte(prev_tx.addr); //byte
           3'b001: ahbif.HRDATA = slave_mem.read_half(prev_tx.addr); //half word
@@ -267,6 +282,7 @@ class sim_slave extends uvm_monitor;
         slave_mem.print_all();
       end
 
+      //addr phase: samples transaction details
       #2;
       if (ahbif.HTRANS == '0) begin
         prev_tx.trans = prev_tx.IDLE;
@@ -288,15 +304,14 @@ endclass //sim_slave
 
 
 
+//simulated cpu which uses DUT (ahb master) to communicate with the simulated slave
 class sim_cpu extends uvm_driver#(transaction);
   `uvm_component_utils(sim_cpu)
 
   virtual generic_bus_if bus_if;
 
-  uvm_analysis_port #(transaction) cpu_ap; 
-  uvm_analysis_port #(transaction) response_ap;
-
-  logic n_rst;
+  uvm_analysis_port #(transaction) cpu_ap; //writes addr phase transaction to predictor
+  uvm_analysis_port #(transaction) response_ap; //writes data phase READ transaction to comparator
 
   function new(string name, uvm_component parent);
 		super.new(name, parent);
@@ -317,25 +332,28 @@ class sim_cpu extends uvm_driver#(transaction);
 
   task run_phase(uvm_phase phase);
     transaction req_item;
-    transaction prev;
-    transaction response;
-    bit immediate_busy = 0;
-    bit this_busy = 0;
+    transaction prev; //previous addr phase transaction
+    transaction response; //data phase response
+    bit busy_wait = 0; //whether there is or not a wait within addr phase of this transaction
     
     prev = transaction::type_id::create("prev");
     response = transaction::type_id::create("response");
 
     forever begin
       seq_item_port.get_next_item(req_item);
-      if(!immediate_busy)
+      
+      //if there was an wait in previous loop
+      //then remove an extra wait and clear busy_wait
+      if(!busy_wait)
         @(posedge bus_if.clk); 
       else
-        immediate_busy = 0;
+        busy_wait = 0;
+
+      //at the start of the simulation, do not sending void transaction
       if(prev.addr !== 'x) 
         cpu_ap.write(prev);
-      $info("DBUG CPU transaction");
-      req_item.print();
 
+      //addr phase
       if(req_item.trans == req_item.IDLE) begin
         bus_if.ren = 0;
         bus_if.wen = 0;
@@ -358,6 +376,7 @@ class sim_cpu extends uvm_driver#(transaction);
         bus_if.byte_en = req_item.byte_en;
       end
       
+      //data phase
       if(prev.trans == prev.WRITE) begin
         bus_if.wdata = prev.wdata;
       end
@@ -372,11 +391,10 @@ class sim_cpu extends uvm_driver#(transaction);
       end
 
 
-      // #1;
+      //if busy is asserted by the slave, wait until busy is cleared
       while (bus_if.busy) begin
-        $info("CPU DEBUG rear busy wait"); //DEBUG
         @(posedge bus_if.clk); 
-        immediate_busy = 1;
+        busy_wait = 1;
         if(prev.trans == req_item.READ) begin
           #1;
           if(!bus_if.busy) begin
@@ -390,12 +408,6 @@ class sim_cpu extends uvm_driver#(transaction);
       end
       prev.copy(req_item);
       seq_item_port.item_done();
-      // immediate another busy
-      // while (bus_if.busy) begin
-      //   $info("CPU DEBUG immediate busy wait"); //DEBUG
-      //   @(posedge bus_if.clk); 
-      //   immediate_busy = 1;
-      // end
     end
   endtask
 
@@ -663,14 +675,9 @@ class ahb_env extends uvm_env;
     comp.tx_seq = tx_seq;
   endfunction
 
-  //TODO
   function void connect_phase(uvm_phase phase);
-  agt.cpu.cpu_ap.connect(pred.analysis_export);
-  agt.cpu.response_ap.connect(comp.response_export);
-
-  //   agt.mon.counter_ap.connect(pred.analysis_export); // connect monitor to predictor
-  //   pred.pred_ap.connect(comp.expected_export); // connect predictor to comparator
-  //   agt.mon.result_ap.connect(comp.actual_export); // connect monitor to comparator
+    agt.cpu.cpu_ap.connect(pred.analysis_export);
+    agt.cpu.response_ap.connect(comp.response_export);
   endfunction
 
 endclass //ahb_env
