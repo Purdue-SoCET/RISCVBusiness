@@ -86,7 +86,7 @@ module ahb (
 	    ahb_m.HTRANS = 2'b0;
         ahb_m.HWRITE = 1'b0;
         ahb_m.HADDR = 0;
-        ahb_m.HWDATA = 0;
+        ahb_m.HWDATA = out_gen_bus_if.wdata;
         ahb_m.HBURST = 0;
         ahb_m.HPROT = 0;
         ahb_m.HMASTLOCK = 0;

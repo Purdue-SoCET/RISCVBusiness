@@ -1,3 +1,7 @@
+//By            : Zhengsen Fu
+//Description   : tb for ahb master but without burst mode
+//Last Updated  : 8/21/20
+
 `include "ahb.sv"
 `include "uvm_macros.svh"
 `include "tb_components.svh"
@@ -18,6 +22,7 @@ module tb_ahb ();
 
   ahb DUT(.CLK(clk), .nRST(n_rst), .ahb_m(ahbif.ahb_m), .out_gen_bus_if(bus_if.generic_bus));
 
+  // reset DUT
   initial begin
     n_rst = 0;
     @(posedge clk);
