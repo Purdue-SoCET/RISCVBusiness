@@ -46,7 +46,18 @@ module ahb (
       state <= n_state;
   end
 
-  assign n_state = (out_gen_bus_if.ren | out_gen_bus_if.wen) ? DATA : IDLE;
+  //assign n_state = (out_gen_bus_if.ren | out_gen_bus_if.wen) ? DATA : IDLE;
+  always_comb begin
+    if(state == IDLE) begin
+        n_state = (out_gen_bus_if.ren | out_gen_bus_if.wen) ? DATA : IDLE;
+    end else begin
+        if(ahb_m.HREADY) begin
+            n_state = (out_gen_bus_if.ren | out_gen_bus_if.wen) ? DATA : IDLE;
+        end else begin
+            n_state = DATA;
+        end
+    end
+  end
 
   always_comb begin
     if(out_gen_bus_if.byte_en == 4'b1111)

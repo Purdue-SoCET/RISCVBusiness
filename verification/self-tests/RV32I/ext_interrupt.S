@@ -25,6 +25,8 @@
 #include "riscv_test.h"
 #include "test_macros.h"
 
+#define claim_complete_reg 0x80040018
+
 RVTEST_RV32U
 RVTEST_CODE_BEGIN
 
@@ -95,9 +97,23 @@ reserved_external_interrupt_handler:
     mret
 
 machine_external_interrupt_handler:
-    jal x1, push_registers
+    //jal x1, push_registers
+    addi x16, x0, 16
+    addi x17, x0, 17
+    addi x18, x0, 18
+    addi x19, x0, 19
+    addi x20, x0, 20
+
+    //la x2, claim_complete_reg // read the claim complete register to know the type of interrupt that occurred
+    lui x2, 0x80040 // load in the claim complete register address
+    addi x2, x2, 0x018 
+    lw x3, 0(x2)
+    beq x0, x3, invalid_id_read
     li TESTNUM, 1
-    jal x1, pop_registers
+    sw x3, 0(x2)
+
+invalid_id_read:
+    //jal x1, pop_registers
     mret
 
 push_registers:

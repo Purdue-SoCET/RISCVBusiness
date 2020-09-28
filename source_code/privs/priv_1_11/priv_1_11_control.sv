@@ -146,11 +146,11 @@ module priv_1_11_control (
                      (prv_intern_if.mie.msie & prv_intern_if.mip.msip) | (prv_intern_if.mie.meie & prv_intern_if.mip.meip)));
  
   // Register Updates on Interrupt/Exception
-  assign prv_intern_if.mcause_rup = exception | interrupt_fired;
+  assign prv_intern_if.mcause_rup = exception | interrupt; // TODO: Change to interrupt
   assign prv_intern_if.mcause_next.interrupt = ~exception;
   assign prv_intern_if.mcause_next.cause = exception ? ex_src : intr_src;
 
-  assign prv_intern_if.mstatus_rup = exception | interrupt_fired | prv_intern_if.mret;
+  assign prv_intern_if.mstatus_rup = exception | prv_intern_if.intr | prv_intern_if.mret; // TODO: Change to prv_intern_if.intr
 
   always_comb begin
     prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mie;
@@ -168,7 +168,7 @@ module priv_1_11_control (
 
 
   // Update EPC as soon as interrupt or exception is found 
-  assign prv_intern_if.mepc_rup = exception | interrupt_fired;
+  assign prv_intern_if.mepc_rup = exception | interrupt; // TODO: Change to interrupt
   assign prv_intern_if.mepc_next = prv_intern_if.epc;
 
   assign prv_intern_if.mtval_rup = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s | 
