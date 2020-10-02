@@ -4,8 +4,10 @@
 
 `include "ahb.sv"
 `include "uvm_macros.svh"
-`include "tb_components.svh"
+// `include "tb_components.svh"
 import uvm_pkg::*;
+`include "bus_tx.svh"
+`include "ahb_test.svh"
 
 module tb_ahb ();
   logic clk;
