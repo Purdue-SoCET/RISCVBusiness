@@ -14,6 +14,7 @@ module pp_mul32
 	logic [31:0] multiplicand_reg;
 	logic [31:0] multiplier_reg;
 	logic [63:0] result;
+	logic [63:0] result2;
 	logic [63:0] temp_product;
 	logic [63:0] temp_product2;
 	logic [31:0] multiplicand_mod;
@@ -25,7 +26,9 @@ module pp_mul32
 	logic [63:0] pp [15:0];
 	logic [32:0] modified_in;
 	logic [63:0] sum0, sum1, sum2, sum3, sum4, sum5, sum6, sum7, sum8, sum9, sum10, sum11, sum12, sum13; 	
-	logic [63:0] cout0, cout1, cout2, cout3, cout4, cout5, cout6, cout7, cout8, cout9, cout10, cout11, cout12, cout13; 
+	logic [63:0] cout0, cout1, cout2, cout3, cout4, cout5, cout6, cout7, cout8, cout9, cout10, cout11, cout12, cout13;
+	logic [1:0] count;
+	logic mult_complete; 
 	//logic [63:0] sum13_pip, cout13_pip;
 	logic [63:0] sum5_pip, cout5_pip, sum6_pip, cout6_pip, sum7_pip, cout7_pip;
 	logic [1:0] is_signed_reg;
@@ -139,7 +142,7 @@ module pp_mul32
 	carry_save_adder #(64) CSA5 (.x(cout0), .y(sum0), .z(cout1), .cout(cout5), .sum(sum5));
 	carry_save_adder #(64) CSA6 (.x(sum1), .y(cout2), .z(sum2), .cout(cout6), .sum(sum6));
 	carry_save_adder #(64) CSA7 (.x(cout3), .y(sum3), .z(cout4), .cout(cout7), .sum(sum7)); // remaining sum4
-	// Pipeline register after wallace tree	
+	// Pipeline register in wallace tree between layer 2 and layer 3	
 	always_ff @ (posedge CLK, negedge nRST) begin
 		if (nRST == 0) begin
 			cout5_pip <= '0;
@@ -170,21 +173,24 @@ module pp_mul32
 	// Layer 6
 	carry_save_adder #(64) CSA13 (.x(cout12), .y(sum12), .z(sum11), .cout(cout13), .sum(sum13));
 
-	// STAGE 3: CARRY LOOK AHEAD ADDER	
+	// STAGE 3: CARRY LOOK AHEAD ADDER
+	flex_counter #(2) FC (.clk(CLK), .n_rst(nRST), .clear(start), .count_enable(count_ena), .rollover_val(2'd2), .count_out(count), .rollover_flag(finished)); 	
 	assign temp_product = cout13 + sum13;
 	assign temp_product2 = is_signed_reg[0] == 0 && multiplier_reg[31] ? temp_product + ({{33{multiplicand_mod[31]}},multiplicand_mod} << 32) : temp_product; // plus extra 1M
 	assign result = adjust_product ? (~temp_product2)+1: temp_product2;
+	assign mult_complete = count == 2'd1;
+	assign result2 = mult_complete? result: '0;
 
 	always_ff @ (posedge CLK, negedge nRST) begin
 		if (nRST == 0) begin
 			product <= '0;
 		end
-		else if (done) begin
-			product <= result;
+		else begin
+			product <= result2;
 		end
 	end
 
-	//Small FSM
+	//Small FSM to control flex counter
 	typedef enum logic {IDLE, START} state_type;
 	state_type state, next_state;
 	always_ff @ (posedge CLK, negedge nRST) begin
@@ -199,10 +205,10 @@ module pp_mul32
 		case (state)
 			IDLE: begin
 				if (start) 
-					next_state = START; //consume one cycle 
+					next_state = START; 
 			end
 			START: begin
-				if (done)
+				if (finished)
 					next_state = IDLE;
 			end
 		endcase
@@ -218,16 +224,6 @@ module pp_mul32
 				count_ena = 1;
 			end
 		endcase
-	end
-
-
-	flex_counter #(2) FC (.clk(CLK), .n_rst(nRST), .clear(start), .count_enable(count_ena), .rollover_val(2'd2), .rollover_flag(done)); //consume two more cycles
-
-	always_ff @ (posedge CLK, negedge nRST) begin
-		if (nRST == 0) 
-			finished <= 0;
-		else 
-			finished <= done; //to synchronize with final product
 	end
 	
 endmodule
