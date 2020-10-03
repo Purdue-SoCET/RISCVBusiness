@@ -10,7 +10,7 @@ module pp_mul32
 	output logic finished,
 	output logic [63:0] product
 );
-	parameter CYCLE = 4;
+	//logic start_reg;
 	logic [31:0] multiplicand_reg;
 	logic [31:0] multiplier_reg;
 	logic [63:0] result;
@@ -26,7 +26,9 @@ module pp_mul32
 	logic [32:0] modified_in;
 	logic [63:0] sum0, sum1, sum2, sum3, sum4, sum5, sum6, sum7, sum8, sum9, sum10, sum11, sum12, sum13; 	
 	logic [63:0] cout0, cout1, cout2, cout3, cout4, cout5, cout6, cout7, cout8, cout9, cout10, cout11, cout12, cout13; 
-	logic [63:0] sum13_pip, cout13_pip;
+	//logic [63:0] sum13_pip, cout13_pip;
+	logic [63:0] sum5_pip, cout5_pip, sum6_pip, cout6_pip, sum7_pip, cout7_pip;
+	logic [1:0] is_signed_reg;
 	logic done;
 	logic count_ena;	
 	integer i, j;
@@ -35,17 +37,19 @@ module pp_mul32
 		if (nRST == 0) begin
 			multiplicand_reg <= '0;
 			multiplier_reg <= '0;
+			is_signed_reg <= '0;
 		end
 		else if (start) begin
 			multiplicand_reg <= multiplicand;
 			multiplier_reg <= multiplier;
+			is_signed_reg <= is_signed;
 		end
 	end
 	// Modify multiplicand and multiplier if they are signed
-	assign multiplicand_mod = is_signed[1] && multiplicand_reg[31] ? (~(multiplicand_reg)+1) : multiplicand_reg;
-	assign multiplier_mod = is_signed[0] && multiplier_reg[31] ? (~(multiplier_reg)+1) : multiplier_reg;
+	assign multiplicand_mod = is_signed_reg[1] && multiplicand_reg[31] ? (~(multiplicand_reg)+1) : multiplicand_reg;
+	assign multiplier_mod = is_signed_reg[0] && multiplier_reg[31] ? (~(multiplier_reg)+1) : multiplier_reg;
 	// Control signal to modify final product
- 	assign adjust_product   = (is_signed[0] & multiplier_reg[31]) ^ (is_signed[1] & multiplicand_reg[31]);
+ 	assign adjust_product   = (is_signed_reg[0] & multiplier_reg[31]) ^ (is_signed_reg[1] & multiplicand_reg[31]);
 	// For bit pair recoding part
 	assign mul_plus2 = multiplicand_mod + multiplicand_mod;
 	assign mul_minus2 = ~mul_plus2 + 1;
@@ -79,9 +83,9 @@ module pp_mul32
 	// Shift partial product
 	always_comb begin
 		for (j = 0; j < 16; j = j + 1) 
-		begin
-			partial_product[j] = pp[j] << (2*j); // Shift with multiple of 2 (Radix 4)
-		end
+			begin
+				partial_product[j] = pp[j] << (2*j); // Shift with multiple of 2 (Radix 4)
+			end
 	end
 
 	// Pipeline register before wallace tree
@@ -135,6 +139,26 @@ module pp_mul32
 	carry_save_adder #(64) CSA5 (.x(cout0), .y(sum0), .z(cout1), .cout(cout5), .sum(sum5));
 	carry_save_adder #(64) CSA6 (.x(sum1), .y(cout2), .z(sum2), .cout(cout6), .sum(sum6));
 	carry_save_adder #(64) CSA7 (.x(cout3), .y(sum3), .z(cout4), .cout(cout7), .sum(sum7)); // remaining sum4
+	// Pipeline register after wallace tree	
+	always_ff @ (posedge CLK, negedge nRST) begin
+		if (nRST == 0) begin
+			cout5_pip <= '0;
+			sum5_pip <= '0;
+			cout6_pip <= '0;
+			sum6_pip <= '0;
+			cout7_pip <= '0;
+			sum7_pip <= '0;
+		end
+		else begin
+			cout5_pip <= cout5;
+			sum5_pip <= sum5;
+			cout6_pip <= cout6;
+			sum6_pip <= sum6;
+			cout7_pip <= cout7;
+			sum7_pip <= sum7;
+		end
+	end
+
 	// Layer 3
 	carry_save_adder #(64) CSA8 (.x(cout5), .y(sum5), .z(cout6), .cout(cout8), .sum(sum8));
 	carry_save_adder #(64) CSA9 (.x(sum6), .y(cout7), .z(sum7), .cout(cout9), .sum(sum9));
@@ -144,23 +168,11 @@ module pp_mul32
 	// Layer 5
 	carry_save_adder #(64) CSA12 (.x(cout10), .y(sum10), .z(cout11), .cout(cout12), .sum(sum12));	// remaining sum11
 	// Layer 6
-	carry_save_adder #(64) CSA13 (.x(cout12), .y(sum12), .z(sum11), .cout(cout13), .sum(sum13));	
-
-	// Pipeline register after wallace tree	
-	always_ff @ (posedge CLK, negedge nRST) begin
-		if (nRST == 0) begin
-			cout13_pip <= '0;
-			sum13_pip <= '0;
-		end
-		else begin
-			cout13_pip <= cout13;
-			sum13_pip <= sum13;
-		end
-	end
+	carry_save_adder #(64) CSA13 (.x(cout12), .y(sum12), .z(sum11), .cout(cout13), .sum(sum13));
 
 	// STAGE 3: CARRY LOOK AHEAD ADDER	
-	assign temp_product = cout13_pip + sum13_pip;
-	assign temp_product2 = is_signed[0] == 0 && multiplier_reg[31] ? temp_product + ({{33{multiplicand_mod[31]}},multiplicand_mod} << 32) : temp_product; // plus extra 1M
+	assign temp_product = cout13 + sum13;
+	assign temp_product2 = is_signed_reg[0] == 0 && multiplier_reg[31] ? temp_product + ({{33{multiplicand_mod[31]}},multiplicand_mod} << 32) : temp_product; // plus extra 1M
 	assign result = adjust_product ? (~temp_product2)+1: temp_product2;
 
 	always_ff @ (posedge CLK, negedge nRST) begin
