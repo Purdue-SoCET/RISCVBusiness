@@ -98,16 +98,13 @@ module tb_pp_mul32 ();
 			tb_multiplicand = tb_test_case[tb_test_case_num].test_multiplicand;
 			tb_multiplier = tb_test_case[tb_test_case_num].test_multiplier;
 			tb_is_signed = tb_test_case[tb_test_case_num].test_is_signed;
-			//reset_dut();
 			@(negedge tb_CLK);	
-			tb_start = 1;
-			@(negedge tb_CLK);
+			tb_start = 1; 
+			@(negedge tb_CLK); // First Clock Cycle
 			tb_start = 0;
 			tb_expected_out = tb_multiplicand * tb_multiplier;
-			@(posedge tb_CLK);
-			@(posedge tb_CLK);
-			@(posedge tb_CLK);
-			@(posedge tb_CLK);
+			@(posedge tb_CLK); // Second Clock Cycle
+			@(posedge tb_CLK); // Third Clock Cycle
 			#(CLOCK_PERIOD/4.0);	
 			assert (tb_product == tb_expected_out)
 				$info ("CORRECT MULTIPLICATION");
