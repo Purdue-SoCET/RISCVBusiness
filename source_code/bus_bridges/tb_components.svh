@@ -257,7 +257,7 @@ class sim_slave extends uvm_monitor;
     //TODO:missing HRESP
     forever begin
       @(posedge ahbif.HCLK);
-      $info("SLAVE DEBUG prev trans: %h  addr: %h", prev_tx.trans, prev_tx.addr);
+      // $info("SLAVE DEBUG prev trans: %h  addr: %h", prev_tx.trans, prev_tx.addr);
 
       //data phase: responses from the slave
       if(prev_tx.trans == '0) begin //if previous transaction is IDLE, do nothing
@@ -265,7 +265,7 @@ class sim_slave extends uvm_monitor;
       end else if(prev_tx.trans == prev_tx.WRITE) begin //if previous transaction is WRITE, write HWDATA to mem
         random_wait();
         #2; // wait two nano seconds before sample HWDATA
-        $info("SLAVE DEBUG write addr: %h    value: %h",prev_tx.addr, ahbif.HWDATA);
+        // $info("SLAVE DEBUG write addr: %h    value: %h",prev_tx.addr, ahbif.HWDATA);
         case(prev_HSIZE) 
           3'b000: slave_mem.write_byte(prev_tx.addr, ahbif.HWDATA); //byte
           3'b001: slave_mem.write_half(prev_tx.addr, ahbif.HWDATA); //half word
@@ -278,8 +278,8 @@ class sim_slave extends uvm_monitor;
           3'b001: ahbif.HRDATA = slave_mem.read_half(prev_tx.addr); //half word
           3'b010: ahbif.HRDATA = slave_mem.read_word(prev_tx.addr); //word
         endcase
-        $info("SLAVE DEBUG read addr: %h    value: %h   size: %h",prev_tx.addr, ahbif.HRDATA, prev_HSIZE);
-        slave_mem.print_all();
+        // $info("SLAVE DEBUG read addr: %h    value: %h   size: %h",prev_tx.addr, ahbif.HRDATA, prev_HSIZE);
+        // slave_mem.print_all();
       end
 
       //addr phase: samples transaction details
@@ -390,15 +390,18 @@ class sim_cpu extends uvm_driver#(transaction);
         end
       end
 
-
+      seq_item_port.item_done();
       //if busy is asserted by the slave, wait until busy is cleared
       while (bus_if.busy) begin
+        if(req_item.trans == req_item.IDLE) begin
+          break;
+        end
         @(posedge bus_if.clk); 
         busy_wait = 1;
         if(prev.trans == req_item.READ) begin
           #1;
           if(!bus_if.busy) begin
-            $info("CPU DEBUG rear busy reading point"); //DEBUG
+            // $info("CPU DEBUG rear busy reading point"); //DEBUG
             response.copy(prev);
             response.wdata = bus_if.rdata;
             response_ap.write(response);
@@ -407,7 +410,6 @@ class sim_cpu extends uvm_driver#(transaction);
         end
       end
       prev.copy(req_item);
-      seq_item_port.item_done();
     end
   endtask
 
@@ -417,6 +419,9 @@ endclass //sim_cpu
 
 class ahb_seq extends uvm_sequence #(transaction);
   `uvm_object_utils(ahb_seq)
+
+  int number;
+
   function new(string name = "");
     super.new(name);
   endfunction: new
@@ -489,14 +494,20 @@ class ahb_seq extends uvm_sequence #(transaction);
       req_item.trans = req_item.IDLE;
     finish_item(req_item);
 
+
+    number = 0;
     repeat(3000) begin
       start_item(req_item);
       if(!req_item.randomize()) begin
         // if the transaction is unable to be randomized, send a fatal message
         `uvm_fatal("ahb_seq", "not able to randomize")
       end
+      number++;
+      $info("DEBUG: item sent! %d", number);
+
       finish_item(req_item);
     end
+    $info("DEBUG: reached end");
   endtask: body
 endclass //ahb_seq
 
@@ -567,12 +578,12 @@ class predictor extends uvm_subscriber #(transaction);
         3'b010: mem.write_word(t.addr, t.wdata); //word
       endcase
 
-      $info("PREDICTOR DEBUG write addr: %h    value: %h  size: %h",t.addr, t.wdata, HSIZE);
+      // $info("PREDICTOR DEBUG write addr: %h    value: %h  size: %h",t.addr, t.wdata, HSIZE);
       
-      $display("predictor");
-      $display("predictor mem");
-      mem.print_all();
-      $display("");
+      // $display("predictor");
+      // $display("predictor mem");
+      // mem.print_all();
+      // $display("");
     end
   endfunction
 endclass //predictor
