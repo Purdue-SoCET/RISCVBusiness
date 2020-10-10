@@ -28,6 +28,7 @@
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
 `include "component_selection_defines.vh"
+`include "sparce_pipeline_if.vh"
 
 module pipeline_wrapper (
   input logic CLK, nRST,
@@ -37,7 +38,8 @@ module pipeline_wrapper (
   prv_pipeline_if prv_pipe_if,
   predictor_pipeline_if predict_if,
   risc_mgmt_if rm_if,
-  cache_control_if cc_if
+  cache_control_if cc_if,
+  sparce_pipeline_if sparce_if
 );
  
    tspp tspp_pipeline(.*);

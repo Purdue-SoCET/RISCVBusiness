@@ -29,6 +29,7 @@
 `include "prv_pipeline_if.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
+`include "sparce_pipeline_if.vh"
 
 module tspp (
   input logic CLK, nRST,
@@ -38,7 +39,8 @@ module tspp (
   prv_pipeline_if prv_pipe_if,
   predictor_pipeline_if predict_if,
   risc_mgmt_if rm_if,
-  cache_control_if cc_if
+  cache_control_if cc_if,
+  sparce_pipeline_if sparce_if
 );
   //interface instantiations
   tspp_fetch_execute_if      fetch_ex_if();

@@ -55,7 +55,7 @@ module tb_RISCVBusiness ();
   RISCVBusiness DUT (
     .CLK(CLK),
     .nRST(nRST),
-    .halt(halt),
+    //.halt(halt),
     .gen_bus_if(rvb_gen_bus_if)
   );
 

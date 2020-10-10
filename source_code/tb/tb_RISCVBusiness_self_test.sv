@@ -56,7 +56,6 @@ module tb_RISCVBusiness_self_test ();
   RISCVBusiness DUT (
     .CLK(CLK),
     .nRST(nRST),
-    .halt(halt),
     .gen_bus_if(rvb_gen_bus_if)
   );
 
@@ -159,9 +158,9 @@ module tb_RISCVBusiness_self_test ();
     // Check Register 28 to see if test passed or failed
     if (clk_count == `RVBSELF_CLK_TIMEOUT)
       $display("ERROR: Test timed out");
-    else if(DUT.pipeline.tspp_pipeline.execute_stage_i.rf.registers[28] != 32'h1)
+    else if(DUT.execute_stage_i.rf.registers[28] != 32'h1)
       $display("ERROR: Test %0d did not pass",
-                (DUT.pipeline.tspp_pipeline.execute_stage_i.rf.registers[28] - 1)/2);
+                (DUT.execute_stage_i.rf.registers[28] - 1)/2);
     else 
       $display("SUCCESS");
     $finish;

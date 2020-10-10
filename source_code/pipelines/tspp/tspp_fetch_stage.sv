@@ -27,13 +27,15 @@
 `include "predictor_pipeline_if.vh"
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
+`include "cache_control_if.vh"
 
 module tspp_fetch_stage (
   input logic CLK, nRST,
   tspp_fetch_execute_if.fetch fetch_ex_if,
   tspp_hazard_unit_if.fetch hazard_if,
   predictor_pipeline_if.access predict_if,
-  generic_bus_if.cpu igen_bus_if
+  generic_bus_if.cpu igen_bus_if,
+  sparce_pipeline_if.pipe_fetch sparce_if
 );
   import rv32i_types_pkg::*;
 
@@ -54,8 +56,8 @@ module tspp_fetch_stage (
 
   assign pc4 = pc + 4;
   assign predict_if.current_pc = pc;
-  assign npc = hazard_if.insert_priv_pc ? hazard_if.priv_pc : (hazard_if.npc_sel ? fetch_ex_if.brj_addr : 
-                (predict_if.predict_taken ? predict_if.target_addr : pc4));
+  assign npc = hazard_if.insert_priv_pc ? hazard_if.priv_pc : ( sparce_if.skipping ? sparce_if.sparce_target : (hazard_if.npc_sel ? fetch_ex_if.brj_addr : 
+                (predict_if.predict_taken ? predict_if.target_addr : pc4)));
 
   //Instruction Access logic
   assign hazard_if.i_mem_busy  = igen_bus_if.busy;
@@ -96,6 +98,12 @@ module tspp_fetch_stage (
       endian_swapper ltb_endian(igen_bus_if.rdata, instr);
   endgenerate
 
+  /*********************************************************
+  *** SparCE Module Logic
+  *********************************************************/
+
+  assign sparce_if.pc = pc;
+  assign sparce_if.rdata = igen_bus_if.rdata;
 endmodule
 
 

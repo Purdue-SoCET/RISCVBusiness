@@ -8,7 +8,9 @@
 `define AHB_IF_VH
 
 interface ahb_if;
-   logic [1:0] HTRANS, HRESP;
+   logic [1:0] HTRANS;
+   logic  [1:0] HRESP;
+   //logic [1:0] HRESP;			JOHN CHANGED THIS
    logic [2:0] HSIZE;
    logic [31:0] HADDR;
    logic [31:0] HWDATA;

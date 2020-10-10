@@ -188,7 +188,7 @@ module control_unit
   // TODO: FIX ME WHEN IMPLEMENTING INTERRUPTS
   assign cu_if.halt = (cu_if.instr == 32'h0000006f);
   // Privilege Control Signals
-  assign cu_if.fault_insn = 'b0;
+  assign cu_if.fault_insn = '0;
  
   always_comb begin
     case(cu_if.opcode)
