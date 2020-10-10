@@ -45,15 +45,11 @@ module tb_RISCVBusiness_self_test ();
   logic [7:0] checksum;
   integer fptr, stats_ptr;
   integer clk_count;
-  logic plic_ext_int; //plic_clear_ext_int_m;
 
   //Interface Instantiations
   generic_bus_if gen_bus_if();
   generic_bus_if rvb_gen_bus_if();
   generic_bus_if tb_gen_bus_if();
-  ahb_if ahb_bus_if();
-  
-  // additional instantiation for the priv unit to control the external interrupt signal
 
   //Module Instantiations
 
@@ -61,9 +57,7 @@ module tb_RISCVBusiness_self_test ();
     .CLK(CLK),
     .nRST(nRST),
     .halt(halt),
-    .ahb_master(ahb_bus_if),
-    .plic_ext_int(plic_ext_int)
-    //plic_clear_ext_int_m(//plic_clear_ext_int_m)
+    .gen_bus_if(rvb_gen_bus_if)
   );
 
   ram_wrapper ram (
@@ -109,11 +103,11 @@ module tb_RISCVBusiness_self_test ();
   always_comb begin
     if(ram_control) begin
       /* No actual bus, so directly connect ram to generic bus interface */
-      gen_bus_if.addr    =   ahb_bus_if.HADDR;
-      gen_bus_if.ren     =   ~ahb_bus_if.HWRITE;
-      gen_bus_if.wen     =   ahb_bus_if.HWRITE;
-      gen_bus_if.wdata   =   ahb_bus_if.HWDATA;
-      gen_bus_if.byte_en =   1'b1; //ahb_bus_if.byte_en;
+      gen_bus_if.addr    =   rvb_gen_bus_if.addr;
+      gen_bus_if.ren     =   rvb_gen_bus_if.ren;
+      gen_bus_if.wen     =   rvb_gen_bus_if.wen;
+      gen_bus_if.wdata   =   rvb_gen_bus_if.wdata;
+      gen_bus_if.byte_en =   rvb_gen_bus_if.byte_en;
     end else begin
       gen_bus_if.addr    =   tb_gen_bus_if.addr;
       gen_bus_if.ren     =   tb_gen_bus_if.ren;
@@ -124,11 +118,10 @@ module tb_RISCVBusiness_self_test ();
   end
 
   /* No actual bus, so directly connect ram to generic bus interface */
-  assign ahb_bus_if.HRDATA  = gen_bus_if.rdata;
-  //assign ahb_bus_if.busy   = gen_bus_if.busy;
+  assign rvb_gen_bus_if.rdata  = gen_bus_if.rdata;
+  assign rvb_gen_bus_if.busy   = gen_bus_if.busy;
   assign tb_gen_bus_if.rdata   = gen_bus_if.rdata;
   assign tb_gen_bus_if.busy    = gen_bus_if.busy;
-
 
   //Clock generation
   initial begin : INIT
@@ -149,35 +142,6 @@ module tb_RISCVBusiness_self_test ();
     @(posedge CLK);
 
     nRST = 1;
-     plic_ext_int = 1'b0;
-     ////plic_clear_ext_int_m = 1'b0;
-     
-     #(PERIOD * 200);
-     plic_ext_int = 1'b1; // first external interrupt
-
-     #(PERIOD * 2);
-     //plic_clear_ext_int_m = 1'b1; // claim response (clear pending interrupt)
-
-     #(PERIOD * 5);
-     plic_ext_int = 1'b0;
-
-     #(PERIOD * 10);
-     //plic_clear_ext_int_m = 1'b0;
-
-     #(PERIOD * 50);
-     plic_ext_int = 1'b1; // second external interrupt
-
-     #(PERIOD * 200);
-     //plic_clear_ext_int_m = 1'b1; // claim response
-
-     #(PERIOD * 5);
-     plic_ext_int = 1'b0;
-
-     #(PERIOD * 10);
-     //plic_clear_ext_int_m = 1'b0;
-
-     #(PERIOD * 10);
-    
     
     while (halt == 0 && clk_count != `RVBSELF_CLK_TIMEOUT) begin
       @(posedge CLK);
@@ -185,7 +149,6 @@ module tb_RISCVBusiness_self_test ();
       if(gen_bus_if.addr == 16'h0000 & !gen_bus_if.busy & gen_bus_if.wen) begin
         $write("%c", gen_bus_if.wdata[31:24]);
       end
-      // TODO: Check clock count
     end
 
     #(1);
