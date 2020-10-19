@@ -73,11 +73,14 @@ module pp_mul32
 				3'b011:
 					pp[i/2] = {{31'd0},mul_plus2}; // +2M
 				3'b100:
-					pp[i/2] = {{31{1'b1}},mul_minus2}; // -2M
+					if (mul_minus2 == 0) pp[i/2] = '0;
+					else pp[i/2] = {{31{1'b1}},mul_minus2}; // -2M
 				3'b101:
-					pp[i/2] = {{31{1'b1}},mul_minus1}; // -1M
+					if (mul_minus1 == 0) pp[i/2] = '0;
+					else pp[i/2] = {{31{1'b1}},mul_minus1}; // -1M
 				3'b110:
-					pp[i/2] = {{31{1'b1}},mul_minus1}; // -1M
+					if (mul_minus1 == 0) pp[i/2] = '0;
+					else pp[i/2] = {{31{1'b1}},mul_minus1}; // -1M
 				3'b111:
 					pp[i/2] = '0;
 			endcase
