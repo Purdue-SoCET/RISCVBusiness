@@ -87,7 +87,7 @@ module priv_1_11_csr_rfile (
 
   // No FPU or Extensions
   assign mstatus.xs     = XS_ALL_OFF;
-  assign mstatus.fs     = FS_OFF;
+  assign mstatus.fs     = FS_OFF; // Even though FPU will be integrated for AFTzx06, there is no functionality for Supervisor Mode
   assign mstatus.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
   assign mstatus.reserved_3 = '0;
 

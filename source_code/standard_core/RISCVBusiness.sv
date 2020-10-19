@@ -35,6 +35,10 @@
 module RISCVBusiness (
   input logic CLK, nRST,
   input logic plic_ext_int,
+  input logic clint_soft_int,
+  input logic clint_clear_soft_int,
+  input logic clint_timer_int,
+  input logic clint_clear_timer_int,
   `ifdef BUS_INTERFACE_GENERIC_BUS
   generic_bus_if.cpu gen_bus_if
   `elsif BUS_INTERFACE_AHB
@@ -118,7 +122,11 @@ module RISCVBusiness (
     .CLK(CLK),
     .nRST(nRST),
     .prv_pipe_if(prv_pipe_if),
-    .plic_ext_int(plic_ext_int)
+    .plic_ext_int(plic_ext_int),
+    .clint_soft_int(clint_soft_int),
+    .clint_clear_soft_int(clint_clear_soft_int),
+    .clint_timer_int(clint_timer_int),
+    .clint_clear_timer_int(clint_clear_timer_int)
   );
 
   risc_mgmt_wrapper rmgmt (

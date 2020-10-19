@@ -28,7 +28,11 @@
 module priv_1_11_block (
   input logic CLK, nRST,
   prv_pipeline_if.priv_block prv_pipe_if, 
-  input logic plic_ext_int
+  input logic plic_ext_int,
+  input logic clint_soft_int,
+  input logic clint_clear_soft_int,
+  input logic clint_timer_int,
+  input logic clint_clear_timer_int
 );
   import machine_mode_types_1_11_pkg::*;
 
@@ -42,10 +46,10 @@ module priv_1_11_block (
   // Disable interrupts that will not be used
   assign prv_intern_if.timer_int_u = 1'b0;
   assign prv_intern_if.timer_int_s = 1'b0;
-  assign prv_intern_if.timer_int_m = 1'b0;
+  assign prv_intern_if.timer_int_m = clint_timer_int;
   assign prv_intern_if.soft_int_u = 1'b0;
   assign prv_intern_if.soft_int_s = 1'b0;
-  assign prv_intern_if.soft_int_m = 1'b0; // software interrupts are not currently enabled
+  assign prv_intern_if.soft_int_m = clint_soft_int; // software interrupts are not currently enabled
   assign prv_intern_if.ext_int_u = 1'b0;
   assign prv_intern_if.ext_int_s = 1'b0;
   assign prv_intern_if.ext_int_m = plic_ext_int;
@@ -56,10 +60,10 @@ module priv_1_11_block (
   // Disable clear interrupts that will not be used
   assign prv_intern_if.clear_timer_int_u = 1'b0;
   assign prv_intern_if.clear_timer_int_s = 1'b0;
-  assign prv_intern_if.clear_timer_int_m = 1'b0;
+  assign prv_intern_if.clear_timer_int_m = clint_clear_timer_int;
   assign prv_intern_if.clear_soft_int_u = 1'b0;
   assign prv_intern_if.clear_soft_int_s = 1'b0;
-  assign prv_intern_if.clear_soft_int_m = 1'b0;
+  assign prv_intern_if.clear_soft_int_m = clint_clear_soft_int;
   assign prv_intern_if.clear_ext_int_u = 1'b0;
   assign prv_intern_if.clear_ext_int_s = 1'b0;
   assign prv_intern_if.clear_ext_int_m = 1'b0;

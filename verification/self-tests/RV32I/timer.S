@@ -31,6 +31,8 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
 
+.equ mtime, 0x80050004
+.equ mtimecmp, 0x8005000C
 
 main:
   # Define trap vector address
@@ -42,10 +44,10 @@ main:
   addi x3, x0, 0x1
   slli x3, x3, 3
   csrw mstatus, x3
-  la x1, mtime
+  li x1, mtime
   lw x2, 0(x1)
   addi x2, x2, 50 
-  la x1, mtimecmp
+  li x1, mtimecmp
   sw x2, 0(x1)
   ori x3, x0, 0x80
   csrw mie, x3
