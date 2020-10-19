@@ -201,6 +201,7 @@ module pp_mul32
 	end
 
 	always_comb begin
+        /*
 		next_state = state;
 		case (state)
 			IDLE: begin
@@ -212,6 +213,15 @@ module pp_mul32
 					next_state = IDLE;
 			end
 		endcase
+        */
+        next_state = state;
+        if(state == IDLE && start) begin
+            next_state = START;
+        end else if(state == START && finished) begin
+            next_state = IDLE;
+        end else begin
+            next_state = state;
+        end
 	end
 
 	always_comb begin
@@ -221,7 +231,7 @@ module pp_mul32
 				count_ena = 0;
 			end
 			START: begin
-				count_ena = 1;
+				count_ena = ~finished;
 			end
 		endcase
 	end
