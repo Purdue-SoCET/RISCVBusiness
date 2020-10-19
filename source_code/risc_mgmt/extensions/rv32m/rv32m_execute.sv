@@ -91,7 +91,7 @@ module rv32m_execute (
   assign mul_start      = operand_diff && operation[2];
 
   // Module instantiations
-  shift_add_multiplier #(.N(WORD_SIZE)) mult_i (
+  pp_mul32 mult_i (
     .CLK(CLK),
     .nRST(nRST),
     .multiplicand(multiplicand),
@@ -116,7 +116,7 @@ module rv32m_execute (
   assign div_zero   = (divisor == 32'h0);  
   assign div_start  = operand_diff && ~operation[2] & ~overflow & ~div_zero;
 
-  shift_test_restore_divider #(.N(WORD_SIZE)) div_i (
+  shift_test_restore_divider div_i(
     .CLK(CLK),
     .nRST(nRST),
     .divisor(divisor),
