@@ -30,15 +30,11 @@
 `include "sparce_pipeline_if.vh"
 `include "tspp_fetch_execute_if.vh"
 `include "tspp_hazard_unit_if.vh"
-
+`include "core_interrupt_if.vh"
 
 module RISCVBusiness (
   input logic CLK, nRST,
-  input logic plic_ext_int,
-  input logic clint_soft_int,
-  input logic clint_clear_soft_int,
-  input logic clint_timer_int,
-  input logic clint_clear_timer_int,
+  core_interrupt_if.core interrupt_if,
   `ifdef BUS_INTERFACE_GENERIC_BUS
   generic_bus_if.cpu gen_bus_if
   `elsif BUS_INTERFACE_AHB
@@ -122,11 +118,7 @@ module RISCVBusiness (
     .CLK(CLK),
     .nRST(nRST),
     .prv_pipe_if(prv_pipe_if),
-    .plic_ext_int(plic_ext_int),
-    .clint_soft_int(clint_soft_int),
-    .clint_clear_soft_int(clint_clear_soft_int),
-    .clint_timer_int(clint_timer_int),
-    .clint_clear_timer_int(clint_clear_timer_int)
+    .interrupt_if
   );
 
   risc_mgmt_wrapper rmgmt (

@@ -23,15 +23,12 @@
 */
 
 `include "prv_pipeline_if.vh"
+`include "core_interrupt_if.vh"
 
 module priv_wrapper (
   input logic CLK, nRST,
   prv_pipeline_if.priv_block prv_pipe_if,
-  input logic plic_ext_int,
-  input logic clint_soft_int,
-  input logic clint_clear_soft_int,
-  input logic clint_timer_int,
-  input logic clint_clear_timer_int
+  core_interrupt_if.core interrupt_if
 );
 
   //TODO: Select different priv blocks for backwards compatibility

@@ -19,6 +19,14 @@ def configure(ctx):
       tb = 'tb_RISCVBusiness_self_test',
       tb_includes = ['include']
     )
+    ctx.SFFUnits.add('RISCVBusiness_self_test_plic',
+        includes = ['include'],
+        src_dir = rvb_srcs,
+        use = ['RISCVBusiness_packages'],
+        tb_use = ['RISCVBusiness_packages'],
+        tb = 'tb_RISCVBusiness_self_test_plic',
+        tb_includes = ['include']
+    )
     ctx.SFFUnits.add('alu', 
       includes = ['include'],
       src_dir = ['standard_core'],

@@ -14,10 +14,10 @@ microarch_params:
   
   # Bus configurations
   bus_endianness      : "big"
-  bus_interface_type  : "ahb_if"
+  bus_interface_type  : "generic_bus_if"
 
   # Sparisty Optimizations
-  sparce_enabled : "enabled"
+  sparce_enabled : "disabled"
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:

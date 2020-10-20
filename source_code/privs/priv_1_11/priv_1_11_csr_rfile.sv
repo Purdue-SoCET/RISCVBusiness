@@ -39,15 +39,15 @@ module priv_1_11_csr_rfile (
   marchid_t     marchid;
   mimpid_t      mimpid;
   mhartid_t     mhartid;
-  misaid_t      misaid;
+  misaid_t      misaid, misaid_next, misaid_temp, misaid_default;
 
-  assign misaid.base          = BASE_RV32;
-  assign misaid.zero          = '0;
-  assign misaid.extensions  = MISAID_EXT_I `ifdef         RV32M_SUPPORTED |
-                              MISAID_EXT_M `endif `ifdef  RV32C_SUPPORTED |
-                              MISAID_EXT_C `endif `ifdef  RV32F_SUPPORTED | 
-                              MISAID_EXT_F `endif `ifdef  CUSTOM_SUPPORTED |
-                              MISAID_EXT_X `endif;
+  assign misaid_default.base        = BASE_RV32;
+  assign misaid_default.zero        = '0;
+  assign misaid_default.extensions  = MISAID_EXT_I `ifdef         RV32M_SUPPORTED |
+                                      MISAID_EXT_M `endif `ifdef  RV32C_SUPPORTED |
+                                      MISAID_EXT_C `endif `ifdef  RV32F_SUPPORTED | 
+                                      MISAID_EXT_F `endif `ifdef  CUSTOM_SUPPORTED |
+                                      MISAID_EXT_X `endif;
 
   //TODO: Version Numbering Convention
   assign mvendorid        = '0;
@@ -87,7 +87,7 @@ module priv_1_11_csr_rfile (
 
   // No FPU or Extensions
   assign mstatus.xs     = XS_ALL_OFF;
-  assign mstatus.fs     = FS_OFF; // Even though FPU will be integrated for AFTzx06, there is no functionality for Supervisor Mode
+  assign mstatus.fs     = FS_OFF; // Even though FPU will be integrated for AFTx06, there is no functionality for Supervisor Mode
   assign mstatus.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
   assign mstatus.reserved_3 = '0;
 
@@ -159,6 +159,7 @@ module priv_1_11_csr_rfile (
       mip.mtip    <= 1'b0;
       mie.meie    <= 1'b0;
       mip.meip    <= 1'b0;
+      misaid      <= misaid_default;
       mtvec       <= '0;
       mcause      <= '0;
       mepc        <= '0;
@@ -175,6 +176,7 @@ module priv_1_11_csr_rfile (
       mip.msip    <= mip_next.msip;
       mip.mtip    <= mip_next.mtip;
       mip.meip    <= mip_next.meip;
+      misaid      <= misaid_next;
       mtvec       <= mtvec_next;
       mcause      <= mcause_next;
       mepc        <= mepc_next;
@@ -227,6 +229,17 @@ module priv_1_11_csr_rfile (
   assign mie_next       = (prv_intern_if.addr == MIE_ADDR) ? mie_t'(rup_data) : mie;
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;
+  // Ensure legal MISA value - WARL
+  always_comb begin
+    misaid_temp = misaid_t'(rup_data);
+      if(prv_intern_if.addr == MISA_ADDR && misaid_temp.base != 2'b00 
+          && (misaid_temp.extensions & MISAID_EXT_E) ^ (misaid_temp.extensions & MISAID_EXT_I) != 'b1
+            && misaid_temp.zero == 4'b0) begin
+        misaid_next = misaid_temp;
+      end else begin
+        misaid_next = misaid;
+      end
+  end
 
   always_comb begin // register to send to pipeline based on the address
     valid_csr_addr = 1'b1;
