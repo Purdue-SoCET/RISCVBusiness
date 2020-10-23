@@ -173,13 +173,13 @@ module pp_mul32
 	// Layer 6
 	carry_save_adder #(64) CSA13 (.x(cout12), .y(sum12), .z(sum11), .cout(cout13), .sum(sum13));
 
-	// STAGE 3: CARRY LOOK AHEAD ADDER
-	flex_counter #(2) FC (.clk(CLK), .n_rst(nRST), .clear(start), .count_enable(count_ena), .rollover_val(2'd2), .count_out(count), .rollover_flag(finished)); 	
+	// STAGE 3: NORMAL ADDER
+	flex_counter_mul #(2) FC (.clk(CLK), .n_rst(nRST), .clear(start), .count_enable(count_ena), .rollover_val(2'd2), .count_out(count), .rollover_flag(finished)); 	
 	assign temp_product = cout13 + sum13;
 	assign temp_product2 = is_signed_reg[0] == 0 && multiplier_reg[31] ? temp_product + ({{33{multiplicand_mod[31]}},multiplicand_mod} << 32) : temp_product; // plus extra 1M
 	assign result = adjust_product ? (~temp_product2)+1: temp_product2;
-	assign mult_complete = count == 2'd1;
-	assign result2 = mult_complete? result: '0;
+	assign mult_complete = count == 2'd1 | count == 2'd2;
+	assign result2 = mult_complete ? result: '0;
 
 	always_ff @ (posedge CLK, negedge nRST) begin
 		if (nRST == 0) begin

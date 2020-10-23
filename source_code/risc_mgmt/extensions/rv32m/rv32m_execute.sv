@@ -91,7 +91,7 @@ module rv32m_execute (
   assign mul_start      = operand_diff && operation[2];
 
   // Module instantiations
-  shift_add_multiplier #(.N(WORD_SIZE)) mult_i (
+  pp_mul32 mult_i (
     .CLK(CLK),
     .nRST(nRST),
     .multiplicand(multiplicand),
