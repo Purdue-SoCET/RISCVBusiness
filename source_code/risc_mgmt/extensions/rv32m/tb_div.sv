@@ -67,7 +67,7 @@ nRST = 1'b1;
 @(posedge CLK);
 @(posedge CLK);
 
-
+//       80/2         unsigned = 40 .... 0
 test_div(32'h80,32'h2,1'h0,32'h40, 32'h0);
 
 test_div(32'hFFFFFFF7,32'h3,1'h1,32'hFFFFFFFD, 32'h0);//-9 / 3 = -3...0
