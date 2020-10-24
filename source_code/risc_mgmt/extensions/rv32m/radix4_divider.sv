@@ -6,16 +6,48 @@ module radix4_divider
 	input logic CLK, 
 	input logic nRST, 
   	input logic start,
+	input logic is_signed, //new
 	input logic [NUM_BITS-1:0] dividend, 
 	input logic [NUM_BITS-1:0] divisor, 
 	output logic [NUM_BITS-1:0] quotient, 
-	output logic [NUM_BITS-1:0] remainder
+	output logic [NUM_BITS-1:0] remainder,
+	output logic finished
+
 );
 	logic [NUM_BITS-1:0] next_remainder, next_quotient, shifted_remainder, shifted_quotient;
 	logic [NUM_BITS-1:0] Result1, Result2, Result3;
 	logic [NUM_BITS-1:0] DivisorX2, DivisorX3;
 	logic [4:0] count, next_count;
 
+	assign usign_divisor        = is_signed & divisor[NUM_BITS-1] ? (~divisor)+1 : divisor;
+	assign usign_dividend       = is_signed & dividend[NUM_BITS-1] ? (~dividend)+1 : dividend;
+	assign adjustment_possible  = is_signed && (divisor[NUM_BITS-1] ^ dividend[NUM_BITS-1]); 
+	assign adjust_quotient      = adjustment_possible && ~quotient[NUM_BITS-1];
+	assign adjust_remainder     = is_signed && dividend[NUM_BITS-1];
+	assign div_done             = (count == 0);
+
+//adjust signed to unsigned output 
+//change the output at the end : every cycle
+	always_comb begin 
+		if (~finished && adjust_quotient)
+			quotient <= ~quotient +1;
+		else if(~finished && adjust_remainder)
+			remainder <= ~remainder	+1;
+		else begin
+			quotient <= quotient;
+			remainder <= remainder;
+		end
+	end
+					
+
+	always_ff @(posedge CLK, negedge nRST) begin
+		if (nRST == 0 || start)
+			finished <= 0;
+		else if (div_done)
+			finished <= 1;
+
+	end
+	//initialize d2 d3
 	assign DivisorX2 = divisor << 1; //Divisor*2
 	assign DivisorX3 = (divisor << 1) + divisor; //Divisor*3
 	always_ff @(posedge CLK, negedge nRST) begin
