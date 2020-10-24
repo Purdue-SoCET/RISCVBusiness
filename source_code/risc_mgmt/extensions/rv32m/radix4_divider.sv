@@ -1,70 +1,63 @@
-module radix4_divider(input clk,
-input reset,
-input is_signed,
-input [31:0] dividend,
-input [31:0] divisor,
-output logic [31:0] quotient, 
-output logic [31:0] remainder
+module radix4_divider
+#(
+	parameter NUM_BITS = 32
+)
+(
+	input logic CLK, 
+	input logic nRST, 
+  	input logic start,
+	input logic [NUM_BITS-1:0] dividend, 
+	input logic [NUM_BITS-1:0] divisor, 
+	output logic [NUM_BITS-1:0] quotient, 
+	output logic [NUM_BITS-1:0] remainder
 );
-logic [31:0] usign_divisor, usign_dividend;
-logic adj_possible, adj_quo,adj_rem;
+	logic [NUM_BITS-1:0] next_remainder, next_quotient, shifted_remainder, shifted_quotient;
+	logic [NUM_BITS-1:0] Result1, Result2, Result3;
+	logic [NUM_BITS-1:0] DivisorX2, DivisorX3;
+	logic [4:0] count, next_count;
 
-assign usign_divisor = is_signed & divisor[31] ? (~divisor)+1: divisor;
-assign usign_dividend = is_signed & dividend[31] ? (~dividend)+1:dividend;
-assign adj_possible = is_signed && (divisor[31]^dividend[31]);
-assign adj_quo = adj_possible && ~quotient[31];
-assign adj_rem = is_signed && dividend[31];
+	assign DivisorX2 = divisor << 1; //Divisor*2
+	assign DivisorX3 = (divisor << 1) + divisor; //Divisor*3
+	always_ff @(posedge CLK, negedge nRST) begin
+		if (nRST == 0) begin
+			quotient <= '0;
+			remainder <= '0;
+			count <= 5'd16;
+		end else if (start) begin
+			quotient <= dividend;
+			remainder <= '0;
+			count <= 5'd16;
+		end else if (count >= 0) begin
+			quotient <= next_quotient;
+			remainder <= next_remainder;
+			count <= next_count;
+		end
+	end
 
-
-reg [31:0] r1,r2,r3,d2,d3,p,a;
-
-always_ff@(posedge clk, negedge reset)
-begin
-
-if (reset == 0) begin
-	quotient <= 0;
-	remainder <= 0;
-end
-
-else begin 
-	quotient <= a;
-	remainder <= p;
-end
-end
-
-always_comb begin
-
-a = usign_dividend;
-p = 0;
-d2 = usign_divisor << 1;
-d3 = usign_divisor << 1 + 1;
-
-for (int i = 0; i < 16; i++) begin
-
-p = (p<<2) | a [63:62];
-a = a << 2;
-
-r1 = p - usign_divisor;
-r2 = p - d2;
-r3 = p - d3;
-
-if (r1[63])
-	a = a | 0;
-else if (r2[63]) begin
-	p = r1;
-	a = a | 1;
-end
-else if (r3[63]) begin 
-	p = r2;
-	a = a | 2;
-end
-else begin
-	p = r3;
-	a = a | 3;
-end
-end
-end
+	always_comb begin
+		next_quotient = quotient;
+		next_remainder = remainder;
+		next_count = count;
+		if (count != 0) begin
+			next_count = count - 1;
+			shifted_remainder = (remainder << 2) | quotient[NUM_BITS-1:NUM_BITS-2];
+			shifted_quotient = quotient << 2;
+			Result1 = shifted_remainder - divisor;
+			Result2 = shifted_remainder - DivisorX2;
+			Result3 = shifted_remainder - DivisorX3;
+			if(Result1[NUM_BITS-1]) begin 
+				next_remainder = shifted_remainder;
+				next_quotient = shifted_quotient | 0;
+			end else if(Result2[NUM_BITS-1]) begin 
+				next_remainder = Result1;
+				next_quotient = shifted_quotient | 1;
+			end else if(Result3[NUM_BITS-1]) begin 
+				next_remainder = Result2;
+				next_quotient = shifted_quotient | 2;
+			end else begin 
+				next_remainder = Result3;
+				next_quotient = shifted_quotient | 3;
+			end
+		end
+	end
 endmodule
-
-
-
