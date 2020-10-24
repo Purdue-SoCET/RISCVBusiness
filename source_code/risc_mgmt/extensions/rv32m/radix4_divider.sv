@@ -14,7 +14,7 @@ module radix4_divider
 	output logic finished
 
 );
-	logic [NUM_BITS-1:0] next_remainder, next_quotient, shifted_remainder, shifted_quotient;
+	logic [NUM_BITS-1:0] next_remainder, next_quotient, shifted_remainder, shifted_quotient, temp_quotient, temp_remainder;
 	logic [NUM_BITS-1:0] Result1, Result2, Result3;
 	logic [NUM_BITS-1:0] DivisorX2, DivisorX3;
 	logic [4:0] count, next_count;
@@ -31,19 +31,29 @@ module radix4_divider
 	assign div_done             = (count == 0);
 
 
-//adjust signed to unsigned output 
-//change the output at the end : every cycle
+	always_comb begin
+	quotient = temp_quotient;
+	remainder = temp_remainder;
+		if (count == 5'b1) begin
+			quotient = adjust_quotient ? temp_quotient + 1 : temp_quotient;
+			remainder = adjust_remainder ? temp_remainder + 1 : temp_remainder;
+		end
+	end
+
+/*
 	always_ff @(posedge CLK, negedge nRST) begin
 		if (~finished && adjust_quotient)
-			quotient <= ~quotient +1;
+			quotient <= ~quotient + 1;
+			
 		else if(~finished && adjust_remainder)
-			remainder <= ~remainder	+1;
+			remainder <= ~remainder	+ 1;
+			
 		else begin
 			quotient <= quotient;
 			remainder <= remainder;
 		end
 	end
-					
+*/					
 
 	always_ff @(posedge CLK, negedge nRST) begin
 		if (nRST == 0 || start)
@@ -57,28 +67,32 @@ module radix4_divider
 	assign DivisorX3 = (usign_divisor << 1) + usign_divisor; //Divisor*3
 	always_ff @(posedge CLK, negedge nRST) begin
 		if (nRST == 0) begin
-			quotient <= '0;
-			remainder <= '0;
+
 			count <= 5'd16;
+			temp_quotient <= '0;
+			temp_remainder <= '0;
 		end else if (start) begin
-			quotient <= usign_dividend;
-			remainder <= '0;
+			temp_quotient <= usign_dividend;
+			temp_remainder <= '0;
 			count <= 5'd16;
+	
 		end else if (count >= 0) begin
-			quotient <= next_quotient;
-			remainder <= next_remainder;
+			temp_quotient <= next_quotient;
+			temp_remainder <= next_remainder;
 			count <= next_count;
 		end
 	end
 
 	always_comb begin
-		next_quotient = quotient;
-		next_remainder = remainder;
+		
+		next_quotient = temp_quotient;
+		next_remainder = temp_remainder;
 		next_count = count;
+		
 		if (count != 0) begin
 			next_count = count - 1;
-			shifted_remainder = (remainder << 2) | quotient[NUM_BITS-1:NUM_BITS-2];
-			shifted_quotient = quotient << 2;
+			shifted_remainder = (temp_remainder << 2) | temp_quotient[NUM_BITS-1:NUM_BITS-2];
+			shifted_quotient = temp_quotient << 2;
 			Result1 = shifted_remainder - usign_divisor;
 			Result2 = shifted_remainder - DivisorX2;
 			Result3 = shifted_remainder - DivisorX3;
@@ -95,6 +109,6 @@ module radix4_divider
 				next_remainder = Result3;
 				next_quotient = shifted_quotient | 3;
 			end
-		end
+		end					
 	end
 endmodule
