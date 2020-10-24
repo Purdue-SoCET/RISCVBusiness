@@ -19,6 +19,10 @@ module radix4_divider
 	logic [NUM_BITS-1:0] DivisorX2, DivisorX3;
 	logic [4:0] count, next_count;
 
+	logic [NUM_BITS-1:0] usign_divisor, usign_dividend;
+	logic adjustment_possible, adjust_quotient, adjust_remainder;
+	logic div_done;
+
 	assign usign_divisor        = is_signed & divisor[NUM_BITS-1] ? (~divisor)+1 : divisor;
 	assign usign_dividend       = is_signed & dividend[NUM_BITS-1] ? (~dividend)+1 : dividend;
 	assign adjustment_possible  = is_signed && (divisor[NUM_BITS-1] ^ dividend[NUM_BITS-1]); 
@@ -26,9 +30,10 @@ module radix4_divider
 	assign adjust_remainder     = is_signed && dividend[NUM_BITS-1];
 	assign div_done             = (count == 0);
 
+
 //adjust signed to unsigned output 
 //change the output at the end : every cycle
-	always_comb begin 
+	always_ff @(posedge CLK, negedge nRST) begin
 		if (~finished && adjust_quotient)
 			quotient <= ~quotient +1;
 		else if(~finished && adjust_remainder)
@@ -48,15 +53,15 @@ module radix4_divider
 
 	end
 	//initialize d2 d3
-	assign DivisorX2 = divisor << 1; //Divisor*2
-	assign DivisorX3 = (divisor << 1) + divisor; //Divisor*3
+	assign DivisorX2 = usign_divisor << 1; //Divisor*2
+	assign DivisorX3 = (usign_divisor << 1) + usign_divisor; //Divisor*3
 	always_ff @(posedge CLK, negedge nRST) begin
 		if (nRST == 0) begin
 			quotient <= '0;
 			remainder <= '0;
 			count <= 5'd16;
 		end else if (start) begin
-			quotient <= dividend;
+			quotient <= usign_dividend;
 			remainder <= '0;
 			count <= 5'd16;
 		end else if (count >= 0) begin
@@ -74,7 +79,7 @@ module radix4_divider
 			next_count = count - 1;
 			shifted_remainder = (remainder << 2) | quotient[NUM_BITS-1:NUM_BITS-2];
 			shifted_quotient = quotient << 2;
-			Result1 = shifted_remainder - divisor;
+			Result1 = shifted_remainder - usign_divisor;
 			Result2 = shifted_remainder - DivisorX2;
 			Result3 = shifted_remainder - DivisorX3;
 			if(Result1[NUM_BITS-1]) begin 
