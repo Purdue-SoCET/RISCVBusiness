@@ -116,7 +116,7 @@ module rv32m_execute (
   assign div_zero   = (divisor == 32'h0);  
   assign div_start  = operand_diff && ~operation[2] & ~overflow & ~div_zero;
 
-  shift_test_restore_divider div_i(
+  radix4_divider div_i(
     .CLK(CLK),
     .nRST(nRST),
     .divisor(divisor),
