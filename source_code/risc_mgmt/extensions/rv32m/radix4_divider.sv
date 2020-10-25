@@ -15,7 +15,7 @@ module radix4_divider
 
 );
 	logic [NUM_BITS-1:0] next_remainder, next_quotient, shifted_remainder, shifted_quotient, temp_quotient, temp_remainder;
-	logic [NUM_BITS-1:0] Result1, Result2, Result3;
+	logic [NUM_BITS:0] Result1, Result2, Result3;
 	logic [NUM_BITS-1:0] DivisorX2, DivisorX3;
 	logic [4:0] count, next_count;
 
@@ -98,7 +98,7 @@ module radix4_divider
 			Result1 = shifted_remainder - usign_divisor;
 			Result2 = shifted_remainder - DivisorX2;
 			Result3 = shifted_remainder - DivisorX3;
-			if(Result1[NUM_BITS-1]) begin 
+			if(Result1[NUM_BITS-1] | Result1[NUM_BITS]) begin 
 				next_remainder = shifted_remainder;
 				next_quotient = shifted_quotient | 0;
 					if (count == 1 && adjust_quotient )
@@ -107,7 +107,7 @@ module radix4_divider
 					if(count == 1  && adjust_remainder  )
 						next_remainder = ~next_remainder	+ 1;
 						
-			end else if(Result2[NUM_BITS-1]) begin 
+			end else if(Result2[NUM_BITS-1] | Result2[NUM_BITS]) begin 
 				next_remainder = Result1;
 				next_quotient = shifted_quotient | 1;
 					if (count == 1 && adjust_quotient )
@@ -115,7 +115,7 @@ module radix4_divider
 			
 					if(count == 1  && adjust_remainder  )
 						next_remainder = ~next_remainder	+ 1;
-			end else if(Result3[NUM_BITS-1]) begin 
+			end else if(Result3[NUM_BITS-1] | Result3[NUM_BITS]) begin 
 				next_remainder = Result2;
 				next_quotient = shifted_quotient | 2;
 					if (count == 1 && adjust_quotient )
