@@ -29,23 +29,25 @@ module radix4_divider
 	assign adjust_quotient      = adjustment_possible && ~quotient[NUM_BITS-1];
 	assign adjust_remainder     = is_signed && dividend[NUM_BITS-1];
 	assign div_done             = (count == 0);
+	assign quotient = temp_quotient;
+	assign remainder = temp_remainder;
 
-
+/*
 	always_comb begin
 	quotient = temp_quotient;
 	remainder = temp_remainder;
 		if (count == 5'b1) begin
-			quotient = adjust_quotient ? temp_quotient + 1 : temp_quotient;
-			remainder = adjust_remainder ? temp_remainder + 1 : temp_remainder;
+			quotient = adjust_quotient ? ~temp_quotient + 1 : temp_quotient;
+			remainder = adjust_remainder ? ~temp_remainder + 1 : temp_remainder;
 		end
 	end
-
+*/
 /*
 	always_ff @(posedge CLK, negedge nRST) begin
 		if (~finished && adjust_quotient)
 			quotient <= ~quotient + 1;
 			
-		else if(~finished && adjust_remainder)
+		else if(~finished && adjust_remainder  )
 			remainder <= ~remainder	+ 1;
 			
 		else begin
@@ -99,16 +101,38 @@ module radix4_divider
 			if(Result1[NUM_BITS-1]) begin 
 				next_remainder = shifted_remainder;
 				next_quotient = shifted_quotient | 0;
+					if (count == 1 && adjust_quotient )
+						next_quotient = ~next_quotient + 1;
+			
+					if(count == 1  && adjust_remainder  )
+						next_remainder = ~next_remainder	+ 1;
+						
 			end else if(Result2[NUM_BITS-1]) begin 
 				next_remainder = Result1;
 				next_quotient = shifted_quotient | 1;
+					if (count == 1 && adjust_quotient )
+						next_quotient = ~next_quotient + 1;
+			
+					if(count == 1  && adjust_remainder  )
+						next_remainder = ~next_remainder	+ 1;
 			end else if(Result3[NUM_BITS-1]) begin 
 				next_remainder = Result2;
 				next_quotient = shifted_quotient | 2;
+					if (count == 1 && adjust_quotient )
+						next_quotient = ~next_quotient + 1;
+			
+					if(count == 1  && adjust_remainder  )
+						next_remainder = ~next_remainder	+ 1;
 			end else begin 
 				next_remainder = Result3;
 				next_quotient = shifted_quotient | 3;
+					if (count == 1 && adjust_quotient )
+						next_quotient = ~next_quotient + 1;
+			
+					if(count == 1  && adjust_remainder  )
+						next_remainder = ~next_remainder	+ 1;
 			end
-		end					
+		end
+							
 	end
 endmodule
