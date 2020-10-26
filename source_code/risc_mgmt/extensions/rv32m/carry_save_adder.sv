@@ -6,7 +6,7 @@ module carry_save_adder
 	input logic [(BIT_WIDTH-1):0] x,
 	input logic [(BIT_WIDTH-1):0] y,
 	input logic [(BIT_WIDTH-1):0] z,
-	output logic [(BIT_WIDTH):0] cout,
+	output logic [(BIT_WIDTH-1):0] cout,
 	output logic [(BIT_WIDTH-1):0] sum 
 );
 	genvar i;
