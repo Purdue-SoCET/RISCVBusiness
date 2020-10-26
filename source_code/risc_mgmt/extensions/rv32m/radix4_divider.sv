@@ -58,11 +58,13 @@ module radix4_divider
 */					
 
 	always_ff @(posedge CLK, negedge nRST) begin
-		if (nRST == 0 || start)
-			finished <= 0;
-		else if (div_done)
-			finished <= 1;
-
+        if (nRST == 0) begin
+			finished <= 1'b0;
+        end else if(start) begin
+            finished <= 1'b0;
+        end else if(div_done) begin
+            finished <= 1'b1;
+        end
 	end
 	//initialize d2 d3
 	assign DivisorX2 = usign_divisor << 1; //Divisor*2
