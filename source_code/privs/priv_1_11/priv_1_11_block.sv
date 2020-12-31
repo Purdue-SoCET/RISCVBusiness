@@ -24,32 +24,58 @@
 
 `include "prv_pipeline_if.vh"
 `include "priv_1_11_internal_if.vh"
+`include "core_interrupt_if.vh"
 
 module priv_1_11_block (
   input logic CLK, nRST,
-  prv_pipeline_if.priv_block prv_pipe_if
+  prv_pipeline_if.priv_block prv_pipe_if, 
+  core_interrupt_if.core interrupt_if
+  /*input logic plic_ext_int,
+  input logic clint_soft_int,
+  input logic clint_clear_soft_int,
+  input logic clint_timer_int,
+  input logic clint_clear_timer_int*/
 );
+  import machine_mode_types_1_11_pkg::*;
+
   priv_1_11_internal_if prv_intern_if();
 
-  logic [1:0] prv_intr, prv_ret;
   
   priv_1_11_csr_rfile csr_rfile_i(.*, .prv_intern_if(prv_intern_if));
   priv_1_11_control prv_control_i(.*, .prv_intern_if(prv_intern_if));
   priv_1_11_pipeline_control pipeline_control_i(.*, .prv_intern_if(prv_intern_if));
 
-  //Machine Mode Only
-  assign prv_intr = 2'b11;
-  assign prv_ret  = 2'b11;
+  // Disable interrupts that will not be used
+  assign prv_intern_if.timer_int_u = 1'b0;
+  assign prv_intern_if.timer_int_s = 1'b0;
+  assign prv_intern_if.timer_int_m = interrupt_if.timer_int;
+  assign prv_intern_if.soft_int_u = 1'b0;
+  assign prv_intern_if.soft_int_s = 1'b0;
+  assign prv_intern_if.soft_int_m = interrupt_if.soft_int; 
+  assign prv_intern_if.ext_int_u = 1'b0;
+  assign prv_intern_if.ext_int_s = 1'b0;
+  assign prv_intern_if.ext_int_m = interrupt_if.ext_int;
+  assign prv_intern_if.reserved_0 = 1'b0;
+  assign prv_intern_if.reserved_1 = 1'b0;
+  assign prv_intern_if.reserved_2 = 1'b0;
 
-  assign prv_intern_if.soft_int = 1'b0;
-  //TODO: PIC (Programmable Interrupt Controller) 
-  assign prv_intern_if.ext_int =  1'b0;
+  // Disable clear interrupts that will not be used
+  assign prv_intern_if.clear_timer_int_u = 1'b0;
+  assign prv_intern_if.clear_timer_int_s = 1'b0;
+  assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear;
+  assign prv_intern_if.clear_soft_int_u = 1'b0;
+  assign prv_intern_if.clear_soft_int_s = 1'b0;
+  assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear;
+  assign prv_intern_if.clear_ext_int_u = 1'b0;
+  assign prv_intern_if.clear_ext_int_s = 1'b0;
+  assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear;
 
-  // Assign inputs to the prv_block to the corresponding internal signals
+
+  // from pipeline to the priv unit
   assign prv_intern_if.pipe_clear   = prv_pipe_if.pipe_clear;
-  assign prv_intern_if.ret          = prv_pipe_if.ret;
+  assign prv_intern_if.mret          = prv_pipe_if.ret; 
   assign prv_intern_if.epc          = prv_pipe_if.epc;
-  assign prv_intern_if.fault_insn   = prv_pipe_if.fault_insn;
+  assign prv_intern_if.fault_insn_access   = prv_pipe_if.fault_insn;
   assign prv_intern_if.mal_insn = prv_pipe_if.mal_insn;
   assign prv_intern_if.illegal_insn = prv_pipe_if.illegal_insn;
   assign prv_intern_if.fault_l      = prv_pipe_if.fault_l;
@@ -58,6 +84,11 @@ module priv_1_11_block (
   assign prv_intern_if.mal_s        = prv_pipe_if.mal_s;
   assign prv_intern_if.breakpoint   = prv_pipe_if.breakpoint;
   assign prv_intern_if.env_m        = prv_pipe_if.env_m;
+  assign prv_intern_if.env_s	    = 1'b0;
+  assign prv_intern_if.env_u	    = 1'b0;
+  assign prv_intern_if.fault_insn_page = 1'b0;
+  assign prv_intern_if.fault_load_page = 1'b0;
+  assign prv_intern_if.fault_store_page	= 1'b0;
   assign prv_intern_if.mtval        = prv_pipe_if.badaddr;
   assign prv_intern_if.swap         = prv_pipe_if.swap;
   assign prv_intern_if.clr          = prv_pipe_if.clr;
@@ -70,7 +101,7 @@ module priv_1_11_block (
   assign prv_intern_if.ex_rmgmt = prv_pipe_if.ex_rmgmt;
   assign prv_intern_if.ex_rmgmt_cause = prv_pipe_if.ex_rmgmt_cause;
 
-  // Assign outputs from internal signals to the outputs of the priv block
+  // from priv unit to pipeline
   assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc;
   assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
   assign prv_pipe_if.intr        = prv_intern_if.intr;

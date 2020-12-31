@@ -50,14 +50,22 @@ module tb_RISCVBusiness_self_test ();
   generic_bus_if gen_bus_if();
   generic_bus_if rvb_gen_bus_if();
   generic_bus_if tb_gen_bus_if();
+  core_interrupt_if interrupt_if();
+    
+    assign interrupt_if.timer_int = '0;
+    assign interrupt_if.timer_int_clear = '0;
+    assign interrupt_if.ext_int = '0;
+    assign interrupt_if.ext_int_clear = '0;
+    assign interrupt_if.soft_int = '0;
+    assign interrupt_if.soft_int_clear = '0;
 
   //Module Instantiations
 
   RISCVBusiness DUT (
     .CLK(CLK),
     .nRST(nRST),
-    .halt(halt),
-    .gen_bus_if(rvb_gen_bus_if)
+    .gen_bus_if(rvb_gen_bus_if),
+    .interrupt_if
   );
 
   ram_wrapper ram (
@@ -143,7 +151,7 @@ module tb_RISCVBusiness_self_test ();
 
     nRST = 1;
     
-    while (halt == 0 && clk_count != `RVBSELF_CLK_TIMEOUT) begin
+    while (DUT.halt == 0 && clk_count != `RVBSELF_CLK_TIMEOUT) begin
       @(posedge CLK);
       clk_count++;
       if(gen_bus_if.addr == 16'h0000 & !gen_bus_if.busy & gen_bus_if.wen) begin
@@ -159,9 +167,9 @@ module tb_RISCVBusiness_self_test ();
     // Check Register 28 to see if test passed or failed
     if (clk_count == `RVBSELF_CLK_TIMEOUT)
       $display("ERROR: Test timed out");
-    else if(DUT.pipeline.tspp_pipeline.execute_stage_i.rf.registers[28] != 32'h1)
+    else if(DUT.execute_stage_i.rf.registers[28] != 32'h1)
       $display("ERROR: Test %0d did not pass",
-                (DUT.pipeline.tspp_pipeline.execute_stage_i.rf.registers[28] - 1)/2);
+                (DUT.execute_stage_i.rf.registers[28] - 1)/2);
     else 
       $display("SUCCESS");
     $finish;

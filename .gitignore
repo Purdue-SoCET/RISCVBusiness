@@ -27,3 +27,7 @@ source_code/fpga/output_files
 *.lock-waf*
 # Ignore files for commands for moving stuff around
 *.cmd
+mitll*
+# Ignore temporary files created by gedit
+*~
+open_files.sh

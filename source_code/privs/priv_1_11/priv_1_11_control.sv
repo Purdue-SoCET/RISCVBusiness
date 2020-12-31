@@ -35,57 +35,105 @@ module priv_1_11_control (
   logic exception;
   
   int_code_t intr_src;
-  logic interrupt;
+  logic interrupt, clear_interrupt;
   logic interrupt_reg, interrupt_fired;
 
-  always_comb begin
+  always_comb begin // determine the source of the interrupt to be stored in the mcause register
     interrupt = 1'b1;
-    intr_src = SOFT_INT;
+    intr_src = SOFT_INT_M;
 
-    if (prv_intern_if.timer_int) begin
-      intr_src = TIMER_INT;
+    if (prv_intern_if.ext_int_m) begin
+      intr_src = EXT_INT_M;
     end
-    else if (prv_intern_if.soft_int) begin
-      intr_src = SOFT_INT;
+    else if (prv_intern_if.soft_int_m) begin
+      intr_src = SOFT_INT_M;
     end
-    else if (prv_intern_if.ext_int) begin
-      intr_src = EXT_INT;
+    else if (prv_intern_if.timer_int_m) begin
+      intr_src = TIMER_INT_M;
     end
+    else if (prv_intern_if.ext_int_s) begin
+      intr_src = EXT_INT_S;
+    end
+    else if (prv_intern_if.soft_int_s) begin
+      intr_src = SOFT_INT_S;
+    end
+    else if (prv_intern_if.timer_int_s) begin
+      intr_src = TIMER_INT_S;
+    end
+    else if (prv_intern_if.ext_int_u) begin
+      intr_src = EXT_INT_U;
+    end
+    else if (prv_intern_if.soft_int_u) begin
+      intr_src = SOFT_INT_U;
+    end
+    else if (prv_intern_if.timer_int_u) begin
+      intr_src = TIMER_INT_U;
+    end
+
     else
       interrupt = 1'b0;
   end
 
-  assign prv_intern_if.mip_rup = interrupt || prv_intern_if.clear_timer_int;
-  always_comb begin
+  assign clear_interrupt = (prv_intern_if.clear_timer_int_m || prv_intern_if.clear_soft_int_m || prv_intern_if.clear_ext_int_m || prv_intern_if.clear_timer_int_u || prv_intern_if.clear_soft_int_u || prv_intern_if.clear_ext_int_u || prv_intern_if.clear_timer_int_s || prv_intern_if.clear_soft_int_s || prv_intern_if.clear_ext_int_s);
+
+  assign prv_intern_if.mip_rup = interrupt || clear_interrupt; 
+
+  always_comb begin // modify the pending status register 
     prv_intern_if.mip_next = prv_intern_if.mip;
-    if (prv_intern_if.timer_int) prv_intern_if.mip_next.mtip = 1'b1;
-    if (prv_intern_if.clear_timer_int) prv_intern_if.mip_next.mtip = 1'b0;
-    if (prv_intern_if.soft_int) prv_intern_if.mip_next.msip = 1'b1;
-    if (prv_intern_if.ext_int) prv_intern_if.mip_next.msip = 1'b1; //external interrupts not specified in 1.7
+
+    if (prv_intern_if.ext_int_m) prv_intern_if.mip_next.meip = 1'b1;
+    else if (prv_intern_if.clear_ext_int_m) prv_intern_if.mip_next.meip = 1'b0;
+    else if (prv_intern_if.soft_int_m) prv_intern_if.mip_next.msip = 1'b1;
+    else if (prv_intern_if.clear_soft_int_m) prv_intern_if.mip_next.msip = 1'b0;
+    else if (prv_intern_if.timer_int_m) prv_intern_if.mip_next.mtip = 1'b1;
+    else if (prv_intern_if.clear_timer_int_m) prv_intern_if.mip_next.mtip = 1'b0; 
+    else if (prv_intern_if.ext_int_s) prv_intern_if.mip_next.seip = 1'b1;
+    else if (prv_intern_if.clear_ext_int_s) prv_intern_if.mip_next.seip = 1'b0;
+    else if (prv_intern_if.soft_int_s) prv_intern_if.mip_next.ssip = 1'b1;
+    else if (prv_intern_if.clear_soft_int_s) prv_intern_if.mip_next.ssip = 1'b0;
+    else if (prv_intern_if.timer_int_s) prv_intern_if.mip_next.stip = 1'b1;
+    else if (prv_intern_if.clear_timer_int_s) prv_intern_if.mip_next.stip = 1'b0;
+    else if (prv_intern_if.ext_int_u) prv_intern_if.mip_next.ueip = 1'b1;
+    else if (prv_intern_if.clear_ext_int_u) prv_intern_if.mip_next.ueip = 1'b0;
+    else if (prv_intern_if.soft_int_u) prv_intern_if.mip_next.usip = 1'b1;
+    else if (prv_intern_if.clear_soft_int_u) prv_intern_if.mip_next.usip = 1'b0;
+    else if (prv_intern_if.timer_int_u) prv_intern_if.mip_next.utip = 1'b1;
+    else if (prv_intern_if.clear_timer_int_u) prv_intern_if.mip_next.utip = 1'b0;
+
   end
 
-  always_comb begin
+  always_comb begin // determine whether or not an exception occured, as well as the source of the exception
     exception = 1'b1;
     ex_src = INSN_MAL;
 
-    if (prv_intern_if.fault_l)
-      ex_src = L_FAULT;
-    else if (prv_intern_if.mal_l)
-      ex_src = L_ADDR_MAL;
-    else if (prv_intern_if.fault_s) 
-      ex_src = S_FAULT;
-    else if (prv_intern_if.mal_s) 
-      ex_src = S_ADDR_MAL;
-    else if (prv_intern_if.breakpoint)
+    if (prv_intern_if.breakpoint)
       ex_src = BREAKPOINT;
-    else if (prv_intern_if.env_m) 
-      ex_src = ENV_CALL_M;
+    else if (prv_intern_if.fault_insn_page) 
+      ex_src = INSN_PAGE;
+    else if (prv_intern_if.fault_insn_access)
+      ex_src = INSN_ACCESS;
     else if (prv_intern_if.illegal_insn) 
       ex_src = ILLEGAL_INSN;
-    else if (prv_intern_if.fault_insn)
-      ex_src = INSN_FAULT;
     else if (prv_intern_if.mal_insn)
       ex_src = INSN_MAL;
+    else if (prv_intern_if.env_u) 
+      ex_src = ENV_CALL_U;
+    else if (prv_intern_if.env_s) 
+      ex_src = ENV_CALL_S;
+    else if (prv_intern_if.env_m) 
+      ex_src = ENV_CALL_M;
+    else if (prv_intern_if.mal_s) 
+      ex_src = S_ADDR_MAL;
+    else if (prv_intern_if.mal_l)
+      ex_src = L_ADDR_MAL;
+    else if (prv_intern_if.fault_store_page) 
+      ex_src = STORE_PAGE;
+    else if (prv_intern_if.fault_load_page) 
+      ex_src = LOAD_PAGE;
+    else if (prv_intern_if.fault_s) 
+      ex_src = S_FAULT;
+    else if (prv_intern_if.fault_l)
+      ex_src = L_FAULT;
     else if (prv_intern_if.ex_rmgmt)
       ex_src = ex_code_t'(prv_intern_if.ex_rmgmt_cause);
     else 
@@ -94,34 +142,38 @@ module priv_1_11_control (
 
   //output to pipeline control
   assign prv_intern_if.intr = exception | interrupt_reg;
-  assign interrupt_fired = (prv_intern_if.mstatus.ie & ((prv_intern_if.mie.mtie & prv_intern_if.mip.mtip) | 
-                     (prv_intern_if.mie.msie & prv_intern_if.mip.msip)));
+  assign interrupt_fired = (prv_intern_if.mstatus.mie & ((prv_intern_if.mie.mtie & prv_intern_if.mip.mtip) | 
+                     (prv_intern_if.mie.msie & prv_intern_if.mip.msip) | (prv_intern_if.mie.meie & prv_intern_if.mip.meip)));
  
   // Register Updates on Interrupt/Exception
-  assign prv_intern_if.mcause_rup = exception | interrupt_fired;
+  assign prv_intern_if.mcause_rup = exception | interrupt; // TODO: Change to interrupt
   assign prv_intern_if.mcause_next.interrupt = ~exception;
   assign prv_intern_if.mcause_next.cause = exception ? ex_src : intr_src;
 
-  assign prv_intern_if.mstatus_rup = exception | interrupt_fired;
+  assign prv_intern_if.mstatus_rup = exception | prv_intern_if.intr | prv_intern_if.mret; // TODO: Change to prv_intern_if.intr
 
   always_comb begin
-    if (prv_intern_if.intr) begin
-      prv_intern_if.mstatus_next.ie = 1'b0; 
-    end else if (prv_intern_if.ret) begin
-      prv_intern_if.mstatus_next.ie = 1'b1;
-    end
-    else begin
-      prv_intern_if.mstatus_next.ie = prv_intern_if.mstatus.ie;
+    prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mie;
+    prv_intern_if.mstatus_next.mpie = prv_intern_if.mstatus.mpie;
+
+    if (prv_intern_if.intr) begin // interrupt has truly been registered and it is time to go to the vector table
+      prv_intern_if.mstatus_next.mpie = prv_intern_if.mstatus.mie; // when a trap is taken mpie is set to the current mie
+      prv_intern_if.mstatus_next.mie = 1'b0; // disable the interrupt once it enters the handler
+
+    end else if (prv_intern_if.mret) begin // leaving the vector table
+      prv_intern_if.mstatus_next.mpie = 1'b1;
+      prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mpie;
     end
   end
 
+
   // Update EPC as soon as interrupt or exception is found 
-  assign prv_intern_if.mepc_rup = exception | interrupt_fired;
+  assign prv_intern_if.mepc_rup = exception | interrupt; // TODO: Change to interrupt
   assign prv_intern_if.mepc_next = prv_intern_if.epc;
 
   assign prv_intern_if.mtval_rup = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s | 
-                                  prv_intern_if.illegal_insn | prv_intern_if.fault_insn | prv_intern_if.mal_insn | prv_intern_if.ex_rmgmt) 
-                                  & prv_intern_if.pipe_clear;
+                                  prv_intern_if.illegal_insn | prv_intern_if.fault_insn_access | prv_intern_if.mal_insn | prv_intern_if.ex_rmgmt) 
+                                  & prv_intern_if.pipe_clear; // TODO: May need to insert other exception signals
   assign prv_intern_if.mtval_next = prv_intern_if.mtval;
 
   /* Interrupt needs to be latched until pipeline cleared   */
@@ -136,4 +188,5 @@ module priv_1_11_control (
     else if (prv_intern_if.pipe_clear)
       interrupt_reg <= '0;
   end 
+
 endmodule

@@ -39,7 +39,7 @@ module memory_controller_tb ();
   ahb_if ahb_m();
 
   memory_controller DUT ( CLK, nRST, d_gen_bus_if, i_gen_bus_if, out_gen_bus_if );
-  ahb_master DUT2 ( CLK, nRST, ahb_m, out_gen_bus_if); 
+  ahb DUT2 ( CLK, nRST, ahb_m, out_gen_bus_if); 
   
   //-- CLOCK INITIALIZATION --// 
   initial begin : INIT 
@@ -98,8 +98,9 @@ module memory_controller_tb ();
     i_gen_bus_if.wen = 0;
     i_gen_bus_if.addr = i_gen_bus_if.addr + 4; 
     #(5 * PERIOD) 
+    @(posedge CLK)
     ahb_m.HRDATA = 32'hDEADBEEF; 
-    ahb_m.HWDATA = 0; 
+    ahb_m.HWDATA = 0;
     ahb_m.HREADY = 1; 
     #(PERIOD) 
     ahb_m.HRDATA = 32'hbad1bad1; 
@@ -121,7 +122,7 @@ module memory_controller_tb ();
     #(5 * PERIOD) 
     ahb_m.HRDATA = 32'hDEADBEEF; 
     ahb_m.HWDATA = 0; 
-    ahb_m.HREADY = 1; 
+    ahb_m.HREADY = 0; 
     #(PERIOD) 
     ahb_m.HRDATA = 32'hDEADBEEF; 
     ahb_m.HREADY = 0; 
@@ -132,7 +133,7 @@ module memory_controller_tb ();
     #(5 * PERIOD) 
     ahb_m.HRDATA = 32'hbad1bad1; 
     ahb_m.HWDATA = 0; 
-    ahb_m.HREADY = 1; 
+    ahb_m.HREADY = 0; 
     #(PERIOD) 
     ahb_m.HRDATA = 32'hbad1bad1; 
     ahb_m.HREADY = 0; 
@@ -156,7 +157,7 @@ module memory_controller_tb ();
     ahb_m.HREADY = 1; 
     #(PERIOD) 
     ahb_m.HRDATA = 32'hDEADBEEF; 
-    ahb_m.HREADY = 0; 
+    ahb_m.HREADY = 1; 
     d_gen_bus_if.ren = 0; 
     d_gen_bus_if.wen = 1;
     i_gen_bus_if.ren = 1; 
@@ -167,7 +168,7 @@ module memory_controller_tb ();
     ahb_m.HREADY = 1; 
     #(PERIOD) 
     ahb_m.HRDATA = 32'hbad1bad1; 
-    ahb_m.HREADY = 0; 
+    ahb_m.HREADY = 1; 
     d_gen_bus_if.ren = 0; 
     d_gen_bus_if.wen = 0;
     i_gen_bus_if.ren = 1; 

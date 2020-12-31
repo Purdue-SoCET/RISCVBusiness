@@ -39,21 +39,20 @@ module priv_1_11_csr_rfile (
   marchid_t     marchid;
   mimpid_t      mimpid;
   mhartid_t     mhartid;
-  misaid_t      misaid;
+  misaid_t      misaid, misaid_next, misaid_temp, misaid_default;
 
-  assign misaid.base          = BASE_RV32;
-  assign misaid.zero          = '0;
-  assign misaid.extensions  = MISAID_EXT_I `ifdef         RV32M_SUPPORTED |
-                              MISAID_EXT_M `endif `ifdef  RV32C_SUPPORTED |
-                              MISAID_EXT_C `endif `ifdef  RV32F_SUPPORTED | 
-                              MISAID_EXT_F `endif `ifdef  CUSTOM_SUPPORTED |
-                              MISAID_EXT_X `endif;
+  assign misaid_default.base        = BASE_RV32;
+  assign misaid_default.zero        = '0;
+  assign misaid_default.extensions  = MISAID_EXT_I `ifdef         RV32M_SUPPORTED |
+                                      MISAID_EXT_M `endif `ifdef  RV32C_SUPPORTED |
+                                      MISAID_EXT_C `endif `ifdef  RV32F_SUPPORTED | 
+                                      MISAID_EXT_F `endif `ifdef  CUSTOM_SUPPORTED |
+                                      MISAID_EXT_X `endif;
 
   //TODO: Version Numbering Convention
   assign mvendorid        = '0;
   assign marchid          = '0;
   assign mimpid           = '0;
-
   assign mhartid          = '0; 
 
   
@@ -65,37 +64,49 @@ module priv_1_11_csr_rfile (
   mie_t     mie, mie_next;
   mtvec_t   mtvec, mtvec_next;
 
-  assign mstatus.zero = '0;
-
-  // mstatus bits set due to only Machine Mode Implemented
-  assign mstatus.prv   = M_MODE;
-  assign mstatus.prv1  = M_MODE;
-  assign mstatus.ie1    = 1'b0;
-  assign mstatus.prv2 = M_MODE;
-  assign mstatus.ie2    = 1'b0;
-  assign mstatus.prv3 = M_MODE;
-  assign mstatus.ie3    = 1'b0;
+  // Privilege and Global Interrupt-Enable Stack
+  assign mstatus.uie          = 1'b0;
+  assign mstatus.sie   	      = 1'b0;
+  assign mstatus.reserved_0   = 1'b0;
+  assign mstatus.upie	      = 1'b0;
+  assign mstatus.spie	      = 1'b0;
+  assign mstatus.reserved_1   = 1'b0;
+  assign mstatus.spp	      = 1'b0;
+  assign mstatus.reserved_2   = 2'b0;
+  assign mstatus.mpp          = M_LEVEL;
 
   // No memory protection
-  assign mstatus.vm     = VM_MBARE;
   assign mstatus.mprv   = 1'b0;
+  assign mstatus.sum    = 1'b0;
+  assign mstatus.mxr    = 1'b0;
+
+  // No virtualization protection
+  assign mstatus.tvm = 1'b0;
+  assign mstatus.tw = 1'b0;
+  assign mstatus.tsr = 1'b0;
 
   // No FPU or Extensions
   assign mstatus.xs     = XS_ALL_OFF;
-  assign mstatus.fs     = FS_OFF;
-  assign mstatus.sd     = 1'b0;
+  assign mstatus.fs     = FS_OFF; // Even though FPU will be integrated for AFTx06, there is no functionality for Supervisor Mode
+  assign mstatus.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
+  assign mstatus.reserved_3 = '0;
+
+
 
   // Deleg Register Zero in Machine Mode Only (Should be removed)
   assign medeleg = '0;
   assign mideleg = '0;
 
-  assign mie.zero_0 = '0;
-  assign mie.zero_1 = '0;
-  assign mie.zero_2 = '0;
-  assign mie.htie = 1'b0;
+  assign mie.reserved_0 = '0;
+  assign mie.reserved_1 = '0;
+  assign mie.reserved_2 = '0;
+  assign mie.reserved_3 = '0;
+  assign mie.utie = 1'b0;
   assign mie.stie = 1'b0;
-  assign mie.hsie = 1'b0;
+  assign mie.usie = 1'b0;
   assign mie.ssie = 1'b0;
+  assign mie.ueie = 1'b0;
+  assign mie.seie = 1'b0;
 
  /* Machine Trap Handling */
  
@@ -105,30 +116,16 @@ module priv_1_11_csr_rfile (
   mtval_t     mtval, mtval_next;
   mip_t       mip, mip_next;
  
-  assign mip.zero_0 = '0;
-  assign mip.zero_1 = '0;
-  assign mip.zero_2 = '0;
-  assign mip.htip = 1'b0;
+  assign mip.reserved_0 = '0;
+  assign mip.reserved_1 = '0;
+  assign mip.reserved_2 = '0;
+  assign mip.reserved_3 = '0;
+  assign mip.utip = 1'b0;
   assign mip.stip = 1'b0;
-  assign mip.hsip = 1'b0;
+  assign mip.usip = 1'b0;
   assign mip.ssip = 1'b0;
-
-
-  /* Machine Protection and Translation */
-  // Unimplemented, only MBARE supported
- 
- 
-  /* Machine Timers and Counters */
-  mtimecmp_t    mtimecmp, mtimecmp_next;
-  mtime_t       mtime, mtime_next;
-  mtimeh_t      mtimeh, mtimeh_next;
-  logic [63:0]  mtimefull, mtimefull_next;
-  assign mtime          = mtimefull[31:0];
-  assign mtimeh         = mtimefull[63:32];
-  assign mtimefull_next = mtimefull + 1;
-  assign prv_intern_if.timer_int      = (mtime == mtimecmp);
-  assign prv_intern_if.clear_timer_int = (prv_intern_if.addr == MTIMECMP_ADDR) &
-                                      prv_intern_if.valid_write;
+  assign mip.ueip = 1'b0;
+  assign mip.seip = 1'b0;
 
   /* Machine Counter Delta Registers */
   // Unimplemented, only Machine Mode Supported
@@ -151,85 +148,40 @@ module priv_1_11_csr_rfile (
   assign instretfull_next = (prv_intern_if.instr_retired == 1'b1) ?
                             instretfull + 1 : instretfull;
 
-  //Non Standard Extensions, used for testing 
-  mtohost_t   mtohost, mtohost_next;
-  mfromhost_t mfromhost, mfromhost_next;
-
  
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      mstatus.ie  <= 1'b1;
+      mstatus.mie <= 1'b0;
+      mstatus.mpie <= 1'b0;
       mie.mtie    <= 1'b0;
       mie.msie    <= 1'b0;
       mip.msip    <= 1'b0;
       mip.mtip    <= 1'b0;
+      mie.meie    <= 1'b0;
+      mip.meip    <= 1'b0;
+      misaid      <= misaid_default;
       mtvec       <= '0;
       mcause      <= '0;
       mepc        <= '0;
       mtval       <= '0;
-      mscratch    <= '0;
-      mtohost     <= '0;
-      mfromhost   <= '0;
-      mtimecmp    <= '0;
-      mtimefull   <= '0;
-      /* Performance Counters */
       timefull    <= '0;
       cyclefull   <= '0;
       instretfull <= '0;
-    end else if (prv_intern_if.addr == MTIMEH_ADDR)begin
-      mstatus.ie  <= mstatus_next.ie;
-      mie.mtie    <= mie_next.mtie; 
-      mie.msie    <= mie_next.msie;
-      mip.msip    <= mip_next.msip; // interrupt
-      mip.mtip    <= mip_next.mtip; // interrupt
-      mtvec       <= mtvec_next;
-      mcause      <= mcause_next;
-      mepc        <= mepc_next;
-      mtval       <= mtval_next;
-      mscratch    <= mscratch_next;
-      mtohost     <= mtohost_next;
-      mfromhost   <= mfromhost_next;
-      mtimecmp    <= mtimecmp_next;
-      mtimefull   <= {mtimeh_next, mtimefull_next[31:0]};
-      /* Performance Counters */
-      timefull    <= timefull_next;
-      cyclefull   <= cyclefull_next;
-      instretfull <= instretfull_next;
-    end else if (prv_intern_if.addr == MTIME_ADDR) begin
-      mstatus.ie  <= mstatus_next.ie;
-      mie.mtie    <= mie_next.mtie; 
-      mie.msie    <= mie_next.msie;
-      mip.msip    <= mip_next.msip; // interrupt
-      mip.mtip    <= mip_next.mtip; // interrupt
-      mtvec       <= mtvec_next;
-      mcause      <= mcause_next;
-      mepc        <= mepc_next;
-      mtval       <= mtval_next;
-      mscratch    <= mscratch_next;
-      mtohost     <= mtohost_next;
-      mfromhost   <= mfromhost_next;
-      mtimecmp    <= mtimecmp_next;
-      mtimefull   <= {mtimefull_next[63:32], mtime_next};
-      /* Performance Counters */
-      timefull    <= timefull_next;
-      cyclefull   <= cyclefull_next;
-      instretfull <= instretfull_next;
     end else begin      
-      mstatus.ie  <= mstatus_next.ie;
-      mie.mtie    <= mie_next.mtie; 
+      mstatus.mie  <= mstatus_next.mie;
+      mstatus.mpie <= mstatus_next.mpie;
+      mie.mtie    <= mie_next.mtie;
       mie.msie    <= mie_next.msie;
-      mip.msip    <= mip_next.msip; // interrupt
-      mip.mtip    <= mip_next.mtip; // interrupt
+      mie.meie    <= mie_next.meie;
+      mip.msip    <= mip_next.msip;
+      mip.mtip    <= mip_next.mtip;
+      mip.meip    <= mip_next.meip;
+      misaid      <= misaid_next;
       mtvec       <= mtvec_next;
       mcause      <= mcause_next;
       mepc        <= mepc_next;
       mtval       <= mtval_next;
       mscratch    <= mscratch_next;
-      mtohost     <= mtohost_next;
-      mfromhost   <= mfromhost_next;
-      mtimecmp    <= mtimecmp_next;
-      mtimefull   <= mtimefull_next;
-      /* Performance Counters */
       timefull    <= timefull_next;
       cyclefull   <= cyclefull_next;
       instretfull <= instretfull_next;
@@ -257,33 +209,39 @@ module priv_1_11_csr_rfile (
                       prv_intern_if.rdata
                       );
 
-  // Readonly by pipeline, rw by prv
+  // Readonly by pipeline, rw by prv, controlled by hardware
   assign mip_next       = prv_intern_if.mip_rup ? prv_intern_if.mip_next : mip;
   assign mtval_next     = prv_intern_if.mtval_rup ? prv_intern_if.mtval_next : mtval;
   assign mcause_next    = prv_intern_if.mcause_rup ? prv_intern_if.mcause_next : mcause;
 
   // Read and write by pipeline and prv
-  //TODO: Waveforms for this look wrong, potential bug
   assign mstatus_next   = (prv_intern_if.addr == MSTATUS_ADDR) ? mstatus_t'(rup_data) : (
                             prv_intern_if.mstatus_rup ? prv_intern_if.mstatus_next :
                             mstatus
                           );
-
   assign mepc_next      = (prv_intern_if.addr == MEPC_ADDR)  ? mepc_t'(rup_data) : (
                             prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : 
                             mepc
                           );
 
-  // Read and write by pipeline
+
+  // Readonly by priv, rw by pipeline, assigned based on csr instructions
   assign mie_next       = (prv_intern_if.addr == MIE_ADDR) ? mie_t'(rup_data) : mie;
   assign mtvec_next     = (prv_intern_if.addr == MTVEC_ADDR) ? mtvec_t'(rup_data) : mtvec;
   assign mscratch_next  = (prv_intern_if.addr == MSCRATCH_ADDR) ? mscratch_t'(rup_data) : mscratch;
-  assign mtohost_next   = (prv_intern_if.addr == MTOHOST_ADDR) ? mtohost_t'(rup_data) : mtohost;
-  assign mtime_next     = (prv_intern_if.addr == MTIME_ADDR) ? mtime_t'(rup_data) : mtime;
-  assign mtimeh_next    = (prv_intern_if.addr == MTIMEH_ADDR) ? mtimeh_t'(rup_data) : mtimeh;
-  assign mtimecmp_next  = (prv_intern_if.addr == MTIMECMP_ADDR) ? mtimecmp_t'(rup_data) : mtimecmp;
-
+  // Ensure legal MISA value - WARL
   always_comb begin
+    misaid_temp = misaid_t'(rup_data);
+      if(prv_intern_if.addr == MISA_ADDR && misaid_temp.base != 2'b00 
+          && (misaid_temp.extensions & MISAID_EXT_E) ^ (misaid_temp.extensions & MISAID_EXT_I) != 'b1
+            && misaid_temp.zero == 4'b0) begin
+        misaid_next = misaid_temp;
+      end else begin
+        misaid_next = misaid;
+      end
+  end
+
+  always_comb begin // register to send to pipeline based on the address
     valid_csr_addr = 1'b1;
     casez (prv_intern_if.addr)
       MVENDORID_ADDR  : prv_intern_if.rdata = mvendorid;
@@ -304,33 +262,10 @@ module priv_1_11_csr_rfile (
       MTVAL_ADDR      : prv_intern_if.rdata = mtval;
       MIP_ADDR        : prv_intern_if.rdata = mip; 
 
-      //machine protection and translation not present 
-      MBASE_ADDR      : prv_intern_if.rdata = '0;
-      MBOUND_ADDR     : prv_intern_if.rdata = '0;
-      MIBASE_ADDR     : prv_intern_if.rdata = '0;
-      MIBOUND_ADDR    : prv_intern_if.rdata = '0;
-      MDBASE_ADDR     : prv_intern_if.rdata = '0;
-      MDBOUND_ADDR    : prv_intern_if.rdata = '0;
-
-      //only machine mode
-      HTIMEW_ADDR     : prv_intern_if.rdata = '0;
-      HTIMEHW_ADDR    : prv_intern_if.rdata = '0;
-
-      //Timers
-      MTIMECMP_ADDR   : prv_intern_if.rdata = mtimecmp;
-      MTIME_ADDR      : prv_intern_if.rdata = mtime;
-      MTIMEH_ADDR     : prv_intern_if.rdata = mtimeh;
-
-      // Non-Standard mtohost/mfromhost
-      MTOHOST_ADDR    : prv_intern_if.rdata = mtohost;
-      MFROMHOST_ADDR  : prv_intern_if.rdata = mfromhost;
-
       // Performance counters
       MCYCLE_ADDR      : prv_intern_if.rdata = cycle;
-      MTIME_ADDR       : prv_intern_if.rdata = _time;
       MINSTRET_ADDR    : prv_intern_if.rdata = instret;
       MCYCLEH_ADDR     : prv_intern_if.rdata = cycleh;
-      MTIMEH_ADDR      : prv_intern_if.rdata = timeh;
       MINSTRETH_ADDR   : prv_intern_if.rdata = instreth;
 
       default : begin
@@ -347,7 +282,5 @@ module priv_1_11_csr_rfile (
   assign prv_intern_if.mcause    = mcause;
   assign prv_intern_if.mip       = mip;
 
-  assign prv_intern_if.xtvec[2'b11]   = mtvec;
-  assign prv_intern_if.xepc_r[2'b11]  = mepc;
 
 endmodule

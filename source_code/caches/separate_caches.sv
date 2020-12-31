@@ -32,7 +32,7 @@ module separate_caches (
   generic_bus_if.cpu dcache_mem_gen_bus_if,
   generic_bus_if.generic_bus icache_proc_gen_bus_if,
   generic_bus_if.generic_bus dcache_proc_gen_bus_if,
-  cache_control_if cc_if
+  cache_control_if.caches cc_if
 );
   generate
     case (DCACHE_TYPE)

@@ -1,5 +1,5 @@
 def configure(ctx):
-    rvb_srcs = ['caches', 'branch_predictors', 'bus_bridges', 'trackers', 'risc_mgmt', 'privs', 'pipelines', 'standard_core', 'ram']
+    rvb_srcs = ['caches', 'branch_predictors', 'bus_bridges', 'trackers', 'risc_mgmt', 'privs', 'pipelines', 'standard_core', 'ram', 'sparce']
     ctx.SFFUnits.add('RISCVBusiness_packages',
       src_dir = ['packages']
     )
@@ -18,6 +18,14 @@ def configure(ctx):
       tb_use = ['RISCVBusiness_packages'],
       tb = 'tb_RISCVBusiness_self_test',
       tb_includes = ['include']
+    )
+    ctx.SFFUnits.add('RISCVBusiness_self_test_plic',
+        includes = ['include'],
+        src_dir = rvb_srcs,
+        use = ['RISCVBusiness_packages'],
+        tb_use = ['RISCVBusiness_packages'],
+        tb = 'tb_RISCVBusiness_self_test_plic',
+        tb_includes = ['include']
     )
     ctx.SFFUnits.add('alu', 
       includes = ['include'],
@@ -76,3 +84,60 @@ def configure(ctx):
       tb_includes = ['include']
     )
 
+    ctx.SFFUnits.add('priv_1_11_block',
+    includes = ['include'],
+    src_dir = ['privs/priv_1_11'],
+    use = ['RISCVBusiness_packages'],
+    tb_use = ['RISCVBusiness_packages'],
+    tb = 'tb_priv_1_11_block',
+    tb_includes = ['include']
+    )
+    ctx.SFFUnits.add('priv_1_11_control',
+    includes = ['include'],
+    src_dir = ['privs/priv_1_11'],
+    use = ['RISCVBusiness_packages'],
+    tb_use = ['RISCVBusiness_packages'],
+    tb = 'tb_priv_1_11_control',
+    tb_includes = ['include']
+    )
+
+    ctx.SFFUnits.add('sparce_svc',
+      includes = ['include'],
+      src_dir = ['sparce'], 
+      use = ['RISCVBusiness_packages'],
+      tb_use = ['RISCVBusiness_packages'],
+      tb = 'tb_sparce_svc',
+      tb_includes = ['include']
+    )
+    ctx.SFFUnits.add('sparce_sprf',
+      includes = ['include'],
+      src_dir = ['sparce'], 
+      use = ['RISCVBusiness_packages'],
+      tb_use = ['RISCVBusiness_packages'],
+      tb = 'tb_sparce_sprf',
+      tb_includes = ['include']
+    )
+    ctx.SFFUnits.add('sparce_sasa_table',
+      includes = ['include'],
+      src_dir = ['sparce'], 
+      use = ['RISCVBusiness_packages'],
+      tb_use = ['RISCVBusiness_packages'],
+      tb = 'tb_sparce_sasa_table',
+      tb_includes = ['include']
+    )
+    ctx.SFFUnits.add('sparce_psru',
+      includes = ['include'],
+      src_dir = ['sparce'], 
+      use = ['RISCVBusiness_packages'],
+      tb_use = ['RISCVBusiness_packages'],
+      tb = 'tb_sparce_psru',
+      tb_includes = ['include']
+    )
+    ctx.SFFUnits.add('sparce_cfid',
+      includes = ['include'],
+      src_dir = ['sparce'], 
+      use = ['RISCVBusiness_packages'],
+      tb_use = ['RISCVBusiness_packages'],
+      tb = 'tb_sparce_cfid',
+      tb_includes = ['include']
+    )

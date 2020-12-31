@@ -31,6 +31,54 @@ module dmem_extender (
   output word_t  ext_out
 );
 
+/*
+  always_comb begin
+    casez (load_type) 
+      LB  : begin
+        casez (byte_en)
+          4'b0001   : ext_out = 32'(signed'(dmem_in[7:0]));
+          4'b0010   : ext_out = 32'(signed'(dmem_in[15:8]));
+          4'b0100   : ext_out = 32'(signed'(dmem_in[23:16]));
+          4'b1000   : ext_out = 32'(signed'(dmem_in[31:24]));
+          default   : ext_out = '0;
+        endcase
+      end
+
+      LBU : begin
+        casez (byte_en)
+          4'b0001   : ext_out = 32'({'0,dmem_in[7:0]});
+          4'b0010   : ext_out = 32'({'0,dmem_in[15:8]});
+          4'b0100   : ext_out = 32'({'0,dmem_in[23:16]});
+          4'b1000   : ext_out = 32'({'0,dmem_in[31:24]});
+          default   : ext_out = '0;
+        endcase
+      end
+
+      LH  : begin
+        casez (byte_en)
+          4'b0011   : ext_out = 32'(signed'(dmem_in[15:0]));
+          4'b1100   : ext_out = 32'(signed'(dmem_in[31:16]));
+          default   : ext_out = '0;
+        endcase
+      end
+
+      LHU : begin
+        casez (byte_en)
+          4'b0011   : ext_out = 32'({'0,dmem_in[15:0]});
+          4'b1100   : ext_out = 32'({'0,dmem_in[31:16]});
+          default   : ext_out = '0;
+        endcase
+      end
+
+      LW            : ext_out = dmem_in;
+
+      default       : ext_out = '0;
+    endcase
+  end
+*/
+
+
+
 
   always_comb begin
     casez (load_type) 

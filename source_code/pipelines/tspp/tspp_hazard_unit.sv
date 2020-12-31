@@ -31,7 +31,8 @@ module tspp_hazard_unit
 (
   tspp_hazard_unit_if.hazard_unit hazard_if,
   prv_pipeline_if.hazard  prv_pipe_if,
-  risc_mgmt_if.ts_hazard rm_if
+  risc_mgmt_if.ts_hazard rm_if,
+  sparce_pipeline_if.hazard sparce_if
 );
   import alu_types_pkg::*;
   import rv32i_types_pkg::*;
@@ -110,5 +111,10 @@ module tspp_hazard_unit
   assign prv_pipe_if.epc = (e_ex_stage | rm_if.exception) ? hazard_if.epc_e : hazard_if.epc_f;
   assign prv_pipe_if.badaddr = (hazard_if.mal_insn | hazard_if.fault_insn) ? hazard_if.badaddr_f : 
                               (rm_if.exception ? rm_if.mem_addr : hazard_if.badaddr_e);  
+
+  /*********************************************************
+  *** SparCE Module Logic
+  *********************************************************/
+  assign sparce_if.if_ex_enable = rm_if.if_ex_enable;
 
 endmodule

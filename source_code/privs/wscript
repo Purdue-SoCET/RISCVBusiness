@@ -2,7 +2,7 @@
 #encoding: utf-8
 
 def configure(cnf):
-  cnf.recurse(priv_1_7)
+  cnf.recurse(priv_1_11)
 
 def sim_source(cnf):
-  cnf.recurse(priv_1_7)
+  cnf.recurse(priv_1_11)

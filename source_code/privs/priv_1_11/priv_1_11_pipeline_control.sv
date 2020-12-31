@@ -22,36 +22,32 @@
 *   Description:  Control signals for the pipeline from the exception/IRQ
 *                 block 
 */
-
+// Code will mainly be used as pipeline control
 `include "priv_1_11_internal_if.vh"
 
 module priv_1_11_pipeline_control
 (
-  input logic [1:0] prv_intr, prv_ret,
-  priv_1_11_internal_if.pipe_ctrl prv_intern_if
+  priv_1_11_internal_if.pipe_ctrl prv_intern_if // interface for pipeline control
 );
+  import machine_mode_types_1_11_pkg::*;
   import rv32i_types_pkg::*;
-  logic interrupt_pending;
  
-  assign prv_intern_if.insert_pc = prv_intern_if.ret | (prv_intern_if.pipe_clear & prv_intern_if.intr);
- 
+  assign prv_intern_if.insert_pc = prv_intern_if.mret | (prv_intern_if.pipe_clear & prv_intern_if.intr); // insert the PC
+
+  
   always_comb begin
-    if(prv_intern_if.intr)
-      case(prv_intr)
-        2'b00:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b00];
-        2'b01:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b01];
-        2'b10:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b10];
-        2'b11:  prv_intern_if.priv_pc = prv_intern_if.xtvec[2'b11]; 
-      endcase
-    else if (prv_intern_if.ret)
-      case(prv_ret)
-        2'b00:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b00];
-        2'b01:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b01];
-        2'b10:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b10];
-        2'b11:  prv_intern_if.priv_pc = prv_intern_if.xepc_r[2'b11];
-      endcase
-    else
-      prv_intern_if.priv_pc = 32'b0;
-  end
+    prv_intern_if.priv_pc = 'Z;
+
+    if(prv_intern_if.intr) begin
+      if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) begin // vectored mode based on the interrupt source
+        prv_intern_if.priv_pc = (prv_intern_if.mtvec.base << 2) + (prv_intern_if.mcause.cause << 2);
+      end else
+        prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2;
+      
+    end else if (prv_intern_if.mret) 
+      prv_intern_if.priv_pc = prv_intern_if.mepc; // when leaving the ISR, restore to the original PC
+
+  end 
+
 
 endmodule
