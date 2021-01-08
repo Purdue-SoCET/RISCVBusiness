@@ -42,7 +42,7 @@ module tspp_fetch_stage (
   parameter RESET_PC = 32'h200;
   //parameter RESET_PC = 32'h80000000;
 
-  word_t  pc, pc4, npc, instr;
+  word_t  pc, pc4or2, npc, instr;
 
   //PC logic
 
@@ -54,14 +54,34 @@ module tspp_fetch_stage (
     end
   end
 
-  assign pc4 = pc + 4;
+  //RV32C Buffer 
+
+  logic rv32c_done;
+  word_t rv32c_pc, final_inst, imem_pc;
+  fetch_buffer BUFFER
+  (
+    .clk(CLK),
+    .n_rst(nRST),
+    .inst(igen_bus_if.rdata),
+    .inst_arrived(hazard_if.if_ex_flush == 0 & hazard_if.if_ex_stall == 0),
+    .reset_en(hazard_if.insert_priv_pc | sparce_if.skipping | hazard_if.npc_sel | predict_if.predict_taken),
+    .pc_update(hazard_if.pc_en),
+    .reset_pc(npc),
+    .nextpc(rv32c_pc),
+    .countread(imem_pc),
+    .result(final_inst),
+    .done(rv32c_done)
+  );
+
+
+  assign pc4or2 = (final_inst[1:0] != 2'b11) ? (pc + 2) : (pc + 4);
   assign predict_if.current_pc = pc;
   assign npc = hazard_if.insert_priv_pc ? hazard_if.priv_pc : ( sparce_if.skipping ? sparce_if.sparce_target : (hazard_if.npc_sel ? fetch_ex_if.brj_addr : 
-                (predict_if.predict_taken ? predict_if.target_addr : pc4)));
+                (predict_if.predict_taken ? predict_if.target_addr : rv32c_pc)));
 
   //Instruction Access logic
   assign hazard_if.i_mem_busy  = igen_bus_if.busy;
-  assign igen_bus_if.addr         = pc;
+  assign igen_bus_if.addr         = imem_pc;
   assign igen_bus_if.ren          = hazard_if.iren;
   assign igen_bus_if.wen          = 1'b0;
   assign igen_bus_if.byte_en      = 4'b1111;
@@ -76,8 +96,8 @@ module tspp_fetch_stage (
     else if (!hazard_if.if_ex_stall) begin
       fetch_ex_if.fetch_ex_reg.token       <= 1'b1;
       fetch_ex_if.fetch_ex_reg.pc          <= pc;
-      fetch_ex_if.fetch_ex_reg.pc4         <= pc4;
-      fetch_ex_if.fetch_ex_reg.instr       <= igen_bus_if.rdata;
+      fetch_ex_if.fetch_ex_reg.pc4         <= pc4or2;
+      fetch_ex_if.fetch_ex_reg.instr       <= final_inst;
       fetch_ex_if.fetch_ex_reg.prediction  <= predict_if.predict_taken;
     end
   end

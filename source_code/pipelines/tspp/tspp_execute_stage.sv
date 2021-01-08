@@ -114,8 +114,13 @@ module tspp_execute_stage(
     end
   endgenerate
 
-  assign cu_if.instr = fetch_ex_if.fetch_ex_reg.instr;
-  assign rm_if.insn  = fetch_ex_if.fetch_ex_reg.instr;
+  //RV32C Decompressor
+  logic [31:0] c_inst;
+  decompressor DECOMPRESSOR (.inst16(fetch_ex_if.fetch_ex_reg.instr[15:0]), .inst32(c_inst));
+
+  assign cu_if.instr = (fetch_ex_if.fetch_ex_reg.instr[1:0] != 2'b11) ? c_inst : fetch_ex_if.fetch_ex_reg.instr; // Editted by RV32C
+  assign rm_if.insn  = (fetch_ex_if.fetch_ex_reg.instr[1:0] != 2'b11) ? c_inst : fetch_ex_if.fetch_ex_reg.instr; // Editted by RV32C
+
 
   /*******************************************************
   *** Sign Extensions 
