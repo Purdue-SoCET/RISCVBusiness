@@ -64,7 +64,7 @@ module fetch_buffer
     	    end else begin
 		combine = 1;
 		nextbuffer = inst[31:16];
-                nextpc = pc + 4;
+//              nextpc = pc + 4;
 		finished = 1'b0;
 	    end
 	end else if (reset_en) begin

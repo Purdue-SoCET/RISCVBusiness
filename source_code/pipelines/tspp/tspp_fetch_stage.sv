@@ -93,7 +93,7 @@ module tspp_fetch_stage (
       fetch_ex_if.fetch_ex_reg <= '0;
     else if (hazard_if.if_ex_flush)
       fetch_ex_if.fetch_ex_reg <= '0;
-    else if (!hazard_if.if_ex_stall) begin
+    else if (!hazard_if.if_ex_stall & rv32c_done) begin
       fetch_ex_if.fetch_ex_reg.token       <= 1'b1;
       fetch_ex_if.fetch_ex_reg.pc          <= pc;
       fetch_ex_if.fetch_ex_reg.pc4         <= pc4or2;
