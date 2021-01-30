@@ -26,11 +26,13 @@
 `include "control_unit_if.vh"
 `include "rv32i_reg_file_if.vh"
 `include "risc_mgmt_if.vh"
+`include "decompressor_if.vh"
 
 module control_unit 
 (
   control_unit_if.control_unit  cu_if,
   rv32i_reg_file_if.cu          rf_if,
+  decompressor_if.cu          dcpr_if,
   input logic [4:0] rmgmt_rsel_s_0, rmgmt_rsel_s_1, rmgmt_rsel_d,
   input logic rmgmt_req_reg_r, rmgmt_req_reg_w 
 );
@@ -53,9 +55,15 @@ module control_unit
   assign instr_uj = ujtype_t'(cu_if.instr);
 
   assign cu_if.opcode = opcode_t'(cu_if.instr[6:0]);
-  assign rf_if.rs1  = rmgmt_req_reg_r ? rmgmt_rsel_s_0 : cu_if.instr[19:15];
-  assign rf_if.rs2  = rmgmt_req_reg_r ? rmgmt_rsel_s_1 : cu_if.instr[24:20];
-  assign rf_if.rd   = rmgmt_req_reg_w ? rmgmt_rsel_d   : cu_if.instr[11:7]; 
+  assign rf_if.rs1  = rmgmt_req_reg_r ? rmgmt_rsel_s_0 : 
+		      (dcpr_if.edit_rs1 & dcpr_if.c_ena) ? {2'b01, cu_if.instr[17:15]}: 
+		      cu_if.instr[19:15];
+  assign rf_if.rs2  = rmgmt_req_reg_r ? rmgmt_rsel_s_1 : 
+		      (dcpr_if.edit_rs2 & dcpr_if.c_ena) ? {2'b01, cu_if.instr[22:20]}:
+		      cu_if.instr[24:20];
+  assign rf_if.rd   = rmgmt_req_reg_w ? rmgmt_rsel_d   : 
+		      (dcpr_if.edit_rd & dcpr_if.c_ena) ? {2'b01, cu_if.instr[9:7]}:
+		      cu_if.instr[11:7]; 
   assign cu_if.shamt = cu_if.instr[24:20];
  
   // Assign the immediate values
