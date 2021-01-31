@@ -596,6 +596,116 @@ test_ ## testnum: \
 1:
 
 #-----------------------------------------------------------------------
+# Tests compressed instructions (RV32C)
+#-----------------------------------------------------------------------
+#define TEST_RV32C_R_OP( testnum, inst, result, predefined_val, val1) \
+    TEST_CASE( testnum, x13, result, \
+      li  x11, val1; \
+      li  x13, predefined_val; \
+      inst x13, x11; \
+    )
+
+#define TEST_RV32C_RR_SRC12_EQ_DEST( testnum, inst, result, val1 ) \
+    TEST_CASE( testnum, x11, result, \
+      li  x11, val1; \
+      inst x11, x11; \
+    )
+
+#define TEST_RV32C_RR_DEST_BYPASS( testnum, nop_cycles, inst, result, predefined_val, val1) \
+    TEST_CASE( testnum, x16, result, \
+      li  x14, 0; \
+1:    li  x11, val1; \
+      li  x13, predefined_val; \
+      inst x13, x11; \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      addi  x16, x13, 0; \
+      addi  x14, x14, 1; \
+      li  x15, 2; \
+      bne x14, x15, 1b \
+    )
+
+#define TEST_RV32C_RR_SRC12_BYPASS( testnum, src1_nops, src2_nops, inst, result, predefined_val, val1) \
+    TEST_CASE( testnum, x13, result, \
+      li  x14, 0; \
+1:    li  x11, val1; \
+      TEST_INSERT_NOPS_ ## src1_nops \
+      li  x13, predefined_val; \
+      TEST_INSERT_NOPS_ ## src2_nops \
+      inst x13, x11; \
+      addi  x14, x14, 1; \
+      li  x15, 2; \
+      bne x14, x15, 1b \
+    )
+
+#define TEST_RV32C_RR_SRC21_BYPASS( testnum, src1_nops, src2_nops, inst, result, predefined_val, val1) \
+    TEST_CASE( testnum, x13, result, \
+      li  x14, 0; \
+1:    li  x13, predefined_val; \
+      TEST_INSERT_NOPS_ ## src1_nops \
+      li  x11, val1; \
+      TEST_INSERT_NOPS_ ## src2_nops \
+      inst x13, x11; \
+      addi  x14, x14, 1; \
+      li  x15, 2; \
+      bne x14, x15, 1b \
+    )
+
+#define TEST_RV32C_BR2_OP_TAKEN( testnum, inst, val1) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x12, val1; \
+    inst x12, 2f; \
+    bne x0, TESTNUM, fail; \
+1:  bne x0, TESTNUM, 3f; \
+2:  inst x12, 1b; \
+    bne x0, TESTNUM, fail; \
+3:
+
+#define TEST_RV32C_BR2_OP_NOTTAKEN( testnum, inst, val1) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x9, val1; \
+    inst x9, 1f; \
+    bne x0, TESTNUM, 2f; \
+1:  bne x0, TESTNUM, fail; \
+2:  inst x9, 1b; \
+3:
+
+#define TEST_RV32C_BR2_SRC_BYPASS( testnum, src1_nops, inst, val1) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x6, 0; \
+1:  li  x14, val1; \
+    TEST_INSERT_NOPS_ ## src1_nops \
+    inst x14, fail; \
+    addi  x6, x6, 1; \
+    li  x5, 2; \
+    bne x6, x5, 1b \
+
+#define TEST_RV32C_JALR_SRC1_BYPASS( testnum, nop_cycles, inst ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x6, 2f; \
+    TEST_INSERT_NOPS_ ## nop_cycles \
+    inst x6; \
+    bne x0, TESTNUM, fail; \
+2:  addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#define TEST_RV32C_JAL_SRC1_BYPASS( testnum, nop_cycles, inst ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  TEST_INSERT_NOPS_ ## nop_cycles \
+    inst 2f; \
+    bne x0, TESTNUM, fail; \
+2:  addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#-----------------------------------------------------------------------
 # Pass and fail code (assumes test num is in TESTNUM)
 #-----------------------------------------------------------------------
 
