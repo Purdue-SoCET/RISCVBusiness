@@ -106,7 +106,7 @@ module decompressor
         if (c_srai) imm_i = {7'b0100000, imm_i_c[4:0]};
  	else if (c_srli | c_slli) imm_i = {7'b0000000, imm_i_c[4:0]};
 	else if (c_addi16sp) imm_i = {{2{dcpr_if.inst16[12]}}, {dcpr_if.inst16[12], dcpr_if.inst16[4:3], dcpr_if.inst16[5], dcpr_if.inst16[2], dcpr_if.inst16[6]}, 4'd0};
-	else if (c_addi14spn) imm_i = {{2{dcpr_if.inst16[12]}}, {dcpr_if.inst16[10:7], dcpr_if.inst16[12], dcpr_if.inst16[11], dcpr_if.inst16[5], dcpr_if.inst16[6]}, 2'd0};
+	else if (c_addi14spn) imm_i = {2'd0, {dcpr_if.inst16[10:7], dcpr_if.inst16[12], dcpr_if.inst16[11], dcpr_if.inst16[5], dcpr_if.inst16[6]}, 2'd0};
         else imm_i = {{6{imm_i_c[5]}}, imm_i_c};
     end
 

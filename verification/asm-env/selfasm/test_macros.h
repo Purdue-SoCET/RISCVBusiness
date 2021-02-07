@@ -705,6 +705,117 @@ test_ ## testnum: \
     li  x5, 2; \
     bne x4, x5, 1b \
 
+#define SEXT_IMM_5(x) ((x) | (-(((x) >> 5) & 1) << 5))
+
+#define TEST_RV32C_IMM_OP( testnum, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x10, result, \
+      li  x10, val1; \
+      inst x10, SEXT_IMM_5(imm); \
+    )
+
+#define TEST_RV32C_IMM_DEST_BYPASS( testnum, nop_cycles, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x6, result, \
+      li  x4, 0; \
+1:    li  x12, val1; \
+      inst x12, SEXT_IMM_5(imm); \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      addi  x6, x12, 0; \
+      addi  x4, x4, 1; \
+      li  x5, 2; \
+      bne x4, x5, 1b \
+    )
+
+#define TEST_RV32C_IMM_SRC1_BYPASS( testnum, nop_cycles, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x14, result, \
+      li  x4, 0; \
+1:    li  x14, val1; \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      inst x14, SEXT_IMM_5(imm); \
+      addi  x4, x4, 1; \
+      li  x5, 2; \
+      bne x4, x5, 1b \
+    )
+
+#define SEXT_IMM_9(x) ((x) | (-(((x) >> 9) & 1) << 9))
+
+#define TEST_RV32C_IMM_OP_SP( testnum, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x2, result, \
+      li  x2, val1; \
+      inst x2, SEXT_IMM_9(imm); \
+    )
+
+#define TEST_RV32C_IMM_DEST_BYPASS_SP( testnum, nop_cycles, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x6, result, \
+      li  x4, 0; \
+1:    li  x2, val1; \
+      inst x2, SEXT_IMM_9(imm); \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      addi  x6, x2, 0; \
+      addi  x4, x4, 1; \
+      li  x5, 2; \
+      bne x4, x5, 1b \
+    )
+
+#define TEST_RV32C_IMM_SRC1_BYPASS_SP( testnum, nop_cycles, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x2, result, \
+      li  x4, 0; \
+1:    li  x2, val1; \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      inst x2, SEXT_IMM_9(imm); \
+      addi  x4, x4, 1; \
+      li  x5, 2; \
+      bne x4, x5, 1b \
+    )
+
+#define ZERO_IMM_9(x) ((x) | (0 << 10))
+
+#define TEST_RV32C_IMM_OP_SP_REG( testnum, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x10, result, \
+      li  x2, val1; \
+      inst x10, x2, ZERO_IMM_9(imm); \
+    )
+
+#define TEST_RV32C_IMM_DEST_BYPASS_SP_REG( testnum, nop_cycles, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x6, result, \
+      li  x4, 0; \
+1:    li  x2, val1; \
+      inst x11, x2, ZERO_IMM_9(imm); \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      addi  x6, x11, 0; \
+      addi  x4, x4, 1; \
+      li  x5, 2; \
+      bne x4, x5, 1b \
+    )
+
+#define TEST_RV32C_IMM_SRC1_BYPASS_SP_REG( testnum, nop_cycles, inst, result, val1, imm ) \
+    TEST_CASE( testnum, x12, result, \
+      li  x4, 0; \
+1:    li  x2, val1; \
+      TEST_INSERT_NOPS_ ## nop_cycles \
+      inst x12, x2, ZERO_IMM_9(imm); \
+      addi  x4, x4, 1; \
+      li  x5, 2; \
+      bne x4, x5, 1b \
+    )
+
+#define TEST_RV32C_LI( testnum, inst, result, imm, shamt ) \
+    TEST_CASE( testnum, x4, result, \
+      inst x4, SEXT_IMM_5(imm); \
+      sra x4, x4, shamt; \
+    )
+
+#define TEST_RV32C_LUI( testnum, inst, result, imm, shamt ) \
+    TEST_CASE( testnum, x4, result, \
+      inst x4, imm; \
+      sra x4, x4, shamt; \
+    )
+
+#define TEST_RV32C_LD_OP( testnum, inst, result, offset, base ) \
+    TEST_CASE( testnum, x13, result, \
+      la  x11, base; \
+      inst x13, offset(x11); \
+    )
+
 #-----------------------------------------------------------------------
 # Pass and fail code (assumes test num is in TESTNUM)
 #-----------------------------------------------------------------------
