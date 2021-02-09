@@ -1,4 +1,7 @@
 module fetch_buffer
+# (
+    parameter RESET_PC = 32'h200
+)
 (
     input logic clk,
     input logic n_rst,
@@ -24,8 +27,8 @@ module fetch_buffer
 	    buffer <= 16'd0;
 	    combine_reg <= 1'b0;
 	    loadbuffer_reg <= 1'b0;
-	    countread <= 32'h200;
-	    pc <= 32'h200;
+	    countread <= RESET_PC;
+	    pc <= RESET_PC;
 	    final_inst_store <= 32'd0;
 	    reset_next <= 1'b0;
 	end else if (reset_en) begin

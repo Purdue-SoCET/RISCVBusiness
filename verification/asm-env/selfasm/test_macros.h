@@ -816,6 +816,146 @@ test_ ## testnum: \
       inst x13, offset(x11); \
     )
 
+#define TEST_RV32C_LD_DEST_BYPASS( testnum, nop_cycles, inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x11, base; \
+    inst x13, offset(x11); \
+    TEST_INSERT_NOPS_ ## nop_cycles \
+    addi  x6, x13, 0; \
+    li  x29, result; \
+    bne x6, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b; \
+
+#define TEST_RV32C_LD_SRC1_BYPASS( testnum, nop_cycles, inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x11, base; \
+    TEST_INSERT_NOPS_ ## nop_cycles \
+    inst x13, offset(x11); \
+    li  x29, result; \
+    bne x13, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#define TEST_RV32C_ST_OP( testnum, load_inst, store_inst, result, offset, base ) \
+    TEST_CASE( testnum, x13, result, \
+      la  x11, base; \
+      li  x12, result; \
+      store_inst x12, offset(x11); \
+      load_inst x13, offset(x11); \
+    )
+
+#define TEST_RV32C_ST_SRC12_BYPASS( testnum, src1_nops, src2_nops, load_inst, store_inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  li  x11, result; \
+    TEST_INSERT_NOPS_ ## src1_nops \
+    la  x12, base; \
+    TEST_INSERT_NOPS_ ## src2_nops \
+    store_inst x11, offset(x12); \
+    load_inst x13, offset(x12); \
+    li  x29, result; \
+    bne x13, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#define TEST_RV32C_ST_SRC21_BYPASS( testnum, src1_nops, src2_nops, load_inst, store_inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x12, base; \
+    TEST_INSERT_NOPS_ ## src1_nops \
+    li  x11, result; \
+    TEST_INSERT_NOPS_ ## src2_nops \
+    store_inst x11, offset(x12); \
+    load_inst x13, offset(x12); \
+    li  x29, result; \
+    bne x13, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#define TEST_RV32C_LDSP_OP( testnum, inst, result, offset, base ) \
+    TEST_CASE( testnum, x13, result, \
+      la  x2, base; \
+      inst x13, offset(x2); \
+    )
+
+#define TEST_RV32C_LDSP_DEST_BYPASS( testnum, nop_cycles, inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x2, base; \
+    inst x13, offset(x2); \
+    TEST_INSERT_NOPS_ ## nop_cycles \
+    addi  x6, x13, 0; \
+    li  x29, result; \
+    bne x6, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b; \
+
+#define TEST_RV32C_LDSP_SRC1_BYPASS( testnum, nop_cycles, inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x2, base; \
+    TEST_INSERT_NOPS_ ## nop_cycles \
+    inst x13, offset(x2); \
+    li  x29, result; \
+    bne x13, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#define TEST_RV32C_STSP_OP( testnum, load_inst, store_inst, result, offset, base ) \
+    TEST_CASE( testnum, x13, result, \
+      la  x2, base; \
+      li  x12, result; \
+      store_inst x12, offset(x2); \
+      load_inst x13, offset(x2); \
+    )
+
+#define TEST_RV32C_STSP_SRC12_BYPASS( testnum, src1_nops, src2_nops, load_inst, store_inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  li  x11, result; \
+    TEST_INSERT_NOPS_ ## src1_nops \
+    la  x2, base; \
+    TEST_INSERT_NOPS_ ## src2_nops \
+    store_inst x11, offset(x2); \
+    load_inst x13, offset(x2); \
+    li  x29, result; \
+    bne x13, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
+#define TEST_RV32C_STSP_SRC21_BYPASS( testnum, src1_nops, src2_nops, load_inst, store_inst, result, offset, base ) \
+test_ ## testnum: \
+    li  TESTNUM, testnum; \
+    li  x4, 0; \
+1:  la  x2, base; \
+    TEST_INSERT_NOPS_ ## src1_nops \
+    li  x11, result; \
+    TEST_INSERT_NOPS_ ## src2_nops \
+    store_inst x11, offset(x2); \
+    load_inst x13, offset(x2); \
+    li  x29, result; \
+    bne x13, x29, fail; \
+    addi  x4, x4, 1; \
+    li  x5, 2; \
+    bne x4, x5, 1b \
+
 #-----------------------------------------------------------------------
 # Pass and fail code (assumes test num is in TESTNUM)
 #-----------------------------------------------------------------------

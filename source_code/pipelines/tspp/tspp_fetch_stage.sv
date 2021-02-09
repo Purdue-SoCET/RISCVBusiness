@@ -39,8 +39,8 @@ module tspp_fetch_stage (
 );
   import rv32i_types_pkg::*;
 
-  parameter RESET_PC = 32'h200;
-  //parameter RESET_PC = 32'h80000000;
+  //parameter RESET_PC = 32'h200;
+  parameter RESET_PC = 32'h80000000;
 
   word_t  pc, pc4or2, npc, instr;
 
@@ -58,7 +58,7 @@ module tspp_fetch_stage (
 
   logic rv32c_done;
   word_t rv32c_pc, final_inst, imem_pc;
-  fetch_buffer BUFFER
+  fetch_buffer #(RESET_PC) BUFFER
   (
     .clk(CLK),
     .n_rst(nRST),
