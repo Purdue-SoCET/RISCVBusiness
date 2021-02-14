@@ -2,7 +2,7 @@
 `define DECOMPRESSOR_IF_VH
 
 interface decompressor_if();
-
+  import rv32i_types_pkg::word_t;
   word_t  inst32;
   logic [15:0] inst16;
   logic edit_rs1, edit_rs2, edit_rd, c_ena;
