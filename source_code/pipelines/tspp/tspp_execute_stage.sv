@@ -33,8 +33,7 @@
 `include "prv_pipeline_if.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
-`include "decompressor_if.vh"
-
+`include "rv32c_if.vh"
 
 module tspp_execute_stage(
   input logic CLK, nRST,
@@ -46,7 +45,8 @@ module tspp_execute_stage(
   output logic halt,
   risc_mgmt_if.ts_execute rm_if,
   cache_control_if.pipeline cc_if,
-  sparce_pipeline_if.pipe_execute sparce_if
+  sparce_pipeline_if.pipe_execute sparce_if,
+  rv32c_if.execute rv32cif
 );
 
   import rv32i_types_pkg::*;
@@ -57,13 +57,11 @@ module tspp_execute_stage(
   alu_if            alu_if();
   jump_calc_if      jump_if();
   branch_res_if     branch_if(); 
-  decompressor_if   dcpr_if();
  
   // Module instantiations
   control_unit cu (
     .cu_if(cu_if),
     .rf_if(rf_if),
-    .dcpr_if(dcpr_if),
     .rmgmt_rsel_s_0(rm_if.rsel_s_0),
     .rmgmt_rsel_s_1(rm_if.rsel_s_1),
     .rmgmt_rsel_d(rm_if.rsel_d),
@@ -117,12 +115,10 @@ module tspp_execute_stage(
     end
   endgenerate
 
-  //RV32C Decompressor
-  decompressor DECOMPRESSOR (dcpr_if);
-  assign dcpr_if.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
-
-  assign cu_if.instr = dcpr_if.c_ena ? dcpr_if.inst32 : fetch_ex_if.fetch_ex_reg.instr; // Editted by RV32C
-  assign rm_if.insn  = dcpr_if.c_ena ? dcpr_if.inst32 : fetch_ex_if.fetch_ex_reg.instr; // Editted by RV32C
+  //RV32C 
+  assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
+  assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr; 
+  assign rm_if.insn  = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr; 
 
 
   /*******************************************************

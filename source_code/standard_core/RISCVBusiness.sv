@@ -31,6 +31,7 @@
 `include "tspp_fetch_execute_if.vh"
 `include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
+`include "rv32c_if.vh"
 
 module RISCVBusiness (
   input logic CLK, nRST,
@@ -54,6 +55,7 @@ module RISCVBusiness (
   prv_pipeline_if prv_pipe_if();
   cache_control_if cc_if();
   sparce_pipeline_if sparce_if();
+  rv32c_if rv32cif(); 
 
   //interface instantiations
   tspp_fetch_execute_if      fetch_ex_if();
@@ -76,6 +78,7 @@ module RISCVBusiness (
     .sparce_if(sparce_if)
   );
 */
+
   tspp_fetch_stage fetch_stage_i (
     .CLK(CLK),
     .nRST(nRST),
@@ -83,7 +86,8 @@ module RISCVBusiness (
     .hazard_if(hazard_if),
     .predict_if(predict_if),
     .igen_bus_if(tspp_icache_gen_bus_if),
-    .sparce_if(sparce_if)
+    .sparce_if(sparce_if),
+    .rv32cif(rv32cif)
   );
 
   tspp_execute_stage execute_stage_i (
@@ -97,7 +101,8 @@ module RISCVBusiness (
     .halt(halt),
     .rm_if(rm_if),
     .cc_if(cc_if),
-    .sparce_if(sparce_if)
+    .sparce_if(sparce_if),
+    .rv32cif(rv32cif)
   );
 
   tspp_hazard_unit hazard_unit_i (
@@ -161,6 +166,12 @@ module RISCVBusiness (
     .CLK(CLK),
     .nRST(nRST),
     .sparce_if(sparce_if)
+  );
+
+  rv32c_wrapper rv32c (
+    .CLK(CLK),
+    .nRST(nRST),
+    .rv32cif(rv32cif)
   );
 
   // Instantiate the chosen bus interface
