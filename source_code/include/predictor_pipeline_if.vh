@@ -32,6 +32,10 @@ interface predictor_pipeline_if;
   logic update_predictor;
   logic predict_taken, prediction, branch_result;
 
+  word_t pht_index;
+  logic pht_tnt;
+  logic gbh_result;
+
   modport predictor(
     input current_pc, update_predictor, prediction, branch_result, update_addr,
     output predict_taken, target_addr
@@ -45,6 +49,11 @@ interface predictor_pipeline_if;
   modport access(
     input predict_taken, target_addr,
     output current_pc
+  );
+
+  modport pht_prediction(
+    input pht_index,gbh_result,
+    output pht_tnt
   );
 
 endinterface
