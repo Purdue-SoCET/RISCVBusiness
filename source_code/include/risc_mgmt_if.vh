@@ -69,12 +69,15 @@ interface risc_mgmt_if ();
   logic exception;
   logic [`NUM_EXTENSIONS-1:0] ex_cause;
 
+  // to stall rv32c
+  logic [`NUM_EXTENSIONS-1:0] risc_mgmt_start;
+
   modport ts_rmgmt (
     output req_reg_r, req_reg_w, rsel_s_0, rsel_s_1, 
       rsel_d, reg_w, reg_wdata, req_br_j, branch_jump, 
       br_j_addr, req_mem, mem_addr, mem_store, mem_ren, 
       mem_wen, mem_byte_en, execute_stall, memory_stall, 
-      active_insn, exception, ex_cause, ex_token,
+      active_insn, exception, ex_cause, ex_token, risc_mgmt_start,
     input rdata_s_0, rdata_s_1, mem_load, mem_busy, insn, pc, if_ex_enable
   );
 
@@ -92,7 +95,7 @@ interface risc_mgmt_if ();
     input req_reg_r, req_reg_w, rsel_s_0, rsel_s_1,
       rsel_d, reg_w, reg_wdata, req_br_j, branch_jump,
       br_j_addr, req_mem, mem_addr, mem_store, mem_ren,
-      mem_wen, mem_byte_en, ex_token 
+      mem_wen, mem_byte_en, ex_token, risc_mgmt_start 
   );
 
   modport ts_hazard (

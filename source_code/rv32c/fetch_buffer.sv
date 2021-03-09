@@ -20,8 +20,8 @@ module fetch_buffer
     end
 
 
-    assign fb_if.done_earlier = inst_arrived_delay & waitnext_reg & !fb_if.dmem_busy;
-    //assign fb_if.done_earlier_send = inst_arrived_delay & waitnext_reg;
+    assign fb_if.done_earlier = inst_arrived_delay & waitnext_reg & !fb_if.ex_busy;
+    //assign fb_if.done_earlier = 0;
 
     // Buffer and PC logic
     always_ff @ (posedge clk, negedge n_rst) begin

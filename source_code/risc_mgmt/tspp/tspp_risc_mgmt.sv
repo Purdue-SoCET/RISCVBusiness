@@ -139,6 +139,7 @@ module tspp_risc_mgmt (
   end
 
   assign e_start = {N_EXTENSIONS{ex_start}} & tokens;
+  assign rm_if.risc_mgmt_start = e_start; // to stall rv32c load buffer
 
   /* Registerfile / Forwarding Logic
   *  Forwarding not present in 2 stage pipeline

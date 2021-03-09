@@ -118,7 +118,7 @@ module tspp_execute_stage(
   //RV32C 
   assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
   assign rv32cif.halt = cu_if.halt;
-  assign rv32cif.dmem_busy = cu_if.dren | cu_if.dwen;
+  assign rv32cif.ex_busy = cu_if.dren | cu_if.dwen | rm_if.risc_mgmt_start;
   assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr; 
   assign rm_if.insn  = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr; 
 
