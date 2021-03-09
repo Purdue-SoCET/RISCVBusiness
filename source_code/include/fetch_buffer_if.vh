@@ -4,6 +4,7 @@
 interface fetch_buffer_if();
   import rv32i_types_pkg::word_t;
 
+
   word_t inst, reset_pc, nextpc, countread, result;
   logic reset_en, inst_arrived, pc_update, done, done_earlier, done_earlier_send, dmem_busy;
   

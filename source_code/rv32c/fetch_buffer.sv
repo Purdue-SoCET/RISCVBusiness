@@ -19,6 +19,7 @@ module fetch_buffer
 	else inst_arrived_delay <= fb_if.inst_arrived;
     end
 
+
     assign fb_if.done_earlier = inst_arrived_delay & waitnext_reg & !fb_if.dmem_busy;
     //assign fb_if.done_earlier_send = inst_arrived_delay & waitnext_reg;
 

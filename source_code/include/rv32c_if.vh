@@ -9,6 +9,7 @@ interface rv32c_if();
   logic [15:0] inst16;
   logic reset_en, inst_arrived, pc_update, done, c_ena, rv32c_ena, done_earlier, done_earlier_send, halt, dmem_busy;
   
+
   modport rv32c (
     input inst, reset_en, reset_pc, inst_arrived, pc_update, inst16, halt, dmem_busy,
     output done, nextpc, countread, result, inst32, c_ena, rv32c_ena, done_earlier, done_earlier_send

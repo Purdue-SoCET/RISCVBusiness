@@ -100,7 +100,7 @@ module tspp_execute_stage(
   assign rm_if.rdata_s_1 = rf_if.rs2_data;
 
 
-  /*******************************************************
+  /********************************************************
   *** Choose the Endianness Coming into the processor
   *******************************************************/
   generate

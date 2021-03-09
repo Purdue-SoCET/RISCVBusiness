@@ -8,6 +8,7 @@ module rv32c_disabled
   rv32c_if.rv32c rv32cif 
  );
 
+
   assign rv32cif.done = '0;
   assign rv32cif.done_earlier = '0;
   assign rv32cif.nextpc = '0;
