@@ -70,15 +70,15 @@ module tspp_fetch_stage (
 
   //Instruction Access logic
   assign hazard_if.i_mem_busy  = igen_bus_if.busy;
-  assign igen_bus_if.addr         = rv32cif.rv32c_ena ? rv32cif.countread : pc;
+  assign igen_bus_if.addr         = rv32cif.rv32c_ena ? rv32cif.imem_pc : pc;
   assign igen_bus_if.ren          = hazard_if.iren & !rv32cif.done_earlier;
   assign igen_bus_if.wen          = 1'b0;
   assign igen_bus_if.byte_en      = 4'b1111;
   assign igen_bus_if.wdata        = '0;
   
   //Fetch Execute Pipeline Signals
-  word_t inst;
-  assign inst = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
+  word_t instr_to_ex;
+  assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
   always_ff @ (posedge CLK, negedge nRST) begin
     if (!nRST)
       fetch_ex_if.fetch_ex_reg <= '0;
@@ -88,7 +88,7 @@ module tspp_fetch_stage (
       fetch_ex_if.fetch_ex_reg.token       <= 1'b1;
       fetch_ex_if.fetch_ex_reg.pc          <= pc;
       fetch_ex_if.fetch_ex_reg.pc4         <= pc4or2;
-      fetch_ex_if.fetch_ex_reg.instr       <= inst;
+      fetch_ex_if.fetch_ex_reg.instr       <= instr_to_ex;
       fetch_ex_if.fetch_ex_reg.prediction  <= predict_if.predict_taken;
     end 
   end
