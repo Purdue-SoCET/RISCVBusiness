@@ -9,6 +9,7 @@ module rv32c_disabled
  );
 
   assign rv32cif.done = '0;
+  assign rv32cif.done_earlier = '0;
   assign rv32cif.nextpc = '0;
   assign rv32cif.countread = '0;
   assign rv32cif.result = '0;

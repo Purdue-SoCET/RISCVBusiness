@@ -20,7 +20,7 @@ microarch_params:
   sparce_enabled : "enabled"
 
   # RV32C
-  rv32c_enabled : "disabled"
+  rv32c_enabled : "enabled"
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:

@@ -21,7 +21,10 @@ module rv32c_enabled
   assign fb_if.reset_pc = rv32cif.reset_pc;
   assign fb_if.inst_arrived = rv32cif.inst_arrived;
   assign fb_if.pc_update = rv32cif.pc_update;
+  assign fb_if.dmem_busy = rv32cif.dmem_busy;
   assign rv32cif.done = fb_if.done;
+  assign rv32cif.done_earlier = fb_if.done_earlier & (rv32cif.halt == 0);
+  //assign rv32cif.done_earlier_send = fb_if.done_earlier_send;
   assign rv32cif.nextpc = fb_if.nextpc;
   assign rv32cif.countread = fb_if.countread;
   assign rv32cif.result = fb_if.result;

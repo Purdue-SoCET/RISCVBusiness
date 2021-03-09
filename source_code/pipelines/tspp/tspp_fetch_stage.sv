@@ -51,7 +51,7 @@ module tspp_fetch_stage (
   always_ff @ (posedge CLK, negedge nRST) begin
     if(~nRST) begin
       pc <= RESET_PC;
-    end else if (hazard_if.pc_en) begin
+    end else if (hazard_if.pc_en | rv32cif.done_earlier) begin
       pc <= npc;
     end
   end
@@ -71,7 +71,7 @@ module tspp_fetch_stage (
   //Instruction Access logic
   assign hazard_if.i_mem_busy  = igen_bus_if.busy;
   assign igen_bus_if.addr         = rv32cif.rv32c_ena ? rv32cif.countread : pc;
-  assign igen_bus_if.ren          = hazard_if.iren;
+  assign igen_bus_if.ren          = hazard_if.iren & !rv32cif.done_earlier;
   assign igen_bus_if.wen          = 1'b0;
   assign igen_bus_if.byte_en      = 4'b1111;
   assign igen_bus_if.wdata        = '0;
@@ -84,7 +84,7 @@ module tspp_fetch_stage (
       fetch_ex_if.fetch_ex_reg <= '0;
     else if (hazard_if.if_ex_flush)
       fetch_ex_if.fetch_ex_reg <= '0;
-    else if ((rv32cif.done & rv32cif.rv32c_ena) | (!hazard_if.if_ex_stall & !rv32cif.rv32c_ena)) begin
+    else if (((rv32cif.done | rv32cif.done_earlier) & rv32cif.rv32c_ena) | (!hazard_if.if_ex_stall & !rv32cif.rv32c_ena)) begin
       fetch_ex_if.fetch_ex_reg.token       <= 1'b1;
       fetch_ex_if.fetch_ex_reg.pc          <= pc;
       fetch_ex_if.fetch_ex_reg.pc4         <= pc4or2;

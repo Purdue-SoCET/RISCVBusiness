@@ -12,6 +12,15 @@ module fetch_buffer
     logic combine, combine_reg, waitnext, waitnext_reg;
     logic [31:0] final_inst_store, final_inst;
     logic reset_en_1, reset_next, finished;
+    logic inst_arrived_delay;
+
+    always_ff @ (posedge clk, negedge n_rst) begin
+        if (n_rst == 0) inst_arrived_delay <= 1'b0;
+	else inst_arrived_delay <= fb_if.inst_arrived;
+    end
+
+    assign fb_if.done_earlier = inst_arrived_delay & waitnext_reg & !fb_if.dmem_busy;
+    //assign fb_if.done_earlier_send = inst_arrived_delay & waitnext_reg;
 
     // Buffer and PC logic
     always_ff @ (posedge clk, negedge n_rst) begin
@@ -31,7 +40,7 @@ module fetch_buffer
 	    pc <= fb_if.nextpc;
 	    final_inst_store <= final_inst;
 	    reset_next <= 1'b1;
-	end else if (fb_if.inst_arrived) begin
+	end else if (fb_if.inst_arrived | fb_if.done_earlier) begin
 	    buffer <= nextbuffer;
 	    combine_reg <= combine;
 	    waitnext_reg <= waitnext;
@@ -79,8 +88,8 @@ module fetch_buffer
 		combine = 1;
 		nextcountread = fb_if.countread + 4;
 	    end
-        end else if (fb_if.inst_arrived & waitnext_reg) begin
-            final_inst = {16'b0, fb_if.inst[31:16]};
+        end else if (fb_if.done_earlier | (fb_if.inst_arrived & waitnext_reg)) begin
+            final_inst = {16'b0, buffer};
 	    finished = 1'b1;
 	    fb_if.nextpc = pc + 2;
 	    nextcountread = fb_if.countread + 4;
@@ -104,7 +113,9 @@ module fetch_buffer
 	end
     end
 
-    assign fb_if.result = fb_if.inst_arrived ? final_inst : final_inst_store;
+    logic [31:0] debug;
+    assign fb_if.result = final_inst;
+    assign debug = fb_if.inst_arrived ? final_inst : final_inst_store;
     //assign c_ena = fb_if.result[1:0] != 2'b11;
     assign fb_if.done = fb_if.inst_arrived & finished;
 

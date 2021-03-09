@@ -117,6 +117,8 @@ module tspp_execute_stage(
 
   //RV32C 
   assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
+  assign rv32cif.halt = cu_if.halt;
+  assign rv32cif.dmem_busy = cu_if.dren | cu_if.dwen;
   assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr; 
   assign rm_if.insn  = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr; 
 
@@ -186,7 +188,7 @@ module tspp_execute_stage(
     end
   end
 
-  assign rf_if.wen = (cu_if.wen | (rm_if.req_reg_w & rm_if.reg_w)) & (~hazard_if.if_ex_stall | hazard_if.npc_sel) & 
+  assign rf_if.wen = (cu_if.wen | (rm_if.req_reg_w & rm_if.reg_w)) & (~hazard_if.if_ex_stall | hazard_if.npc_sel | rv32cif.done_earlier) & 
                     ~(cu_if.dren & mal_addr); 
   /*******************************************************
   *** Branch Target Resolution and Associated Logic 
