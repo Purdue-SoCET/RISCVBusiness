@@ -40,8 +40,7 @@ module pipeline_wrapper (
   predictor_pipeline_if predict_if,
   risc_mgmt_if rm_if,
   cache_control_if cc_if,
-  sparce_pipeline_if sparce_if,
-  rv32c_if rv32cif
+  sparce_pipeline_if sparce_if
 );
  
    tspp tspp_pipeline(.*);

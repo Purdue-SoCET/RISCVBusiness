@@ -19,6 +19,9 @@ microarch_params:
   # Sparisty Optimizations
   sparce_enabled : "disabled"
 
+  # RV32C
+  rv32c_enabled : "disabled"
+
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:

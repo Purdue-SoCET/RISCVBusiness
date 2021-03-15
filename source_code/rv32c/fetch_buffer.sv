@@ -1,8 +1,29 @@
+/*
+*   Copyright 2016 Purdue University
+*   
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*   
+*       http://www.apache.org/licenses/LICENSE-2.0
+*   
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
+*
+*
+*   Filename:     fetch_buffer.sv
+*
+*   Created by:   Jing Yin See
+*   Email:        see4@purdue.edu
+*   Date Created: 01/15/2021
+*   Description:  Generate next pc and instruction memory pc, output instructions
+*/
+
 `include "fetch_buffer_if.vh"
 module fetch_buffer
-# (
-    parameter RESET_PC = 32'h200
-)
 (
     input logic clk, n_rst,
     fetch_buffer.fb fb_if
@@ -29,8 +50,8 @@ module fetch_buffer
 	    buffer <= 16'd0;
 	    combine_reg <= 1'b0;
 	    waitnext_reg <= 1'b0;
-	    fb_if.imem_pc <= RESET_PC;
-	    pc <= RESET_PC;
+	    fb_if.imem_pc <= fb_if.reset_pc_val;
+	    pc <= fb_if.reset_pc_val;
 	    final_inst_store <= 32'd0;
 	    reset_next <= 1'b0;
 	end else if (fb_if.reset_en) begin

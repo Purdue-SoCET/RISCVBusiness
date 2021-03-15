@@ -62,6 +62,7 @@ module tspp_fetch_stage (
   assign rv32cif.reset_en = hazard_if.insert_priv_pc | sparce_if.skipping | hazard_if.npc_sel | predict_if.predict_taken;
   assign rv32cif.pc_update = hazard_if.pc_en;
   assign rv32cif.reset_pc = npc;
+  assign rv32cif.reset_pc_val = RESET_PC;
 
   assign pc4or2 = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc + 2) : (pc + 4);
   assign predict_if.current_pc = pc;

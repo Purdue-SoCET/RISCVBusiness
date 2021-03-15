@@ -7,10 +7,10 @@ module rv32c_enabled
   input logic clk, nrst,
   rv32c_if.rv32c rv32cif 
  );
-  parameter RESET_PC = 32'h80000000;
+  //parameter RESET_PC = 32'h80000000;
   // Fetch Buffer
   fetch_buffer_if fb_if();
-  fetch_buffer #(RESET_PC) BUFFER
+  fetch_buffer BUFFER
   (
     .clk(clk),
     .n_rst(nrst),
@@ -22,6 +22,7 @@ module rv32c_enabled
   assign fb_if.inst_arrived = rv32cif.inst_arrived;
   assign fb_if.pc_update = rv32cif.pc_update;
   assign fb_if.ex_busy = rv32cif.ex_busy;
+  assign fb_if.reset_pc_val = rv32cif.reset_pc_val;
   assign rv32cif.done = fb_if.done;
   assign rv32cif.done_earlier = fb_if.done_earlier & (rv32cif.halt == 0);
   ///assign rv32cif.done_earlier_send = fb_if.done_earlier_send;
