@@ -32,9 +32,15 @@ interface predictor_pipeline_if;
   logic update_predictor;
   logic predict_taken, prediction, branch_result;
 
+  //PHT
   word_t pht_index;
   logic pht_tnt;
   logic gbh_result;
+
+  //BTB
+  logic branch_prediction, ifbranch;
+  logic [1:0] penalty_cycles;
+  logic btb_address;
 
   modport predictor(
     input current_pc, update_predictor, prediction, branch_result, update_addr,
@@ -57,8 +63,8 @@ interface predictor_pipeline_if;
   );
 
   modport btb_prediction(
-    input prediction, update_address,
-    output hit, address
+    input prediction, current_pc, update_address,
+    output branch_prediction, ifbranch, penalty_cycles, target_addr
   );
 
 endinterface
