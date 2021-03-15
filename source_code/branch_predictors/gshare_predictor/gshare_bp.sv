@@ -7,7 +7,7 @@ module gshare_bp (
         predictor_pipeline_if.btb_prediction btb_if
 );
 
-    assign predict_if.predict_taken = pht_if.taken && btb_if.hit;
-    assign predict_if.target_addr = predict_taken ? btb_if.address : predict_if.current_pc + 4;
+    assign predict_if.predict_taken = pht_if.taken && btb_if.branch_prediction;
+    assign predict_if.target_addr = predict_taken ? btb_if.target_addr : predict_if.current_pc + 4;
         
 endmodule
