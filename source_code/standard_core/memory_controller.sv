@@ -59,6 +59,20 @@ module memory_controller (
   end 
 
   /* State Transition Logic */ 
+  /*
+  * Note: After interrupts were integrated, receiving an interrupt forces IREN
+  * to go low. On an instruction request, the FSM assumed IREN high, and unconditionally
+  * proceeded to an instruction wait state (either INSTR_WAIT or INSTR_DATA_REQ). However,
+  * since IREN was low, the AHB master did not actually receive a request, and therefore the
+  * I-Bus would never see a "ready" condition; the AHB master would be locked in IDLE, and
+  * this FSM would be locked in the instruction wait state forever.
+  *
+  * To fix, I added logic to abort an instruction request if the IREN signal was low in
+  * the INSTR_REQ or DATA_INSTR_REQ state; this only happens on an interrupt, so simply aborting
+  * the transaction on the next transition should be safe since the pipeline will be flushed anyways;
+  * the instruction request in question should not be fetched since the next instruction should be from
+  * the interrupt handler after the new PC is inserted.
+  */
   always_comb 
   begin 
     case(current_state) 
@@ -71,8 +85,10 @@ module memory_controller (
           next_state = IDLE; 
       end 
 
-      INSTR_REQ: begin 
-        if(d_gen_bus_if.ren || d_gen_bus_if.wen) 
+      INSTR_REQ: begin
+        if(!i_gen_bus_if.ren) // Abort request, received an interrupt
+          next_state = IDLE;
+        else if(d_gen_bus_if.ren || d_gen_bus_if.wen) 
           next_state = INSTR_DATA_REQ;
         else 
           next_state = INSTR_WAIT; 
@@ -92,8 +108,10 @@ module memory_controller (
           next_state = DATA_WAIT; 
       end
 
-      DATA_INSTR_REQ: begin 
-        if( out_gen_bus_if.busy == 1'b0 ) 
+      DATA_INSTR_REQ: begin
+        if(!i_gen_bus_if.ren && out_gen_bus_if.busy == 1'b0) // Abort request, received an interrupt
+          next_state = IDLE;
+        else if(out_gen_bus_if.busy == 1'b0) 
           next_state = INSTR_WAIT; 
         else 
           next_state = DATA_INSTR_REQ; 

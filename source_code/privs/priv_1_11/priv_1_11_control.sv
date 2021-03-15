@@ -36,7 +36,7 @@ module priv_1_11_control (
   
   int_code_t intr_src;
   logic interrupt, clear_interrupt;
-  logic interrupt_reg, interrupt_fired;
+  logic interrupt_reg, interrupt_fired, update_mie;
 
   always_comb begin // determine the source of the interrupt to be stored in the mcause register
     interrupt = 1'b1;
@@ -155,8 +155,8 @@ module priv_1_11_control (
   always_comb begin
     prv_intern_if.mstatus_next.mie = prv_intern_if.mstatus.mie;
     prv_intern_if.mstatus_next.mpie = prv_intern_if.mstatus.mpie;
-
-    if (prv_intern_if.intr) begin // interrupt has truly been registered and it is time to go to the vector table
+	//changed from intr
+    if (update_mie) begin // interrupt has truly been registered and it is time to go to the vector table
       prv_intern_if.mstatus_next.mpie = prv_intern_if.mstatus.mie; // when a trap is taken mpie is set to the current mie
       prv_intern_if.mstatus_next.mie = 1'b0; // disable the interrupt once it enters the handler
 
@@ -167,8 +167,13 @@ module priv_1_11_control (
   end
 
 
-  // Update EPC as soon as interrupt or exception is found 
-  assign prv_intern_if.mepc_rup = exception | interrupt; // TODO: Change to interrupt
+  // Update EPC as soon as interrupt or exception is found
+  // Note: mepc cannot update immediately, as if the processor is in an interrupt already,
+  // the MEPC captured will be within the interrupt (and nested interrupts are not supported).
+  // Interrupt fired notes when an interrupt is seen by the processor, i.e. when mstatus.mie is high again.
+  // The signal is 2 cycles long, so the update_mie signal is used to clip it down to 1 to prevent MEPC
+  // double update which results in skipping an instruction.
+  assign prv_intern_if.mepc_rup = exception | (interrupt_fired & ~update_mie); // TODO: Change to interrupt
   assign prv_intern_if.mepc_next = prv_intern_if.epc;
 
   assign prv_intern_if.mtval_rup = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s | 
@@ -183,10 +188,32 @@ module priv_1_11_control (
   always_ff @ (posedge CLK, negedge nRST) begin
     if (!nRST)
       interrupt_reg <= '0;
-    else if (interrupt_fired)
+    else if (interrupt_fired) 
       interrupt_reg <= 1'b1;
     else if (prv_intern_if.pipe_clear)
-      interrupt_reg <= '0;
+      interrupt_reg <= '0;			
+  end 
+
+  /*
+   * Fix for MIE/MPIE issue. This used to be the same as 'interrupt_reg' above,
+   * but the above stays high for 2+ cycles (i.e. waiting for pipe_clear).
+   * This caused MPIE to update twice; the first update would set MPIE to 1,
+   * and the second would cause MPIE to return to 0. Then, after an MRET,
+   * MIE would not be restored since MPIE was lost. Additionally, shortening
+   * interrupt_reg was not an option since pipe_clear must be asserted for the
+   * PC to be inserted into the pipeline from the priv unit, so creating this
+   * extra register was the cleanest solution to ensuring MPIE updates exactly
+   * once.
+   */
+  always_ff @(posedge CLK, negedge nRST) begin
+    if(!nRST)
+      update_mie <= '0;
+    else if(interrupt_fired && ~update_mie) 
+      update_mie <= 1'b1;
+    else if (prv_intern_if.pipe_clear)
+      update_mie <= '0;
+    else 
+      update_mie <= '0;
   end 
 
 endmodule

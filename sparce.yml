@@ -21,6 +21,9 @@ microarch_params:
 
   # RV32C
   rv32c_enabled : "disabled"
+  
+  # Halt
+  infinite_loop_halts : "true"
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:

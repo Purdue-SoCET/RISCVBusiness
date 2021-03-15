@@ -186,8 +186,15 @@ module control_unit
   end
 
   // HALT HACK. Just looking for j + 0x0 (infinite loop)
-  // TODO: FIX ME WHEN IMPLEMENTING INTERRUPTS
-  assign cu_if.halt = (cu_if.instr == 32'h0000006f);
+  // Halt required for unit testing, but not useful in tapeout context
+  // Due to presence of interrupts, infinite loops are valid
+  generate
+    if(INFINITE_LOOP_HALTS == "true") begin
+      assign cu_if.halt = (cu_if.instr == 32'h0000006f);
+    end else begin
+      assign cu_if.halt = '0;
+    end
+  endgenerate
   // Privilege Control Signals
   assign cu_if.fault_insn = '0;
  
