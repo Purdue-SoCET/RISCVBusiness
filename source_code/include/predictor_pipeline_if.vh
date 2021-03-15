@@ -52,8 +52,13 @@ interface predictor_pipeline_if;
   );
 
   modport pht_prediction(
-    input pht_index,gbh_result,
-    output pht_tnt
+    input update_predictor, branch_result, current_pc
+    output taken
+  );
+
+  modport btb_prediction(
+    input prediction, update_address,
+    output hit, address
   );
 
 endinterface
