@@ -68,7 +68,22 @@ module tspp_execute_stage(
     .rmgmt_req_reg_r(rm_if.req_reg_r),
     .rmgmt_req_reg_w(rm_if.req_reg_w)
   );
-  rv32i_reg_file rf (.*);
+  // generate 
+  //     case (BASE_ISA)
+  //         "RV32I": rv32i_reg_file rf (CLK, nRST, rf_if);
+  //         "RV32E": rv32e_reg_file rf (CLK, nRST, rf_if);
+  //     endcase
+  // endgenerate
+
+  generate
+    if (BASE_ISA == "RV32E") begin: REG_FILE_SEL
+        rv32e_reg_file rf (CLK, nRST, rf_if);
+    end
+    else begin: REG_FILE_SEL
+        rv32i_reg_file rf (CLK, nRST, rf_if);
+    end  
+  endgenerate
+  // rv32i_reg_file rf (.*);
   alu alu (.*);
   jump_calc jump_calc (.*);
   

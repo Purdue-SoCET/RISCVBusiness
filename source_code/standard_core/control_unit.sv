@@ -254,7 +254,6 @@ module control_unit
       end
     end
   end
-
   assign cu_if.csr_rw_valid = (cu_if.csr_swap | cu_if.csr_set | cu_if.csr_clr);
 
   assign cu_if.csr_addr = csr_addr_t'(instr_i.imm11_00);

@@ -25,6 +25,9 @@ microarch_params:
   # Halt
   infinite_loop_halts : "true"
 
+  # base ISA 
+  base_isa: "RV32I"
+
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:
