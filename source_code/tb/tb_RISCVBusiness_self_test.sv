@@ -167,9 +167,9 @@ module tb_RISCVBusiness_self_test ();
     // Check Register 28 to see if test passed or failed
     if (clk_count == `RVBSELF_CLK_TIMEOUT)
       $display("ERROR: Test timed out");
-    else if(DUT.execute_stage_i.REG_FILE_SEL.rf.registers[14] != 32'h1)
+    else if(DUT.execute_stage_i.REG_FILE_SEL.rf.registers[28] != 32'h1)
       $display("ERROR: Test %0d did not pass",
-                (DUT.execute_stage_i.REG_FILE_SEL.rf.registers[14] - 1)/2);
+                (DUT.execute_stage_i.REG_FILE_SEL.rf.registers[28] - 1)/2);
     else 
       $display("SUCCESS");
     $finish;

@@ -77,7 +77,7 @@ _start:
         li TESTNUM, 1;                                                  \
         j done
 
-#define TESTNUM x14
+#define TESTNUM x28
 #define RVTEST_FAIL                                                     \
         fence;                                                          \
 1:      beqz TESTNUM, 1b;                                               \
