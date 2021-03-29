@@ -55,7 +55,7 @@ module pht #(
     end 
      always_comb begin: NXT_LOGIC_2BIT
         NXT_STATE = STATE;
-        case(STATE)
+        casez(STATE)
             S_NT: begin
                 if (pht_if.branch_result) begin
                     NXT_STATE = W_NT:
@@ -88,18 +88,20 @@ module pht #(
     end
 
     always_comb begin: OUTPUT_LOGIC
-        S_NT: begin
-            t_nt = 1'b0;
-        end
-        W_NT: begin
-            t_nt = 1'b0;
-        end
-        S_T: begin
-            t_nt = 1'b1;
-        end
-        W_T: begin
-            t_nt = 1'b1;
-        end
+        t_nt = 1'b0;
+        casez(STATE)
+            S_NT: begin
+                t_nt = 1'b0;
+            end
+            W_NT: begin
+                t_nt = 1'b0;
+            end
+            S_T: begin
+                t_nt = 1'b1;
+            end
+            W_T: begin
+                t_nt = 1'b1;
+            end
         endcase
     end
 
