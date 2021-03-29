@@ -1,4 +1,5 @@
-`include "predictor_pipeline_if.vh"
+`include "~/RISCVBusiness/source_code/include/predictor_pipeline_if.vh"
+`include "rv32i_reg_file_if.vh"
 
 module pht #(
     parameter PHT_SIZE = 32, 
@@ -50,7 +51,7 @@ module pht #(
     always_comb begin: NXT_LOGIC_PHT
         nxt_pht_table = pht_table;
         if (pdif.update_predictor) begin
-            nxt_pht_table[xored_index] = t_nt;
+            nxt_pht_table[xored_index] = pht_if.taken;
         end
     end 
      always_comb begin: NXT_LOGIC_2BIT
@@ -58,7 +59,7 @@ module pht #(
         casez(STATE)
             S_NT: begin
                 if (pht_if.branch_result) begin
-                    NXT_STATE = W_NT:
+                    NXT_STATE = W_NT;
                 end else begin
                     NXT_STATE = S_NT;
                 end
@@ -74,7 +75,7 @@ module pht #(
                 if (pht_if.branch_result) begin
                     NXT_STATE = S_T;
                 end else begin
-                    NXT_STATE = W_NT:
+                    NXT_STATE = W_NT;
                 end
             end
             S_T: begin
@@ -88,19 +89,19 @@ module pht #(
     end
 
     always_comb begin: OUTPUT_LOGIC
-        t_nt = 1'b0;
+        pht_if.taken = 1'b0;
         casez(STATE)
             S_NT: begin
-                t_nt = 1'b0;
+                pht_if.taken = 1'b0;
             end
             W_NT: begin
-                t_nt = 1'b0;
+                pht_if.taken = 1'b0;
             end
             S_T: begin
-                t_nt = 1'b1;
+                pht_if.taken = 1'b1;
             end
             W_T: begin
-                t_nt = 1'b1;
+                pht_if.taken = 1'b1;
             end
         endcase
     end
