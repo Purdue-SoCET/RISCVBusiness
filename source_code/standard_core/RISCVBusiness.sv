@@ -88,8 +88,7 @@ module RISCVBusiness (
     .predict_if(predict_if),
     .igen_bus_if(tspp_icache_gen_bus_if),
     .sparce_if(sparce_if),
-    .rv32cif(rv32cif),
-    .wfi(wfi)
+    .rv32cif(rv32cif)
   );
 
   tspp_execute_stage execute_stage_i (
@@ -104,7 +103,8 @@ module RISCVBusiness (
     .rm_if(rm_if),
     .cc_if(cc_if),
     .sparce_if(sparce_if),
-    .rv32cif(rv32cif)
+    .rv32cif(rv32cif),
+    .wfi(wfi)
   );
 
   tspp_hazard_unit hazard_unit_i (
