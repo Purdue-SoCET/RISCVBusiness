@@ -55,8 +55,6 @@ add wave -noupdate -expand -group l1 /tb_caches_top/l1/finish_set
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/abort
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/state
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/next_state
-add wave -noupdate -expand -group l1 /tb_caches_top/l1/cache
-add wave -noupdate -expand -group l1 /tb_caches_top/l1/next_cache
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/ridx
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/last_used
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/next_last_used
@@ -68,8 +66,22 @@ add wave -noupdate -expand -group l1 /tb_caches_top/l1/hit
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/pass_through
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/hit_data
 add wave -noupdate -expand -group l1 /tb_caches_top/l1/hit_idx
+add wave -noupdate /tb_caches_top/l1/SRAM/CLK
+add wave -noupdate /tb_caches_top/l1/SRAM/nRST
+add wave -noupdate /tb_caches_top/l1/SRAM/wVal
+add wave -noupdate /tb_caches_top/l1/SRAM/rVal
+add wave -noupdate /tb_caches_top/l1/SRAM/REN
+add wave -noupdate /tb_caches_top/l1/SRAM/WEN
+add wave -noupdate -expand /tb_caches_top/l1/SRAM/SEL
+add wave -noupdate /tb_caches_top/l1/SRAM/sramMemory
+add wave -noupdate /tb_caches_top/l1/SRAM/n_sramMemory
+add wave -noupdate /tb_caches_top/l1/sramWrite
+add wave -noupdate /tb_caches_top/l1/sramRead
+add wave -noupdate /tb_caches_top/l1/sramREN
+add wave -noupdate /tb_caches_top/l1/sramWEN
+add wave -noupdate /tb_caches_top/l1/sramSEL
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {70000 ps} 0}
+WaveRestoreCursors {{Cursor 1} {158676 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100

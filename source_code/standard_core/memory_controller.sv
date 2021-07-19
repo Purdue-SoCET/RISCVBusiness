@@ -237,6 +237,14 @@ module memory_controller (
                 i_gen_bus_if.busy      = 1'b1;
                 i_gen_bus_if.error     = 1'b0;
             end
+            default: begin
+                out_gen_bus_if.wen     = 0;
+                out_gen_bus_if.ren     = 0;
+                out_gen_bus_if.addr    = 0;
+                out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
+                d_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.busy      = 1'b1;
+            end
         endcase
     end
 

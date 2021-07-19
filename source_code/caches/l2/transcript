@@ -1,0 +1,31 @@
+# //  Questa Sim-64
+# //  Version 10.6b linux_x86_64 May 25 2017
+# //
+# //  Copyright 1991-2017 Mentor Graphics Corporation
+# //  All Rights Reserved.
+# //
+# //  QuestaSim and its associated documentation contain trade
+# //  secrets and commercial or financial information that are the property of
+# //  Mentor Graphics Corporation and are privileged, confidential,
+# //  and exempt from disclosure under the Freedom of Information Act,
+# //  5 U.S.C. Section 552. Furthermore, this information
+# //  is prohibited from disclosure under the Trade Secrets Act,
+# //  18 U.S.C. Section 1905.
+# //
+vlib work
+vlog -reportprogress 300 -work work /home/asicfab/a/socet52/Caches/RISCVBusiness/source_code/caches/l1/tb/l1_cache.sv
+# QuestaSim-64 vlog 10.6b Compiler 2017.05 May 25 2017
+# Start time: 14:31:09 on Feb 11,2022
+# vlog -reportprogress 300 -work work /home/asicfab/a/socet52/Caches/RISCVBusiness/source_code/caches/l1/tb/l1_cache.sv 
+# ** Error: (vlog-7) Failed to open design unit file "/home/asicfab/a/socet52/Caches/RISCVBusiness/source_code/caches/l1/tb/l1_cache.sv" in read mode.
+# No such file or directory. (errno = ENOENT)
+# End time: 14:31:09 on Feb 11,2022, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0
+vlog -reportprogress 300 -work work /home/asicfab/a/socet52/Caches/RISCVBusiness/source_code/caches/l1/tb/tb_l1_cache.sv
+# QuestaSim-64 vlog 10.6b Compiler 2017.05 May 25 2017
+# Start time: 14:31:10 on Feb 11,2022
+# vlog -reportprogress 300 -work work /home/asicfab/a/socet52/Caches/RISCVBusiness/source_code/caches/l1/tb/tb_l1_cache.sv 
+# ** Error: /home/asicfab/a/socet52/Caches/RISCVBusiness/source_code/caches/l1/tb/tb_l1_cache.sv(2): Cannot find `include file "generic_bus_if.vh" in directories:
+#     /package/eda/mg/questa10.6b/questasim/ovm-2.1.2/../verilog_src/ovm-2.1.2/src, /package/eda/mg/questa10.6b/questasim/uvm-1.1d/../verilog_src/uvm-1.1d/src
+# End time: 14:31:10 on Feb 11,2022, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 0
