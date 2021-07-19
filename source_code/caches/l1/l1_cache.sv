@@ -194,6 +194,7 @@ module l1_cache #(
     // cache output logic
     // Outputs: counter control signals, cache, signals to memory, signals to processor
     always_comb begin
+<<<<<<< HEAD
         sramWEN                 = 0;
         sramWrite               = 0;
         sramMask                = '1;
@@ -223,6 +224,41 @@ module l1_cache #(
             ridx = last_used[decoded_addr.idx_bits] + 1;
 
         // state dependent output logic
+=======
+        proc_gen_bus_if.busy    = 1'b1;
+        mem_gen_bus_if.ren      = 1'b0;
+        mem_gen_bus_if.wen      = 1'b0;
+        mem_gen_bus_if.addr     = '0; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
+        mem_gen_bus_if.wdata    = '0; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
+        mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
+        next_read_addr          = read_addr;               //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
+        en_set_ctr 	            = 1'b0;
+        en_word_ctr 	        = 1'b0;
+        en_frame_ctr 	        = 1'b0;
+        clr_set_ctr 	        = 1'b0;
+        clr_word_ctr 	        = 1'b0;
+        clr_frame_ctr 	        = 1'b0;
+        flush_done 	            = 1'b0;
+        // flush_done 	            = 1'b0; //Duplicated?
+
+       	if(ASSOC == 1) begin
+	        ridx  = 1'b0;
+	    end
+	    else if (ASSOC == 2) begin
+	        ridx  = ~last_used[decoded_addr.set_bits];
+	    end
+       
+        for(int i = 0; i < N_SETS; i++) begin // next = orginal Use blocking to go through array?
+            for(int j = 0; j < ASSOC; j++) begin
+                next_cache[i].frames[j].data   = cache[i].frames[j].data;
+                next_cache[i].frames[j].tag    = cache[i].frames[j].tag;
+                next_cache[i].frames[j].valid  = cache[i].frames[j].valid;
+                next_cache[i].frames[j].dirty  = cache[i].frames[j].dirty;
+            end // for (int j = 0; j < ASSOC; j++)
+	    next_last_used[i] = last_used[i]; //keep same last used
+        end
+
+>>>>>>> e238035a... testbench running without stall
         casez(state)
             IDLE: begin
                 // clear out caches with flush

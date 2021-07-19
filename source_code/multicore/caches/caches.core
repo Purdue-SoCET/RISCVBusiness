@@ -1,0 +1,20 @@
+CAPI=2:
+name: socet:riscv:caches:0.1.0
+description: caches
+
+filesets:
+    rtl:
+        depend:
+            - "socet:riscv:packages"
+        files:
+            - caches_wrapper.sv
+            - separate_caches.sv
+            - direct_mapped_tpf/direct_mapped_tpf_cache.sv
+            - pass_through/pass_through_cache.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: caches_wrapper

@@ -636,10 +636,10 @@ class comparator extends uvm_scoreboard;
     
     if(expected == response.wdata) begin
       m_matches++;
-      uvm_report_info("Comparator", "Data Match");
+      `uvm_info("Comparator", "Data Match", UVM_LOW);
     end else begin
       m_mismatches++;
-      uvm_report_error("Comparator", "Error: Data Mismatch");
+      `uvm_error("Comparator", "Error: Data Mismatch");
 
       $display("comparator");
       $info("response: %h", response.wdata);
@@ -652,8 +652,8 @@ class comparator extends uvm_scoreboard;
   endtask
 
   function void report_phase(uvm_phase phase);
-    uvm_report_info("Comparator", $sformatf("Matches:    %0d", m_matches));
-    uvm_report_info("Comparator", $sformatf("Mismatches: %0d", m_mismatches));
+    `uvm_info("Comparator", $sformatf("Matches:    %0d", m_matches), UVM_LOW);
+    `uvm_info("Comparator", $sformatf("Mismatches: %0d", m_mismatches), UVM_LOW);
   endfunction
 
 endclass //comparator
