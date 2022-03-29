@@ -49,7 +49,14 @@ module l1_cache #(
     // 4. Counter for frame size is not necessary, one if(ASSOC == 1) else should be enough
     // 5. Make it work for icache and dcache
     // 6. Test for ASSOC = 1
-    
+
+    // FIXME:
+    // 1. see all FIXME notes through file
+    // 2. there is a difference between the 4 addr for read miss and block WB
+    //      check that you start incrementing your next_read_addr + 4 from the proper base offset
+    // 3. pass through doesn't pass through the ren/wen, addr, or data signals to bus
+    // 4. pass through doesn't relay back the busy signal from the bus after mmio completion
+
     import rv32i_types_pkg::*;
     
     // local parameters
@@ -274,6 +281,8 @@ module l1_cache #(
         proc_gen_bus_if.busy    = 1'b1;
         mem_gen_bus_if.ren      = 1'b0;
         mem_gen_bus_if.wen      = 1'b0;
+        mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
+        next_read_addr          = read_addr;               //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
         en_set_ctr 	            = 1'b0;
         en_word_ctr 	        = 1'b0;
         en_frame_ctr 	        = 1'b0;
