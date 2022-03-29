@@ -176,7 +176,7 @@ package machine_mode_types_1_12_pkg;
     misaid_base_t base;
     logic [3:0] zero;
     logic [25:0] extensions;
-  } misaid_t;5
+  } misaid_t;
 
   parameter MISAID_EXT_A   = 26'h1 << 0;
   parameter MISAID_EXT_B   = 26'h1 << 1;
@@ -248,12 +248,12 @@ package machine_mode_types_1_12_pkg;
     fs_t         fs;            // FP extension state
     priv_level_t mpp;           // Previous privilege level
     vs_t         vs;            // Vector extension state
-    logic        spp;           //
+    logic        spp;           // Supervisor previous privilege level (no effect without S-Mode)
     logic        mpie;          // M-Mode previous enable
     logic        ube;           // U-Mode endianness control
     logic 	     spie;          // S-Mode previous enable
     logic        reserved_2;
-    logic	       mie            // M-Mode interrupt enable
+    logic	       mie;           // M-Mode interrupt enable
     logic        reserved_1;
     logic 	     sie;           // S-Mode interrupt enable
     logic        reserved_0;
@@ -269,7 +269,9 @@ package machine_mode_types_1_12_pkg;
   /* mtvec types */
  typedef enum logic [1:0] {
     DIRECT   = 2'h0,
-    VECTORED = 2'h1
+    VECTORED = 2'h1,
+    RES_0    = 2'h2,
+    RES_1    = 2'h3
   } vector_modes_t;
 
   typedef struct packed {
@@ -382,7 +384,7 @@ package machine_mode_types_1_12_pkg;
    logic hpm4;
    logic hpm3;
    logic ir;
-   logic tm;
+   logic reserved_0;
    logic cy;
   } mcountinhibit_t;
 
@@ -409,7 +411,7 @@ package machine_mode_types_1_12_pkg;
     ENV_CALL_M    = 31'd11,
     INSN_PAGE     = 31'd12,
     LOAD_PAGE     = 31'd13,
-    STORE_PAGE    = 31'd15,
+    STORE_PAGE    = 31'd15
   } ex_code_t;
 
   typedef enum logic [30:0] {
@@ -420,6 +422,9 @@ package machine_mode_types_1_12_pkg;
     EXT_INT_S           = 31'd9,
     EXT_INT_M           = 31'd11
   } int_code_t;
+
+  // General CSR definition
+  typedef logic [31:0] csr_reg_t;
 
   //Non Standard Extentions
   typedef logic [31:0] mtohost_t;

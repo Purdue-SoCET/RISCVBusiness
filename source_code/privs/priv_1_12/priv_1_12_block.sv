@@ -14,23 +14,32 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_wrapper.sv
+*   Filename:     priv_1_12_block.sv
 *
-*   Created by:   John Skubic
-*   Email:        jskubic@purdue.edu
-*   Date Created: 05/18/2017
-*   Description:  Top level wrapper for the priv ISA implementation.
+*   Created by:   Hadi Ahmed
+*   Email:        ahmed138@purdue.edu
+*   Date Created: 03/27/2022
+*   Description:  Top level block for the privileged unit, v1.12
 */
 
 `include "prv_pipeline_if.vh"
+`include "priv_1_12_internal_if.vh"
 `include "core_interrupt_if.vh"
 
-module priv_wrapper (
-  input logic CLK, nRST,
-  prv_pipeline_if.priv_block prv_pipe_if,
-  core_interrupt_if.core interrupt_if
+module priv_1_12_block (
+    input logic CLK, nRST,
+    prv_pipeline_if.prv_block prv_pipe_if,
+    core_interrupt_if.core interrupt_if
 );
 
-  priv_1_12_block priv_block_i(.*);
+    import machine_mode_types_1_12_pkg::*;
+
+    priv_1_12_internal_if priv_int_if();
+
+    priv_level_t curr_priv;
+
+    assign curr_priv = M_MODE; // TODO make this changeable
+
+
 
 endmodule

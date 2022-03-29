@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@
 *   Email:        jskubic@purdue.edu
 *   Date Created: 08/24/2016
 *   Description:  Interface connecting the priv block to the pipeline.
-*                 Contains connections between modules inside the priv block. 
+*                 Contains connections between modules inside the priv block.
 *                 TODO: These two functionalities should be split into two
 *                 separate interfaces.
 */
@@ -31,7 +31,7 @@
 `include "component_selection_defines.vh"
 
 interface prv_pipeline_if();
-  import machine_mode_types_1_11_pkg::*;
+  import machine_mode_types_1_12_pkg::*;
   import rv32i_types_pkg::*;
 
   // exception signals
@@ -49,21 +49,21 @@ interface prv_pipeline_if();
   // csr rw
   logic       swap, clr, set;
   logic       invalid_csr, valid_write;
-  csr_addr_t  addr;
+  mcsr_addr_t maddr;
   word_t      rdata, wdata;
 
   // performance signals
   logic wb_enable, instr;
 
-  // RISC-MGMT 
+  // RISC-MGMT
   logic ex_rmgmt;
   logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
 
   modport hazard (
     input priv_pc, insert_pc, intr,
-    output pipe_clear, ret, epc, fault_insn, mal_insn, 
+    output pipe_clear, ret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
-            breakpoint, env_m, badaddr, wb_enable, 
+            breakpoint, env_m, badaddr, wb_enable,
             ex_rmgmt, ex_rmgmt_cause
   );
 

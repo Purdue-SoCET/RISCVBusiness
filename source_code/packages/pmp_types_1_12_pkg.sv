@@ -76,7 +76,7 @@ package pmp_types_1_12_pkg;
     PMPADDR27_ADDR = 12'h3CB,
     PMPADDR28_ADDR = 12'h3CC,
     PMPADDR29_ADDR = 12'h3CD,
-    PMPADDR30_ADDR = 12'h3CE
+    PMPADDR30_ADDR = 12'h3CE,
     PMPADDR31_ADDR = 12'h3CF,
     PMPADDR32_ADDR = 12'h3D0,
     PMPADDR33_ADDR = 12'h3D1,
@@ -139,6 +139,6 @@ typedef struct packed {
 
 typedef logic [31:0] pmpaddr_t;
 
-endpackage;
+endpackage
 
 `endif //PMP_TYPES_1_12_PKG_SV
