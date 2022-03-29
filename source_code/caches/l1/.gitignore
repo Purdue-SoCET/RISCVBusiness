@@ -1,0 +1,9 @@
+*.log
+*.key
+*.history
+*.diag
+*.shm
+*.svcf
+INCA_libs
+cov_work
+.simvision
