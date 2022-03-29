@@ -425,8 +425,11 @@ package machine_mode_types_1_12_pkg;
 
   // General CSR definition
   typedef logic [31:0] csr_reg_t;
+  typedef logic [63:0] long_csr_t;
 
   //Non Standard Extentions
+  // Unsure what these are for,
+  //  part of priv 1.11
   typedef logic [31:0] mtohost_t;
   typedef logic [31:0] mfromhost_t;
 

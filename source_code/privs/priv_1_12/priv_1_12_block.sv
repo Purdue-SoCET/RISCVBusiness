@@ -38,8 +38,8 @@ module priv_1_12_block (
 
     priv_level_t curr_priv;
 
-    assign curr_priv = M_MODE; // TODO make this changeable
-
+    assign prv_pip_if.curr_priv = M_MODE; // TODO make this changeable
+    assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
 
 
 endmodule

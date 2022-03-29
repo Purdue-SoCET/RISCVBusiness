@@ -60,8 +60,16 @@ module priv_1_12_csr # (
   csr_reg_t         minstret;
   csr_reg_t         mcycleh;
   csr_reg_t         minstreth;
+  long_csr_t        cycles_full, cf_next;
+  long_csr_t        instret_full, if_next;
 
   csr_reg_t nxt_csr_val;
+
+  /* Save some logic with this */
+  assign mcycle = cycles_full[31:0];
+  assign mcycleh = cycles_full[63:32];
+  assign minstret = instret_full[31:0];
+  assign minstreth = instret_full[63:32];
 
   /* These info registers are always just tied to certain values */
   assign mvendorid = '0;
@@ -76,9 +84,9 @@ module priv_1_12_csr # (
   assign misaid.extensions =      MISAID_EXT_I
                             `ifdef RV32C_SUPPORTED
                                 | MISAID_EXT_C
-                            `endif `ifdef RV32E_SUPPORTED
+                             `endif /* `ifdef RV32E_SUPPORTED
                                 | MISAID_EXT_E
-                            `endif `ifdef RV32F_SUPPORTED
+                            `endif */ `ifdef RV32F_SUPPORTED
                                 | MISAID_EXT_F
                             `endif `ifdef RV32M_SUPPORTED
                                 | MISAID_EXT_M
@@ -148,10 +156,11 @@ module priv_1_12_csr # (
   assign mie.seie = 1'b0;
   assign mip.impl_defined = '0; // TODO do we want to define others?
 
+  // Control and Status Registers
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
       /* mstatus reset */
-      mstatus.mie <= 1'b1;
+      mstatus.mie <= 1'b0;
       mstatus.mpie <= 1'b0;
       mstatus.mpp <= M_MODE;
       mstatus.mprv <= 1'b0;
@@ -185,19 +194,108 @@ module priv_1_12_csr # (
       mcounterinhibit <= '1;
 
       /* perf mon reset */
-      mcycle <= '0;
-      mcycleh <= '0;
-      minstret <= '0;
-      minstreth <= '0;
+      cycles_full <= '0;
+      instret_full <= '0;
 
       /* mcause reset */
       mcause <= '0;
 
     end else begin
+      // Only write if it is a valid write and no perm error
+      if (prv_intern_if.csr_mod && ~prv_intern_if.invalid_csr) begin
+        casez (prv_intern_if.csr_addr)
+          MSTATUS_ADDR: begin
+            mstatus.mie <= nxt_csr_val[3];
+            mstatus.mpie <= nxt_csr_val[7];
+            mstatus.mpp <= nxt_csr_val[12:11];
+            mstatus.mprv <= nxt_csr_val[17];
+            mstatus.tw <= nxt_csr_val[21];
+            // can mstatus.mpie and mstatus.mpp be set by software?
+          end
+          MTVEC_ADDR: begin
+            mtvec.mode <= nxt_csr_val[1:0];
+            mtvec.base <= nxt_csr_val[31:2];
+          end
+          MIE_ADDR: begin
+            mie.msie <= nxt_csr_val[3];
+            mie.mtie <= nxt_csr_val[7];
+            mie.meie <= nxt_csr_val[11];
+          end
+          MIP_ADDR: begin
+            mip.msip <= nxt_csr_val[3];
+            mip.mtip <= nxt_csr_val[7];
+            mip.meip <= nxt_csr_val[11];
+          end
+          MSCRATCH_ADDR: begin
+            mscratch <= nxt_csr_val;
+          end
+          MEPC_ADDR: begin
+            mepc <= nxt_csr_val;
+          end
+          MCOUNTEREN_ADDR: begin
+            mcounteren <= nxt_csr_val;
+          end
+          MCOUNTINHIBIT_ADDR: begin
+            mcounterinhibit <= nxt_csr_val;
+          end
+          MCAUSE_ADDR: begin
+            mcause <= nxt_csr_val;
+          end
+        endcase
+      end
 
+      cycles_full <= cf_next;
+      instret_full <= if_next;
     end
   end
 
+  // Privilege Check and Legal Value Check
+  always_comb begin
+    nxt_csr_val = prv_intern_if.new_csr_val;
+    prv_intern_if.invalid_csr = 1'b0;
 
+    if (prv_intern_if.csr_addr[9:8] & prv_intern_if.curr_priv != 2'b11) begin
+      prv_intern_if.invalid_csr = 1'b1; // Not enough privilege
+    end else begin
+      casez(prv_intern_if.csr_addr)
+        MSTATUS_ADDR: begin
+
+        end
+
+        MTVEC_ADDR: begin
+        end
+
+        MIE_ADDR: begin
+
+        end
+
+        MIP_ADDR: begin
+
+        end
+
+
+
+        default: prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
+      endcase
+    end
+  end
+
+  // hw perf mon
+  always_comb begin
+    cf_next = cycles_full;
+    if_next = instret_full;
+
+    if (~mcounterinhibit.cy) begin
+      cf_next = cycles_full + 1;
+    end
+    if (~mcounterinhibit.ir) begin
+      if_next = instret_full + priv_intern_if.inst_ret;
+    end
+  end
+
+  // Return proper values to CPU, PMP, PMA
+  always_comb begin
+
+  end
 
 endmodule

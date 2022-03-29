@@ -35,10 +35,11 @@ interface priv_1_12_internal_if;
     priv_level_t curr_priv; // Current process privilege
     logic csr_mod; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
+    logic inst_ret; // signal when an instruction is retired
     word_t new_csr_val, old_csr_val; // new and old CSR values (atomically swapped)
 
     modport csr (
-        input csr_addr, curr_priv, csr_mod, new_csr_val,
+        input csr_addr, curr_priv, csr_mod, new_csr_val, inst_ret,
         output old_csr_val, invalid_csr
     );
 
