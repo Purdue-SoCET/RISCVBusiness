@@ -110,7 +110,7 @@ module priv_1_12_csr # (
   assign mstatus.mxr = 1'b0;
   assign mstatus.tvm = 1'b0;
   assign mstatus.tsr = 1'b0;
-  assign mstatus.sd = (mstatus.vs == VS_DIRTY) | (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
+  assign mstatus.sd = &(mstatus.vs) | &(mstatus.fs) | &(mstatus.xs);
   `ifdef RV32V_SUPPORTED
     assign mstatus.vs = VS_INITIAL;
   `else
@@ -210,7 +210,6 @@ module priv_1_12_csr # (
             mstatus.mpp <= nxt_csr_val[12:11];
             mstatus.mprv <= nxt_csr_val[17];
             mstatus.tw <= nxt_csr_val[21];
-            // can mstatus.mpie and mstatus.mpp be set by software?
           end
           MTVEC_ADDR: begin
             mtvec.mode <= nxt_csr_val[1:0];
@@ -259,20 +258,24 @@ module priv_1_12_csr # (
     end else begin
       casez(prv_intern_if.csr_addr)
         MSTATUS_ADDR: begin
-
+          if (prv_intern_if.new_csr_val[12:11] == 2'b10) begin
+            nxt_csr_val[12:11] = 2'b00; // If invalid privilege level, dump at 0
+          end
         end
 
         MTVEC_ADDR: begin
+          if (prv_intern_if.new_csr_val[1:0] > 2'b01) begin
+            nxt_csr_val[1:0] = 2'b00;
+          end
         end
 
-        MIE_ADDR: begin
-
+        /* Below have no values to check or are R/O */
+        MVENDORID_ADDR, MARCHID_ADDR, MIMPID_ADDR, MHARTID_ADDR, MCONFIGPTR_ADDR,
+        MISA_ADDR, MIE_ADDR, MTVEC_ADDR, MSTATUSH_ADDR, MSCRATCH_ADDR, MEPC_ADDR
+        MCAUSE_ADDR, MTVAL_ADDR, MIP_ADDR, MCOUNTEREN_ADDR, MCOUNTINHIBIT_ADDR,
+        MCYCLE_ADDR, MINSTRET_ADDR, MCYCLEH_ADDR, MINSTRETH_ADDR: begin
+            nxt_csr_val = priv_intern_if.curr_priv;
         end
-
-        MIP_ADDR: begin
-
-        end
-
 
 
         default: prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
@@ -295,7 +298,30 @@ module priv_1_12_csr # (
 
   // Return proper values to CPU, PMP, PMA
   always_comb begin
-
+    prv_intern_if.old_csr_val = '0;
+    /* CPU return */
+    casez(prv_intern_if.csr_addr)
+    MVENDORID_ADDR: prv_intern_if.old_csr_val = mvendorid;
+    MARCHID_ADDR: prv_intern_if.old_csr_val = marchid;
+    MIMPID_ADDR: prv_intern_if.old_csr_val = mimpid;
+    MHARTID_ADDR: prv_intern_if.old_csr_val = mhartid;
+    MCONFIGPTR_ADDR: prv_intern_if.old_csr_val = mconfigptr;
+    MSTATUS: prv_intern_if.old_csr_val = mstatus;
+    MISA_ADDR: prv_intern_if.old_csr_val = misaid;
+    MIE_ADDR: prv_intern_if.old_csr_val = mie;
+    MTVEC_ADDR: prv_intern_if.old_csr_val = mtvec;
+    MSTATUSH_ADDR: prv_intern_if.old_csr_val = mstatush;
+    MSCRATCH_ADDR: prv_intern_if.old_csr_val = mscratch;
+    MEPC_ADDR: prv_intern_if.old_csr_val = mepc;
+    MCAUSE_ADDR: prv_intern_if.old_csr_val = mcause;
+    MTVAL_ADDR: prv_intern_if.old_csr_val = mtval;
+    MIP_ADDR: prv_intern_if.old_csr_val = mip;
+    MCOUNTEREN_ADDR: prv_intern_if.old_csr_val = mcounteren;
+    MCOUNTINHIBIT_ADDR: prv_intern_if.old_csr_val = mcounterinhibit;
+    MCYCLE_ADDR: prv_intern_if.old_csr_val = mcycle;
+    MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
+    MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
+    MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
   end
 
 endmodule

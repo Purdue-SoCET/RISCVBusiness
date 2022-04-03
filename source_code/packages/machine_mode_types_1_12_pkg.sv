@@ -44,7 +44,7 @@ package machine_mode_types_1_12_pkg;
     MIE_ADDR        = 12'h304,
     MTVEC_ADDR      = 12'h305,
     MCOUNTEREN_ADDR = 12'h306,
-    MSTATUSH_ADDR   = 13'h310,
+    MSTATUSH_ADDR   = 12'h310,
 
     /* Machine Trap Handling */
     MSCRATCH_ADDR   = 12'h340,
