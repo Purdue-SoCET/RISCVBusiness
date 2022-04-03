@@ -28,13 +28,13 @@
 
 module priv_1_12_block (
     input logic CLK, nRST,
-    prv_pipeline_if.prv_block prv_pipe_if,
+    prv_pipeline_if.priv_block prv_pipe_if,
     core_interrupt_if.core interrupt_if
 );
 
     import machine_mode_types_1_12_pkg::*;
 
-    priv_1_12_internal_if priv_int_if();
+    priv_1_12_internal_if prv_intern_if();
 
     priv_level_t curr_priv;
 

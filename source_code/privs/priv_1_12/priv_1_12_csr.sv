@@ -23,7 +23,7 @@
 */
 
 `include "priv_1_12_internal_if.vh"
-`include "component_selection_defins.vh"
+`include "component_selection_defines.vh"
 
 module priv_1_12_csr # (
   HARTID = 0 ) (
@@ -55,7 +55,7 @@ module priv_1_12_csr # (
   mip_t             mip;
   /* Machine Counters/Timers */
   mcounteren_t      mcounteren;
-  mcounterinhibit_t mcounterinhibit;
+  mcountinhibit_t   mcounterinhibit;
   csr_reg_t         mcycle;
   csr_reg_t         minstret;
   csr_reg_t         mcycleh;
@@ -154,7 +154,7 @@ module priv_1_12_csr # (
   assign mie.ssie = 1'b0;
   assign mie.stie = 1'b0;
   assign mie.seie = 1'b0;
-  assign mip.impl_defined = '0; // TODO do we want to define others?
+  assign mie.impl_defined = '0; // TODO do we want to define others?
 
   // Control and Status Registers
   always_ff @ (posedge CLK, negedge nRST) begin
@@ -207,12 +207,12 @@ module priv_1_12_csr # (
           MSTATUS_ADDR: begin
             mstatus.mie <= nxt_csr_val[3];
             mstatus.mpie <= nxt_csr_val[7];
-            mstatus.mpp <= nxt_csr_val[12:11];
+            mstatus.mpp <= priv_level_t'(nxt_csr_val[12:11]);
             mstatus.mprv <= nxt_csr_val[17];
             mstatus.tw <= nxt_csr_val[21];
           end
           MTVEC_ADDR: begin
-            mtvec.mode <= nxt_csr_val[1:0];
+            mtvec.mode <= vector_modes_t'(nxt_csr_val[1:0]);
             mtvec.base <= nxt_csr_val[31:2];
           end
           MIE_ADDR: begin
@@ -271,10 +271,10 @@ module priv_1_12_csr # (
 
         /* Below have no values to check or are R/O */
         MVENDORID_ADDR, MARCHID_ADDR, MIMPID_ADDR, MHARTID_ADDR, MCONFIGPTR_ADDR,
-        MISA_ADDR, MIE_ADDR, MTVEC_ADDR, MSTATUSH_ADDR, MSCRATCH_ADDR, MEPC_ADDR
+        MISA_ADDR, MIE_ADDR, MTVEC_ADDR, MSTATUSH_ADDR, MSCRATCH_ADDR, MEPC_ADDR,
         MCAUSE_ADDR, MTVAL_ADDR, MIP_ADDR, MCOUNTEREN_ADDR, MCOUNTINHIBIT_ADDR,
         MCYCLE_ADDR, MINSTRET_ADDR, MCYCLEH_ADDR, MINSTRETH_ADDR: begin
-            nxt_csr_val = priv_intern_if.curr_priv;
+            nxt_csr_val = prv_intern_if.curr_priv;
         end
 
 
@@ -292,7 +292,7 @@ module priv_1_12_csr # (
       cf_next = cycles_full + 1;
     end
     if (~mcounterinhibit.ir) begin
-      if_next = instret_full + priv_intern_if.inst_ret;
+      if_next = instret_full + prv_intern_if.inst_ret;
     end
   end
 
@@ -301,27 +301,28 @@ module priv_1_12_csr # (
     prv_intern_if.old_csr_val = '0;
     /* CPU return */
     casez(prv_intern_if.csr_addr)
-    MVENDORID_ADDR: prv_intern_if.old_csr_val = mvendorid;
-    MARCHID_ADDR: prv_intern_if.old_csr_val = marchid;
-    MIMPID_ADDR: prv_intern_if.old_csr_val = mimpid;
-    MHARTID_ADDR: prv_intern_if.old_csr_val = mhartid;
-    MCONFIGPTR_ADDR: prv_intern_if.old_csr_val = mconfigptr;
-    MSTATUS: prv_intern_if.old_csr_val = mstatus;
-    MISA_ADDR: prv_intern_if.old_csr_val = misaid;
-    MIE_ADDR: prv_intern_if.old_csr_val = mie;
-    MTVEC_ADDR: prv_intern_if.old_csr_val = mtvec;
-    MSTATUSH_ADDR: prv_intern_if.old_csr_val = mstatush;
-    MSCRATCH_ADDR: prv_intern_if.old_csr_val = mscratch;
-    MEPC_ADDR: prv_intern_if.old_csr_val = mepc;
-    MCAUSE_ADDR: prv_intern_if.old_csr_val = mcause;
-    MTVAL_ADDR: prv_intern_if.old_csr_val = mtval;
-    MIP_ADDR: prv_intern_if.old_csr_val = mip;
-    MCOUNTEREN_ADDR: prv_intern_if.old_csr_val = mcounteren;
-    MCOUNTINHIBIT_ADDR: prv_intern_if.old_csr_val = mcounterinhibit;
-    MCYCLE_ADDR: prv_intern_if.old_csr_val = mcycle;
-    MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
-    MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
-    MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
+      MVENDORID_ADDR: prv_intern_if.old_csr_val = mvendorid;
+      MARCHID_ADDR: prv_intern_if.old_csr_val = marchid;
+      MIMPID_ADDR: prv_intern_if.old_csr_val = mimpid;
+      MHARTID_ADDR: prv_intern_if.old_csr_val = mhartid;
+      MCONFIGPTR_ADDR: prv_intern_if.old_csr_val = mconfigptr;
+      MSTATUS_ADDR: prv_intern_if.old_csr_val = mstatus;
+      MISA_ADDR: prv_intern_if.old_csr_val = misaid;
+      MIE_ADDR: prv_intern_if.old_csr_val = mie;
+      MTVEC_ADDR: prv_intern_if.old_csr_val = mtvec;
+      MSTATUSH_ADDR: prv_intern_if.old_csr_val = mstatush;
+      MSCRATCH_ADDR: prv_intern_if.old_csr_val = mscratch;
+      MEPC_ADDR: prv_intern_if.old_csr_val = mepc;
+      MCAUSE_ADDR: prv_intern_if.old_csr_val = mcause;
+      MTVAL_ADDR: prv_intern_if.old_csr_val = mtval;
+      MIP_ADDR: prv_intern_if.old_csr_val = mip;
+      MCOUNTEREN_ADDR: prv_intern_if.old_csr_val = mcounteren;
+      MCOUNTINHIBIT_ADDR: prv_intern_if.old_csr_val = mcounterinhibit;
+      MCYCLE_ADDR: prv_intern_if.old_csr_val = mcycle;
+      MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
+      MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
+      MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
+    endcase
   end
 
 endmodule

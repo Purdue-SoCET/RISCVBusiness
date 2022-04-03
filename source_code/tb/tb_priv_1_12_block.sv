@@ -24,8 +24,11 @@
 
 `timescale 1ns/100ps
 
+`include "rv32i_types_pkg.sv"
+`include "machine_mode_types_1_12_pkg.sv"
 `include "prv_pipeline_if.vh"
 `include "priv_1_12_internal_if.vh"
+`include "core_interrupt_if.vh"
 
 `define OUTPUT_FILE_NAME "cpu.hex"
 `define STATS_FILE_NAME "stats.txt"
@@ -45,12 +48,17 @@ parameter PERIOD = 20;
 
   //Interface Instantiations
   prv_pipeline_if prv_pipeline_if();
+  core_interrupt_if core_int_if();
+
+  // Package Instantiations
+  import machine_mode_types_1_12_pkg::*;
 
   //Module Instantiations
   priv_1_12_block DUT (
     .CLK(CLK),
     .nRST(nRST),
-    .prv_pipe_if(prv_pipeline_if) // using the "priv_block" modport of the prv_pieline_if.vh file
+    .prv_pipe_if(prv_pipeline_if),
+    .interrupt_if(core_int_if)
   );
 
   //Clock generation
@@ -66,29 +74,29 @@ parameter PERIOD = 20;
   initial begin : CORE_RUN
     nRST = 0;
 
-    prv_pieline_if.pipe_clear = '0;
-    prv_pieline_if.ret = '0;
-    prv_pieline_if.epc = '0;
-    prv_pieline_if.fault_insn = '0;
-    prv_pieline_if.mal_insn = '0;
-    prv_pieline_if.illegal_insn = '0;
-    prv_pieline_if.fault_l = '0;
-    prv_pieline_if.mal_l = '0;
-    prv_pieline_if.fault_s = '0;
-    prv_pieline_if.mal_s = '0;
-    prv_pieline_if.breakpoint = '0;
-    prv_pieline_if.env_m = '0;
-    prv_pieline_if.badaddr = '0;
-    prv_pieline_if.swap = '0;
-    prv_pieline_if.clr = '0;
-    prv_pieline_if.set = '0;
-    prv_pieline_if.wdata = '0;
-    prv_pieline_if.addr = '0;
-    prv_pieline_if.valid_write = '0;
-    prv_pieline_if.wb_enable = '0;
-    prv_pieline_if.instr = '0;
-    prv_pieline_if.ex_rmgmt = '0;
-    prv_pieline_if.ex_rmgmt_cause = '0;
+    prv_pipeline_if.pipe_clear = '0;
+    prv_pipeline_if.ret = '0;
+    prv_pipeline_if.epc = '0;
+    prv_pipeline_if.fault_insn = '0;
+    prv_pipeline_if.mal_insn = '0;
+    prv_pipeline_if.illegal_insn = '0;
+    prv_pipeline_if.fault_l = '0;
+    prv_pipeline_if.mal_l = '0;
+    prv_pipeline_if.fault_s = '0;
+    prv_pipeline_if.mal_s = '0;
+    prv_pipeline_if.breakpoint = '0;
+    prv_pipeline_if.env_m = '0;
+    prv_pipeline_if.badaddr = '0;
+    prv_pipeline_if.swap = '0;
+    prv_pipeline_if.clr = '0;
+    prv_pipeline_if.set = '0;
+    prv_pipeline_if.wdata = '0;
+    prv_pipeline_if.maddr = MSTATUS_ADDR;
+    prv_pipeline_if.valid_write = '0;
+    prv_pipeline_if.wb_enable = '0;
+    prv_pipeline_if.instr = '0;
+    prv_pipeline_if.ex_rmgmt = '0;
+    prv_pipeline_if.ex_rmgmt_cause = '0;
 
     @(posedge CLK);
     @(posedge CLK);
