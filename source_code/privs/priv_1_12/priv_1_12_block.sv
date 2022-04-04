@@ -36,6 +36,8 @@ module priv_1_12_block (
 
     priv_1_12_internal_if prv_intern_if();
 
+    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
+
     priv_level_t curr_priv;
 
     assign prv_intern_if.curr_priv = M_MODE; // TODO make this changeable

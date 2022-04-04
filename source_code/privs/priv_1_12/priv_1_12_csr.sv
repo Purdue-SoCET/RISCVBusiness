@@ -274,9 +274,8 @@ module priv_1_12_csr # (
         MISA_ADDR, MIE_ADDR, MTVEC_ADDR, MSTATUSH_ADDR, MSCRATCH_ADDR, MEPC_ADDR,
         MCAUSE_ADDR, MTVAL_ADDR, MIP_ADDR, MCOUNTEREN_ADDR, MCOUNTINHIBIT_ADDR,
         MCYCLE_ADDR, MINSTRET_ADDR, MCYCLEH_ADDR, MINSTRETH_ADDR: begin
-            nxt_csr_val = prv_intern_if.curr_priv;
+            nxt_csr_val = prv_intern_if.new_csr_val;
         end
-
 
         default: prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
       endcase

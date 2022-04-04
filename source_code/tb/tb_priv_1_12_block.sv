@@ -22,7 +22,7 @@
 *   Description:	Testbench for running the privileged unit v1.12.
 */
 
-`timescale 1ns/100ps
+`timescale 1ns/1ns
 
 `include "rv32i_types_pkg.sv"
 `include "machine_mode_types_1_12_pkg.sv"
@@ -36,7 +36,9 @@
 
 module tb_priv_1_12_block ();
 
-parameter PERIOD = 20;
+  parameter PERIOD = 10;
+
+  localparam PROP_DELAY = 1ns;
 
   logic CLK, nRST;
   logic ram_control; // 1 -> CORE, 0 -> TB
@@ -45,6 +47,8 @@ parameter PERIOD = 20;
   logic [63:0] hexdump_temp;
   logic [7:0] checksum;
   integer fptr, stats_ptr;
+
+  integer test_num;
 
   //Interface Instantiations
   prv_pipeline_if prv_pipeline_if();
@@ -72,7 +76,11 @@ parameter PERIOD = 20;
 
   //Setup core and let it run
   initial begin : CORE_RUN
+    $display("\n");
+    $display("==== Starting tests");
+
     nRST = 0;
+    test_num = 0;
 
     prv_pipeline_if.pipe_clear = '0;
     prv_pipeline_if.ret = '0;
@@ -102,6 +110,130 @@ parameter PERIOD = 20;
     @(posedge CLK);
     nRST = 1;
 
+    $display("=== DUT reset");
+
+    @(posedge CLK);
+    #PROP_DELAY;
+
+    $display("== CSR cases");
+    // ****************
+    // Test Case 0: Read mvendorid
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.maddr = MVENDORID_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'b0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'b0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 1: Read marchid
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.maddr = MARCHID_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'b0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 2: Read mimpid
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.maddr = MIMPID_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'b0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 3: Read mhartid
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.maddr = MHARTID_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'b0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 4: Read mconfigptr
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.maddr = MCONFIGPTR_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'b0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 5: Emulate CSRRW to mstatus
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.wdata = 32'h1088;
+    prv_pipeline_if.maddr = MSTATUS_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'h201800)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'h201800);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 6: Emulate CSRRW to mstatus pt2
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.wdata = 32'h00001088;
+    prv_pipeline_if.maddr = MSTATUS_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'h88)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'h88);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 7: Emulate CSRRW to mscratch
+    // ***************
+    prv_pipeline_if.swap = 1'b1;
+    prv_pipeline_if.wdata = 32'hdeadbeef;
+    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'h0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'h0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+
+    $display("==== Finishing tests");
+    $display("\n");
     $finish;
 
   end : CORE_RUN
