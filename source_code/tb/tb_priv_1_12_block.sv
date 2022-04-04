@@ -139,7 +139,7 @@ module tb_priv_1_12_block ();
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
     else
-      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'b0);
     @(posedge CLK);
     #PROP_DELAY;
     test_num++;
@@ -153,7 +153,7 @@ module tb_priv_1_12_block ();
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
     else
-      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'b0);
     @(posedge CLK);
     #PROP_DELAY;
     test_num++;
@@ -167,7 +167,7 @@ module tb_priv_1_12_block ();
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
     else
-      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'b0);
     @(posedge CLK);
     #PROP_DELAY;
     test_num++;
@@ -181,7 +181,7 @@ module tb_priv_1_12_block ();
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
     else
-      $display("> Test %d: FAIL (got %b) (expected %b)", test_num, prv_pipeline_if.rdata, 32'b0);
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'b0);
     @(posedge CLK);
     #PROP_DELAY;
     test_num++;
