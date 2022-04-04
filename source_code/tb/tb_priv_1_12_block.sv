@@ -231,6 +231,68 @@ module tb_priv_1_12_block ();
     #PROP_DELAY;
     test_num++;
 
+    // ****************
+    // Test Case 8: Emulate CSRRS to mscratch
+    // ***************
+    prv_pipeline_if.swap = 1'b0;
+    prv_pipeline_if.set = 1'b1;
+    prv_pipeline_if.wdata = 32'h21524110;
+    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'hdeadbeef)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'hdeadbeef);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 9: Emulate CSRRS to mscratch pt2
+    // ***************
+    prv_pipeline_if.set = 1'b1;
+    prv_pipeline_if.wdata = 32'h21524110;
+    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'hffffffff)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'hffffffff);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 10: Emulate CSRRC to mscratch
+    // ***************
+    prv_pipeline_if.set = 1'b0;
+    prv_pipeline_if.clr = 1'b1;
+    prv_pipeline_if.wdata = 32'hffffffff;
+    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'hffffffff)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'hffffffff);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
+    // ****************
+    // Test Case 11: Emulate CSRRC to mscratch pt2
+    // ***************
+    prv_pipeline_if.clr = 1'b1;
+    prv_pipeline_if.wdata = 32'h0;
+    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    #PROP_DELAY;
+    if (prv_pipeline_if.rdata == 32'h0)
+      $display("> Test %d: PASS", test_num);
+    else
+      $display("> Test %d: FAIL (got %h) (expected %h)", test_num, prv_pipeline_if.rdata, 32'h0);
+    @(posedge CLK);
+    #PROP_DELAY;
+    test_num++;
+
 
     $display("==== Finishing tests");
     $display("\n");

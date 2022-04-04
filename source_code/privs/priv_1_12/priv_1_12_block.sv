@@ -43,7 +43,9 @@ module priv_1_12_block (
     assign prv_intern_if.curr_priv = M_MODE; // TODO make this changeable
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.maddr;
-    assign prv_intern_if.csr_mod = prv_pipe_if.swap | prv_pipe_if.clr | prv_pipe_if.set;
+    assign prv_intern_if.csr_write = prv_pipe_if.swap;
+    assign prv_intern_if.csr_clear = prv_pipe_if.clr;
+    assign prv_intern_if.csr_set = prv_pipe_if.set;
     assign prv_intern_if.new_csr_val = prv_pipe_if.wdata;
     assign prv_pipe_if.rdata = prv_intern_if.old_csr_val;
     assign prv_pipe_if.invalid_csr = prv_intern_if.invalid_csr;

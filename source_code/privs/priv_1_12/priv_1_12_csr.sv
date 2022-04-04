@@ -202,7 +202,7 @@ module priv_1_12_csr # (
 
     end else begin
       // Only write if it is a valid write and no perm error
-      if (prv_intern_if.csr_mod && ~prv_intern_if.invalid_csr) begin
+      if ((prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) && ~prv_intern_if.invalid_csr) begin
         casez (prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
             mstatus.mie <= nxt_csr_val[3];
@@ -250,7 +250,10 @@ module priv_1_12_csr # (
 
   // Privilege Check and Legal Value Check
   always_comb begin
-    nxt_csr_val = prv_intern_if.new_csr_val;
+    nxt_csr_val = (prv_intern_if.csr_write) ? prv_intern_if.new_csr_val :
+                  (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
+                  (prv_intern_if.csr_set)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
+                  prv_intern_if.new_csr_val;
     prv_intern_if.invalid_csr = 1'b0;
 
     if (prv_intern_if.csr_addr[9:8] & prv_intern_if.curr_priv != 2'b11) begin
@@ -274,7 +277,10 @@ module priv_1_12_csr # (
         MISA_ADDR, MIE_ADDR, MTVEC_ADDR, MSTATUSH_ADDR, MSCRATCH_ADDR, MEPC_ADDR,
         MCAUSE_ADDR, MTVAL_ADDR, MIP_ADDR, MCOUNTEREN_ADDR, MCOUNTINHIBIT_ADDR,
         MCYCLE_ADDR, MINSTRET_ADDR, MCYCLEH_ADDR, MINSTRETH_ADDR: begin
-            nxt_csr_val = prv_intern_if.new_csr_val;
+            nxt_csr_val = (prv_intern_if.csr_write) ? prv_intern_if.new_csr_val :
+                          (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
+                          (prv_intern_if.csr_clear)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
+                          prv_intern_if.new_csr_val;
         end
 
         default: prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
