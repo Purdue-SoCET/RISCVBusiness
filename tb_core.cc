@@ -1,5 +1,8 @@
 #include <iostream>
+#include <iomanip>
+#include <cstdio>
 #include <fstream>
+#include <sstream>
 #include <map>
 
 #include "verilated.h"
@@ -9,12 +12,101 @@
 
 vluint64_t sim_time = 0;
 
-std::map<uint32_t, uint32_t>* make_memory() {
 
-    std::map<uint32_t, uint32_t>* mmap = new std::map<uint32_t, uint32_t>;
+class MemoryMap {
+private:
+
+    // TODO: Assuming 0 for uninitialized memory since bare metal tests don't properly set
+    // up the bss section.
+    const uint32_t c_default_value = 0x00000000;
+    const char *dumpfile = "memsim.dump";
+    std::map<uint32_t, uint32_t> mmap;
+
+protected:
+    inline uint32_t expand_mask(uint8_t mask) {
+        uint32_t acc = 0;
+        for(int i = 0; i < 4; i++) {
+            auto bit = ((mask & (1 << i)) != 0);
+            if(bit) {
+                acc |= (0xF << (i * 8));
+            }
+        }
+
+        return acc;
+    }
+
+public:
+
+    MemoryMap(const char *fname) {
+        uint32_t address = 0x80000000;
+        std::ifstream myFile(fname, std::ios::in | std::ios::binary);
+        if(!myFile) {
+            std::ostringstream ss;
+            ss << "Couldn't open " << fname << std::endl;
+            throw ss.str();
+        }
+
+        while(!myFile.eof()) {
+            uint32_t data;
+            myFile.read((char *)&data, sizeof(data));
+
+            mmap.insert(std::make_pair(address, data));
+
+            address += 4;
+        }
+    }
+
+    // TODO: Add simulation for SWI/mtime?
+    uint32_t read(uint32_t addr) {
+        auto it = mmap.find(addr);
+        if(it != mmap.end()) {
+            return it->second;
+        } else {
+            return c_default_value;
+        }
+    }
+
+    void write(uint32_t addr, uint32_t value, uint8_t mask) {
+        // NOTE: For now, assuming that all memory is legally acessible.
+        auto it = mmap.find(addr);
+        if(it != mmap.end()) {
+            auto mask_exp = expand_mask(mask);
+            it->second = (value & mask_exp) | (it->second & ~mask_exp);
+        } else {
+            mmap.insert(std::make_pair(addr, value));
+        }
+    }
+
+    void dump() {
+        std::ofstream outfile;
+        outfile.open(dumpfile);
+        if(!outfile) {
+            std::ostringstream ss;
+            ss << "Couldn't open " << dumpfile << std::endl;
+            throw ss.str();
+        }
+
+        for(auto p : mmap) {
+            if(p.second != 0) {
+                char buf[80];
+                snprintf(buf, 80, "%08x : %02x%02x%02x%02x", p.first, 
+                        (p.second & 0xFF000000) >> 24, 
+                        (p.second & 0x00FF0000) >> 16, 
+                        (p.second & 0x0000FF00) >> 8, 
+                        p.second & 0x000000FF);
+                outfile << buf << std::endl;
+            }
+        }
+    }
+};
+
+/*
+std::map<uint32_t, uint32_t> make_memory(const char *filename) {
+
+    std::map<uint32_t, uint32_t> mmap;
 
     uint32_t address = 0x80000000;
-    std::ifstream myFile("meminit.bin", std::ios::in | std::ios::binary);
+    std::ifstream myFile(filename, std::ios::in | std::ios::binary);
     if(!myFile) {
         std::cout << "Couldn't open meminit.bin!" << std::endl;
         return NULL;
@@ -24,13 +116,14 @@ std::map<uint32_t, uint32_t>* make_memory() {
         uint32_t data;
         myFile.read((char *)&data, sizeof(data));
 
-        mmap->insert(std::make_pair(address, data));
+        mmap.insert(std::make_pair(address, data));
 
         address += 4;
     }
 
     return mmap;
 }
+*/
 
 void tick(Vtop_core& dut, VerilatedVcdC& trace) {
     dut.CLK = 0;
@@ -66,11 +159,16 @@ void reset(Vtop_core& dut, VerilatedVcdC& trace) {
 
 int main(int argc, char **argv) {
 
-    std::map<uint32_t, uint32_t> *memory = make_memory();
-    if(!memory) {
-        std::cout << "Could not open meminit.bin" << std::endl;
-        return 0;
+    const char *fname;
+
+    if(argc < 2) {
+        std::cout << "Warning: No bin file name provided, assuming './meminit.bin' as file location!" << std::endl;
+        fname = "meminit.bin";
+    } else {
+        fname = argv[1];
     }
+
+    MemoryMap memory(fname);
 
     Vtop_core dut;
 
@@ -82,17 +180,17 @@ int main(int argc, char **argv) {
 
     reset(dut, m_trace);
     while(!dut.halt) {
+        // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
             dut.busy = 0;
             if(dut.ren) {
                 uint32_t addr = dut.addr;
-                auto it = memory->find(addr);
-                if(it != memory->end()) {
-                    uint32_t data = it->second;
-                    dut.rdata = data;
-                } else {
-                    dut.rdata = 0;
-                }
+                dut.rdata = memory.read(addr);
+            } else if(dut.wen) {
+                uint32_t addr = dut.addr;
+                uint32_t value = dut.wdata;
+                uint8_t mask = dut.byte_en;
+                memory.write(addr, value, mask);
             }
         } else if(!dut.busy) {
             dut.busy = 1;
@@ -106,7 +204,8 @@ int main(int argc, char **argv) {
     } else {
         std::cout << "Test FAILED" << std::endl;
     }
-
     m_trace.close();
+    memory.dump();
+
     return 0;
 }
