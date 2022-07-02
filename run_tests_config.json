@@ -1,0 +1,15 @@
+{
+  "arch": "RV32I",
+  "abi": "ilp32",
+  "xlen": "rv32imc",
+  "test_type": "self-tests",
+  "top_level": "RISCVBusiness_self_test",
+  "test_filenames": ["*.S"],
+  
+  "cache_file": "run_tests_cache.json",
+  "build_dir": "./build",
+  "verif_dir": "./verification",
+  "asm_env": "./verification/asm-env/selfasm",
+  "sim_dir": "./sim_out",
+  "link_file": "link.ld"
+}

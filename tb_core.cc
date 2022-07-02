@@ -28,7 +28,7 @@ protected:
         for(int i = 0; i < 4; i++) {
             auto bit = ((mask & (1 << i)) != 0);
             if(bit) {
-                acc |= (0xF << (i * 8));
+                acc |= (0xFF << (i * 8));
             }
         }
 
@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
         tick(dut, m_trace);
     }
 
-    if(dut.top_core->get_x28()) {
+    if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else {
         std::cout << "Test FAILED" << std::endl;

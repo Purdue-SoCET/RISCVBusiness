@@ -62,8 +62,6 @@ module RISCVBusiness (
   tspp_fetch_execute_if      fetch_ex_if();
   tspp_hazard_unit_if        hazard_if();
 
-  logic halt;    //JOHN CHANGED THIS
-
   // Module Instantiations
 /*
   pipeline_wrapper pipeline (

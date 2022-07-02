@@ -63,7 +63,7 @@ module priv_1_11_csr_rfile (
   mideleg_t mideleg;
   mie_t     mie, mie_next;
   mtvec_t   mtvec, mtvec_next;
-
+/*
   // Privilege and Global Interrupt-Enable Stack
   assign mstatus_next.uie          = 1'b0;
   assign mstatus_next.sie   	      = 1'b0;
@@ -90,13 +90,14 @@ module priv_1_11_csr_rfile (
   assign mstatus_next.fs     = FS_OFF; // Even though FPU will be integrated for AFTx06, there is no functionality for Supervisor Mode
   assign mstatus_next.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
   assign mstatus_next.reserved_3 = '0;
-
+*/
 
 
   // Deleg Register Zero in Machine Mode Only (Should be removed)
   assign medeleg = '0;
   assign mideleg = '0;
 
+/*
   assign mie_next.reserved_0 = '0;
   assign mie_next.reserved_1 = '0;
   assign mie_next.reserved_2 = '0;
@@ -107,7 +108,7 @@ module priv_1_11_csr_rfile (
   assign mie_next.ssie = 1'b0;
   assign mie_next.ueie = 1'b0;
   assign mie_next.seie = 1'b0;
-
+*/
  /* Machine Trap Handling */
  
   mscratch_t  mscratch, mscratch_next;
@@ -115,7 +116,7 @@ module priv_1_11_csr_rfile (
   mcause_t    mcause, mcause_next;
   mtval_t     mtval, mtval_next;
   mip_t       mip, mip_next;
- 
+/*
   assign mip_next.reserved_0 = '0;
   assign mip_next.reserved_1 = '0;
   assign mip_next.reserved_2 = '0;
@@ -126,7 +127,7 @@ module priv_1_11_csr_rfile (
   assign mip_next.ssip = 1'b0;
   assign mip_next.ueip = 1'b0;
   assign mip_next.seip = 1'b0;
-
+*/
   /* Machine Counter Delta Registers */
   // Unimplemented, only Machine Mode Supported
 
