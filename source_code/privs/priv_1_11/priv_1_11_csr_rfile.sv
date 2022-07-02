@@ -65,31 +65,31 @@ module priv_1_11_csr_rfile (
   mtvec_t   mtvec, mtvec_next;
 
   // Privilege and Global Interrupt-Enable Stack
-  assign mstatus.uie          = 1'b0;
-  assign mstatus.sie   	      = 1'b0;
-  assign mstatus.reserved_0   = 1'b0;
-  assign mstatus.upie	      = 1'b0;
-  assign mstatus.spie	      = 1'b0;
-  assign mstatus.reserved_1   = 1'b0;
-  assign mstatus.spp	      = 1'b0;
-  assign mstatus.reserved_2   = 2'b0;
-  assign mstatus.mpp          = M_LEVEL;
+  assign mstatus_next.uie          = 1'b0;
+  assign mstatus_next.sie   	      = 1'b0;
+  assign mstatus_next.reserved_0   = 1'b0;
+  assign mstatus_next.upie	      = 1'b0;
+  assign mstatus_next.spie	      = 1'b0;
+  assign mstatus_next.reserved_1   = 1'b0;
+  assign mstatus_next.spp	      = 1'b0;
+  assign mstatus_next.reserved_2   = 2'b0;
+  assign mstatus_next.mpp          = M_LEVEL;
 
   // No memory protection
-  assign mstatus.mprv   = 1'b0;
-  assign mstatus.sum    = 1'b0;
-  assign mstatus.mxr    = 1'b0;
+  assign mstatus_next.mprv   = 1'b0;
+  assign mstatus_next.sum    = 1'b0;
+  assign mstatus_next.mxr    = 1'b0;
 
   // No virtualization protection
-  assign mstatus.tvm = 1'b0;
-  assign mstatus.tw = 1'b0;
-  assign mstatus.tsr = 1'b0;
+  assign mstatus_next.tvm = 1'b0;
+  assign mstatus_next.tw = 1'b0;
+  assign mstatus_next.tsr = 1'b0;
 
   // No FPU or Extensions
-  assign mstatus.xs     = XS_ALL_OFF;
-  assign mstatus.fs     = FS_OFF; // Even though FPU will be integrated for AFTx06, there is no functionality for Supervisor Mode
-  assign mstatus.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
-  assign mstatus.reserved_3 = '0;
+  assign mstatus_next.xs     = XS_ALL_OFF;
+  assign mstatus_next.fs     = FS_OFF; // Even though FPU will be integrated for AFTx06, there is no functionality for Supervisor Mode
+  assign mstatus_next.sd     = (mstatus.fs == FS_DIRTY) | (mstatus.xs == XS_SOME_D);
+  assign mstatus_next.reserved_3 = '0;
 
 
 
@@ -97,16 +97,16 @@ module priv_1_11_csr_rfile (
   assign medeleg = '0;
   assign mideleg = '0;
 
-  assign mie.reserved_0 = '0;
-  assign mie.reserved_1 = '0;
-  assign mie.reserved_2 = '0;
-  assign mie.reserved_3 = '0;
-  assign mie.utie = 1'b0;
-  assign mie.stie = 1'b0;
-  assign mie.usie = 1'b0;
-  assign mie.ssie = 1'b0;
-  assign mie.ueie = 1'b0;
-  assign mie.seie = 1'b0;
+  assign mie_next.reserved_0 = '0;
+  assign mie_next.reserved_1 = '0;
+  assign mie_next.reserved_2 = '0;
+  assign mie_next.reserved_3 = '0;
+  assign mie_next.utie = 1'b0;
+  assign mie_next.stie = 1'b0;
+  assign mie_next.usie = 1'b0;
+  assign mie_next.ssie = 1'b0;
+  assign mie_next.ueie = 1'b0;
+  assign mie_next.seie = 1'b0;
 
  /* Machine Trap Handling */
  
@@ -116,16 +116,16 @@ module priv_1_11_csr_rfile (
   mtval_t     mtval, mtval_next;
   mip_t       mip, mip_next;
  
-  assign mip.reserved_0 = '0;
-  assign mip.reserved_1 = '0;
-  assign mip.reserved_2 = '0;
-  assign mip.reserved_3 = '0;
-  assign mip.utip = 1'b0;
-  assign mip.stip = 1'b0;
-  assign mip.usip = 1'b0;
-  assign mip.ssip = 1'b0;
-  assign mip.ueip = 1'b0;
-  assign mip.seip = 1'b0;
+  assign mip_next.reserved_0 = '0;
+  assign mip_next.reserved_1 = '0;
+  assign mip_next.reserved_2 = '0;
+  assign mip_next.reserved_3 = '0;
+  assign mip_next.utip = 1'b0;
+  assign mip_next.stip = 1'b0;
+  assign mip_next.usip = 1'b0;
+  assign mip_next.ssip = 1'b0;
+  assign mip_next.ueip = 1'b0;
+  assign mip_next.seip = 1'b0;
 
   /* Machine Counter Delta Registers */
   // Unimplemented, only Machine Mode Supported
@@ -151,8 +151,9 @@ module priv_1_11_csr_rfile (
  
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      mstatus.mie <= 1'b0;
-      mstatus.mpie <= 1'b0;
+      mstatus <= '0;
+      //mstatus.mie <= 1'b0;
+      //mstatus.mpie <= 1'b0;
       mie.mtie    <= 1'b0;
       mie.msie    <= 1'b0;
       mip.msip    <= 1'b0;
@@ -168,14 +169,17 @@ module priv_1_11_csr_rfile (
       cyclefull   <= '0;
       instretfull <= '0;
     end else begin      
-      mstatus.mie  <= mstatus_next.mie;
-      mstatus.mpie <= mstatus_next.mpie;
-      mie.mtie    <= mie_next.mtie;
-      mie.msie    <= mie_next.msie;
-      mie.meie    <= mie_next.meie;
-      mip.msip    <= mip_next.msip;
-      mip.mtip    <= mip_next.mtip;
-      mip.meip    <= mip_next.meip;
+      mstatus <= mstatus_next;
+      //mstatus.mie  <= mstatus_next.mie;
+      //mstatus.mpie <= mstatus_next.mpie;
+      mie <= mie_next;
+      //mie.mtie    <= mie_next.mtie;
+      //mie.msie    <= mie_next.msie;
+      //mie.meie    <= mie_next.meie;
+      mip <= mip_next;
+      //mip.msip    <= mip_next.msip;
+      //mip.mtip    <= mip_next.mtip;
+      //mip.meip    <= mip_next.meip;
       misaid      <= misaid_next;
       mtvec       <= mtvec_next;
       mcause      <= mcause_next;

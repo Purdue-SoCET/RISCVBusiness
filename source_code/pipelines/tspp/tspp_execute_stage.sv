@@ -150,7 +150,7 @@ module tspp_execute_stage(
   /*******************************************************
   *** Jump Target Calculator and Associated Logic 
   *******************************************************/
-  word_t jump_addr;
+  word_t jump_addr /* verilator isolate_assignments */;
   always_comb begin
     if (cu_if.j_sel) begin
       jump_if.base = fetch_ex_if.fetch_ex_reg.pc;

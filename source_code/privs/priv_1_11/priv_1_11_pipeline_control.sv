@@ -36,7 +36,7 @@ module priv_1_11_pipeline_control
 
   
   always_comb begin
-    prv_intern_if.priv_pc = 'Z;
+    prv_intern_if.priv_pc = '0;
 
     if(prv_intern_if.intr) begin
       if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) begin // vectored mode based on the interrupt source

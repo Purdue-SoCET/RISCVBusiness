@@ -26,7 +26,7 @@
 module fetch_buffer
 (
     input logic clk, n_rst,
-    fetch_buffer.fb fb_if
+    fetch_buffer_if.fb fb_if
 );
     logic [15:0] buffer, nextbuffer;
     logic [31:0] pc, next_imem_pc;

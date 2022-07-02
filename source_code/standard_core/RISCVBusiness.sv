@@ -35,7 +35,7 @@
 
 module RISCVBusiness (
   input logic CLK, nRST,
-  output logic wfi,
+  output logic wfi, halt,
   core_interrupt_if.core interrupt_if,
   `ifdef BUS_INTERFACE_GENERIC_BUS
   generic_bus_if.cpu gen_bus_if
