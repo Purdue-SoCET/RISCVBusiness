@@ -179,15 +179,15 @@ int main(int argc, char **argv) {
 
 
     reset(dut, m_trace);
-    while(!dut.halt) {
+    while(!dut.halt && sim_time < 10000) {
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
             dut.busy = 0;
             if(dut.ren) {
-                uint32_t addr = dut.addr;
+                uint32_t addr = dut.addr & 0xFFFFFFFC;
                 dut.rdata = memory.read(addr);
             } else if(dut.wen) {
-                uint32_t addr = dut.addr;
+                uint32_t addr = dut.addr & 0xFFFFFFFC;
                 uint32_t value = dut.wdata;
                 uint8_t mask = dut.byte_en;
                 memory.write(addr, value, mask);
@@ -199,7 +199,9 @@ int main(int argc, char **argv) {
         tick(dut, m_trace);
     }
 
-    if(dut.top_core->get_x28() == 1) {
+    if(sim_time == 10000) {
+        std::cout << "Test TIMED OUT" << std::endl;
+    } else if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else {
         std::cout << "Test FAILED" << std::endl;
