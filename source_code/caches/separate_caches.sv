@@ -35,7 +35,9 @@ module separate_caches (
   cache_control_if.caches cc_if
 );
   generate
+    /* verilator lint_off width */
     case (DCACHE_TYPE)
+    /* verilator lint_on width */
       "pass_through" : begin
                         pass_through_cache dcache(
                           .CLK(CLK),
@@ -60,7 +62,9 @@ module separate_caches (
   endgenerate
 
   generate
+    /* verilator lint_off width */
     case (ICACHE_TYPE)
+    /* verilator lint_on width */
       "pass_through" : begin
                         pass_through_cache icache(
                           .CLK(CLK),

@@ -7,7 +7,9 @@ module rv32c_wrapper(
 );
 
 generate
+  /* verilator lint_off width */
   case(RV32C_ENABLED)
+  /* verilator lint_on width */
     "disabled" : rv32c_disabled RV32C(.clk(CLK), .nrst(nRST), .rv32cif(rv32cif));
     "enabled" : rv32c_enabled RV32C(.clk(CLK), .nrst(nRST), .rv32cif(rv32cif));
   endcase
