@@ -46,7 +46,7 @@ default:
 	$(USAGE)
 
 verilate:
-	verilator -Wno-UNOPTFLAT -Wno-SYMRSVDWORD -cc -Wno-lint --report-unoptflat --trace --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
+	verilator -Wno-UNOPTFLAT -Wno-SYMRSVDWORD -cc -Wno-lint --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
 
 clean:
 	rm -rf obj_dir

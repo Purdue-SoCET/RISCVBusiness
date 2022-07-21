@@ -6,11 +6,12 @@
 #include <map>
 
 #include "verilated.h"
-#include "verilated_vcd_c.h"
+#include "verilated_fst_c.h"
 #include "Vtop_core.h"
 #include "Vtop_core_top_core.h"
 
 vluint64_t sim_time = 0;
+
 
 
 class MemoryMap {
@@ -125,7 +126,7 @@ std::map<uint32_t, uint32_t> make_memory(const char *filename) {
 }
 */
 
-void tick(Vtop_core& dut, VerilatedVcdC& trace) {
+void tick(Vtop_core& dut, VerilatedFstC& trace) {
     dut.CLK = 0;
     dut.eval();
     trace.dump(sim_time);
@@ -136,7 +137,7 @@ void tick(Vtop_core& dut, VerilatedVcdC& trace) {
     sim_time++;
 }
 
-void reset(Vtop_core& dut, VerilatedVcdC& trace) {
+void reset(Vtop_core& dut, VerilatedFstC& trace) {
     // Initialize signals 
     dut.CLK = 0;
     dut.nRST = 0;
@@ -173,9 +174,9 @@ int main(int argc, char **argv) {
     Vtop_core dut;
 
     Verilated::traceEverOn(true);
-    VerilatedVcdC m_trace;
+    VerilatedFstC m_trace;
     dut.trace(&m_trace, 5);
-    m_trace.open("waveform.vcd");
+    m_trace.open("waveform.fst");
 
 
     reset(dut, m_trace);
