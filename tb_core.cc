@@ -17,8 +17,9 @@ vluint64_t sim_time = 0;
 class MemoryMap {
 private:
 
-    // TODO: Assuming 0 for uninitialized memory since bare metal tests don't properly set
-    // up the bss section.
+    // NOTE: Assuming 0 for uninitialized memory
+    // This is because bare-metal tests may not set up bss,
+    // but the program will nonetheless have a bss section.
     const uint32_t c_default_value = 0x00000000;
     const char *dumpfile = "memsim.dump";
     std::map<uint32_t, uint32_t> mmap;
@@ -87,6 +88,7 @@ public:
             throw ss.str();
         }
 
+        // Account for endianness
         for(auto p : mmap) {
             if(p.second != 0) {
                 char buf[80];
@@ -100,31 +102,6 @@ public:
         }
     }
 };
-
-/*
-std::map<uint32_t, uint32_t> make_memory(const char *filename) {
-
-    std::map<uint32_t, uint32_t> mmap;
-
-    uint32_t address = 0x80000000;
-    std::ifstream myFile(filename, std::ios::in | std::ios::binary);
-    if(!myFile) {
-        std::cout << "Couldn't open meminit.bin!" << std::endl;
-        return NULL;
-    }
-
-    while(!myFile.eof()) {
-        uint32_t data;
-        myFile.read((char *)&data, sizeof(data));
-
-        mmap.insert(std::make_pair(address, data));
-
-        address += 4;
-    }
-
-    return mmap;
-}
-*/
 
 void tick(Vtop_core& dut, VerilatedFstC& trace) {
     dut.CLK = 0;
@@ -180,7 +157,7 @@ int main(int argc, char **argv) {
 
 
     reset(dut, m_trace);
-    while(!dut.halt && sim_time < 10000) {
+    while(!dut.halt && sim_time < 1000000) {
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
             dut.busy = 0;
@@ -200,12 +177,12 @@ int main(int argc, char **argv) {
         tick(dut, m_trace);
     }
 
-    if(sim_time == 10000) {
+    if(sim_time == 1000000) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else {
-        std::cout << "Test FAILED" << std::endl;
+        std::cout << "Test FAILED: Test " << dut.top_core->get_x28() << std::endl;
     }
     m_trace.close();
     memory.dump();
