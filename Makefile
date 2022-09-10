@@ -35,6 +35,7 @@ HEADER_FILES := -I$(RISCV)/include
 define USAGE
 @echo "-----------------------------------------"
 @echo " Build Targets:"
+@echo "     config: config core with example.yml"
 @echo "     verilate: Invoke verilator"
 @echo "-----------------------------------------"
 endef
@@ -44,6 +45,9 @@ endef
 
 default:
 	$(USAGE)
+
+config:
+	python scripts/config_core.py example.yml
 
 verilate:
 	verilator -Wno-UNOPTFLAT -Wno-SYMRSVDWORD -cc -Wno-lint --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc

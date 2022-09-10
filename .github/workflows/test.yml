@@ -15,4 +15,5 @@ jobs:
         uses: Purdue-SoCET/SoCET-CI@main # core usage
         with:
           targets: | # List all FuseSoC Test Targets
+            make configß
             make verilate
