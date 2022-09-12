@@ -2,7 +2,9 @@
 `include "ahb_if.vh"
 `include "generic_bus_if.vh"
 
-module top_core(
+module top_core #(
+    parameter RESET_PC = 32'h80000000
+)(
     input CLK, nRST,
     output wfi, halt,
     // core_interrupt_if
@@ -21,6 +23,7 @@ module top_core(
     // TODO
     `endif
 );
+
 
     function [31:0] get_x28;
         // verilator public
@@ -71,7 +74,9 @@ module top_core(
     `endif
 
 
-    RISCVBusiness CORE(
+    RISCVBusiness #(
+        .RESET_PC(RESET_PC)
+    ) CORE(
         .*
     );
 

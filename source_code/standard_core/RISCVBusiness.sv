@@ -44,6 +44,8 @@ module RISCVBusiness (
   `endif
 );
 
+  parameter RESET_PC = 32'h80000000;
+
   // Interface instantiations
 
   generic_bus_if tspp_icache_gen_bus_if();
@@ -78,7 +80,9 @@ module RISCVBusiness (
   );
 */
 
-  tspp_fetch_stage fetch_stage_i (
+  tspp_fetch_stage #(
+    .RESET_PC(RESET_PC)
+  ) fetch_stage_i (
     .CLK(CLK),
     .nRST(nRST),
     .fetch_ex_if(fetch_ex_if),
