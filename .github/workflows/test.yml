@@ -1,0 +1,19 @@
+name: Test
+on:
+  push:
+  pull_request: 
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3 # required
+      - name: Run Regression Tests
+        uses: Purdue-SoCET/SoCET-CI@main # core usage
+        with:
+          targets: | # List all FuseSoC Test Targets
+            make config
+            make verilate
