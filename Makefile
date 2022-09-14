@@ -51,6 +51,7 @@ config:
 
 verilate:
 	verilator -Wno-UNOPTFLAT -Wno-SYMRSVDWORD -cc -Wno-lint --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
+	$(MAKE) -C obj_dir -f Vtop_core.mk -j `nproc`
 
 clean:
 	rm -rf obj_dir
