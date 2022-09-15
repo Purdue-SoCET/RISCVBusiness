@@ -1,0 +1,158 @@
+CAPI=2:
+name: socet:aft:RISCVBusiness:0.1.0
+description: RISC-V Core for AFTx series
+
+filesets:
+    rtl:
+        files:
+            - source_code/packages/machine_mode_types_1_7_pkg.sv
+            - source_code/packages/machine_mode_types_pkg.sv
+            - source_code/packages/alu_types_pkg.sv
+            - source_code/packages/machine_mode_types_1_11_pkg.sv
+            - source_code/packages/rv32i_types_pkg.sv
+            - source_code/packages/risc_mgmt/crc32_pkg.sv
+            - source_code/packages/risc_mgmt/template_pkg.sv
+            - source_code/packages/risc_mgmt/test_pkg.sv
+            - source_code/packages/risc_mgmt/rv32m_pkg.sv
+            - source_code/branch_predictors/branch_predictor_wrapper.sv
+            - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
+            - source_code/bus_bridges/generic_nonpipeline.sv
+            - source_code/caches/caches_wrapper.sv
+            - source_code/caches/separate_caches.sv
+            - source_code/caches/direct_mapped_tpf/direct_mapped_tpf_cache.sv
+            - source_code/caches/pass_through/pass_through_cache.sv
+            - source_code/pipelines/pipeline_wrapper.sv
+            - source_code/pipelines/tspp/tspp_hazard_unit.sv
+            - source_code/pipelines/tspp/tspp.sv
+            - source_code/pipelines/tspp/tspp_fetch_stage.sv
+            - source_code/pipelines/tspp/tspp_execute_stage.sv
+            - source_code/privs/priv_wrapper.sv
+            - source_code/privs/priv_1_11/priv_1_11_control.sv
+            - source_code/privs/priv_1_11/priv_1_11_block.sv
+            - source_code/privs/priv_1_11/priv_1_11_csr_rfile.sv
+            - source_code/privs/priv_1_11/priv_1_11_pipeline_control.sv
+            - source_code/ram/config_ram_wrapper.sv
+            - source_code/ram/ram_sim_model.sv
+            - source_code/ram/ram_wrapper.sv
+            - source_code/risc_mgmt/risc_mgmt_wrapper.sv
+            - source_code/risc_mgmt/extensions/crc32/crc32.sv
+            - source_code/risc_mgmt/extensions/crc32/crc32_decode.sv
+            - source_code/risc_mgmt/extensions/crc32/crc32_execute.sv
+            - source_code/risc_mgmt/extensions/crc32/crc32_memory.sv
+            - source_code/risc_mgmt/extensions/rv32m/rv32m_memory.sv
+            - source_code/risc_mgmt/extensions/rv32m/shift_add_multiplier.sv
+            - source_code/risc_mgmt/extensions/rv32m/shift_test_restore_divider.sv
+            - source_code/risc_mgmt/extensions/rv32m/carry_save_adder.sv
+            - source_code/risc_mgmt/extensions/rv32m/flex_counter_mul.sv
+            - source_code/risc_mgmt/extensions/rv32m/full_adder.sv
+            - source_code/risc_mgmt/extensions/rv32m/pp_mul32.sv
+            - source_code/risc_mgmt/extensions/rv32m/radix4_divider.sv
+            - source_code/risc_mgmt/extensions/rv32m/rv32m_execute.sv
+            - source_code/risc_mgmt/extensions/rv32m/rv32m_decode.sv
+            - source_code/risc_mgmt/extensions/template/template_decode.sv
+            - source_code/risc_mgmt/extensions/template/template_execute.sv
+            - source_code/risc_mgmt/extensions/template/template_memory.sv
+            - source_code/risc_mgmt/tspp/tspp_risc_mgmt.sv
+            - source_code/sparce/sparce_wrapper.sv
+            - source_code/sparce/sparce_disabled/sparce_disabled.sv
+            - source_code/sparce/sparce_enabled/sparce_cfid.sv
+            - source_code/sparce/sparce_enabled/sparce_enabled.sv
+            - source_code/sparce/sparce_enabled/sparce_psru.sv
+            - source_code/sparce/sparce_enabled/sparce_sasa_table.sv
+            - source_code/sparce/sparce_enabled/sparce_sprf.sv
+            - source_code/sparce/sparce_enabled/sparce_svc.sv
+            - source_code/standard_core/alu.sv
+            - source_code/standard_core/branch_res.sv
+            - source_code/standard_core/dmem_extender.sv
+            - source_code/standard_core/endian_swapper.sv
+            - source_code/standard_core/memory_controller.sv
+            - source_code/standard_core/control_unit.sv
+            - source_code/standard_core/jump_calc.sv
+            - source_code/standard_core/rv32i_reg_file.sv
+            - source_code/standard_core/RISCVBusiness.sv
+            - source_code/standard_core/top_core.sv
+            - source_code/trackers/branch_tracker.sv
+            - source_code/trackers/cpu_tracker.sv
+            - source_code/Floating_Point_Unit/source/u_to_s.sv
+            - source_code/Floating_Point_Unit/source/ADD_step1.sv
+            - source_code/Floating_Point_Unit/source/ADD_step2.sv
+            - source_code/Floating_Point_Unit/source/ADD_step3.sv
+            - source_code/Floating_Point_Unit/source/FPU_top_level.sv
+            - source_code/Floating_Point_Unit/source/MUL_step1.sv
+            - source_code/Floating_Point_Unit/source/MUL_step2.sv
+            - source_code/Floating_Point_Unit/source/adder_26b.sv
+            - source_code/Floating_Point_Unit/source/adder_8b.sv
+            - source_code/Floating_Point_Unit/source/int_compare.sv
+            - source_code/Floating_Point_Unit/source/left_shift.sv
+            - source_code/Floating_Point_Unit/source/max_select.sv
+            - source_code/Floating_Point_Unit/source/mul_26b.sv
+            - source_code/Floating_Point_Unit/source/right_shift.sv
+            - source_code/Floating_Point_Unit/source/rounder.sv
+            - source_code/Floating_Point_Unit/source/s_to_u.sv
+            - source_code/Floating_Point_Unit/source/subtract.sv
+            - source_code/RV32E/rv32e_reg_file.sv
+            - source_code/RV32E/rv32e_wrapper.sv
+            - source_code/rv32c/decompressor.sv
+            - source_code/rv32c/rv32c_disabled.sv
+            - source_code/rv32c/rv32c_enabled.sv
+            - source_code/rv32c/fetch_buffer.sv
+            - source_code/rv32c/rv32c_wrapper.sv
+            - source_code/include/ahb_if.vh : {is_include_file: true}
+            - source_code/include/cache_control_if.vh : {is_include_file: true}
+            - source_code/include/component_selection_defines.vh : {is_include_file: true}
+            - source_code/include/risc_mgmt_if.vh : {is_include_file: true}
+            - source_code/include/generic_bus_if.vh : {is_include_file: true}
+            - source_code/include/rv32c_if.vh : {is_include_file: true}
+            - source_code/include/risc_mgmt_decode_if.vh : {is_include_file: true}
+            - source_code/include/risc_mgmt_execute_if.vh : {is_include_file: true}
+            - source_code/include/risc_mgmt_macros.vh : {is_include_file: true}
+            - source_code/include/risc_mgmt_memory_if.vh : {is_include_file: true}
+            - source_code/include/sparce_internal_if.vh : {is_include_file: true}
+            - source_code/include/tspp_fetch_execute_if.vh : {is_include_file: true}
+            - source_code/include/tspp_hazard_unit_if.vh : {is_include_file: true}
+            - source_code/include/control_unit_if.vh : {is_include_file: true}
+            - source_code/include/jump_calc_if.vh : {is_include_file: true}
+            - source_code/include/priv_1_11_internal_if.vh : {is_include_file: true}
+            - source_code/include/prv_pipeline_if.vh : {is_include_file: true}
+            - source_code/include/rv32i_reg_file_if.vh : {is_include_file: true}
+            - source_code/include/predictor_pipeline_if.vh : {is_include_file: true}
+            - source_code/include/alu_if.vh : {is_include_file: true}
+            - source_code/include/branch_res_if.vh : {is_include_file: true}
+            - source_code/include/core_interrupt_if.vh : {is_include_file: true}
+            - source_code/include/decompressor_if.vh : {is_include_file: true}
+            - source_code/include/fetch_buffer_if.vh : {is_include_file: true}
+            - source_code/include/sparce_pipeline_if.vh : {is_include_file: true}
+
+        file_type: systemVerilogSource
+
+    tb:
+        files:
+            - tb_core.cc : {fileType: cppSource} 
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: RISCVBusiness
+
+    sim:
+        <<: *default
+        description: Simulate w/TB
+        default_tool: verilator
+        filesets_append:
+            - tb
+        toplevel: top_core
+        tools:
+            verilator:
+                verilator_options: ["-Wno-UNOPTFLAT", "-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+
+
+    lint:
+        filesets:
+            - rtl
+        description: Linting
+        default_tool: veriblelint
+        toplevel: RISCVBusiness
+
