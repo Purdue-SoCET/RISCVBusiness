@@ -10,7 +10,7 @@ module carry_save_adder #(
     genvar i;
     logic [(BIT_WIDTH-1):0] c;
     generate
-        for (i = 0; i < BIT_WIDTH; i = i + 1) begin
+        for (i = 0; i < BIT_WIDTH; i = i + 1) begin : g_mul_csa
             full_adder FA (
                 .x(x[i]),
                 .y(y[i]),

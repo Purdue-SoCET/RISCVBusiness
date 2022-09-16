@@ -96,6 +96,11 @@ module radix4_divider #(
         next_quotient = temp_quotient;
         next_remainder = temp_remainder;
         next_count = count;
+        shifted_remainder = '0;
+        shifted_quotient = '0;
+        Result1 = '0;
+        Result2 = '0;
+        Result3 = '0;
 
         if (count != 0) begin
             next_count = count - 1;

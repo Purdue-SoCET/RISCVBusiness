@@ -100,7 +100,7 @@ module ram_sim_model #(
 
     // Changes for bus endianness
     generate
-        if (ENDIANNESS == "big") begin
+        if (ENDIANNESS == "big") begin : g_ram_be
             // swap endianness
             endian_swapper #(
                 .N_BYTES(N_BYTES)
@@ -116,13 +116,13 @@ module ram_sim_model #(
             );
 
             // swap byte enables
-            for (i = 0; i < N_BYTES / 2; i++) begin
+            for (i = 0; i < N_BYTES / 2; i++) begin : g_ram_be_byte_enable
                 assign byte_en[N_BYTES-1-i] = byte_en_in[i];
                 assign byte_en[i]           = byte_en_in[N_BYTES-1-i];
             end
             if (N_BYTES % 2) assign byte_en[N_BYTES/2] = byte_en_in[N_BYTES/2];
 
-        end else if (ENDIANNESS == "little") begin
+        end else if (ENDIANNESS == "little") begin : g_ram_le
             assign wdata = wdata_in;
             assign byte_en = byte_en_in;
             assign rdata_out = rdata;

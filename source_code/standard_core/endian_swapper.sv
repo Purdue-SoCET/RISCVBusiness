@@ -22,20 +22,21 @@
 *   Description:  Swaps the endianess of the input word
 */
 
-import rv32i_types_pkg::*;
 module endian_swapper #(
-    parameter N_BYTES = WORD_SIZE / 8,
+    parameter N_BYTES = rv32i_types_pkg::WORD_SIZE / 8,
     parameter N_BITS  = N_BYTES * 8
 ) (
     input  [N_BITS-1:0] word_in,
     output [N_BITS-1:0] word_out
 );
 
+    import rv32i_types_pkg::*;
+
     generate
         genvar i;
-        for (i = 0; i < N_BYTES; i++) begin : word_assign
+        for (i = 0; i < N_BYTES; i++) begin : g_word_assign
             assign word_out[N_BITS-(8*i)-1 : N_BITS-(8*(i+1))] = word_in[((i+1)*8)-1:(i*8)];
-        end : word_assign
+        end
     endgenerate
 
 endmodule

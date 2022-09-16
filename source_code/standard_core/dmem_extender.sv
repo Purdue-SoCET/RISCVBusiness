@@ -23,14 +23,14 @@
 *                 load type
 */
 
-import rv32i_types_pkg::*;
 module dmem_extender (
-    input  word_t       dmem_in,
-    input  load_t       load_type,
+    input  rv32i_types_pkg::word_t       dmem_in,
+    input  rv32i_types_pkg::load_t       load_type,
     input  logic  [3:0] byte_en,
-    output word_t       ext_out
+    output rv32i_types_pkg::word_t       ext_out
 );
 
+    import rv32i_types_pkg::*;
     /*
   always_comb begin
     casez (load_type)

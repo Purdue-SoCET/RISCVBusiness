@@ -103,7 +103,7 @@ module RISCVBusiness_fpga
   assign HEX6 = ~display.hex6;
   assign HEX7 = ~display.hex7;
 
-  generate
+  generate 
     genvar seg_select;
     for(seg_select=0; seg_select < 8; seg_select= seg_select + 1)
     begin: seven_seg_display_controller

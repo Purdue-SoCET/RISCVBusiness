@@ -39,7 +39,7 @@ module separate_caches (
         /* verilator lint_off width */
         case (DCACHE_TYPE)
             /* verilator lint_on width */
-            "pass_through": begin
+            "pass_through": begin : g_dcache_passthrough
                 pass_through_cache dcache (
                     .CLK(CLK),
                     .nRST(nRST),
@@ -67,7 +67,7 @@ module separate_caches (
         /* verilator lint_off width */
         case (ICACHE_TYPE)
             /* verilator lint_on width */
-            "pass_through": begin
+            "pass_through": begin : g_icache_passthrough
                 pass_through_cache icache (
                     .CLK(CLK),
                     .nRST(nRST),

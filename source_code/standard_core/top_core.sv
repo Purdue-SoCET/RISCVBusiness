@@ -34,9 +34,10 @@ module top_core #(
 
     function [31:0] get_x28;
         // verilator public
-        get_x28 = CORE.execute_stage_i.REG_FILE_SEL.rf.registers[28];
+        get_x28 = CORE.execute_stage_i.g_rfile_select.rf.registers[28];
     endfunction
 
+    /*
     bind tspp_execute_stage cpu_tracker cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),
@@ -54,7 +55,7 @@ module top_core #(
         .imm_UJ(imm_UJ_ext),
         .imm_SB(cu_if.imm_SB),
         .instr_30(instr_30)
-    );
+    );*/
 
 
 

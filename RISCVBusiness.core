@@ -19,9 +19,7 @@ filesets:
             - source_code/caches/separate_caches.sv
             - source_code/caches/direct_mapped_tpf/direct_mapped_tpf_cache.sv
             - source_code/caches/pass_through/pass_through_cache.sv
-            - source_code/pipelines/pipeline_wrapper.sv
             - source_code/pipelines/tspp/tspp_hazard_unit.sv
-            - source_code/pipelines/tspp/tspp.sv
             - source_code/pipelines/tspp/tspp_fetch_stage.sv
             - source_code/pipelines/tspp/tspp_execute_stage.sv
             - source_code/privs/priv_wrapper.sv
@@ -29,9 +27,6 @@ filesets:
             - source_code/privs/priv_1_11/priv_1_11_block.sv
             - source_code/privs/priv_1_11/priv_1_11_csr_rfile.sv
             - source_code/privs/priv_1_11/priv_1_11_pipeline_control.sv
-            - source_code/ram/config_ram_wrapper.sv
-            - source_code/ram/ram_sim_model.sv
-            - source_code/ram/ram_wrapper.sv
             - source_code/risc_mgmt/risc_mgmt_wrapper.sv
             - source_code/risc_mgmt/extensions/crc32/crc32.sv
             - source_code/risc_mgmt/extensions/crc32/crc32_decode.sv
@@ -51,14 +46,7 @@ filesets:
             - source_code/risc_mgmt/extensions/template/template_execute.sv
             - source_code/risc_mgmt/extensions/template/template_memory.sv
             - source_code/risc_mgmt/tspp/tspp_risc_mgmt.sv
-            - source_code/sparce/sparce_wrapper.sv
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
-            - source_code/sparce/sparce_enabled/sparce_cfid.sv
-            - source_code/sparce/sparce_enabled/sparce_enabled.sv
-            - source_code/sparce/sparce_enabled/sparce_psru.sv
-            - source_code/sparce/sparce_enabled/sparce_sasa_table.sv
-            - source_code/sparce/sparce_enabled/sparce_sprf.sv
-            - source_code/sparce/sparce_enabled/sparce_svc.sv
             - source_code/standard_core/alu.sv
             - source_code/standard_core/branch_res.sv
             - source_code/standard_core/dmem_extender.sv
@@ -69,8 +57,6 @@ filesets:
             - source_code/standard_core/rv32i_reg_file.sv
             - source_code/standard_core/RISCVBusiness.sv
             - source_code/standard_core/top_core.sv
-            - source_code/trackers/branch_tracker.sv
-            - source_code/trackers/cpu_tracker.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
             - source_code/rv32c/decompressor.sv
@@ -78,6 +64,7 @@ filesets:
             - source_code/rv32c/rv32c_enabled.sv
             - source_code/rv32c/fetch_buffer.sv
             - source_code/rv32c/rv32c_wrapper.sv
+            - source_code/bus_bridges/ahb.sv
             - source_code/include/ahb_if.vh : {is_include_file: true}
             - source_code/include/cache_control_if.vh : {is_include_file: true}
             - source_code/include/component_selection_defines.vh : {is_include_file: true}
@@ -88,7 +75,6 @@ filesets:
             - source_code/include/risc_mgmt_execute_if.vh : {is_include_file: true}
             - source_code/include/risc_mgmt_macros.vh : {is_include_file: true}
             - source_code/include/risc_mgmt_memory_if.vh : {is_include_file: true}
-            - source_code/include/sparce_internal_if.vh : {is_include_file: true}
             - source_code/include/tspp_fetch_execute_if.vh : {is_include_file: true}
             - source_code/include/tspp_hazard_unit_if.vh : {is_include_file: true}
             - source_code/include/control_unit_if.vh : {is_include_file: true}
@@ -106,9 +92,18 @@ filesets:
 
         file_type: systemVerilogSource
 
+    trackers:
+        files:
+            - source_code/trackers/branch_tracker.sv
+            - source_code/trackers/cpu_tracker.sv
+        file_type: systemVerilogSource
+            
     tb:
         files:
             - tb_core.cc : {fileType: cppSource} 
+            - source_code/ram/config_ram_wrapper.sv
+            - source_code/ram/ram_sim_model.sv
+            - source_code/ram/ram_wrapper.sv
         file_type: systemVerilogSource
 
 
@@ -128,6 +123,16 @@ targets:
         tools:
             verilator:
                 verilator_options: ["-Wno-UNOPTFLAT", "-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+
+    fpga:
+        <<: *default
+        description: FPGA Synthesis
+        default_tool: quartus
+        toplevel: top_core
+        tools:
+            quartus:
+                family: Cyclone IV E
+                device: EP4CE115F29C7
 
 
     lint:

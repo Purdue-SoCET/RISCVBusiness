@@ -168,7 +168,14 @@ module RISCVBusiness (
         .out_gen_bus_if(pipeline_trans_if)
     );
 
+    /*
     sparce_wrapper sparce_wrapper_i (
+        .CLK(CLK),
+        .nRST(nRST),
+        .sparce_if(sparce_if)
+    );*/
+
+    sparce_disabled sparce_disabled_i (
         .CLK(CLK),
         .nRST(nRST),
         .sparce_if(sparce_if)
@@ -184,7 +191,7 @@ module RISCVBusiness (
 
     generate
         case (BUS_INTERFACE_TYPE)
-            "generic_bus_if": begin
+            "generic_bus_if": begin : g_generic_bus_if
                 generic_nonpipeline bt (
                     .CLK(CLK),
                     .nRST(nRST),
@@ -192,7 +199,7 @@ module RISCVBusiness (
                     .out_gen_bus_if(gen_bus_if)
                 );
             end
-            "ahb_if": begin
+            "ahb_if": begin : g_ahb_if
                 ahb bt (
                     .CLK(CLK),
                     .nRST(nRST),

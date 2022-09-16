@@ -179,9 +179,9 @@ module control_unit (
     // Halt required for unit testing, but not useful in tapeout context
     // Due to presence of interrupts, infinite loops are valid
     generate
-        if (INFINITE_LOOP_HALTS == "true") begin
+        if (INFINITE_LOOP_HALTS == "true") begin : g_inf_loop_halt
             assign cu_if.halt = (cu_if.instr == 32'h0000006f);
-        end else begin
+        end else begin : g_no_halt
             assign cu_if.halt = '0;
         end
     endgenerate

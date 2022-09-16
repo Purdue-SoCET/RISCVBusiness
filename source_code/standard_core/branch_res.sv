@@ -34,7 +34,7 @@ module branch_res (
     word_t offset;
     logic lt, eq, ltu;
     logic sign_1, sign_2, sign_r, carry_out;
-    logic [WORD_SIZE : 0] adder_out, op_1_ext, op_2_ext;
+    logic [WORD_SIZE : 0] adder_out, op_1_ext /* verilator split_var */, op_2_ext /* verilator split_var */;
 
     // target addr generation
     assign offset = $signed(br_if.imm_sb);

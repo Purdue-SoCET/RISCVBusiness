@@ -190,10 +190,10 @@ module memory_controller (
     end
 
     generate
-        if (BUS_ENDIANNESS == "big") begin
+        if (BUS_ENDIANNESS == "big") begin : g_mc_bus_be
             assign wdata = d_gen_bus_if.wdata;
             assign rdata = out_gen_bus_if.rdata;
-        end else if (BUS_ENDIANNESS == "little") begin
+        end else if (BUS_ENDIANNESS == "little") begin : g_mc_bus_le
             logic [31:0] little_endian_wdata, little_endian_rdata;
             endian_swapper wswap (
                 d_gen_bus_if.wdata,

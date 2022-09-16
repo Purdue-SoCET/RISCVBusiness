@@ -489,6 +489,8 @@ module direct_mapped_tpf_cache (
                     else next_state = IDLE;
                 end
             end
+
+            default: next_state = curr_state;
         endcase
     end
 endmodule

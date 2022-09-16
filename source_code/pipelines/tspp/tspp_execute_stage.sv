@@ -70,21 +70,17 @@ module tspp_execute_stage (
         .rmgmt_req_reg_r(rm_if.req_reg_r),
         .rmgmt_req_reg_w(rm_if.req_reg_w)
     );
-    // generate
-    //     case (BASE_ISA)
-    //         "RV32I": rv32i_reg_file rf (CLK, nRST, rf_if);
-    //         "RV32E": rv32e_reg_file rf (CLK, nRST, rf_if);
-    //     endcase
-    // endgenerate
+
     assign wfi = cu_if.wfi;  //Added by rkannank
+
     generate
-        if (BASE_ISA == "RV32E") begin : REG_FILE_SEL
+        if (BASE_ISA == "RV32E") begin : g_rfile_select
             rv32e_reg_file rf (
                 CLK,
                 nRST,
                 rf_if
             );
-        end else begin : REG_FILE_SEL
+        end else begin : g_rfile_select
             rv32i_reg_file rf (
                 CLK,
                 nRST,
@@ -126,9 +122,9 @@ module tspp_execute_stage (
   *** Choose the Endianness Coming into the processor
   *******************************************************/
     generate
-        if (BUS_ENDIANNESS == "big") begin
+        if (BUS_ENDIANNESS == "big") begin : g_data_bus_be
             assign byte_en = byte_en_temp;
-        end else if (BUS_ENDIANNESS == "little") begin
+        end else if (BUS_ENDIANNESS == "little") begin : g_data_bus_le
             assign byte_en = cu_if.dren ? byte_en_temp :
               {byte_en_temp[0], byte_en_temp[1],
               byte_en_temp[2], byte_en_temp[3]};

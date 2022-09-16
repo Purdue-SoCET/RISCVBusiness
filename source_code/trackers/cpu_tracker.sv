@@ -25,26 +25,21 @@
 
 `define TRACE_FILE_NAME "trace.log"
 
-import rv32i_types_pkg::*;
-import machine_mode_types_1_11_pkg::*;
 module cpu_tracker (
-    input logic CLK,
-    wb_stall,
-    instr_30,
-    input word_t instr,
-    pc,
-    input opcode_t opcode,
+    input logic CLK, wb_stall, instr_30,
+    input rv32i_types_pkg::word_t instr, pc,
+    input rv32i_types_pkg::opcode_t opcode,
     input logic [2:0] funct3,
     input logic [11:0] funct12,
-    input logic [4:0] rs1,
-    rs2,
-    rd,
+    input logic [4:0] rs1, rs2, rd,
     input logic [12:0] imm_SB,
-    input logic [11:0] imm_S,
-    imm_I,
+    input logic [11:0] imm_S, imm_I,
     input logic [20:0] imm_UJ,
     input logic [31:0] imm_U
 );
+    import rv32i_types_pkg::*;
+    import machine_mode_types_1_11_pkg::*;
+
     parameter CPUID = 0;
 
     integer fptr;
