@@ -37,28 +37,28 @@ module radix4_divider #(
     assign remainder           = temp_remainder;
 
     /*
-	always_comb begin
-	quotient = temp_quotient;
-	remainder = temp_remainder;
-		if (count == 5'b1) begin
-			quotient = adjust_quotient ? ~temp_quotient + 1 : temp_quotient;
-			remainder = adjust_remainder ? ~temp_remainder + 1 : temp_remainder;
-		end
-	end
+    always_comb begin
+    quotient = temp_quotient;
+    remainder = temp_remainder;
+        if (count == 5'b1) begin
+            quotient = adjust_quotient ? ~temp_quotient + 1 : temp_quotient;
+            remainder = adjust_remainder ? ~temp_remainder + 1 : temp_remainder;
+        end
+    end
 */
     /*
-	always_ff @(posedge CLK, negedge nRST) begin
-		if (~finished && adjust_quotient)
-			quotient <= ~quotient + 1;
-			
-		else if(~finished && adjust_remainder  )
-			remainder <= ~remainder	+ 1;
-			
-		else begin
-			quotient <= quotient;
-			remainder <= remainder;
-		end
-	end
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (~finished && adjust_quotient)
+            quotient <= ~quotient + 1;
+
+        else if(~finished && adjust_remainder  )
+            remainder <= ~remainder + 1;
+
+        else begin
+            quotient <= quotient;
+            remainder <= remainder;
+        end
+    end
 */
 
     always_ff @(posedge CLK, negedge nRST) begin

@@ -5,7 +5,6 @@ description: RISC-V Core for AFTx series
 filesets:
     rtl:
         files:
-            - source_code/packages/machine_mode_types_pkg.sv
             - source_code/packages/alu_types_pkg.sv
             - source_code/packages/machine_mode_types_1_11_pkg.sv
             - source_code/packages/rv32i_types_pkg.sv

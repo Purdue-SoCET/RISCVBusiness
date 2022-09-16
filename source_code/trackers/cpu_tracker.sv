@@ -26,7 +26,7 @@
 `define TRACE_FILE_NAME "trace.log"
 
 import rv32i_types_pkg::*;
-import machine_mode_types_pkg::*;
+import machine_mode_types_1_11_pkg::*;
 module cpu_tracker (
     input logic CLK,
     wb_stall,
@@ -241,23 +241,6 @@ module cpu_tracker (
             MCAUSE_ADDR:    csrRegisterAssign = "mcause";
             MTVAL_ADDR:     csrRegisterAssign = "mtval";
             MIP_ADDR:       csrRegisterAssign = "mip";
-            // TODO: MAY BE ABLE TO REMOVE BELOW
-            MBASE_ADDR:     csrRegisterAssign = "mbase";
-            MBOUND_ADDR:    csrRegisterAssign = "mbound";
-            MIBASE_ADDR:    csrRegisterAssign = "mibase";
-            MIBOUND_ADDR:   csrRegisterAssign = "mibound";
-            MDBASE_ADDR:    csrRegisterAssign = "mdbase";
-            MDBOUND_ADDR:   csrRegisterAssign = "mdbound";
-            // TODO: MAY BE ABLE TO REMOVE ABOVE
-            // TODO: BELOW MUST BE REMOVED
-            HTIMEW_ADDR:    csrRegisterAssign = "htimew";
-            HTIMEHW_ADDR:   csrRegisterAssign = "htimehw";
-            MTIMECMP_ADDR:  csrRegisterAssign = "mtimecmp";
-            MTIME_ADDR:     csrRegisterAssign = "mtime";
-            MTIMEH_ADDR:    csrRegisterAssign = "mtimeh";
-            MTOHOST_ADDR:   csrRegisterAssign = "mtohost";
-            MFROMHOST_ADDR: csrRegisterAssign = "mfromhost";
-            // TODO: ABOVE MUST BE REMOVED
             default:        csrRegisterAssign = "csr register not tracked";
         endcase
     endfunction

@@ -23,7 +23,7 @@
 *                   - Cache Size
 *                   - Non-Cacheable start address
 *                   - Block Size
-*	                  - Prefetch Length
+*                     - Prefetch Length
 */
 
 `include "generic_bus_if.vh"

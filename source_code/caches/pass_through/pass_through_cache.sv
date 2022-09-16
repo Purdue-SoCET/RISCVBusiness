@@ -19,7 +19,7 @@
 *   Created by:   John Skubic
 *   Email:        jskubic@purdue.edu
 *   Date Created: 06/01/2016
-*   Description:  Pass Through Cache	
+*   Description:  Pass Through Cache
 */
 
 `include "generic_bus_if.vh"

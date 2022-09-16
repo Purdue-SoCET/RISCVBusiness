@@ -16,7 +16,7 @@
 *
 *   Filename:     ram_wrapper.sv
 *
-*   Created by:   John Skubic	
+*   Created by:   John Skubic
 *   Email:        jskubic@purdue.edu
 *   Date Created: 06/01/2016
 *   Description:  Ram wrapper should contain the ram module provided by the

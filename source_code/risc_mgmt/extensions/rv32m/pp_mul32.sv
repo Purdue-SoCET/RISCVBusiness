@@ -305,17 +305,17 @@ module pp_mul32 (
 
     always_comb begin
         /*
-		next_state = state;
-		case (state)
-			IDLE: begin
-				if (start)
-					next_state = START;
-			end
-			START: begin
-				if (finished)
-					next_state = IDLE;
-			end
-		endcase
+        next_state = state;
+        case (state)
+            IDLE: begin
+                if (start)
+                    next_state = START;
+            end
+            START: begin
+                if (finished)
+                    next_state = IDLE;
+            end
+        endcase
         */
         next_state = state;
         if (state == IDLE && start) begin

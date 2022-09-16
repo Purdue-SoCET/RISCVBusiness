@@ -16,7 +16,7 @@
 *
 *   Filename:     ram_sim_model.sv
 *
-*   Created by:   John Skubic	
+*   Created by:   John Skubic
 *   Email:        jskubic@purdue.edu
 *   Date Created: 04/27/2017
 *   Description:  SRAM model.  This is NOT SYNTHESIZABLE but allows this

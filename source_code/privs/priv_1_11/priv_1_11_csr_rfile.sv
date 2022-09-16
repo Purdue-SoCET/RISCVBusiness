@@ -66,12 +66,12 @@ module priv_1_11_csr_rfile (
 /*
   // Privilege and Global Interrupt-Enable Stack
   assign mstatus_next.uie          = 1'b0;
-  assign mstatus_next.sie   	      = 1'b0;
+  assign mstatus_next.sie             = 1'b0;
   assign mstatus_next.reserved_0   = 1'b0;
-  assign mstatus_next.upie	      = 1'b0;
-  assign mstatus_next.spie	      = 1'b0;
+  assign mstatus_next.upie        = 1'b0;
+  assign mstatus_next.spie        = 1'b0;
   assign mstatus_next.reserved_1   = 1'b0;
-  assign mstatus_next.spp	      = 1'b0;
+  assign mstatus_next.spp         = 1'b0;
   assign mstatus_next.reserved_2   = 2'b0;
   assign mstatus_next.mpp          = M_LEVEL;
 
