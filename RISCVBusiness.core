@@ -5,7 +5,6 @@ description: RISC-V Core for AFTx series
 filesets:
     rtl:
         files:
-            - source_code/packages/machine_mode_types_1_7_pkg.sv
             - source_code/packages/machine_mode_types_pkg.sv
             - source_code/packages/alu_types_pkg.sv
             - source_code/packages/machine_mode_types_1_11_pkg.sv
@@ -73,23 +72,6 @@ filesets:
             - source_code/standard_core/top_core.sv
             - source_code/trackers/branch_tracker.sv
             - source_code/trackers/cpu_tracker.sv
-            - source_code/Floating_Point_Unit/source/u_to_s.sv
-            - source_code/Floating_Point_Unit/source/ADD_step1.sv
-            - source_code/Floating_Point_Unit/source/ADD_step2.sv
-            - source_code/Floating_Point_Unit/source/ADD_step3.sv
-            - source_code/Floating_Point_Unit/source/FPU_top_level.sv
-            - source_code/Floating_Point_Unit/source/MUL_step1.sv
-            - source_code/Floating_Point_Unit/source/MUL_step2.sv
-            - source_code/Floating_Point_Unit/source/adder_26b.sv
-            - source_code/Floating_Point_Unit/source/adder_8b.sv
-            - source_code/Floating_Point_Unit/source/int_compare.sv
-            - source_code/Floating_Point_Unit/source/left_shift.sv
-            - source_code/Floating_Point_Unit/source/max_select.sv
-            - source_code/Floating_Point_Unit/source/mul_26b.sv
-            - source_code/Floating_Point_Unit/source/right_shift.sv
-            - source_code/Floating_Point_Unit/source/rounder.sv
-            - source_code/Floating_Point_Unit/source/s_to_u.sv
-            - source_code/Floating_Point_Unit/source/subtract.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
             - source_code/rv32c/decompressor.sv
@@ -157,7 +139,7 @@ targets:
         toplevel: top_core
         tools:
             veriblelint:
-                verible_lint_args: ['--autofix=inplace', '--rules_config_search']
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search']
 
     format:
         filesets:
