@@ -154,5 +154,17 @@ targets:
             - rtl
         description: Linting
         default_tool: veriblelint
-        toplevel: RISCVBusiness
+        toplevel: top_core
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace', '--rules_config_search']
 
+    format:
+        filesets:
+            - rtl
+        description: Linting
+        default_tool: veribleformat
+        toplevel: top_core
+        tools:
+            veribleformat:
+                verible_format_args: ['--indentation_spaces=4', '--inplace']

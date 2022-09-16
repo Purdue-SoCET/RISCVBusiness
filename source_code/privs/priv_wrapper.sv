@@ -26,11 +26,12 @@
 `include "core_interrupt_if.vh"
 
 module priv_wrapper (
-  input logic CLK, nRST,
-  prv_pipeline_if.priv_block prv_pipe_if,
-  core_interrupt_if.core interrupt_if
+    input logic CLK,
+    nRST,
+    prv_pipeline_if.priv_block prv_pipe_if,
+    core_interrupt_if.core interrupt_if
 );
 
-  priv_1_12_block priv_block_i(.*);
+    priv_1_12_block priv_block_i(.*);
 
 endmodule

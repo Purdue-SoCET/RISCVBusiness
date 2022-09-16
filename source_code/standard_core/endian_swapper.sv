@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,19 +23,19 @@
 */
 
 import rv32i_types_pkg::*;
-module endian_swapper # (
-  parameter N_BYTES = WORD_SIZE/8,
-  parameter N_BITS = N_BYTES*8
+module endian_swapper #(
+    parameter N_BYTES = WORD_SIZE / 8,
+    parameter N_BITS  = N_BYTES * 8
 ) (
-  input [N_BITS-1:0] word_in,
-  output [N_BITS-1:0] word_out
+    input  [N_BITS-1:0] word_in,
+    output [N_BITS-1:0] word_out
 );
 
-  generate
-    genvar i;
-    for(i=0; i < N_BYTES; i++) begin : word_assign
-      assign word_out[N_BITS - (8*i) - 1 : N_BITS - (8 * (i+1))] = word_in[((i+1)*8)-1:(i*8)];
-    end : word_assign
-  endgenerate
+    generate
+        genvar i;
+        for (i = 0; i < N_BYTES; i++) begin : word_assign
+            assign word_out[N_BITS-(8*i)-1 : N_BITS-(8*(i+1))] = word_in[((i+1)*8)-1:(i*8)];
+        end : word_assign
+    endgenerate
 
 endmodule

@@ -1,12 +1,12 @@
 /*
 *   Copyright 2019 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 *
 *   Filename:     sparce_sasa_table.sv
 *
-*   Created by:   Vadim V. Nikiforov 
+*   Created by:   Vadim V. Nikiforov
 *   Email:        vnikifor@purdue.edu
 *   Date Created: 04/6/2019
 *   Description:  The file containing the SASA table
@@ -82,7 +82,7 @@ module sparce_sasa_table #(parameter SASA_ENTRIES = 16, parameter SASA_SETS = 1,
 
   logic [SASA_SETS:0] sasa_hits;
   logic sasa_config, sasa_config_match;
-  
+
   // sasa table configuration register
   assign sasa_config_match = sasa_if.sasa_enable && sasa_if.sasa_wen && (sasa_if.sasa_addr == SASA_ADDR + 4);
 
@@ -96,7 +96,7 @@ module sparce_sasa_table #(parameter SASA_ENTRIES = 16, parameter SASA_SETS = 1,
         sasa_config <= sasa_if.sasa_data;
       end
     end
-  end 
+  end
 
   // wiring for indexing of the cache arrays
   assign input_idx = (SASA_ENTRIES == SASA_SETS) ? 0 : input_data.prev_pc;
@@ -104,7 +104,7 @@ module sparce_sasa_table #(parameter SASA_ENTRIES = 16, parameter SASA_SETS = 1,
   assign pc_tag = sasa_if.pc >> (`CLOG2(SASA_ENTRIES/SASA_SETS) + 2);
   assign sasa_match = sasa_if.sasa_enable && sasa_if.sasa_wen && (sasa_if.sasa_addr == SASA_ADDR);
 
-  
+
   always_comb begin : sasa_input_conversion
     input_data.prev_pc       = sasa_if.sasa_data[31:16];
     input_data.rs1           = sasa_if.sasa_data[15:11];

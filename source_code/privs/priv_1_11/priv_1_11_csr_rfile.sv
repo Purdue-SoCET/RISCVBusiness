@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ module priv_1_11_csr_rfile (
 );
   import machine_mode_types_1_11_pkg::*;
   import rv32i_types_pkg::*;
- 
+
   /* Machine Information Registers */
 
   mvendorid_t   mvendorid;
@@ -45,7 +45,7 @@ module priv_1_11_csr_rfile (
   assign misaid_default.zero        = '0;
   assign misaid_default.extensions  = MISAID_EXT_I `ifdef         RV32M_SUPPORTED |
                                       MISAID_EXT_M `endif `ifdef  RV32C_SUPPORTED |
-                                      MISAID_EXT_C `endif `ifdef  RV32F_SUPPORTED | 
+                                      MISAID_EXT_C `endif `ifdef  RV32F_SUPPORTED |
                                       MISAID_EXT_F `endif `ifdef  CUSTOM_SUPPORTED |
                                       MISAID_EXT_X `endif;
 
@@ -53,9 +53,9 @@ module priv_1_11_csr_rfile (
   assign mvendorid        = '0;
   assign marchid          = '0;
   assign mimpid           = '0;
-  assign mhartid          = '0; 
+  assign mhartid          = '0;
 
-  
+
   /* Machine Trap Setup Registers */
 
   mstatus_t mstatus, mstatus_next;
@@ -110,7 +110,7 @@ module priv_1_11_csr_rfile (
   assign mie_next.seie = 1'b0;
 */
  /* Machine Trap Handling */
- 
+
   mscratch_t  mscratch, mscratch_next;
   mepc_t      mepc, mepc_next;
   mcause_t    mcause, mcause_next;
@@ -149,7 +149,7 @@ module priv_1_11_csr_rfile (
   assign instretfull_next = (prv_intern_if.instr_retired == 1'b1) ?
                             instretfull + 1 : instretfull;
 
- 
+
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
       mstatus <= '0;
@@ -169,7 +169,7 @@ module priv_1_11_csr_rfile (
       timefull    <= '0;
       cyclefull   <= '0;
       instretfull <= '0;
-    end else begin      
+    end else begin
       mstatus <= mstatus_next;
       //mstatus.mie  <= mstatus_next.mie;
       //mstatus.mpie <= mstatus_next.mpie;
@@ -225,7 +225,7 @@ module priv_1_11_csr_rfile (
                             mstatus
                           );
   assign mepc_next      = (prv_intern_if.addr == MEPC_ADDR)  ? mepc_t'(rup_data) : (
-                            prv_intern_if.mepc_rup ? prv_intern_if.mepc_next : 
+                            prv_intern_if.mepc_rup ? prv_intern_if.mepc_next :
                             mepc
                           );
 
@@ -237,7 +237,7 @@ module priv_1_11_csr_rfile (
   // Ensure legal MISA value - WARL
   always_comb begin
     misaid_temp = misaid_t'(rup_data);
-      if(prv_intern_if.addr == MISA_ADDR && misaid_temp.base != 2'b00 
+      if(prv_intern_if.addr == MISA_ADDR && misaid_temp.base != 2'b00
           && (misaid_temp.extensions & MISAID_EXT_E) ^ (misaid_temp.extensions & MISAID_EXT_I) != 'b1
             && misaid_temp.zero == 4'b0) begin
         misaid_next = misaid_temp;
@@ -253,19 +253,19 @@ module priv_1_11_csr_rfile (
       MARCHID_ADDR    : prv_intern_if.rdata = marchid;
       MIMPID_ADDR     : prv_intern_if.rdata = mimpid;
       MHARTID_ADDR    : prv_intern_if.rdata = mhartid;
-      MISA_ADDR       : prv_intern_if.rdata = misaid; 
+      MISA_ADDR       : prv_intern_if.rdata = misaid;
 
       MSTATUS_ADDR    : prv_intern_if.rdata = mstatus;
       MTVEC_ADDR      : prv_intern_if.rdata = mtvec;
-      MEDELEG_ADDR    : prv_intern_if.rdata = medeleg; 
-      MIDELEG_ADDR    : prv_intern_if.rdata = mideleg; 
+      MEDELEG_ADDR    : prv_intern_if.rdata = medeleg;
+      MIDELEG_ADDR    : prv_intern_if.rdata = mideleg;
       MIE_ADDR        : prv_intern_if.rdata = mie;
 
       MSCRATCH_ADDR   : prv_intern_if.rdata = mscratch;
       MEPC_ADDR       : prv_intern_if.rdata = mepc;
       MCAUSE_ADDR     : prv_intern_if.rdata = mcause;
       MTVAL_ADDR      : prv_intern_if.rdata = mtval;
-      MIP_ADDR        : prv_intern_if.rdata = mip; 
+      MIP_ADDR        : prv_intern_if.rdata = mip;
 
       // Performance counters
       MCYCLE_ADDR      : prv_intern_if.rdata = cycle;
