@@ -9,13 +9,6 @@ module top_core #(
     nRST,
     output wfi,
     halt,
-    // core_interrupt_if
-    input ext_int,
-    ext_int_clear,
-    input soft_int,
-    soft_int_clear,
-    input timer_int,
-    timer_int_clear,
     // generic bus if case
 `ifdef BUS_INTERFACE_GENERIC_BUS
     input busy,
@@ -29,6 +22,13 @@ module top_core #(
 `elsif BUS_INTERFACE_AHB
     // TODO
 `endif
+    // core_interrupt_if
+    input ext_int,
+    ext_int_clear,
+    input soft_int,
+    soft_int_clear,
+    input timer_int,
+    timer_int_clear
 );
 
 

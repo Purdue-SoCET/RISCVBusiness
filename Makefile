@@ -22,7 +22,7 @@ PREDICTOR_FILES := $(BRANCH_PREDICT)/branch_predictor_wrapper.sv $(BRANCH_PREDIC
 PRIV_FILES := $(PRIVS)/priv_wrapper.sv  $(PRIVS)/priv_1_12/priv_1_12_block.sv  $(PRIVS)/priv_1_12/priv_1_12_int_ex_handler.sv  $(PRIVS)/priv_1_12/priv_1_12_csr.sv  $(PRIVS)/priv_1_12/priv_1_12_pipe_control.sv
 CACHE_FILES := $(CACHES)/caches_wrapper.sv $(CACHES)/pass_through/pass_through_cache.sv $(CACHES)/direct_mapped_tpf/direct_mapped_tpf_cache.sv $(CACHES)/separate_caches.sv
 SPARCE_FILES := $(SPARCE)/sparce_wrapper.sv $(SPARCE)/sparce_disabled/sparce_disabled.sv $(SPARCE)/sparce_enabled/sparce_cfid.sv  $(SPARCE)/sparce_enabled/sparce_enabled.sv  $(SPARCE)/sparce_enabled/sparce_psru.sv  $(SPARCE)/sparce_enabled/sparce_sasa_table.sv  $(SPARCE)/sparce_enabled/sparce_sprf.sv  $(SPARCE)/sparce_enabled/sparce_svc.sv
-RISCV_BUS_FILES := $(RISCV_BUS)/generic_nonpipeline.sv #$(RISCV_BUS)/ahb.sv
+RISCV_BUS_FILES := $(RISCV_BUS)/generic_nonpipeline.sv $(RISCV_BUS)/ahb.sv
 TRACKER_FILES := $(RISCV)/trackers/cpu_tracker.sv $(RISCV)/trackers/branch_tracker.sv
 
 COMPONENT_FILES_SV := $(CORE_PKG_FILES) $(RISC_MGMT_FILES) $(RISC_EXT_FILES) $(CORE_FILES) $(RV32C_FILES) $(PIPELINE_FILES) $(SPARCE_FILES) $(PREDICTOR_FILES) $(PRIV_FILES) $(CACHE_FILES) $(RISCV_BUS_FILES) $(TRACKER_FILES)
@@ -50,8 +50,12 @@ config:
 	python3 scripts/config_core.py example.yml
 
 verilate:
-	verilator -Wno-UNOPTFLAT -Wno-SYMRSVDWORD -cc -Wno-lint --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
-	$(MAKE) -C obj_dir -f Vtop_core.mk -j `nproc`
+	verilator -Wno-WIDTH -Wno-UNUSED -Wno-UNDRIVEN -Wno-SYMRSVDWORD --waiver-output RISCVBusiness.vlt -cc --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
+	$(MAKE) -C obj_dir -f Vtop_core.mk -j `nproc` 
+
+no-lint:
+	verilator -Wno-UNOPTFLAT -Wno-lint -Wno-SYMRSVDWORD --waiver-output RISCVBusiness.vlt -cc --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
+	$(MAKE) -C obj_dir -f Vtop_core.mk -j `nproc` 
 
 clean:
 	rm -rf obj_dir

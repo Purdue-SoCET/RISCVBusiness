@@ -84,7 +84,7 @@ module radix4_divider #(
             temp_remainder <= '0;
             count <= 5'd16;
 
-        end else if (count >= 0) begin
+        end else begin
             temp_quotient <= next_quotient;
             temp_remainder <= next_remainder;
             count <= next_count;
@@ -117,19 +117,19 @@ module radix4_divider #(
                 if (count == 1 && adjust_remainder) next_remainder = ~next_remainder + 1;
 
             end else if (Result2[NUM_BITS-1] | Result2[NUM_BITS]) begin
-                next_remainder = Result1;
+                next_remainder = Result1[NUM_BITS-1:0];
                 next_quotient  = shifted_quotient | 1;
                 if (count == 1 && adjust_quotient) next_quotient = ~next_quotient + 1;
 
                 if (count == 1 && adjust_remainder) next_remainder = ~next_remainder + 1;
             end else if (Result3[NUM_BITS-1] | Result3[NUM_BITS]) begin
-                next_remainder = Result2;
+                next_remainder = Result2[NUM_BITS-1:0];
                 next_quotient  = shifted_quotient | 2;
                 if (count == 1 && adjust_quotient) next_quotient = ~next_quotient + 1;
 
                 if (count == 1 && adjust_remainder) next_remainder = ~next_remainder + 1;
             end else begin
-                next_remainder = Result3;
+                next_remainder = Result3[NUM_BITS-1:0];
                 next_quotient  = shifted_quotient | 3;
                 if (count == 1 && adjust_quotient) next_quotient = ~next_quotient + 1;
 

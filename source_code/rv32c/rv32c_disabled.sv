@@ -3,7 +3,8 @@
 `include "decompressor_if.vh"
 
 module rv32c_disabled (
-    input logic clk, nrst,
+    input logic clk,
+    nrst,
     rv32c_if.rv32c rv32cif
 );
 

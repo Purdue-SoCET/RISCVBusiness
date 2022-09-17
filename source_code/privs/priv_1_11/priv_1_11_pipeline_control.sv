@@ -39,7 +39,7 @@ module priv_1_11_pipeline_control (
 
         if (prv_intern_if.intr) begin
             if (prv_intern_if.mtvec.mode == VECTORED & prv_intern_if.mcause.interrupt) begin // vectored mode based on the interrupt source
-                prv_intern_if.priv_pc = (prv_intern_if.mtvec.base << 2) + (prv_intern_if.mcause.cause << 2);
+                prv_intern_if.priv_pc = {prv_intern_if.mtvec.base, 2'b00} + {prv_intern_if.mcause.cause, 2'b00};
             end else prv_intern_if.priv_pc = prv_intern_if.mtvec.base << 2;
 
         end else if (prv_intern_if.mret)

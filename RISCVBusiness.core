@@ -64,7 +64,6 @@ filesets:
             - source_code/rv32c/rv32c_enabled.sv
             - source_code/rv32c/fetch_buffer.sv
             - source_code/rv32c/rv32c_wrapper.sv
-            - source_code/bus_bridges/ahb.sv
             - source_code/include/ahb_if.vh : {is_include_file: true}
             - source_code/include/cache_control_if.vh : {is_include_file: true}
             - source_code/include/component_selection_defines.vh : {is_include_file: true}
@@ -97,10 +96,20 @@ filesets:
             - source_code/trackers/branch_tracker.sv
             - source_code/trackers/cpu_tracker.sv
         file_type: systemVerilogSource
+
+    buses:
+        files:
+            - source_code/bus_bridges/ahb.sv
+        file_type: systemVerilogSource
             
-    tb:
+    verilator_tb:
         files:
             - tb_core.cc : {fileType: cppSource} 
+        file_type: systemVerilogSource    
+
+    tb:
+        files:
+            - source_code/tb/tb_RISCVBusiness_self_test.sv
             - source_code/ram/config_ram_wrapper.sv
             - source_code/ram/ram_sim_model.sv
             - source_code/ram/ram_wrapper.sv
@@ -118,9 +127,22 @@ targets:
         description: Simulate w/TB
         default_tool: verilator
         filesets_append:
-            - tb
-        toplevel: top_core
+            - trackers
+            - "tool_verilator? (verilator_tb)"
+            - "!tool_verilator? (tb)"
+        toplevel:
+            - "tool_verilator? (top_core)"
+            - "!tool_verilator? (tb_RISCVBusiness_self_test)"
         tools:
+            xcelium:
+                xrun_options:
+                    - +xmtimescale+1ns/100ps
+            modelsim:
+                vsim_options:
+                    - -vopt
+                    - -voptargs='+acc'
+                    - -t ps
+
             verilator:
                 verilator_options: ["-Wno-UNOPTFLAT", "-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
@@ -138,6 +160,8 @@ targets:
     lint:
         filesets:
             - rtl
+            - trackers
+            - tb
         description: Linting
         default_tool: veriblelint
         toplevel: top_core

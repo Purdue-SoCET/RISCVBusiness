@@ -26,7 +26,7 @@
 module dmem_extender (
     input  rv32i_types_pkg::word_t       dmem_in,
     input  rv32i_types_pkg::load_t       load_type,
-    input  logic  [3:0] byte_en,
+    input  logic                   [3:0] byte_en,
     output rv32i_types_pkg::word_t       ext_out
 );
 
