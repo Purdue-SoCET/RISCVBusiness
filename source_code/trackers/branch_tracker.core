@@ -1,0 +1,21 @@
+CAPI=2:
+name: socet:riscv:branch-tracker:0.1.0
+description: RISC-V Branch tracker module
+
+filesets:
+    rtl:
+        files:
+            - branch_tracker.sv
+        file_type: systemVerilogSource
+
+targets:
+    lint:
+        filesets:
+            - rtl
+        description: Linting
+        default_tool: veriblelint
+        toplevel: branch_tracker
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search']
+

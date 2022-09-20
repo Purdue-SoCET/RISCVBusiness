@@ -40,7 +40,7 @@ module cpu_tracker (
     import rv32i_types_pkg::*;
     import machine_mode_types_1_11_pkg::*;
 
-    parameter CPUID = 0;
+    parameter int CPUID = 0;
 
     integer fptr;
     string instr_mnemonic, output_str, src1, src2, dest, operands;
@@ -73,6 +73,7 @@ module cpu_tracker (
                     CSRRS, CSRRW, CSRRC:    $sformat(operands, "%s, %s, %s", dest, csr, src1);
                     CSRRSI, CSRRWI, CSRRCI: $sformat(operands, "%s, %s, %d", dest, csr, rs1);
                     PRIV:                   operands = "";
+                    default:                operands = "";
                 endcase
             end
             default:    operands = "";
@@ -216,6 +217,7 @@ module cpu_tracker (
             5'd29: registerAssign = "t4";
             5'd30: registerAssign = "t5";
             5'd31: registerAssign = "t6";
+            default: registerAssign = "UNKNOWN REGISTER";
         endcase
     endfunction
 

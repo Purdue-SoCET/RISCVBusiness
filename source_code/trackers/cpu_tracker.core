@@ -1,0 +1,21 @@
+CAPI=2:
+name: socet:riscv:cpu-tracker:0.1.0
+description: RISC-V Tracker modules
+
+filesets:
+    rtl:
+        files:
+            - cpu_tracker.sv
+        file_type: systemVerilogSource
+
+targets:
+    lint:
+        filesets:
+            - rtl
+        description: Linting
+        default_tool: veriblelint
+        toplevel: cpu_tracker
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search']
+
