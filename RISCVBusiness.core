@@ -161,7 +161,6 @@ targets:
         filesets:
             - rtl
             - trackers
-            - tb
         description: Linting
         default_tool: veriblelint
         toplevel: top_core

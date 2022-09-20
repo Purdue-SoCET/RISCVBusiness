@@ -97,7 +97,8 @@ module memory_controller (
             end
 
             DATA_INSTR_REQ: begin
-                if(!i_gen_bus_if.ren && out_gen_bus_if.busy == 1'b0) // Abort request, received an interrupt
+                // Abort request, received an interrupt
+                if(!i_gen_bus_if.ren && out_gen_bus_if.busy == 1'b0)
                     next_state = IDLE;
                 else if (out_gen_bus_if.busy == 1'b0) next_state = INSTR_WAIT;
                 else next_state = DATA_INSTR_REQ;
@@ -204,12 +205,12 @@ module memory_controller (
         end else if (BUS_ENDIANNESS == "little") begin : g_mc_bus_le
             logic [31:0] little_endian_wdata, little_endian_rdata;
             endian_swapper wswap (
-                d_gen_bus_if.wdata,
-                little_endian_wdata
+                .word_in(d_gen_bus_if.wdata),
+                .word_out(little_endian_wdata)
             );
             endian_swapper rswap (
-                out_gen_bus_if.rdata,
-                little_endian_rdata
+                .word_in(out_gen_bus_if.rdata),
+                .word_out(little_endian_rdata)
             );
             assign wdata = little_endian_wdata;
             assign rdata = little_endian_rdata;

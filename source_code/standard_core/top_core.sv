@@ -3,7 +3,7 @@
 `include "generic_bus_if.vh"
 
 module top_core #(
-    parameter RESET_PC = 32'h80000000
+    parameter logic [31:0] RESET_PC = 32'h80000000
 ) (
     input CLK,
     nRST,
@@ -17,7 +17,7 @@ module top_core #(
     wen,
     output [3:0] byte_en,
     output [31:0] addr,
-    wdata
+    wdata,
     // ahb if case
 `elsif BUS_INTERFACE_AHB
     // TODO

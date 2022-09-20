@@ -1,8 +1,0 @@
-#! /usr/bin/env python
-#encoding: utf-8
-
-def configure(cnf):
-  cnf.recurse(nottaken_predictor)
-
-def sim_source(cnf):
-  cnf.recurse(nottaken_predictor)

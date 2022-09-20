@@ -1,0 +1,30 @@
+CAPI=2:
+name: socet:aft:riscv-standard:0.1.0
+description: Standard core files for RISCVBusiness
+
+filesets:
+    rtl:
+        files:
+            - alu.sv
+            - branch_res.sv
+            - dmem_extender.sv
+            - endian_swapper.sv
+            - memory_controller.sv
+            - control_unit.sv
+            - jump_calc.sv
+            - rv32i_reg_file.sv
+            - RISCVBusiness.sv
+            - top_core.sv
+        file_type: systemVerilogSource
+
+targets:
+    lint:
+        filesets:
+            - rtl
+        description: Linting
+        default_tool: veriblelint
+        toplevel: top_core
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search']
+

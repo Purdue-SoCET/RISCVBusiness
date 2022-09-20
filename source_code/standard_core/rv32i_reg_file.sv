@@ -32,7 +32,7 @@ module rv32i_reg_file (
 
     import rv32i_types_pkg::*;
 
-    parameter NUM_REGS = 32;
+    localparam int NUM_REGS = 32;
 
     word_t [NUM_REGS-1:0] registers;
 

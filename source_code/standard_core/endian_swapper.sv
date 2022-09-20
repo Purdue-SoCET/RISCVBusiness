@@ -23,8 +23,8 @@
 */
 
 module endian_swapper #(
-    parameter N_BYTES = rv32i_types_pkg::WORD_SIZE / 8,
-    parameter N_BITS  = N_BYTES * 8
+    parameter int N_BYTES = rv32i_types_pkg::WORD_SIZE / 8,
+    parameter int N_BITS  = N_BYTES * 8
 ) (
     input  [N_BITS-1:0] word_in,
     output [N_BITS-1:0] word_out

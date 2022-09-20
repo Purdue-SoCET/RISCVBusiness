@@ -46,7 +46,7 @@ module RISCVBusiness (
 `endif
 );
 
-    parameter RESET_PC = 32'h80000000;
+    parameter logic [31:0] RESET_PC = 32'h80000000;
 
     // Interface instantiations
 
