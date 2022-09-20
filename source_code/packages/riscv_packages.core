@@ -1,0 +1,27 @@
+CAPI=2:
+name: socet:riscv:packages:0.1.0
+description: RISC-V Tracker modules
+
+filesets:
+    rtl:
+        files:
+            - alu_types_pkg.sv
+            - rv32i_types_pkg.sv
+            - machine_mode_types_1_11_pkg.sv
+            - risc_mgmt/crc32_pkg.sv
+            - risc_mgmt/template_pkg.sv
+            - risc_mgmt/test_pkg.sv
+            - risc_mgmt/rv32m_pkg.sv
+        file_type: systemVerilogSource
+
+targets:
+    lint:
+        filesets:
+            - rtl
+        description: Linting
+        default_tool: veriblelint
+        toplevel: alu_types_pkg
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search']
+

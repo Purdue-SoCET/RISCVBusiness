@@ -27,8 +27,8 @@
 
 package rv32m_pkg;
 
-    localparam RV32M_OPCODE = 7'b0110011;
-    localparam RV32M_OPCODE_MINOR = 7'b0000001;
+    localparam logic [6:0] RV32M_OPCODE = 7'b0110011;
+    localparam logic [6:0] RV32M_OPCODE_MINOR = 7'b0000001;
 
     typedef struct packed {
         logic [6:0] opcode_minor;

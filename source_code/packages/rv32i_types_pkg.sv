@@ -25,14 +25,14 @@
 `ifndef RV32I_TYPES_PKG_SV
 `define RV32I_TYPES_PKG_SV
 package rv32i_types_pkg;
-    parameter WORD_SIZE = 32;
-    parameter RAM_ADDR_SIZE = 32;
-    parameter OP_W = 7;
-    parameter BR_W = 3;
-    parameter LD_W = 3;
-    parameter SW_W = 3;
-    parameter IMM_W = 3;
-    parameter REG_W = 3;
+    parameter int WORD_SIZE = 32;
+    parameter int RAM_ADDR_SIZE = 32;
+    parameter int OP_W = 7;
+    parameter int BR_W = 3;
+    parameter int LD_W = 3;
+    parameter int SW_W = 3;
+    parameter int IMM_W = 3;
+    parameter int REG_W = 3;
 
     typedef logic [WORD_SIZE-1:0] word_t;
 
