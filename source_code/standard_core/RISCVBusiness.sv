@@ -23,7 +23,6 @@
 */
 
 `include "generic_bus_if.vh"
-`include "ahb_if.vh"
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
@@ -43,7 +42,10 @@ module RISCVBusiness (
     generic_bus_if.cpu gen_bus_if
 `elsif BUS_INTERFACE_AHB
     ahb_if.ahb_m ahb_master
+`elsif BUS_INTERFACE_APB
+    apb_if.requester apb_requester
 `endif
+
 );
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
@@ -205,6 +207,14 @@ module RISCVBusiness (
                     .nRST(nRST),
                     .out_gen_bus_if(pipeline_trans_if),
                     .ahb_m(ahb_master)
+                );
+            end
+            "apb_if": begin
+                apb bt(
+                    .CLK(CLK),
+                    .nRST(nRST),
+                    .out_gen_bus_if(pipeline_trans_if),
+                    .apbif(apb_requester)
                 );
             end
         endcase

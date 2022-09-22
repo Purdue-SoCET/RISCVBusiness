@@ -24,7 +24,6 @@
 */
 
 `include "generic_bus_if.vh"
-`include "ahb_if.vh"
 
 module ahb (
     input CLK,

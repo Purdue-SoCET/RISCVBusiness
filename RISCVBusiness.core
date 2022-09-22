@@ -4,6 +4,9 @@ description: RISC-V Core for AFTx series
 
 filesets:
     rtl:
+        depend:
+            - "socet:digital-lib:bus_protocol_if"
+            - "socet:digital-lib:apb_if"
         files:
             - source_code/packages/alu_types_pkg.sv
             - source_code/packages/machine_mode_types_1_11_pkg.sv
@@ -64,7 +67,6 @@ filesets:
             - source_code/rv32c/rv32c_enabled.sv
             - source_code/rv32c/fetch_buffer.sv
             - source_code/rv32c/rv32c_wrapper.sv
-            - source_code/include/ahb_if.vh : {is_include_file: true}
             - source_code/include/cache_control_if.vh : {is_include_file: true}
             - source_code/include/component_selection_defines.vh : {is_include_file: true}
             - source_code/include/risc_mgmt_if.vh : {is_include_file: true}
@@ -99,7 +101,16 @@ filesets:
 
     buses:
         files:
+            - source_code/bus_bridges/ahb_if.sv
             - source_code/bus_bridges/ahb.sv
+            - source_code/bus_bridges/apb.sv
+        file_type: systemVerilogSource
+
+    fpga_wrapper:
+        files:
+            - source_code/fpga/RISCVBusiness_fpga.sv
+            - source_code/ram/ram_sim_model.sv
+            - source_code/ram/ram_wrapper.sv
         file_type: systemVerilogSource
             
     verilator_tb:
@@ -128,6 +139,7 @@ targets:
         default_tool: verilator
         filesets_append:
             - trackers
+            - buses
             - "tool_verilator? (verilator_tb)"
             - "!tool_verilator? (tb)"
         toplevel:
@@ -148,8 +160,13 @@ targets:
 
     fpga:
         <<: *default
+        filesets_append:
+            - buses
+            - fpga_wrapper
         description: FPGA Synthesis
         default_tool: quartus
+        parameters:
+            - SYNTHESIS=true
         toplevel: top_core
         tools:
             quartus:
@@ -177,3 +194,9 @@ targets:
         tools:
             veribleformat:
                 verible_format_args: ['--indentation_spaces=4', '--inplace']
+
+parameters:
+    SYNTHESIS:
+        description: Set for tools performing synthesis
+        datatype: bool
+        paramtype: vlogdefine

@@ -1,5 +1,4 @@
 `include "core_interrupt_if.vh"
-`include "ahb_if.vh"
 `include "generic_bus_if.vh"
 
 module top_core #(
@@ -79,6 +78,9 @@ module top_core #(
 `elsif BUS_INTERFACE_AHB
     ahb_if ahb_master ();
     // TODO
+
+`elsif BUS_INTERFACE_APB
+    apb_if apb_requester (CLK, nRST);
 `endif
 
 
