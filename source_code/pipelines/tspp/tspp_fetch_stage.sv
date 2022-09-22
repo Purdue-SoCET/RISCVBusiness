@@ -61,7 +61,7 @@ module tspp_fetch_stage (
     assign rv32cif.inst_arrived = hazard_if.if_ex_flush == 0 & hazard_if.if_ex_stall == 0;
     assign rv32cif.reset_en = hazard_if.insert_priv_pc | sparce_if.skipping | hazard_if.npc_sel | predict_if.predict_taken;
     assign rv32cif.pc_update = hazard_if.pc_en;
-    assign rv32cif.reset_pc = npc;
+    assign rv32cif.reset_pc = hazard_if.insert_priv_pc ? hazard_if.priv_pc : ( sparce_if.skipping ? sparce_if.sparce_target : (hazard_if.npc_sel ? fetch_ex_if.brj_addr : (predict_if.predict_taken ? predict_if.target_addr : pc4or2)));
     assign rv32cif.reset_pc_val = RESET_PC;
 
     assign pc4or2 = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc + 2) : (pc + 4);
