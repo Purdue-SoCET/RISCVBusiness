@@ -15,6 +15,9 @@ filesets:
         file_type: systemVerilogSource
 
 targets:
+    default: &default
+        filesets:
+            - rtl
     lint:
         filesets:
             - rtl
