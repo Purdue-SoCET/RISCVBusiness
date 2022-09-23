@@ -11,6 +11,7 @@ filesets:
             - "socet:riscv:caches"
             - "socet:riscv:risc_mgmt"
             - "socet:riscv:riscv_standard"
+            - "socet:riscv:riscv_include"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
@@ -31,29 +32,7 @@ filesets:
             - source_code/rv32c/rv32c_enabled.sv
             - source_code/rv32c/fetch_buffer.sv
             - source_code/rv32c/rv32c_wrapper.sv
-            - source_code/include/cache_control_if.vh : {is_include_file: true}
-            - source_code/include/component_selection_defines.vh : {is_include_file: true}
-            - source_code/include/risc_mgmt_if.vh : {is_include_file: true}
-            - source_code/include/generic_bus_if.vh : {is_include_file: true}
-            - source_code/include/rv32c_if.vh : {is_include_file: true}
-            - source_code/include/risc_mgmt_decode_if.vh : {is_include_file: true}
-            - source_code/include/risc_mgmt_execute_if.vh : {is_include_file: true}
-            - source_code/include/risc_mgmt_macros.vh : {is_include_file: true}
-            - source_code/include/risc_mgmt_memory_if.vh : {is_include_file: true}
-            - source_code/include/tspp_fetch_execute_if.vh : {is_include_file: true}
-            - source_code/include/tspp_hazard_unit_if.vh : {is_include_file: true}
-            - source_code/include/control_unit_if.vh : {is_include_file: true}
-            - source_code/include/jump_calc_if.vh : {is_include_file: true}
-            - source_code/include/priv_1_11_internal_if.vh : {is_include_file: true}
-            - source_code/include/prv_pipeline_if.vh : {is_include_file: true}
-            - source_code/include/rv32i_reg_file_if.vh : {is_include_file: true}
-            - source_code/include/predictor_pipeline_if.vh : {is_include_file: true}
-            - source_code/include/alu_if.vh : {is_include_file: true}
-            - source_code/include/branch_res_if.vh : {is_include_file: true}
-            - source_code/include/core_interrupt_if.vh : {is_include_file: true}
-            - source_code/include/decompressor_if.vh : {is_include_file: true}
-            - source_code/include/fetch_buffer_if.vh : {is_include_file: true}
-            - source_code/include/sparce_pipeline_if.vh : {is_include_file: true}
+            
 
         file_type: systemVerilogSource
 

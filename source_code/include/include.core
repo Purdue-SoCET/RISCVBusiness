@@ -1,0 +1,36 @@
+CAPI=2:
+name: socet:riscv:riscv_include:0.1.0
+description: include files
+
+filesets:
+    rtl:
+        files:
+            - cache_control_if.vh : {is_include_file: true}
+            - component_selection_defines.vh : {is_include_file: true}
+            - risc_mgmt_if.vh : {is_include_file: true}
+            - generic_bus_if.vh : {is_include_file: true}
+            - rv32c_if.vh : {is_include_file: true}
+            - risc_mgmt_decode_if.vh : {is_include_file: true}
+            - risc_mgmt_execute_if.vh : {is_include_file: true}
+            - risc_mgmt_macros.vh : {is_include_file: true}
+            - risc_mgmt_memory_if.vh : {is_include_file: true}
+            - tspp_fetch_execute_if.vh : {is_include_file: true}
+            - tspp_hazard_unit_if.vh : {is_include_file: true}
+            - control_unit_if.vh : {is_include_file: true}
+            - jump_calc_if.vh : {is_include_file: true}
+            - priv_1_11_internal_if.vh : {is_include_file: true}
+            - prv_pipeline_if.vh : {is_include_file: true}
+            - rv32i_reg_file_if.vh : {is_include_file: true}
+            - predictor_pipeline_if.vh : {is_include_file: true}
+            - alu_if.vh : {is_include_file: true}
+            - branch_res_if.vh : {is_include_file: true}
+            - core_interrupt_if.vh : {is_include_file: true}
+            - decompressor_if.vh : {is_include_file: true}
+            - fetch_buffer_if.vh : {is_include_file: true}
+            - sparce_pipeline_if.vh : {is_include_file: true}
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
