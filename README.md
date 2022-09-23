@@ -10,6 +10,17 @@ Design documents and project information for the RISC-V Business project can be 
 
 Getting started with RISCV Business consists of three steps: setting up the RISCV tool-chain, setting up the WAF build system, and finally interacting with the RISCV Business project itself. 
 
+## Fusesoc
+This project uses the [Fusesoc](http://fusesoc.net/) build system.  Use the following commands to get started...
+
+```bash
+# install project dependencies &
+# setup git pre-commit hook
+./setup.sh
+# all dependencies are set up, run a test with fusesoc
+fusesoc --cores-root . run --target sim socet:aft:RISCVBusiness
+```
+
 ## Generating RISC-V tool-chain
 
 Refer to the following link for instructions on installing the RISC-V software tools:
