@@ -1,0 +1,35 @@
+CAPI=2:
+name: socet:riscv:risc_mgmt:0.1.0
+description: risc management
+
+filesets:
+    rtl:
+ #       depend:
+ #           - "socet:riscv:packages"
+        files:
+            - risc_mgmt_wrapper.sv
+            - extensions/crc32/crc32.sv
+            - extensions/crc32/crc32_decode.sv
+            - extensions/crc32/crc32_execute.sv
+            - extensions/crc32/crc32_memory.sv
+            - extensions/rv32m/rv32m_memory.sv
+            - extensions/rv32m/shift_add_multiplier.sv
+            - extensions/rv32m/shift_test_restore_divider.sv
+            - extensions/rv32m/carry_save_adder.sv
+            - extensions/rv32m/flex_counter_mul.sv
+            - extensions/rv32m/full_adder.sv
+            - extensions/rv32m/pp_mul32.sv
+            - extensions/rv32m/radix4_divider.sv
+            - extensions/rv32m/rv32m_execute.sv
+            - extensions/rv32m/rv32m_decode.sv
+            - extensions/template/template_decode.sv
+            - extensions/template/template_execute.sv
+            - extensions/template/template_memory.sv
+            - tspp/tspp_risc_mgmt.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: risc_mgmt_wrapper

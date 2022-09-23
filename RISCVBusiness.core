@@ -9,6 +9,7 @@ filesets:
             - "socet:digital-lib:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:caches"
+            - "socet:riscv:risc_mgmt"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
@@ -21,25 +22,6 @@ filesets:
             - source_code/privs/priv_1_11/priv_1_11_block.sv
             - source_code/privs/priv_1_11/priv_1_11_csr_rfile.sv
             - source_code/privs/priv_1_11/priv_1_11_pipeline_control.sv
-            - source_code/risc_mgmt/risc_mgmt_wrapper.sv
-            - source_code/risc_mgmt/extensions/crc32/crc32.sv
-            - source_code/risc_mgmt/extensions/crc32/crc32_decode.sv
-            - source_code/risc_mgmt/extensions/crc32/crc32_execute.sv
-            - source_code/risc_mgmt/extensions/crc32/crc32_memory.sv
-            - source_code/risc_mgmt/extensions/rv32m/rv32m_memory.sv
-            - source_code/risc_mgmt/extensions/rv32m/shift_add_multiplier.sv
-            - source_code/risc_mgmt/extensions/rv32m/shift_test_restore_divider.sv
-            - source_code/risc_mgmt/extensions/rv32m/carry_save_adder.sv
-            - source_code/risc_mgmt/extensions/rv32m/flex_counter_mul.sv
-            - source_code/risc_mgmt/extensions/rv32m/full_adder.sv
-            - source_code/risc_mgmt/extensions/rv32m/pp_mul32.sv
-            - source_code/risc_mgmt/extensions/rv32m/radix4_divider.sv
-            - source_code/risc_mgmt/extensions/rv32m/rv32m_execute.sv
-            - source_code/risc_mgmt/extensions/rv32m/rv32m_decode.sv
-            - source_code/risc_mgmt/extensions/template/template_decode.sv
-            - source_code/risc_mgmt/extensions/template/template_execute.sv
-            - source_code/risc_mgmt/extensions/template/template_memory.sv
-            - source_code/risc_mgmt/tspp/tspp_risc_mgmt.sv
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/standard_core/alu.sv
             - source_code/standard_core/branch_res.sv
