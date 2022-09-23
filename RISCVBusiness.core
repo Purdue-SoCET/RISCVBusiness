@@ -7,21 +7,12 @@ filesets:
         depend:
             - "socet:digital-lib:bus_protocol_if"
             - "socet:digital-lib:apb_if"
+            - "socet:riscv:packages"
+            - "socet:riscv:caches"
         files:
-            - source_code/packages/alu_types_pkg.sv
-            - source_code/packages/machine_mode_types_1_11_pkg.sv
-            - source_code/packages/rv32i_types_pkg.sv
-            - source_code/packages/risc_mgmt/crc32_pkg.sv
-            - source_code/packages/risc_mgmt/template_pkg.sv
-            - source_code/packages/risc_mgmt/test_pkg.sv
-            - source_code/packages/risc_mgmt/rv32m_pkg.sv
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
-            - source_code/caches/caches_wrapper.sv
-            - source_code/caches/separate_caches.sv
-            - source_code/caches/direct_mapped_tpf/direct_mapped_tpf_cache.sv
-            - source_code/caches/pass_through/pass_through_cache.sv
             - source_code/pipelines/tspp/tspp_hazard_unit.sv
             - source_code/pipelines/tspp/tspp_fetch_stage.sv
             - source_code/pipelines/tspp/tspp_execute_stage.sv
@@ -101,9 +92,9 @@ filesets:
 
     buses:
         files:
-            - source_code/bus_bridges/ahb_if.sv
-            - source_code/bus_bridges/ahb.sv
-            - source_code/bus_bridges/apb.sv
+#             - source_code/bus_bridges/ahb_if.sv
+#             - source_code/bus_bridges/ahb.sv
+#             - source_code/bus_bridges/apb.sv
         file_type: systemVerilogSource
 
     fpga_wrapper:
