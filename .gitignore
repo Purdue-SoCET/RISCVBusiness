@@ -61,3 +61,7 @@ xrun.key
 waves.shm/
 
 open_files.sh
+
+# fusesoc
+fusesoc_libraries
+fusesoc.conf

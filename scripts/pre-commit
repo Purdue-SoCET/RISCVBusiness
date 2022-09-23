@@ -1,0 +1,8 @@
+#! /bin/sh
+echo "Pre-Commit: Running Lint"
+fusesoc --cores-root . run --no-export --target lint socet:aft:gpio
+
+if [ $? -ne 0 ] 
+then
+    exit 1
+fi
