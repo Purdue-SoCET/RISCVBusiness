@@ -4,8 +4,6 @@ description: risc management
 
 filesets:
     rtl:
- #       depend:
- #           - "socet:riscv:packages"
         files:
             - risc_mgmt_wrapper.sv
             - extensions/crc32/crc32.sv

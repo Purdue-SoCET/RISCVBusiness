@@ -1,5 +1,5 @@
 CAPI=2:
-name: socet:aft:riscv-standard:0.1.0
+name: socet:riscv:riscv_standard:0.1.0
 description: Standard core files for RISCVBusiness
 
 filesets:
@@ -18,6 +18,9 @@ filesets:
         file_type: systemVerilogSource
 
 targets:
+    default: &default
+        filesets:
+            - rtl
     lint:
         filesets:
             - rtl

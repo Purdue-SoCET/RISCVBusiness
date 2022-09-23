@@ -10,6 +10,7 @@ filesets:
             - "socet:riscv:packages"
             - "socet:riscv:caches"
             - "socet:riscv:risc_mgmt"
+            - "socet:riscv:riscv_standard"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
@@ -23,16 +24,6 @@ filesets:
             - source_code/privs/priv_1_11/priv_1_11_csr_rfile.sv
             - source_code/privs/priv_1_11/priv_1_11_pipeline_control.sv
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
-            - source_code/standard_core/alu.sv
-            - source_code/standard_core/branch_res.sv
-            - source_code/standard_core/dmem_extender.sv
-            - source_code/standard_core/endian_swapper.sv
-            - source_code/standard_core/memory_controller.sv
-            - source_code/standard_core/control_unit.sv
-            - source_code/standard_core/jump_calc.sv
-            - source_code/standard_core/rv32i_reg_file.sv
-            - source_code/standard_core/RISCVBusiness.sv
-            - source_code/standard_core/top_core.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
             - source_code/rv32c/decompressor.sv
