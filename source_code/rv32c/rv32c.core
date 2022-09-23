@@ -1,0 +1,18 @@
+CAPI=2:
+name: socet:riscv:rv32c:0.1.0
+description: rv32c
+
+filesets:
+    rtl:
+        files:
+            - decompressor.sv
+            - rv32c_disabled.sv
+            - rv32c_enabled.sv
+            - fetch_buffer.sv
+            - rv32c_wrapper.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl

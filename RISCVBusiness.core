@@ -12,6 +12,7 @@ filesets:
             - "socet:riscv:risc_mgmt"
             - "socet:riscv:riscv_standard"
             - "socet:riscv:riscv_include"
+            - "socet:riscv:rv32c"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
@@ -27,13 +28,6 @@ filesets:
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
-            - source_code/rv32c/decompressor.sv
-            - source_code/rv32c/rv32c_disabled.sv
-            - source_code/rv32c/rv32c_enabled.sv
-            - source_code/rv32c/fetch_buffer.sv
-            - source_code/rv32c/rv32c_wrapper.sv
-            
-
         file_type: systemVerilogSource
 
     trackers:
@@ -44,6 +38,7 @@ filesets:
 
     buses:
         files:
+# FIXME: UNCOMMENT WHEN bus_bridges ARE FIXED
 #             - source_code/bus_bridges/ahb_if.sv
 #             - source_code/bus_bridges/ahb.sv
 #             - source_code/bus_bridges/apb.sv
