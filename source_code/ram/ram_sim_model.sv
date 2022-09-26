@@ -45,10 +45,13 @@ module ram_sim_model #(
     output logic busy_out
 );
 
-
+    genvar i;
     // Memory as associative array to try and save space at runtime
+`ifndef SYNTHESIS
     logic [N_BITS-1:0] memory [*];
-
+`else
+    logic [N_BITS-1:0] memory [DEPTH-1:0];
+`endif
     // Variables for file IO
     integer fptr;
     logic [ADDR_BITS-1:0] faddr;
@@ -68,7 +71,6 @@ module ram_sim_model #(
     string line;
     int res;
 
-    genvar i;
 
     // Load in meminit
     initial begin
@@ -130,9 +132,12 @@ module ram_sim_model #(
     endgenerate
 
     generate
-        for (i = 0; i < N_BYTES; i++) assign mask[i*8+:8] = {8{byte_en[i]}};
+        for (i = 0; i < N_BYTES; i++) begin : g_ram_mask
+            assign mask[i*8+:8] = {8{byte_en[i]}};
+        end
     endgenerate
 
+`ifndef SYNTHESIS
     always begin
         @(posedge CLK);
         if (access && wen_ram) begin
@@ -141,6 +146,13 @@ module ram_sim_model #(
             else memory[addr_ram] = wdata_ram & mask;
         end
     end
+`else
+    always_ff @(posedge CLK) begin
+        if (access && wen_ram) begin
+            memory[addr_ram] <= (wdata_ram & mask) | (memory[addr_ram] & ~mask);
+        end
+    end
+`endif
 
     assign addr = addr_in[ADDR_BITS-1:0];
     assign ren  = ren_in;
@@ -177,7 +189,11 @@ module ram_sim_model #(
 
     assign access = (counter == LAT) && !input_diff;
 
+`ifndef SYNTHESIS
     assign rdata = (^addr_ram !== 1'bx) && memory.exists(addr_ram) ? memory[addr_ram] : MEM_DEFAULT;
+`else
+    assign rdata = memory[addr_ram];
+`endif
     assign busy_out = ~access;
 
 endmodule

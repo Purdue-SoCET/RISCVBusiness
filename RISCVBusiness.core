@@ -1,12 +1,12 @@
 CAPI=2:
-name: socet:aft:RISCVBusiness:0.1.0
+name: socet:riscv:RISCVBusiness:0.1.0
 description: RISC-V Core for AFTx series
 
 filesets:
     rtl:
         depend:
-            - "socet:digital-lib:bus_protocol_if"
-            - "socet:digital-lib:apb_if"
+            - "socet:bus-components:bus_protocol_if"
+            - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:caches"
             - "socet:riscv:risc_mgmt"
@@ -38,10 +38,9 @@ filesets:
 
     buses:
         files:
-# FIXME: UNCOMMENT WHEN bus_bridges ARE FIXED
-#             - source_code/bus_bridges/ahb_if.sv
-#             - source_code/bus_bridges/ahb.sv
-#             - source_code/bus_bridges/apb.sv
+            - source_code/bus_bridges/ahb_if.sv
+            - source_code/bus_bridges/ahb.sv
+            - source_code/bus_bridges/apb.sv
         file_type: systemVerilogSource
 
     fpga_wrapper:
@@ -69,6 +68,7 @@ targets:
     default: &default
         filesets:
             - rtl
+            - buses
         toplevel: RISCVBusiness
 
     sim:
@@ -77,7 +77,6 @@ targets:
         default_tool: verilator
         filesets_append:
             - trackers
-            - buses
             - "tool_verilator? (verilator_tb)"
             - "!tool_verilator? (tb)"
         toplevel:
