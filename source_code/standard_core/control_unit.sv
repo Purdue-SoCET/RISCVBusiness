@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@
 *   Email:        steven69@purdue.edu
 *   Date Created: 06/09/2016
 *   Description:  The control unit combinationally sets all of the control
-*                 signals used in the processor based on the incoming instruction. 
+*                 signals used in the processor based on the incoming instruction.
 */
 
 `include "control_unit_if.vh"
@@ -28,16 +28,16 @@
 `include "risc_mgmt_if.vh"
 `include "decompressor_if.vh"
 
-module control_unit 
+module control_unit
 (
   control_unit_if.control_unit  cu_if,
   rv32i_reg_file_if.cu          rf_if,
   input logic [4:0] rmgmt_rsel_s_0, rmgmt_rsel_s_1, rmgmt_rsel_d,
-  input logic rmgmt_req_reg_r, rmgmt_req_reg_w 
+  input logic rmgmt_req_reg_r, rmgmt_req_reg_w
 );
   import alu_types_pkg::*;
   import rv32i_types_pkg::*;
-  import machine_mode_types_1_11_pkg::*;
+  import machine_mode_types_1_12_pkg::*;
 
   stype_t         instr_s;
   itype_t         instr_i;
@@ -56,9 +56,9 @@ module control_unit
   assign cu_if.opcode = opcode_t'(cu_if.instr[6:0]);
   assign rf_if.rs1  = rmgmt_req_reg_r ? rmgmt_rsel_s_0 : cu_if.instr[19:15];
   assign rf_if.rs2  = rmgmt_req_reg_r ? rmgmt_rsel_s_1 : cu_if.instr[24:20];
-  assign rf_if.rd   = rmgmt_req_reg_w ? rmgmt_rsel_d   : cu_if.instr[11:7]; 
+  assign rf_if.rd   = rmgmt_req_reg_w ? rmgmt_rsel_d   : cu_if.instr[11:7];
   assign cu_if.shamt = cu_if.instr[24:20];
- 
+
   // Assign the immediate values
   assign cu_if.imm_I  = instr_i.imm11_00;
   assign cu_if.imm_S  = {instr_s.imm11_05, instr_s.imm04_00};
@@ -137,7 +137,7 @@ module control_unit
   assign sr = ((cu_if.opcode == IMMED && instr_i.funct3 == SRI) ||
                 (cu_if.opcode == REGREG && instr_r.funct3 == SR));
   assign add_sub = (cu_if.opcode == REGREG && instr_r.funct3 == ADDSUB);
-  
+
   assign aluop_sll = ((cu_if.opcode == IMMED && instr_i.funct3 == SLLI) ||
                       (cu_if.opcode == REGREG && instr_r.funct3 == SLL));
   assign aluop_sra = sr && cu_if.instr[30];
@@ -196,7 +196,7 @@ module control_unit
   endgenerate
   // Privilege Control Signals
   assign cu_if.fault_insn = '0;
- 
+
   always_comb begin
     case(cu_if.opcode)
       REGREG: cu_if.illegal_insn = instr_r.funct7[0];
@@ -207,7 +207,7 @@ module control_unit
       default                 : cu_if.illegal_insn = 1'b1;
     endcase
   end
- 
+
   //Decoding of System Priv Instructions
   always_comb begin
     cu_if.ret_insn = 1'b0;
@@ -242,7 +242,7 @@ module control_unit
       end  else
       if (rv32i_system_t'(instr_r.funct3) == CSRRS) begin
         cu_if.csr_set   = 1'b1;
-      end else if (rv32i_system_t'(instr_r.funct3) == CSRRC) begin 
+      end else if (rv32i_system_t'(instr_r.funct3) == CSRRC) begin
         cu_if.csr_clr = 1'b1;
       end else if (rv32i_system_t'(instr_r.funct3) == CSRRWI) begin
         cu_if.csr_swap  = 1'b1;
@@ -258,8 +258,7 @@ module control_unit
   end
   assign cu_if.csr_rw_valid = (cu_if.csr_swap | cu_if.csr_set | cu_if.csr_clr);
 
-  assign cu_if.csr_addr = csr_addr_t'(instr_i.imm11_00);
+  assign cu_if.csr_addr = mcsr_addr_t'(instr_i.imm11_00);
   assign cu_if.zimm     = cu_if.instr[19:15];
 
 endmodule
-
