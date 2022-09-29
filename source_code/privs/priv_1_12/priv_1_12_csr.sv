@@ -42,20 +42,20 @@ module priv_1_12_csr # (
   csr_reg_t         mhartid;
   csr_reg_t         mconfigptr;
   /* Machine Trap Setup */
-  mstatus_t         mstatus;
+  mstatus_t         mstatus, mstatus_next;
   misaid_t          misaid;
-  mie_t             mie;
-  mtvec_t           mtvec;
+  mie_t             mie, mie_next;
+  mtvec_t           mtvec, mtvec_next;
   mstatush_t        mstatush;
   /* Machine Trap Handling */
-  csr_reg_t         mscratch;
-  csr_reg_t         mepc;
-  mcause_t          mcause;
-  csr_reg_t         mtval;
-  mip_t             mip;
+  csr_reg_t         mscratch, mscratch_next;
+  csr_reg_t         mepc, mepc_next;
+  mcause_t          mcause, mcause_next;
+  csr_reg_t         mtval, mtval_next;
+  mip_t             mip, mip_next;
   /* Machine Counters/Timers */
-  mcounteren_t      mcounteren;
-  mcountinhibit_t   mcounterinhibit;
+  mcounteren_t      mcounteren, mcounteren_next;
+  mcountinhibit_t   mcounterinhibit, mcounterinhibit_next;
   csr_reg_t         mcycle;
   csr_reg_t         minstret;
   csr_reg_t         mcycleh;
@@ -78,7 +78,7 @@ module priv_1_12_csr # (
   assign mconfigptr = '0;
   assign mhartid = HARTID;
 
-  /* These registers have some RO fields */
+  /* These registers are RO fields */
   assign misaid.zero = '0;
   assign misaid.base = BASE_RV32;
   assign misaid.extensions =      MISAID_EXT_I
@@ -98,63 +98,12 @@ module priv_1_12_csr # (
                                 | MISAID_EXT_X
                             `endif;
 
-  assign mstatus.reserved_0 = '0;
-  assign mstatus.reserved_1 = '0;
-  assign mstatus.reserved_2 = '0;
-  assign mstatus.reserved_3 = '0;
-  assign mstatus.sie = 1'b0;
-  assign mstatus.spie = 1'b0;
-  assign mstatus.ube = 1'b0;
-  assign mstatus.spp = 1'b0;
-  assign mstatus.sum = 1'b0;
-  assign mstatus.mxr = 1'b0;
-  assign mstatus.tvm = 1'b0;
-  assign mstatus.tsr = 1'b0;
-  assign mstatus.sd = &(mstatus.vs) | &(mstatus.fs) | &(mstatus.xs);
-  `ifdef RV32V_SUPPORTED
-    assign mstatus.vs = VS_INITIAL;
-  `else
-    assign mstatus.vs = VS_OFF;
-  `endif
-  `ifdef RV32F_SUPPORTED
-    assign mstatus.fs = FS_INITIAL;
-  `else
-    assign mstatus.fs = FS_OFF;
-  `endif
-  `ifdef CUSTOM_SUPPORTED
-    assign mstatus.xs = XS_NONE_D;
-  `else
-    assign mstatus.xs = XS_ALL_OFF;
-  `endif
-
   assign mstatush.reserved_0 = '0;
   assign mstatush.sbe = 1'b0;
   assign mstatush.mbe = 1'b0;
   assign mstatush.reserved_1 = '0;
 
-  assign mip.zero_0 = '0;
-  assign mip.zero_1 = '0;
-  assign mip.zero_2 = '0;
-  assign mip.zero_3 = '0;
-  assign mip.zero_4 = '0;
-  assign mip.zero_5 = '0;
-  assign mip.zero_6 = '0;
-  assign mip.ssip = 1'b0;
-  assign mip.stip = 1'b0;
-  assign mip.seip = 1'b0;
-  assign mip.impl_defined = '0; // TODO do we want to define others?
-
-  assign mie.zero_0 = '0;
-  assign mie.zero_1 = '0;
-  assign mie.zero_2 = '0;
-  assign mie.zero_3 = '0;
-  assign mie.zero_4 = '0;
-  assign mie.zero_5 = '0;
-  assign mie.zero_6 = '0;
-  assign mie.ssie = 1'b0;
-  assign mie.stie = 1'b0;
-  assign mie.seie = 1'b0;
-  assign mie.impl_defined = '0; // TODO do we want to define others?
+  
 
   // Control and Status Registers
   always_ff @ (posedge CLK, negedge nRST) begin
@@ -165,20 +114,44 @@ module priv_1_12_csr # (
       mstatus.mpp <= M_MODE;
       mstatus.mprv <= 1'b0;
       mstatus.tw <= 1'b1;
+      mstatus.reserved_0 <= '0;
+      mstatus.reserved_1 <= '0;
+      mstatus.reserved_2 <= '0;
+      mstatus.reserved_3 <= '0;
+      mstatus.sie <= 1'b0;
+      mstatus.spie <= 1'b0;
+      mstatus.ube <= 1'b0;
+      mstatus.spp <= 1'b0;
+      mstatus.sum <= 1'b0;
+      mstatus.mxr <= 1'b0;
+      mstatus.tvm <= 1'b0;
+      mstatus.tsr <= 1'b0;
+      mstatus.sd <= &(mstatus.vs) | &(mstatus.fs) | &(mstatus.xs);
+      `ifdef RV32V_SUPPORTED
+        mstatus.vs <= VS_INITIAL;
+      `else
+        mstatus.vs <= VS_OFF;
+      `endif
+      `ifdef RV32F_SUPPORTED
+        mstatus.fs <= FS_INITIAL;
+      `else
+        mstatus.fs <= FS_OFF;
+      `endif
+      `ifdef CUSTOM_SUPPORTED
+        mstatus.xs <= XS_NONE_D;
+      `else
+        mstatus.xs <= XS_ALL_OFF;
+      `endif
 
       /* mtvec reset */
       mtvec.mode <= DIRECT; // TODO talk with cole about defaults
       mtvec.base <= '0;     // TODO talk with cole about defaults
 
       /* mie reset */
-      mie.msie <= 1'b0;
-      mie.mtie <= 1'b0;
-      mie.meie <= 1'b0;
+      mie <= '0;
 
       /* mip reset */
-      mip.msip <= 1'b0;
-      mip.mtip <= 1'b0;
-      mip.meip <= 1'b0;
+      mip <= '0;
 
       /* msratch reset */
       mscratch <= '0;
@@ -201,6 +174,18 @@ module priv_1_12_csr # (
       mcause <= '0;
 
     end else begin
+      mstatus <= mstatus_next;
+      mtvec <= mtvec_next;
+      mie <= mie_next;
+      mip <= mip_next;
+      mscratch <= mscratch_next;
+      mepc <= mepc_next;
+      mtval <= mtval_next;
+      mcounteren <= mcounteren_next;
+      mcounterinhibit <= mcounterinhibit_next;
+      mcause <= mcause_next;
+
+
       // Only write if it is a valid write and no perm error
       if ((prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) && ~prv_intern_if.invalid_csr) begin
         casez (prv_intern_if.csr_addr)
@@ -250,6 +235,17 @@ module priv_1_12_csr # (
 
   // Privilege Check and Legal Value Check
   always_comb begin
+    mstatus_next = mstatus;
+    mtvec_next = mtvec;
+    mie_next = mie;
+    mip_next = mip;
+    mscratch_next = mscratch;
+    mepc_next = mepc;
+    mtval_next = mtval;
+    mcounteren_next = mcounteren;
+    mcounterinhibit_next = mcounterinhibit;
+    mcause_next = mcause_next;
+
     nxt_csr_val = (prv_intern_if.csr_write) ? prv_intern_if.new_csr_val :
                   (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
                   (prv_intern_if.csr_set)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
@@ -262,29 +258,71 @@ module priv_1_12_csr # (
       casez(prv_intern_if.csr_addr)
         MSTATUS_ADDR: begin
           if (prv_intern_if.new_csr_val[12:11] == 2'b10) begin
-            nxt_csr_val[12:11] = 2'b00; // If invalid privilege level, dump at 0
+            mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
+          end else begin
+            mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
           end
+          mstatus_next.mie = nxt_csr_val[3];
+          mstatus_next.mpie = nxt_csr_val[7];
+          mstatus_next.mprv = nxt_csr_val[17];
+          mstatus_next.tw = nxt_csr_val[21];
         end
 
         MTVEC_ADDR: begin
           if (prv_intern_if.new_csr_val[1:0] > 2'b01) begin
-            nxt_csr_val[1:0] = 2'b00;
+            mtvec_next.mode = DIRECT;
+          end else begin
+            mtvec_next.mode = vector_modes_t'(nxt_csr_val[1:0]);
           end
+          mtvec_next.base = nxt_csr_val[31:2];
         end
 
-        /* Below have no values to check or are R/O */
-        MVENDORID_ADDR, MARCHID_ADDR, MIMPID_ADDR, MHARTID_ADDR, MCONFIGPTR_ADDR,
-        MISA_ADDR, MIE_ADDR, MTVEC_ADDR, MSTATUSH_ADDR, MSCRATCH_ADDR, MEPC_ADDR,
-        MCAUSE_ADDR, MTVAL_ADDR, MIP_ADDR, MCOUNTEREN_ADDR, MCOUNTINHIBIT_ADDR,
-        MCYCLE_ADDR, MINSTRET_ADDR, MCYCLEH_ADDR, MINSTRETH_ADDR: begin
-            nxt_csr_val = (prv_intern_if.csr_write) ? prv_intern_if.new_csr_val :
-                          (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
-                          (prv_intern_if.csr_clear)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
-                          prv_intern_if.new_csr_val;
+        MIE_ADDR: begin
+          mie_next.msie = nxt_csr_val[3];
+          mie_next.mtie = nxt_csr_val[7];
+          mie_next.meie = nxt_csr_val[11];
         end
 
+        MIP_ADDR: begin
+            mip_next.msip = nxt_csr_val[3];
+            mip_next.mtip = nxt_csr_val[7];
+            mip_next.meip = nxt_csr_val[11];
+        end
+        MSCRATCH_ADDR: begin
+          mscratch_next = nxt_csr_val;
+        end
+        MEPC_ADDR: begin
+          mepc_next = nxt_csr_val;
+        end
+        MTVAL_ADDR: begin
+          mtval_next = nxt_csr_val;
+        end
+        MCOUNTEREN_ADDR: begin
+          mcounteren_next = nxt_csr_val;
+        end
+        MCOUNTINHIBIT_ADDR: begin
+          mcounterinhibit_next = nxt_csr_val;
+        end
+        MCAUSE_ADDR: begin
+          mcause_next = nxt_csr_val;
+        end
         default: prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
       endcase
+    end
+
+    // inject values
+    if (prv_intern_if.inject_mstatus) begin
+      mstatus_next = prv_intern_if.next_mstatus;
+    end else if (prv_intern_if.inject_mtval) begin
+      mtval_next = prv_intern_if.next_mtval;
+    end else if (prv_intern_if.inject_mepc) begin
+      mepc_next = prv_intern_if.next_mepc;
+    end else if (prv_intern_if.inject_mcause) begin
+      mcause_next = prv_intern_if.next_mcause;
+    end else if (prv_intern_if.inject_mie) begin
+      mie_next = prv_intern_if.next_mie;
+    end else if (prv_intern_if.inject_mip) begin
+      mip_next = prv_intern_if.next_mip;
     end
   end
 
@@ -303,8 +341,8 @@ module priv_1_12_csr # (
 
   // Return proper values to CPU, PMP, PMA
   always_comb begin
-    prv_intern_if.old_csr_val = '0;
     /* CPU return */
+    prv_intern_if.old_csr_val = '0;
     casez(prv_intern_if.csr_addr)
       MVENDORID_ADDR: prv_intern_if.old_csr_val = mvendorid;
       MARCHID_ADDR: prv_intern_if.old_csr_val = marchid;
@@ -329,5 +367,14 @@ module priv_1_12_csr # (
       MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
     endcase
   end
+
+  /* Priv control return */
+  assign prv_intern_if.curr_mip = mip;
+  assign prv_intern_if.curr_mie = mie;
+  assign prv_intern_if.curr_mcause = mcause;
+  assign prv_intern_if.curr_mepc = mepc;
+  assign prv_intern_if.curr_mstatus = mstatus;
+  assign prv_intern_if.curr_mtvec = mtvec;
+  assign prv_intern_if.curr_mtval = mtval;
 
 endmodule
