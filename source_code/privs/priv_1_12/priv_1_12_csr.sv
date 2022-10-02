@@ -184,50 +184,6 @@ module priv_1_12_csr # (
       mcounteren <= mcounteren_next;
       mcounterinhibit <= mcounterinhibit_next;
       mcause <= mcause_next;
-
-
-      // Only write if it is a valid write and no perm error
-      if ((prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) && ~prv_intern_if.invalid_csr) begin
-        casez (prv_intern_if.csr_addr)
-          MSTATUS_ADDR: begin
-            mstatus.mie <= nxt_csr_val[3];
-            mstatus.mpie <= nxt_csr_val[7];
-            mstatus.mpp <= priv_level_t'(nxt_csr_val[12:11]);
-            mstatus.mprv <= nxt_csr_val[17];
-            mstatus.tw <= nxt_csr_val[21];
-          end
-          MTVEC_ADDR: begin
-            mtvec.mode <= vector_modes_t'(nxt_csr_val[1:0]);
-            mtvec.base <= nxt_csr_val[31:2];
-          end
-          MIE_ADDR: begin
-            mie.msie <= nxt_csr_val[3];
-            mie.mtie <= nxt_csr_val[7];
-            mie.meie <= nxt_csr_val[11];
-          end
-          MIP_ADDR: begin
-            mip.msip <= nxt_csr_val[3];
-            mip.mtip <= nxt_csr_val[7];
-            mip.meip <= nxt_csr_val[11];
-          end
-          MSCRATCH_ADDR: begin
-            mscratch <= nxt_csr_val;
-          end
-          MEPC_ADDR: begin
-            mepc <= nxt_csr_val;
-          end
-          MCOUNTEREN_ADDR: begin
-            mcounteren <= nxt_csr_val;
-          end
-          MCOUNTINHIBIT_ADDR: begin
-            mcounterinhibit <= nxt_csr_val;
-          end
-          MCAUSE_ADDR: begin
-            mcause <= nxt_csr_val;
-          end
-        endcase
-      end
-
       cycles_full <= cf_next;
       instret_full <= if_next;
     end
@@ -248,7 +204,7 @@ module priv_1_12_csr # (
 
     nxt_csr_val = (prv_intern_if.csr_write) ? prv_intern_if.new_csr_val :
                   (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
-                  (prv_intern_if.csr_set)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
+                  (prv_intern_if.csr_clear)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
                   prv_intern_if.new_csr_val;
     prv_intern_if.invalid_csr = 1'b0;
 

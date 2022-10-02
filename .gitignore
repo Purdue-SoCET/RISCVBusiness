@@ -54,5 +54,8 @@ __pycache__/
 INCA_libs/
 xcelium.d/
 xrun.history
+xrun.key
+.simvision
+waves.shm/
 
 open_files.sh

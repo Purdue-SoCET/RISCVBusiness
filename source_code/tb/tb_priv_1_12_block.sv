@@ -99,7 +99,7 @@ module tb_priv_1_12_block ();
     prv_pipeline_if.clr = '0;
     prv_pipeline_if.set = '0;
     prv_pipeline_if.wdata = '0;
-    prv_pipeline_if.maddr = MSTATUS_ADDR;
+    prv_pipeline_if.maddr = MISA_ADDR;
     prv_pipeline_if.valid_write = '0;
     prv_pipeline_if.wb_enable = '0;
     prv_pipeline_if.instr = '0;
