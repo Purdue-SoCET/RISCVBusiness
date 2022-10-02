@@ -50,4 +50,9 @@ _vmake
 *.pyc
 __pycache__/
 
+# ignore xrun files
+INCA_libs/
+xcelium.d/
+xrun.history
+
 open_files.sh

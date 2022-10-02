@@ -203,4 +203,4 @@ module priv_1_12_int_ex_handler (
             update_mie <= '0;
     end
 
-endmodule;
+endmodule

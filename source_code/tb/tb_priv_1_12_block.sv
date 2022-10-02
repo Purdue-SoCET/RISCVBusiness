@@ -14,12 +14,12 @@
 *   limitations under the License.
 *
 *
-*   Filename:		  tb_priv_1_12_block.sv
+*   Filename:     tb_priv_1_12_block.sv
 *
-*   Created by:		Hadi Ahmed
-*   Email:			ahmed138@purdue.edu
-*   Date Created:	04/02/2022
-*   Description:	Testbench for running the privileged unit v1.12.
+*   Created by:   Hadi Ahmed
+*   Email:        ahmed138@purdue.edu
+*   Date Created: 04/02/2022
+*   Description:  Testbench for running the privileged unit v1.12.
 */
 
 `timescale 1ns/1ns

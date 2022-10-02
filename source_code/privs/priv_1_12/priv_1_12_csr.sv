@@ -103,7 +103,7 @@ module priv_1_12_csr # (
   assign mstatush.mbe = 1'b0;
   assign mstatush.reserved_1 = '0;
 
-  
+
 
   // Control and Status Registers
   always_ff @ (posedge CLK, negedge nRST) begin
@@ -375,6 +375,5 @@ module priv_1_12_csr # (
   assign prv_intern_if.curr_mepc = mepc;
   assign prv_intern_if.curr_mstatus = mstatus;
   assign prv_intern_if.curr_mtvec = mtvec;
-  assign prv_intern_if.curr_mtval = mtval;
 
 endmodule
