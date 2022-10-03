@@ -76,15 +76,15 @@ module tspp_execute_stage (
     generate
         if (BASE_ISA == "RV32E") begin : g_rfile_select
             rv32e_reg_file rf (
-                CLK,
-                nRST,
-                rf_if
+                .CLK,
+                .nRST,
+                .rf_if
             );
         end else begin : g_rfile_select
             rv32i_reg_file rf (
-                CLK,
-                nRST,
-                rf_if
+                .CLK,
+                .nRST,
+                .rf_if
             );
         end
     endgenerate
@@ -204,8 +204,9 @@ module tspp_execute_stage (
         end
     end
 
-    assign rf_if.wen = (cu_if.wen | (rm_if.req_reg_w & rm_if.reg_w)) & (~hazard_if.if_ex_stall | hazard_if.npc_sel | rv32cif.done_earlier) &
-                    ~(cu_if.dren & mal_addr);
+    assign rf_if.wen = (cu_if.wen | (rm_if.req_reg_w & rm_if.reg_w))
+                       & (~hazard_if.if_ex_stall | hazard_if.npc_sel | rv32cif.done_earlier)
+                       & ~(cu_if.dren & mal_addr);
     /*******************************************************
   *** Branch Target Resolution and Associated Logic
   *******************************************************/
@@ -374,7 +375,8 @@ module tspp_execute_stage (
     end
 
     //Send exceptions to Hazard Unit
-    assign hazard_if.illegal_insn = (cu_if.illegal_insn & ~rm_if.ex_token) | prv_pipe_if.invalid_csr;
+    assign hazard_if.illegal_insn = (cu_if.illegal_insn & ~rm_if.ex_token)
+                                    | prv_pipe_if.invalid_csr;
     assign hazard_if.fault_l = 1'b0;
     assign hazard_if.mal_l = cu_if.dren & mal_addr;
     assign hazard_if.fault_s = 1'b0;
