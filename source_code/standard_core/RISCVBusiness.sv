@@ -41,7 +41,7 @@ module RISCVBusiness (
 `ifdef BUS_INTERFACE_GENERIC_BUS
     generic_bus_if.cpu gen_bus_if
 `elsif BUS_INTERFACE_AHB
-    ahb_if.ahb_m ahb_master
+    ahb_if.manager ahb_master
 `elsif BUS_INTERFACE_APB
     apb_if.requester apb_requester
 `endif

@@ -6,6 +6,7 @@ filesets:
     rtl:
         depend:
             - "socet:bus-components:bus_protocol_if"
+            - "socet:bus-components:ahb_if"
             - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:caches"
@@ -38,9 +39,8 @@ filesets:
 
     buses:
         files:
-            - source_code/bus_bridges/ahb_if.sv
-            - source_code/bus_bridges/ahb.sv
-            - source_code/bus_bridges/apb.sv
+            - "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
+            - "!tool_verilator? (source_code/bus_bridges/apb.sv)"
         file_type: systemVerilogSource
 
     fpga_wrapper:

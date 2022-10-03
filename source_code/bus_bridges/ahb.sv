@@ -28,8 +28,8 @@
 module ahb (
     input CLK,
     nRST,
-    ahb_if.ahb_m ahb_m,
-    generic_bus_if.generic_bus out_gen_bus_if
+    generic_bus_if.generic_bus out_gen_bus_if,
+    ahb_if.manager ahb_m
 );
 
     typedef enum logic {
@@ -63,7 +63,6 @@ module ahb (
             ahb_m.HADDR = out_gen_bus_if.addr;
             ahb_m.HWDATA = out_gen_bus_if.wdata;
             ahb_m.HBURST = 0;
-            ahb_m.HPROT = 0;
             ahb_m.HMASTLOCK = 0;
         end else if (out_gen_bus_if.wen) begin
             ahb_m.HTRANS = 2'b10;
@@ -71,7 +70,6 @@ module ahb (
             ahb_m.HADDR = out_gen_bus_if.addr;
             ahb_m.HWDATA = out_gen_bus_if.wdata;
             ahb_m.HBURST = 0;
-            ahb_m.HPROT = 0;
             ahb_m.HMASTLOCK = 0;
         end else begin
             ahb_m.HTRANS = 2'b0;
@@ -79,7 +77,6 @@ module ahb (
             ahb_m.HADDR = 0;
             ahb_m.HWDATA = out_gen_bus_if.wdata;
             ahb_m.HBURST = 0;
-            ahb_m.HPROT = 0;
             ahb_m.HMASTLOCK = 0;
         end
 
