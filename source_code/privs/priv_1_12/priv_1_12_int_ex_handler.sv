@@ -68,7 +68,7 @@ module priv_1_12_int_ex_handler (
         end
     end
 
-    assign clear_interrupt = (prv_intern_if.clear_timer_int_m | prv_intern_if.clear_soft_int_m | prv_intern_if.clear_ext_int_m | prv_intern_if.clear_timer_int_s || prv_intern_if.clear_soft_int_s || prv_intern_if.clear_ext_int_s);
+    assign clear_interrupt = (prv_intern_if.clear_timer_int_m | prv_intern_if.clear_soft_int_m | prv_intern_if.clear_ext_int_m | prv_intern_if.clear_timer_int_s | prv_intern_if.clear_soft_int_s | prv_intern_if.clear_ext_int_s);
 
     // Determine whether an exception occured
     always_comb begin

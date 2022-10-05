@@ -164,7 +164,7 @@ module priv_1_12_csr # (
 
       /* mcounter reset */
       mcounteren <= '1;
-      mcounterinhibit <= '1;
+      mcounterinhibit <= '0;
 
       /* perf mon reset */
       cycles_full <= '0;
@@ -209,7 +209,9 @@ module priv_1_12_csr # (
     prv_intern_if.invalid_csr = 1'b0;
 
     if (prv_intern_if.csr_addr[9:8] & prv_intern_if.curr_priv != 2'b11) begin
-      prv_intern_if.invalid_csr = 1'b1; // Not enough privilege
+      if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
+        prv_intern_if.invalid_csr = 1'b1; // Not enough privilege
+      end
     end else begin
       casez(prv_intern_if.csr_addr)
         MSTATUS_ADDR: begin
@@ -262,7 +264,11 @@ module priv_1_12_csr # (
         MCAUSE_ADDR: begin
           mcause_next = nxt_csr_val;
         end
-        default: prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
+        default: begin
+          if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
+            prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
+          end
+        end
       endcase
     end
 
@@ -287,10 +293,10 @@ module priv_1_12_csr # (
     cf_next = cycles_full;
     if_next = instret_full;
 
-    if (~mcounterinhibit.cy) begin
+    if (mcounteren.cy & ~mcounterinhibit.cy) begin
       cf_next = cycles_full + 1;
     end
-    if (~mcounterinhibit.ir) begin
+    if (mcounteren.ir & ~mcounterinhibit.ir) begin
       if_next = instret_full + prv_intern_if.inst_ret;
     end
   end

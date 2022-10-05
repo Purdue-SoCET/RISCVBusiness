@@ -1,11 +1,11 @@
 {
   "arch": "RV32I",
   "abi": "ilp32",
-  "xlen": "rv32imc",
+  "xlen": "rv32i",
   "test_type": "self-tests",
   "top_level": "RISCVBusiness_self_test",
   "test_filenames": ["*.S"],
-  
+
   "cache_file": "run_tests_cache.json",
   "build_dir": "./build",
   "verif_dir": "./verification",
