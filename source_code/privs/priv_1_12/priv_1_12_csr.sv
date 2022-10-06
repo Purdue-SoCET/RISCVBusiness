@@ -65,6 +65,10 @@ module priv_1_12_csr # (
 
   csr_reg_t nxt_csr_val;
 
+  // invalid_csr flags
+  logic invalid_csr_0, invalid_csr_1;
+  assign prv_intern_if.invalid_csr = invalid_csr_0 | invalid_csr_1;
+
   /* Save some logic with this */
   assign mcycle = cycles_full[31:0];
   assign mcycleh = cycles_full[63:32];
@@ -206,70 +210,67 @@ module priv_1_12_csr # (
                   (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
                   (prv_intern_if.csr_clear)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
                   prv_intern_if.new_csr_val;
-    prv_intern_if.invalid_csr = 1'b0;
+    invalid_csr_0 = 1'b0;
 
     if (prv_intern_if.csr_addr[9:8] & prv_intern_if.curr_priv != 2'b11) begin
       if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
-        prv_intern_if.invalid_csr = 1'b1; // Not enough privilege
+        invalid_csr_0 = 1'b1; // Not enough privilege
       end
     end else begin
-      casez(prv_intern_if.csr_addr)
-        MSTATUS_ADDR: begin
-          if (prv_intern_if.new_csr_val[12:11] == 2'b10) begin
-            mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
-          end else begin
-            mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
+      if (prv_intern_if.valid_write) begin
+        casez(prv_intern_if.csr_addr)
+          MSTATUS_ADDR: begin
+            if (prv_intern_if.new_csr_val[12:11] == 2'b10) begin
+              mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
+            end else begin
+              mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
+            end
+            mstatus_next.mie = nxt_csr_val[3];
+            mstatus_next.mpie = nxt_csr_val[7];
+            mstatus_next.mprv = nxt_csr_val[17];
+            mstatus_next.tw = nxt_csr_val[21];
           end
-          mstatus_next.mie = nxt_csr_val[3];
-          mstatus_next.mpie = nxt_csr_val[7];
-          mstatus_next.mprv = nxt_csr_val[17];
-          mstatus_next.tw = nxt_csr_val[21];
-        end
 
-        MTVEC_ADDR: begin
-          if (prv_intern_if.new_csr_val[1:0] > 2'b01) begin
-            mtvec_next.mode = DIRECT;
-          end else begin
-            mtvec_next.mode = vector_modes_t'(nxt_csr_val[1:0]);
+          MTVEC_ADDR: begin
+            if (prv_intern_if.new_csr_val[1:0] > 2'b01) begin
+              mtvec_next.mode = DIRECT;
+            end else begin
+              mtvec_next.mode = vector_modes_t'(nxt_csr_val[1:0]);
+            end
+            mtvec_next.base = nxt_csr_val[31:2];
           end
-          mtvec_next.base = nxt_csr_val[31:2];
-        end
 
-        MIE_ADDR: begin
-          mie_next.msie = nxt_csr_val[3];
-          mie_next.mtie = nxt_csr_val[7];
-          mie_next.meie = nxt_csr_val[11];
-        end
-
-        MIP_ADDR: begin
-            mip_next.msip = nxt_csr_val[3];
-            mip_next.mtip = nxt_csr_val[7];
-            mip_next.meip = nxt_csr_val[11];
-        end
-        MSCRATCH_ADDR: begin
-          mscratch_next = nxt_csr_val;
-        end
-        MEPC_ADDR: begin
-          mepc_next = nxt_csr_val;
-        end
-        MTVAL_ADDR: begin
-          mtval_next = nxt_csr_val;
-        end
-        MCOUNTEREN_ADDR: begin
-          mcounteren_next = nxt_csr_val;
-        end
-        MCOUNTINHIBIT_ADDR: begin
-          mcounterinhibit_next = nxt_csr_val;
-        end
-        MCAUSE_ADDR: begin
-          mcause_next = nxt_csr_val;
-        end
-        default: begin
-          if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
-            prv_intern_if.invalid_csr = 1'b1; // CSR address doesn't exist
+          MIE_ADDR: begin
+            mie_next.msie = nxt_csr_val[3];
+            mie_next.mtie = nxt_csr_val[7];
+            mie_next.meie = nxt_csr_val[11];
           end
-        end
-      endcase
+
+          MIP_ADDR: begin
+              mip_next.msip = nxt_csr_val[3];
+              mip_next.mtip = nxt_csr_val[7];
+              mip_next.meip = nxt_csr_val[11];
+          end
+          MSCRATCH_ADDR: begin
+            mscratch_next = nxt_csr_val;
+          end
+          MEPC_ADDR: begin
+            mepc_next = nxt_csr_val;
+          end
+          MTVAL_ADDR: begin
+            mtval_next = nxt_csr_val;
+          end
+          MCOUNTEREN_ADDR: begin
+            mcounteren_next = nxt_csr_val;
+          end
+          MCOUNTINHIBIT_ADDR: begin
+            mcounterinhibit_next = nxt_csr_val;
+          end
+          MCAUSE_ADDR: begin
+            mcause_next = nxt_csr_val;
+          end
+        endcase
+      end
     end
 
     // inject values
@@ -305,6 +306,7 @@ module priv_1_12_csr # (
   always_comb begin
     /* CPU return */
     prv_intern_if.old_csr_val = '0;
+    invalid_csr_1 = 1'b0;
     casez(prv_intern_if.csr_addr)
       MVENDORID_ADDR: prv_intern_if.old_csr_val = mvendorid;
       MARCHID_ADDR: prv_intern_if.old_csr_val = marchid;
@@ -327,6 +329,11 @@ module priv_1_12_csr # (
       MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
       MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
       MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
+      default: begin
+        if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
+          invalid_csr_1 = 1'b1; // CSR address doesn't exist
+        end
+      end
     endcase
   end
 
