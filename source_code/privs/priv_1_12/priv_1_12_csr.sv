@@ -148,8 +148,8 @@ module priv_1_12_csr # (
       `endif
 
       /* mtvec reset */
-      mtvec.mode <= DIRECT; // TODO talk with cole about defaults
-      mtvec.base <= '0;     // TODO talk with cole about defaults
+      mtvec.mode <= DIRECT;
+      mtvec.base <= '0;
 
       /* mie reset */
       mie <= '0;
