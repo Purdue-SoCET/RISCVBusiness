@@ -104,12 +104,13 @@ module priv_1_12_csr # (
   /* These registers are RO fields */
   assign misa.zero = '0;
   assign misa.base = BASE_RV32;
+  // NOTE: Per the v1.12 spec, both I and E CANNOT be high - If supporting E, I must be disabled
   assign misa.extensions =      MISA_EXT_I
                             `ifdef RV32C_SUPPORTED
                                 | MISA_EXT_C
-                             `endif /* `ifdef RV32E_SUPPORTED
+                             `endif `ifdef RV32E_SUPPORTED
                                 | MISA_EXT_E
-                            `endif */ `ifdef RV32F_SUPPORTED
+                            `endif `ifdef RV32F_SUPPORTED
                                 | MISA_EXT_F
                             `endif `ifdef RV32M_SUPPORTED
                                 | MISA_EXT_M
