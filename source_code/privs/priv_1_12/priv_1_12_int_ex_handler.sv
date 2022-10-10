@@ -161,7 +161,7 @@ module priv_1_12_int_ex_handler (
     // The signal is 2 cycles long, so the update_mie signal is used to clip it down to 1 to prevent MEPC
     // double update which results in skipping an instruction.
     assign prv_intern_if.inject_mepc = exception | (interrupt_fired & ~update_mie); // TODO: Change to interrupt
-    assign prv_intern_if.next_mepc = prv_intern_if.curr_mepc;
+    assign prv_intern_if.next_mepc = prv_intern_if.epc;
 
     assign prv_intern_if.inject_mtval = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s |
                                     prv_intern_if.illegal_insn | prv_intern_if.fault_insn_access | prv_intern_if.mal_insn | prv_intern_if.ex_rmgmt)
