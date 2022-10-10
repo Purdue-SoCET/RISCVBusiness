@@ -43,7 +43,7 @@ module priv_1_12_csr # (
   csr_reg_t         mconfigptr;
   /* Machine Trap Setup */
   mstatus_t         mstatus, mstatus_next;
-  misaid_t          misaid;
+  misa_t            misa;
   mie_t             mie, mie_next;
   mtvec_t           mtvec, mtvec_next;
   mstatush_t        mstatush;
@@ -83,23 +83,23 @@ module priv_1_12_csr # (
   assign mhartid = HARTID;
 
   /* These registers are RO fields */
-  assign misaid.zero = '0;
-  assign misaid.base = BASE_RV32;
-  assign misaid.extensions =      MISAID_EXT_I
+  assign misa.zero = '0;
+  assign misa.base = BASE_RV32;
+  assign misa.extensions =      MISA_EXT_I
                             `ifdef RV32C_SUPPORTED
-                                | MISAID_EXT_C
+                                | MISA_EXT_C
                              `endif /* `ifdef RV32E_SUPPORTED
-                                | MISAID_EXT_E
+                                | MISA_EXT_E
                             `endif */ `ifdef RV32F_SUPPORTED
-                                | MISAID_EXT_F
+                                | MISA_EXT_F
                             `endif `ifdef RV32M_SUPPORTED
-                                | MISAID_EXT_M
+                                | MISA_EXT_M
                             `endif `ifdef RV32U_SUPPORTED
-                                | MISAID_EXT_U
+                                | MISA_EXT_U
                             `endif `ifdef RV32V_SUPPORTED
-                                | MISAID_EXT_V
+                                | MISA_EXT_V
                             `endif `ifdef CUSTOM_SUPPORTED
-                                | MISAID_EXT_X
+                                | MISA_EXT_X
                             `endif;
 
   assign mstatush.reserved_0 = '0;
@@ -314,7 +314,7 @@ module priv_1_12_csr # (
       MHARTID_ADDR: prv_intern_if.old_csr_val = mhartid;
       MCONFIGPTR_ADDR: prv_intern_if.old_csr_val = mconfigptr;
       MSTATUS_ADDR: prv_intern_if.old_csr_val = mstatus;
-      MISA_ADDR: prv_intern_if.old_csr_val = misaid;
+      MISA_ADDR: prv_intern_if.old_csr_val = misa;
       MIE_ADDR: prv_intern_if.old_csr_val = mie;
       MTVEC_ADDR: prv_intern_if.old_csr_val = mtvec;
       MSTATUSH_ADDR: prv_intern_if.old_csr_val = mstatush;

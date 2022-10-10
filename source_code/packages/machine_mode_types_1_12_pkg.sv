@@ -164,46 +164,46 @@ package machine_mode_types_1_12_pkg;
 
   /* Machine Mode Register Types */
 
-  /* misaid types */
+  /* misa types */
 
   typedef enum logic [1:0] {
     BASE_RV32   = 2'h1,
     BASE_RV64   = 2'h2,
     BASE_RV128  = 2'h3
-  } misaid_base_t;
+  } misa_base_t;
 
   typedef struct packed {
-    misaid_base_t base;
+    misa_base_t base;
     logic [3:0] zero;
     logic [25:0] extensions;
-  } misaid_t;
+  } misa_t;
 
-  parameter MISAID_EXT_A   = 26'h1 << 0;
-  parameter MISAID_EXT_B   = 26'h1 << 1;
-  parameter MISAID_EXT_C   = 26'h1 << 2;
-  parameter MISAID_EXT_D   = 26'h1 << 3;
-  parameter MISAID_EXT_E   = 26'h1 << 4;
-  parameter MISAID_EXT_F   = 26'h1 << 5;
-  parameter MISAID_EXT_G   = 26'h1 << 6;
-  parameter MISAID_EXT_H   = 26'h1 << 7;
-  parameter MISAID_EXT_I   = 26'h1 << 8;
-  parameter MISAID_EXT_J   = 26'h1 << 9;
-  parameter MISAID_EXT_K   = 26'h1 << 10;
-  parameter MISAID_EXT_L   = 26'h1 << 11;
-  parameter MISAID_EXT_M   = 26'h1 << 12;
-  parameter MISAID_EXT_N   = 26'h1 << 13;
-  parameter MISAID_EXT_O   = 26'h1 << 14;
-  parameter MISAID_EXT_P   = 26'h1 << 15;
-  parameter MISAID_EXT_Q   = 26'h1 << 16;
-  parameter MISAID_EXT_R   = 26'h1 << 17;
-  parameter MISAID_EXT_S   = 26'h1 << 18;
-  parameter MISAID_EXT_T   = 26'h1 << 19;
-  parameter MISAID_EXT_U   = 26'h1 << 20;
-  parameter MISAID_EXT_V   = 26'h1 << 21;
-  parameter MISAID_EXT_W   = 26'h1 << 22;
-  parameter MISAID_EXT_X   = 26'h1 << 23;
-  parameter MISAID_EXT_Y   = 26'h1 << 24;
-  parameter MISAID_EXT_Z   = 26'h1 << 25;
+  parameter MISA_EXT_A = 26'h1 << 0;
+  parameter MISA_EXT_B = 26'h1 << 1;
+  parameter MISA_EXT_C = 26'h1 << 2;
+  parameter MISA_EXT_D = 26'h1 << 3;
+  parameter MISA_EXT_E = 26'h1 << 4;
+  parameter MISA_EXT_F = 26'h1 << 5;
+  parameter MISA_EXT_G = 26'h1 << 6;
+  parameter MISA_EXT_H = 26'h1 << 7;
+  parameter MISA_EXT_I = 26'h1 << 8;
+  parameter MISA_EXT_J = 26'h1 << 9;
+  parameter MISA_EXT_K = 26'h1 << 10;
+  parameter MISA_EXT_L = 26'h1 << 11;
+  parameter MISA_EXT_M = 26'h1 << 12;
+  parameter MISA_EXT_N = 26'h1 << 13;
+  parameter MISA_EXT_O = 26'h1 << 14;
+  parameter MISA_EXT_P = 26'h1 << 15;
+  parameter MISA_EXT_Q = 26'h1 << 16;
+  parameter MISA_EXT_R = 26'h1 << 17;
+  parameter MISA_EXT_S = 26'h1 << 18;
+  parameter MISA_EXT_T = 26'h1 << 19;
+  parameter MISA_EXT_U = 26'h1 << 20;
+  parameter MISA_EXT_V = 26'h1 << 21;
+  parameter MISA_EXT_W = 26'h1 << 22;
+  parameter MISA_EXT_X = 26'h1 << 23;
+  parameter MISA_EXT_Y = 26'h1 << 24;
+  parameter MISA_EXT_Z = 26'h1 << 25;
 
   /* mstatus types */
 
