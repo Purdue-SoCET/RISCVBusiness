@@ -258,7 +258,7 @@ module control_unit
   end
   assign cu_if.csr_rw_valid = (cu_if.csr_swap | cu_if.csr_set | cu_if.csr_clr);
 
-  assign cu_if.csr_addr = mcsr_addr_t'(instr_i.imm11_00);
+  assign cu_if.csr_addr = csr_addr_t'(instr_i.imm11_00);
   assign cu_if.zimm     = cu_if.instr[19:15];
 
 endmodule

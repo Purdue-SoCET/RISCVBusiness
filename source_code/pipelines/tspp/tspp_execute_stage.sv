@@ -374,7 +374,7 @@ module tspp_execute_stage(
   assign prv_pipe_if.clr   = cu_if.csr_clr;
   assign prv_pipe_if.set   = cu_if.csr_set;
   assign prv_pipe_if.wdata = cu_if.csr_imm ? {27'h0, cu_if.zimm} : rf_if.rs1_data;
-  assign prv_pipe_if.maddr  = cu_if.csr_addr;
+  assign prv_pipe_if.csr_addr  = cu_if.csr_addr;
   assign prv_pipe_if.valid_write = (prv_pipe_if.swap | prv_pipe_if.clr |
                                     prv_pipe_if.set) & ~hazard_if.if_ex_stall;
   assign prv_pipe_if.instr = (cu_if.instr != '0);

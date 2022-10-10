@@ -99,7 +99,7 @@ module tb_priv_1_12_block ();
     prv_pipeline_if.clr = '0;
     prv_pipeline_if.set = '0;
     prv_pipeline_if.wdata = '0;
-    prv_pipeline_if.maddr = MISA_ADDR;
+    prv_pipeline_if.csr_addr = MISA_ADDR;
     prv_pipeline_if.valid_write = '0;
     prv_pipeline_if.wb_enable = '0;
     prv_pipeline_if.instr = '0;
@@ -120,7 +120,7 @@ module tb_priv_1_12_block ();
     // Test Case 0: Read mvendorid
     // ***************
     prv_pipeline_if.swap = 1'b1;
-    prv_pipeline_if.maddr = MVENDORID_ADDR;
+    prv_pipeline_if.csr_addr = MVENDORID_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
@@ -134,7 +134,7 @@ module tb_priv_1_12_block ();
     // Test Case 1: Read marchid
     // ***************
     prv_pipeline_if.swap = 1'b1;
-    prv_pipeline_if.maddr = MARCHID_ADDR;
+    prv_pipeline_if.csr_addr = MARCHID_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
@@ -148,7 +148,7 @@ module tb_priv_1_12_block ();
     // Test Case 2: Read mimpid
     // ***************
     prv_pipeline_if.swap = 1'b1;
-    prv_pipeline_if.maddr = MIMPID_ADDR;
+    prv_pipeline_if.csr_addr = MIMPID_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
@@ -162,7 +162,7 @@ module tb_priv_1_12_block ();
     // Test Case 3: Read mhartid
     // ***************
     prv_pipeline_if.swap = 1'b1;
-    prv_pipeline_if.maddr = MHARTID_ADDR;
+    prv_pipeline_if.csr_addr = MHARTID_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
@@ -176,7 +176,7 @@ module tb_priv_1_12_block ();
     // Test Case 4: Read mconfigptr
     // ***************
     prv_pipeline_if.swap = 1'b1;
-    prv_pipeline_if.maddr = MCONFIGPTR_ADDR;
+    prv_pipeline_if.csr_addr = MCONFIGPTR_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'b0)
       $display("> Test %d: PASS", test_num);
@@ -191,7 +191,7 @@ module tb_priv_1_12_block ();
     // ***************
     prv_pipeline_if.swap = 1'b1;
     prv_pipeline_if.wdata = 32'h1088;
-    prv_pipeline_if.maddr = MSTATUS_ADDR;
+    prv_pipeline_if.csr_addr = MSTATUS_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'h201800)
       $display("> Test %d: PASS", test_num);
@@ -206,7 +206,7 @@ module tb_priv_1_12_block ();
     // ***************
     prv_pipeline_if.swap = 1'b1;
     prv_pipeline_if.wdata = 32'h00001088;
-    prv_pipeline_if.maddr = MSTATUS_ADDR;
+    prv_pipeline_if.csr_addr = MSTATUS_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'h88)
       $display("> Test %d: PASS", test_num);
@@ -221,7 +221,7 @@ module tb_priv_1_12_block ();
     // ***************
     prv_pipeline_if.swap = 1'b1;
     prv_pipeline_if.wdata = 32'hdeadbeef;
-    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    prv_pipeline_if.csr_addr = MSCRATCH_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'h0)
       $display("> Test %d: PASS", test_num);
@@ -237,7 +237,7 @@ module tb_priv_1_12_block ();
     prv_pipeline_if.swap = 1'b0;
     prv_pipeline_if.set = 1'b1;
     prv_pipeline_if.wdata = 32'h21524110;
-    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    prv_pipeline_if.csr_addr = MSCRATCH_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'hdeadbeef)
       $display("> Test %d: PASS", test_num);
@@ -252,7 +252,7 @@ module tb_priv_1_12_block ();
     // ***************
     prv_pipeline_if.set = 1'b1;
     prv_pipeline_if.wdata = 32'h21524110;
-    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    prv_pipeline_if.csr_addr = MSCRATCH_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'hffffffff)
       $display("> Test %d: PASS", test_num);
@@ -268,7 +268,7 @@ module tb_priv_1_12_block ();
     prv_pipeline_if.set = 1'b0;
     prv_pipeline_if.clr = 1'b1;
     prv_pipeline_if.wdata = 32'hffffffff;
-    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    prv_pipeline_if.csr_addr = MSCRATCH_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'hffffffff)
       $display("> Test %d: PASS", test_num);
@@ -283,7 +283,7 @@ module tb_priv_1_12_block ();
     // ***************
     prv_pipeline_if.clr = 1'b1;
     prv_pipeline_if.wdata = 32'h0;
-    prv_pipeline_if.maddr = MSCRATCH_ADDR;
+    prv_pipeline_if.csr_addr = MSCRATCH_ADDR;
     #PROP_DELAY;
     if (prv_pipeline_if.rdata == 32'h0)
       $display("> Test %d: PASS", test_num);

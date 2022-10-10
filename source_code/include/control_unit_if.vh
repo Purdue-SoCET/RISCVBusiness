@@ -47,7 +47,7 @@ interface control_unit_if;
   // Privilege control signals
   logic fault_insn, illegal_insn, ret_insn, breakpoint, ecall_insn;
   logic csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid;
-  mcsr_addr_t csr_addr;
+  csr_addr_t csr_addr;
   logic [4:0] zimm;
 
   modport control_unit(

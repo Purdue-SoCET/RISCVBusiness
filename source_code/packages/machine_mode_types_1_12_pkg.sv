@@ -159,7 +159,7 @@ package machine_mode_types_1_12_pkg;
     MHPMEVENT29_ADDR   = 12'h33D,
     MHPMEVENT30_ADDR   = 12'h33E,
     MHPMEVENT31_ADDR   = 12'h33F
-  } mcsr_addr_t;
+  } maddr_t;
 
 
   /* Machine Mode Register Types */
@@ -251,11 +251,11 @@ package machine_mode_types_1_12_pkg;
     logic        spp;           // Supervisor previous privilege level (no effect without S-Mode)
     logic        mpie;          // M-Mode previous enable
     logic        ube;           // U-Mode endianness control
-    logic 	     spie;          // S-Mode previous enable
+    logic        spie;          // S-Mode previous enable
     logic        reserved_2;
-    logic	       mie;           // M-Mode interrupt enable
+    logic        mie;           // M-Mode interrupt enable
     logic        reserved_1;
-    logic 	     sie;           // S-Mode interrupt enable
+    logic        sie;           // S-Mode interrupt enable
     logic        reserved_0;
   } mstatus_t;
 
@@ -424,6 +424,7 @@ package machine_mode_types_1_12_pkg;
   } int_code_t;
 
   // General CSR definition
+  typedef logic [11:0] csr_addr_t;
   typedef logic [31:0] csr_reg_t;
   typedef logic [63:0] long_csr_t;
 

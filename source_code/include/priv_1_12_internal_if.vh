@@ -37,7 +37,7 @@ interface priv_1_12_internal_if;
     logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
 
     // CSR block values
-    mcsr_addr_t csr_addr; // CSR address to read
+    csr_addr_t csr_addr; // CSR address to read
     priv_level_t curr_priv; // Current process privilege
     logic csr_write, csr_set, csr_clear; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
