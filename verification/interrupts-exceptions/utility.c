@@ -21,4 +21,5 @@ void put_uint32_hex(uint32_t x) {
         }
         x >>= 4;
     }
+    print(buf);
 }

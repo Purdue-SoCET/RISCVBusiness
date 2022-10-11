@@ -8,6 +8,8 @@ meminit.ver
 verification/asm-tests/RV32I/*.elf
 verification/asm-tests/RV32I/*.log
 verification/asm-tests/RV32I/*.hex
+*.bin
+*.elf
 # config files are auto-generated
 source_code/include/component_selection_defines.vh
 verification/c-firmware/custom_instruction_calls.h

@@ -296,15 +296,20 @@ module priv_1_12_csr # (
     // inject values
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
-    end else if (prv_intern_if.inject_mtval) begin
+    end 
+    if (prv_intern_if.inject_mtval) begin
       mtval_next = prv_intern_if.next_mtval;
-    end else if (prv_intern_if.inject_mepc) begin
+    end 
+    if (prv_intern_if.inject_mepc) begin
       mepc_next = prv_intern_if.next_mepc;
-    end else if (prv_intern_if.inject_mcause) begin
+    end 
+    if (prv_intern_if.inject_mcause) begin
       mcause_next = prv_intern_if.next_mcause;
-    end else if (prv_intern_if.inject_mie) begin
+    end 
+    if (prv_intern_if.inject_mie) begin
       mie_next = prv_intern_if.next_mie;
-    end else if (prv_intern_if.inject_mip) begin
+    end 
+    if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
     end
   end

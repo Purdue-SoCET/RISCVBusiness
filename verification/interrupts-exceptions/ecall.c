@@ -6,6 +6,12 @@ extern volatile int flag;
 
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
+    asm volatile(
+        "mv t0, zero; csrrs t0, mepc, t0; addi t0, t0, 4; csrw mepc, t0;"
+        :
+        :
+        : "t0"
+    );
     print("Made it to handler!\n");
     flag = 1;
 }
