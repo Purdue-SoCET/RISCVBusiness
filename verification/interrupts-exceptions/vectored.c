@@ -47,9 +47,16 @@ void __attribute__((interrupt)) m_sw_handler() {
     (*msip) = 0x0; // writing 0 clears this
 }
 
-void __attribute__((interrupt)) default_handler() {} // does nothing
+void __attribute__((interrupt)) default_handler() {
+    done(); // Go to done and fail test
+} // should not end up here, this is a fail!
 
 // mtvec value MUST be aligned
+// Note: .align 2 forces the jumps to be on multiple-of-4 boundaries here,
+// which is required for vectored mode which computes the address as
+// (mtvec.base + cause) x 4
+// If this test breaks, it may mean that the alignment is wrong, check the
+// disassembly!
 void __attribute__((naked)) __attribute__((aligned(4))) handler_dispatch() {
     asm volatile(".align 2; j default_handler"); // 0
     asm volatile(".align 2; j default_handler"); // 1

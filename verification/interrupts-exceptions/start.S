@@ -4,6 +4,7 @@ _start:
     li sp, 0x8000F000
     jal main
 
+.global done
 done:
     la x28, flag
     lw x28, 0(x28)

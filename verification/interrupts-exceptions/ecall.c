@@ -6,12 +6,17 @@ extern volatile int flag;
 
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
+    uint32_t mepc_value;
+    asm volatile("csrr %0, mepc" : "=r"(mepc_value));
+    mepc_value += 4;
+    asm volatile("csrw mepc, %0" : : "r"(mepc_value));
+    /*
     asm volatile(
         "mv t0, zero; csrrs t0, mepc, t0; addi t0, t0, 4; csrw mepc, t0;"
         :
         :
         : "t0"
-    );
+    );*/
     print("Made it to handler!\n");
     flag = 1;
 }
