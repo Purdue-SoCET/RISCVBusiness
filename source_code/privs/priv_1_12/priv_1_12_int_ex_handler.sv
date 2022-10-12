@@ -128,15 +128,20 @@ module priv_1_12_int_ex_handler (
 
         if (prv_intern_if.ext_int_m) prv_intern_if.next_mip.meip = 1'b1;
         else if (prv_intern_if.clear_ext_int_m) prv_intern_if.next_mip.meip = 1'b0;
-        else if (prv_intern_if.soft_int_m) prv_intern_if.next_mip.msip = 1'b1;
+
+        if (prv_intern_if.soft_int_m) prv_intern_if.next_mip.msip = 1'b1;
         else if (prv_intern_if.clear_soft_int_m) prv_intern_if.next_mip.msip = 1'b0;
-        else if (prv_intern_if.timer_int_m) prv_intern_if.next_mip.mtip = 1'b1;
+
+        if (prv_intern_if.timer_int_m) prv_intern_if.next_mip.mtip = 1'b1;
         else if (prv_intern_if.clear_timer_int_m) prv_intern_if.next_mip.mtip = 1'b0;
-        else if (prv_intern_if.ext_int_s) prv_intern_if.next_mip.seip = 1'b1;
+
+        if (prv_intern_if.ext_int_s) prv_intern_if.next_mip.seip = 1'b1;
         else if (prv_intern_if.clear_ext_int_s) prv_intern_if.next_mip.seip = 1'b0;
-        else if (prv_intern_if.soft_int_s) prv_intern_if.next_mip.ssip = 1'b1;
+
+        if (prv_intern_if.soft_int_s) prv_intern_if.next_mip.ssip = 1'b1;
         else if (prv_intern_if.clear_soft_int_s) prv_intern_if.next_mip.ssip = 1'b0;
-        else if (prv_intern_if.timer_int_s) prv_intern_if.next_mip.stip = 1'b1;
+
+        if (prv_intern_if.timer_int_s) prv_intern_if.next_mip.stip = 1'b1;
         else if (prv_intern_if.clear_timer_int_s) prv_intern_if.next_mip.stip = 1'b0;
     end
 

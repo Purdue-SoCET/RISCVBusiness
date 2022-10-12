@@ -33,6 +33,8 @@ volatile uint32_t *ext_clear    = (uint32_t *)EXT_ADDR_CLEAR;
 void __attribute__((interrupt)) m_ext_handler() {
     flag -= 0xE;
     (*ext_clear) = 0x1; // writing anything simulates clearing interrupt
+    uint32_t mie_value = 0x088;
+    asm volatile("csrw mie, %0" : : "r" (mie_value));
 }
 
 void __attribute__((interrupt)) m_timer_handler() {
@@ -49,18 +51,18 @@ void __attribute__((interrupt)) default_handler() {} // does nothing
 
 // mtvec value MUST be aligned
 void __attribute__((naked)) __attribute__((aligned(4))) handler_dispatch() {
-    asm volatile("j default_handler"); // 0
-    asm volatile("j default_handler"); // 1
-    asm volatile("j default_handler"); // 2
-    asm volatile("j m_sw_handler");    // 3
-    asm volatile("j default_handler"); // 4
-    asm volatile("j default_handler"); // 5
-    asm volatile("j default_handler"); // 6
-    asm volatile("j m_timer_handler"); // 7
-    asm volatile("j default_handler"); // 8
-    asm volatile("j default_handler"); // 9
-    asm volatile("j default_handler"); // 10
-    asm volatile("j m_ext_handler");   // 11
+    asm volatile(".align 2; j default_handler"); // 0
+    asm volatile(".align 2; j default_handler"); // 1
+    asm volatile(".align 2; j default_handler"); // 2
+    asm volatile(".align 2; j m_sw_handler");    // 3
+    asm volatile(".align 2; j default_handler"); // 4
+    asm volatile(".align 2; j default_handler"); // 5
+    asm volatile(".align 2; j default_handler"); // 6
+    asm volatile(".align 2; j m_timer_handler"); // 7
+    asm volatile(".align 2; j default_handler"); // 8
+    asm volatile(".align 2; j default_handler"); // 9
+    asm volatile(".align 2; j default_handler"); // 10
+    asm volatile(".align 2; j m_ext_handler");   // 11
 }
 
 
@@ -70,7 +72,7 @@ int main() {
     uint32_t mie_value = 0x888;
     uint32_t mstatus_value = 0x8;
 
-    
+
     // set mtimecmp away so interrupt doesn't fire immediately
     *mtimecmp = 0xFF;
 

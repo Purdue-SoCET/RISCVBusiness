@@ -1,17 +1,17 @@
 # ISA Configurations
-isa_params:  
+isa_params:
   xlen : 32
 
 # Microarchitectural Configurations
 microarch_params:
   # Branch/Jump Configurations
   br_predictor_type : "not_taken"
-  
+
   # Cache configurations
   cache_config  : "separate"
   dcache_type   : "pass_through"
   icache_type   : "pass_through"
-  
+
   # Bus configurations
   bus_endianness      : "big"
   bus_interface_type  : "generic_bus_if"
@@ -21,15 +21,14 @@ microarch_params:
 
   # RV32C
   rv32c_enabled : "disabled"
-  
+
   # Halt
   infinite_loop_halts : "true"
 
-  # base ISA 
+  # base ISA
   base_isa: "RV32I"
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:
   nonstandard_extensions:
-
