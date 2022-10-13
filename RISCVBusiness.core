@@ -22,10 +22,10 @@ filesets:
             - source_code/pipelines/tspp/tspp_fetch_stage.sv
             - source_code/pipelines/tspp/tspp_execute_stage.sv
             - source_code/privs/priv_wrapper.sv
-            - source_code/privs/priv_1_11/priv_1_11_control.sv
-            - source_code/privs/priv_1_11/priv_1_11_block.sv
-            - source_code/privs/priv_1_11/priv_1_11_csr_rfile.sv
-            - source_code/privs/priv_1_11/priv_1_11_pipeline_control.sv
+            - source_code/privs/priv_1_12/priv_1_12_int_ex_handler.sv
+            - source_code/privs/priv_1_12/priv_1_12_block.sv
+            - source_code/privs/priv_1_12/priv_1_12_csr.sv
+            - source_code/privs/priv_1_12/priv_1_12_pipe_control.sv
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv

@@ -38,7 +38,7 @@ module cpu_tracker (
     input logic [31:0] imm_U
 );
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_11_pkg::*;
+    import machine_mode_types_1_12_pkg::*;
 
     parameter int CPUID = 0;
 

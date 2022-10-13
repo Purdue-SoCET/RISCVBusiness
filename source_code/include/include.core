@@ -18,7 +18,8 @@ filesets:
             - tspp_hazard_unit_if.vh : {is_include_file: true}
             - control_unit_if.vh : {is_include_file: true}
             - jump_calc_if.vh : {is_include_file: true}
-            - priv_1_11_internal_if.vh : {is_include_file: true}
+            - priv_1_12_internal_if.vh : {is_include_file: true}
+            - priv_ext_if.vh : {is_include_file: true}
             - prv_pipeline_if.vh : {is_include_file: true}
             - rv32i_reg_file_if.vh : {is_include_file: true}
             - predictor_pipeline_if.vh : {is_include_file: true}

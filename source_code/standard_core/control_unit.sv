@@ -39,7 +39,7 @@ module control_unit (
 );
     import alu_types_pkg::*;
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_11_pkg::*;
+    import machine_mode_types_1_12_pkg::*;
 
     stype_t  instr_s;
     itype_t  instr_i;
