@@ -33,29 +33,44 @@ HEADER_FILES := -I$(RISCV)/include
 
 
 define USAGE
-@echo "-----------------------------------------"
+@echo "----------------------------------------------------------------------"
 @echo " Build Targets:"
 @echo "     config: config core with example.yml"
-@echo "     verilate: Invoke verilator"
-@echo "-----------------------------------------"
+@echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
+@echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target
+@echo "		clean: Remove build directories"
+@echo " 	veryclean: Remove fusesoc libraries & build directories"
+@echo "----------------------------------------------------------------------"
 endef
 
-.phony: default clean
+.phony: default clean config verilate xcelium
 
 
 default:
 	$(USAGE)
 
 config:
-	python3 scripts/config_core.py example.yml
+	@echo "----------------------"
+	@echo " Running config_core"
+	@echo "----------------------"
+	@python3 scripts/config_core.py example.yml
 
-verilate:
-	verilator -Wno-WIDTH -Wno-UNUSED -Wno-UNDRIVEN -Wno-SYMRSVDWORD --waiver-output RISCVBusiness.vlt -cc --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
-	$(MAKE) -C obj_dir -f Vtop_core.mk -j `nproc` 
+verilate: config
+	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness
+	@echo "------------------------------------------------------------------"
+	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
+	@echo "to the build directory created by FuseSoC and using the Makefile there."
+	@echo "------------------------------------------------------------------"
 
-no-lint:
-	verilator -Wno-UNOPTFLAT -Wno-lint -Wno-SYMRSVDWORD --waiver-output RISCVBusiness.vlt -cc --report-unoptflat --trace-fst --trace-structs --top-module top_core $(HEADER_FILES) $(COMPONENT_FILES_SV) --exe tb_core.cc
-	$(MAKE) -C obj_dir -f Vtop_core.mk -j `nproc` 
+xcelium: config
+	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool xcelium socet:riscv:RISCVBusiness
+	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
+	@echo "to the build directory created by FuseSoC and using the Makefile there."
 
 clean:
-	rm -rf obj_dir
+	rm -rf build
+	rm -rf rvb_out
+
+veryclean:
+	rm -rf fusesoc_libraries
+	rm fusesoc.conf

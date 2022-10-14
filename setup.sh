@@ -30,7 +30,7 @@ if ! fusesoc library add digital-lib git@github.com:Purdue-SoCET/digital-lib.git
   exit 1
 fi
 
-info_print "Installing pre-commit hook"
-cp ./scripts/pre-commit ./.git/hooks/
+#info_print "Installing pre-commit hook"
+#cp ./scripts/pre-commit ./.git/hooks/
 
 success_print "Initialization Complete!"
