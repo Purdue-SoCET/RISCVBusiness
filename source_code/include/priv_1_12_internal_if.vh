@@ -29,6 +29,7 @@
 
 interface priv_1_12_internal_if;
     import machine_mode_types_1_12_pkg::*;
+    import pma_types_1_12_pkg::*;
     import rv32i_types_pkg::*;
 
     // RISC-MGMT?

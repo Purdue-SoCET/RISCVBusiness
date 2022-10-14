@@ -25,6 +25,7 @@
 `include "prv_pipeline_if.vh"
 `include "priv_1_12_internal_if.vh"
 `include "core_interrupt_if.vh"
+`include "priv_ext_if.vh"
 
 module priv_1_12_block (
     input logic CLK, nRST,
@@ -35,10 +36,12 @@ module priv_1_12_block (
     import machine_mode_types_1_12_pkg::*;
 
     priv_1_12_internal_if prv_intern_if();
+    priv_ext_if priv_ext_pma_if();
 
-    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
+    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if));
     priv_1_12_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
     priv_1_12_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
+    priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
 
     priv_level_t curr_priv;
 

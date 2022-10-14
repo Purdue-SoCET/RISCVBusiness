@@ -32,6 +32,7 @@ module priv_1_12_csr #(
   input CLK,
   input nRST,
   priv_1_12_internal_if.csr prv_intern_if
+  priv_ext_if.priv priv_ext_pma_if
   `ifdef RV32F_SUPPORTED
   , priv_ext_if.priv priv_ext_f_if
   `endif // RV32F_SUPPORTED
@@ -79,7 +80,10 @@ module priv_1_12_csr #(
   assign prv_intern_if.invalid_csr = invalid_csr_0 | invalid_csr_1;
 
   // Extension Broadcast Signals
-`ifdef RV32F_SUPPORTED
+  assign priv_ext_pma_if.csr_addr = prv_intern_if.csr_addr;
+  assign priv_ext_pma_if.value_in = nxt_csr_val;
+  assign priv_ext_pma_if.csr_active = ~invalid_csr_0 & prv_intern_if.valid_write & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
+  `ifdef RV32F_SUPPORTED
     assign priv_ext_f_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_f_if.value_in = nxt_csr_val;
     assign priv_ext_f_if.csr_active = prv_intern_if.valid_write
@@ -362,6 +366,9 @@ module priv_1_12_csr #(
       MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
       default: begin
         if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
+          if (priv_ext_pma_if.ack) begin
+            prv_intern_if.old_csr_val = priv_ext_pma_if.value_out;
+          end
           `ifdef RV32F_SUPPORTED
             if (priv_ext_f_if.ack) begin
               prv_intern_if.old_csr_val = priv_ext_f_if.value_out;
@@ -375,11 +382,12 @@ module priv_1_12_csr #(
 
           // CSR address doesn't exist
           invalid_csr_1 = 1'b1
+                          & (~priv_ext_pma_if.ack) & (~priv_ext_pma_if.invalid_csr)
                           `ifdef RV32F_SUPPORTED
-                          & (~priv_ext_f_if.ack) & (~priv_ext_f_if.invalid_csr)
+                            & (~priv_ext_f_if.ack) & (~priv_ext_f_if.invalid_csr)
                           `endif // RV32F_SUPPORTED
                           `ifdef RV32V_SUPPORTED
-                          & (~priv_ext_v_if.ack) & (~priv_ext_v_if.invalid_csr)
+                            & (~priv_ext_v_if.ack) & (~priv_ext_v_if.invalid_csr)
                           `endif // RV32V_SUPPORTED
                         ;
         end

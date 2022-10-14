@@ -22,30 +22,61 @@
 *   Description:  PMA Checker, version 1.12
 */
 
-`include "prv_1_12_internal_if.vh"
+`include "priv_1_12_internal_if.vh"
+`include "priv_ext_if.vh"
 
 module priv_1_12_pma (
   input logic CLK, nRST,
   priv_1_12_internal_if.pma prv_intern_if,
+  priv_ext_if.ext priv_ext_if
 );
 
-  pma_reg_t [5:0] pma_regs, nxt_pma_regs;
+import pma_types_1_12_pkg::*;
+
+  pma_reg_t [15:0] pma_regs, nxt_pma_regs;
+  pma_reg_t active_reg;
   pma_cfg_t pma_cfg;
 
   // Core State Registers
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      pma_regs[0] <= '0;
-      pma_regs[1] <= '0;
-      pma_regs[2] <= '0;
-      pma_regs[3] <= '0;
-      pma_regs[4] <= '0;
-      pma_regs[5] <= '0;
+      // TODO figure out defaults
+      pma_regs[00] <= '0;
+      pma_regs[01] <= '0;
+      pma_regs[02] <= '0;
+      pma_regs[03] <= '0;
+      pma_regs[04] <= '0;
+      pma_regs[05] <= '0;
+      pma_regs[06] <= '0;
+      pma_regs[07] <= '0;
+      pma_regs[08] <= '0;
+      pma_regs[09] <= '0;
+      pma_regs[10] <= '0;
+      pma_regs[11] <= '0;
+      pma_regs[12] <= '0;
+      pma_regs[13] <= '0;
+      pma_regs[14] <= '0;
+      pma_regs[15] <= '0;
     end else begin
       pma_regs <= nxt_pma_regs;
     end
   end
 
+  // Core State Logic
+  always_comb begin
+    nxt_pma_regs = pma_regs;
+    priv_ext_if.ack = 1'b0;
+    if (priv_ext_if.csr_addr[11:4] == 8'b10111100) begin
+      priv_ext_if.ack = 1'b1;
+      // TODO should these be writable?
+      // if (priv_ext_if.csr_active) begin
+      //   nxt_pma_regs[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
+      // end
+    end
+  end
+
+  assign priv_ext_if.invalid_csr = 1'b0;
+  assign priv_ext_if.value_out = pma_regs[priv_ext_if.csr_addr[3:0]];
 
   // PMA Logic Block
   always_comb begin
@@ -53,12 +84,12 @@ module priv_1_12_pma (
     prv_intern_if.pma_s_fault = 1'b0;
     prv_intern_if.pma_i_fault = 1'b0;
 
-    pma_reg = pma_cfg_regs[prv_intern_if.addr[31:26]];
+    active_reg = pma_regs[prv_intern_if.addr[31:28]];
 
-    if (~addr[25]) begin
-      pma_cfg = pma_reg.pma_cfg_0;
+    if (~prv_intern_if.addr[27]) begin
+      pma_cfg = active_reg.pma_cfg_0;
     end else begin
-      pma_cfg = pma_reg.pma_cfg_1;
+      pma_cfg = active_reg.pma_cfg_1;
     end
 
     if (prv_intern_if.ren & ~pma_cfg.R) begin
