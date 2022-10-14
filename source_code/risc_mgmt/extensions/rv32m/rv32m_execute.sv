@@ -133,7 +133,9 @@ module rv32m_execute (
         casez (operation)
             3'b1??: begin  // MUL
                 eif.busy = ~mul_finished;
-                eif.reg_wdata = idex.lower_word ? product[WORD_SIZE-1:0] : product[(WORD_SIZE*2)-1 : WORD_SIZE];
+                eif.reg_wdata = idex.lower_word ?
+                                    product[WORD_SIZE-1:0]
+                                    : product[(WORD_SIZE*2)-1 : WORD_SIZE];
             end
             3'b01?: begin  // DIV
                 eif.busy = ~div_finished & ~(div_zero | overflow);

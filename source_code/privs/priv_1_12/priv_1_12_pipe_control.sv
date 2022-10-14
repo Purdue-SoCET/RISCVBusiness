@@ -39,12 +39,15 @@ module priv_1_12_pipe_control (
         prv_intern_if.priv_pc = '0;
 
         if (prv_intern_if.intr) begin
-            if (prv_intern_if.curr_mtvec.mode == VECTORED & prv_intern_if.curr_mcause.interrupt) begin // vectored mode based on the interrupt source
-                prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2) + (prv_intern_if.curr_mcause.cause << 2);
-            end else
+            if (prv_intern_if.curr_mtvec.mode == VECTORED & prv_intern_if.curr_mcause.interrupt) begin
+                prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2)
+                                            + (prv_intern_if.curr_mcause.cause << 2);
+            end else begin
                 prv_intern_if.priv_pc = prv_intern_if.curr_mtvec.base << 2;
-        end else if (prv_intern_if.mret)
-            prv_intern_if.priv_pc = prv_intern_if.curr_mepc; // when leaving the ISR, restore to the original PC
+            end
+        end else if (prv_intern_if.mret) begin
+            prv_intern_if.priv_pc = prv_intern_if.curr_mepc; // Leaving ISR
+        end
     end
 
 endmodule

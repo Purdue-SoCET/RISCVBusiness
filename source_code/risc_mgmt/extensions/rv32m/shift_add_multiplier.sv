@@ -24,7 +24,7 @@
 */
 
 module shift_add_multiplier #(
-    parameter N = 32
+    parameter int N = 32
 ) (
     input logic CLK,
     nRST,
@@ -59,8 +59,10 @@ module shift_add_multiplier #(
             multiplier_reg   <= '0;
             product          <= '0;
         end else if (start) begin
-            multiplicand_reg  <= (is_signed[1] && multiplicand[N-1]) ? multiplicand_ext : {{N{1'b0}}, multiplicand};
-            multiplier_reg    <= (is_signed[0] && multiplier[N-1]) ? multiplier_ext : {{N{1'b0}}, multiplier};
+            multiplicand_reg  <= (is_signed[1] && multiplicand[N-1]) ?
+                                    multiplicand_ext : {{N{1'b0}}, multiplicand};
+            multiplier_reg    <= (is_signed[0] && multiplier[N-1]) ?
+                                    multiplier_ext : {{N{1'b0}}, multiplier};
             product <= '0;
         end else if (mult_complete & ~finished) begin  // adjust sign on product
             multiplicand_reg <= multiplicand_reg;

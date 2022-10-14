@@ -1,5 +1,5 @@
 module radix4_divider #(
-    parameter NUM_BITS = 32
+    parameter int NUM_BITS = 32
 ) (
     input logic CLK,
     input logic nRST,

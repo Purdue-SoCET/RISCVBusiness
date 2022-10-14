@@ -88,8 +88,8 @@ module priv_1_12_block (
     assign prv_intern_if.mal_s             = prv_pipe_if.mal_s;
     assign prv_intern_if.breakpoint        = prv_pipe_if.breakpoint;
     assign prv_intern_if.env_m             = prv_pipe_if.env_m;
-    assign prv_intern_if.env_s	           = 1'b0;
-    assign prv_intern_if.env_u	           = 1'b0;
+    assign prv_intern_if.env_s             = 1'b0;
+    assign prv_intern_if.env_u             = 1'b0;
     assign prv_intern_if.fault_insn_page   = 1'b0;
     assign prv_intern_if.fault_load_page   = 1'b0;
     assign prv_intern_if.fault_store_page  = 1'b0;

@@ -23,7 +23,7 @@
 */
 
 module shift_test_restore_divider #(
-    parameter N = 32
+    parameter int N = 32
 ) (
     input logic CLK,
     nRST,
@@ -36,9 +36,9 @@ module shift_test_restore_divider #(
     output logic finished
 );
 
-    localparam COUNTER_BITS = $clog2(N) + 1;
-    localparam U_Q = N - 1;
-    localparam U_R = (2 * N) - 1;
+    localparam int COUNTER_BITS = $clog2(N) + 1;
+    localparam int U_Q = N - 1;
+    localparam int U_R = (2 * N) - 1;
 
     logic [(2*N)+1:0] result;
     assign {remainder, quotient} = result[(2*N)-1:0];

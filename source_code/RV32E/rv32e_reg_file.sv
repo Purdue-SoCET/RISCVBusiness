@@ -29,7 +29,7 @@ module rv32e_reg_file (
     rv32i_reg_file_if rf_if
 );
     import rv32i_types_pkg::*;
-    localparam NUM_REGS = 16;
+    localparam int NUM_REGS = 16;
 
     // input:
     // rf_if.wen:    write enable.

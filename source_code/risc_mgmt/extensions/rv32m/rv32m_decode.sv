@@ -35,15 +35,14 @@ module rv32m_decode (
 
     import rv32m_pkg::*;
 
-    parameter OPCODE = RV32M_OPCODE;
-
     rv32m_insn_t insn;
 
     assign dif.mem_to_reg = 1'b0;
 
     assign insn = rv32m_insn_t'(dif.insn);
 
-    assign dif.insn_claim = (insn.opcode_major == OPCODE) && (insn.opcode_minor == RV32M_OPCODE_MINOR);
+    assign dif.insn_claim = (insn.opcode_major == RV32M_OPCODE)
+                                && (insn.opcode_minor == RV32M_OPCODE_MINOR);
     assign dif.rsel_s_0 = insn.rs1;
     assign dif.rsel_s_1 = insn.rs2;
     assign dif.rsel_d = insn.rd;

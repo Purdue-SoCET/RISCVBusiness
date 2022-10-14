@@ -68,7 +68,9 @@ module priv_1_12_int_ex_handler (
         end
     end
 
-    assign clear_interrupt = (prv_intern_if.clear_timer_int_m | prv_intern_if.clear_soft_int_m | prv_intern_if.clear_ext_int_m | prv_intern_if.clear_timer_int_s | prv_intern_if.clear_soft_int_s | prv_intern_if.clear_ext_int_s);
+    assign clear_interrupt = (prv_intern_if.clear_timer_int_m | prv_intern_if.clear_soft_int_m
+                             | prv_intern_if.clear_ext_int_m  | prv_intern_if.clear_timer_int_s
+                             | prv_intern_if.clear_soft_int_s | prv_intern_if.clear_ext_int_s);
 
     // Determine whether an exception occured
     always_comb begin
@@ -111,8 +113,10 @@ module priv_1_12_int_ex_handler (
 
     // Output info to pipe_ctrl
     assign prv_intern_if.intr = exception | interrupt_reg;
-    assign interrupt_fired = (prv_intern_if.curr_mstatus.mie & ((prv_intern_if.curr_mie.mtie & prv_intern_if.curr_mip.mtip) |
-                    (prv_intern_if.curr_mie.msie & prv_intern_if.curr_mip.msip) | (prv_intern_if.curr_mie.meie & prv_intern_if.curr_mip.meip)));
+    assign interrupt_fired = (prv_intern_if.curr_mstatus.mie &
+                                ((prv_intern_if.curr_mie.mtie & prv_intern_if.curr_mip.mtip)
+                                    | (prv_intern_if.curr_mie.msie & prv_intern_if.curr_mip.msip)
+                                    | (prv_intern_if.curr_mie.meie & prv_intern_if.curr_mip.meip)));
 
     // Register updates on Interrupts/Exceptions
     /* NOTE a lot of the below code are patterns that exist to solve issues
@@ -145,13 +149,16 @@ module priv_1_12_int_ex_handler (
         else if (prv_intern_if.clear_timer_int_s) prv_intern_if.next_mip.stip = 1'b0;
     end
 
-    assign prv_intern_if.inject_mstatus = exception | prv_intern_if.intr | prv_intern_if.mret | prv_intern_if.sret | prv_intern_if.uret;
+    assign prv_intern_if.inject_mstatus = exception | prv_intern_if.intr | prv_intern_if.mret
+                                          | prv_intern_if.sret | prv_intern_if.uret;
 
     always_comb begin
         prv_intern_if.next_mstatus.mie = prv_intern_if.curr_mstatus.mie;
         prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mpie;
-        if (update_mie) begin // interrupt has truly been registered and it is time to go to the vector table
-            prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mie; // when a trap is taken mpie is set to the current mie
+        // interrupt has truly been registered and it is time to go to the vector table
+        if (update_mie) begin
+            // when a trap is taken mpie is set to the current mie
+            prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mie;
             prv_intern_if.next_mstatus.mie = 1'b0;
         end else if (prv_intern_if.mret) begin
             prv_intern_if.next_mstatus.mpie = 1'b0; // leaving the vector table
@@ -165,12 +172,17 @@ module priv_1_12_int_ex_handler (
     // Interrupt fired notes when an interrupt is seen by the processor, i.e. when mstatus.mie is high again.
     // The signal is 2 cycles long, so the update_mie signal is used to clip it down to 1 to prevent MEPC
     // double update which results in skipping an instruction.
-    assign prv_intern_if.inject_mepc = exception | (interrupt_fired & ~update_mie); // TODO: Change to interrupt
+    // TODO: Change to interrupt
+    assign prv_intern_if.inject_mepc = exception | (interrupt_fired & ~update_mie);
     assign prv_intern_if.next_mepc = prv_intern_if.epc;
 
-    assign prv_intern_if.inject_mtval = (prv_intern_if.mal_l | prv_intern_if.fault_l | prv_intern_if.mal_s | prv_intern_if.fault_s |
-                                    prv_intern_if.illegal_insn | prv_intern_if.fault_insn_access | prv_intern_if.mal_insn | prv_intern_if.ex_rmgmt)
-                                    & prv_intern_if.pipe_clear; // TODO: May need to insert other exception signals
+    // TODO: May need to insert other exception signals
+    assign prv_intern_if.inject_mtval = (prv_intern_if.mal_l | prv_intern_if.fault_l
+                                        | prv_intern_if.mal_s | prv_intern_if.fault_s
+                                        | prv_intern_if.illegal_insn
+                                        | prv_intern_if.fault_insn_access
+                                        | prv_intern_if.mal_insn | prv_intern_if.ex_rmgmt)
+                                            & prv_intern_if.pipe_clear;
     assign prv_intern_if.next_mtval = prv_intern_if.curr_mtval;
 
     /* Interrupt needs to be latched until pipeline cleared   */

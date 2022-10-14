@@ -26,9 +26,11 @@
 `include "priv_ext_if.vh"
 `include "component_selection_defines.vh"
 
-module priv_1_12_csr # (
-  HARTID = 0 ) (
-  input CLK, nRST,
+module priv_1_12_csr #(
+  parameter int HARTID = 0
+)(
+  input CLK,
+  input nRST,
   priv_1_12_internal_if.csr prv_intern_if
   `ifdef RV32F_SUPPORTED
   , priv_ext_if.priv priv_ext_f_if
@@ -77,16 +79,20 @@ module priv_1_12_csr # (
   assign prv_intern_if.invalid_csr = invalid_csr_0 | invalid_csr_1;
 
   // Extension Broadcast Signals
-  `ifdef RV32F_SUPPORTED
+`ifdef RV32F_SUPPORTED
     assign priv_ext_f_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_f_if.value_in = nxt_csr_val;
-    assign priv_ext_f_if.csr_active = prv_intern_if.valid_write & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
-  `endif // RV32F_SUPPORTED
-  `ifdef RV32V_SUPPORTED
+    assign priv_ext_f_if.csr_active = prv_intern_if.valid_write
+                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set
+                                                                 | prv_intern_if.csr_clear);
+`endif // RV32F_SUPPORTED
+`ifdef RV32V_SUPPORTED
     assign priv_ext_v_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_v_if.value_in = nxt_csr_val;
-    assign priv_ext_v_if.csr_active = prv_intern_if.valid_write & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
-  `endif // RV32V_SUPPORTED
+    assign priv_ext_v_if.csr_active = prv_intern_if.valid_write
+                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set
+                                                                 | prv_intern_if.csr_clear);
+`endif // RV32V_SUPPORTED
 
   /* Save some logic with this */
   assign mcycle = cycles_full[31:0];
@@ -224,11 +230,11 @@ module priv_1_12_csr # (
     mtval_next = mtval;
     mcounteren_next = mcounteren;
     mcounterinhibit_next = mcounterinhibit;
-    mcause_next = mcause_next;
+    mcause_next = mcause;
 
     nxt_csr_val = (prv_intern_if.csr_write) ? prv_intern_if.new_csr_val :
                   (prv_intern_if.csr_set)   ? prv_intern_if.new_csr_val | prv_intern_if.old_csr_val :
-                  (prv_intern_if.csr_clear)   ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
+                  (prv_intern_if.csr_clear) ? ~prv_intern_if.new_csr_val & prv_intern_if.old_csr_val :
                   prv_intern_if.new_csr_val;
     invalid_csr_0 = 1'b0;
 
@@ -296,19 +302,19 @@ module priv_1_12_csr # (
     // inject values
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
-    end 
+    end
     if (prv_intern_if.inject_mtval) begin
       mtval_next = prv_intern_if.next_mtval;
-    end 
+    end
     if (prv_intern_if.inject_mepc) begin
       mepc_next = prv_intern_if.next_mepc;
-    end 
+    end
     if (prv_intern_if.inject_mcause) begin
       mcause_next = prv_intern_if.next_mcause;
-    end 
+    end
     if (prv_intern_if.inject_mie) begin
       mie_next = prv_intern_if.next_mie;
-    end 
+    end
     if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
     end
@@ -366,7 +372,7 @@ module priv_1_12_csr # (
               prv_intern_if.old_csr_val = priv_ext_v_if.value_out;
             end
           `endif // RV32V_SUPPORTED
-          
+
           // CSR address doesn't exist
           invalid_csr_1 = 1'b1
                           `ifdef RV32F_SUPPORTED

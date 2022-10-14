@@ -209,7 +209,7 @@ module RISCVBusiness (
                     .ahb_m(ahb_master)
                 );
             end
-            "apb_if": begin
+            "apb_if": begin : g_apb_if
                 apb bt(
                     .CLK(CLK),
                     .nRST(nRST),

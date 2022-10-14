@@ -81,7 +81,8 @@ module fetch_buffer (
         waitnext = 1'b0;
         final_inst = final_inst_store;
         finished = 1'b0;
-        if (fb_if.inst_arrived & reset_next & (pc != fb_if.imem_pc)) begin // Handle Jump/Branch Condition when misaligned
+        // Jump/Branch condition when misaligned
+        if (fb_if.inst_arrived & reset_next & (pc != fb_if.imem_pc)) begin
             next_imem_pc = fb_if.imem_pc + 4;
             if (fb_if.inst[17:16] != 2'b11) begin  // upper 16 bits are compressed
                 final_inst = {16'd0, fb_if.inst[31:16]};

@@ -19,11 +19,11 @@ module pp_mul32 (
     logic [31:0] multiplicand_mod;
     logic [31:0] multiplier_mod;
     logic adjust_product;
-    logic [63:0] partial_product[15:0];
+    logic [63:0] partial_product[16];
     logic [63:0]
         pp0, pp1, pp2, pp3, pp4, pp5, pp6, pp7, pp8, pp9, pp10, pp11, pp12, pp13, pp14, pp15;
     logic [32:0] mul_plus2, mul_minus2, mul_minus1;
-    logic [63:0] pp[15:0];
+    logic [63:0] pp[16];
     logic [32:0] modified_in;
     logic [63:0]
         sum0, sum1, sum2, sum3, sum4, sum5, sum6, sum7, sum8, sum9, sum10, sum11, sum12, sum13;
@@ -63,10 +63,13 @@ module pp_mul32 (
         end
     end
     // Modify multiplicand and multiplier if they are signed
-    assign multiplicand_mod = is_signed_reg[1] && multiplicand_reg[31] ? (~(multiplicand_reg)+1) : multiplicand_reg;
-    assign multiplier_mod = is_signed_reg[0] && multiplier_reg[31] ? (~(multiplier_reg)+1) : multiplier_reg;
+    assign multiplicand_mod = is_signed_reg[1] && multiplicand_reg[31] ?
+                                (~(multiplicand_reg)+1) : multiplicand_reg;
+    assign multiplier_mod = is_signed_reg[0] && multiplier_reg[31] ?
+                                (~(multiplier_reg)+1) : multiplier_reg;
     // Control signal to modify final product
-    assign adjust_product   = (is_signed_reg[0] & multiplier_reg[31]) ^ (is_signed_reg[1] & multiplicand_reg[31]);
+    assign adjust_product   = (is_signed_reg[0] & multiplier_reg[31])
+                                ^ (is_signed_reg[1] & multiplicand_reg[31]);
     // For bit pair recoding part
     assign mul_plus2 = multiplicand_mod + multiplicand_mod;
     assign mul_minus2 = ~mul_plus2 + 1;
@@ -279,7 +282,9 @@ module pp_mul32 (
         .rollover_flag(finished)
     );
     assign temp_product = cout13 + sum13;
-    assign temp_product2 = is_signed_reg[0] == 0 && multiplier_reg[31] ? temp_product + ({{33{multiplicand_mod[31]}},multiplicand_mod} << 32) : temp_product; // plus extra 1M
+    assign temp_product2 = is_signed_reg[0] == 0 && multiplier_reg[31] ?
+                                temp_product + ({{33{multiplicand_mod[31]}},multiplicand_mod} << 32)
+                                : temp_product; // plus extra 1M
     assign result = adjust_product ? (~temp_product2) + 1 : temp_product2;
     assign mult_complete = count == 2'd1 | count == 2'd2;
     assign result2 = mult_complete ? result : '0;
@@ -296,8 +301,8 @@ module pp_mul32 (
     typedef enum logic {
         IDLE,
         START
-    } state_type;
-    state_type state, next_state;
+    } state_t;
+    state_t state, next_state;
     always_ff @(posedge CLK, negedge nRST) begin
         if (nRST == 0) state <= IDLE;
         else state <= next_state;

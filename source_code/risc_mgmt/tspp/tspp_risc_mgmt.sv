@@ -38,8 +38,8 @@ module tspp_risc_mgmt (
 );
     import rv32i_types_pkg::*;
 
-    parameter N_EXTENSIONS = `NUM_EXTENSIONS;
-    localparam N_EXT_BITS = $clog2(N_EXTENSIONS);
+    parameter int N_EXTENSIONS = `NUM_EXTENSIONS;
+    localparam int N_EXT_BITS = $clog2(N_EXTENSIONS);
 
     /******************************************************************
   * Signal Instantiations

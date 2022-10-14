@@ -35,9 +35,9 @@ module crc32 (
 
     import rv32i_types_pkg::*;
 
-    parameter POLY = 32'h04c1_1db7;
-    parameter POLY_REV = 32'hedb8_8320;
-    parameter POLY_REV_REC = 32'h8260_8edb;
+    parameter logic [31:0] POLY = 32'h04c1_1db7;
+    parameter logic [31:0] POLY_REV = 32'hedb8_8320;
+    parameter logic [31:0] POLY_REV_REC = 32'h8260_8edb;
 
     word_t next_crc, curr_crc, mask;
     logic update;

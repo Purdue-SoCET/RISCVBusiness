@@ -1,5 +1,5 @@
 module flex_counter_mul #(
-    parameter NUM_CNT_BITS = 4
+    parameter int NUM_CNT_BITS = 4
 ) (
     input wire clk,
     input wire n_rst,

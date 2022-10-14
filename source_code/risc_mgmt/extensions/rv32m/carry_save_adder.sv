@@ -1,5 +1,5 @@
 module carry_save_adder #(
-    parameter BIT_WIDTH = 32
+    parameter int BIT_WIDTH = 32
 ) (
     input  logic [(BIT_WIDTH-1):0] x,
     input  logic [(BIT_WIDTH-1):0] y,

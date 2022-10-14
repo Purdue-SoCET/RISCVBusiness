@@ -36,7 +36,7 @@ module template_decode (
 
     import rv32i_types_pkg::*;
 
-    parameter OPCODE = 7'b000_1011;
+    parameter logic [7:0] OPCODE = 7'b000_1011;
 
     rtype_t insn_rtype;
     logic [9:0] funct10;
