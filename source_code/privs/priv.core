@@ -1,0 +1,28 @@
+CAPI=2:
+name: socet:riscv:priv:0.1.0
+description: Privileged Architecture for RISCVBusiness
+
+filesets:
+    rtl:
+        files:
+            - priv_wrapper.sv
+            - priv_1_12/priv_1_12_int_ex_handler.sv
+            - priv_1_12/priv_1_12_block.sv
+            - priv_1_12/priv_1_12_csr.sv
+            - priv_1_12/priv_1_12_pipe_control.sv
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: priv_wrapper
+
+    lint:
+        <<: *default
+        description: Linting
+        default_tool: veriblelint
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search']
