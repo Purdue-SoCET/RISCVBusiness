@@ -4,7 +4,7 @@ Design documents and project information for the RISC-V Business project can be 
 [RISCV-Business Documentation](https://wiki.itap.purdue.edu/display/RISC/RISCV-Business)
 
 **Current User-Level ISA Spec :** v2.1
-**Current Privileged ISA Spec :** v1.11
+**Current Privileged ISA Spec :** v1.12
 
 # Getting Started
 
@@ -17,8 +17,14 @@ This project uses the [Fusesoc](http://fusesoc.net/) build system.  Use the foll
 # install project dependencies &
 # setup git pre-commit hook
 ./setup.sh
+# configure the RISC-V core
+python3 scripts/config_core.py example.yml # or 'make config'
 # all dependencies are set up, run a test with fusesoc
 fusesoc --cores-root . run --target sim socet:aft:RISCVBusiness
+# For ease of use, use the makefile
+make verilate # (or 'make xcelium')
+# Run ISA tests
+run_tests_verilator.py
 ```
 
 ## Generating RISC-V tool-chain
@@ -46,14 +52,6 @@ Then run after setting the environment variable "RISCV" to your install location
 ~~~
 ./build.sh
 ~~~
-
-## Installing the build environment
-
-RISCVBusiness uses SoCFoundationFlow, built off of the waf build system.  The following repository contains the source for waf:
-
-[SoCFoundationFlow](https://github.com/mattaw/SoCFoundationFlow)
-
-Refer to SoCFoundationFlow for installation instructions.
 
 ## Setup and Run RISCV Business
 
