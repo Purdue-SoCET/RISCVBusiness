@@ -30,6 +30,11 @@ if ! fusesoc library add digital-lib git@github.com:Purdue-SoCET/digital-lib.git
   exit 1
 fi
 
+if ! fusesoc library add bus-components git@github.com:Purdue-SoCET/bus-components.git ; then
+    error_print "Failed to fetch bus-components: ensure that ssh key is set up for repository permissions"
+    exit 1
+fi
+
 #info_print "Installing pre-commit hook"
 #cp ./scripts/pre-commit ./.git/hooks/
 
