@@ -37,9 +37,9 @@ define USAGE
 @echo " Build Targets:"
 @echo "     config: config core with example.yml"
 @echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
-@echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target
-@echo "		clean: Remove build directories"
-@echo " 	veryclean: Remove fusesoc libraries & build directories"
+@echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target"
+@echo "     clean: Remove build directories"
+@echo "     veryclean: Remove fusesoc libraries & build directories"
 @echo "----------------------------------------------------------------------"
 endef
 
