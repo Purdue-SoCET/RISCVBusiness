@@ -178,8 +178,8 @@ module tb_RISCVBusiness_self_test ();
 
   task dump_stats();
     logic [63:0] instret, cycles;
-    instret = DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.instretfull;
-    cycles  = DUT.priv_wrapper_i.priv_block_i.csr_rfile_i.cyclefull;
+    instret = DUT.priv_wrapper_i.priv_block_i.csr.instret_full;
+    cycles  = DUT.priv_wrapper_i.priv_block_i.csr.cycles_full;
     if (cycles != clk_count) $info("Cycles CSR (%0d) != clk_count (%0d)", cycles, clk_count);
     stats_ptr = $fopen(`STATS_FILE_NAME, "w");
     $fwrite(stats_ptr, "Instructions retired: %2d\n", instret);
@@ -236,4 +236,3 @@ module tb_RISCVBusiness_self_test ();
   endfunction
 
 endmodule
-
