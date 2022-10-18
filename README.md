@@ -17,14 +17,28 @@ This project uses the [Fusesoc](http://fusesoc.net/) build system.  Use the foll
 # install project dependencies &
 # setup git pre-commit hook
 ./setup.sh
+
+# For ease of use, use the makefile to run FuseSoC tests
+make # shows all build targets available
+
 # configure the RISC-V core
-python3 scripts/config_core.py example.yml # or 'make config'
-# all dependencies are set up, run a test with fusesoc
-fusesoc --cores-root . run --target sim socet:aft:RISCVBusiness
-# For ease of use, use the makefile
-make verilate # (or 'make xcelium')
+make config 
+# or python3 scripts/config_core.py <custom>.yml
+#   if you want to use a config other than example.yml
+
+make verilate # build with Verilator, or...
+make xcelium # build with Xcelium
+```
+
+> Congrats! All dependencies are now set up.  Now you can run simulations/tests:
+
+
+```bash
 # Run ISA tests
 run_tests_verilator.py
+
+# Run specify binary on Verliator core simulation
+./rvb_out/sim-verilator/Vtop_core meminit.bin
 ```
 
 ## Generating RISC-V tool-chain
