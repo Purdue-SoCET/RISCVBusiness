@@ -82,20 +82,19 @@ module priv_1_12_csr #(
   // Extension Broadcast Signals
   assign priv_ext_pma_if.csr_addr = prv_intern_if.csr_addr;
   assign priv_ext_pma_if.value_in = nxt_csr_val;
-  assign priv_ext_pma_if.csr_active = ~invalid_csr_0 & prv_intern_if.valid_write & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
+  assign priv_ext_pma_if.csr_active = ~invalid_csr_0 & prv_intern_if.valid_write 
+                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
   `ifdef RV32F_SUPPORTED
     assign priv_ext_f_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_f_if.value_in = nxt_csr_val;
     assign priv_ext_f_if.csr_active = prv_intern_if.valid_write
-                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set
-                                                                 | prv_intern_if.csr_clear);
+                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
 `endif // RV32F_SUPPORTED
 `ifdef RV32V_SUPPORTED
     assign priv_ext_v_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_v_if.value_in = nxt_csr_val;
     assign priv_ext_v_if.csr_active = prv_intern_if.valid_write
-                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set
-                                                                 | prv_intern_if.csr_clear);
+                                      & (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear);
 `endif // RV32V_SUPPORTED
 
   /* Save some logic with this */
