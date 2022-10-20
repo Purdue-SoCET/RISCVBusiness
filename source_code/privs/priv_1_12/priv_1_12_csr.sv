@@ -31,7 +31,7 @@ module priv_1_12_csr #(
 )(
   input CLK,
   input nRST,
-  priv_1_12_internal_if.csr prv_intern_if
+  priv_1_12_internal_if.csr prv_intern_if,
   priv_ext_if.priv priv_ext_pma_if
   `ifdef RV32F_SUPPORTED
   , priv_ext_if.priv priv_ext_f_if

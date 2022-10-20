@@ -10,6 +10,7 @@ filesets:
             - priv_1_12/priv_1_12_block.sv
             - priv_1_12/priv_1_12_csr.sv
             - priv_1_12/priv_1_12_pipe_control.sv
+            - priv_1_12/priv_1_12_pma.sv
         file_type: systemVerilogSource
 
 

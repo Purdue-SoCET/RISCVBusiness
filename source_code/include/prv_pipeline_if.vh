@@ -60,8 +60,8 @@ interface prv_pipeline_if();
   logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
 
   // Memory protection signals
-  logic ren, wen, xen;
-  logic [RAM_ADDR_SIZE-1:0] addr;
+  logic iren, dwen, dren;
+  logic [RAM_ADDR_SIZE-1:0] iaddr, daddr;
 
   modport hazard (
     input priv_pc, insert_pc, intr,
@@ -76,13 +76,16 @@ interface prv_pipeline_if();
     input  rdata, invalid_csr
   );
 
+  // modport cache (
+
+  // )
 
   modport priv_block (
     input pipe_clear, ret, epc, fault_insn, mal_insn,
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
           breakpoint, env_m, badaddr, swap, clr, set,
           wdata, csr_addr, valid_write, wb_enable, instr,
-          ex_rmgmt, ex_rmgmt_cause, ren, wen, xen, addr,
+          ex_rmgmt, ex_rmgmt_cause,
     output priv_pc, insert_pc, intr, rdata, invalid_csr
   );
 
