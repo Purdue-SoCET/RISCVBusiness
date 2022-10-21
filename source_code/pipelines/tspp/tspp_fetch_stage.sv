@@ -29,6 +29,7 @@
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
 `include "rv32c_if.vh"
+`include "prv_pipeline_if.vh"
 
 module tspp_fetch_stage (
     input logic CLK,
@@ -38,7 +39,8 @@ module tspp_fetch_stage (
     predictor_pipeline_if.access predict_if,
     generic_bus_if.cpu igen_bus_if,
     sparce_pipeline_if.pipe_fetch sparce_if,
-    rv32c_if.fetch rv32cif
+    rv32c_if.fetch rv32cif,
+    prv_pipeline_if.fetch prv_pipe_if
 );
     import rv32i_types_pkg::*;
 
@@ -109,6 +111,10 @@ module tspp_fetch_stage (
     assign hazard_if.mal_insn = mal_addr;
     assign hazard_if.badaddr_f = igen_bus_if.addr;
     assign hazard_if.epc_f = pc;
+
+    // Send memory protection signals
+    assign prv_pipe_if.iren = igen_bus_if.ren;
+    assign prv_pipe_if.iaddr = igen_bus_if.addr;
 
     // Choose the endianness of the data coming into the processor
     generate

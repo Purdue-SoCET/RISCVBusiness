@@ -94,7 +94,8 @@ module RISCVBusiness (
         .predict_if(predict_if),
         .igen_bus_if(tspp_icache_gen_bus_if),
         .sparce_if(sparce_if),
-        .rv32cif(rv32cif)
+        .rv32cif(rv32cif),
+        .prv_pipe_if(prv_pipe_if)
     );
 
     tspp_execute_stage execute_stage_i (
