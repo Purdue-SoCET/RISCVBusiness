@@ -243,8 +243,8 @@ module tspp_execute_stage (
     // RISC-MGMT connection
     assign rm_if.mem_load       = dgen_bus_if.rdata;
 
-    assign dgen_bus_if.ren      = rm_if.req_mem ? rm_if.mem_ren : cu_if.dren & ~mal_addr;
-    assign dgen_bus_if.wen      = rm_if.req_mem ? rm_if.mem_wen : cu_if.dwen & ~mal_addr;
+    assign dgen_bus_if.ren      = rm_if.req_mem ? rm_if.mem_ren : cu_if.dren & ~mal_addr & ~prv_pipe_if.prot_fault_l;
+    assign dgen_bus_if.wen      = rm_if.req_mem ? rm_if.mem_wen : cu_if.dwen & ~mal_addr & ~prv_pipe_if.prot_fault_s;
     assign byte_en_temp         = rm_if.req_mem ? rm_if.mem_byte_en : byte_en_standard;
     assign dgen_bus_if.byte_en  = byte_en;
     assign dgen_bus_if.addr     = rm_if.req_mem ? rm_if.mem_addr : alu_if.port_out;

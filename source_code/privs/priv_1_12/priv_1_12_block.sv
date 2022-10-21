@@ -82,12 +82,12 @@ module priv_1_12_block (
     // from pipeline to the priv unit
     assign prv_intern_if.pipe_clear        = prv_pipe_if.pipe_clear;
     assign prv_intern_if.epc               = prv_pipe_if.epc;
-    assign prv_intern_if.fault_insn_access = prv_pipe_if.fault_insn | prv_intern_if.pma_i_fault;
+    assign prv_intern_if.fault_insn_access = prv_pipe_if.fault_insn;
     assign prv_intern_if.mal_insn          = prv_pipe_if.mal_insn;
     assign prv_intern_if.illegal_insn      = prv_pipe_if.illegal_insn;
-    assign prv_intern_if.fault_l           = prv_pipe_if.fault_l | prv_intern_if.pma_l_fault;
+    assign prv_intern_if.fault_l           = prv_pipe_if.fault_l;
     assign prv_intern_if.mal_l             = prv_pipe_if.mal_l;
-    assign prv_intern_if.fault_s           = prv_pipe_if.fault_s | prv_intern_if.pma_s_fault;
+    assign prv_intern_if.fault_s           = prv_pipe_if.fault_s;
     assign prv_intern_if.mal_s             = prv_pipe_if.mal_s;
     assign prv_intern_if.breakpoint        = prv_pipe_if.breakpoint;
     assign prv_intern_if.env_m             = prv_pipe_if.env_m;
@@ -111,5 +111,10 @@ module priv_1_12_block (
     assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc;
     assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
     assign prv_pipe_if.intr        = prv_intern_if.intr;
+
+    // Memory protection faults
+    assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault;
+    assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault;
+    assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault;
 
 endmodule

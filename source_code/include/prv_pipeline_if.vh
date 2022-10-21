@@ -62,9 +62,10 @@ interface prv_pipeline_if();
   // Memory protection signals
   logic iren, dwen, dren;
   logic [RAM_ADDR_SIZE-1:0] iaddr, daddr;
+  logic prot_fault_s, prot_fault_l, prot_fault_i;
 
   modport hazard (
-    input priv_pc, insert_pc, intr,
+    input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
     output pipe_clear, ret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
             breakpoint, env_m, badaddr, wb_enable,
@@ -73,7 +74,7 @@ interface prv_pipeline_if();
 
   modport pipe (
     output swap, clr, set, wdata, csr_addr, valid_write, instr,
-    input  rdata, invalid_csr
+    input  rdata, invalid_csr, prot_fault_s, prot_fault_l
   );
 
   // modport cache (
@@ -86,7 +87,8 @@ interface prv_pipeline_if();
           breakpoint, env_m, badaddr, swap, clr, set,
           wdata, csr_addr, valid_write, wb_enable, instr,
           ex_rmgmt, ex_rmgmt_cause,
-    output priv_pc, insert_pc, intr, rdata, invalid_csr
+    output priv_pc, insert_pc, intr, rdata, invalid_csr, 
+            prot_fault_s, prot_fault_l, prot_fault_i
   );
 
 endinterface
