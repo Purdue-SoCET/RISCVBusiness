@@ -34,8 +34,8 @@ module priv_1_12_pma (
 import pma_types_1_12_pkg::*;
 
   pma_reg_t [15:0] pma_regs, nxt_pma_regs;
-  pma_reg_t active_reg;
-  pma_cfg_t pma_cfg;
+  pma_reg_t active_reg_d, active_reg_i;
+  pma_cfg_t pma_cfg_d, pma_cfg_i;
 
   // Core State Registers
   always_ff @ (posedge CLK, negedge nRST) begin
@@ -84,23 +84,30 @@ import pma_types_1_12_pkg::*;
     prv_intern_if.pma_s_fault = 1'b0;
     prv_intern_if.pma_i_fault = 1'b0;
 
-    active_reg = pma_regs[prv_intern_if.addr[31:28]];
+    active_reg_d = pma_regs[prv_intern_if.daddr[31:28]];
+    active_reg_i = pma_regs[prv_intern_if.iaddr[31:28]];
 
-    if (~prv_intern_if.addr[27]) begin
-      pma_cfg = active_reg.pma_cfg_0;
+    if (~prv_intern_if.daddr[27]) begin
+      pma_cfg_d = active_reg_d.pma_cfg_0;
     end else begin
-      pma_cfg = active_reg.pma_cfg_1;
+      pma_cfg_d = active_reg_d.pma_cfg_1;
     end
 
-    if (prv_intern_if.ren & ~pma_cfg.R) begin
+    if (~prv_intern_if.iaddr[27]) begin
+      pma_cfg_i = active_reg_i.pma_cfg_0;
+    end else begin
+      pma_cfg_i = active_reg_i.pma_cfg_1;
+    end
+
+    if (prv_intern_if.ren & ~pma_cfg_d.R) begin
       prv_intern_if.pma_l_fault = 1'b1;
-    end else if (prv_intern_if.wen & ~pma_cfg.W) begin
+    end else if (prv_intern_if.wen & ~pma_cfg_d.W) begin
       prv_intern_if.pma_s_fault = 1'b1;
-    end else if (prv_intern_if.xen & ~pma_cfg.X) begin
+    end else if (prv_intern_if.xen & ~pma_cfg_i.X) begin
       prv_intern_if.pma_i_fault = 1'b1;
     end
 
-    if (prv_intern_if.acc_width_type > pma_cfg.AccWidth) begin
+    if (prv_intern_if.acc_width_type > pma_cfg_d.AccWidth) begin
       if (prv_intern_if.ren) begin
         prv_intern_if.pma_l_fault = 1'b1;
       end else if (prv_intern_if.wen) begin

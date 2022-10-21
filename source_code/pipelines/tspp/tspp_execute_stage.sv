@@ -389,6 +389,12 @@ module tspp_execute_stage (
     assign hazard_if.epc_e = fetch_ex_if.fetch_ex_reg.pc;
     assign hazard_if.token_ex = fetch_ex_if.fetch_ex_reg.token;
 
+    // setup signals for memory protection
+    //  not considering risc-mgmt here TODO
+    assign prv_pipe_if.dren  = cu_if.dren & ~mal_addr;
+    assign prv_pipe_if.dwen  = cu_if.dwen & ~mal_addr;
+    assign prv_pipe_if.daddr = alu_if.port_out;
+
     /*********************************************************
   *** Branch Predictor Logic
   *********************************************************/

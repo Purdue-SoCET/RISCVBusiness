@@ -73,13 +73,13 @@ interface prv_pipeline_if();
   );
 
   modport pipe (
-    output swap, clr, set, wdata, csr_addr, valid_write, instr,
+    output swap, clr, set, wdata, csr_addr, valid_write, instr, dren, dwen, daddr,
     input  rdata, invalid_csr, prot_fault_s, prot_fault_l
   );
 
-  // modport cache (
-
-  // )
+  modport fetch (
+    output iren, iaddr
+  );
 
   modport priv_block (
     input pipe_clear, ret, epc, fault_insn, mal_insn,
@@ -87,6 +87,7 @@ interface prv_pipeline_if();
           breakpoint, env_m, badaddr, swap, clr, set,
           wdata, csr_addr, valid_write, wb_enable, instr,
           ex_rmgmt, ex_rmgmt_cause,
+          daddr, iaddr, dren, dwen, iren,
     output priv_pc, insert_pc, intr, rdata, invalid_csr, 
             prot_fault_s, prot_fault_l, prot_fault_i
   );

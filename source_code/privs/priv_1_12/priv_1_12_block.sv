@@ -112,7 +112,10 @@ module priv_1_12_block (
     assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
     assign prv_pipe_if.intr        = prv_intern_if.intr;
 
-    // Memory protection faults
+    // Memory protection signals
+    assign prv_intern_if.daddr = prv_pipe_if.daddr;
+    assign prv_intern_if.ren = prv_pipe_if.dren;
+    assign prv_intern_if.wen = prv_pipe_if.dwen;
     assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault;
     assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault;
     assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault;

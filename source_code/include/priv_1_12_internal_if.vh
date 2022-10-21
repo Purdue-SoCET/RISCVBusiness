@@ -79,7 +79,7 @@ interface priv_1_12_internal_if;
     logic intr; // Did something trigger an interrupt?
 
     // Addresses and memory access info for memory protection
-    logic [RAM_ADDR_SIZE-1:0] addr; // Address to check
+    logic [RAM_ADDR_SIZE-1:0] daddr, iaddr; // Address to check
     logic ren, wen, xen; // RWX access type
 
     // PMA comm variables
@@ -110,7 +110,7 @@ interface priv_1_12_internal_if;
     );
 
     modport pma (
-        input addr, ren, wen, xen, acc_width_type,
+        input iaddr, daddr, ren, wen, xen, acc_width_type,
         output pma_s_fault, pma_i_fault, pma_l_fault
     );
 
