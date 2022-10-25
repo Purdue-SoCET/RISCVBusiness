@@ -115,6 +115,8 @@ module priv_1_12_block (
     // Memory protection signals
     assign prv_intern_if.daddr = prv_pipe_if.daddr;
     assign prv_intern_if.iaddr = prv_pipe_if.iaddr;
+    assign prv_intern_if.d_acc_width = prv_pipe_if.d_acc_width;
+    assign prv_intern_if.i_acc_width = prv_pipe_if.i_acc_width;
     assign prv_intern_if.ren = prv_pipe_if.dren;
     assign prv_intern_if.wen = prv_pipe_if.dwen;
     assign prv_intern_if.xen = prv_pipe_if.iren;

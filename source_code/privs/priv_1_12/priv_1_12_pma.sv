@@ -31,32 +31,33 @@ module priv_1_12_pma (
   priv_ext_if.ext priv_ext_if
 );
 
-import pma_types_1_12_pkg::*;
+  import pma_types_1_12_pkg::*;
+  import rv32i_types_pkg::*;
 
   pma_reg_t [15:0] pma_regs, nxt_pma_regs;
   pma_reg_t active_reg_d, active_reg_i;
   pma_cfg_t pma_cfg_d, pma_cfg_i;
+  pma_reg_t new_val;
 
   // Core State Registers
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      // TODO figure out defaults
-      pma_regs[00] <= '0;
-      pma_regs[01] <= '0;
-      pma_regs[02] <= '0;
-      pma_regs[03] <= '0;
-      pma_regs[04] <= '0;
-      pma_regs[05] <= '0;
-      pma_regs[06] <= '0;
-      pma_regs[07] <= '0;
-      pma_regs[08] <= '0;
-      pma_regs[09] <= '0;
-      pma_regs[10] <= '0;
-      pma_regs[11] <= '0;
-      pma_regs[12] <= '0;
-      pma_regs[13] <= '0;
-      pma_regs[14] <= '0;
-      pma_regs[15] <= '0;
+      pma_regs[00] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h1BF1)}); // 0 - ROM, 1 - RAM
+      pma_regs[01] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[02] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[03] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[04] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[05] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[06] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[07] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
+      pma_regs[08] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[09] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[10] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[11] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[12] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[13] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[14] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[15] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
     end else begin
       pma_regs <= nxt_pma_regs;
     end
@@ -66,12 +67,26 @@ import pma_types_1_12_pkg::*;
   always_comb begin
     nxt_pma_regs = pma_regs;
     priv_ext_if.ack = 1'b0;
+    new_val = pma_reg_t'(priv_ext_if.value_in);
     if (priv_ext_if.csr_addr[11:4] == 8'b10111100) begin
       priv_ext_if.ack = 1'b1;
-      // TODO should these be writable?
-      // if (priv_ext_if.csr_active) begin
-      //   nxt_pma_regs[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
-      // end
+      if (priv_ext_if.csr_active) begin
+        // WARL checks
+        if (new_val.pma_cfg_0.Rsrv == RsrvReserved) begin
+          new_val.pma_cfg_0.Rsrv = RsrvNone;
+        end
+        if (new_val.pma_cfg_1.Rsrv == RsrvReserved) begin
+          new_val.pma_cfg_0.Rsrv = RsrvNone;
+        end
+        if (new_val.pma_cfg_0.AccWidth == AccWidthReserved) begin
+          new_val.pma_cfg_0.Rsrv = WordAcc;
+        end
+        if (new_val.pma_cfg_1.AccWidth == AccWidthReserved) begin
+          new_val.pma_cfg_0.Rsrv = WordAcc;
+        end
+
+        nxt_pma_regs[priv_ext_if.csr_addr[3:0]] = new_val;
+      end
     end
   end
 
@@ -99,22 +114,12 @@ import pma_types_1_12_pkg::*;
       pma_cfg_i = active_reg_i.pma_cfg_1;
     end
 
-    if (prv_intern_if.ren & ~pma_cfg_d.R) begin
+    if (prv_intern_if.ren & (~pma_cfg_d.R || (prv_intern_if.d_acc_width > pma_cfg_d.AccWidth))) begin
       prv_intern_if.pma_l_fault = 1'b1;
-    end else if (prv_intern_if.wen & ~pma_cfg_d.W) begin
+    end else if (prv_intern_if.wen & (~pma_cfg_d.W || (prv_intern_if.d_acc_width > pma_cfg_d.AccWidth))) begin
       prv_intern_if.pma_s_fault = 1'b1;
-    end else if (prv_intern_if.xen & ~pma_cfg_i.X) begin
+    end else if (prv_intern_if.xen & (~pma_cfg_i.X || (prv_intern_if.i_acc_width > pma_cfg_i.AccWidth))) begin
       prv_intern_if.pma_i_fault = 1'b1;
-    end
-
-    if (prv_intern_if.acc_width_type > pma_cfg_d.AccWidth) begin
-      if (prv_intern_if.ren) begin
-        prv_intern_if.pma_l_fault = 1'b1;
-      end else if (prv_intern_if.wen) begin
-        prv_intern_if.pma_s_fault = 1'b1;
-      end else if (prv_intern_if.xen) begin
-        prv_intern_if.pma_i_fault = 1'b1;
-      end
     end
   end
 

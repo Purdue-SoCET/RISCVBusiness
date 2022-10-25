@@ -43,6 +43,7 @@ module tspp_fetch_stage (
     prv_pipeline_if.fetch prv_pipe_if
 );
     import rv32i_types_pkg::*;
+    import pma_types_1_12_pkg::*;
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
 
@@ -115,6 +116,7 @@ module tspp_fetch_stage (
     // Send memory protection signals
     assign prv_pipe_if.iren = igen_bus_if.ren;
     assign prv_pipe_if.iaddr = igen_bus_if.addr;
+    assign prv_pipe_if.i_acc_width = WordAcc;
 
     // Choose the endianness of the data coming into the processor
     generate

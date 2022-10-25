@@ -83,7 +83,7 @@ interface priv_1_12_internal_if;
     logic ren, wen, xen; // RWX access type
 
     // PMA comm variables
-    pma_accwidth_t acc_width_type; // Width of memory access
+    pma_accwidth_t d_acc_width, i_acc_width; // Width of memory access
     logic pma_s_fault, pma_l_fault, pma_i_fault; // PMA store fault, load fault, instruction fault
 
     modport csr (
@@ -110,7 +110,7 @@ interface priv_1_12_internal_if;
     );
 
     modport pma (
-        input iaddr, daddr, ren, wen, xen, acc_width_type,
+        input iaddr, daddr, ren, wen, xen, d_acc_width, i_acc_width,
         output pma_s_fault, pma_i_fault, pma_l_fault
     );
 

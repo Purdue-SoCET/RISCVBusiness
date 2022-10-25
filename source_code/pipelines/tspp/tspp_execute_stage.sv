@@ -52,6 +52,7 @@ module tspp_execute_stage (
 );
 
     import rv32i_types_pkg::*;
+    import pma_types_1_12_pkg::*;
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -394,6 +395,7 @@ module tspp_execute_stage (
     assign prv_pipe_if.dren  = cu_if.dren & ~mal_addr;
     assign prv_pipe_if.dwen  = cu_if.dwen & ~mal_addr;
     assign prv_pipe_if.daddr = alu_if.port_out;
+    assign prv_pipe_if.d_acc_width = WordAcc;
 
     /*********************************************************
   *** Branch Predictor Logic

@@ -33,6 +33,7 @@
 interface prv_pipeline_if();
   import machine_mode_types_1_12_pkg::*;
   import rv32i_types_pkg::*;
+  import pma_types_1_12_pkg::*;
 
   // exception signals
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
@@ -62,6 +63,7 @@ interface prv_pipeline_if();
   // Memory protection signals
   logic iren, dwen, dren;
   logic [RAM_ADDR_SIZE-1:0] iaddr, daddr;
+  pma_accwidth_t d_acc_width, i_acc_width;
   logic prot_fault_s, prot_fault_l, prot_fault_i;
 
   modport hazard (
@@ -73,12 +75,12 @@ interface prv_pipeline_if();
   );
 
   modport pipe (
-    output swap, clr, set, wdata, csr_addr, valid_write, instr, dren, dwen, daddr,
+    output swap, clr, set, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width,
     input  rdata, invalid_csr, prot_fault_s, prot_fault_l
   );
 
   modport fetch (
-    output iren, iaddr
+    output iren, iaddr, i_acc_width
   );
 
   modport priv_block (
@@ -88,6 +90,7 @@ interface prv_pipeline_if();
           wdata, csr_addr, valid_write, wb_enable, instr,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,
+          d_acc_width, i_acc_width,
     output priv_pc, insert_pc, intr, rdata, invalid_csr, 
             prot_fault_s, prot_fault_l, prot_fault_i
   );
