@@ -3,14 +3,14 @@
 
     #include <stdint.h>
 
-    #define MTIME_ADDR      0x10000
-    #define MTIMEH_ADDR     0x10004
-    #define MTIMECMP_ADDR   0x10008
-    #define MTIMECMPH_ADDR  0x1000C
-    #define MSIP_ADDR       0x10010
-    #define EXT_ADDR_SET    0x10014
-    #define EXT_ADDR_CLEAR  0x10018
-    #define MAGIC_ADDR      0x20000
+    #define MTIME_ADDR      0xFFFFFFE0
+    #define MTIMEH_ADDR     0xFFFFFFE4
+    #define MTIMECMP_ADDR   0xFFFFFFE8
+    #define MTIMECMPH_ADDR  0xFFFFFFEC
+    #define MSIP_ADDR       0xFFFFFFF0
+    #define EXT_ADDR_SET    0xFFFFFFF4
+    #define EXT_ADDR_CLEAR  0xFFFFFFF8
+    #define MAGIC_ADDR      0xFFFFFFFC
     
 
     void print(char *string);
