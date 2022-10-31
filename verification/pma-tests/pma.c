@@ -15,7 +15,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     mepc_value += 4;
     asm volatile("csrw mepc, %0" : : "r"(mepc_value));
 
-    print("PMA Checker failed\n");
+    print("PMA Checker failed (expected)\n");
     flag = 2;
 }
 
