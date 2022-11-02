@@ -37,11 +37,13 @@ module priv_1_12_block (
 
     priv_1_12_internal_if prv_intern_if();
     priv_ext_if priv_ext_pma_if();
+    priv_ext_if priv_ext_pmp_if();
 
-    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if));
+    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
     priv_1_12_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
     priv_1_12_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
     priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
+    priv_1_12_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
 
     priv_level_t curr_priv;
 
@@ -120,8 +122,8 @@ module priv_1_12_block (
     assign prv_intern_if.ren = prv_pipe_if.dren;
     assign prv_intern_if.wen = prv_pipe_if.dwen;
     assign prv_intern_if.xen = prv_pipe_if.iren;
-    assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault;
-    assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault;
-    assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault;
+    assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault | prv_intern_if.pmp_i_fault;
+    assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault | prv_intern_if.pmp_l_fault;
+    assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault | prv_intern_if.pmp_s_fault;
 
 endmodule
