@@ -34,7 +34,7 @@ module priv_1_12_pmp (
   import pmp_types_1_12_pkg::*;
   import rv32i_types_pkg::*;
 
-  pmpcfg_t [0:3] pmp_cfg_regs, nxt_pmp_cfg;
+  pmpcfg_t [1:0] pmp_cfg_regs, nxt_pmp_cfg;
   pmpaddr_t [15:0] pmp_addr_regs, nxt_pmp_addr;
   pmpcfg_t new_cfg;
 
@@ -56,7 +56,7 @@ module priv_1_12_pmp (
     new_cfg = pmpcfg_t'(priv_ext_if.value_in);
     if (priv_ext_if.csr_active) begin
       casez(priv_ext_if.csr_addr)
-        12'b0011_1011_zzzz: begin
+        12'b0011_1010_00zz: begin
           // WARL check (reserved)
           new_cfg.cfg0.reserved = '0;
           new_cfg.cfg1.reserved = '0;
@@ -82,17 +82,17 @@ module priv_1_12_pmp (
           if (new_cfg.cfg1.W == 1'b0 && new_cfg.cfg1.R == 1'b1) begin
             new_cfg.cfg1.R = 1'b0;
           end
-          if (new_cfg.cfg1.W == 1'b0 && new_cfg.cfg1.R == 1'b1) begin
-            new_cfg.cfg1.R = 1'b0;
+          if (new_cfg.cfg2.W == 1'b0 && new_cfg.cfg2.R == 1'b1) begin
+            new_cfg.cfg2.R = 1'b0;
           end
-          if (new_cfg.cfg1.W == 1'b0 && new_cfg.cfg1.R == 1'b1) begin
-            new_cfg.cfg1.R = 1'b0;
+          if (new_cfg.cfg3.W == 1'b0 && new_cfg.cfg3.R == 1'b1) begin
+            new_cfg.cfg3.R = 1'b0;
           end
           // Assign field
-          nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = new_cfg;
-        end
-        12'b0011_1010_00zz: begin
           nxt_pmp_cfg[priv_ext_if.csr_addr[1:0]] = priv_ext_if.value_in;
+        end
+        12'b0011_1011_zzzz: begin
+          nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = new_cfg;
         end
       endcase
     end
@@ -117,9 +117,36 @@ module priv_1_12_pmp (
     endcase
   end
 
-  // PMP Logic Block
-  always_comb begin
-    
-  end
+  /***** Data PMP checker unit *****/
+  logic [15:0] d_cfg_match;
+  genvar i;
+
+  generate
+    for (i=0; i<16; i++) begin
+      priv_1_12_pmp_matcher matcher (
+        {2'b00, prv_intern_if.daddr[31:2]},
+        (i%4) == 0 ? pmp_cfg_regs[i>>2].cfg0 : ((i%4) == 1 ? pmp_cfg_regs[i>>2].cfg1 : ((i%4) == 2 ? pmp_cfg_regs[i>>2].cfg2 : pmp_cfg_regs[i>>2].cfg3)),
+        pmp_addr_regs[i],
+        i == 0 ? '0 : pmp_addr_regs[i-1],
+        d_cfg_match[i]
+      );
+    end
+  endgenerate
+
+  /***** Instruction PMP checker unit *****/
+  logic [15:0] i_cfg_match;
+  genvar j;
+
+  generate
+    for (j=0; j<16; j++) begin
+      priv_1_12_pmp_matcher matcher (
+        {2'b00, prv_intern_if.iaddr[31:2]},
+        (j%4) == 0 ? pmp_cfg_regs[j>>2].cfg0 : ((j%4) == 1 ? pmp_cfg_regs[j>>2].cfg1 : ((j%4) == 2 ? pmp_cfg_regs[j>>2].cfg2 : pmp_cfg_regs[j>>2].cfg3)),
+        pmp_addr_regs[j],
+        j == 0 ? '0 : pmp_addr_regs[j-1],
+        d_cfg_match[j]
+      );
+    end
+  endgenerate
 
 endmodule

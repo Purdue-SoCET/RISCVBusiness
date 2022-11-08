@@ -37,9 +37,10 @@ interface priv_1_12_internal_if;
     logic ex_rmgmt;
     logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
 
+    priv_level_t curr_priv; // Current process privilege
+
     // CSR block values
     csr_addr_t csr_addr; // CSR address to read
-    priv_level_t curr_priv; // Current process privilege
     logic csr_write, csr_set, csr_clear; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
     logic inst_ret; // signal when an instruction is retired
@@ -118,7 +119,7 @@ interface priv_1_12_internal_if;
     );
 
     modport pmp (
-        input iaddr, daddr, ren, wen, xen,
+        input iaddr, daddr, ren, wen, xen, curr_priv,
         output pmp_s_fault, pmp_i_fault, pmp_l_fault
     );
 
