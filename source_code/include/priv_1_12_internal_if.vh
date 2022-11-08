@@ -119,7 +119,7 @@ interface priv_1_12_internal_if;
     );
 
     modport pmp (
-        input iaddr, daddr, ren, wen, xen, curr_priv,
+        input iaddr, daddr, ren, wen, xen, curr_priv, curr_mstatus,
         output pmp_s_fault, pmp_i_fault, pmp_l_fault
     );
 

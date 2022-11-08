@@ -130,12 +130,14 @@ package pmp_types_1_12_pkg;
    logic       R;
  } pmpcfg_base_t;
 
-typedef struct packed {
-  pmpcfg_base_t cfg3;
-  pmpcfg_base_t cfg2;
-  pmpcfg_base_t cfg1;
-  pmpcfg_base_t cfg0;
-} pmpcfg_t;
+// typedef struct packed {
+//   pmpcfg_base_t cfg3;
+//   pmpcfg_base_t cfg2;
+//   pmpcfg_base_t cfg1;
+//   pmpcfg_base_t cfg0;
+// } pmpcfg_t;
+
+typedef pmpcfg_base_t [3:0] pmpcfg_t;
 
 typedef logic [31:0] pmpaddr_t;
 
