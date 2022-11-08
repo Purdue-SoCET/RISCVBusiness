@@ -20,9 +20,6 @@
 *   Email:        jskubic@purdue.edu
 *   Date Created: 08/24/2016
 *   Description:  Interface connecting the priv block to the pipeline.
-*                 Contains connections between modules inside the priv block.
-*                 TODO: These two functionalities should be split into two
-*                 separate interfaces.
 */
 
 `ifndef PRV_PIPELINE_IF_VH
