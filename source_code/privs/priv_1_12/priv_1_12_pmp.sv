@@ -51,6 +51,8 @@ module priv_1_12_pmp (
   end
 
   // Core State Logic
+  logic [1:0] pmp_cfg_addr_add_one_reg = (priv_ext_if.csr_addr[3:0] + 1) >> 2;   // exists because TOR is weird
+  logic [1:0] pmp_cfg_addr_add_one_cfg = (priv_ext_if.csr_addr[3:0] + 1) & 2'h3; // exists because TOR is weird
   always_comb begin
     nxt_pmp_addr = pmp_addr_regs;
     nxt_pmp_cfg = pmp_cfg_regs;
@@ -76,11 +78,38 @@ module priv_1_12_pmp (
           if (new_cfg[3].W == 1'b0 && new_cfg[3].R == 1'b1) begin
             new_cfg[3].R = 1'b0;
           end
+
+          // Make sure we cannot write to locked CSRs
+          if (pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][0].L) begin
+            new_cfg[0] = pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][0];
+          end
+          if (pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][1].L) begin
+            new_cfg[1] = pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][1];
+          end
+          if (pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][2].L) begin
+            new_cfg[2] = pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][2];
+          end
+          if (pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][3].L) begin
+            new_cfg[3] = pmp_cfg_regs[priv_ext_if.csr_addr[1:0]][3];
+          end
+
           // Assign field
-          nxt_pmp_cfg[priv_ext_if.csr_addr[1:0]] = priv_ext_if.value_in;
+          nxt_pmp_cfg[priv_ext_if.csr_addr[1:0]] = new_cfg;
         end
         12'b0011_1011_zzzz: begin // 0x3B0
-          nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = new_cfg;
+          // Make sure we cannot write to locked CSRs
+          if (~pmp_cfg_regs[priv_ext_if.csr_addr[3:2]][priv_ext_if.csr_addr[1:0]].L) begin
+            // But wait, TOR messes things up - we need to check the cfg above it
+            //    pmpcfg(i) might be TOR, which means it uses both pmpaddr(i) and pmpaddr(i-1)
+            //    pg 60 of the v1.12 specification for more info
+            if (priv_ext_if.csr_addr[3:0] != 15) begin // 15 is the last valid register, can't check the one above it
+              if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A == TOR) begin // If not TOR, everything is good
+                nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
+              end else if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A) begin // It was TOR, and is not locked
+                nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
+              end
+            end
+          end
         end
       endcase
     end
