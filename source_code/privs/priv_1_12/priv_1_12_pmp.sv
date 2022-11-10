@@ -35,7 +35,7 @@ module priv_1_12_pmp (
   import machine_mode_types_1_12_pkg::*;
   import rv32i_types_pkg::*;
 
-  pmpcfg_t [1:0] pmp_cfg_regs, nxt_pmp_cfg;
+  pmpcfg_t [3:0] pmp_cfg_regs, nxt_pmp_cfg;
   pmpaddr_t [15:0] pmp_addr_regs, nxt_pmp_addr;
   pmpcfg_t new_cfg;
 
@@ -105,7 +105,7 @@ module priv_1_12_pmp (
             if (priv_ext_if.csr_addr[3:0] != 15) begin // 15 is the last valid register, can't check the one above it
               if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A == TOR) begin // If not TOR, everything is good
                 nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
-              end else if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A) begin // It was TOR, and is not locked
+              end else if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L) begin // It was TOR, and is not locked
                 nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
               end
             end
@@ -142,7 +142,7 @@ module priv_1_12_pmp (
     for (i=0; i<16; i++) begin
       priv_1_12_pmp_matcher matcher (
         {2'b00, prv_intern_if.daddr[31:2]},
-        pmp_cfg_regs[i>>2][i%4],
+        pmp_cfg_regs[i>>2][i & 3],
         pmp_addr_regs[i],
         i == 0 ? '0 : pmp_addr_regs[i-1],
         d_cfg_match[i]

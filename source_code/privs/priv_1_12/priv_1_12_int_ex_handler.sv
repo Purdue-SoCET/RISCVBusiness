@@ -149,12 +149,10 @@ module priv_1_12_int_ex_handler (
         else if (prv_intern_if.clear_timer_int_s) prv_intern_if.next_mip.stip = 1'b0;
     end
 
-    assign prv_intern_if.inject_mstatus = exception | prv_intern_if.intr | prv_intern_if.mret
-                                          | prv_intern_if.sret | prv_intern_if.uret;
+    assign prv_intern_if.inject_mstatus = exception | prv_intern_if.intr | prv_intern_if.mret;
 
     always_comb begin
-        prv_intern_if.next_mstatus.mie = prv_intern_if.curr_mstatus.mie;
-        prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mpie;
+        prv_intern_if.next_mstatus = prv_intern_if.curr_mstatus;
         // interrupt has truly been registered and it is time to go to the vector table
         if (update_mie) begin
             // when a trap is taken mpie is set to the current mie

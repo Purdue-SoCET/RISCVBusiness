@@ -23,10 +23,18 @@ int main() {
 
     flag = 4;
 
-    // 1. Test PMP, NA4 in M Mode
-    uint32_t pmp_cfg = 0x00000010; // set pmpcfg0.pmp0cfg to (no L, NA4, no RWX)
-    uint32_t pmp_addr = BAD_PMP_ADDR >> 2; // set pmpaddr0 to the bad address, chop off bottom 2 bits
+    // 0. Setup the instruction/stack/MMIO regions
+    uint32_t pmp_cfg = 0x001F1F00;
     asm volatile("csrw pmpcfg0, %0" : : "r" (pmp_cfg));
+    uint32_t pmp_addr = (0x80000000 >> 2) & ~((1 << 14) - 1) | ((1 << (14 - 1)) - 1);
+    asm volatile("csrw pmpaddr1, %0" : : "r" (pmp_addr));
+    pmp_addr = (0xFFFFFFE0 >> 2) & ~((1 << 4) - 1) | ((1 << (4 - 1)) - 1);
+    asm volatile("csrw pmpaddr2, %0" : : "r" (pmp_addr));
+
+    // 1. Test PMP, NA4 in M Mode
+    pmp_cfg = 0x00000010; // set pmpcfg0.pmp0cfg to (no L, NA4, no RWX)
+    pmp_addr = BAD_PMP_ADDR >> 2; // set pmpaddr0 to the bad address, chop off bottom 2 bits
+    asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
     asm volatile("csrw pmpaddr0, %0" : : "r" (pmp_addr));
     *bad_pmp_addr = 0xDEADBEEF; // should succeed
     flag -= 1;
@@ -39,7 +47,7 @@ int main() {
     // 3. Test PMP, NA4 with L register
     asm volatile("csrc mstatus, %0" : : "r" (mstatus)); // clear mstatus.mprv
     pmp_cfg = 0x00000090; // set pmpcfg0.pmp0cfg to (L, NA4, no RWX)
-    asm volatile("csrw pmpcfg0, %0" : : "r" (pmp_cfg));
+    asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
     *bad_pmp_addr = 0x0987FEDC; // should fail
 
    
