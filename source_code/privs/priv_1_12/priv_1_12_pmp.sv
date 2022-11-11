@@ -59,7 +59,7 @@ module priv_1_12_pmp (
     new_cfg = pmpcfg_t'(priv_ext_if.value_in);
     if (priv_ext_if.csr_active) begin
       casez(priv_ext_if.csr_addr)
-        12'b0011_1010_00zz: begin // 0x3A0
+        12'b0011_1010_00??: begin // 0x3A0
           // WARL check (reserved)
           new_cfg[0].reserved = '0;
           new_cfg[1].reserved = '0;
@@ -96,7 +96,7 @@ module priv_1_12_pmp (
           // Assign field
           nxt_pmp_cfg[priv_ext_if.csr_addr[1:0]] = new_cfg;
         end
-        12'b0011_1011_zzzz: begin // 0x3B0
+        12'b0011_1011_????: begin // 0x3B0
           // Make sure we cannot write to locked CSRs
           if (~pmp_cfg_regs[priv_ext_if.csr_addr[3:2]][priv_ext_if.csr_addr[1:0]].L) begin
             // But wait, TOR messes things up - we need to check the cfg above it
@@ -122,10 +122,10 @@ module priv_1_12_pmp (
     priv_ext_if.value_out = '0;
     priv_ext_if.ack = 1'b1;
     casez(priv_ext_if.csr_addr)
-      12'b0011_1010_00zz: begin
+      12'b0011_1010_00??: begin
         priv_ext_if.value_out = pmp_cfg_regs[priv_ext_if.csr_addr[1:0]];
       end
-      12'b0011_1011_zzzz: begin
+      12'b0011_1011_????: begin
         priv_ext_if.value_out = pmp_addr_regs[priv_ext_if.csr_addr[3:0]];
       end
       default: begin
@@ -159,22 +159,22 @@ module priv_1_12_pmp (
     d_match_found = 1'b1;
     d_prot_fault = 1'b0;
     casez(d_cfg_match)
-      16'bzzzz_zzzz_zzzz_zzz1: d_match = pmp_cfg_regs[0][0];
-      16'bzzzz_zzzz_zzzz_zz1z: d_match = pmp_cfg_regs[0][1];
-      16'bzzzz_zzzz_zzzz_z1zz: d_match = pmp_cfg_regs[0][2];
-      16'bzzzz_zzzz_zzzz_1zzz: d_match = pmp_cfg_regs[0][3];
-      16'bzzzz_zzzz_zzz1_zzzz: d_match = pmp_cfg_regs[1][0];
-      16'bzzzz_zzzz_zz1z_zzzz: d_match = pmp_cfg_regs[1][1];
-      16'bzzzz_zzzz_z1zz_zzzz: d_match = pmp_cfg_regs[1][2];
-      16'bzzzz_zzzz_1zzz_zzzz: d_match = pmp_cfg_regs[1][3];
-      16'bzzzz_zzz1_zzzz_zzzz: d_match = pmp_cfg_regs[2][0];
-      16'bzzzz_zz1z_zzzz_zzzz: d_match = pmp_cfg_regs[2][1];
-      16'bzzzz_z1zz_zzzz_zzzz: d_match = pmp_cfg_regs[2][2];
-      16'bzzzz_1zzz_zzzz_zzzz: d_match = pmp_cfg_regs[2][3];
-      16'bzzz1_zzzz_zzzz_zzzz: d_match = pmp_cfg_regs[3][0];
-      16'bzz1z_zzzz_zzzz_zzzz: d_match = pmp_cfg_regs[3][1];
-      16'bz1zz_zzzz_zzzz_zzzz: d_match = pmp_cfg_regs[3][2];
-      16'b1zzz_zzzz_zzzz_zzzz: d_match = pmp_cfg_regs[3][3];
+      16'b????_????_????_???1: d_match = pmp_cfg_regs[0][0];
+      16'b????_????_????_??10: d_match = pmp_cfg_regs[0][1];
+      16'b????_????_????_?100: d_match = pmp_cfg_regs[0][2];
+      16'b????_????_????_1000: d_match = pmp_cfg_regs[0][3];
+      16'b????_????_???1_0000: d_match = pmp_cfg_regs[1][0];
+      16'b????_????_??10_0000: d_match = pmp_cfg_regs[1][1];
+      16'b????_????_?100_0000: d_match = pmp_cfg_regs[1][2];
+      16'b????_????_1000_0000: d_match = pmp_cfg_regs[1][3];
+      16'b????_???1_0000_0000: d_match = pmp_cfg_regs[2][0];
+      16'b????_??10_0000_0000: d_match = pmp_cfg_regs[2][1];
+      16'b????_?100_0000_0000: d_match = pmp_cfg_regs[2][2];
+      16'b????_1000_0000_0000: d_match = pmp_cfg_regs[2][3];
+      16'b???1_0000_0000_0000: d_match = pmp_cfg_regs[3][0];
+      16'b??10_0000_0000_0000: d_match = pmp_cfg_regs[3][1];
+      16'b?100_0000_0000_0000: d_match = pmp_cfg_regs[3][2];
+      16'b1000_0000_0000_0000: d_match = pmp_cfg_regs[3][3];
       default: d_match_found = 1'b0;
     endcase
 
@@ -220,22 +220,22 @@ module priv_1_12_pmp (
     i_match_found = 1'b1;
     i_prot_fault = 1'b0;
     casez(i_cfg_match)
-      16'bzzzz_zzzz_zzzz_zzz1: i_match = pmp_cfg_regs[0][0];
-      16'bzzzz_zzzz_zzzz_zz1z: i_match = pmp_cfg_regs[0][1];
-      16'bzzzz_zzzz_zzzz_z1zz: i_match = pmp_cfg_regs[0][2];
-      16'bzzzz_zzzz_zzzz_1zzz: i_match = pmp_cfg_regs[0][3];
-      16'bzzzz_zzzz_zzz1_zzzz: i_match = pmp_cfg_regs[1][0];
-      16'bzzzz_zzzz_zz1z_zzzz: i_match = pmp_cfg_regs[1][1];
-      16'bzzzz_zzzz_z1zz_zzzz: i_match = pmp_cfg_regs[1][2];
-      16'bzzzz_zzzz_1zzz_zzzz: i_match = pmp_cfg_regs[1][3];
-      16'bzzzz_zzz1_zzzz_zzzz: i_match = pmp_cfg_regs[2][0];
-      16'bzzzz_zz1z_zzzz_zzzz: i_match = pmp_cfg_regs[2][1];
-      16'bzzzz_z1zz_zzzz_zzzz: i_match = pmp_cfg_regs[2][2];
-      16'bzzzz_1zzz_zzzz_zzzz: i_match = pmp_cfg_regs[2][3];
-      16'bzzz1_zzzz_zzzz_zzzz: i_match = pmp_cfg_regs[3][0];
-      16'bzz1z_zzzz_zzzz_zzzz: i_match = pmp_cfg_regs[3][1];
-      16'bz1zz_zzzz_zzzz_zzzz: i_match = pmp_cfg_regs[3][2];
-      16'b1zzz_zzzz_zzzz_zzzz: i_match = pmp_cfg_regs[3][3];
+      16'b????_????_????_???1: i_match = pmp_cfg_regs[0][0];
+      16'b????_????_????_??10: i_match = pmp_cfg_regs[0][1];
+      16'b????_????_????_?100: i_match = pmp_cfg_regs[0][2];
+      16'b????_????_????_1000: i_match = pmp_cfg_regs[0][3];
+      16'b????_????_???1_0000: i_match = pmp_cfg_regs[1][0];
+      16'b????_????_??10_0000: i_match = pmp_cfg_regs[1][1];
+      16'b????_????_?100_0000: i_match = pmp_cfg_regs[1][2];
+      16'b????_????_1000_0000: i_match = pmp_cfg_regs[1][3];
+      16'b????_???1_0000_0000: i_match = pmp_cfg_regs[2][0];
+      16'b????_??10_0000_0000: i_match = pmp_cfg_regs[2][1];
+      16'b????_?100_0000_0000: i_match = pmp_cfg_regs[2][2];
+      16'b????_1000_0000_0000: i_match = pmp_cfg_regs[2][3];
+      16'b???1_0000_0000_0000: i_match = pmp_cfg_regs[3][0];
+      16'b??10_0000_0000_0000: i_match = pmp_cfg_regs[3][1];
+      16'b?100_0000_0000_0000: i_match = pmp_cfg_regs[3][2];
+      16'b1000_0000_0000_0000: i_match = pmp_cfg_regs[3][3];
       default: i_match_found = 1'b0;
     endcase
 

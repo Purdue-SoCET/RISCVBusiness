@@ -39,7 +39,6 @@ int main() {
     // 1. Test PMP, NAPOT in M Mode
     pmp_cfg = 0x00000018; // set pmpcfg0.pmp0cfg to (no L, NAPOT, no RWX)
     pmp_addr = ((BAD_PMP_ADDR >> 2) & ~((1 << G) - 1)) | ((1 << (G - 1)) - 1); // set pmpaddr0 to the bad address, chop off bottom 2 bits and add in the NAPOT mask
-    put_uint32_hex(pmp_addr);
     asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
     asm volatile("csrw pmpaddr0, %0" : : "r" (pmp_addr));
     *bad_pmp_addr = 0xDEADBEEF; // should succeed
