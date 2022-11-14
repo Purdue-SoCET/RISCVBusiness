@@ -46,21 +46,21 @@ int main() {
     asm volatile("csrw pmpaddr0, %0" : : "r" (pmp_addr));
     *(bad_pmp_addr_bot + 4) = 0xDEADBEEF; // should succeed
     flag -= 1;
-    *(bad_pmp_addr_top + 1) = 0xDEADBEEF; // should succeed
+    *(bad_pmp_addr_top) = 0xDEADBEEF; // should succeed
     flag -= 1;
 
     // 2. Test PMP, NAPOT with MPRV
     uint32_t mstatus = 0x20000; // set mstatus.mprv, mpp should be 2'b00
     asm volatile("csrw mstatus, %0" : : "r" (mstatus));
     *(bad_pmp_addr_bot + 4) = 0xABCD1234; // should fail
-    *(bad_pmp_addr_top + 1) = 0xABCD1234; // should fail
+    *(bad_pmp_addr_top) = 0xABCD1234; // should fail
 
     // 3. Test PMP, NAPOT with L register
     asm volatile("csrc mstatus, %0" : : "r" (mstatus)); // clear mstatus.mprv
     pmp_cfg = 0x00008000; // set pmpcfg0.pmp0cfg to (L, TOR, no RWX)
     asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
     *(bad_pmp_addr_bot + 4) = 0x0987FEDC; // should fail
-    *(bad_pmp_addr_top + 1) = 0x0987FEDC; // should succeed
+    *(bad_pmp_addr_top) = 0x0987FEDC; // should succeed
     flag -= 1;
 
     return 0;

@@ -66,17 +66,17 @@ module priv_1_12_pmp (
           new_cfg[2].reserved = '0;
           new_cfg[3].reserved = '0;
           // WARL check (R/W)
-          if (new_cfg[0].W == 1'b0 && new_cfg[0].R == 1'b1) begin
-            new_cfg[0].R = 1'b0;
+          if (new_cfg[0].R == 1'b0 && new_cfg[0].W == 1'b1) begin
+            new_cfg[0].W = 1'b0;
           end
-          if (new_cfg[1].W == 1'b0 && new_cfg[1].R == 1'b1) begin
-            new_cfg[1].R = 1'b0;
+          if (new_cfg[1].R == 1'b0 && new_cfg[1].W == 1'b1) begin
+            new_cfg[1].W = 1'b0;
           end
-          if (new_cfg[2].W == 1'b0 && new_cfg[2].R == 1'b1) begin
-            new_cfg[2].R = 1'b0;
+          if (new_cfg[2].R == 1'b0 && new_cfg[2].W == 1'b1) begin
+            new_cfg[2].W = 1'b0;
           end
-          if (new_cfg[3].W == 1'b0 && new_cfg[3].R == 1'b1) begin
-            new_cfg[3].R = 1'b0;
+          if (new_cfg[3].R == 1'b0 && new_cfg[3].W == 1'b1) begin
+            new_cfg[3].W = 1'b0;
           end
 
           // Make sure we cannot write to locked CSRs
@@ -103,7 +103,7 @@ module priv_1_12_pmp (
             //    pmpcfg(i) might be TOR, which means it uses both pmpaddr(i) and pmpaddr(i-1)
             //    pg 60 of the v1.12 specification for more info
             if (priv_ext_if.csr_addr[3:0] != 15) begin // 15 is the last valid register, can't check the one above it
-              if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A == TOR) begin // If not TOR, everything is good
+              if (pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A != TOR) begin // If not TOR, everything is good
                 nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
               end else if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L) begin // It was TOR, and is not locked
                 nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
