@@ -84,7 +84,7 @@ module tspp_fetch_stage (
     //Instruction Access logic
     assign hazard_if.i_mem_busy = igen_bus_if.busy;
     assign igen_bus_if.addr = rv32cif.rv32c_ena ? rv32cif.imem_pc : pc;
-    assign igen_bus_if.ren = hazard_if.iren & !rv32cif.done_earlier;
+    assign igen_bus_if.ren = hazard_if.iren & !rv32cif.done_earlier & ~prv_pipe_if.prot_fault_i;
     assign igen_bus_if.wen = 1'b0;
     assign igen_bus_if.byte_en = 4'b1111;
     assign igen_bus_if.wdata = '0;
@@ -108,13 +108,13 @@ module tspp_fetch_stage (
     //Send exceptions to Hazard Unit
     logic mal_addr;
     assign mal_addr = (igen_bus_if.addr[1:0] != 2'b00);
-    assign hazard_if.fault_insn = 1'b0;
+    assign hazard_if.fault_insn = prv_pipe_if.prot_fault_i;
     assign hazard_if.mal_insn = mal_addr;
     assign hazard_if.badaddr_f = igen_bus_if.addr;
     assign hazard_if.epc_f = pc;
 
     // Send memory protection signals
-    assign prv_pipe_if.iren = igen_bus_if.ren;
+    assign prv_pipe_if.iren = 1'b1;
     assign prv_pipe_if.iaddr = igen_bus_if.addr;
     assign prv_pipe_if.i_acc_width = WordAcc;
 

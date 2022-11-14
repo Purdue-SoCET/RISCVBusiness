@@ -378,9 +378,9 @@ module tspp_execute_stage (
     //Send exceptions to Hazard Unit
     assign hazard_if.illegal_insn = (cu_if.illegal_insn & ~rm_if.ex_token)
                                     | prv_pipe_if.invalid_csr;
-    assign hazard_if.fault_l = 1'b0;
+    assign hazard_if.fault_l = prv_pipe_if.prot_fault_l;
     assign hazard_if.mal_l = cu_if.dren & mal_addr;
-    assign hazard_if.fault_s = 1'b0;
+    assign hazard_if.fault_s = prv_pipe_if.prot_fault_s;
     assign hazard_if.mal_s = cu_if.dwen & mal_addr;
     assign hazard_if.breakpoint = cu_if.breakpoint;
     assign hazard_if.env_m = cu_if.ecall_insn;
