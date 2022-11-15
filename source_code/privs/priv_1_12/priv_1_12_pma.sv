@@ -39,25 +39,33 @@ module priv_1_12_pma (
   pma_cfg_t pma_cfg_d, pma_cfg_i;
   pma_reg_t new_val;
 
+  // Some easy to use config constants
+  //  ROM_PMA - reserved, no W, R, X, WordAcc, Idm, Cache, Coh, RsrvEventual, AMONone, Memory
+  `define ROM_PMA pma_cfg_t'({2'b0, 1'b0, 1'b1, 1'b1, WordAcc, 1'b1, 1'b1, 1'b1, RsrvEventual, AMONone, 1'b1})
+  //  RAM_PMA - reserved, W, R, X, WordAcc, Idm, Cache, Coh, RsrvEventual, AMONone, Memory
+  `define RAM_PMA pma_cfg_t'({2'b0, 1'b1, 1'b1, 1'b1, WordAcc, 1'b1, 1'b1, 1'b1, RsrvEventual, AMONone, 1'b1})
+  //  IO_PMA - reserved, W, R, X, WordAcc, no Idm, no Cache, Coh, RsrvEventual, AMONone, I/O
+  `define IO_PMA  pma_cfg_t'({2'b0, 1'b1, 1'b1, 1'b1, WordAcc, 1'b0, 1'b0, 1'b1, RsrvEventual, AMONone, 1'b0})
+
   // Core State Registers
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      pma_regs[00] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h1BF1)}); // 0 - ROM, 1 - RAM
-      pma_regs[01] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[02] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[03] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[04] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[05] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[06] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[07] <= pma_reg_t'({pma_cfg_t'(16'h3BF1), pma_cfg_t'(16'h3BF1)}); // RAM
-      pma_regs[08] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[09] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[10] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[11] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[12] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[13] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[14] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
-      pma_regs[15] <= pma_reg_t'({pma_cfg_t'(16'h3B30), pma_cfg_t'(16'h3B30)}); // I/O
+      pma_regs[00] <= pma_reg_t'({`RAM_PMA, `ROM_PMA});
+      pma_regs[01] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[02] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[03] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[04] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[05] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[06] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[07] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
+      pma_regs[08] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[09] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[10] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[11] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[12] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[13] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[14] <= pma_reg_t'({`IO_PMA, `IO_PMA});
+      pma_regs[15] <= pma_reg_t'({`IO_PMA, `IO_PMA});
     end else begin
       pma_regs <= nxt_pma_regs;
     end
