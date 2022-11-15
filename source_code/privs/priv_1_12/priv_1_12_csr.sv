@@ -248,7 +248,7 @@ module priv_1_12_csr #(
                   prv_intern_if.new_csr_val;
     invalid_csr_0 = 1'b0;
 
-    if (prv_intern_if.csr_addr[9:8] & prv_intern_if.curr_priv != 2'b11) begin
+    if (prv_intern_if.csr_addr[9:8] > prv_intern_if.curr_priv) begin
       if (prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear) begin
         invalid_csr_0 = 1'b1; // Not enough privilege
       end
@@ -256,7 +256,7 @@ module priv_1_12_csr #(
       if (prv_intern_if.valid_write) begin
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
-            if (prv_intern_if.new_csr_val[12:11] == 2'b10) begin
+            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE) begin
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
@@ -283,9 +283,9 @@ module priv_1_12_csr #(
           end
 
           MIP_ADDR: begin
-              mip_next.msip = nxt_csr_val[3];
-              mip_next.mtip = nxt_csr_val[7];
-              mip_next.meip = nxt_csr_val[11];
+            mip_next.msip = nxt_csr_val[3];
+            mip_next.mtip = nxt_csr_val[7];
+            mip_next.meip = nxt_csr_val[11];
           end
           MSCRATCH_ADDR: begin
             mscratch_next = nxt_csr_val;

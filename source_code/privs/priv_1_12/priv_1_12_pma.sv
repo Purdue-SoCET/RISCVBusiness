@@ -79,10 +79,10 @@ module priv_1_12_pma (
           new_val.pma_cfg_0.Rsrv = RsrvNone;
         end
         if (new_val.pma_cfg_0.AccWidth == AccWidthReserved) begin
-          new_val.pma_cfg_0.Rsrv = WordAcc;
+          new_val.pma_cfg_0.AccWidth = WordAcc;
         end
         if (new_val.pma_cfg_1.AccWidth == AccWidthReserved) begin
-          new_val.pma_cfg_0.Rsrv = WordAcc;
+          new_val.pma_cfg_0.AccWidth = WordAcc;
         end
 
         nxt_pma_regs[priv_ext_if.csr_addr[3:0]] = new_val;
