@@ -76,8 +76,8 @@ interface priv_1_12_internal_if;
     word_t priv_pc; // pc to handle the interrupt/exception
     logic pipe_clear; // is the pipeline clear of hazards
     logic insert_pc; // inform pipeline that we are changing the PC
-    logic mret, sret, uret; // returning from a trap instruction
-    logic intr; // Did something trigger an interrupt?
+    logic mret, sret; // returning from a trap instruction
+    logic intr; // Did something trigger an interrupt or exception?
 
     // Addresses and memory access info for memory protection
     logic [RAM_ADDR_SIZE-1:0] daddr, iaddr; // Address to check
@@ -103,13 +103,13 @@ interface priv_1_12_internal_if;
             clear_timer_int_u, clear_timer_int_s, clear_timer_int_m, clear_soft_int_u, clear_soft_int_s, clear_soft_int_m,
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
             env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtval,
-            mret, sret, uret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc,
+            mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_priv,
         output inject_mcause, inject_mepc, inject_mie, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, intr
     );
 
     modport pipe_ctrl (
-        input intr, pipe_clear, mret, sret, uret, curr_mtvec, curr_mcause, curr_mepc,
+        input intr, pipe_clear, mret, sret, curr_mtvec, curr_mcause, curr_mepc,
         output insert_pc, priv_pc
     );
 
@@ -121,6 +121,11 @@ interface priv_1_12_internal_if;
     modport pmp (
         input iaddr, daddr, ren, wen, xen, curr_priv, curr_mstatus,
         output pmp_s_fault, pmp_i_fault, pmp_l_fault
+    );
+
+    modport mode (
+        input mret, curr_mstatus, intr,
+        output curr_priv
     );
 
 endinterface

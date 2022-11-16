@@ -45,8 +45,6 @@ module priv_1_12_block (
     priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
     priv_1_12_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
 
-    priv_level_t curr_priv;
-
     assign prv_intern_if.curr_priv = M_MODE; // TODO make this changeable
 
     // Assign CSR values
@@ -57,7 +55,7 @@ module priv_1_12_block (
     assign prv_intern_if.csr_set = prv_pipe_if.set;
     assign prv_intern_if.new_csr_val = prv_pipe_if.wdata;
     assign prv_pipe_if.rdata = prv_intern_if.old_csr_val;
-    assign prv_pipe_if.invalid_csr = prv_intern_if.invalid_csr;
+    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.ret & (prv_intern_if.curr_priv != M_MODE));
 
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;
@@ -92,17 +90,16 @@ module priv_1_12_block (
     assign prv_intern_if.fault_s           = prv_pipe_if.fault_s;
     assign prv_intern_if.mal_s             = prv_pipe_if.mal_s;
     assign prv_intern_if.breakpoint        = prv_pipe_if.breakpoint;
-    assign prv_intern_if.env_m             = prv_pipe_if.env_m;
+    assign prv_intern_if.env_m             = prv_pipe_if.env && (prv_intern_if.curr_priv == M_MODE);
     assign prv_intern_if.env_s             = 1'b0;
-    assign prv_intern_if.env_u             = 1'b0;
+    assign prv_intern_if.env_u             = prv_pipe_if.env && (prv_intern_if.curr_priv == U_MODE);
     assign prv_intern_if.fault_insn_page   = 1'b0;
     assign prv_intern_if.fault_load_page   = 1'b0;
     assign prv_intern_if.fault_store_page  = 1'b0;
     assign prv_intern_if.curr_mtval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
-    assign prv_intern_if.mret              = prv_pipe_if.ret;  // TODO make this changeable
+    assign prv_intern_if.mret              = prv_pipe_if.ret & (prv_intern_if.curr_priv == M_MODE);
     assign prv_intern_if.sret              = 1'b0;
-    assign prv_intern_if.uret              = 1'b0;
 
     // RISC-MGMT?
     //  not sure what these are for, part of priv 1.11

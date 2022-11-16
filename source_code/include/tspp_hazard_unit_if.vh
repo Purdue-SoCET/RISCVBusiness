@@ -34,7 +34,7 @@ interface tspp_hazard_unit_if();
 
   //Pipeline Exceptions
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-        breakpoint, env_m;
+        breakpoint, env;
   word_t epc_f, epc_e, badaddr_f, badaddr_e;
 
   // TVEC Insertion
@@ -51,7 +51,7 @@ interface tspp_hazard_unit_if();
     input i_mem_busy, d_mem_busy, dren, dwen, jump,
           branch, mispredict, halt, pc,fault_insn, mal_insn, 
           illegal_insn, fault_l, 
-          mal_l, fault_s, mal_s, breakpoint, env_m, ret,
+          mal_l, fault_s, mal_s, breakpoint, env, ret,
           epc_f, epc_e, badaddr_f, badaddr_e, token_ex, fence_stall, rv32c_ready,
     output pc_en, npc_sel, if_ex_stall, if_ex_flush, priv_pc, insert_priv_pc, iren
   );
@@ -64,7 +64,7 @@ interface tspp_hazard_unit_if();
   modport execute (
     input if_ex_stall, npc_sel,
     output d_mem_busy, dren, dwen, jump, branch, mispredict, halt,
-    illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env_m, ret, epc_e,
+    illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, ret, epc_e,
     badaddr_e, token_ex, fence_stall
   );
  

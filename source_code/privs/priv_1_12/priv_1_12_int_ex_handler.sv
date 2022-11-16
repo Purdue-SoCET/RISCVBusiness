@@ -162,6 +162,14 @@ module priv_1_12_int_ex_handler (
             prv_intern_if.next_mstatus.mpie = 1'b0; // leaving the vector table
             prv_intern_if.next_mstatus.mie = prv_intern_if.curr_mstatus.mpie;
         end
+
+        // We need to change mstatus bits for mode changes
+        if (prv_intern_if.mret) begin // If we are going back from a trap
+            prv_intern_if.next_mstatus.mpp = U_MODE; // We must set mpp to the least privileged mode possible
+            prv_intern_if.next_mstatus.mprv = 1'b0;
+        end else if (prv_intern_if.intr) begin // If we are receiving an exception or interrupt
+            prv_intern_if.next_mstatus.mpp = prv_intern_if.curr_priv;
+        end
     end
 
     // Update EPC as soon as interrupt or exception is found

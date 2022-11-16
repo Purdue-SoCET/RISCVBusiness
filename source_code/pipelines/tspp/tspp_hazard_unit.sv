@@ -78,7 +78,7 @@ module tspp_hazard_unit (
     assign prv_pipe_if.ret = hazard_if.ret;
     assign e_ex_stage = hazard_if.illegal_insn | hazard_if.fault_l | hazard_if.mal_l |
                       hazard_if.fault_s | hazard_if.mal_s | hazard_if.breakpoint |
-                      hazard_if.env_m;
+                      hazard_if.env;
     assign e_f_stage = hazard_if.fault_insn | hazard_if.mal_insn;
     assign intr = ~e_ex_stage & ~e_f_stage & prv_pipe_if.intr;
 
@@ -103,7 +103,7 @@ module tspp_hazard_unit (
     assign prv_pipe_if.fault_s = hazard_if.fault_s;
     assign prv_pipe_if.mal_s = hazard_if.mal_s;
     assign prv_pipe_if.breakpoint = hazard_if.breakpoint;
-    assign prv_pipe_if.env_m = hazard_if.env_m;
+    assign prv_pipe_if.env = hazard_if.env;
     assign prv_pipe_if.ex_rmgmt = rm_if.exception;
 
     assign prv_pipe_if.ex_rmgmt_cause = rm_if.ex_cause;
