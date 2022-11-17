@@ -256,7 +256,7 @@ module priv_1_12_csr #(
       if (prv_intern_if.valid_write) begin
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
-            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE) begin
+            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || prv_intern_if.new_csr_val[12:11] == S_MODE) begin
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);

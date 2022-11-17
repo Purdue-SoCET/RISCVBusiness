@@ -55,7 +55,8 @@ module priv_1_12_block (
     assign prv_intern_if.csr_set = prv_pipe_if.set;
     assign prv_intern_if.new_csr_val = prv_pipe_if.wdata;
     assign prv_pipe_if.rdata = prv_intern_if.old_csr_val;
-    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.ret & (prv_intern_if.curr_priv != M_MODE));
+    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.ret & (prv_intern_if.curr_priv != M_MODE)) 
+                                            | (prv_pipe_if.wfi & (prv_intern_if.curr_priv == U_MODE) & (prv_intern_if.curr_mstatus.tw));
 
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;

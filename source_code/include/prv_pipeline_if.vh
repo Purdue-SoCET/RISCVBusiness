@@ -34,7 +34,7 @@ interface prv_pipeline_if();
 
   // exception signals
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-        breakpoint, env, ret;
+        breakpoint, env, ret, wfi;
 
   // interrupt signals
   logic timer_int, soft_int, ext_int;
@@ -72,7 +72,7 @@ interface prv_pipeline_if();
   );
 
   modport pipe (
-    output swap, clr, set, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width,
+    output swap, clr, set, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, wfi,
     input  rdata, invalid_priv_isn, prot_fault_s, prot_fault_l
   );
 
@@ -84,7 +84,7 @@ interface prv_pipeline_if();
   modport priv_block (
     input pipe_clear, ret, epc, fault_insn, mal_insn,
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
-          breakpoint, env, badaddr, swap, clr, set,
+          breakpoint, env, badaddr, swap, clr, set, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,

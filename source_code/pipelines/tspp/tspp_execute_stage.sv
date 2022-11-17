@@ -73,6 +73,7 @@ module tspp_execute_stage (
     );
 
     assign wfi = cu_if.wfi;  //Added by rkannank
+    assign prv_pipe_if.wfi = cu_if.wfi;
 
     generate
         if (BASE_ISA == "RV32E") begin : g_rfile_select
