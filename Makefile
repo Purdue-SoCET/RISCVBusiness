@@ -38,6 +38,7 @@ define USAGE
 @echo "     config: config core with example.yml"
 @echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
 @echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target"
+@echo "     lint: Invoke 'FuseSoC run --build' to run the Verilator lint target"
 @echo "     clean: Remove build directories"
 @echo "     veryclean: Remove fusesoc libraries & build directories"
 @echo "----------------------------------------------------------------------"
@@ -66,6 +67,10 @@ xcelium: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool xcelium socet:riscv:RISCVBusiness
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
+
+lint: config
+	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
+	@echo "Lint finished, no errors found"
 
 clean:
 	rm -rf build
