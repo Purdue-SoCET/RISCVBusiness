@@ -44,6 +44,7 @@ module priv_1_12_block (
     priv_1_12_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
     priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
     priv_1_12_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
+    priv_1_12_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
     assign prv_intern_if.curr_priv = M_MODE; // TODO make this changeable
 

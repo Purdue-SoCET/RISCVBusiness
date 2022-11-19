@@ -13,6 +13,7 @@ filesets:
             - priv_1_12/priv_1_12_pma.sv
             - priv_1_12/priv_1_12_pmp.sv
             - priv_1_12/priv_1_12_pmp_matcher.sv
+            - priv_1_12/priv_1_12_mode.sv
         file_type: systemVerilogSource
 
 

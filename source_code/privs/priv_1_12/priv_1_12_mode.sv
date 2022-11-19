@@ -27,9 +27,9 @@
 `include "core_interrupt_if.vh"
 `include "priv_ext_if.vh"
 
-module priv_1_12_block (
+module priv_1_12_mode (
     input logic CLK, nRST,
-    priv_1_12_internal_if.mode prv_intern_if,
+    priv_1_12_internal_if.mode prv_intern_if
 );
 
     import machine_mode_types_1_12_pkg::*;
@@ -38,7 +38,7 @@ module priv_1_12_block (
     priv_level_t curr_priv, next_priv;
 
     always_ff @ (posedge CLK, negedge nRST) begin
-        if (nRST) begin
+        if (~nRST) begin
             curr_priv <= M_MODE;
         end else begin
             curr_priv <= next_priv;
