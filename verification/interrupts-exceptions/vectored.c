@@ -81,6 +81,7 @@ int main() {
 
 
     // set mtimecmp away so interrupt doesn't fire immediately
+    *mtimecmph = 0x00;
     *mtimecmp = 0xFF;
 
     // Setup interrupts
