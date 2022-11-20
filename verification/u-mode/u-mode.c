@@ -5,12 +5,11 @@ extern volatile int flag;
 extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
-    uint32_t mepc, mtval, mcause_raw;
+    uint32_t mepc, mtval;
     mcause_t mcause;
     asm volatile("csrr %0, mepc" : "=r"(mepc));
     asm volatile("csrr %0, mtval" : "=r"(mtval));
-    asm volatile("csrr %0, mcause" : "=r"(mcause_raw));
-    mcause = *((mcause_t*) &mcause_raw); // hacky C shit
+    asm volatile("csrr %0, mcause" : "=r"((mcause_t) mcause));
 
     print("mepc: ");
     put_uint32_hex(mepc);
@@ -28,10 +27,10 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
 
     print("-----\n");
 
-    if (mcause.ex_code == 8){
+    if (~mcause.interrupt && mcause.ex_code == 8){
         uint32_t mstatus = 0x1800; // set mpp back to M_MODE
         asm volatile("csrs mstatus, %0" : : "r"(mstatus));
-        mepc = (uint32_t) done; // TODO get the address of done
+        mepc = (uint32_t) &done;
     }
     else
     {
@@ -47,6 +46,13 @@ void __attribute__((noreturn)) user_main(void) {
 
     flag = 0; // Flag is protected, should fail
 
+    asm volatile("mret"); // privileged instruction
+
+    uint32_t temp;
+    asm volatile("csrr %0, mstatush" : "=r"(temp)); // Machine mode CSR
+
+    asm volatile("wfi"); // No timeout wait enabled
+
     asm volatile("ecall"); // ends user_main
 
     __builtin_unreachable();
@@ -57,7 +63,7 @@ int main(void) {
     // Setup exceptions
     uint32_t mtvec_value = (uint32_t) handler;
     uint32_t mstatus_value = 0x08;
-    asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
+    asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
     asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
 
     // Setup PMP
@@ -70,7 +76,7 @@ int main(void) {
 
 
     // Jump to user program
-    flag = 3;
+    flag = 6;
     uint32_t mepc_value = (uint32_t) user_main;
     asm volatile("csrw mepc, %0" : : "r"(mepc_value));
     asm volatile("mret");

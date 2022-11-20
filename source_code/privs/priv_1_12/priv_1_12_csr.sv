@@ -151,7 +151,7 @@ module priv_1_12_csr #(
       /* mstatus reset */
       mstatus.mie <= 1'b0;
       mstatus.mpie <= 1'b0;
-      mstatus.mpp <= M_MODE;
+      mstatus.mpp <= U_MODE;
       mstatus.mprv <= 1'b0;
       mstatus.tw <= 1'b1;
       mstatus.reserved_0 <= '0;

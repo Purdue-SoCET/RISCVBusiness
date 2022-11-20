@@ -46,8 +46,6 @@ module priv_1_12_block (
     priv_1_12_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
     priv_1_12_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
-    assign prv_intern_if.curr_priv = M_MODE; // TODO make this changeable
-
     // Assign CSR values
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.csr_addr;
