@@ -41,7 +41,7 @@ interface priv_1_12_internal_if;
 
     // CSR block values
     csr_addr_t csr_addr; // CSR address to read
-    logic csr_write, csr_set, csr_clear; // Is the CSR currently being modified?
+    logic csr_write, csr_set, csr_clear, csr_read; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
     logic inst_ret; // signal when an instruction is retired
     word_t new_csr_val, old_csr_val; // new and old CSR values (atomically swapped)
@@ -91,7 +91,7 @@ interface priv_1_12_internal_if;
     logic pmp_s_fault, pmp_l_fault, pmp_i_fault; // PMP store fault, load fault, instruction fault
 
     modport csr (
-        input csr_addr, curr_priv, csr_write, csr_set, csr_clear, new_csr_val, inst_ret, valid_write,
+        input csr_addr, curr_priv, csr_write, csr_set, csr_clear, csr_read, new_csr_val, inst_ret, valid_write,
             inject_mcause, inject_mepc, inject_mie, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval,
         output old_csr_val, invalid_csr,

@@ -96,12 +96,12 @@ module priv_1_12_csr #(
   `ifdef RV32F_SUPPORTED
     assign priv_ext_f_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_f_if.value_in = nxt_csr_val;
-    assign priv_ext_f_if.csr_active = prv_intern_if.valid_write & (csr_operation);
+    assign priv_ext_f_if.csr_active = ~invalid_csr_priv & prv_intern_if.valid_write & (csr_operation);
 `endif // RV32F_SUPPORTED
 `ifdef RV32V_SUPPORTED
     assign priv_ext_v_if.csr_addr = prv_intern_if.csr_addr;
     assign priv_ext_v_if.value_in = nxt_csr_val;
-    assign priv_ext_v_if.csr_active = prv_intern_if.valid_write & (csr_operation);
+    assign priv_ext_v_if.csr_active = ~invalid_csr_priv & prv_intern_if.valid_write & (csr_operation);
 `endif // RV32V_SUPPORTED
 
   /* Save some logic with this */
@@ -254,9 +254,9 @@ module priv_1_12_csr #(
                   prv_intern_if.new_csr_val;
     invalid_csr_priv = 1'b0;
 
-    if (prv_intern_if.csr_addr[11:10] == 2'b11 && 1'b0 /* TODO add read signal here */) begin
+    if (prv_intern_if.csr_addr[11:10] == 2'b11 && !prv_intern_if.csr_read) begin
       if (csr_operation) begin
-        invalid_csr_priv = 1'b1;
+        invalid_csr_priv = 1'b1; // Attempting to modify a R/O CSR
       end
     end else if (prv_intern_if.csr_addr[9:8] > prv_intern_if.curr_priv) begin
       if (csr_operation) begin
@@ -442,14 +442,14 @@ module priv_1_12_csr #(
         if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = /* TODO get mtime */;
+          prv_intern_if.old_csr_val = /* TODO get mtime */ '0;
         end
       end
       TIMEH_ADDR: begin
         if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = /* TODO get mtimeh */;
+          prv_intern_if.old_csr_val = /* TODO get mtimeh */ '0;
         end
       end
       /* Extension Addresses */
