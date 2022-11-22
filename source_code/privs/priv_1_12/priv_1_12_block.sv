@@ -29,6 +29,7 @@
 
 module priv_1_12_block (
     input logic CLK, nRST,
+    input logic [63:0] mtime,
     prv_pipeline_if.priv_block prv_pipe_if,
     core_interrupt_if.core interrupt_if
 );
@@ -39,7 +40,7 @@ module priv_1_12_block (
     priv_ext_if priv_ext_pma_if();
     priv_ext_if priv_ext_pmp_if();
 
-    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
+    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
     priv_1_12_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
     priv_1_12_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
     priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));

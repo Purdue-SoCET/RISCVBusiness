@@ -31,6 +31,7 @@ module priv_1_12_csr #(
 )(
   input CLK,
   input nRST,
+  input logic [63:0] mtime,
   priv_1_12_internal_if.csr prv_intern_if,
   priv_ext_if.priv priv_ext_pma_if,
   priv_ext_if.priv priv_ext_pmp_if
@@ -442,14 +443,14 @@ module priv_1_12_csr #(
         if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = /* TODO get mtime */ '0;
+          prv_intern_if.old_csr_val = /* TODO get mtime */ mtime[31:0];
         end
       end
       TIMEH_ADDR: begin
         if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = /* TODO get mtimeh */ '0;
+          prv_intern_if.old_csr_val = /* TODO get mtimeh */ mtime[63:32];
         end
       end
       /* Extension Addresses */

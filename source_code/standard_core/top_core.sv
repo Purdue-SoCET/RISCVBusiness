@@ -6,6 +6,7 @@ module top_core #(
 ) (
     input CLK,
     nRST,
+    input [63:0] mtime,
     output wfi,
     halt,
     // generic bus if case

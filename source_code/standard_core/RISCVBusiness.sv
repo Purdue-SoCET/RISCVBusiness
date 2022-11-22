@@ -33,8 +33,8 @@
 `include "rv32c_if.vh"
 
 module RISCVBusiness (
-    input logic CLK,
-    nRST,
+    input logic CLK, nRST,
+    input logic [63:0] mtime,
     output logic wfi,
     halt,
     core_interrupt_if.core interrupt_if,
@@ -132,7 +132,8 @@ module RISCVBusiness (
         .CLK(CLK),
         .nRST(nRST),
         .prv_pipe_if(prv_pipe_if),
-        .interrupt_if
+        .interrupt_if,
+        .mtime(mtime)
     );
 
     risc_mgmt_wrapper rmgmt (
