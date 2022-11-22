@@ -123,6 +123,7 @@ module priv_1_12_csr #(
   assign misa.base = BASE_RV32;
   // NOTE: Per the v1.12 spec, both I and E CANNOT be high - If supporting E, I must be disabled
   assign misa.extensions =      MISA_EXT_I
+                              | MISA_EXT_U
                             `ifdef RV32C_SUPPORTED
                                 | MISA_EXT_C
                              `endif `ifdef RV32E_SUPPORTED
@@ -131,8 +132,6 @@ module priv_1_12_csr #(
                                 | MISA_EXT_F
                             `endif `ifdef RV32M_SUPPORTED
                                 | MISA_EXT_M
-                            `endif `ifdef RV32U_SUPPORTED
-                                | MISA_EXT_U
                             `endif `ifdef RV32V_SUPPORTED
                                 | MISA_EXT_V
                             `endif `ifdef CUSTOM_SUPPORTED
