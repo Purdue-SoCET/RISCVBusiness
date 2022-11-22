@@ -35,25 +35,25 @@ module priv_1_12_mode (
     import machine_mode_types_1_12_pkg::*;
     import rv32i_types_pkg::*;
 
-    priv_level_t curr_priv, next_priv;
+    priv_level_t curr_priv_level, next_priv_level;
 
     always_ff @ (posedge CLK, negedge nRST) begin
         if (~nRST) begin
-            curr_priv <= M_MODE;
+            curr_priv_level <= M_MODE;
         end else begin
-            curr_priv <= next_priv;
+            curr_priv_level <= next_priv_level;
         end
     end
 
     always_comb begin
-        next_priv = curr_priv;
+        next_priv_level = curr_priv_level;
         if (prv_intern_if.intr) begin
-            next_priv = M_MODE;
+            next_priv_level = M_MODE;
         end else if (prv_intern_if.mret) begin
-            next_priv = prv_intern_if.curr_mstatus.mpp;
+            next_priv_level = prv_intern_if.curr_mstatus.mpp;
         end
     end
 
-    assign prv_intern_if.curr_priv = curr_priv;
+    assign prv_intern_if.curr_privilege_level = curr_priv_level;
 
 endmodule

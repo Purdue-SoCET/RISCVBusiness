@@ -45,7 +45,7 @@ interface prv_pipeline_if();
   word_t [3:0] xtvec, xepc_r;
 
   // csr rw
-  logic       swap, clr, set, read;
+  logic       swap, clr, set, read_only;
   logic       invalid_priv_isn, valid_write;
   csr_addr_t  csr_addr;
   word_t      rdata, wdata;
@@ -72,7 +72,7 @@ interface prv_pipeline_if();
   );
 
   modport pipe (
-    output swap, clr, set, read, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, wfi,
+    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, wfi,
     input  rdata, invalid_priv_isn, prot_fault_s, prot_fault_l
   );
 
@@ -84,7 +84,7 @@ interface prv_pipeline_if();
   modport priv_block (
     input pipe_clear, ret, epc, fault_insn, mal_insn,
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
-          breakpoint, env, badaddr, swap, clr, set, read, wfi,
+          breakpoint, env, badaddr, swap, clr, set, read_only, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,

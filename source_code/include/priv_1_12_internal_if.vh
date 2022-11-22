@@ -37,11 +37,11 @@ interface priv_1_12_internal_if;
     logic ex_rmgmt;
     logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
 
-    priv_level_t curr_priv; // Current process privilege
+    priv_level_t curr_privilege_level; // Current process privilege
 
     // CSR block values
     csr_addr_t csr_addr; // CSR address to read
-    logic csr_write, csr_set, csr_clear, csr_read; // Is the CSR currently being modified?
+    logic csr_write, csr_set, csr_clear, csr_read_only; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
     logic inst_ret; // signal when an instruction is retired
     word_t new_csr_val, old_csr_val; // new and old CSR values (atomically swapped)
@@ -91,7 +91,7 @@ interface priv_1_12_internal_if;
     logic pmp_s_fault, pmp_l_fault, pmp_i_fault; // PMP store fault, load fault, instruction fault
 
     modport csr (
-        input csr_addr, curr_priv, csr_write, csr_set, csr_clear, csr_read, new_csr_val, inst_ret, valid_write,
+        input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, valid_write,
             inject_mcause, inject_mepc, inject_mie, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval,
         output old_csr_val, invalid_csr,
@@ -103,7 +103,7 @@ interface priv_1_12_internal_if;
             clear_timer_int_u, clear_timer_int_s, clear_timer_int_m, clear_soft_int_u, clear_soft_int_s, clear_soft_int_m,
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
             env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtval,
-            mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_priv,
+            mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level,
         output inject_mcause, inject_mepc, inject_mie, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, intr
     );
@@ -119,13 +119,13 @@ interface priv_1_12_internal_if;
     );
 
     modport pmp (
-        input iaddr, daddr, ren, wen, xen, curr_priv, curr_mstatus,
+        input iaddr, daddr, ren, wen, xen, curr_privilege_level, curr_mstatus,
         output pmp_s_fault, pmp_i_fault, pmp_l_fault
     );
 
     modport mode (
         input mret, curr_mstatus, intr,
-        output curr_priv
+        output curr_privilege_level
     );
 
 endinterface

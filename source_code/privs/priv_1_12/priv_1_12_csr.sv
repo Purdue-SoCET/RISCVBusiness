@@ -255,11 +255,11 @@ module priv_1_12_csr #(
                   prv_intern_if.new_csr_val;
     invalid_csr_priv = 1'b0;
 
-    if (prv_intern_if.csr_addr[11:10] == 2'b11 && !prv_intern_if.csr_read) begin
+    if (prv_intern_if.csr_addr[11:10] == 2'b11 && !prv_intern_if.csr_read_only) begin
       if (csr_operation) begin
         invalid_csr_priv = 1'b1; // Attempting to modify a R/O CSR
       end
-    end else if (prv_intern_if.csr_addr[9:8] > prv_intern_if.curr_priv) begin
+    end else if (prv_intern_if.csr_addr[9:8] > prv_intern_if.curr_privilege_level) begin
       if (csr_operation) begin
         invalid_csr_priv = 1'b1; // Not enough privilege
       end
@@ -412,42 +412,42 @@ module priv_1_12_csr #(
       MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
-        if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.cy) begin
+        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycle;
         end
       end
       CYCLEH_ADDR: begin
-        if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.cy) begin
+        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycleh;
         end
       end
       INSTRET_ADDR: begin
-        if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.ir) begin
+        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.ir) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstret;
         end
       end
       INSTRETH_ADDR: begin
-        if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.ir) begin
+        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.ir) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstreth;
         end
       end
       TIME_ADDR: begin
-        if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.tm) begin
+        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtime */ mtime[31:0];
         end
       end
       TIMEH_ADDR: begin
-        if (prv_intern_if.curr_priv == U_MODE & ~mcounteren.tm) begin
+        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtimeh */ mtime[63:32];

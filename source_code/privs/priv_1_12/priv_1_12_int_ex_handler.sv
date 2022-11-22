@@ -165,7 +165,7 @@ module priv_1_12_int_ex_handler (
 
         // We need to change mstatus bits for mode changes
         if (prv_intern_if.intr) begin // If we are receiving an exception or interrupt
-            prv_intern_if.next_mstatus.mpp = prv_intern_if.curr_priv;
+            prv_intern_if.next_mstatus.mpp = prv_intern_if.curr_privilege_level;
         end else if (prv_intern_if.mret) begin // If we are going back from a trap
             prv_intern_if.next_mstatus.mpp = U_MODE; // We must set mpp to the least privileged mode possible
             if (prv_intern_if.curr_mstatus.mpp != M_MODE) begin
