@@ -49,7 +49,7 @@ void __attribute__((noreturn)) user_main(void) {
     asm volatile("mret"); // privileged instruction
 
     uint32_t temp;
-    asm volatile("csrr %0, mstatush" : "=r"(temp)); // Machine mode CSR
+    asm volatile("csrr %0, mstatus" : "=r"(temp)); // Machine mode CSR
 
     asm volatile("wfi"); // No timeout wait enabled
 
