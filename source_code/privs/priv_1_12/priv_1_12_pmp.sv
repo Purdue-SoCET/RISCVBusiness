@@ -243,13 +243,13 @@ module priv_1_12_pmp (
       if (~i_match_found) begin
         i_prot_fault = 1'b1;
       end else begin
-        if ((prv_intern_if.ren & ~i_match.R) || (prv_intern_if.wen & ~i_match.W)) begin
+        if (prv_intern_if.xen & ~i_match.X) begin
           i_prot_fault = 1'b1;
         end
       end
     end else begin // Core is in M_MODE with no privilege check requirements
       if (d_match_found & i_match.L) begin
-        if ((prv_intern_if.ren & ~i_match.R) || (prv_intern_if.wen & ~i_match.W)) begin
+        if (prv_intern_if.xen & ~i_match.X) begin
           i_prot_fault = 1'b1;
         end
       end
