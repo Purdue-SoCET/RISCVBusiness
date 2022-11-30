@@ -344,9 +344,6 @@ module priv_1_12_csr #(
     if (prv_intern_if.inject_mcause) begin
       mcause_next = prv_intern_if.next_mcause;
     end
-    if (prv_intern_if.inject_mie) begin
-      mie_next = prv_intern_if.next_mie;
-    end
     if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
     end

@@ -11,11 +11,11 @@ void print(char *string) {
 
 void put_uint32_hex(uint32_t x) {
     char buf[10] = {0};
-    
+
     for(int i = 0; i < 8; i++) {
         uint8_t value = (x & 0xF);
         if(value >= 10) {
-            buf[7-i] = (value + 'A');
+            buf[7-i] = ((value-10) + 'A');
         } else {
             buf[7-i] = (value + '0');
         }

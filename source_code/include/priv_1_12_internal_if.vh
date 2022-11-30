@@ -69,7 +69,7 @@ interface priv_1_12_internal_if;
     mstatus_t curr_mstatus, next_mstatus;
     mtvec_t curr_mtvec;
     csr_reg_t curr_mtval, next_mtval;
-    logic inject_mip, inject_mie, inject_mcause, inject_mepc, inject_mstatus, inject_mtval;
+    logic inject_mip, inject_mcause, inject_mepc, inject_mstatus, inject_mtval;
 
     // Things from the pipe we care about
     word_t epc; // pc of the instruction prior to the exception
@@ -92,7 +92,7 @@ interface priv_1_12_internal_if;
 
     modport csr (
         input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, valid_write,
-            inject_mcause, inject_mepc, inject_mie, inject_mip, inject_mstatus, inject_mtval,
+            inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval,
         output old_csr_val, invalid_csr,
             curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtvec
@@ -104,12 +104,12 @@ interface priv_1_12_internal_if;
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
             env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtval,
             mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level,
-        output inject_mcause, inject_mepc, inject_mie, inject_mip, inject_mstatus, inject_mtval,
+        output inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, intr
     );
 
     modport pipe_ctrl (
-        input intr, pipe_clear, mret, sret, curr_mtvec, curr_mcause, curr_mepc,
+        input intr, pipe_clear, mret, sret, curr_mtvec, curr_mepc, next_mcause,
         output insert_pc, priv_pc
     );
 

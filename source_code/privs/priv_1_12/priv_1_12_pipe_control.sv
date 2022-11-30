@@ -38,9 +38,9 @@ module priv_1_12_pipe_control (
         prv_intern_if.priv_pc = '0;
 
         if (prv_intern_if.intr) begin
-            if (prv_intern_if.curr_mtvec.mode == VECTORED & prv_intern_if.curr_mcause.interrupt) begin
+            if (prv_intern_if.curr_mtvec.mode == VECTORED & prv_intern_if.next_mcause.interrupt) begin
                 prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2)
-                                            + (prv_intern_if.curr_mcause.cause << 2);
+                                            + (prv_intern_if.next_mcause.cause << 2);
             end else begin
                 prv_intern_if.priv_pc = prv_intern_if.curr_mtvec.base << 2;
             end
