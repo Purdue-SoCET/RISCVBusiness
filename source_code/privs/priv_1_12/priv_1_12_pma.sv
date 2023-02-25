@@ -52,7 +52,7 @@ module priv_1_12_pma (
   // Core State Registers
   always_ff @ (posedge CLK, negedge nRST) begin
     if (~nRST) begin
-      pma_regs[00] <= pma_reg_t'({`RAM_PMA, `ROM_PMA});
+      pma_regs[00] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
       pma_regs[01] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
       pma_regs[02] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});
       pma_regs[03] <= pma_reg_t'({`RAM_PMA, `RAM_PMA});

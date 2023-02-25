@@ -63,7 +63,8 @@ module priv_1_12_debug (
             nxt_dcsr = dcsr;
 
             // handle csr write
-            case (priv_ext_if.csr_addr)
+            if (prv_intern_if.curr_priv_dmode) begin
+                case (priv_ext_if.csr_addr)
                 12'h7b0: begin
                     // dcsr
                     priv_ext_if.ack = 1'b1;
@@ -96,7 +97,8 @@ module priv_1_12_debug (
                         nxt_dscratch1 = priv_ext_if.value_in;
                     end
                 end
-            endcase
+                endcase
+            end
 
             // handle inject signal from int_ex_hanlder unit
             if(prv_intern_if.inject_dpc) begin
@@ -108,7 +110,7 @@ module priv_1_12_debug (
                 if(prv_intern_if.next_mcause.interrupt) begin
                     if(prv_intern_if.next_mcause.cause == DEBUG_INT_M) begin
                         // enter debug due to haltreq was set
-                        nxt_dcsr.cause = 3'b001;
+                        nxt_dcsr.cause = 3'b011;
                     end
                     
                     // TODO:
@@ -118,7 +120,7 @@ module priv_1_12_debug (
                 else begin
                     if(prv_intern_if.next_mcause.cause == BREAKPOINT) begin
                         // enter debug due to ebreak
-                        nxt_dcsr.cause = 3'b011;
+                        nxt_dcsr.cause = 3'b001;
                     end
                     
                     // TODO:

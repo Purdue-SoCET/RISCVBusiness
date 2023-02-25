@@ -296,12 +296,14 @@ module priv_1_12_csr #(
             mie_next.msie = nxt_csr_val[3];
             mie_next.mtie = nxt_csr_val[7];
             mie_next.meie = nxt_csr_val[11];
+            mie_next.mdie = nxt_csr_val[16];
           end
 
           MIP_ADDR: begin
             mip_next.msip = nxt_csr_val[3];
             mip_next.mtip = nxt_csr_val[7];
             mip_next.meip = nxt_csr_val[11];
+            mip_next.mdip = nxt_csr_val[16];
           end
           MSCRATCH_ADDR: begin
             mscratch_next = nxt_csr_val;
