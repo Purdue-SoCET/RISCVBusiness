@@ -39,6 +39,7 @@ module priv_1_12_mode (
     logic curr_priv_dmode, next_priv_dmode;
 
     logic ebreakm_debug_mode, ebreaku_debug_mode;   // ebreak in M/U will cause hart to enter Debug-Mode instead of M-Mode
+    logic debug_intr;                               // interrupt caused by debug intr
     assign ebreakm_debug_mode = (prv_intern_if.next_mcause.cause == BREAKPOINT && 
                                 curr_priv_level == M_MODE && 
                                 prv_intern_if.ebreakm_debug);
@@ -46,6 +47,8 @@ module priv_1_12_mode (
     assign ebreaku_debug_mode = (prv_intern_if.next_mcause.cause == BREAKPOINT &&
                                 curr_priv_level == U_MODE && 
                                 prv_intern_if.ebreaku_debug);
+    
+    assign debug_intr = (prv_intern_if.next_mcause.cause == DEBUG_INT_M);
 
     assign prv_intern_if.curr_priv_dmode = curr_priv_dmode;
 
@@ -67,7 +70,10 @@ module priv_1_12_mode (
             next_priv_level = M_MODE;
             
             // implement the real D_MODE
-            if(ebreakm_debug_mode) begin
+            if(debug_intr) begin
+                next_priv_dmode = 1'b1;
+            end
+            else if(ebreakm_debug_mode) begin
                 // set the D_mode flag
                 next_priv_dmode = 1'b1;
             end
