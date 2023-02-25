@@ -82,13 +82,14 @@ module priv_1_12_mode (
                 next_priv_dmode = 1'b1;
             end
 
-        end else if (prv_intern_if.mret) begin
-            next_priv_level = prv_intern_if.curr_mstatus.mpp;
         end else if (prv_intern_if.dret) begin
             //next_priv_level = prv_intern_if.curr_mstatus.mpp;
             next_priv_level = prv_intern_if.curr_dcsr.prv;
             next_priv_dmode = 1'b0;
         end
+        else if (prv_intern_if.mret) begin
+            next_priv_level = prv_intern_if.curr_mstatus.mpp;
+        end 
     end
 
     assign prv_intern_if.curr_privilege_level = curr_priv_level;

@@ -236,7 +236,6 @@ module priv_1_12_csr #(
   end
 
   // Privilege Check and Legal Value Check
-  logic debug;
   logic inject_mcycle, inject_minstret, inject_mcycleh, inject_minstreth;
   always_comb begin
     mstatus_next = mstatus;
@@ -302,7 +301,6 @@ module priv_1_12_csr #(
           end
 
           MIP_ADDR: begin
-            debug = 1'b1;
             mip_next.msip = nxt_csr_val[3];
             mip_next.mtip = nxt_csr_val[7];
             mip_next.meip = nxt_csr_val[11];
