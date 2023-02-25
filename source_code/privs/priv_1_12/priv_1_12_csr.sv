@@ -248,7 +248,6 @@ module priv_1_12_csr #(
     mcounteren_next = mcounteren;
     mcounterinhibit_next = mcounterinhibit;
     mcause_next = mcause;
-    debug = 1'b0;
 
     inject_mcycle = 1'b0;
     inject_mcycle = 1'b0;
