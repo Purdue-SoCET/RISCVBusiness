@@ -11,7 +11,7 @@ class bus_agent extends uvm_agent;
   `uvm_component_utils(bus_agent)
   sequencer  sqr;
   bus_driver_v2 bus_drv;
-  //bus_monitor bus_mon;
+  l1_req_monitor l1_req_mon;
 
   function new(string name, uvm_component parent = null);
     super.new(name, parent);
@@ -20,7 +20,7 @@ class bus_agent extends uvm_agent;
   virtual function void build_phase(uvm_phase phase);
     sqr = sequencer::type_id::create("sqr", this);
     bus_drv = bus_driver_v2::type_id::create("bus_drv", this);
-    //bus_mon = bus_monitor::type_id::create("bus_mon", this);
+    l1_req_mon = l1_req_monitor::type_id::create("l1_req_mon", this);
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);

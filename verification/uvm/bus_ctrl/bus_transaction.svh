@@ -28,21 +28,25 @@ class bus_transaction extends uvm_sequence_item;
   rand int numTransactions;
 
   // Bus monitor side stuff we need
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] procReq; // indicates a proc req happened at the given index in time
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] snoopReq; // indicated a snoop request happened at the given index in time
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] snoopRsp; // indicated a snoop response happened at the given index in time
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] busCtrlRsp; // indicates a bus control response to the processors at the given index in time
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] l2Req; // indicates a l2 request by bus controller at the given index in time
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] l2Rsp; // indicates a l2 rsp by the l2 at the given index in time
-  bit [dut_params::NUM_CPUS_USED-1:0][1023:0] l2_rw; // 1--> write request to l2; 0 --> read request to l2
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0][dut_params::WORD_W - 1:0] procReqAddr;
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0][dut_params::WORD_W - 1:0] l2ReqAddr;
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0][dut_params::WORD_W - 1:0] snoopReqAddr;
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0] snoopReqInvalidate;
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0] [1:0] snoopRspType; // 0 -> no hit; 1 -> snoop hit S; 2 -> snoop hit E; 3 -> snoop hit M (dirty)
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0] [TRANS_SIZE-1:0] snoopRspData; // the data being provided by snooped cache
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0] [TRANS_SIZE-1:0] l2RspData; // the data being provided by the l2 on a read
-  bit [dut_params::NUM_CPUS_USED - 1:0][1023:0] [TRANS_SIZE-1:0] l2StoreData; // the data being provided to the l2 on a write
+  bit procReq; // indicates a proc req happened at the given index in time
+  bit [dut_params::NUM_CPUS_USED-1:0] snoopReq; // indicated a snoop request happened at the given index in time
+  bit [dut_params::NUM_CPUS_USED-1:0] snoopRsp; // indicated a snoop response happened at the given index in time
+  bit [dut_params::NUM_CPUS_USED-1:0] busCtrlRsp; // indicates a bus control response to the processors at the given index in time
+  bit l2Req; // indicates a l2 request by bus controller at the given index in time
+  bit l2Rsp; // indicates a l2 rsp by the l2 at the given index in time
+  bit l2_rw; // 1--> write request to l2; 0 --> read request to l2
+  bit [dut_params::WORD_W - 1:0] procReqAddr;
+  bit [TRANS_SIZE-1:0] procReq_dstore;
+  bit [1:0] procReqType; // 0 --> read; 1 --> busReadX; 2 --> write
+  bit [TRANS_SIZE - 1:0] busCtrlRsp_dload;
+  bit busCtrlRsp_exclusive;
+  bit [dut_params::WORD_W - 1:0] l2ReqAddr;
+  bit [dut_params::NUM_CPUS_USED - 1:0][dut_params::WORD_W - 1:0] snoopReqAddr;
+  bit [dut_params::NUM_CPUS_USED - 1:0] snoopReqInvalidate;
+  bit [dut_params::NUM_CPUS_USED - 1:0][1:0] snoopRspType; // 0 -> no hit; 1 -> snoop hit S/E; 2 -> snoop hit M (dirty)
+  bit [dut_params::NUM_CPUS_USED - 1:0][TRANS_SIZE-1:0] snoopRspData; // the data being provided by snooped cache
+  bit [TRANS_SIZE-1:0] l2RspData; // the data being provided by the l2 on a read
+  bit [TRANS_SIZE-1:0] l2StoreData; // the data being provided to the l2 on a write
 
   // Constraints on the data
   constraint numTransConstraint {numTransactions > 0;}
