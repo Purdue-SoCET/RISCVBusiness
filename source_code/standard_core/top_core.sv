@@ -40,6 +40,11 @@ module top_core #(
         get_x28 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[28];
     endfunction
 
+    function [31:0] get_x03;
+        // verilator public
+        get_x03 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[3];
+    endfunction
+
 
     bind stage3_mem_stage cpu_tracker cpu_track1 (
         .CLK(CLK),
