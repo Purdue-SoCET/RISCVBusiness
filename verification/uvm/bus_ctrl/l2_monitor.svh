@@ -27,17 +27,6 @@ class l2_monitor extends uvm_monitor;
   endfunction
 
 virtual function bus_transaction zeroTrans(bus_transaction tx);
-  tx.idle = '0;
-  tx.daddr = '0;
-  tx.dWEN = '0;
-  tx.readX = '0;
-  tx.dstore = '0;
-  tx.dload = '0;
-  tx.exclusive = '0;
-  tx.snoopHitAddr = '0;
-  tx.snoopDirty = '0;
-  tx.numTransactions = 0;
-
   tx.procReq = '0;
   tx.snoopReq = '0;
   tx.snoopRsp = '0;
@@ -46,26 +35,30 @@ virtual function bus_transaction zeroTrans(bus_transaction tx);
   tx.l2Rsp = '0;
   tx.l2_rw = '0;
   tx.procReqAddr = '0;
+  tx.procReq_dstore = '0;
+  tx.procReqType = '0;
+  tx.busCtrlRsp_dload = '0;
+  tx.busCtrlRsp_exclusive = '0;
   tx.l2ReqAddr = '0;
   tx.snoopReqAddr = '0;
   tx.snoopReqInvalidate = '0;
   tx.snoopRspType = '0;
-  tx.procReqData = '0;
   tx.snoopRspData = '0;
   tx.l2RspData = '0;
   tx.l2StoreData = '0;
-  tx.busCtrlRspData = '0;
 
   return tx;
 endfunction
+
 
 virtual task run_phase(uvm_phase phase);
     super.run_phase(phase);
     forever begin
         bus_transaction tx;
-        timeoutCount = 0;
         bit l2ReqPhaseDone = 0;
         bit l2RspPhaseDone = 0;
+
+        timeoutCount = 0;
 
         // captures activity between the driver and DUT
         tx = bus_transaction::type_id::create("tx");

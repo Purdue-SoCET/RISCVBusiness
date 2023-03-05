@@ -5,7 +5,7 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 `include "bus_ctrl_if.vh"
 class bus_monitor extends uvm_monitor;
-  `uvm_component_utils(ahb_bus_monitor)
+  `uvm_component_utils(bus_monitor)
 
   localparam TRANS_SIZE = dut_params::WORD_W * dut_params::BLOCK_SIZE_WORDS;
 
@@ -36,15 +36,13 @@ class bus_monitor extends uvm_monitor;
 virtual function bit proc_req_different(bus_transaction tx, int txi, int vifi);
    if(!tx.procReq[vifi][txi]) begin
      return 1;
-   end else if(tx.dWEN[vifi][txi] != vif.dWEN[vifii] || tx.dRENfi][txi] != !vif.dWEN[vifi]
+   end else if(tx.dWEN[vifi][txi] != vif.dWEN[vifi] || tx.dREN[vifi][txi] != !vif.dWEN[vifi]
                 || tx.readX[vifi][txi] != vif.ccwrite[vifi] || tx.daddr[vifi][txi] != vif.daddr[vifi]
                 || tx.dstore[vifi][txi] != vif.dstore[vifi]) begin
      return 1;
    end
 
    return 0;
-end
-
 endfunction
 
 
@@ -93,8 +91,8 @@ endfunction
   virtual task run_phase(uvm_phase phase);
     super.run_phase(phase);
     forever begin
+      int i;
       bus_transaction tx;
-      timeoutCount = 0;
       bit [dut_params::NUM_CPUS_USED-1:0] reqStarted = '0;
       bit transComplete = 0;
       bit snoopReqPhaseDone = 0;
@@ -105,11 +103,15 @@ endfunction
       int cpuIndx[dut_params::NUM_CPUS_USED-1:0];
       int reqL1 = -1; // this is the L1 that should be recieving the data at the end!
 
+
       // Since not all of the snoops come at once we need to keep
       // stored versions of everyone's response until we get all of them
       bit [dut_params::NUM_CPUS_USED-1:0] snoopRsp;
       bit [dut_params::NUM_CPUS_USED-1:0] [1:0] snoopRspType;
       bit [dut_params::NUM_CPUS_USED-1:0] [TRANS_SIZE-1:0] snoopRspData;
+
+
+      timeoutCount = 0;
 
       // captures activity between the driver and DUT
       tx = bus_transaction::type_id::create("tx");
@@ -142,7 +144,7 @@ endfunction
                   `uvm_fatal("Monitor", $sformatf("req not complete before new request! proc %d", i));
                 end
 
-                tx.procReq[i][cpuIndex[i]] = 1;
+                tx.procReq[i][cpuIndx[i]] = 1;
                 tx.dWEN[i][cpuIndx[i]] = 1;
                 tx.readX[i][cpuIndx[i]] = 0;
                 tx.daddr[i][cpuIndx[i]] = vif.daddr[i];
@@ -184,7 +186,7 @@ endfunction
         end
 
        // Check to see if there are snoop responses without a snoop request, this would be bad if it happened
-       if(|vif.snoopDone && (reqL1 == -1) begin // if reqL1 isn't set then we haven't had a snoop req yet
+       if(|vif.snoopDone && (reqL1 == -1)) begin // if reqL1 isn't set then we haven't had a snoop req yet
          `uvm_fatal("Monitor", "Snoop rsp without a snoop request!");
        end
 
@@ -197,7 +199,7 @@ endfunction
          end
          if(|vif.ccnoophit || |vif.ccIsPresent) begin // if we have a snoop hit
            if(|vif.ccdirty && ~(vif.ccdirty & (vif.ccdirty - 1))) begin // check that ccdirty is high and only 1 is set
-             for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+             for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
                if(vif.ccdirty[i]) begin
                  tx.snoopRsp[reqL1][cpuIndx[reqL1]]  = 1;
                  tx.snoopRspType[reqL1][cpuIndx[reqL1]]  = 3; // snoop hit dirty
@@ -255,7 +257,7 @@ endfunction
            if(~vif.l2WEN) begin // if we don't have a snoop (go straight into l2 request), must be write so if we don't see write then problem
              `uvm_fatal("Monitor", "No snoop but l2 read seen, should see snoop first before any l2 read");
            end
-           for(int i = 0; i < dut_params; i++) begin
+           for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
              if(vif.dWEN[i] && (reqL1 != -1) && (vif.l2addr == vif.daddr[i])) begin // if we have multiple writes to this address
                `uvm_fatal("Monitor", "multiple writers to same address, not allowed in MESI");
              end
