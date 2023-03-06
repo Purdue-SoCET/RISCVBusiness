@@ -9,8 +9,8 @@ microarch_params:
   
   # Cache configurations
   cache_config  : "separate"
-  dcache_type   : "pass_through"
-  icache_type   : "pass_through"
+  dcache_type   : "l1"
+  icache_type   : "l1"
   
   # Bus configurations
   bus_endianness      : "big"

@@ -149,11 +149,12 @@ module stage3_hazard_unit (
                                 & ~rmgmt_stall & ~hazard_if.fence_stall)
                           | branch_jump | prv_pipe_if.insert_pc | prv_pipe_if.ret | hazard_if.rollback;*/
     // Unforunately, pc_en is negative logic of stalling
-    assign hazard_if.pc_en = (!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
+    assign hazard_if.pc_en = ((!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
                             || branch_jump
                             || ex_flush_hazard
                             || prv_pipe_if.insert_pc
-                            || prv_pipe_if.ret;//) //&& !wait_for_imem;
+                            || prv_pipe_if.ret) 
+                            &&~hazard_if.fence_stall;//) //&& !wait_for_imem;
 
     assign hazard_if.if_ex_flush  = ex_flush_hazard // control hazard
                                   || branch_jump    // control hazard
@@ -170,7 +171,8 @@ module stage3_hazard_unit (
                                   //& (~ex_flush_hazard | e_ex_stage) // ???
                                   //|| rm_if.execute_stall //
                                   || hazard_if.ex_busy // Waiting for extension
-                                  || mem_use_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
+                                  || mem_use_stall 
+                                  || hazard_if.fence_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
      // TODO: Exceptions
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
                                   || hazard_if.fence_stall

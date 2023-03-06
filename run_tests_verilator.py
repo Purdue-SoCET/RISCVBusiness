@@ -161,7 +161,7 @@ def run_tests(config: Type[run_config]) -> List[str]:
             
             # cache the result in the dict
             test_status[filepath.stem] = result
-            #print(test_status)
+            # print(test_status)
     # catch keyboard interrupts to flush the cache file
     except KeyboardInterrupt:
         pass # yes I know that this is not the pest practice

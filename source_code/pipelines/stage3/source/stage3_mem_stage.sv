@@ -155,7 +155,7 @@ module stage3_mem_stage(
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.fence_stall = ex_mem_if.ex_mem_reg.ifence && (!dflushed || !iflushed);
+    assign hazard_if.fence_stall = ex_mem_if.ex_mem_reg.ifence && (!iflushed || !dflushed);
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
