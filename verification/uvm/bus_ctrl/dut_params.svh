@@ -11,6 +11,7 @@ package dut_params;
   localparam DRVR_TIMEOUT = 50;
   localparam MONITOR_TIMEOUT = 1000;
   localparam DRVR_SNOOP_ARRAY_SIZE = 4096;
+  localparam l2_RAND_RANGE = 10;
 
 endpackage
 `endif

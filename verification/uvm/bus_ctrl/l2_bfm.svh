@@ -7,7 +7,6 @@
 `include "Utils.svh"
 
 import uvm_pkg::*;
-import rv32i_types_pkg::*;
 
 class l2_bfm extends uvm_component;
   `uvm_component_utils(memory_bfm)
@@ -15,9 +14,6 @@ class l2_bfm extends uvm_component;
   virtual bus_ctrl_if bif;
 
   env_config bus_env_config;
-
-  word_t mem[word_t];  // initialized memory array
-  word_t mmio[word_t];  // initialized memory mapped array
 
   function new(string name = "l2_bfm", uvm_component parent);
     super.new(name, parent);
@@ -46,54 +42,45 @@ class l2_bfm extends uvm_component;
       `PROPAGATION_DELAY
 
       // default values on bus
-      bus_if.dload = 64'hbad0bad0bad0bad0;
+      bus_if.l2load = 64'hbad0bad0bad0bad0;
+      bus_if.l2state = L2_FREE;
 
-      if (bus_if.dREN) begin
+      if (bus_if.l2REN) begin
         mem_read();
-      end else if (bus_if.dWEN) begin
+      end else if (bus_if.l2WEN) begin
         mem_write();
       end
     end
   endtask : run_phase
 
   task mem_read();
-    int count;
+    bus_if.l2state = L2_BUSY
+    int cycles = $urandom() % dut_params::l2_RAND_RANGE;
+    int count = 0;
 
-    bus_if.busy = '1;
     count = 1;
-    while (count < bus_env_config.mem_latency && bus_if.ren) begin
-      @(posedge cif.CLK);
-      `PROPAGATION_DELAY
+    while (count < the random thing) begin
+      @(posedge bus_if.CLK);
       count++;
     end
 
-    bus_if.rdata = read(bus_if.addr);
-    bus_if.busy  = '0;
+    bus_if.l2load = {32'haaaaaaaa, bus_if.l2addr[31:0]};
+    bus_if.l2state = L2_ACCESS;
   endtask : mem_read
 
   task mem_write();
-    int count;
+    bus_if.l2state = L2_BUSY
+    int cycles = $urandom() % dut_params::l2_RAND_RANGE;
+    int count = 0;
 
-    bus_if.busy = '1;
     count = 1;
-    while (count < bus_env_config.mem_latency) begin
-      @(posedge cif.CLK);
-      `PROPAGATION_DELAY
+    while (count < the random thing) begin
+      @(posedge bus_if.CLK);
       count++;
     end
-
-    mem[bus_if.addr] = bus_if.wdata;
-
-    bus_if.busy = '0;
+    
+    bus_if.l2state = L2_ACCESS;
   endtask : mem_write
-
-  function word_t read(word_t addr);
-    if (mem.exists(bus_if.addr)) begin
-      return mem[bus_if.addr];
-    end else begin
-      return {bus_env_config.mem_tag, addr[15:0]};  // return non-initialized data
-    end
-  endfunction : read
 
 endclass : memory_bfm
 
