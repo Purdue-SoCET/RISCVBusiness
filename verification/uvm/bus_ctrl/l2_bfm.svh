@@ -59,7 +59,7 @@ class l2_bfm extends uvm_component;
     int count = 0;
 
     count = 1;
-    while (count < the random thing) begin
+    while (count < cycles) begin
       @(posedge bus_if.CLK);
       count++;
     end
@@ -74,11 +74,11 @@ class l2_bfm extends uvm_component;
     int count = 0;
 
     count = 1;
-    while (count < the random thing) begin
+    while (count < cycles) begin
       @(posedge bus_if.CLK);
       count++;
     end
-    
+
     bus_if.l2state = L2_ACCESS;
   endtask : mem_write
 
