@@ -1,10 +1,11 @@
-`IFNDEF L1_SNOOPRESP_BFM
-`DEFINE L1_SNOOPRESP_BFM
+`ifndef L1_SNOOPRESP_BFM
+`define L1_SNOOPRESP_BFM
 
 import uvm_pkg::*;
 
 `include "bus_ctrl_if.sv"
 `include "dut_params.svh"
+`include "uvm_macros.svh"
 
 class l1_snoopresp_bfm #(bus_transaction);
  `uvm_component_utils(l1_snoopresp_bfm)
@@ -165,4 +166,4 @@ class l1_snoopresp_bfm #(bus_transaction);
 // endtask
 
 endclass : l1_snoopresp_bfm
-`ENDIF
+`endif

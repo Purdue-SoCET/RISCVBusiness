@@ -9,6 +9,8 @@ import uvm_pkg::*;
 `include "bus_ctrl_if.vh"
 `include "bus_checker.svh"  // uvm_subscriber
 `include "bus_transaction.svh"  // uvm_sequence_item
+`include "l2_bfm.svh"
+`include "l1_snoopresp_bfm.sv"
 
 class environment extends uvm_env;
   `uvm_component_utils(environment)
@@ -19,12 +21,17 @@ class environment extends uvm_env;
 
   bus_checker bus_check;  // a checker to check the overall results
 
+  l2_bfm l2BFM;
+  l1_snoopresp_bfm snpRspBFM;
+
   function new(string name = "env", uvm_component parent = null);
     super.new(name, parent);
   endfunction
 
   function void build_phase(uvm_phase phase);
     // instantiate all the components through factory method
+    l2BFM = l2_bfm::type_id::create("l2_bfm", this);
+    snpRspBFM = l1_snoopresp_bfm::type_id_create("l1_snoopresp_bfm", this);
     bus_agent_agent = bus_agent::type_id::create("bus_agent", this);
     snp_rsp_agent_agent = snp_rsp_agent::type_id::create("snp_rsp_agent", this);
     l2_agent_agent = l2_agent::type_id::create("l2_agent", this);
