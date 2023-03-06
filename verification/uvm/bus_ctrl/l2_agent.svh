@@ -3,7 +3,6 @@
 
 import uvm_pkg::*;
 `include "uvm_macros.svh"
-`include "sequence.svh"
 `include "l2_monitor.svh"
 
 class l2_agent extends uvm_agent;

@@ -34,9 +34,9 @@ class environment extends uvm_env;
 
   // TODO: Connect everything up correctly
   function void connect_phase(uvm_phase phase);
-    bus_agent.l1_req_mon.check_ap.connect(bus_check.l1_req_export);  // connect monitor to predictor
-    snp_rsp_agent.snp_rsp_mon.check_ap.connect(bus_check.snp_rsp_export);  // connect monitor to predictor
-    l2_agent.l2_mon.check_ap.connect(bus_check.l2_export);  // connect monitor to predictor
+    bus_agent_agent.l1_req_mon.check_ap.connect(bus_check.l1_req_export);  // connect monitor to predictor
+    snp_rsp_agent_agent.snp_rsp_mon.check_ap.connect(bus_check.snp_rsp_export);  // connect monitor to predictor
+    l2_agent_agent.l2_mon.check_ap.connect(bus_check.l2_export);  // connect monitor to predictor
   endfunction
 
 endclass : environment

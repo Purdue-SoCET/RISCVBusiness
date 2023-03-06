@@ -27,17 +27,6 @@ class l1_req_monitor extends uvm_monitor;
   endfunction
 
 virtual function bus_transaction zeroTrans(bus_transaction tx);
-  tx.idle = '0;
-  tx.daddr = '0;
-  tx.dWEN = '0;
-  tx.readX = '0;
-  tx.dstore = '0;
-  tx.dload = '0;
-  tx.exclusive = '0;
-  tx.snoopHitAddr = '0;
-  tx.snoopDirty = '0;
-  tx.numTransactions = 0;
-
   tx.procReq = '0;
   tx.snoopReq = '0;
   tx.snoopRsp = '0;
@@ -46,15 +35,17 @@ virtual function bus_transaction zeroTrans(bus_transaction tx);
   tx.l2Rsp = '0;
   tx.l2_rw = '0;
   tx.procReqAddr = '0;
+  tx.procReq_dstore = '0;
+  tx.procReqType = '0;
+  tx.busCtrlRsp_dload = '0;
+  tx.busCtrlRsp_exclusive = '0;
   tx.l2ReqAddr = '0;
   tx.snoopReqAddr = '0;
   tx.snoopReqInvalidate = '0;
   tx.snoopRspType = '0;
-  tx.procReqData = '0;
   tx.snoopRspData = '0;
   tx.l2RspData = '0;
   tx.l2StoreData = '0;
-  tx.busCtrlRspData = '0;
 
   return tx;
 endfunction
@@ -63,13 +54,15 @@ endfunction
     super.run_phase(phase);
     forever begin
       bus_transaction tx_array [dut_params::NUM_CPUS_USED-1:0];
-      `zero_unpckd_array(timeoutCount);
       bit [dut_params::NUM_CPUS_USED-1:0] reqStarted = '0;
       bit transComplete = 0;
-      bit busCtrlRspDone[dut_params::NUM_CPUS_USED-1:0] = 0;
+      bit [dut_params::NUM_CPUS_USED-1:0] busCtrlRspDone = '0;
+      int i;
 
+
+      `zero_unpckd_array(timeoutCount);
       // captures activity between the driver and DUT
-      for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+      for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
         tx_array[i] = bus_transaction::type_id::create("tx");
         tx_array[i] = zeroTrans(tx_array[i]);
       end
@@ -78,14 +71,14 @@ endfunction
         // Check for new L1 requests
         // Throw error if we have write & read or write & ccwrite OR if a new request starts before the old one ends
         if(|vif.dREN || |vif.dWEN) begin
-           for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+           for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
              if((vif.dREN[i] && vif.dWEN[i]) || (vif.dWEN[i] && vif.ccwrite[i])) begin
                 `uvm_fatal("Monitor", $sformatf("Invalid combination of CPUS requests %d", i));
              end else if(reqStarted[i]) begin // if we get a new request when there is already an outstanding request!
                 `uvm_fatal("Monitor", $sformatf("req not complete before new request! proc %d", i));
              end else begin // if we have a valid request and we don't current have one for this CPU
                 tx_array[i].procReq= 1;
-                tx_array[i].procReq_daddr = vif.daddr[i];
+                tx_array[i].procReqAddr = vif.daddr[i];
                 tx_array[i].procReqType = vif.dWEN[i] ? 2 
                                                         : vif.ccwrite[i] ? 1 : 0;
                 reqStarted[i] = 1;
@@ -95,7 +88,7 @@ endfunction
 
        // Now we check for the bus_ctrl response to the l1!
        if(~(&vif.dwait) && |reqStarted) begin
-         for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+         for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
            if(!vif.dwait[i]) begin
              if(!reqStarted[i]) begin // if we get a low dwait without first seeing a request
                `uvm_fatal("l1_req Monitor", "Low dwait without a request being started");
@@ -111,7 +104,7 @@ endfunction
 
        // Go through all of the l1s to see if any requests are done and if they are send them to the checker
        // Also update the timeout of all of the outstanding requests
-       for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+       for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
          if(busCtrlRspDone[i]) begin
            `uvm_info(this.get_name(), $sformatf("New result sent to checker for l1 #%d", i), UVM_LOW);
            check_ap.write(tx_array[i]);

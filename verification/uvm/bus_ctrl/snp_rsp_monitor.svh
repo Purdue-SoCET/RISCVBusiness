@@ -25,19 +25,7 @@ class snp_rsp_monitor extends uvm_monitor;
       `uvm_fatal("monitor", "No virtual interface specified for this monitor instance")
     end
   endfunction
-
 virtual function bus_transaction zeroTrans(bus_transaction tx);
-  tx.idle = '0;
-  tx.daddr = '0;
-  tx.dWEN = '0;
-  tx.readX = '0;
-  tx.dstore = '0;
-  tx.dload = '0;
-  tx.exclusive = '0;
-  tx.snoopHitAddr = '0;
-  tx.snoopDirty = '0;
-  tx.numTransactions = 0;
-
   tx.procReq = '0;
   tx.snoopReq = '0;
   tx.snoopRsp = '0;
@@ -46,15 +34,17 @@ virtual function bus_transaction zeroTrans(bus_transaction tx);
   tx.l2Rsp = '0;
   tx.l2_rw = '0;
   tx.procReqAddr = '0;
+  tx.procReq_dstore = '0;
+  tx.procReqType = '0;
+  tx.busCtrlRsp_dload = '0;
+  tx.busCtrlRsp_exclusive = '0;
   tx.l2ReqAddr = '0;
   tx.snoopReqAddr = '0;
   tx.snoopReqInvalidate = '0;
   tx.snoopRspType = '0;
-  tx.procReqData = '0;
   tx.snoopRspData = '0;
   tx.l2RspData = '0;
   tx.l2StoreData = '0;
-  tx.busCtrlRspData = '0;
 
   return tx;
 endfunction
@@ -63,11 +53,12 @@ virtual task run_phase(uvm_phase phase);
     super.run_phase(phase);
     forever begin
         bus_transaction tx;
-        timeoutCount = 0;
         bit snoopReqPhaseDone = 0;
         bit [dut_params::NUM_CPUS_USED-1:0] snoopRspPhaseDone = 0;
         int reqL1 = -1; // this is the L1 that should be recieving the data at the end!
+        int i;
 
+        timeoutCount = 0;
 
         // captures activity between the driver and DUT
         tx = bus_transaction::type_id::create("tx");
@@ -78,7 +69,7 @@ virtual task run_phase(uvm_phase phase);
         @(posedge vif.clk);
         // Check for new snoop requests
         if(|vif.ccwait && !(&snoopReqPhaseDone)) begin
-           for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+           for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
              tx.snoopReq[i] = vif.ccwait[i];
              tx.snoopReqAddr[i] = vif.ccsnoopaddr[i];
              tx.snoopReqInvalidate[i] = vif.ccinv[i];
@@ -93,14 +84,14 @@ virtual task run_phase(uvm_phase phase);
         end
 
        // Check to see if there are snoop responses without a snoop request, this would be bad if it happened
-       if(|vif.snoopDone && ~snoopReqPhaseDone) begin // if we haven't had a snoop req yet
+       if(|vif.ccsnoopdone && ~snoopReqPhaseDone) begin // if we haven't had a snoop req yet
          `uvm_fatal("snp_rsp Monitor", "Some snoop rsp without a snoop request!");
        end
 
        // Check for new snoop responses 
-       if((!(&snoopRspPhaseDone)) && |vif.snoopdone)  begin // if we see a snoop done signal
-         for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
-           if(vif.ccnoopdone[i]) begin
+       if((!(&snoopRspPhaseDone)) && |vif.ccsnoopdone)  begin // if we see a snoop done signal
+         for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+           if(vif.ccsnoopdone[i]) begin
              tx.snoopRsp[i] = 1;
              tx.snoopRspType = vif.ccsnoophit[i] ?
                                                    vif.ccdirty[i] ? 2 : 1
@@ -129,3 +120,5 @@ virtual task run_phase(uvm_phase phase);
 endtask : run_phase
 
 endclass : snp_rsp_monitor
+
+`endif

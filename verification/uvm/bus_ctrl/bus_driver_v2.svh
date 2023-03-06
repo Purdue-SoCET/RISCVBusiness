@@ -82,7 +82,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
             `uvm_info(this.get_name(), "Stim not fully sent...", UVM_DEBUG);
             // Loop through all of the CPUS that we are driving and send out any stim that needs to be sent
                 `uvm_info(this.get_name(), $sformatf("Sending stim %0d from CPU: %d", cpuIndexCounts[i], i), UVM_DEBUG);
-                driveCpuStim(i, currTrans, cpuIndexCounts[i]);
+                driveCpuStim(i, cpuIndexCounts[i], currTrans);
 
             @(posedge vif.clk);  // clock in the stimulus
 

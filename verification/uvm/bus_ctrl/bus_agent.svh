@@ -5,7 +5,7 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 `include "sequence.svh"
 `include "bus_driver_v2.svh"
-`include "bus_monitor.svh"
+`include "l1_req_monitor.svh"
 
 class bus_agent extends uvm_agent;
   `uvm_component_utils(bus_agent)

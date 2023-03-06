@@ -1,3 +1,6 @@
+`ifndef TB_BUS_CTRL
+`define TB_BUS_CTRL
+
 `include "bus_ctrl.sv"
 
 // interface file
@@ -43,3 +46,5 @@ module tb_bus_ctrl ();
     run_test("test_basic");
   end
 endmodule
+
+`endif
