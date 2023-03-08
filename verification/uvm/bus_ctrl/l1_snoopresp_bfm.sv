@@ -7,7 +7,7 @@ import uvm_pkg::*;
 `include "dut_params.svh"
 `include "uvm_macros.svh"
 
-class l1_snoopresp_bfm #(bus_transaction);
+class l1_snoopresp_bfm ;
  `uvm_component_utils(l1_snoopresp_bfm)
 
  virtual bus_ctrl_if vif;
@@ -21,7 +21,7 @@ class l1_snoopresp_bfm #(bus_transaction);
 
  function void build_phase(uvm_phase phase);
    if (!uvm_config_db#(virtual bus_ctrl_if)::get(this, "", "bus_ctrl_vif", vif)) begin
-     `uvm_fatal("monitor", "No virtual interface specified for this monitor instance")
+     `uvm_fatal("snoop_bfm", "No virtual interface specified for this mbgm instance")
    end
  endfunction
 
@@ -33,18 +33,20 @@ class l1_snoopresp_bfm #(bus_transaction);
  endtask : run_phase 
 
  virtual task snoop_bus();
-  rand bit hit;
-  rand int loc;
+  bit hit;
+  int loc;
   logic [CPUS-1:0] l1_ccdirty;
   word_t [CPUS-1:0] l1_dstore;
   l1_ccdirty = '0;
   l1_dstore = '0;
+  //std::randomize(loc);
 
    fork 
     begin
      for(int i = 0, i < dut_params::NUM_CPUS_USED, i++) begin 
        if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 0)) begin
          wait_new_time();
+         std::randomize(hit);
          vif.ccsnoophit[i] = hit;
          vif.ccIsPresent[i] = hit;
        end 
@@ -71,6 +73,7 @@ class l1_snoopresp_bfm #(bus_transaction);
    //still randomizing the L1 which provides the block to bus when block = shared along with dirty
    loc = generate_ccdirty(vif.ccsnoophit);
    //l1_ccdirty[loc] = 1;
+   std::randomize(hit);
    l1_ccdirty[loc] = hit; //randomizing selected random bit
    dstore[loc] = 0xdeadbeef;
    vif.dstore = l1_dstore;
@@ -82,9 +85,10 @@ class l1_snoopresp_bfm #(bus_transaction);
 
  virtual task generate_ccdirty(logic [CPUS-1:0] snoophit);
   logic [CPUS-1:0] l1_ccdirty;
-  rand int temp_arr[$bits(snoophit)];
+  int temp_arr[$bits(snoophit)];
   int position;
   l1_ccdirty = '0;
+  std::randomize(temp_arr);
   for(i=0; i<$bits(snoophit); i++) begin
    if(snoophit[i] == 1) temp_arr[i] = i;
   end
