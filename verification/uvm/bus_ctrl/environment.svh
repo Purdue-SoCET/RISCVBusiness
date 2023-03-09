@@ -31,7 +31,7 @@ class environment extends uvm_env;
   function void build_phase(uvm_phase phase);
     // instantiate all the components through factory method
     l2BFM = l2_bfm::type_id::create("l2_bfm", this);
-    snpRspBFM = l1_snoopresp_bfm::type_id_create("l1_snoopresp_bfm", this);
+    snpRspBFM = l1_snoopresp_bfm::type_id::create("l1_snoopresp_bfm", this);
     bus_agent_agent = bus_agent::type_id::create("bus_agent", this);
     snp_rsp_agent_agent = snp_rsp_agent::type_id::create("snp_rsp_agent", this);
     l2_agent_agent = l2_agent::type_id::create("l2_agent", this);

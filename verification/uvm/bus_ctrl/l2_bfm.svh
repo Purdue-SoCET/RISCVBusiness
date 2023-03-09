@@ -4,14 +4,15 @@
 `include "bus_ctrl_if.vh"
 `include "dut_params.svh"
 `include "uvm_macros.svh"
-`include "Utils.svh"
+//`include "Utils.svh"
+`define PROPAGATION_DELAY #(2000);
 
 import uvm_pkg::*;
 
 class l2_bfm extends uvm_component;
-  `uvm_component_utils(memory_bfm)
+  `uvm_component_utils(l2_bfm)
 
-  virtual bus_ctrl_if bif;
+  virtual bus_ctrl_if bus_if;
 
   env_config bus_env_config;
 
@@ -29,17 +30,20 @@ class l2_bfm extends uvm_component;
     end
 
     // get interface from database
-    if (!uvm_config_db#(virtual cache_if)::get(this, "", "d_cif", bif)) begin
-      `uvm_fatal($sformatf("%s/d_cif", this.get_name()),
-                 "No virtual interface specified for this test instance");
-    end
+   // if (!uvm_config_db#(virtual cache_if)::get(this, "", "d_cif", bif)) begin
+   //   `uvm_fatal($sformatf("%s/d_cif", this.get_name()),
+   //              "No virtual interface specified for this test instance");
+   // end
     `uvm_info(this.get_name(), "pulled <d_cif> from db", UVM_FULL)
   endfunction : build_phase
 
   virtual task run_phase(uvm_phase phase);
     forever begin
-      @(posedge bif.CLK);
-      `PROPAGATION_DELAY
+      //@(posedge bif.CLK);
+      //`PROPAGATION_DELAY
+      for(int i = 0; i < 1999; i++) begin
+        @(posedge bus_if.clk);
+      end
 
       // default values on bus
       bus_if.l2load = 64'hbad0bad0bad0bad0;
@@ -47,16 +51,17 @@ class l2_bfm extends uvm_component;
 
       if (bus_if.l2REN) begin
         mem_read();
-      end else if (bus_if.l2WEN) begin
+      end 
+      else if (bus_if.l2WEN) begin
         mem_write();
       end
     end
   endtask : run_phase
 
   task mem_read();
-    bus_if.l2state = L2_BUSY
-    int cycles = $urandom() % dut_params::l2_RAND_RANGE;
     int count = 0;
+    int cycles = $urandom() % (dut_params::l2_RAND_RANGE);
+    bus_if.l2state = L2_BUSY;
 
     count = 1;
     while (count < cycles) begin
@@ -69,9 +74,9 @@ class l2_bfm extends uvm_component;
   endtask : mem_read
 
   task mem_write();
-    bus_if.l2state = L2_BUSY
-    int cycles = $urandom() % dut_params::l2_RAND_RANGE;
     int count = 0;
+    int cycles = $urandom() % (dut_params::l2_RAND_RANGE);
+    bus_if.l2state = L2_BUSY;
 
     count = 1;
     while (count < cycles) begin
@@ -82,6 +87,6 @@ class l2_bfm extends uvm_component;
     bus_if.l2state = L2_ACCESS;
   endtask : mem_write
 
-endclass : memory_bfm
+endclass : l2_bfm
 
 `endif
