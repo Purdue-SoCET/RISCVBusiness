@@ -14,7 +14,7 @@ class l2_bfm extends uvm_component;
 
   virtual bus_ctrl_if bus_if;
 
-  env_config bus_env_config;
+  //env_config bus_env_config;
 
   function new(string name = "l2_bfm", uvm_component parent);
     super.new(name, parent);
@@ -25,9 +25,9 @@ class l2_bfm extends uvm_component;
     super.build_phase(phase);
 
     // get config from database
-    if (!uvm_config_db#(env_config)::get(this, "", "bus_env_config", bus_env_config)) begin
-      `uvm_fatal(this.get_name(), "env config not registered to db")
-    end
+   // if (!uvm_config_db#(env_config)::get(this, "", "bus_env_config", bus_env_config)) begin
+   //   `uvm_fatal(this.get_name(), "env config not registered to db")
+   // end
 
     // get interface from database
    // if (!uvm_config_db#(virtual cache_if)::get(this, "", "d_cif", bif)) begin
@@ -65,7 +65,8 @@ class l2_bfm extends uvm_component;
 
     count = 1;
     while (count < cycles) begin
-      @(posedge bus_if.CLK);
+      //@(posedge bus_if.CLK);
+      @(posedge bus_if.clk);
       count++;
     end
 
@@ -80,7 +81,8 @@ class l2_bfm extends uvm_component;
 
     count = 1;
     while (count < cycles) begin
-      @(posedge bus_if.CLK);
+      //@(posedge bus_if.CLK);
+      @(posedge bus_if.clk);
       count++;
     end
 
