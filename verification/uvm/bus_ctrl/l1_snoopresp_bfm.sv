@@ -53,10 +53,10 @@ class l1_snoopresp_bfm extends uvm_component;
        end 
        else if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 1)) begin
         //Add logic here to search L1, if found, then invalidate depending on exclusive or not
-        `uvm_info("L1_SNOOP", $sformatf("Cache block invalidated in %d th L1", i), UVM_DEBUG);
+        //`uvm_info("L1_SNOOP", $sformatf("Cache block invalidated in %d th L1", i), UVM_DEBUG);
        end 
        else begin
-         `uvm_info("L1_SNOOP", $sformatf("Nothing to Snoop/Respond to in %d th L1", i), UVM_LOW);
+         //`uvm_info("L1_SNOOP", $sformatf("Nothing to Snoop/Respond to in %d th L1", i), UVM_LOW);
          zero_all_sigs();
        end
       end 
@@ -64,10 +64,10 @@ class l1_snoopresp_bfm extends uvm_component;
    join
 
    if(|vif.ccsnoophit) begin 
-    `uvm_info("L1_SNOOP", $sformatf("Cache Block Found with L1 = %b", vif.ccsnoophit), UVM_LOW);
+    //`uvm_info("L1_SNOOP", $sformatf("Cache Block Found with L1 = %b", vif.ccsnoophit), UVM_LOW);
    end 
    else begin 
-    `uvm_info("L1_SNOOP", $sformatf("Requested Cache block is not found with L1's. Go to L2!!"), UVM_LOW);
+    //`uvm_info("L1_SNOOP", $sformatf("Requested Cache block is not found with L1's. Go to L2!!"), UVM_LOW);
     //vif.l2_req = 1; //this signal should connect to L2/Busctrl to get the new block.
    end
    //still randomizing the L1 which provides the block to bus when block = shared along with dirty

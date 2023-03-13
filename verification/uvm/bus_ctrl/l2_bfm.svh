@@ -30,20 +30,22 @@ class l2_bfm extends uvm_component;
    // end
 
     // get interface from database
-   // if (!uvm_config_db#(virtual cache_if)::get(this, "", "d_cif", bif)) begin
-   //   `uvm_fatal($sformatf("%s/d_cif", this.get_name()),
-   //              "No virtual interface specified for this test instance");
-   // end
-    `uvm_info(this.get_name(), "pulled <d_cif> from db", UVM_FULL)
+   if (!uvm_config_db#(virtual bus_ctrl_if)::get(this, "", "bus_ctrl_vif", bus_if)) begin
+      `uvm_fatal($sformatf("%s/d_cif", this.get_name()),
+                 "No virtual interface specified for this test instance");
+    end
+    `uvm_info(this.get_name(), "pulled <bus_ctrl vif> from db", UVM_FULL)
   endfunction : build_phase
 
   virtual task run_phase(uvm_phase phase);
     forever begin
       //@(posedge bif.CLK);
       //`PROPAGATION_DELAY
-      for(int i = 0; i < 1999; i++) begin
-        @(posedge bus_if.clk);
-      end
+      //for(int i = 0; i < 1999; i++) begin
+        //@(posedge bus_if.clk);
+      //end
+
+      @(posedge bus_if.clk);
 
       // default values on bus
       bus_if.l2load = 64'hbad0bad0bad0bad0;
