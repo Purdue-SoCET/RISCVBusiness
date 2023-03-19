@@ -28,6 +28,7 @@ class l1_snoopresp_bfm extends uvm_component;
 
  virtual task run_phase(uvm_phase phase);
    forever begin
+    @(posedge vif.clk);
     zero_all_sigs();
     snoop_bus(); 
    end
@@ -76,9 +77,13 @@ class l1_snoopresp_bfm extends uvm_component;
    void'(std::randomize(hit));
    l1_ccdirty[loc] = hit; //randomizing selected random bit
    l1_dstore[loc] = 'hdeadbeef;
+   if(|vif.ccwait == 1) begin
    vif.dstore = l1_dstore;
    vif.ccdirty = l1_ccdirty;
-   foreach(vif.ccsnoopdone[i]) vif.ccsnoopdone[i] = 1;
+   end
+   foreach(vif.ccsnoopdone[i]) begin 
+   if(vif.ccwait[i] == 1) vif.ccsnoopdone[i] = 1; //check this part again
+   end
    #2;
    zero_all_sigs();
  endtask
