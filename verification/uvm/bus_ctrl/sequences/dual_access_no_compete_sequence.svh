@@ -20,7 +20,7 @@ class dual_access_no_compete extends basic_sequence #(bus_transaction);
             req_item.numTransactions < 3;
             req_item.idle == 0;
             foreach (req_item.daddr[0][i]) {
-                req_item.daddr[0][i][dut_params::WORD_W - 1:2] != req_item.daddr[1][i][dut_params::WORD_W - 1:2]; // don't compare the lower 2 bits since addresses are truncated to the nearest word
+                req_item.daddr[0][i][dut_params::WORD_W - 1:3] != req_item.daddr[1][i][dut_params::WORD_W - 1:3]; // don't compare the lower 2 bits since addresses are truncated to the nearest word
             }
           }) begin
         // if the transaction is unable to be randomized, send a fatal message

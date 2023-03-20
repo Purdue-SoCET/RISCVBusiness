@@ -41,7 +41,7 @@ class bus_transaction extends uvm_sequence_item;
   bit [TRANS_SIZE - 1:0] busCtrlRsp_dload;
   bit busCtrlRsp_exclusive;
   bit [dut_params::WORD_W - 1:0] l2ReqAddr;
-  bit [dut_params::NUM_CPUS_USED - 1:0][dut_params::WORD_W - 1:0] snoopReqAddr;
+  bit [dut_params::WORD_W - 1:0] snoopReqAddr;
   bit [dut_params::NUM_CPUS_USED - 1:0] snoopReqInvalidate;
   bit [dut_params::NUM_CPUS_USED - 1:0][1:0] snoopRspType; // 0 -> no hit; 1 -> snoop hit S/E; 2 -> snoop hit M (dirty)
   bit [dut_params::NUM_CPUS_USED - 1:0][TRANS_SIZE-1:0] snoopRspData; // the data being provided by snooped cache

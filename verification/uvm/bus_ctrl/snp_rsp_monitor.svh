@@ -50,34 +50,35 @@ virtual function bus_transaction zeroTrans(bus_transaction tx);
 endfunction
 
 virtual task run_phase(uvm_phase phase);
-    super.run_phase(phase);
+    //super.run_phase(phase);
+    bus_transaction tx;
+    bit snoopReqPhaseDone = 0;
+    bit [dut_params::NUM_CPUS_USED-1:0] snoopRspPhaseDone = '0;
+    int reqL1 = -1; // this is the L1 that should be recieving the data at the end!
+    int i;
+
+    timeoutCount = 0;
+    // captures activity between the driver and DUT
+    tx = bus_transaction::type_id::create("tx");
+
+    // zero out everything
+    tx = zeroTrans(tx);
     forever begin
-        bus_transaction tx;
-        bit snoopReqPhaseDone = 0;
-        bit [dut_params::NUM_CPUS_USED-1:0] snoopRspPhaseDone = 0;
-        int reqL1 = -1; // this is the L1 that should be recieving the data at the end!
-        int i;
-
-        timeoutCount = 0;
-
-        // captures activity between the driver and DUT
-        tx = bus_transaction::type_id::create("tx");
-
-        // zero out everything
-        tx = zeroTrans(tx);
-
         @(posedge vif.clk);
+        #2;
         // Check for new snoop requests
         if(|vif.ccwait && !(&snoopReqPhaseDone)) begin
            for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
-             tx.snoopReq[i] = vif.ccwait[i];
-             tx.snoopReqAddr[i] = vif.ccsnoopaddr[i];
-             tx.snoopReqInvalidate[i] = vif.ccinv[i];
              if(vif.ccwait[i] == 0) begin // we aren't snooping into this one so it must be the requester
                if(|snoopRspPhaseDone) begin // if one of the snpRspPhaseDone is set then we have multiple that are not being snooped, this is fatal
                  `uvm_fatal("snp_rsp monitor", "Multiple L1s were not snooped on a snoop request!");
                end
                snoopRspPhaseDone[i] = 1; // flag requester as done in the done vector
+             end else begin
+                tx.snoopReq[i] = vif.ccwait[i];
+                tx.snoopReqAddr = vif.ccsnoopaddr[i];
+                tx.snoopReqInvalidate[i] = vif.ccinv[i];
+                `uvm_info("snp_rsp_monitor", $sformatf("Req addr is %0h\n", tx.snoopReqAddr), UVM_DEBUG);
              end
            end
            snoopReqPhaseDone = 1;
@@ -131,6 +132,7 @@ virtual task run_phase(uvm_phase phase);
             end
         end
         timeoutCount = 0;
+        tx = zeroTrans(tx);
         end
     end
 endtask : run_phase

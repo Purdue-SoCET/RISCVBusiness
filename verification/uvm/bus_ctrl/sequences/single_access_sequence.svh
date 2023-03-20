@@ -9,7 +9,7 @@ import uvm_pkg::*;
   * dWEN is left randomized since we want to test both reads and writes randomly.
 */
 
-class rw_0_idle_1_sequence extends basic_sequence #(bus_transaction);
+class rw_0_idle_1_sequence extends uvm_sequence #(bus_transaction);
   `uvm_object_utils(single_access_sequence)
   function new(string name = "");
     super.new(name);
@@ -39,7 +39,7 @@ class rw_0_idle_1_sequence extends basic_sequence #(bus_transaction);
   endtask : body
 endclass  //single access sequence
 
-class idle_0_rw_1_sequence extends basic_sequence #(bus_transaction);
+class idle_0_rw_1_sequence extends uvm_sequence #(bus_transaction);
   `uvm_object_utils(single_access_sequence)
   function new(string name = "");
     super.new(name);
