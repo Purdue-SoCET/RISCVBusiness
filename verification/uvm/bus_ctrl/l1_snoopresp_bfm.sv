@@ -29,6 +29,7 @@ class l1_snoopresp_bfm extends uvm_component;
  virtual task run_phase(uvm_phase phase);
    forever begin
     @(posedge vif.clk);
+    #2; // propogation delay
     zero_all_sigs();
     snoop_bus(); 
    end
@@ -43,49 +44,48 @@ class l1_snoopresp_bfm extends uvm_component;
   l1_dstore = '0;
   //std::randomize(loc);
 
-   fork 
-    begin
-     for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin 
-       if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 0)) begin
-         wait_new_time();
-         void'(std::randomize(hit));
-         vif.ccsnoophit[i] = hit;
-         vif.ccIsPresent[i] = hit;
-       end 
-       else if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 1)) begin
-        //Add logic here to search L1, if found, then invalidate depending on exclusive or not
-        //`uvm_info("L1_SNOOP", $sformatf("Cache block invalidated in %d th L1", i), UVM_DEBUG);
-       end 
-       else begin
-         //`uvm_info("L1_SNOOP", $sformatf("Nothing to Snoop/Respond to in %d th L1", i), UVM_LOW);
-         zero_all_sigs();
-       end
-      end 
-    end
-   join
+  if(|vif.ccwait == 1) begin
 
-   if(|vif.ccsnoophit) begin 
-    //`uvm_info("L1_SNOOP", $sformatf("Cache Block Found with L1 = %b", vif.ccsnoophit), UVM_LOW);
-   end 
-   else begin 
-    //`uvm_info("L1_SNOOP", $sformatf("Requested Cache block is not found with L1's. Go to L2!!"), UVM_LOW);
-    //vif.l2_req = 1; //this signal should connect to L2/Busctrl to get the new block.
+       fork 
+        begin
+         for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin 
+           if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 0)) begin
+             wait_new_time();
+             void'(std::randomize(hit));
+             vif.ccsnoophit[i] = hit;
+             vif.ccIsPresent[i] = hit;
+           end 
+           else if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 1)) begin
+            //Add logic here to search L1, if found, then invalidate depending on exclusive or not
+            //`uvm_info("L1_SNOOP", $sformatf("Cache block invalidated in %d th L1", i), UVM_DEBUG);
+           end 
+           else begin
+             //`uvm_info("L1_SNOOP", $sformatf("Nothing to Snoop/Respond to in %d th L1", i), UVM_LOW);
+             zero_all_sigs();
+           end
+          end 
+        end
+       join
+
+       if(|vif.ccsnoophit) begin 
+        //`uvm_info("L1_SNOOP", $sformatf("Cache Block Found with L1 = %b", vif.ccsnoophit), UVM_LOW);
+       end 
+       else begin 
+        //`uvm_info("L1_SNOOP", $sformatf("Requested Cache block is not found with L1's. Go to L2!!"), UVM_LOW);
+        //vif.l2_req = 1; //this signal should connect to L2/Busctrl to get the new block.
+       end
+       //still randomizing the L1 which provides the block to bus when block = shared along with dirty
+       loc = generate_ccdirty(vif.ccsnoophit);
+       //l1_ccdirty[loc] = 1;
+       void'(std::randomize(hit));
+       l1_ccdirty[loc] = hit; //randomizing selected random bit
+       l1_dstore[loc] = 'hdeadbeef;
+       vif.dstore = l1_dstore;
+       vif.ccdirty = l1_ccdirty;
+       foreach(vif.ccsnoopdone[i]) begin 
+         vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again
+       end
    end
-   //still randomizing the L1 which provides the block to bus when block = shared along with dirty
-   loc = generate_ccdirty(vif.ccsnoophit);
-   //l1_ccdirty[loc] = 1;
-   void'(std::randomize(hit));
-   l1_ccdirty[loc] = hit; //randomizing selected random bit
-   l1_dstore[loc] = 'hdeadbeef;
-   if(|vif.ccwait == 1) begin
-   vif.dstore = l1_dstore;
-   vif.ccdirty = l1_ccdirty;
-   end
-   foreach(vif.ccsnoopdone[i]) begin 
-   if(vif.ccwait[i] == 1) vif.ccsnoopdone[i] = 1; //check this part again
-   end
-   #2;
-   zero_all_sigs();
  endtask
 
  //virtual task generate_ccdirty(logic [CPUS-1:0] snoophit);

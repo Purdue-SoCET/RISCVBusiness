@@ -73,9 +73,9 @@ endfunction
         if(|vif.dREN || |vif.dWEN) begin
            for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
              if((vif.dREN[i] && vif.dWEN[i]) || (vif.dWEN[i] && vif.ccwrite[i])) begin
-                `uvm_fatal("Monitor", $sformatf("Invalid combination of CPUS requests %d", i));
+                `uvm_fatal("Monitor", $sformatf("Invalid combination of CPUS requests %0d", i));
              end else if(reqStarted[i]) begin // if we get a new request when there is already an outstanding request!
-                `uvm_fatal("Monitor", $sformatf("req not complete before new request! proc %d", i));
+                `uvm_fatal("Monitor", $sformatf("req not complete before new request! proc %0d", i));
              end else begin // if we have a valid request and we don't current have one for this CPU
                 tx_array[i].procReq= 1;
                 tx_array[i].procReqAddr = vif.daddr[i];
@@ -106,7 +106,7 @@ endfunction
        // Also update the timeout of all of the outstanding requests
        for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
          if(busCtrlRspDone[i]) begin
-           `uvm_info(this.get_name(), $sformatf("New result sent to checker for l1 #%d", i), UVM_LOW);
+           `uvm_info(this.get_name(), $sformatf("New result sent to checker for l1 #%0d", i), UVM_LOW);
            check_ap.write(tx_array[i]);
            busCtrlRspDone[i] = 0;
            reqStarted[i] = 0;
@@ -116,7 +116,7 @@ endfunction
          if(reqStarted[i]) begin
            timeoutCount[i] = timeoutCount[i] + 1;
            if(timeoutCount[i] == MONITOR_TIMEOUT) begin
-             `uvm_fatal("L1 req Monitor", $sformatf("Timeout reached for l1 req #%d", i));
+             `uvm_fatal("L1 req Monitor", $sformatf("Timeout reached for l1 req #%0d", i));
            end
          end
        end

@@ -77,7 +77,7 @@ virtual task run_phase(uvm_phase phase);
                if(|snoopRspPhaseDone) begin // if one of the snpRspPhaseDone is set then we have multiple that are not being snooped, this is fatal
                  `uvm_fatal("snp_rsp monitor", "Multiple L1s were not snooped on a snoop request!");
                end
-               snoopRspPhaseDone[i] = 1;
+               snoopRspPhaseDone[i] = 1; // flag requester as done in the done vector
              end
            end
            snoopReqPhaseDone = 1;
@@ -92,6 +92,9 @@ virtual task run_phase(uvm_phase phase);
        if((!(&snoopRspPhaseDone)) && |vif.ccsnoopdone)  begin // if we see a snoop done signal
          for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
            if(vif.ccsnoopdone[i]) begin
+             if(~vif.ccwait[i]) begin // shouldn't see a response if not ccwait high (if there is not a req)
+                `uvm_fatal("snp_rsp Monitor", $sformatf("Snoop response on requester l1 #%0d, not allowed!\n", i));
+             end
              tx.snoopRsp[i] = 1;
              tx.snoopRspType = vif.ccsnoophit[i] ?
                                                    vif.ccdirty[i] ? 2 : 1
@@ -115,6 +118,19 @@ virtual task run_phase(uvm_phase phase);
 
           `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_LOW);
           check_ap.write(tx);
+
+          // Wait for ccwait to go low for all
+          // Note: This makes the assumption that ccwait will go low for all l1s before the next snoop request
+          // This is okay since it will take at least 1 cycle for bus_ctrl to send response to l1s in fastest scenario
+          // Meaning we should get at least 2 cycles of low ccwait in worst case fastest scenario
+          while(|vif.ccwait) begin
+            @(posedge vif.clk);
+            timeoutCount = timeoutCount + 1;
+            if(timeoutCount == 5) begin
+              `uvm_fatal("snp_rsp Monitor", "Monitor timeout waiting for ccwait to go low after snoop trans complete!");
+            end
+        end
+        timeoutCount = 0;
         end
     end
 endtask : run_phase

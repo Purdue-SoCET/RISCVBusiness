@@ -41,6 +41,7 @@ class bus_checker extends uvm_scoreboard;
     bus_transaction reqTx;
     bus_transaction l2Tx;
     bus_transaction snpRspTx;
+    bit [dut_params::WORD_W-1:0] mask;
 
     bit snpRspPresent;
     bit l2TxPresent;
@@ -73,7 +74,8 @@ class bus_checker extends uvm_scoreboard;
       end
 
       if(snpRspPresent) begin
-        if(reqTx.procReqAddr != snpRspTx.snoopReqAddr) begin
+        mask = ~(31'd0 | {($clog2(4*dut_params::BLOCK_SIZE_WORDS)){1'b1}});
+        if((reqTx.procReqAddr & mask) != snpRspTx.snoopReqAddr) begin
           uvm_report_error("Checker", "Processor request address and snoop request address don't match!");
         end
 
@@ -109,7 +111,7 @@ class bus_checker extends uvm_scoreboard;
       end
 
       if(l2TxPresent && ~errorFlag) begin
-        if(reqTx.procReqAddr != l2Tx.l2ReqAddr) begin
+        if((reqTx.procReqAddr & mask) != l2Tx.l2ReqAddr) begin
           uvm_report_error("Checker", "Processor request address and l2 request address don't match!");
         end
 

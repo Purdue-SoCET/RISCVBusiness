@@ -180,7 +180,7 @@ module bus_ctrl #(
             end
             READ_L2: begin // reads data into bus from l2
                 ccif.l2REN = 1; 
-                ndload[requester_cpu] = ccif.l2load; 
+                ndload = ccif.l2load; 
             end
             BUS_TO_L1: begin // move data from bus to cache; alert requester
                 ccif.dwait[requester_cpu] = 0;

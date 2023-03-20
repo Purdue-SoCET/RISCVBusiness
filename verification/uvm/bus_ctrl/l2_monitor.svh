@@ -104,6 +104,18 @@ virtual task run_phase(uvm_phase phase);
 
           `uvm_info(this.get_name(), "New l2 result sent to checker", UVM_LOW);
           check_ap.write(tx);
+           // Wait for l2 reqest to go low
+          // Note: This makes the assumption that the req will go low for at least 1 cycle before the next one
+          // This is okay since it will take at least 1 cycle for bus_ctrl to send response to l1s in fastest scenario
+          // Meaning we should get > 1 cycle of low request
+          while(vif.l2REN | vif.l2WEN) begin
+            @(posedge vif.clk);
+            timeoutCount = timeoutCount + 1;
+            if(timeoutCount == 5) begin
+              `uvm_fatal("l2_monitor Monitor", "Monitor timeout waiting for l2REN and l2WEN to go low after l2 trans complete!");
+            end
+        end
+        timeoutCount = 0;
         end
     end
 endtask : run_phase
