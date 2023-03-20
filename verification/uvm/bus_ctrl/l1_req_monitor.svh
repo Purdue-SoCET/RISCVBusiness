@@ -68,6 +68,7 @@ endfunction
       end
 
       @(posedge vif.clk);
+      #2;
         // Check for new L1 requests
         // Throw error if we have write & read or write & ccwrite OR if a new request starts before the old one ends
         if(|vif.dREN || |vif.dWEN) begin

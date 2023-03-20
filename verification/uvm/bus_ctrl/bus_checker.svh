@@ -77,6 +77,7 @@ class bus_checker extends uvm_scoreboard;
         mask = ~(31'd0 | {($clog2(4*dut_params::BLOCK_SIZE_WORDS)){1'b1}});
         if((reqTx.procReqAddr & mask) != snpRspTx.snoopReqAddr) begin
           uvm_report_error("Checker", "Processor request address and snoop request address don't match!");
+          `uvm_info("Checker", $sformatf("L1 req addr unmasked: %0h L1 req addr masked: %0h Snp req addr unmasked: %0h\n", reqTx.procReqAddr, (reqTx.procReqAddr & mask), snpRspTx.snoopReqAddr), UVM_DEBUG);
         end
 
         case(reqTx.procReqType)
@@ -113,6 +114,7 @@ class bus_checker extends uvm_scoreboard;
       if(l2TxPresent && ~errorFlag) begin
         if((reqTx.procReqAddr & mask) != l2Tx.l2ReqAddr) begin
           uvm_report_error("Checker", "Processor request address and l2 request address don't match!");
+          `uvm_info("Checker", $sformatf("L1 req addr unmasked: %0h L1 req addr masked: %0h L2 req addr unmasked: %0h\n", reqTx.procReqAddr, (reqTx.procReqAddr & mask), l2Tx.l2ReqAddr), UVM_DEBUG);
         end
 
         if(snpRspPresent) begin

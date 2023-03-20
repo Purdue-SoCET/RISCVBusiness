@@ -99,7 +99,6 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
                                                  cpuIndexCounts[i] + 1,
                                                  currTrans.numTransactions, i), UVM_DEBUG);
             cpuIndexCounts[i] = cpuIndexCounts[i] + 1;
-            `uvm_info(this.get_name(), $sformatf("Cpu index count for %0d is now %0d\n", i, cpuIndexCounts[i]), UVM_DEBUG);
 
             driveCpuIdle(i);
         end
