@@ -121,6 +121,7 @@ virtual task run_phase(uvm_phase phase);
 
        // Check for new snoop responses 
        if((!(&snoopRspPhaseDone)) && |vif.ccsnoopdone)  begin // if we see a snoop done signal
+         `uvm_info("snp_rsp_ Monitor", "SNOOP DONE SEEN!\n", UVM_DEBUG);
          for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
            if(vif.ccsnoopdone[i]) begin
              if(~vif.ccwait[i]) begin // shouldn't see a response if not ccwait high (if there is not a req)
@@ -162,7 +163,7 @@ virtual task run_phase(uvm_phase phase);
          end
        end
 
-        if(&snoopReqPhaseDone) begin
+        if(&snoopReqPhaseDone && ~(&snoopRspPhaseDone)) begin
           timeoutCount = timeoutCount + 1;
           if(timeoutCount == MONITOR_TIMEOUT) begin
             `uvm_fatal("snp_rsp Monitor", "Monitor timeout reached after a snoop request, no snoop response seen!");
@@ -174,7 +175,7 @@ virtual task run_phase(uvm_phase phase);
           reqTimeoutCount = 0;
           addrSet = 0;
           snoopRspPhaseDone = '0;
-          snoopReqPhaseDone = 0;
+          snoopReqPhaseDone = '0;
 
           `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_LOW);
 

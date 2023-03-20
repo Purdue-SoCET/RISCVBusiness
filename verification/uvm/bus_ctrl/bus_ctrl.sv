@@ -214,7 +214,8 @@ module bus_ctrl #(
     function logic snoopStatus;
         input logic [CPU_ID_LENGTH-1:0] requester_cpu;
         input logic [CPUS-1:0] snoopDone;
-        snoopStatus = &(({CPUS{1'b1}} << requester_cpu) | snoopDone);
+        snoopStatus = &(((1'b1 << requester_cpu) | {CPUS{1'b0}}) | snoopDone);
+        //snoopStatus = &(({CPUS{1'b1}} << requester_cpu) | snoopDone);
     endfunction
 
     // task to do priority encoding to determine the requester or supplier
