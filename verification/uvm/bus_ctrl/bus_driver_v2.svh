@@ -94,17 +94,16 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
                 @(posedge vif.clk);
                 timeoutCount[i] = timeoutCount[i] + 1;
               end
-            end
 
             `uvm_info(this.get_name(), $sformatf("Transaction %0d/%0d complete for CPU: %0d",
                                                  cpuIndexCounts[i] + 1,
                                                  currTrans.numTransactions, i), UVM_DEBUG);
             cpuIndexCounts[i] = cpuIndexCounts[i] + 1;
+            `uvm_info(this.get_name(), $sformatf("Cpu index count for %0d is now %0d\n", i, cpuIndexCounts[i]), UVM_DEBUG);
 
-            @(posedge vif.clk);
-            zero_all_sigs();
+            driveCpuIdle(i);
+        end
     end
-    driveCpuIdle(i);
   endtask
 
   function automatic bit allStimNotSent(int cpuIndexCount,
