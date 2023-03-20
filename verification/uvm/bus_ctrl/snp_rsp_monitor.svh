@@ -13,6 +13,7 @@ class snp_rsp_monitor extends uvm_monitor;
 
   uvm_analysis_port #(bus_transaction) check_ap;
   int timeoutCount;
+  int reqTimeoutCount;
 
   function new(string name, uvm_component parent = null);
     super.new(name, parent);
@@ -52,17 +53,23 @@ endfunction
 virtual task run_phase(uvm_phase phase);
     //super.run_phase(phase);
     bus_transaction tx;
-    bit snoopReqPhaseDone = 0;
+    bus_transaction newTx;
+    bit [dut_params::NUM_CPUS_USED-1:0] snoopReqPhaseDone = '0;
     bit [dut_params::NUM_CPUS_USED-1:0] snoopRspPhaseDone = '0;
+    bit addrSet = 0;
     int reqL1 = -1; // this is the L1 that should be recieving the data at the end!
     int i;
 
     timeoutCount = 0;
+    reqTimeoutCount = 0;
     // captures activity between the driver and DUT
     tx = bus_transaction::type_id::create("tx");
+    newTx = bus_transaction::type_id::create("newTx");
 
     // zero out everything
     tx = zeroTrans(tx);
+
+
     forever begin
         @(posedge vif.clk);
         #2;
@@ -70,23 +77,45 @@ virtual task run_phase(uvm_phase phase);
         if(|vif.ccwait && !(&snoopReqPhaseDone)) begin
            for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
              if(vif.ccwait[i] == 0) begin // we aren't snooping into this one so it must be the requester
+               snoopReqPhaseDone[i] = 1;
                if(|snoopRspPhaseDone) begin // if one of the snpRspPhaseDone is set then we have multiple that are not being snooped, this is fatal
                  `uvm_fatal("snp_rsp monitor", "Multiple L1s were not snooped on a snoop request!");
                end
                snoopRspPhaseDone[i] = 1; // flag requester as done in the done vector
              end else begin
-                tx.snoopReq[i] = vif.ccwait[i];
-                tx.snoopReqAddr = vif.ccsnoopaddr[i];
-                tx.snoopReqInvalidate[i] = vif.ccinv[i];
-                `uvm_info("snp_rsp_monitor", $sformatf("Req addr is %0h\n", tx.snoopReqAddr), UVM_DEBUG);
+                snoopReqPhaseDone[i] = 1;
+                if(addrSet) begin // this menas we had someone else being snooped too
+                  if(tx.snoopReq != vif.ccwait[i]) begin
+                    `uvm_fatal("snp_rsp_monitor", "Different snp reqs on same trans for ccwait!\n");
+                  end
+                  if(tx.snoopReqAddr != vif.ccsnoopaddr[i]) begin
+                    `uvm_fatal("snp_rsp_monitor", "Different snp reqs on same trans for snpAddr!\n");
+                  end
+                  if(tx.snoopReqInvalidate != vif.ccinv[i]) begin
+                    `uvm_fatal("snp_rsp_monitor", "Different snp reqs on same trans for ccinv!\n");
+                  end
+                end else begin
+                    tx.snoopReq = vif.ccwait[i];
+                    tx.snoopReqAddr = vif.ccsnoopaddr[i];
+                    tx.snoopReqInvalidate = vif.ccinv[i];
+                    `uvm_info("snp_rsp_monitor", $sformatf("Req addr is %0h\n", tx.snoopReqAddr), UVM_DEBUG);
+                end
              end
            end
-           snoopReqPhaseDone = 1;
+        end
+        
+        if(|snoopReqPhaseDone && ~(&snoopReqPhaseDone)) begin
+          reqTimeoutCount = reqTimeoutCount + 1;
+          if(reqTimeoutCount == MONITOR_TIMEOUT) begin
+            `uvm_fatal("snp_rsp Monitor", "Monitor timeout reached after first snoop request, bus_ctrl didn't make all required requests!");
+          end
         end
 
        // Check to see if there are snoop responses without a snoop request, this would be bad if it happened
-       if(|vif.ccsnoopdone && ~snoopReqPhaseDone) begin // if we haven't had a snoop req yet
-         `uvm_fatal("snp_rsp Monitor", "Some snoop rsp without a snoop request!");
+       foreach(vif.ccsnoopdone[i]) begin
+         if(~snoopReqPhaseDone[i] && vif.ccsnoopdone[i]) begin
+           `uvm_fatal("snp_rsp Monitor", $sformatf("Some snoop rsp for l1 #%0d without a snoop request!", i));
+         end
        end
 
        // Check for new snoop responses 
@@ -96,7 +125,7 @@ virtual task run_phase(uvm_phase phase);
              if(~vif.ccwait[i]) begin // shouldn't see a response if not ccwait high (if there is not a req)
                 `uvm_fatal("snp_rsp Monitor", $sformatf("Snoop response on requester l1 #%0d, not allowed!\n", i));
              end
-             tx.snoopRsp[i] = 1;
+             tx.snoopRsp = 1;
              tx.snoopRspType = vif.ccsnoophit[i] ?
                                                    vif.ccdirty[i] ? 2 : 1
                                                   : 0;
@@ -105,7 +134,7 @@ virtual task run_phase(uvm_phase phase);
          end
        end
 
-        if(snoopReqPhaseDone) begin
+        if(&snoopReqPhaseDone) begin
           timeoutCount = timeoutCount + 1;
           if(timeoutCount == MONITOR_TIMEOUT) begin
             `uvm_fatal("snp_rsp Monitor", "Monitor timeout reached after a snoop request, no snoop response seen!");
@@ -114,10 +143,14 @@ virtual task run_phase(uvm_phase phase);
 
         if(&snoopRspPhaseDone) begin
           timeoutCount = 0;
+          reqTimeoutCount = 0;
+          addrSet = 0;
           snoopRspPhaseDone = '0;
           snoopReqPhaseDone = 0;
 
           `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_LOW);
+
+          //`uvm_info("snp_rsp_monitor", $sformatf("Req addr is %0h\n", tx.snoopReqAddr), UVM_DEBUG);
           check_ap.write(tx);
 
           // Wait for ccwait to go low for all
@@ -125,6 +158,7 @@ virtual task run_phase(uvm_phase phase);
           // This is okay since it will take at least 1 cycle for bus_ctrl to send response to l1s in fastest scenario
           // Meaning we should get at least 2 cycles of low ccwait in worst case fastest scenario
           while(|vif.ccwait) begin
+            //`uvm_info("snp_rsp Monitor", "WAITED!\n", UVM_DEBUG);
             @(posedge vif.clk);
             timeoutCount = timeoutCount + 1;
             if(timeoutCount == 5) begin
@@ -132,6 +166,8 @@ virtual task run_phase(uvm_phase phase);
             end
         end
         timeoutCount = 0;
+        newTx.copy(tx);
+        tx = newTx;
         tx = zeroTrans(tx);
         end
     end

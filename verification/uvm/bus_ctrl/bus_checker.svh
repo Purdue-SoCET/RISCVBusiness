@@ -62,7 +62,9 @@ class bus_checker extends uvm_scoreboard;
       end else begin
         snpRspPresent = 1;
         snp_rsp_fifo.get(snpRspTx);
+        //`uvm_info(this.get_name(), $sformatf("Received new snpRsp trans:\n%s", snpRspTx.sprint()), UVM_DEBUG);
       end
+      
 
       // Now get the l2 response! 
       // done with similar logic to the above snoop response
