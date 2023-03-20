@@ -57,6 +57,7 @@ virtual task run_phase(uvm_phase phase);
     bit [dut_params::NUM_CPUS_USED-1:0] snoopReqPhaseDone = '0;
     bit [dut_params::NUM_CPUS_USED-1:0] snoopRspPhaseDone = '0;
     bit addrSet = 0;
+    bit snpRspSet = 0;
     int reqL1 = -1; // this is the L1 that should be recieving the data at the end!
     int i;
 
@@ -125,10 +126,37 @@ virtual task run_phase(uvm_phase phase);
              if(~vif.ccwait[i]) begin // shouldn't see a response if not ccwait high (if there is not a req)
                 `uvm_fatal("snp_rsp Monitor", $sformatf("Snoop response on requester l1 #%0d, not allowed!\n", i));
              end
-             tx.snoopRsp = 1;
-             tx.snoopRspType = vif.ccsnoophit[i] ?
+             if(snpRspSet) begin // if someone else has already responded with valid data
+               if(vif.ccsnoophit[i]) begin
+                 if(vif.ccdirty[i]) begin // if this one hits M state
+                   if(tx.snoopRspType == 2) begin // we've already seen a dirty
+                     `uvm_fatal("snp_rsp Monitor", "Double dirty snoop responses, not allowed to have two l1s in M state!\n");
+                   end
+                   if(tx.snoopRspType == 1) begin // we've seen a snoop hit S/E and now this is M
+                     `uvm_fatal("snp_rsp Monitor", "One L1 is in M while another is in S/E, not allowed!\n");
+                   end
+
+                   tx.snoopRspType = 2;
+                   tx.snoopRspData = vif.dstore[i];
+                 end else begin // if this is a hit in S/E and not dirty
+                   if(tx.snoopRspType == 2) begin // we've already seen a dirty
+                     `uvm_fatal("snp_rsp Monitor", "Already seen a M state, now seeing a S/E state, can't have both at same time!\n");
+                   end
+                   if(tx.snoopRspData != vif.dstore[i]) begin
+                     `uvm_fatal("snp_rsp Monitor", "Saw two L1s flag in S state but their data doesn't match!\n");
+                   end
+                 end
+               end
+             end else begin
+               tx.snoopRsp = 1;
+               tx.snoopRspType = vif.ccsnoophit[i] ?
                                                    vif.ccdirty[i] ? 2 : 1
                                                   : 0;
+               if(vif.ccsnoophit[i]) begin
+                 tx.snoopRspData = vif.dstore[i];
+                 snpRspSet = 1; // only care about checking if we get another hit as well so this will flag the coherence protocol check to happen for the next hit
+               end
+             end
              snoopRspPhaseDone[i] = 1;
            end
          end
