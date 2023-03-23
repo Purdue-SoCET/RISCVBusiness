@@ -107,7 +107,7 @@ module priv_1_12_block (
     assign prv_intern_if.fault_store_page  = 1'b0;
     assign prv_intern_if.curr_mtval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
-    assign prv_intern_if.mret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.mret              = prv_pipe_if.ret & ((prv_intern_if.curr_privilege_level == M_MODE) && (~prv_intern_if.curr_priv_dmode));
     assign prv_intern_if.dret              = prv_pipe_if.ret & ((prv_intern_if.curr_privilege_level == M_MODE) && (prv_intern_if.curr_priv_dmode));
     assign prv_intern_if.sret              = 1'b0;
 

@@ -6,6 +6,7 @@ module priv_1_12_debug (
     import machine_mode_types_1_12_pkg::*;
 
     csr_reg_t dpc, nxt_dpc;
+    csr_reg_t epc_4;
     //nxt_dpc_int, nxt_dpc_pipe;
     csr_reg_t dscratch0, dscratch1, nxt_dscratch0, nxt_dscratch1;
     dcsr_t dcsr, nxt_dcsr;
@@ -48,116 +49,124 @@ module priv_1_12_debug (
         end
     end
 
-        // for for dcsr WARL check
-        assign dcsr_mask = dcsr_t'(priv_ext_if.value_in & {4'b0, 12'b0, 1'b1, 1'b0, 2'b11, 3'b0, 3'b000, 1'b0, 1'b1, 1'b0, 3'b111});
-        //                                         31:28          15    14  13:12  11:9    8:6     5     4     3     2:0
-        //                                         xdebugver    ebrkm      ebrks/u stpie  cause        mrpven nmip    prv
-        //                                                                        stopc/t 
+    // for for dcsr WARL check
+    assign dcsr_mask = dcsr_t'(priv_ext_if.value_in & {4'b0, 12'b0, 1'b1, 1'b0, 2'b11, 3'b0, 3'b000, 1'b0, 1'b1, 1'b0, 3'b111});
+            //                                         31:28          15    14  13:12  11:9    8:6     5     4     3     2:0
+            //                                         xdebugver    ebrkm      ebrks/u stpie  cause        mrpven nmip    prv
+    //                                                                        stopc/t 
 
-        always_comb begin: next_logic
-            priv_ext_if.ack = 1'b0;
+    assign epc_4 = prv_intern_if.next_dpc + 4'b0100;
 
-            nxt_dpc = dpc;
-            nxt_dscratch0 = dscratch0;
-            nxt_dscratch1 = dscratch1;
-            nxt_dcsr = dcsr;
+    always_comb begin: next_logic
+        priv_ext_if.ack = 1'b0;
 
-            // handle csr write
-            if (prv_intern_if.curr_priv_dmode) begin
-                case (priv_ext_if.csr_addr)
-                12'h7b0: begin
-                    // dcsr
-                    priv_ext_if.ack = 1'b1;
-                    if(priv_ext_if.csr_active) begin
-                        // WARL check
-                        nxt_dcsr = dcsr | dcsr_mask;
+        nxt_dpc = dpc;
+        nxt_dscratch0 = dscratch0;
+        nxt_dscratch1 = dscratch1;
+        nxt_dcsr = dcsr;
 
-                        if(nxt_dcsr.prv == S_MODE || nxt_dcsr.prv == RESERVED_MODE) begin
-                            // S, and H modes are not supported
-                            nxt_dcsr.prv = dcsr.prv;
-                        end
+        // handle csr write
+        if (prv_intern_if.curr_priv_dmode) begin
+            case (priv_ext_if.csr_addr)
+            12'h7b0: begin
+                // dcsr
+                priv_ext_if.ack = 1'b1;
+                if(priv_ext_if.csr_active) begin
+                    // WARL check
+                    nxt_dcsr = dcsr | dcsr_mask;
+
+                    if(nxt_dcsr.prv == S_MODE || nxt_dcsr.prv == RESERVED_MODE) begin
+                        // S, and H modes are not supported
+                        nxt_dcsr.prv = dcsr.prv;
                     end
-                end
-                12'h7b1: begin
-                    // dpc
-                    priv_ext_if.ack = 1'b1;
-                    if(priv_ext_if.csr_active) begin
-                        nxt_dpc = priv_ext_if.value_in;
-                    end
-                end
-                12'h7b2: begin
-                    priv_ext_if.ack = 1'b1;
-                    if(priv_ext_if.csr_active) begin
-                        nxt_dscratch0 = priv_ext_if.value_in;
-                    end
-                end
-                12'h7b3: begin
-                    priv_ext_if.ack = 1'b1;
-                    if(priv_ext_if.csr_active) begin
-                        nxt_dscratch1 = priv_ext_if.value_in;
-                    end
-                end
-                endcase
-            end
-
-            // handle inject signal from int_ex_hanlder unit
-            if(prv_intern_if.inject_dpc) begin
-                nxt_dpc = prv_intern_if.next_dpc;
-            end
-
-            // dcsr cause
-            if(prv_intern_if.inject_mcause) begin
-                if(prv_intern_if.next_mcause.interrupt) begin
-                    if(prv_intern_if.next_mcause.cause == DEBUG_INT_M) begin
-                        // enter debug due to haltreq was set
-                        nxt_dcsr.cause = 3'b011;
-                    end
-                    
-                    // TODO:
-                        // enter due to resethaltreq
-                        // cause = 2
-                end
-                else begin
-                    if(prv_intern_if.next_mcause.cause == BREAKPOINT) begin
-                        // enter debug due to ebreak
-                        nxt_dcsr.cause = 3'b001;
-                    end
-                    
-                    // TODO:
-                        // enter due to single step
-                        // cause = 0
-
                 end
             end
-
-            // dcsr nmip
-            nxt_dcsr.nmip = 1'b0;
-
-            // dcsr prv
-            if (prv_intern_if.intr && prv_intern_if.curr_priv_dmode != 1'b1) begin
-                // this may capture the curr priv level when not debug mode, but it does not matter
-                // when debug mode is entered, .intr will be high, curr_priv_dmode will be low
-                nxt_dcsr.prv = prv_intern_if.curr_privilege_level;
+            12'h7b1: begin
+                // dpc
+                priv_ext_if.ack = 1'b1;
+                if(priv_ext_if.csr_active) begin
+                    nxt_dpc = priv_ext_if.value_in;
+                end
             end
-        end
-
-        always_comb begin: value_out_logic
-            priv_ext_if.value_out = dscratch0;
-            case (priv_ext_if.csr_addr[1:0])
-                2'b00: priv_ext_if.value_out = dcsr;
-                2'b01: priv_ext_if.value_out = dpc;
-                2'b10: priv_ext_if.value_out = dscratch0;
-                2'b11: priv_ext_if.value_out = dscratch1;
+            12'h7b2: begin
+                priv_ext_if.ack = 1'b1;
+                if(priv_ext_if.csr_active) begin
+                    nxt_dscratch0 = priv_ext_if.value_in;
+                end
+            end
+            12'h7b3: begin
+                priv_ext_if.ack = 1'b1;
+                if(priv_ext_if.csr_active) begin
+                    nxt_dscratch1 = priv_ext_if.value_in;
+                end
+            end
             endcase
         end
 
-        assign priv_ext_if.invalid_csr = 1'b0;
+        // handle inject signal from int_ex_hanlder unit
+        if(prv_intern_if.inject_dpc) begin
+            if(prv_intern_if.next_mcause == BREAKPOINT) begin
+                nxt_dpc = epc_4;
+            end
+            else begin
+                nxt_dpc = prv_intern_if.next_dpc;
+            end
+        end
 
-        assign prv_intern_if.curr_dpc = dpc;
-        assign prv_intern_if.curr_dcsr = dcsr;
-        assign prv_intern_if.ebreakm_debug = dcsr.ebreakm;
-        assign prv_intern_if.ebreaks_debug = dcsr.ebreaks;
-        assign prv_intern_if.ebreaku_debug = dcsr.ebreaku;
+        // dcsr cause
+        if(prv_intern_if.inject_mcause) begin
+            if(prv_intern_if.next_mcause.interrupt) begin
+                if(prv_intern_if.next_mcause.cause == DEBUG_INT_M) begin
+                    // enter debug due to haltreq was set
+                    nxt_dcsr.cause = 3'b011;
+                end
+                
+                // TODO:
+                    // enter due to resethaltreq
+                    // cause = 2
+            end
+            else begin
+                if(prv_intern_if.next_mcause.cause == BREAKPOINT) begin
+                    // enter debug due to ebreak
+                    nxt_dcsr.cause = 3'b001;
+                end
+                
+                // TODO:
+                    // enter due to single step
+                    // cause = 0
+
+            end
+        end
+
+        // dcsr nmip
+        nxt_dcsr.nmip = 1'b0;
+
+        // dcsr prv
+        if (prv_intern_if.intr && prv_intern_if.curr_priv_dmode != 1'b1) begin
+            // this may capture the curr priv level when not debug mode, but it does not matter
+            // when debug mode is entered, .intr will be high, curr_priv_dmode will be low
+            
+            nxt_dcsr.prv = prv_intern_if.curr_privilege_level;
+        end
+    end
+
+    always_comb begin: value_out_logic
+        priv_ext_if.value_out = dscratch0;
+        case (priv_ext_if.csr_addr[1:0])
+            2'b00: priv_ext_if.value_out = dcsr;
+            2'b01: priv_ext_if.value_out = dpc;
+            2'b10: priv_ext_if.value_out = dscratch0;
+            2'b11: priv_ext_if.value_out = dscratch1;
+        endcase
+    end
+
+    assign priv_ext_if.invalid_csr = 1'b0;
+
+    assign prv_intern_if.curr_dpc = dpc;
+    assign prv_intern_if.curr_dcsr = dcsr;
+    assign prv_intern_if.ebreakm_debug = dcsr.ebreakm;
+    assign prv_intern_if.ebreaks_debug = dcsr.ebreaks;
+    assign prv_intern_if.ebreaku_debug = dcsr.ebreaku;
     
 endmodule
 
