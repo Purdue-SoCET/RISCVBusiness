@@ -252,10 +252,8 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
 
 int main(int argc, char **argv) {
 
-    const char *fname;
-    uint32_t tohost_addr = 0x80002000;
-
-    if(argc < 2) {
+    const char *fname; 
+    if(argc < 3) {
         std::cout << "Warning: No bin file name provided, assuming './meminit.bin' as file location!" << std::endl;
         fname = "meminit.bin";
     } else {
@@ -263,7 +261,7 @@ int main(int argc, char **argv) {
     }
 
     MemoryMap memory(fname);
-
+    uint32_t tohost_addr = strtoul(argv[2], NULL, 16);
     Vtop_core dut;
 
     Verilated::traceEverOn(true);
@@ -281,7 +279,7 @@ int main(int argc, char **argv) {
 
 
     reset(dut, m_trace);
-    while(!dut.halt && sim_time < 100000) {
+    while(!dut.halt && sim_time < 1000000000) {
         // TODO: Variable latency
         if(!MemoryMap::is_mmio_region(tohost_addr)) {
                     if(memory.read(tohost_addr)) {
@@ -323,14 +321,22 @@ int main(int argc, char **argv) {
 
     if(sim_time >= 100000) {
         std::cout << "Test TIMED OUT" << std::endl;
+        m_trace.close();
+        memory.dump();
+        dut.final();
+        exit(1);
     } else if(dut.top_core->get_x03() == 1) {
         std::cout << "Test PASSED" << std::endl;
+        m_trace.close();
+        memory.dump();
+        dut.final();
+        exit(0);
     } else {
         std::cout << "Test FAILED: Test " << dut.top_core->get_x03() << std::endl;
+        m_trace.close();
+        memory.dump();
+        dut.final();
+        exit(1);
     }
-    m_trace.close();
-    memory.dump();
-    dut.final();
 
-    return 0;
 }
