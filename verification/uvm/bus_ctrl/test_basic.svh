@@ -46,5 +46,6 @@ class test_basic extends uvm_test;
     basicSeq.start(env.bus_agent_agent.sqr);
     `uvm_info(this.get_name(), "Finished basic sequence", UVM_LOW);
     #100ns;
+    phase.drop_objection(this, "Finished basic seq in main phase");
   endtask
 endclass : test_basic

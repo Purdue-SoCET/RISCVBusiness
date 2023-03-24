@@ -46,6 +46,7 @@ class l2_bfm extends uvm_component;
       //end
 
       @(posedge bus_if.clk);
+      #2;
 
       // default values on bus
       bus_if.l2load = 64'hbad0bad0bad0bad0;

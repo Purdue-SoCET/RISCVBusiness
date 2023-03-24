@@ -7,6 +7,7 @@ import uvm_pkg::*;
 `include "dut_params.svh"
 `include "uvm_macros.svh"
 
+
 class l1_snoopresp_bfm extends uvm_component;
  `uvm_component_utils(l1_snoopresp_bfm)
 
@@ -39,7 +40,7 @@ class l1_snoopresp_bfm extends uvm_component;
   bit hit;
   int loc;
   logic [CPUS-1:0] l1_ccdirty;
-  word_t [CPUS-1:0] l1_dstore;
+  logic [CPUS-1:0][DATA_WIDTH-1:0]l1_dstore;
   l1_ccdirty = '0;
   l1_dstore = '0;
   //std::randomize(loc);
@@ -79,12 +80,20 @@ class l1_snoopresp_bfm extends uvm_component;
        //l1_ccdirty[loc] = 1;
        void'(std::randomize(hit));
        l1_ccdirty[loc] = hit; //randomizing selected random bit
-       l1_dstore[loc] = 'hdeadbeef;
+       l1_dstore[loc] = {32'hbbbbbbbb, vif.ccsnoopaddr[loc]};
        vif.dstore = l1_dstore;
        vif.ccdirty = l1_ccdirty;
        foreach(vif.ccsnoopdone[i]) begin 
          vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again
        end
+
+       // Hold the signals until we get ccwait low
+       // This is the bus protocol the bus controller expects
+       while(|vif.ccwait) begin
+         @(posedge vif.clk);
+       end
+
+       zero_all_sigs();
    end
  endtask
 

@@ -196,7 +196,7 @@ module bus_ctrl #(
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
                 nl2_store = ccif.dstore[supplier_cpu]; 
                 nl2_addr = ccif.daddr[supplier_cpu] & ~(word_t'(3'b111));
-                ccif.dwait[supplier_cpu] = 0; 
+                //ccif.dwait[supplier_cpu] = 0; 
             end
             WRITEBACK:
                 ccif.l2WEN = 1;
