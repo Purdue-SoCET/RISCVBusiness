@@ -4,7 +4,7 @@ import uvm_pkg::*;
 `include "dut_params.svh"
 `include "sequence.svh"
 
-class dual_access_no_compete extends uvm_sequence #(bus_transaction);
+class dual_access_overlapping extends uvm_sequence #(bus_transaction);
   `uvm_object_utils(single_access_sequence)
   function new(string name = "");
     super.new(name);
@@ -20,7 +20,7 @@ class dual_access_no_compete extends uvm_sequence #(bus_transaction);
             req_item.numTransactions < 3;
             req_item.idle == 0;
             foreach (req_item.daddr[0][i]) {
-                req_item.daddr[0][i][dut_params::WORD_W - 1:3] != req_item.daddr[1][i][dut_params::WORD_W - 1:3]; // don't compare the lower 3 bits since addresses are truncated to the nearest word
+                req_item.daddr[0][i][dut_params::WORD_W - 1:3] == req_item.daddr[1][i][dut_params::WORD_W - 1:3]; // don't compare the lower 3 bits since addresses are truncated to the nearest word
             }
           }) begin
         // if the transaction is unable to be randomized, send a fatal message
@@ -30,4 +30,4 @@ class dual_access_no_compete extends uvm_sequence #(bus_transaction);
       finish_item(req_item);
     end
   endtask : body
-endclass  //dual access no compete sequence
+endclass  //dual access overlapping sequence
