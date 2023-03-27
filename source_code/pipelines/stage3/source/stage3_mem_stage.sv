@@ -146,6 +146,8 @@ module stage3_mem_stage(
     end
 
     assign ifence_pulse  = ex_mem_if.ex_mem_reg.ifence & ~ifence_reg;
+    assign cc_if.icache_flush  = ifence_pulse;
+    assign cc_if.dcache_flush  = ifence_pulse;
     assign iflushed_next = ifence_pulse ? 1'b0 : cc_if.iflush_done;
     assign dflushed_next = ifence_pulse ? 1'b0 : cc_if.dflush_done;
 

@@ -10,6 +10,9 @@ microarch_params:
   # Cache configurations
   cache_config  : "separate"
   dcache_type   : "l1"
+  # dcache_type   : "pass_through"
+  # icache_type   : "pass_through"
+
   icache_type   : "l1"
   
   # Bus configurations

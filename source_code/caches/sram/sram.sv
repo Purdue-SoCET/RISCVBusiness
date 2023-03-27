@@ -50,7 +50,7 @@ module sram #(
         n_sramMemory = sramMemory;
         rVal = 32'hBAD0BAD0;
         if (WEN)
-            n_sramMemory[SEL] = (wVal & wMask);// | (wMask & sramMemory[SEL]);
+            n_sramMemory[SEL] = (wVal & ~wMask) | (wMask & sramMemory[SEL]);
         if (REN)
             rVal = sramMemory[SEL];
     end
