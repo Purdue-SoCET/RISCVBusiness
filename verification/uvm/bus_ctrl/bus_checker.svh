@@ -83,7 +83,6 @@ class bus_checker extends uvm_scoreboard;
        end
       end
 
-      `uvm_info("Checker", $sformatf("Timeout var is %0d\n", timeout), UVM_DEBUG);
       // Now get the l2 response! 
       // done with similar logic to the above snoop response
       if(l2_fifo.is_empty()) begin
@@ -94,13 +93,10 @@ class bus_checker extends uvm_scoreboard;
       end
 
 
-      `uvm_info("Checker", $sformatf("L2 present flag is %0d\n", l2TxPresent), UVM_DEBUG);
-      `uvm_info("Checker", $sformatf("Snp present flag is %0d\n", snpRspPresent), UVM_DEBUG);
+      //`uvm_info("Checker", $sformatf("L2 present flag is %0d\n", l2TxPresent), UVM_DEBUG);
+      //`uvm_info("Checker", $sformatf("Snp present flag is %0d\n", snpRspPresent), UVM_DEBUG);
 
 
-      `uvm_info("Checker", $sformatf("L1 req trans is %s\n", reqTx.sprint()), UVM_DEBUG);
-      `uvm_info("Checker", $sformatf("Snp trans is %s\n", snpRspTx.sprint()), UVM_DEBUG);
-      `uvm_info("Checker", $sformatf("L2 trans is %s\n", l2Tx.sprint()), UVM_DEBUG);
 
       if(snpRspPresent) begin
         mask = ~(31'd0 | {($clog2(4*dut_params::BLOCK_SIZE_WORDS)){1'b1}});
@@ -227,8 +223,13 @@ class bus_checker extends uvm_scoreboard;
           endcase
       end
 
-    if(errorFlag) m_mismatches = m_mismatches + 1;
-    else m_matches = m_matches + 1;
+    if(errorFlag) begin 
+      `uvm_info("Checker", "Error flag seen!\n", UVM_DEBUG);
+      `uvm_info("Checker", $sformatf("L1 req trans is %s\n", reqTx.sprint()), UVM_DEBUG);
+      `uvm_info("Checker", $sformatf("Snp trans is %s\n", snpRspTx.sprint()), UVM_DEBUG);
+      `uvm_info("Checker", $sformatf("L2 trans is %s\n", l2Tx.sprint()), UVM_DEBUG);
+      m_mismatches = m_mismatches + 1;
+    end else m_matches = m_matches + 1;
 
     end // forever
   endtask
