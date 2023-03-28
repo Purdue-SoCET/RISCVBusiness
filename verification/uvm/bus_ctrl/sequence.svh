@@ -15,7 +15,7 @@ class basic_sequence extends uvm_sequence #(bus_transaction);
     req_item = bus_transaction::type_id::create("req_item");
 
     // Do simple read requests
-    repeat (1) begin
+    repeat (10) begin
       start_item(req_item);
       if (!req_item.randomize() with {
             req_item.numTransactions == 1;

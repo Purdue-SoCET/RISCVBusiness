@@ -176,6 +176,7 @@ virtual task run_phase(uvm_phase phase);
           addrSet = 0;
           snoopRspPhaseDone = '0;
           snoopReqPhaseDone = '0;
+          snpRspSet = 0;
 
           `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_LOW);
 
