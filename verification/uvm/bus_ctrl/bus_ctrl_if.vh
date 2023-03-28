@@ -94,7 +94,7 @@ interface bus_ctrl_if;
 
     always_comb begin
         for(int i = 0; i < CPUS; i++) begin
-            if(ccwait[i]) dstore[i] = snoop_dstore[i];
+            if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
             else dstore[i] = driver_dstore[i];
         end
     end
