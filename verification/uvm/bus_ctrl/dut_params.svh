@@ -10,6 +10,7 @@ package dut_params;
   localparam WORD_W = 32;
   localparam DRVR_TIMEOUT = 50;
   localparam MONITOR_TIMEOUT = 10;
+  localparam BUS_CHECKER_TIMEOUT = 25;
   localparam DRVR_SNOOP_ARRAY_SIZE = 4096;
   localparam l2_RAND_RANGE = 10;
 

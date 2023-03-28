@@ -17,6 +17,8 @@ class bus_checker extends uvm_scoreboard;
   uvm_tlm_analysis_fifo #(bus_transaction) snp_rsp_fifo;
   uvm_tlm_analysis_fifo #(bus_transaction) l1_req_fifo;
 
+  virtual bus_ctrl_if vif;
+
   int m_matches, m_mismatches;  // records number of matches and mismatches
   function new(string name, uvm_component parent = null);
     super.new(name, parent);
@@ -29,6 +31,11 @@ class bus_checker extends uvm_scoreboard;
     l2_fifo = new("l2_fifo", this);
     snp_rsp_fifo = new("snp_rsp_fifo", this);
     l1_req_fifo = new("l1_req_fifo", this);
+
+    if (!uvm_config_db#(virtual bus_ctrl_if)::get(this, "", "bus_ctrl_vif", vif)) begin
+      // if the interface was not correctly set, raise a fatal message
+      `uvm_fatal("Driver", "No virtual interface specified for this test instance");
+    end
   endfunction
 
   function void connect_phase(uvm_phase phase);
@@ -42,6 +49,7 @@ class bus_checker extends uvm_scoreboard;
     bus_transaction l2Tx;
     bus_transaction snpRspTx;
     bit [dut_params::WORD_W-1:0] mask;
+    int timeout = 0;
 
     bit snpRspPresent;
     bit l2TxPresent;
@@ -53,6 +61,7 @@ class bus_checker extends uvm_scoreboard;
       // get the l1_req/rsp packet and fill this into the completed transaction array
       l1_req_fifo.get(reqTx); // This is a blocking transaction I think
       errorFlag = 0;
+      timeout = 0;
 
       // get the snp_rsp_packet if there is one
       // Since the l1_rsp packet doesn't get sent until the transaction is complete
@@ -66,6 +75,15 @@ class bus_checker extends uvm_scoreboard;
       end
       
 
+      if(snpRspTx.snoopRspType != 1) begin // If the snoop was dirty then the L2 happens after the L1 gets low dwait, we must wait for the L2 trans to happen before checking everything
+       while(timeout < dut_params::BUS_CHECKER_TIMEOUT && l2_fifo.is_empty()) begin
+        @(posedge vif.clk);
+        #2;
+        timeout = timeout + 1;
+       end
+      end
+
+      `uvm_info("Checker", $sformatf("Timeout var is %0d\n", timeout), UVM_DEBUG);
       // Now get the l2 response! 
       // done with similar logic to the above snoop response
       if(l2_fifo.is_empty()) begin
@@ -74,6 +92,15 @@ class bus_checker extends uvm_scoreboard;
         l2TxPresent = 1;
         l2_fifo.get(l2Tx);
       end
+
+
+      `uvm_info("Checker", $sformatf("L2 present flag is %0d\n", l2TxPresent), UVM_DEBUG);
+      `uvm_info("Checker", $sformatf("Snp present flag is %0d\n", snpRspPresent), UVM_DEBUG);
+
+
+      `uvm_info("Checker", $sformatf("L1 req trans is %s\n", reqTx.sprint()), UVM_DEBUG);
+      `uvm_info("Checker", $sformatf("Snp trans is %s\n", snpRspTx.sprint()), UVM_DEBUG);
+      `uvm_info("Checker", $sformatf("L2 trans is %s\n", l2Tx.sprint()), UVM_DEBUG);
 
       if(snpRspPresent) begin
         mask = ~(31'd0 | {($clog2(4*dut_params::BLOCK_SIZE_WORDS)){1'b1}});
@@ -117,6 +144,7 @@ class bus_checker extends uvm_scoreboard;
         if((reqTx.procReqAddr & mask) != l2Tx.l2ReqAddr) begin
           uvm_report_error("Checker", "Processor request address and l2 request address don't match!");
           `uvm_info("Checker", $sformatf("L1 req addr unmasked: %0h L1 req addr masked: %0h L2 req addr unmasked: %0h\n", reqTx.procReqAddr, (reqTx.procReqAddr & mask), l2Tx.l2ReqAddr), UVM_DEBUG);
+          errorFlag = 1;
         end
 
         if(snpRspPresent) begin

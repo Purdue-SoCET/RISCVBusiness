@@ -54,6 +54,7 @@ endfunction
     super.run_phase(phase);
     forever begin
       bus_transaction tx_array [dut_params::NUM_CPUS_USED-1:0];
+      bus_transaction newTx;
       bit [dut_params::NUM_CPUS_USED-1:0] reqStarted = '0;
       bit transComplete = 0;
       bit [dut_params::NUM_CPUS_USED-1:0] busCtrlRspDone = '0;
@@ -66,6 +67,8 @@ endfunction
         tx_array[i] = bus_transaction::type_id::create("tx");
         tx_array[i] = zeroTrans(tx_array[i]);
       end
+
+      newTx = bus_transaction::type_id::create("newTx");
 
       @(posedge vif.clk);
       #2;
@@ -108,6 +111,7 @@ endfunction
        for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
          if(busCtrlRspDone[i]) begin
            `uvm_info(this.get_name(), $sformatf("New result sent to checker for l1 #%0d", i), UVM_LOW);
+           newTx.copy(tx_array[i]);
            check_ap.write(tx_array[i]);
            busCtrlRspDone[i] = 0;
            reqStarted[i] = 0;

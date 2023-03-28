@@ -180,7 +180,9 @@ virtual task run_phase(uvm_phase phase);
           `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_LOW);
 
           //`uvm_info("snp_rsp_monitor", $sformatf("Req addr is %0h\n", tx.snoopReqAddr), UVM_DEBUG);
-          check_ap.write(tx);
+          newTx.copy(tx);
+          check_ap.write(newTx);
+          //`uvm_info(this.get_name(), $sformatf("Result sent to checker is: %s\n", tx.sprint()), UVM_DEBUG);
 
           // Wait for ccwait to go low for all
           // Note: This makes the assumption that ccwait will go low for all l1s before the next snoop request
@@ -195,8 +197,6 @@ virtual task run_phase(uvm_phase phase);
             end
         end
         timeoutCount = 0;
-        newTx.copy(tx);
-        tx = newTx;
         tx = zeroTrans(tx);
         end
     end

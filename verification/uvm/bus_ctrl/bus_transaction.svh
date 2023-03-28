@@ -55,9 +55,6 @@ class bus_transaction extends uvm_sequence_item;
   }
 
 
-  //TODO: YOU MAY WANT TO RECONSIDER HOW MANY OF THESE FIELDS YOU INCLUDE FOR PRINTING
-  // NOTE: EXAMPLE OF NOT PRINTING CERTAIN FIELDS BELOW
-  // `uvm_field_int(haddr, UVM_NOCOMPARE | UVM_NOPRINT)
 
   `uvm_object_utils_begin(bus_transaction)
     `uvm_field_int(idle, UVM_DEFAULT)
@@ -72,10 +69,22 @@ class bus_transaction extends uvm_sequence_item;
     `uvm_field_int(procReq, UVM_DEFAULT)
     `uvm_field_int(snoopReq, UVM_DEFAULT)
     `uvm_field_int(snoopRsp, UVM_DEFAULT)
+    `uvm_field_int(l2Req, UVM_DEFAULT)
+    `uvm_field_int(l2Rsp, UVM_DEFAULT)
+    `uvm_field_int(l2_rw, UVM_DEFAULT)
     `uvm_field_int(busCtrlRsp, UVM_DEFAULT)
+    `uvm_field_int(procReqAddr, UVM_DEFAULT)
+    `uvm_field_int(procReq_dstore, UVM_DEFAULT)
+    `uvm_field_int(procReqType, UVM_DEFAULT)
+    `uvm_field_int(busCtrlRsp_dload, UVM_DEFAULT)
+    `uvm_field_int(busCtrlRsp_exclusive, UVM_DEFAULT)
+    `uvm_field_int(l2ReqAddr, UVM_DEFAULT)
     `uvm_field_int(snoopReqAddr, UVM_DEFAULT)
     `uvm_field_int(snoopReqInvalidate, UVM_DEFAULT)
     `uvm_field_int(snoopRspType, UVM_DEFAULT)
+    `uvm_field_int(snoopRspData, UVM_DEFAULT)
+    `uvm_field_int(l2RspData, UVM_DEFAULT)
+    `uvm_field_int(l2StoreData, UVM_DEFAULT)
   `uvm_object_utils_end
 
   function new(string name = "bus_transaction");

@@ -55,6 +55,7 @@ virtual task run_phase(uvm_phase phase);
     super.run_phase(phase);
     forever begin
         bus_transaction tx;
+        bus_transaction newTx;
         bit l2ReqPhaseDone = 0;
         bit l2RspPhaseDone = 0;
 
@@ -62,6 +63,7 @@ virtual task run_phase(uvm_phase phase);
 
         // captures activity between the driver and DUT
         tx = bus_transaction::type_id::create("tx");
+        newTx = bus_transaction::type_id::create("newTx");
 
         // zero out everything
         tx = zeroTrans(tx);
@@ -103,6 +105,7 @@ virtual task run_phase(uvm_phase phase);
           l2ReqPhaseDone = 0;
 
           `uvm_info(this.get_name(), "New l2 result sent to checker", UVM_LOW);
+          newTx.copy(tx);
           check_ap.write(tx);
            // Wait for l2 reqest to go low
           // Note: This makes the assumption that the req will go low for at least 1 cycle before the next one
