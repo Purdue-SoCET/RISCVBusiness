@@ -81,7 +81,7 @@ class l1_snoopresp_bfm extends uvm_component;
        void'(std::randomize(hit));
        l1_ccdirty[loc] = hit; //randomizing selected random bit
        l1_dstore[loc] = {32'hbbbbbbbb, vif.ccsnoopaddr[loc]};
-       vif.dstore = l1_dstore;
+       vif.snoop_dstore = l1_dstore;
        vif.ccdirty = l1_ccdirty;
        foreach(vif.ccsnoopdone[i]) begin 
          vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again

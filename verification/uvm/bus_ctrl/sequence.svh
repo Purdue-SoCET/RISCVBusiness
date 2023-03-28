@@ -15,11 +15,11 @@ class basic_sequence extends uvm_sequence #(bus_transaction);
     req_item = bus_transaction::type_id::create("req_item");
 
     // Do simple read requests
-    repeat (10) begin
+    repeat (1) begin
       start_item(req_item);
       if (!req_item.randomize() with {
             req_item.numTransactions == 10;
-            //req_item.idle == 1;
+            req_item.idle == 0;
             req_item.dWEN == 0;
           }) begin
         // if the transaction is unable to be randomized, send a fatal message

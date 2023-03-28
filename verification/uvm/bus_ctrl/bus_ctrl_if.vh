@@ -72,7 +72,7 @@ interface bus_ctrl_if;
     
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
-    transfer_width_t    [CPUS-1:0] dload, dstore;
+    transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
     word_t              [CPUS-1:0] daddr;
     // L1 coherence INPUTS to bus 
     logic               [CPUS-1:0] cctrans;     // indicates that the requester is undergoing a miss
@@ -92,6 +92,12 @@ interface bus_ctrl_if;
     logic l2WEN, l2REN; 
     word_t l2addr; 
 
+    always_comb begin
+        for(int i = 0; i < CPUS; i++) begin
+            if(ccwait[i]) dstore[i] = snoop_dstore[i];
+            else dstore[i] = driver_dstore[i];
+        end
+    end
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, 

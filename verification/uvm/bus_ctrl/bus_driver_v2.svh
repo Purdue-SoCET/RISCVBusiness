@@ -95,6 +95,8 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
                 timeoutCount[i] = timeoutCount[i] + 1;
               end
 
+              // TODO: wait a random amount of time on idle!!!!
+
             `uvm_info(this.get_name(), $sformatf("Transaction %0d/%0d complete for CPU: %0d",
                                                  cpuIndexCounts[i] + 1,
                                                  currTrans.numTransactions, i), UVM_DEBUG);
@@ -134,7 +136,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
         vif.daddr[cpuIndex]   = currTrans.daddr[cpuIndex][arrayIndex];
         vif.dWEN[cpuIndex]    = currTrans.dWEN[cpuIndex][arrayIndex] && ~(&(~(1'b1 << cpuIndex) & vif.dWEN) && addrMatch(vif.daddr, currTrans.daddr[cpuIndex][arrayIndex], cpuIndex)); // only do a write if we are the only one writing to this address
         vif.dREN[cpuIndex]    = ~currTrans.dWEN[cpuIndex][arrayIndex] || (&(~(1'b1 << cpuIndex) & vif.dWEN) && addrMatch(vif.daddr, currTrans.daddr[cpuIndex][arrayIndex], cpuIndex)); // we read if someone else is already writing to this address or if we were supposed to read
-        vif.dstore[cpuIndex]  = currTrans.dstore[cpuIndex][arrayIndex];
+        vif.driver_dstore[cpuIndex]  = currTrans.dstore[cpuIndex][arrayIndex];
         vif.ccwrite[cpuIndex] = currTrans.readX[cpuIndex][arrayIndex];
       end
     end
@@ -146,7 +148,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
       vif.daddr[cpuIndex]   = '0;
       vif.dWEN[cpuIndex]    = '0;
       vif.dREN[cpuIndex]    = '0;
-      vif.dstore[cpuIndex]  = '0;
+      vif.driver_dstore[cpuIndex]  = '0;
       vif.ccwrite[cpuIndex] = '0;
       vif.cctrans[cpuIndex] = '0;
 
@@ -184,7 +186,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
       vif.dREN        = '0;
       vif.dWEN        = '0;
       vif.daddr       = '0;
-      vif.dstore      = '0;
+      vif.driver_dstore      = '0;
       vif.cctrans     = '0;
       vif.ccwrite     = '0;
       vif.ccsnoophit  = '0;
