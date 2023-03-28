@@ -18,7 +18,7 @@ class basic_sequence extends uvm_sequence #(bus_transaction);
     repeat (10) begin
       start_item(req_item);
       if (!req_item.randomize() with {
-            req_item.numTransactions == 1;
+            req_item.numTransactions == 10;
             req_item.idle == 0;
             req_item.dWEN == 0;
           }) begin
