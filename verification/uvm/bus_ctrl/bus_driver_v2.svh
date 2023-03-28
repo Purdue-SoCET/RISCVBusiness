@@ -86,7 +86,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
 
             @(posedge vif.clk);  // clock in the stimulus
 
-              while (vif.dwait[i]) begin
+              while (vif.dwait[i] && currTrans.idle[i][cpuIndexCounts[i]] != 1) begin
                 if (timeoutCount[i] > dut_params::DRVR_TIMEOUT) begin
                   `uvm_fatal("Driver",
                              "Timeout while waiting for a low dwait");
@@ -127,7 +127,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
     input int arrayIndex;
     input bus_transaction currTrans;
     begin
-      if (currTrans.idle[cpuIndex]) begin
+      if (currTrans.idle[cpuIndex][arrayIndex]) begin
         driveCpuIdle(cpuIndex);
       end else begin
         vif.cctrans[cpuIndex] = 1'b1;
