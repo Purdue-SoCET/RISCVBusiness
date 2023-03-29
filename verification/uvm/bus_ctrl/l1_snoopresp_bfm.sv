@@ -58,16 +58,17 @@ class l1_snoopresp_bfm extends uvm_component;
              if(hit) l1_dstore[i] = {32'hbbbbbbbb, vif.ccsnoopaddr[i]};
              else l1_dstore[i] = {32'hbbbbbbbb, 32'hdeadbeef};
              //foreach(vif.ccsnoopdone[i]) begin 
-             vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again
+             vif.ccsnoopdone[i] = 1; //check this part again
              //end
            end 
            else if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 1)) begin
             //Add logic here to search L1, if found, then invalidate depending on exclusive or not
             //`uvm_info("L1_SNOOP", $sformatf("Cache block invalidated in %d th L1", i), UVM_DEBUG);
+             vif.ccsnoopdone[i] = 1; //check this part again
            end 
            else begin
              //`uvm_info("L1_SNOOP", $sformatf("Nothing to Snoop/Respond to in %d th L1", i), UVM_LOW);
-             zero_all_sigs();
+             zeroSigsForIndex(i);
            end
           end 
         end
@@ -185,6 +186,17 @@ class l1_snoopresp_bfm extends uvm_component;
        vif.ccIsPresent = '0;
        vif.ccdirty     = '0;
        vif.ccsnoopdone = '0;
+     end
+ endtask
+
+ virtual task zeroSigsForIndex(input int i);
+     begin
+       vif.cctrans[i]     = '0;
+       //vif.ccwrite     = '0;
+       vif.ccsnoophit[i]  = '0;
+       vif.ccIsPresent[i] = '0;
+       vif.ccdirty[i]     = '0;
+       vif.ccsnoopdone[i] = '0;
      end
  endtask
 
