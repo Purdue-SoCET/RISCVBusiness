@@ -57,6 +57,9 @@ class l1_snoopresp_bfm extends uvm_component;
              vif.ccIsPresent[i] = hit;
              if(hit) l1_dstore[i] = {32'hbbbbbbbb, vif.ccsnoopaddr[i]};
              else l1_dstore[i] = {32'hbbbbbbbb, 32'hdeadbeef};
+             //foreach(vif.ccsnoopdone[i]) begin 
+             vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again
+             //end
            end 
            else if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 1)) begin
             //Add logic here to search L1, if found, then invalidate depending on exclusive or not
@@ -84,9 +87,9 @@ class l1_snoopresp_bfm extends uvm_component;
        l1_ccdirty[loc] = hit; //randomizing selected random bit
        vif.snoop_dstore = l1_dstore;
        vif.ccdirty = l1_ccdirty;
-       foreach(vif.ccsnoopdone[i]) begin 
-         vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again
-       end
+       //foreach(vif.ccsnoopdone[i]) begin 
+       //  vif.ccsnoopdone[i] = vif.ccwait[i] ? 1 : 0; //check this part again
+       //end
 
        // Hold the signals until we get ccwait low
        // This is the bus protocol the bus controller expects
