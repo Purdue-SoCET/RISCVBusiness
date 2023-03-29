@@ -71,7 +71,7 @@ endfunction
       newTx = bus_transaction::type_id::create("newTx");
 
       @(posedge vif.clk);
-      #2;
+      #5;
         // Check for new L1 requests
         // Throw error if we have write & read or write & ccwrite OR if a new request starts before the old one ends
         if(|vif.dREN || |vif.dWEN) begin
@@ -82,6 +82,7 @@ endfunction
                 `uvm_fatal("Monitor", $sformatf("req not complete before new request! proc %0d", i));
              end else begin // if we have a valid request and we don't current have one for this CPU
                 tx_array[i].procReq= 1;
+                tx_array[i].procReq_dstore = vif.dstore[i];
                 tx_array[i].procReqAddr = vif.daddr[i];
                 tx_array[i].procReqType = vif.dWEN[i] ? 2 
                                                         : vif.ccwrite[i] ? 1 : 0;

@@ -44,8 +44,8 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
     forever begin
       zero_all_sigs();
       seq_item_port.get_next_item(currTrans);
-      `uvm_info(this.get_name(), $sformatf("Received new sequence item:\n%s", currTrans.sprint()),
-                UVM_DEBUG);
+      /*`uvm_info(this.get_name(), $sformatf("Received new sequence item:\n%s", currTrans.sprint()),
+                UVM_DEBUG);*/
       `zero_unpckd_array(cpuIndexCounts);
 
       for(int j = 0; j < dut_params::NUM_CPUS_USED; j++) begin

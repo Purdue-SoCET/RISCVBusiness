@@ -55,6 +55,8 @@ class l1_snoopresp_bfm extends uvm_component;
              void'(std::randomize(hit));
              vif.ccsnoophit[i] = hit;
              vif.ccIsPresent[i] = hit;
+             if(hit) l1_dstore[i] = {32'hbbbbbbbb, vif.ccsnoopaddr[i]};
+             else l1_dstore[i] = {32'hbbbbbbbb, 32'hdeadbeef};
            end 
            else if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 1)) begin
             //Add logic here to search L1, if found, then invalidate depending on exclusive or not
@@ -80,7 +82,6 @@ class l1_snoopresp_bfm extends uvm_component;
        //l1_ccdirty[loc] = 1;
        void'(std::randomize(hit));
        l1_ccdirty[loc] = hit; //randomizing selected random bit
-       l1_dstore[loc] = {32'hbbbbbbbb, vif.ccsnoopaddr[loc]};
        vif.snoop_dstore = l1_dstore;
        vif.ccdirty = l1_ccdirty;
        foreach(vif.ccsnoopdone[i]) begin 
@@ -176,7 +177,7 @@ class l1_snoopresp_bfm extends uvm_component;
  virtual task zero_all_sigs();
      begin
        vif.cctrans     = '0;
-       vif.ccwrite     = '0;
+       //vif.ccwrite     = '0;
        vif.ccsnoophit  = '0;
        vif.ccIsPresent = '0;
        vif.ccdirty     = '0;

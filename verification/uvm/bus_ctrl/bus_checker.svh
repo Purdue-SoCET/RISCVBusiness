@@ -75,7 +75,7 @@ class bus_checker extends uvm_scoreboard;
       end
       
 
-      if(snpRspTx.snoopRspType != 1) begin // If the snoop was dirty then the L2 happens after the L1 gets low dwait, we must wait for the L2 trans to happen before checking everything
+      if((snpRspPresent && snpRspTx.snoopRspType != 1) || (reqTx.procReqType == 2)) begin // If the snoop was dirty then the L2 happens after the L1 gets low dwait, we must wait for the L2 trans to happen before checking everything or if we have a processor write
        while(timeout < dut_params::BUS_CHECKER_TIMEOUT && l2_fifo.is_empty()) begin
         @(posedge vif.clk);
         #2;
@@ -98,8 +98,10 @@ class bus_checker extends uvm_scoreboard;
 
 
 
+
+      mask = ~(31'd0 | {($clog2(4*dut_params::BLOCK_SIZE_WORDS)){1'b1}});
+
       if(snpRspPresent) begin
-        mask = ~(31'd0 | {($clog2(4*dut_params::BLOCK_SIZE_WORDS)){1'b1}});
         if((reqTx.procReqAddr & mask) != snpRspTx.snoopReqAddr) begin
           uvm_report_error("Checker", "Processor request address and snoop request address don't match!");
           `uvm_info("Checker", $sformatf("L1 req addr unmasked: %0h L1 req addr masked: %0h Snp req addr unmasked: %0h\n", reqTx.procReqAddr, (reqTx.procReqAddr & mask), snpRspTx.snoopReqAddr), UVM_DEBUG);
@@ -178,7 +180,7 @@ class bus_checker extends uvm_scoreboard;
             errorFlag = 1;
           end
         end
-      end else if(~errorFlag && (snpRspTx.snoopRspType != 1 || reqTx.procReqType == 2)) begin
+      end else if(~errorFlag && ((snpRspPresent && snpRspTx.snoopRspType != 1) || reqTx.procReqType == 2)) begin
         uvm_report_error("Checker", "No l2 TX seen on a l1 write/snoop response invalid/dirty!");
         errorFlag = 1;
       end else begin
@@ -226,8 +228,8 @@ class bus_checker extends uvm_scoreboard;
     if(errorFlag) begin 
       `uvm_info("Checker", "Error flag seen!\n", UVM_DEBUG);
       `uvm_info("Checker", $sformatf("L1 req trans is %s\n", reqTx.sprint()), UVM_DEBUG);
-      `uvm_info("Checker", $sformatf("Snp trans is %s\n", snpRspTx.sprint()), UVM_DEBUG);
-      `uvm_info("Checker", $sformatf("L2 trans is %s\n", l2Tx.sprint()), UVM_DEBUG);
+      if(snpRspPresent) begin `uvm_info("Checker", $sformatf("Snp trans is %s\n", snpRspTx.sprint()), UVM_DEBUG); end
+      if(l2TxPresent) begin `uvm_info("Checker", $sformatf("L2 trans is %s\n", l2Tx.sprint()), UVM_DEBUG); end
       m_mismatches = m_mismatches + 1;
     end else m_matches = m_matches + 1;
 

@@ -4,6 +4,7 @@
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 `include "bus_ctrl_if.vh"
+`timescale 1ns/1ns
 class snp_rsp_monitor extends uvm_monitor;
   `uvm_component_utils(snp_rsp_monitor)
 
@@ -70,10 +71,11 @@ virtual task run_phase(uvm_phase phase);
     // zero out everything
     tx = zeroTrans(tx);
 
+    @(posedge vif.clk);
+    #1;
+
 
     forever begin
-        @(posedge vif.clk);
-        #2;
         // Check for new snoop requests
         if(|vif.ccwait && !(&snoopReqPhaseDone)) begin
            for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
@@ -115,9 +117,13 @@ virtual task run_phase(uvm_phase phase);
        // Check to see if there are snoop responses without a snoop request, this would be bad if it happened
        foreach(vif.ccsnoopdone[i]) begin
          if(~snoopReqPhaseDone[i] && vif.ccsnoopdone[i]) begin
+            #3;
            `uvm_fatal("snp_rsp Monitor", $sformatf("Some snoop rsp for l1 #%0d without a snoop request!", i));
          end
        end
+
+       //`uvm_info(this.get_name(), $sformatf("ReqPhase done is 0x%0x\n", snoopReqPhaseDone), UVM_DEBUG);
+       //`uvm_info(this.get_name(), $sformatf("ccsnoopdone is 0x%0x\n", vif.ccsnoopdone), UVM_DEBUG);
 
        // Check for new snoop responses 
        if((!(&snoopRspPhaseDone)) && |vif.ccsnoopdone)  begin // if we see a snoop done signal
@@ -125,6 +131,7 @@ virtual task run_phase(uvm_phase phase);
          for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
            if(vif.ccsnoopdone[i]) begin
              if(~vif.ccwait[i]) begin // shouldn't see a response if not ccwait high (if there is not a req)
+                #2;
                 `uvm_fatal("snp_rsp Monitor", $sformatf("Snoop response on requester l1 #%0d, not allowed!\n", i));
              end
              if(snpRspSet) begin // if someone else has already responded with valid data
@@ -196,9 +203,14 @@ virtual task run_phase(uvm_phase phase);
             if(timeoutCount == 5) begin
               `uvm_fatal("snp_rsp Monitor", "Monitor timeout waiting for ccwait to go low after snoop trans complete!");
             end
+
         end
+        #5;
         timeoutCount = 0;
         tx = zeroTrans(tx);
+        end else begin
+          @(posedge vif.clk);
+          #5;
         end
     end
 endtask : run_phase

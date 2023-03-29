@@ -12,7 +12,7 @@
 // Include params
 `include "dut_params.svh"
 
-`timescale 1ns / 1ps
+`timescale 1ns / 1ns
 // import uvm packages
 import uvm_pkg::*;
 
