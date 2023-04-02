@@ -503,7 +503,7 @@ module priv_1_12_csr #(
   assign prv_intern_if.curr_mepc = mepc;
   // TODOS:
   // add the mux infront of mstatus so when mprven in mstatus is 0, mprv will be ignored
-  assign prv_intern_if.curr_mstatus = mstatus & mstatus_t'({14'h3ff,prv_intern_if.curr_dcsr.mprven,17'h1fff});
+  assign prv_intern_if.curr_mstatus = prv_intern_if.curr_priv_dmode? mstatus & mstatus_t'({14'h3ff,prv_intern_if.curr_dcsr.mprven,17'h1fff}) : mstatus;
   assign prv_intern_if.curr_mtvec = mtvec;
 
 endmodule
