@@ -4,7 +4,6 @@
 `include "bus_ctrl_if.vh"
 `include "dut_params.svh"
 `include "uvm_macros.svh"
-//`include "Utils.svh"
 `define PROPAGATION_DELAY #(2000);
 
 import uvm_pkg::*;
@@ -14,8 +13,6 @@ class l2_bfm extends uvm_component;
 
   virtual bus_ctrl_if bus_if;
 
-  //env_config bus_env_config;
-
   function new(string name = "l2_bfm", uvm_component parent);
     super.new(name, parent);
   endfunction
@@ -24,12 +21,7 @@ class l2_bfm extends uvm_component;
     string bus_if_str;
     super.build_phase(phase);
 
-    // get config from database
-   // if (!uvm_config_db#(env_config)::get(this, "", "bus_env_config", bus_env_config)) begin
-   //   `uvm_fatal(this.get_name(), "env config not registered to db")
-   // end
-
-    // get interface from database
+   // get interface from database
    if (!uvm_config_db#(virtual bus_ctrl_if)::get(this, "", "bus_ctrl_vif", bus_if)) begin
       `uvm_fatal($sformatf("%s/d_cif", this.get_name()),
                  "No virtual interface specified for this test instance");
@@ -39,11 +31,6 @@ class l2_bfm extends uvm_component;
 
   virtual task run_phase(uvm_phase phase);
     forever begin
-      //@(posedge bif.CLK);
-      //`PROPAGATION_DELAY
-      //for(int i = 0; i < 1999; i++) begin
-        //@(posedge bus_if.clk);
-      //end
 
       @(posedge bus_if.clk);
       #2;
@@ -68,7 +55,6 @@ class l2_bfm extends uvm_component;
 
     count = 1;
     while (count < cycles) begin
-      //@(posedge bus_if.CLK);
       @(posedge bus_if.clk);
       count++;
     end
@@ -84,7 +70,6 @@ class l2_bfm extends uvm_component;
 
     count = 1;
     while (count < cycles) begin
-      //@(posedge bus_if.CLK);
       @(posedge bus_if.clk);
       count++;
     end
