@@ -1,0 +1,8 @@
+TEST_ST_OP( testnum, load_inst, store_inst, result, offset, base ) \
+    TEST_CASE( testnum, x3, result, \
+      la  x1, base; \
+      li  x2, result; \
+      store_inst x2, offset(x1); \
+      load_inst x3, offset(x1); \
+    )
+

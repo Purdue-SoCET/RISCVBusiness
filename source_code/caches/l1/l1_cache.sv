@@ -35,7 +35,7 @@ module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
     parameter ASSOC               = 1, // 1 or 2 so far
-    parameter NONCACHE_START_ADDR = 32'h8000_0000
+    parameter NONCACHE_START_ADDR = 32'hF000_0000
 )
 (
     input logic CLK, nRST,
@@ -234,7 +234,7 @@ module l1_cache #(
         mem_gen_bus_if.wen      = 1'b0;
         mem_gen_bus_if.addr     = '0; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
         mem_gen_bus_if.wdata    = '0; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
-        mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
+        mem_gen_bus_if.byte_en  = '1; // this should totally be 1111
         next_read_addr          = read_addr;               //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
         en_set_ctr 	            = 1'b0;
         en_word_ctr 	        = 1'b0;
@@ -274,9 +274,9 @@ module l1_cache #(
 		                4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h0000FFFF;
                         default:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h0;
                     endcase
-                    sramWrite.frames[hit_idx].data[decoded_addr.block_bits] = proc_gen_bus_if.wdata;														   				   
+                    sramWrite.frames[hit_idx].data[decoded_addr.block_bits] = proc_gen_bus_if.wdata;
+                    sramMask.frames[hit_idx].dirty 	    = 0;														   				   
 		            sramWrite.frames[hit_idx].dirty 	    = 1'b1;
-                    sramMask.frames[hit_idx].dirty 	    = 0;
 		            next_last_used[decoded_addr.idx_bits]   = hit_idx;
                 end
                 else if(pass_through)begin // Passthrough data logic
