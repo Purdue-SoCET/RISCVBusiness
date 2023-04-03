@@ -34,7 +34,7 @@ localparam SRAM_HEIGHT = 128;
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
-    parameter ASSOC               = 1, // 1 or 2 so far
+    parameter ASSOC               = 2, // 1 or 2 so far
     parameter NONCACHE_START_ADDR = 32'hF000_0000 // sh/sb still have issues when uncached; not sure whats up with that still tbh
 )
 (
