@@ -35,7 +35,7 @@ module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
     parameter ASSOC               = 1, // 1 or 2 so far
-    parameter NONCACHE_START_ADDR = 32'hF000_0000
+    parameter NONCACHE_START_ADDR = 32'hF000_0000 // sh/sb still have issues when uncached; not sure whats up with that still tbh
 )
 (
     input logic CLK, nRST,
@@ -218,7 +218,9 @@ module l1_cache #(
     end
 
     assign sramREN = 1;
-    assign sramSEL = flush ? set_num : decoded_addr.idx_bits;
+    logic flushing;
+    assign sramSEL = flushing ? set_num : decoded_addr.idx_bits;
+
 
     // Comb. logic for outputs, maybe merging this comb. block with the one above
     // could be an optmization. Hopefully, synthesizer is smart to catch it.
@@ -228,6 +230,7 @@ module l1_cache #(
         sramWEN = 0;
         sramWrite = 0;
         sramMask = '1;
+        flushing = 0;
 
         proc_gen_bus_if.busy    = 1'b1;
         mem_gen_bus_if.ren      = 1'b0;
@@ -358,6 +361,7 @@ module l1_cache #(
             // write back, un-dirty and then come back to FLUSH_CACHE
             // then re-loop to search for dirty frame
             FLUSH_CACHE: begin
+                flushing = 1;
                 if(finish_set) begin
                     clr_set_ctr  = 1'b1;
                     flush_done 	 = 1'b1;
@@ -368,6 +372,7 @@ module l1_cache #(
             // therefore, just checking ASSOC in FLUSH_FRAME, and deciding whether to go back to
             // FLUSH_CACHE or stay for cleaning of the another frame is sufficient
             FLUSH_SET: begin 
+                flushing = 1;
                 if(finish_frame) begin
                     clr_frame_ctr  = 1'b1;
                     en_set_ctr 	   = 1'b1;
@@ -378,6 +383,7 @@ module l1_cache #(
             end // case: FLUSH_SET
 	    
             FLUSH_FRAME: begin
+                flushing = 1;
 	            if (sramRead.frames[frame_num].dirty) begin
                     mem_gen_bus_if.wen    = 1'b1;
                     mem_gen_bus_if.addr   = {sramRead.frames[frame_num].tag, set_num[N_SET_BITS - 1:0], word_num[N_BLOCK_BITS - 1:0], 2'b00};
@@ -391,7 +397,7 @@ module l1_cache #(
 	    	        sramWrite.frames[frame_num] = 0;
                     sramMask.frames[frame_num] = 0;
                 end		
-                if(~mem_gen_bus_if.busy) begin
+                if(~mem_gen_bus_if.busy || ~sramRead.frames[frame_num].dirty) begin
                     en_word_ctr  = 1'b1;
                 end
             end // case: FLUSH_FRAME
@@ -408,8 +414,7 @@ module l1_cache #(
                     next_state 	= WB;
                 else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state 	= FETCH;
-                if(flush)  
-                    next_state 	= FLUSH_CACHE;
+                
 	        end
 	        FETCH: begin
                 if(decoded_addr != decoded_req_addr)begin //ABORT 
@@ -449,6 +454,8 @@ module l1_cache #(
 	                next_state = FLUSH_SET;
 	        end
 	    endcase // casez (state)
+        if(flush)  
+            next_state 	= FLUSH_CACHE;
     end // always_comb
 
 endmodule // l1_cache

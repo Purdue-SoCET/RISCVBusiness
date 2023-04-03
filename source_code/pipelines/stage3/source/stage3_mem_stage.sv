@@ -132,6 +132,7 @@ module stage3_mem_stage(
     logic ifence_pulse;
     logic iflushed, iflushed_next;
     logic dflushed, dflushed_next;
+    logic iflush_done_reg, dflush_done_reg;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
@@ -148,8 +149,8 @@ module stage3_mem_stage(
     assign ifence_pulse  = ex_mem_if.ex_mem_reg.ifence & ~ifence_reg;
     assign cc_if.icache_flush  = ifence_pulse;
     assign cc_if.dcache_flush  = ifence_pulse;
-    assign iflushed_next = ifence_pulse ? 1'b0 : cc_if.iflush_done;
-    assign dflushed_next = ifence_pulse ? 1'b0 : cc_if.dflush_done;
+    assign iflushed_next = ifence_pulse ? 1'b0 : cc_if.iflush_done || ~cc_if.dflush_done;
+    assign dflushed_next = ifence_pulse ? 1'b0 : cc_if.dflush_done || ~cc_if.iflush_done;
 
     /************************
     * Hazard/Forwarding Unit
@@ -157,7 +158,7 @@ module stage3_mem_stage(
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.fence_stall = ex_mem_if.ex_mem_reg.ifence && (!iflushed || !dflushed);
+    assign hazard_if.fence_stall = ex_mem_if.ex_mem_reg.ifence && !(iflushed && dflushed);
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
