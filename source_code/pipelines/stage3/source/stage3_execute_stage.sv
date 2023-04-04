@@ -83,7 +83,7 @@ module stage3_execute_stage (
         //.rmgmt_req_reg_w(rm_if.req_reg_w)
     );
 
-    assign wfi = cu_if.wfi;  //Added by rkannank
+    //assign wfi = cu_if.wfi;  //Added by rkannank
 
     generate
         if (BASE_ISA == "RV32E") begin : g_rfile_select

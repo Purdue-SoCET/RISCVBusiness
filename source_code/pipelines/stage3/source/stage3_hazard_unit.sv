@@ -86,7 +86,7 @@ module stage3_hazard_unit (
     assign intr = ~exception & prv_pipe_if.intr;
 
     assign prv_pipe_if.pipe_clear = 1'b1; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
-    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || hazard_if.wfi || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
 
     assign hazard_if.insert_priv_pc = prv_pipe_if.insert_pc;
     assign hazard_if.priv_pc = prv_pipe_if.priv_pc;
@@ -97,7 +97,7 @@ module stage3_hazard_unit (
     assign hazard_if.suppress_iren = branch_jump || ex_flush_hazard || prv_pipe_if.ret || prv_pipe_if.insert_pc;  // prevents a false instruction request from being sent when pipeline flush imminent
     assign hazard_if.suppress_data = exception; // suppress data transfer on interrupt/exception. Exception case: prevent read/write of faulting location. Interrupt: make symmetric with exceptions for ease
 
-    assign hazard_if.rollback = (hazard_if.ifence && !hazard_if.fence_stall); // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
+    assign hazard_if.rollback = hazard_if.wfi || (hazard_if.ifence && !hazard_if.fence_stall); // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
 
     // EPC priority logic
     assign epc = hazard_if.valid_m && !intr ? hazard_if.pc_m :

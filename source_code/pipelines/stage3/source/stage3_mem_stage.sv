@@ -200,6 +200,8 @@ module stage3_mem_stage(
     assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
     assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.badaddr : dgen_bus_if.addr;
 
+    assign wfi = ex_mem_if.ex_mem_reg.wfi_insn;
+
     // NEW
     assign hazard_if.pc_m = ex_mem_if.ex_mem_reg.pc;
     assign hazard_if.valid_m = ex_mem_if.ex_mem_reg.valid;
