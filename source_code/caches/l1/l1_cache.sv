@@ -28,13 +28,10 @@
 
 `include "generic_bus_if.vh"
 
-localparam SRAM_WR_SIZE = 128;
-localparam SRAM_HEIGHT = 128;
-
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
-    parameter ASSOC               = 1, // tested 1, 2, 4, 8
+    parameter ASSOC               = 4, // dont set this to 0
     parameter NONCACHE_START_ADDR = 32'hF000_0000 // sh/sb still have issues when uncached; not sure whats up with that still tbh
 )
 (
@@ -49,7 +46,7 @@ module l1_cache #(
     // local parameters
     localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
     localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
-    localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / (BLOCK_SIZE);
+    localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
     localparam N_FRAME_BITS       = $clog2(ASSOC);
     localparam N_SET_BITS         = $clog2(N_SETS);
@@ -57,7 +54,7 @@ module l1_cache #(
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2; // in bits
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
-    
+
     typedef struct packed {
         logic valid;
         logic dirty;
@@ -68,57 +65,53 @@ module l1_cache #(
     typedef struct packed {
         cache_frame_t [ASSOC - 1:0] frames;
     } cache_set_t;      // cache set
-    
-    typedef enum {
-       IDLE, FETCH, WB, FLUSH_CACHE
-    } fsm_t;            // cache state machine
 
     typedef struct packed {
         logic [N_TAG_BITS-1:0] tag_bits;
         logic [N_SET_BITS-1:0] idx_bits;
         logic [N_BLOCK_BITS-1:0] block_bits;
         logic [1:0] byte_bits;
-    } decoded_addr_t;   // cache address type
+    } decoded_cache_addr_t;   // cache address type
 
     typedef struct packed {
         logic finish;
         logic [N_SET_BITS-1:0] set_num;
-        logic [N_FRAME_BITS-1:0] frame_num;
+        logic [N_FRAME_BITS-1:0] frame_num; // assoc
         logic [N_BLOCK_BITS-1:0] word_num;
-    } flush_idx_t;      // flush counter type
+    } flush_idx_t;             // flush counter type
 
+    typedef enum {
+       IDLE, FETCH, WB, FLUSH_CACHE
+    } cache_fsm_t;            // cache state machine
+    
     // counter signals
     flush_idx_t flush_idx, next_flush_idx;
     logic   [N_BLOCK_BITS:0] word_num, next_word_num;
     logic   enable_word_count, clear_word_count, 
             clear_flush_count, enable_flush_count, enable_flush_count_nowb;
-
     // States
-    fsm_t state, next_state;
+    cache_fsm_t state, next_state;
     // lru
     logic [N_FRAME_BITS-1:0] ridx;
-    logic [N_FRAME_BITS-1:0] last_used;
-    logic [N_FRAME_BITS-1:0] next_last_used;
+    logic [N_SET_BITS-1:0] last_used;
+    logic [N_SET_BITS-1:0] next_last_used;
     // address
     word_t read_addr, next_read_addr;
-    decoded_addr_t decoded_req_addr, next_decoded_req_addr;
-    decoded_addr_t decoded_addr;
-    // abort 
-    logic abort;
+    decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
+    decoded_cache_addr_t decoded_addr;
     // Cache Hit
     logic hit, pass_through;
     word_t [BLOCK_SIZE-1:0] hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
     cache_set_t sramWrite, sramRead, sramMask;
-    logic sramREN, sramWEN; 
+    logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL;
 
     // sram instance
-    assign sramREN = 1;
     assign sramSEL = (state == FLUSH_CACHE) ? flush_idx.set_num : decoded_addr.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
-        SRAM(CLK, nRST, sramWrite, sramRead, sramREN, sramWEN, sramSEL, sramMask);
+        SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -153,14 +146,20 @@ module l1_cache #(
         next_flush_idx = flush_idx;
         if (clear_flush_count)
             next_flush_idx = 0;
-        else if (enable_flush_count_nowb)
+        else if (enable_flush_count_nowb) begin
             next_flush_idx = flush_idx + BLOCK_SIZE;
-        else if (enable_flush_count)
+            if (next_flush_idx.frame_num >= (ASSOC))
+                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), N_FRAME_BITS'('0), N_BLOCK_BITS'('0)};
+        end
+        else if (enable_flush_count) begin
             next_flush_idx = flush_idx + 1;
+            if (next_flush_idx.frame_num >= (ASSOC))
+                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), N_FRAME_BITS'('0), N_BLOCK_BITS'('0)};
+        end 
     end
 
     // decoded address conversion
-    assign decoded_addr = decoded_addr_t'(proc_gen_bus_if.addr);
+    assign decoded_addr = decoded_cache_addr_t'(proc_gen_bus_if.addr);
 
     // hit logic with pass through
     always_comb begin
@@ -192,7 +191,6 @@ module l1_cache #(
         mem_gen_bus_if.addr     = '0; 
         mem_gen_bus_if.wdata    = '0; 
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
-        next_read_addr          = read_addr;
         enable_flush_count      = 0;
         enable_word_count       = 0;
         enable_flush_count_nowb = 0;
@@ -200,14 +198,15 @@ module l1_cache #(
         clear_word_count        = 0;
         flush_done 	            = 1'b0;
         clear_done 	            = 1'b0;
+        next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
         
         // associativity, using NRU
-       	if (ASSOC == 1)
-	        ridx  = 0;
-	    else
-	        ridx  = last_used[decoded_addr.idx_bits] + 1;
+        if (ASSOC == 1)
+            ridx = 0;
+        else
+            ridx = (last_used[decoded_addr.idx_bits] == (ASSOC - 1)) ? 0 : last_used[decoded_addr.idx_bits] + 1;
 
         casez(state)
             IDLE: begin
@@ -241,7 +240,7 @@ module l1_cache #(
                     mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en;
                     proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
                     proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;
-                    if(proc_gen_bus_if.wen)begin // kinda sus
+                    if(proc_gen_bus_if.wen)begin
                         casez (proc_gen_bus_if.byte_en) // Case statement for byte enable
                             4'b0001:    mem_gen_bus_if.wdata  = {24'd0, proc_gen_bus_if.wdata[7:0]};
                             4'b0010:    mem_gen_bus_if.wdata  = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
@@ -270,19 +269,19 @@ module l1_cache #(
 
                 if(word_num == BLOCK_SIZE) begin
                     sramWEN = 1;
-                    clear_word_count 					        = 1'b1;
+                    clear_word_count 					    = 1'b1;
                     sramWrite.frames[ridx].valid            = 1'b1;
                     sramWrite.frames[ridx].tag 	            = decoded_req_addr.tag_bits;
-                    sramMask.frames[ridx].valid = 0;
-                    sramMask.frames[ridx].tag = 0;
+                    sramMask.frames[ridx].valid             = 1'b0;
+                    sramMask.frames[ridx].tag               = 1'b0;
                     mem_gen_bus_if.ren 					    = 1'b0;
                 end
                 if(~mem_gen_bus_if.busy && (word_num != BLOCK_SIZE)) begin
-                    sramWEN = 1;
-                    enable_word_count     = 1'b1;
+                    sramWEN                                = 1'b1;
+                    enable_word_count                      = 1'b1;
                     next_read_addr 						   = read_addr + 4;
                     sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
-                    sramMask.frames[ridx].data[word_num] = 0;
+                    sramMask.frames[ridx].data[word_num]   = 1'b0;
                 end
             end
             WB: begin
@@ -333,35 +332,34 @@ module l1_cache #(
     // next state logic
     always_comb begin
 	    next_state = state;
-        abort = 0;
 	    casez(state)
 	        IDLE: begin                    
-                if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
-                    next_state 	= WB;
-                else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
-                    next_state 	= FETCH;
+                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
+                    next_state = WB;
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
+                    next_state = FETCH;
 	        end
 	        FETCH: begin
-                if(decoded_addr != decoded_req_addr)
-                    next_state = IDLE;
+                if (decoded_addr != decoded_req_addr)
+                    next_state = IDLE; 
                 else if (word_num == BLOCK_SIZE)
-                    next_state 	= IDLE;
+                    next_state = IDLE;
 	        end
 	        WB: begin
-                if(decoded_addr != decoded_req_addr)
+                if (decoded_addr != decoded_req_addr)
                     next_state = IDLE; 
-                else if(word_num == BLOCK_SIZE)
-                    next_state 	= FETCH;
+                else if (word_num == BLOCK_SIZE)
+                    next_state = FETCH;
 	        end
 	        FLUSH_CACHE: begin        
-                if(flush_done)
-                    next_state 	= IDLE;
+                if (flush_done)
+                    next_state = IDLE;
 	        end
 	    endcase // casez (state)
 
         // can jump to flush in any state
         if (flush)  
-            next_state 	= FLUSH_CACHE;
+            next_state = FLUSH_CACHE;
     end
 
 endmodule

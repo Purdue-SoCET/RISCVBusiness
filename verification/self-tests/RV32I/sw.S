@@ -25,9 +25,9 @@ RVTEST_CODE_BEGIN
   # Test with negative offset
 
   TEST_ST_OP( 6, lw, sw, 0x00aa00aa, -12, tdat8 );
-  #TEST_ST_OP( 7, lw, sw, 0xaa00aa00, -8,  tdat8 );
-  #TEST_ST_OP( 8, lw, sw, 0x0aa00aa0, -4,  tdat8 );
-  #TEST_ST_OP( 9, lw, sw, 0xa00aa00a, 0,   tdat8 );
+  TEST_ST_OP( 7, lw, sw, 0xaa00aa00, -8,  tdat8 );
+  TEST_ST_OP( 8, lw, sw, 0x0aa00aa0, -4,  tdat8 );
+  TEST_ST_OP( 9, lw, sw, 0xa00aa00a, 0,   tdat8 );
 
   # Test with a negative base
 
