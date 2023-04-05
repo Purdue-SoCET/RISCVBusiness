@@ -311,7 +311,7 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 1000000) {
+    if(sim_time >= 100000) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
