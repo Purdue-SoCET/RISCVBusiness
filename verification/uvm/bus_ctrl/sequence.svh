@@ -15,12 +15,13 @@ class basic_sequence extends uvm_sequence #(bus_transaction);
     req_item = bus_transaction::type_id::create("req_item");
 
     // Do simple read requests
-    repeat (1000) begin
+    repeat (dut_params::NUM_TESTS) begin
       start_item(req_item);
       if (!req_item.randomize() with {
-            req_item.numTransactions == 1000;
-            //req_item.idle == 0;
-            //req_item.dWEN == 1;
+            req_item.numTransactions == dut_params::NUM_TRANS_PER_TEST;
+            req_item.idle == dut_params::ALLOW_IDLE_TRANS;
+            //req_item.dWEN == 0;
+            //req_item.readX == 0;
           }) begin
         // if the transaction is unable to be randomized, send a fatal message
         `uvm_fatal("sequence", "not able to randomize")
