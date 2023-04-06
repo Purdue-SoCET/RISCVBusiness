@@ -43,36 +43,19 @@ class l1_snoopresp_bfm extends uvm_component;
   hitVals  = '0;
 
   if(|vif.ccwait == 1) begin
-       // First generate all of our randomized hit/dirty values
-       // Need to do this before fork since the dirty depends on all of the hits being generated first
-       hitVals = generate_hit(vif.ccwait);
-       dirtyVals = generate_ccdirty(hitVals);
-       fork 
-        begin
-         for(int i = 0; i < dut_params::NUM_CPUS_USED; i++) begin 
-           if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 0)) begin
-             // Wait a random amount of time
-             wait_new_time();
+    // First generate all of our randomized hit/dirty values
+    // Need to do this before fork since the dirty depends on all of the hits being generated first
+    hitVals = generate_hit(vif.ccwait);
+    dirtyVals = generate_ccdirty(hitVals);
+    
 
-             // Set the hit/dirty values 
-             vif.ccsnoophit[i] = hitVals[i];
-             vif.ccIsPresent[i] = hitVals[i];
-             vif.ccdirty[i] = dirtyVals[i];
-
-             // If we get a hit set our dstore
-             if(hitVals[i]) vif.snoop_dstore[i] = {32'hbbbbbbbb, vif.ccsnoopaddr[i]};
-             else vif.snoop_dstore[i] = {32'hbbbbbbbb, 32'hdeadbeef};
-             vif.ccsnoopdone[i] = 1; //check this part again
-           end 
-           else if(vif.ccwait[i] == 1) begin
-             vif.ccsnoopdone[i] = 1; //check this part again
-           end 
-           else begin
-             zeroSigsForIndex(i);
-           end
-          end 
-        end
-       join
+    for(int j = 0; j < dut_params::NUM_CPUS_USED; j++) begin
+      fork
+          automatic int i = j;
+          runResp(i, hitVals, dirtyVals);
+      join_none
+      end
+    wait fork;
 
        while(|vif.ccwait) begin
          @(posedge vif.clk);
@@ -80,6 +63,35 @@ class l1_snoopresp_bfm extends uvm_component;
 
        zero_all_sigs();
    end
+ endtask
+
+ virtual task runResp;
+    input int i;
+    input logic [CPUS-1:0] hitVals;
+    input logic [CPUS-1:0] dirtyVals;
+ begin
+    if((vif.ccwait[i] == 1) && (vif.ccinv[i] == 0)) begin
+     // Wait a random amount of time
+     wait_new_time();
+
+     // Set the hit/dirty values 
+     vif.ccsnoophit[i] = hitVals[i];
+     vif.ccIsPresent[i] = hitVals[i];
+     vif.ccdirty[i] = dirtyVals[i];
+
+     // If we get a hit set our dstore
+     if(hitVals[i]) vif.snoop_dstore[i] = {32'hbbbbbbbb, vif.ccsnoopaddr[i]};
+     else vif.snoop_dstore[i] = {32'hbbbbbbbb, 32'hdeadbeef};
+     vif.ccsnoopdone[i] = 1; //check this part again
+   end 
+   else if(vif.ccwait[i] == 1) begin
+     vif.ccsnoopdone[i] = 1; //check this part again
+   end 
+   else begin
+     zeroSigsForIndex(i);
+   end
+
+ end
  endtask
 
  virtual function logic [CPUS-1:0] generate_hit(logic [CPUS-1:0] waitVals);
