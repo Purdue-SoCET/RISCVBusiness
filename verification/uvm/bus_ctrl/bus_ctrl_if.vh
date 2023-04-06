@@ -26,7 +26,7 @@
 `define BUS_CTRL_IF_VH
 
 // parameters
-parameter CPUS = 4;
+parameter CPUS = 8;
 parameter BLOCK_SIZE = 2;
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
 localparam CPU_ID_LENGTH = $clog2(CPUS);
