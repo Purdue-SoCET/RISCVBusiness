@@ -41,11 +41,10 @@ typedef enum {
     SNOOP_INV,          // sends a invalidation request to all cores
     TRANSFER_R,         // provides cache to bus transfer
     TRANSFER_RX,        // provides cache to bus transfer, only when promoting to modified
-    TRANSFER_R_FIN,     // provides bus to requester transfer
     READ_L2,            // reads from l2 to bus
-    BUS_TO_L1,          // finishes transaction by providing from bus to cache
+    BUS_TO_CACHE,       // finishes transaction by providing from bus to cache
     WRITEBACK,          // evicts cache entry to L2
-    WRITEBACK_2,          // evicts cache entry to L2
+    WRITEBACK_MS,       // evicts cache entry to L2 and sets some signals for L1
     INVALIDATE          // invalidates non requester entries and updates requester S -> M
 } bus_state_t;
 
