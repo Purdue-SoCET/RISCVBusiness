@@ -12,10 +12,15 @@ class basic_sequence extends uvm_sequence #(bus_transaction);
 
   task body();
     bus_transaction req_item;
+    int i;
     req_item = bus_transaction::type_id::create("req_item");
+
+    i = 0;
 
     // Do simple read requests
     repeat (dut_params::NUM_TESTS) begin
+        i = i + 1;
+        `uvm_info(this.get_name(), $sformatf("\n\n********************************************************************\n Running series of transactions (test#): %0d out of %0d\n********************************************************************", i, dut_params::NUM_TESTS), UVM_LOW);
       start_item(req_item);
       if (!req_item.randomize() with {
             req_item.numTransactions == dut_params::NUM_TRANS_PER_TEST;

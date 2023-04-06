@@ -104,7 +104,7 @@ virtual task run_phase(uvm_phase phase);
           l2RspPhaseDone = 0;
           l2ReqPhaseDone = 0;
 
-          `uvm_info(this.get_name(), "New l2 result sent to checker", UVM_LOW);
+          `uvm_info(this.get_name(), "New l2 result sent to checker", UVM_DEBUG);
           newTx.copy(tx);
           check_ap.write(tx);
            // Wait for l2 reqest to go low

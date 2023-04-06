@@ -183,13 +183,13 @@ class bus_checker extends uvm_scoreboard;
       end else if(~errorFlag && ((snpRspPresent && snpRspTx.snoopRspType != 1) || reqTx.procReqType == 2)) begin
         uvm_report_error("Checker", "No l2 TX seen on a l1 write/snoop response invalid/dirty!");
         errorFlag = 1;
-      end else begin
-        `uvm_info("Checker", "No l2 checks done because of bad snoop request", UVM_LOW);
+      end else if(errorFlag & l2TxPresent) begin
+        `uvm_info("Checker", "No l2 checks done because of bad snoop request", UVM_DEBUG);
       end
 
       // Lastly check up on the data given back to the processor
       if(errorFlag) begin
-        `uvm_info("Checker", "No L1 bus_ctrl response checks done because of bad snoop and/or L2 Tx", UVM_LOW);
+        `uvm_info("Checker", "No L1 bus_ctrl response checks done because of bad snoop and/or L2 Tx", UVM_DEBUG);
       end else if(snpRspPresent) begin // we only need to check stuff on a snoop b/c otherwise it was a processor write which has no data returned
         case(snpRspTx.snoopRspType)
             0: begin
@@ -237,8 +237,8 @@ class bus_checker extends uvm_scoreboard;
   endtask
 
   function void report_phase(uvm_phase phase);
-    uvm_report_info("Checker", $sformatf("Matches:    %0d", m_matches));
-    uvm_report_info("Checker", $sformatf("Mismatches: %0d", m_mismatches));
+    uvm_report_info("Checker", $sformatf("Matches:    %0d", m_matches), UVM_NONE);
+    uvm_report_info("Checker", $sformatf("Mismatches: %0d", m_mismatches), UVM_NONE);
   endfunction
 
 

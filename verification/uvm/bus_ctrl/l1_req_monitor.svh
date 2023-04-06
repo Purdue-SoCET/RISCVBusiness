@@ -111,7 +111,7 @@ endfunction
        // Also update the timeout of all of the outstanding requests
        for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
          if(busCtrlRspDone[i]) begin
-           `uvm_info(this.get_name(), $sformatf("New result sent to checker for l1 #%0d", i), UVM_LOW);
+           `uvm_info(this.get_name(), $sformatf("New result sent to checker for l1 #%0d", i), UVM_DEBUG);
            newTx.copy(tx_array[i]);
            check_ap.write(tx_array[i]);
            busCtrlRspDone[i] = 0;

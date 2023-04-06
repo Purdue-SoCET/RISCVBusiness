@@ -187,7 +187,7 @@ virtual task run_phase(uvm_phase phase);
           snoopReqPhaseDone = '0;
           snpRspSet = 0;
 
-          `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_LOW);
+          `uvm_info(this.get_name(), "New snp_rsp result sent to checker", UVM_DEBUG);
 
           //`uvm_info("snp_rsp_monitor", $sformatf("Req addr is %0h\n", tx.snoopReqAddr), UVM_DEBUG);
           newTx.copy(tx);

@@ -104,6 +104,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
 
             driveCpuIdle(i);
         end
+    `uvm_info(this.get_name(), $sformatf("L1 #%0d complete with reqs", i), UVM_LOW);
     end
   endtask
 
@@ -157,7 +158,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
 
   task DUT_reset();
     begin
-      `uvm_info(this.get_name(), "Resetting DUT", UVM_LOW);
+      `uvm_info(this.get_name(), "Resetting DUT", UVM_DEBUG);
 
       zero_all_sigs();
 
@@ -168,7 +169,7 @@ class bus_driver_v2 extends uvm_driver #(bus_transaction);
       @(posedge vif.clk);
       @(posedge vif.clk);
 
-      `uvm_info(this.get_name(), "DUT Reset", UVM_LOW);
+      `uvm_info(this.get_name(), "DUT Reset", UVM_DEBUG);
     end
   endtask
 
