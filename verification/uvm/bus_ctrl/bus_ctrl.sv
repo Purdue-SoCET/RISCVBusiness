@@ -207,7 +207,7 @@ module bus_ctrl #(
 
     // function to obtain all non requesters
     function logic [CPUS-1:0] nonRequesterEnable;
-        input requester_cpu;
+        input [CPU_ID_LENGTH-1:0] requester_cpu;
         nonRequesterEnable = '1 & ~(1 << requester_cpu);
     endfunction
     
