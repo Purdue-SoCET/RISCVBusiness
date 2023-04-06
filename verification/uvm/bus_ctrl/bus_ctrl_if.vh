@@ -33,7 +33,7 @@ localparam CPU_ID_LENGTH = $clog2(CPUS);
 
 
 // coherence bus controller states
-typedef enum logic [3:0] {
+typedef enum {
     GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV, 
     IDLE,               // determines if a request is going on
     SNOOP_R,            // sends a snoop based on busRD
@@ -45,6 +45,7 @@ typedef enum logic [3:0] {
     READ_L2,            // reads from l2 to bus
     BUS_TO_L1,          // finishes transaction by providing from bus to cache
     WRITEBACK,          // evicts cache entry to L2
+    WRITEBACK_2,          // evicts cache entry to L2
     INVALIDATE          // invalidates non requester entries and updates requester S -> M
 } bus_state_t;
 

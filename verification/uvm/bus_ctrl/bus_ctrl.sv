@@ -92,36 +92,17 @@ module bus_ctrl #(
             SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
             SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
             SNOOP_INV:          nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? INVALIDATE : state;
-            TRANSFER_R:         nstate = TRANSFER_R_FIN;
+            TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK : BUS_TO_L1;
             TRANSFER_RX:        nstate = BUS_TO_L1;
-            TRANSFER_R_FIN:     nstate = wb_needed ? WRITEBACK : IDLE; // note: roughly translates to [I -> S, M -> S] : [I -> S, E -> S]
             READ_L2:            nstate = (ccif.l2state == L2_ACCESS) ? BUS_TO_L1 : state;
+            WRITEBACK:          nstate = (ccif.l2state == L2_ACCESS) ? IDLE : WRITEBACK_2;
+            WRITEBACK_2:        nstate = (ccif.l2state == L2_ACCESS) ? IDLE : state;
+            TRANSFER_R_FIN:     nstate = IDLE;
             BUS_TO_L1:          nstate = IDLE;
-            WRITEBACK:          nstate = (ccif.l2state == L2_ACCESS) ? IDLE : state;
             INVALIDATE:         nstate = IDLE;
         endcase
     end
     
-//     // requester arbitration
-//     typedef enum logic [1:0] {
-//     INVALIDATE, READ, READ_EXCLUSIVE, EVICTION 
-//     } request_type_t;
-    
-//     request_type_t [CPUS-1: 0] request_type;
-//     always_comb begin
-//         request_type = 0;
-//         for (int i = 0; i < CPUS; i++) begin
-//             if (ccif.dWEN[i])
-//                 request_type[I] = EVICTION;
-//             else if (ccif.dREN[i] & ccif.ccwrite[i])                  
-//                 request_type[i] = READ_EXCLUSIVE;
-//             else if (ccif.dREN[i])                  
-//                 request_type[i] = READ;
-//             else if (ccif.ccwrite[i])
-//                 request_type[i] = INVALIDATE;
-//         end
-//     end
-
     // output logic for bus FSM
     always_comb begin
         // defaults
@@ -182,23 +163,22 @@ module bus_ctrl #(
                 ccif.l2REN = 1; 
                 ndload = ccif.l2load; 
             end
+            TRANSFER_R, TRANSFER_RX: begin // move data from cache to bus
+                ndload = ccif.dstore[supplier_cpu];
+                ccif.ccwait = nonRequesterEnable(requester_cpu);
+                nl2_store = ccif.dstore[supplier_cpu]; 
+                nl2_addr = ccif.daddr[requester_cpu] & ~(word_t'(3'b111));
+            end
             BUS_TO_L1: begin // move data from bus to cache; alert requester
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
             end
-            TRANSFER_R, TRANSFER_RX: begin // move data from cache to bus
-                ndload = ccif.dstore[supplier_cpu];
-                ccif.ccwait = nonRequesterEnable(requester_cpu);
-                nwb_needed = ccif.ccdirty[supplier_cpu];
-            end
-            TRANSFER_R_FIN: begin // move data from bus to requester
+            WRITEBACK: begin
+                ccif.l2WEN = 1;
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
-                nl2_store = ccif.dstore[supplier_cpu]; 
-                nl2_addr = ccif.daddr[requester_cpu] & ~(word_t'(3'b111));
-                //ccif.dwait[supplier_cpu] = 0; 
             end
-            WRITEBACK:
+            WRITEBACK_2:
                 ccif.l2WEN = 1;
             INVALIDATE:
                 ccif.dwait[requester_cpu] = 0;
@@ -214,9 +194,8 @@ module bus_ctrl #(
     function logic snoopStatus;
         input logic [CPU_ID_LENGTH-1:0] requester_cpu;
         input logic [CPUS-1:0] snoopDone;
-        snoopStatus = &(((1'b1 << requester_cpu) | {CPUS{1'b0}}) | snoopDone);
-        //snoopStatus = &(({CPUS{1'b1}} << requester_cpu) | snoopDone);
-    endfunction
+        snoopStatus = &((1'b1 << requester_cpu) | snoopDone);
+    endfunction 
 
     // task to do priority encoding to determine the requester or supplier
     task priorityEncode;

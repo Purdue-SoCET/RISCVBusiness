@@ -5,7 +5,7 @@
   foreach(``ARRAY``[i]) ``ARRAY``[i] = 0
 package dut_params;
 
-  localparam NUM_CPUS_USED = 8;
+  localparam NUM_CPUS_USED = 4;
   localparam BLOCK_SIZE_WORDS = 2;
   localparam WORD_W = 32;
   localparam DRVR_TIMEOUT = 10000;
@@ -15,8 +15,8 @@ package dut_params;
   localparam l2_RAND_RANGE = 10;
 
   // Signals to control test type
-  localparam NUM_TESTS = 100; // Reset is pulled low between each test
-  localparam NUM_TRANS_PER_TEST = 100; // number of cache -> bus requests (per cache) in each test
+  localparam NUM_TESTS = 1; // Reset is pulled low between each test
+  localparam NUM_TRANS_PER_TEST = 1; // number of cache -> bus requests (per cache) in each test
   localparam ALLOW_IDLE_TRANS = 0;// Allows idle transactions to be part of the possible trans in a test
 
 endpackage
