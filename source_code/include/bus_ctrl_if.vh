@@ -26,14 +26,14 @@
 `define BUS_CTRL_IF_VH
 
 // parameters
-parameter CACHES = 4;
+parameter CPUS = 8;
 parameter BLOCK_SIZE = 2;
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
-localparam CACHE_ID_LENGTH = $clog2(CACHES);
+localparam CPU_ID_LENGTH = $clog2(CPUS);
 
 
 // coherence bus controller states
-typedef enum logic [3:0] {
+typedef enum {
     GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV, 
     IDLE,               // determines if a request is going on
     SNOOP_R,            // sends a snoop based on busRD
@@ -41,10 +41,10 @@ typedef enum logic [3:0] {
     SNOOP_INV,          // sends a invalidation request to all cores
     TRANSFER_R,         // provides cache to bus transfer
     TRANSFER_RX,        // provides cache to bus transfer, only when promoting to modified
-    TRANSFER_R_FIN,     // provides bus to requester transfer
     READ_L2,            // reads from l2 to bus
-    BUS_TO_L1,          // finishes transaction by providing from bus to cache
+    BUS_TO_CACHE,       // finishes transaction by providing from bus to cache
     WRITEBACK,          // evicts cache entry to L2
+    WRITEBACK_MS,       // evicts cache entry to L2 and sets some signals for L1
     INVALIDATE          // invalidates non requester entries and updates requester S -> M
 } bus_state_t;
 
@@ -62,36 +62,46 @@ typedef enum logic [1:0] {
 // taken from coherence_ctrl_if.vh
 typedef logic [31:0] word_t;
 typedef logic [DATA_WIDTH-1:0] transfer_width_t;
-typedef logic [CACHES-1:0] cache_bitvec_t;
-typedef logic [CACHE_ID_LENGTH-1:0] cacheid_t;
+typedef logic [CPUS-1:0] cpus_bitvec_t;
+typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if;
+    logic nRST;
+    logic clk;
+    
     // L1 generic control signals
-    logic               [CACHES-1:0] dREN, dWEN, dwait; 
-    transfer_width_t    [CACHES-1:0] dload, dstore;
-    word_t              [CACHES-1:0] daddr;
+    logic               [CPUS-1:0] dREN, dWEN, dwait; 
+    transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
+    word_t              [CPUS-1:0] daddr;
     // L1 coherence INPUTS to bus 
-    logic               [CACHES-1:0] ccwrite;     // indicates that the requester is attempting to go to M
-    logic               [CACHES-1:0] ccsnoophit;  // indicates that the responder has the data
-    logic               [CACHES-1:0] ccsnoopdone;  // indicates that the responder has the data
-    logic               [CACHES-1:0] ccIsPresent; // indicates that nonrequesters have the data valid
-    logic               [CACHES-1:0] ccdirty;     // indicates that we have [I -> S, M -> S]
+    logic               [CPUS-1:0] cctrans;     // indicates that the requester is undergoing a miss
+    logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
+    logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
+    logic               [CPUS-1:0] ccsnoopdone;  // indicates that the responder has the data
+    logic               [CPUS-1:0] ccIsPresent; // indicates that nonrequesters have the data valid
+    logic               [CPUS-1:0] ccdirty;     // indicates that we have [I -> S, M -> S]
     // L1 coherence OUTPUTS
-    logic               [CACHES-1:0] ccwait;      // indicates a potential snoophit wait request
-    logic               [CACHES-1:0] ccinv;       // indicates an invalidation request
-    logic               [CACHES-1:0] ccexclusive; // indicates an exclusivity update
-    word_t              [CACHES-1:0] ccsnoopaddr; 
+    logic               [CPUS-1:0] ccwait;      // indicates a potential snoophit wait request
+    logic               [CPUS-1:0] ccinv;       // indicates an invalidation request
+    logic               [CPUS-1:0] ccexclusive; // indicates an exclusivity update
+    word_t              [CPUS-1:0] ccsnoopaddr; 
     // L2 signals
     l2_state_t l2state; 
     transfer_width_t l2load, l2store; 
     logic l2WEN, l2REN; 
     word_t l2addr; 
 
+    always_comb begin
+        for(int i = 0; i < CPUS; i++) begin
+            if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
+            else dstore[i] = driver_dstore[i];
+        end
+    end
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, 
-                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state, 
         output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
@@ -103,7 +113,7 @@ interface bus_ctrl_if;
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN,
         output  dREN, dWEN, daddr, dstore, 
-                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state
     ); 
 
