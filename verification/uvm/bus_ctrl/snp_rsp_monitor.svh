@@ -129,6 +129,7 @@ virtual task run_phase(uvm_phase phase);
        if((!(&snoopRspPhaseDone)) && |vif.ccsnoopdone)  begin // if we see a snoop done signal
          `uvm_info("snp_rsp_ Monitor", "SNOOP DONE SEEN!\n", UVM_DEBUG);
          for(i = 0; i < dut_params::NUM_CPUS_USED; i++) begin
+           if(snoopRspPhaseDone[i]) continue;
            if(vif.ccsnoopdone[i]) begin
              if(~vif.ccwait[i]) begin // shouldn't see a response if not ccwait high (if there is not a req)
                 #2;
@@ -138,6 +139,7 @@ virtual task run_phase(uvm_phase phase);
                if(vif.ccsnoophit[i]) begin
                  if(vif.ccdirty[i]) begin // if this one hits M state
                    if(tx.snoopRspType == 2) begin // we've already seen a dirty
+                       #50;
                      `uvm_fatal("snp_rsp Monitor", "Double dirty snoop responses, not allowed to have two l1s in M state!\n");
                    end
                    if(tx.snoopRspType == 1) begin // we've seen a snoop hit S/E and now this is M

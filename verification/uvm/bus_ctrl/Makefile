@@ -1,4 +1,4 @@
-RUN_COMMON=tb_bus_ctrl -L $(QUESTA_HOME)/uvm-1.2 -novopt -iterationlimit=100k -sv_seed random "+UVM_VERBOSITY=UVM_DEBUG"#1370611297 "+UVM_VERBOSITY=UVM_DEBUG" 
+RUN_COMMON=tb_bus_ctrl -L $(QUESTA_HOME)/uvm-1.2 -novopt -iterationlimit=100k -sv_seed 1138575530 "+UVM_VERBOSITY=UVM_DEBUG" 
 #add in the random seed!, look into the iterationLimit variable 
 targets:
 	@echo "Available Targets:"

@@ -5,11 +5,11 @@
   foreach(``ARRAY``[i]) ``ARRAY``[i] = 0
 package dut_params;
 
-  localparam NUM_CPUS_USED = 2;
+  localparam NUM_CPUS_USED = 4;
   localparam BLOCK_SIZE_WORDS = 2;
   localparam WORD_W = 32;
   localparam DRVR_TIMEOUT = 10000;
-  localparam MONITOR_TIMEOUT = 10;
+  localparam MONITOR_TIMEOUT = 20;
   localparam BUS_CHECKER_TIMEOUT = 25;
   localparam DRVR_SNOOP_ARRAY_SIZE = 4096;
   localparam l2_RAND_RANGE = 10;
