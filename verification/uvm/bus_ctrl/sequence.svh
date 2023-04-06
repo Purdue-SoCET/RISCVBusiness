@@ -21,12 +21,17 @@ class basic_sequence extends uvm_sequence #(bus_transaction);
     repeat (dut_params::NUM_TESTS) begin
         i = i + 1;
         `uvm_info(this.get_name(), $sformatf("\n\n********************************************************************\n Running series of transactions (test#): %0d out of %0d\n********************************************************************", i, dut_params::NUM_TESTS), UVM_LOW);
+
       start_item(req_item);
       if (!req_item.randomize() with {
             req_item.numTransactions == dut_params::NUM_TRANS_PER_TEST;
-            req_item.idle == dut_params::ALLOW_IDLE_TRANS;
-            //req_item.dWEN == 0;
-            //req_item.readX == 0;
+
+            // if we don't allow idle then set idle to zero for all
+            // the funny bussiness below is because the user sets ALLOW_IDLE_TRANS to 1 or 0
+            // We can't just set idle to that so basically when ALLOW_IDLE_TRANS is 1 we say idle can be anything less
+            // or equal to its max value (We let it be anything) but if ALLPW_IDLE_TRANS is 0 we say it must be 
+            // Less than or equal to zero meaning that it is zero
+            req_item.idle <= ({$bits(req_item.idle){1'b1}} & {$bits(req_item.idle){dut_params::ALLOW_IDLE_TRANS[0]}});
           }) begin
         // if the transaction is unable to be randomized, send a fatal message
         `uvm_fatal("sequence", "not able to randomize")
