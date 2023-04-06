@@ -42,13 +42,14 @@ class l1_snoopresp_bfm extends uvm_component;
   dirtyVals = '0;
   hitVals  = '0;
 
+
   if(|vif.ccwait == 1) begin
     // First generate all of our randomized hit/dirty values
     // Need to do this before fork since the dirty depends on all of the hits being generated first
     hitVals = generate_hit(vif.ccwait);
     dirtyVals = generate_ccdirty(hitVals);
-    
 
+    `uvm_info(this.get_name(), $sformatf("Dirty vals are 0x%x\n", dirtyVals), UVM_DEBUG);
     for(int j = 0; j < dut_params::NUM_CPUS_USED; j++) begin
       fork
           automatic int i = j;
@@ -121,12 +122,9 @@ class l1_snoopresp_bfm extends uvm_component;
         end
     end
 
-    // If no hits just return zero array for the dirty
-    if(numHit == 0) begin return tempDirtyArray; end
-
-    // Now pick a random location to set dirty to within those that are hits
-    hitPos = hitPosArray[$urandom() % numHit];
-    tempDirtyArray[hitPos] = $urandom() % 2; // now randomize this positon
+    // If only 1 hit then we can toss a coin to see if it is dity
+    // Can't do this if multiple hits because only 1 cache can be in M while the others must be in I
+    if(numHit == 1) begin tempDirtyArray[hitPosArray[0]] = $urandom() %2; end
 
     return tempDirtyArray;
  endfunction
