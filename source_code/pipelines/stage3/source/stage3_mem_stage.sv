@@ -147,10 +147,21 @@ module stage3_mem_stage(
     end
 
     assign ifence_pulse  = ex_mem_if.ex_mem_reg.ifence & ~ifence_reg;
-    assign cc_if.icache_flush  = ifence_pulse;
-    assign cc_if.dcache_flush  = ifence_pulse;
-    assign iflushed_next = ifence_pulse ? 1'b0 : cc_if.iflush_done || ~cc_if.dflush_done;
-    assign dflushed_next = ifence_pulse ? 1'b0 : cc_if.dflush_done || ~cc_if.iflush_done;
+    assign cc_if.icache_flush = ifence_pulse;
+    assign cc_if.dcache_flush = ifence_pulse;
+    // holds iflushed/dflushed high when done, resets to 0 on a pulse
+    always_comb begin
+        iflushed_next = iflushed;
+        dflushed_next = dflushed;
+        if (ifence_pulse) begin
+            iflushed_next = 0;
+            dflushed_next = 0;
+        end
+        if (cc_if.iflush_done)
+            iflushed_next = 1;
+        if (cc_if.dflush_done)
+            dflushed_next = 1;
+    end
 
     /************************
     * Hazard/Forwarding Unit
@@ -158,7 +169,7 @@ module stage3_mem_stage(
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.fence_stall = ex_mem_if.ex_mem_reg.ifence && !(iflushed && dflushed);
+    assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;

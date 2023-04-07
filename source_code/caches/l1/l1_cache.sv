@@ -89,6 +89,7 @@ module l1_cache #(
     logic   [N_BLOCK_BITS:0] word_num, next_word_num;
     logic   enable_word_count, clear_word_count, 
             clear_flush_count, enable_flush_count, enable_flush_count_nowb;
+    logic   word_count_done;
     // States
     cache_fsm_t state, next_state;
     // lru
@@ -107,6 +108,8 @@ module l1_cache #(
     cache_set_t sramWrite, sramRead, sramMask;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL;
+    // flush reg
+    logic flush_req, nflush_req;
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE) ? flush_idx.set_num : decoded_addr.idx_bits;
@@ -116,34 +119,37 @@ module l1_cache #(
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
         if(~nRST) begin
+            state <= IDLE;
             flush_idx <= 0;
             word_num <= 0;
-            last_used <= '0;
-            state <= IDLE;
-            read_addr <= '0;
-            decoded_req_addr <= '0;
+            last_used <= 0;
+            read_addr <= 0;
+            decoded_req_addr <= 0;
+            flush_req <= 0;
         end
         else begin
-            flush_idx <= next_flush_idx;
-            word_num <= next_word_num;
-            last_used <= next_last_used;
-            state <= next_state;
-            read_addr <= next_read_addr;
-            decoded_req_addr <= next_decoded_req_addr;
+            state <= next_state;                        // cache state machine
+            flush_idx <= next_flush_idx;                // index for flushing the cache entries
+            word_num <= next_word_num;                  // word counter for fetching/writing back
+            last_used <= next_last_used;                // MRU index
+            read_addr <= next_read_addr;                // cache address to provide to memory
+            decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
+            flush_req <= nflush_req;                    // flush requested by core
         end
     end
     
     // counters
     always_comb begin
-        // word counter logic
         next_word_num = word_num;
+        next_flush_idx = flush_idx;
+        word_count_done = ~mem_gen_bus_if.busy && (BLOCK_SIZE - 1) == word_num;
+        // word counter logic
         if (clear_word_count)
             next_word_num = 0;
         else if (enable_word_count)
             next_word_num = word_num + 1;
 
         // flush counter logic
-        next_flush_idx = flush_idx;
         if (clear_flush_count)
             next_flush_idx = 0;
         else if (enable_flush_count_nowb) begin
@@ -163,9 +169,9 @@ module l1_cache #(
 
     // hit logic with pass through
     always_comb begin
-        hit 	        = '0;
-        hit_idx         = '0;
-        hit_data        = '0;
+        hit 	        = 0;
+        hit_idx         = 0;
+        hit_data        = 0;
         pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
 
         if (!pass_through) begin
@@ -185,39 +191,41 @@ module l1_cache #(
         sramWEN                 = 0;
         sramWrite               = 0;
         sramMask                = '1;
-        proc_gen_bus_if.busy    = 1'b1;
-        mem_gen_bus_if.ren      = 1'b0;
-        mem_gen_bus_if.wen      = 1'b0;
-        mem_gen_bus_if.addr     = '0; 
-        mem_gen_bus_if.wdata    = '0; 
+        proc_gen_bus_if.busy    = 1;
+        mem_gen_bus_if.ren      = 0;
+        mem_gen_bus_if.wen      = 0;
+        mem_gen_bus_if.addr     = 0; 
+        mem_gen_bus_if.wdata    = 0; 
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         enable_flush_count      = 0;
         enable_word_count       = 0;
         enable_flush_count_nowb = 0;
         clear_flush_count       = 0;
         clear_word_count        = 0;
-        flush_done 	            = 1'b0;
-        clear_done 	            = 1'b0;
+        flush_done 	            = 0;
+        clear_done 	            = 0;
         next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
         
         // associativity, using NRU
-        if (ASSOC == 1)
+        if (ASSOC == 1 || (last_used[decoded_addr.idx_bits] == (ASSOC - 1)))
             ridx = 0;
         else
-            ridx = (last_used[decoded_addr.idx_bits] == (ASSOC - 1)) ? 0 : last_used[decoded_addr.idx_bits] + 1;
+            ridx = last_used[decoded_addr.idx_bits] + 1;
 
         casez(state)
             IDLE: begin
                 next_read_addr = decoded_addr;
-                if(proc_gen_bus_if.ren && hit && !flush) begin // if read enable and hit
-                    proc_gen_bus_if.busy 		   = 1'b0; // Set bus to not busy
-                    proc_gen_bus_if.rdata 		   = hit_data[decoded_addr.block_bits];
-		            next_last_used[decoded_addr.idx_bits]  = hit_idx;
+                // cache hit on a processor read
+                if(proc_gen_bus_if.ren && hit && !flush) begin
+                    proc_gen_bus_if.busy = 0; 
+                    proc_gen_bus_if.rdata = hit_data[decoded_addr.block_bits];
+		            next_last_used[decoded_addr.idx_bits] = hit_idx;
                 end
-                else if(proc_gen_bus_if.wen && hit && !flush) begin // if write enable and hit
-                    proc_gen_bus_if.busy 							     = 1'b0;
+                // cache hit on a processor write
+                else if(proc_gen_bus_if.wen && hit && !flush) begin
+                    proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
                     casez (proc_gen_bus_if.byte_en)
                         4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'hFFFFFF00;
@@ -228,20 +236,21 @@ module l1_cache #(
 		                4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h0000FFFF;
                         default:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h0;
                     endcase
+                    sramMask.frames[hit_idx].dirty = 0;														   				   
                     sramWrite.frames[hit_idx].data[decoded_addr.block_bits] = proc_gen_bus_if.wdata;
-                    sramMask.frames[hit_idx].dirty 	        = 0;														   				   
-		            sramWrite.frames[hit_idx].dirty 	    = 1'b1;
-		            next_last_used[decoded_addr.idx_bits]   = hit_idx;
+		            sramWrite.frames[hit_idx].dirty = 1;
+		            next_last_used[decoded_addr.idx_bits] = hit_idx;
                 end
-                else if(pass_through)begin // Passthrough data logic
+                // passthrough
+                else if(pass_through) begin
                     mem_gen_bus_if.wen      = proc_gen_bus_if.wen;
                     mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
                     mem_gen_bus_if.addr     = proc_gen_bus_if.addr;
                     mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en;
                     proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
                     proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;
-                    if(proc_gen_bus_if.wen)begin
-                        casez (proc_gen_bus_if.byte_en) // Case statement for byte enable
+                    if(proc_gen_bus_if.wen) begin
+                        casez (proc_gen_bus_if.byte_en)
                             4'b0001:    mem_gen_bus_if.wdata  = {24'd0, proc_gen_bus_if.wdata[7:0]};
                             4'b0010:    mem_gen_bus_if.wdata  = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
                             4'b0100:    mem_gen_bus_if.wdata  = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
@@ -252,31 +261,34 @@ module l1_cache #(
                         endcase
                     end 
                 end
-		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin // FETCH
+                // cache miss on a clean block
+		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
                 	next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
 			    end
-			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin // WB
+                // cache miss on a dirty block
+			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
 			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
             	end
             end 
             FETCH: begin
-                mem_gen_bus_if.ren   = 1'b1;
-                mem_gen_bus_if.addr  = read_addr;
+                // set cache to be invalid before cache completes fetch
+                mem_gen_bus_if.ren = 1;
+                mem_gen_bus_if.addr = read_addr;
                 sramMask.frames[ridx].valid = 0;
                 sramWrite.frames[ridx].valid = 0;
-
-                if(word_num == BLOCK_SIZE) begin
+                // complete fetch transaction from memory
+                if(word_count_done) begin
                     sramWEN = 1;
                     clear_word_count 					    = 1'b1;
                     sramWrite.frames[ridx].valid            = 1'b1;
                     sramWrite.frames[ridx].tag 	            = decoded_req_addr.tag_bits;
                     sramMask.frames[ridx].valid             = 1'b0;
                     sramMask.frames[ridx].tag               = 1'b0;
-                    mem_gen_bus_if.ren 					    = 1'b0;
                 end
-                if(~mem_gen_bus_if.busy && (word_num != BLOCK_SIZE)) begin
+                // fill data
+                if(~mem_gen_bus_if.busy) begin
                     sramWEN                                = 1'b1;
                     enable_word_count                      = 1'b1;
                     next_read_addr 						   = read_addr + 4;
@@ -285,42 +297,50 @@ module l1_cache #(
                 end
             end
             WB: begin
-                mem_gen_bus_if.wen    = 1'b1;
-                mem_gen_bus_if.addr   = read_addr; 
-                mem_gen_bus_if.wdata  = sramRead.frames[ridx].data[word_num];
-
-                if(word_num == BLOCK_SIZE) begin
+                // set stim for eviction
+                mem_gen_bus_if.wen = 1'b1;
+                mem_gen_bus_if.addr = read_addr; 
+                mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
+                // invalidate when eviction is complete
+                if(word_count_done) begin
                     sramWEN = 1;
-                    clear_word_count 					  = 1'b1;
-                    sramWrite.frames[ridx].dirty = 1'b0;
+                    clear_word_count = 1;
+                    sramWrite.frames[ridx].dirty = 0;
                     sramMask.frames[ridx].dirty = 0;
-                    mem_gen_bus_if.wen 					  = 1'b0;
+                    sramWrite.frames[ridx].valid = 0;
+                    sramMask.frames[ridx].valid = 0;
                 end
-                if(~mem_gen_bus_if.busy && (word_num != BLOCK_SIZE)) begin
-                    enable_word_count     = 1'b1;
-                    next_read_addr  = read_addr + 4;
+                // increment eviction word counter
+                if(~mem_gen_bus_if.busy) begin
+                    enable_word_count = 1;
+                    next_read_addr = read_addr + 4;
                 end
             end
             FLUSH_CACHE: begin
+                // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].valid && sramRead.frames[flush_idx.frame_num].dirty) begin
                     mem_gen_bus_if.wen    = 1'b1;
                     mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag, flush_idx.set_num, flush_idx.word_num, 2'b00};
                     mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].data[flush_idx.word_num];
+                    // increment to next word when flush of word is done
                     if (~mem_gen_bus_if.busy) begin
                         enable_flush_count = 1;
-                        if (flush_idx.word_num == (BLOCK_SIZE-1)) begin
+                        // clears entry when flushed
+                        if (flush_idx.word_num == (BLOCK_SIZE - 1)) begin
                             sramWEN = 1;
 	    	                sramWrite.frames[flush_idx.frame_num] = 0;
                             sramMask.frames[flush_idx.frame_num] = 0;
                         end
                     end
                 end
+                // else clears entry, moves to next frame
                 else begin
                     sramWEN = 1;
 	    	        sramWrite.frames[flush_idx.frame_num] = 0;
                     sramMask.frames[flush_idx.frame_num] = 0;
                     enable_flush_count_nowb = 1;
                 end
+                // flag the completion of flush
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
                     flush_done 	       = 1;
@@ -338,28 +358,36 @@ module l1_cache #(
                     next_state = WB;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
+
+                if (flush || flush_req)  
+                    next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
                 if (decoded_addr != decoded_req_addr)
                     next_state = IDLE; 
-                else if (word_num == BLOCK_SIZE)
+                else if (word_count_done)
                     next_state = IDLE;
 	        end
 	        WB: begin
                 if (decoded_addr != decoded_req_addr)
                     next_state = IDLE; 
-                else if (word_num == BLOCK_SIZE)
+                else if (word_count_done)
                     next_state = FETCH;
 	        end
 	        FLUSH_CACHE: begin        
                 if (flush_done)
                     next_state = IDLE;
 	        end
-	    endcase // casez (state)
+	    endcase
+    end
 
-        // can jump to flush in any state
-        if (flush)  
-            next_state = FLUSH_CACHE;
+    // flush saver
+    always_comb begin
+        nflush_req = flush_req;
+        if (flush)
+            nflush_req = 1;
+        if (state == FLUSH_CACHE)
+            nflush_req = 0;
     end
 
 endmodule
