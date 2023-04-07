@@ -48,9 +48,9 @@ module l1_cache #(
     localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
     localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
-    localparam N_FRAME_BITS       = $clog2(ASSOC);
-    localparam N_SET_BITS         = $clog2(N_SETS);
-    localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE);
+    localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
+    localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
+    localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2; // in bits
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
@@ -94,8 +94,8 @@ module l1_cache #(
     cache_fsm_t state, next_state;
     // lru
     logic [N_FRAME_BITS-1:0] ridx;
-    logic [N_SET_BITS-1:0] last_used;
-    logic [N_SET_BITS-1:0] next_last_used;
+    logic [N_SETS-1:0] last_used;
+    logic [N_SETS-1:0] next_last_used;
     // address
     word_t read_addr, next_read_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
@@ -155,12 +155,12 @@ module l1_cache #(
         else if (enable_flush_count_nowb) begin
             next_flush_idx = flush_idx + BLOCK_SIZE;
             if (next_flush_idx.frame_num >= (ASSOC))
-                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), N_FRAME_BITS'('0), N_BLOCK_BITS'('0)};
+                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), (N_FRAME_BITS + N_BLOCK_BITS)'('0)};
         end
         else if (enable_flush_count) begin
             next_flush_idx = flush_idx + 1;
             if (next_flush_idx.frame_num >= (ASSOC))
-                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), N_FRAME_BITS'('0), N_BLOCK_BITS'('0)};
+                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), (N_FRAME_BITS + N_BLOCK_BITS)'('0)};
         end 
     end
 
@@ -313,7 +313,7 @@ module l1_cache #(
                 // increment eviction word counter
                 if(~mem_gen_bus_if.busy) begin
                     enable_word_count = 1;
-                    next_read_addr = read_addr + 4;
+                    next_read_addr    = !word_count_done ? read_addr + 4 : {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                 end
             end
             FLUSH_CACHE: begin
