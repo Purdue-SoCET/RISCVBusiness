@@ -217,6 +217,7 @@ module l1_cache #(
         casez(state)
             IDLE: begin
                 next_read_addr = decoded_addr;
+                clear_word_count = 1;
                 // cache hit on a processor read
                 if(proc_gen_bus_if.ren && hit && !flush) begin
                     proc_gen_bus_if.busy = 0; 

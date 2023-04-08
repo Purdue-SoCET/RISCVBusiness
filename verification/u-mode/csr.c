@@ -78,7 +78,8 @@ int main(void) {
     asm volatile("nop; nop; nop;");
     asm volatile("csrr %0, cycle" : "=r"(csr_val_1));
 
-    if (csr_val_1 - csr_val_0 < 15) // Are the two cycle counts close?
+    // TODO: This test is highly dependent on I-fetch speed
+    if (csr_val_1 - csr_val_0 < 30) // Are the two cycle counts close?
     {
         flag -= 1;
     }
