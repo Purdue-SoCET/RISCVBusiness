@@ -70,3 +70,23 @@ fusesoc.conf
 # synthesis scripts
 desflow1/
 .vscode/
+
+# uvm
+work
+mapped
+fpga
+transcript
+*.wlf
+README
+*.swp
+._*
+*.log
+*.deps
+*.hex
+*.ver
+mti*
+*.diff
+system.summary
+system_fpga.summary
+*.vstf
+*vsim*

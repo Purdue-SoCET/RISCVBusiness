@@ -149,12 +149,11 @@ module stage3_hazard_unit (
                                 & ~rmgmt_stall & ~hazard_if.fence_stall)
                           | branch_jump | prv_pipe_if.insert_pc | prv_pipe_if.ret | hazard_if.rollback;*/
     // Unforunately, pc_en is negative logic of stalling
-    assign hazard_if.pc_en = ((!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
+    assign hazard_if.pc_en = (!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
                             || branch_jump
                             || ex_flush_hazard
                             || prv_pipe_if.insert_pc
-                            || prv_pipe_if.ret) 
-                            &&~hazard_if.fence_stall;//) //&& !wait_for_imem;
+                            || prv_pipe_if.ret;//) //&& !wait_for_imem;
 
     assign hazard_if.if_ex_flush  = ex_flush_hazard // control hazard
                                   || branch_jump    // control hazard

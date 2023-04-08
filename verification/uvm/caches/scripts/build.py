@@ -54,11 +54,12 @@ def build(params):
         +define+INTERFACE_CHECKER={IF_CHECKER} \
 	    +acc \
 	    +cover \
-	    -L {QUESTA_HOME}/uvm-1.2 tb_caches_top.sv 
+	    -L {QUESTA_HOME}/uvm-1.2 {SRAM} tb_caches_top.sv 
     '''.format(
         CACHES=SRC + "caches",
         L1=SRC + "caches/l1",
         L2=SRC + "caches/l2",
+        SRAM=SRC + "caches/sram/sram.sv",
         INCLUDE=SRC + "include",
         PACKAGES=SRC + "packages",
         QUESTA_HOME=os.getenv('QUESTA_HOME'),
