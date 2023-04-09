@@ -152,15 +152,19 @@ module l1_cache #(
         // flush counter logic
         if (clear_flush_count)
             next_flush_idx = 0;
-        else if (enable_flush_count_nowb) begin
+        else if (enable_flush_count_nowb)
             next_flush_idx = flush_idx + BLOCK_SIZE;
-            if (next_flush_idx.frame_num >= (ASSOC))
-                next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), (N_FRAME_BITS + N_BLOCK_BITS)'('0)};
-        end
-        else if (enable_flush_count) begin
+        else if (enable_flush_count)
             next_flush_idx = flush_idx + 1;
-            if (next_flush_idx.frame_num >= (ASSOC))
+
+        // correction for non-powers of 2 or 1
+        if (enable_flush_count || enable_flush_count_nowb) begin
+            if (next_flush_idx.set_num >= N_SETS)
+                next_flush_idx = {1'b1, (N_SET_BITS + N_FRAME_BITS + N_BLOCK_BITS)'('0)};
+            if (next_flush_idx.frame_num >= ASSOC)
                 next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), (N_FRAME_BITS + N_BLOCK_BITS)'('0)};
+            if (next_flush_idx.word_num >= BLOCK_SIZE)
+                next_flush_idx = {({flush_idx.finish, flush_idx.set_num, flush_idx.frame_num} + 1'b1), N_BLOCK_BITS'('0)};
         end
     end
 
@@ -215,6 +219,7 @@ module l1_cache #(
         else
             ridx = last_used[decoded_addr.idx_bits] + 1;
 
+        // state dependent output logic
         casez(state)
             IDLE: begin
                 next_read_addr = decoded_addr;
