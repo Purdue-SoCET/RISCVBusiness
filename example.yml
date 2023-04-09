@@ -10,9 +10,13 @@ microarch_params:
   # Cache configurations
   cache_config  : "separate"
   dcache_type   : "l1"
+  dcache_size : 1024
+  dcache_block_size : 2
+  dcache_assoc : 1
   icache_type   : "l1"
-  # dcache_type   : "pass_through"
-  # icache_type   : "pass_through"
+  icache_size : 1024
+  icache_block_size : 2
+  icache_assoc : 1
   
   # Bus configurations
   bus_endianness      : "big"

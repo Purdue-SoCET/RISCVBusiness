@@ -61,7 +61,12 @@ module separate_caches (
                 .clear_done(cc_if.dclear_done)
             );
             "l1":
-            l1_cache dcache (
+            l1_cache #(
+                .CACHE_SIZE(DCACHE_SIZE),
+                .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
+                .ASSOC(DCACHE_ASSOC)
+            )
+            dcache (
                 .CLK(CLK),
                 .nRST(nRST),
                 .mem_gen_bus_if(dcache_mem_gen_bus_if),
@@ -100,7 +105,12 @@ module separate_caches (
                 .clear_done(cc_if.iclear_done)
             );
             "l1":
-            l1_cache icache (
+            l1_cache #(
+                .CACHE_SIZE(ICACHE_SIZE),
+                .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
+                .ASSOC(ICACHE_ASSOC)
+            )
+            icache (
                 .CLK(CLK),
                 .nRST(nRST),
                 .mem_gen_bus_if(icache_mem_gen_bus_if),

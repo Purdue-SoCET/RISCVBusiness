@@ -41,7 +41,13 @@ UARCH_PARAMS = \
     # Cache Configurations
     'cache_config' : ['separate'],
     'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
+    'dcache_size' : [512, 1024, 2048],
+    'dcache_block_size' : [1, 2, 4, 8],
+    'dcache_assoc' : [1, 2, 4],
     'icache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
+    'icache_size' : [512, 1024, 2048],
+    'icache_block_size' : [1, 2, 4, 8],
+    'icache_assoc' : [1, 2, 4],
     # Bus Configurations
     'bus_endianness' : ['big', 'little'],
     'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
@@ -142,7 +148,10 @@ def create_include(config):
       sys.exit(err)
     else:
       line = 'localparam '
-      line += uarch_param.upper() + ' = "' + uarch_params[uarch_param] + '"'
+      if isinstance(uarch_params[uarch_param], str): # deal with integer params
+        line += uarch_param.upper() + ' = "' + uarch_params[uarch_param] + '"'
+      else:
+        line += uarch_param.upper() + ' = ' + str(uarch_params[uarch_param])
       line += ';\n'
     include_file.write(line)
 
