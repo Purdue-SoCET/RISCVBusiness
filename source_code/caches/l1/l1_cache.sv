@@ -192,6 +192,7 @@ module l1_cache #(
         sramWrite               = 0;
         sramMask                = '1;
         proc_gen_bus_if.busy    = 1;
+        proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
         mem_gen_bus_if.addr     = 0; 
