@@ -39,7 +39,7 @@ module sram #(
     sram_entry_size_t [SRAM_HEIGHT-1:0] sramMemory; 
     sram_entry_size_t [SRAM_HEIGHT-1:0] n_sramMemory;
 
-    always_ff @(negedge CLK, negedge nRST) begin
+    always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST)
             sramMemory <= 0;
         else
