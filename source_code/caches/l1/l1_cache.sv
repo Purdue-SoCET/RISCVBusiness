@@ -81,7 +81,7 @@ module l1_cache #(
     } flush_idx_t;             // flush counter type
 
     typedef enum {
-       IDLE, FETCH, WB, FLUSH_CACHE
+       IDLE, HIT, FETCH, WB, FLUSH_CACHE
     } cache_fsm_t;            // cache state machine
     
     // counter signals
@@ -110,6 +110,7 @@ module l1_cache #(
     logic [N_SET_BITS-1:0] sramSEL;
     // flush reg
     logic flush_req, nflush_req;
+    logic idle_done;
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE) ? flush_idx.set_num : decoded_addr.idx_bits;
@@ -206,6 +207,7 @@ module l1_cache #(
         clear_flush_count       = 0;
         clear_word_count        = 0;
         flush_done 	            = 0;
+        idle_done               = 0;
         clear_done 	            = 0;
         next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
@@ -220,6 +222,18 @@ module l1_cache #(
         // state dependent output logic
         casez(state)
             IDLE: begin
+                // clear out caches with flush
+                sramWEN = 1;
+    	        sramWrite.frames[flush_idx.frame_num] = 0;
+                sramMask.frames[flush_idx.frame_num] = 0;
+                enable_flush_count_nowb = 1;
+                // flag the completion of flush
+                if (flush_idx.finish) begin
+                    clear_flush_count  = 1;
+                    idle_done 	       = 1;
+                end
+            end
+            HIT: begin
                 next_read_addr = decoded_addr;
                 clear_word_count = 1;
                 // cache hit on a processor read
@@ -359,30 +373,33 @@ module l1_cache #(
     always_comb begin
 	    next_state = state;
 	    casez(state)
-	        IDLE: begin                    
+            IDLE: begin        
+                if (idle_done)
+                    next_state = HIT;
+	        end
+	        HIT: begin                    
                 if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
                     next_state = WB;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
-
                 if (flush || flush_req)  
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
                 if (decoded_addr != decoded_req_addr)
-                    next_state = IDLE; 
+                    next_state = HIT; 
                 else if (word_count_done)
-                    next_state = IDLE;
+                    next_state = HIT;
 	        end
 	        WB: begin
                 if (decoded_addr != decoded_req_addr)
-                    next_state = IDLE; 
+                    next_state = HIT; 
                 else if (word_count_done)
                     next_state = FETCH;
 	        end
 	        FLUSH_CACHE: begin        
                 if (flush_done)
-                    next_state = IDLE;
+                    next_state = HIT;
 	        end
 	    endcase
     end
