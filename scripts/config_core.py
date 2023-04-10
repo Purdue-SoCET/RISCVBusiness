@@ -41,13 +41,16 @@ UARCH_PARAMS = \
     # Cache Configurations
     'cache_config' : ['separate'],
     'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
-    'dcache_size' : [512, 1024, 2048],
-    'dcache_block_size' : [1, 2, 4, 8],
-    'dcache_assoc' : [1, 2, 4],
     'icache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
-    'icache_size' : [512, 1024, 2048],
-    'icache_block_size' : [1, 2, 4, 8],
-    'icache_assoc' : [1, 2, 4],
+    # Cache Configurations (free_params)
+    'noncache_start_addr' : [],
+    # Cache Configurations (int_params)
+    'dcache_size' : [],
+    'dcache_block_size' : [],
+    'dcache_assoc' : [],
+    'icache_size' : [],
+    'icache_block_size' : [],
+    'icache_assoc' : [],
     # Bus Configurations
     'bus_endianness' : ['big', 'little'],
     'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
@@ -121,6 +124,8 @@ def create_include(config):
 
   # Handle localparam configurations
   isa_params = config['isa_params']
+  free_params = ['noncache_start_addr']
+  int_params = ['dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc']
   include_file.write('// ISA Params:\n') 
   for isa_param in isa_params:
     try:
@@ -142,10 +147,24 @@ def create_include(config):
   include_file.write('\n// Microarch Params:\n') 
   uarch_params = config['microarch_params']
   for uarch_param in uarch_params:
-    if uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
+    # errors
+    if uarch_param in int_params or uarch_param in free_params:
+      if uarch_param not in free_params and not isinstance(uarch_params[uarch_param], int):
+        err = 'Illegal configuration of incorrect type for ' + uarch_param
+        sys.exit(err)
+      if uarch_params['dcache_size'] % (uarch_params['dcache_block_size'] * uarch_params['dcache_assoc']) is not 0:
+        err = 'Invalid dcache_size. Not divisible by block_size * assoc.'
+        sys.exit(err)
+      if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) is not 0:
+        err = 'Invalid icache_size. Not divisible by block_size * assoc.'
+        sys.exit(err)
+    elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
       err = 'Illegal configuration. ' + uarch_params[uarch_param]
       err += ' is not a valid configuration for ' + uarch_param
       sys.exit(err)
+    # write to parameter file
+    if uarch_param in free_params or uarch_param in int_params:
+      line = 'localparam ' + uarch_param.upper() + ' = ' + str(uarch_params[uarch_param]) + ';\n'
     else:
       line = 'localparam '
       if isinstance(uarch_params[uarch_param], str): # deal with integer params
