@@ -90,3 +90,4 @@ system.summary
 system_fpga.summary
 *.vstf
 *vsim*
+*.txt

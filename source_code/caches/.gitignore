@@ -1,0 +1,43 @@
+work
+mapped
+fpga
+transcript
+# Makefile
+# modelsim.ini
+*.wlf
+README
+*.swp
+._*
+*.log
+*.deps
+*.hex
+*.ver
+mti*
+*.diff
+
+# irun build files
+INCA_libs
+cov_work
+*.key
+*.history
+*.diag
+*.shm
+*.svcf
+.simvision
+
+# added this because it continually gets updated from syn
+system.summary
+system_fpga.summary
+
+# vsim outputs
+*.vstf
+*vsim*
+
+# libreoffice temp file
+.~*
+
+# temp files
+*.temp*
+
+# python cache files
+*.pyc
