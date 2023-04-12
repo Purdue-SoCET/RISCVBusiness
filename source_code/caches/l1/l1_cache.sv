@@ -113,7 +113,7 @@ module l1_cache #(
     logic idle_done;
 
     // sram instance
-    assign sramSEL = (state == FLUSH_CACHE) ? flush_idx.set_num : decoded_addr.idx_bits;
+    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
 
@@ -224,8 +224,8 @@ module l1_cache #(
             IDLE: begin
                 // clear out caches with flush
                 sramWEN = 1;
-    	        sramWrite.frames[flush_idx.frame_num] = 0;
-                sramMask.frames[flush_idx.frame_num] = 0;
+    	        sramWrite.frames[flush_idx.frame_num] = '0;
+                sramMask.frames[flush_idx.frame_num] = '0;
                 enable_flush_count_nowb = 1;
                 // flag the completion of flush
                 if (flush_idx.finish) begin

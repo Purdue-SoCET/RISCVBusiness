@@ -40,10 +40,7 @@ module sram #(
     sram_entry_size_t [SRAM_HEIGHT-1:0] n_sramMemory;
 
     always_ff @(posedge CLK) begin
-        if (!nRST)
-            sramMemory <= 0;
-        else
-            sramMemory <= n_sramMemory;
+        sramMemory <= n_sramMemory;
     end
 
     always_comb begin
