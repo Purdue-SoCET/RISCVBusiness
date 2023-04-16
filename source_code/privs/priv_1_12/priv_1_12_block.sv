@@ -73,7 +73,7 @@ module priv_1_12_block (
     assign prv_intern_if.ext_int_s = 1'b0;
     assign prv_intern_if.ext_int_m = interrupt_if.ext_int;
     // debug
-    assign prv_intern_if.debug_int_m = interrupt_if.debug_int;
+    assign prv_intern_if.debug_int_m = interrupt_if.debug_int || prv_intern_if.singlestep_debug_int;
 
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;

@@ -60,6 +60,7 @@ module RISCVBusiness (
     risc_mgmt_if rm_if ();
     predictor_pipeline_if predict_if ();
     prv_pipeline_if prv_pipe_if ();
+    priv_1_12_internal_if prv_intern_if ();  // for singlestep
     cache_control_if cc_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();

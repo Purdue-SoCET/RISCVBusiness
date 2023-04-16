@@ -29,9 +29,10 @@
 
 module stage3_hazard_unit (
     stage3_hazard_unit_if.hazard_unit hazard_if,
-    prv_pipeline_if.hazard prv_pipe_if
+    prv_pipeline_if.hazard prv_pipe_if,
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
+    priv_1_12_internal_if.hazard prv_intern_if  // for singlestep
 );
     import alu_types_pkg::*;
     import rv32i_types_pkg::*;
@@ -54,6 +55,74 @@ module stage3_hazard_unit (
     logic exception;
     logic intr;
     word_t epc;
+
+    // store the singlestep instruction pc
+    word_t curr_singlestep_pc, nxt_singlestep_pc;
+
+    always_ff @( posedge CLK, negedge nRST ) begin
+      if (!nRST) begin
+        curr_singlestep_pc = '0;
+      end else begin
+        curr_singlestep_pc = nxt_singlestep_pc;
+      end
+    end
+
+    always_comb begin
+      nxt_singlestep_pc = curr_singlestep_pc;
+      // if singlestep in debug_mode, save dpc as the pc for singlestep instruction
+      if (prv_intern_if.singlestep == 1'b1 && prv_intern_if.insert_pc == 1'b1) begin
+        nxt_singlestep_pc = prv_intern_if.curr_dpc;
+      // if single step not in debug mode, save pc in fetch stage as the pc for singlestep instruction
+      end else if (prv_intern_if.singlestep_rising_edge == 1'b1 && prv_intern_if.curr_priv_dmode == 1'b0) begin
+        nxt_singlestep_pc = hazard_if.pc_f;
+      end
+    end
+
+    // state machine for tracking singlestep instruction
+    typedef enum logic [2:0] {IDLE, WAIT, DEBUG_INT} singlestep_state;
+    singlestep_state curr_state, nxt_state;
+
+    always_ff @( posedge CLK, negedge nRST ) begin
+      if (!nRST) begin
+        curr_state = IDLE;
+      end else begin
+        curr_state = nxt_state;
+      end
+    end
+
+    // If dcsr.step is 1, 
+    //      after resumereq, dret will be triggered -> cause insert_pc to be triggered
+    // If (in singlestep mode && insert_pc) or (in singlestep mode && not in debug_mode)
+    //      wait for current instruction to complete
+    //      call debug interrupt
+    always_comb begin : singlestep_fsm_nxt_state
+      nxt_state = curr_state;
+
+      case(curr_state)
+        IDLE: begin
+          if ((prv_intern_if.singlestep == 1'b1 && prv_intern_if.insert_pc == 1'b1) ||
+              (prv_intern_if.singlestep_rising_edge == 1'b1 && prv_intern_if.curr_priv_dmode == 1'b0)) begin
+                nxt_state = WAIT;
+          end
+        end
+        WAIT: begin
+          if (hazard_if.pc_m == curr_singlestep_pc && ex_mem_stall == 1'b0) begin
+            nxt_state = DEBUG_INT;
+          end
+        end
+        DEBUG_INT: Begin
+          nxt_state = IDLE;
+        end
+      endcase
+    end
+
+    always_comb begin: singlestep_fsm_output
+      prv_intern_if.singlestep_debug_int = 1'b0;
+      if (curr_state == DEBUG_INT) begin
+        prv_intern_if.singlestep_debug_int = 1'b1;
+      end
+    end
+
 
     // TODO: RISC-MGMT
     //logic rmgmt_stall;
