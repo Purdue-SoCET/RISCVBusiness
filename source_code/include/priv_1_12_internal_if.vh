@@ -129,7 +129,7 @@ interface priv_1_12_internal_if;
 
     modport pipe_ctrl (
         input intr, pipe_clear, mret, dret, sret, curr_mtvec, curr_mepc, next_mcause,
-              curr_dpc,
+              curr_dpc, curr_priv_dmode, 
         output insert_pc, priv_pc
     );
 
