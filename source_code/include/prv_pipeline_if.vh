@@ -63,12 +63,18 @@ interface prv_pipeline_if();
   pma_accwidth_t d_acc_width, i_acc_width;
   logic prot_fault_s, prot_fault_l, prot_fault_i;
 
+  // singlestep
+  logic curr_priv_dmode,singlestep, singlestep_rising_edge, singlestep_debug_int;
+  csr_reg_t curr_dpc;
+
+
   modport hazard (
     input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
+          curr_dpc, curr_priv_dmode, singlestep, singlestep_rising_edge, // debug single step
     output pipe_clear, ret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
             breakpoint, env, wfi, badaddr, wb_enable,
-            ex_rmgmt, ex_rmgmt_cause
+            ex_rmgmt, ex_rmgmt_cause, singlestep_debug_int // debug single step
   );
 
   modport pipe (
@@ -87,9 +93,10 @@ interface prv_pipeline_if();
           wdata, csr_addr, valid_write, wb_enable, instr,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,
-          d_acc_width, i_acc_width,
+          d_acc_width, i_acc_width, singlestep_debug_int,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
-            prot_fault_s, prot_fault_l, prot_fault_i
+            prot_fault_s, prot_fault_l, prot_fault_i, singlestep, singlestep_rising_edge, 
+            curr_dpc, curr_priv_dmode
   );
 
 endinterface

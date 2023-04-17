@@ -31,6 +31,7 @@
 `include "cache_control_if.vh"
 `include "sparce_pipeline_if.vh"
 `include "rv32c_if.vh"
+`include "priv_1_12_internal_if.vh"
 
 module stage3 #(
     RESET_PC = 32'h80000000
@@ -42,6 +43,7 @@ module stage3 #(
     generic_bus_if.cpu igen_bus_if,
     generic_bus_if.cpu dgen_bus_if,
     prv_pipeline_if prv_pipe_if,
+    priv_1_12_internal_if.hazard prv_intern_if,  //for singlestep
     predictor_pipeline_if predict_if,
     //risc_mgmt_if rm_if,
     cache_control_if cc_if,

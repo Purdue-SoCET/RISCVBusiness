@@ -73,7 +73,7 @@ module priv_1_12_block (
     assign prv_intern_if.ext_int_s = 1'b0;
     assign prv_intern_if.ext_int_m = interrupt_if.ext_int;
     // debug
-    assign prv_intern_if.debug_int_m = interrupt_if.debug_int;
+    assign prv_intern_if.debug_int_m = interrupt_if.debug_int || prv_intern_if.singlestep_debug_int;
 
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;
@@ -120,6 +120,12 @@ module priv_1_12_block (
     assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc;
     assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
     assign prv_pipe_if.intr        = prv_intern_if.intr;
+    // debug single step
+    assign prv_pipe_if.singlestep  = prv_intern_if.singlestep;
+    assign prv_pipe_if.singlestep_rising_edge = prv_intern_if.singlestep_rising_edge;
+    assign prv_pipe_if.curr_dpc = prv_intern_if.curr_dpc;
+    assign prv_pipe_if.curr_priv_dmode = prv_intern_if.curr_priv_dmode;
+    assign prv_intern_if.singlestep_debug_int = prv_pipe_if.singlestep_debug_int;
 
     // Memory protection signals
     assign prv_intern_if.daddr = prv_pipe_if.daddr;

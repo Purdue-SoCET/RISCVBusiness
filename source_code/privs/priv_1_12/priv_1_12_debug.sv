@@ -13,6 +13,23 @@ module priv_1_12_debug (
     dcsr_t dcsr_mask;
     // nxt_dpc_int dpc value obtained from interrupt_exception unit, nxt_dpc_pipe value from pipeline(due to csr instructions)
 
+    // connect singlestep bit to the hazard unit
+    assign prv_intern_if.singlestep = prv_intern_if.curr_dcsr.step;
+
+    // singlestep rising edge detector
+    logic prev_step;
+    always_ff @( posedge CLK, negedge nRST ) begin
+        if (!nRST) begin
+            prev_step = 0;
+        end else begin
+            prev_step = prv_intern_if.curr_dcsr.step;
+        end
+    end
+
+    always_comb begin
+        prv_intern_if.singlestep_rising_edge = !prev_step & prv_intern_if.curr_dcsr.step;
+    end
+
     always_ff @( posedge CLK, negedge nRST ) begin
         if(nRST == 1'b0) begin
             // debug PC
@@ -24,8 +41,8 @@ module priv_1_12_debug (
 
             // Debug Control and status register
             dcsr.xdebugver <= 4'd4;
-                //TODO; cheeck ebreakm/s/u
-            dcsr.ebreakm <= 0;
+                //TODO; check ebreakm/s/u
+            dcsr.ebreakm <= 1;
             dcsr.ebreaks <= 0;
             dcsr.ebreaku <= 0;
             dcsr.stepie <= 0;   // WARL
@@ -114,27 +131,24 @@ module priv_1_12_debug (
         end
 
         // dcsr cause
-        if(prv_intern_if.inject_mcause) begin
-            if(prv_intern_if.next_mcause.interrupt) begin
-                if(prv_intern_if.next_mcause.cause == DEBUG_INT_M) begin
+        if (prv_intern_if.inject_mcause) begin
+            if (prv_intern_if.next_mcause.interrupt) begin
+                if (prv_intern_if.next_mcause.cause == DEBUG_INT_M && prv_intern_if.singlestep_debug_int == 1'b1) begin
+                    // enter debug due to singlestep completion
+                    nxt_dcsr.cause = 3'b100;
+                // end else if () begin
+                //     // TODO: enter due to resethaltreq
+                //     nxt_dcsr.cause = 3'b101;
+                end else if (prv_intern_if.next_mcause.cause == DEBUG_INT_M) begin
                     // enter debug due to haltreq was set
                     nxt_dcsr.cause = 3'b011;
                 end
-                
-                // TODO:
-                    // enter due to resethaltreq
-                    // cause = 2
             end
             else begin
-                if(prv_intern_if.next_mcause.cause == BREAKPOINT) begin
+                if (prv_intern_if.next_mcause.cause == BREAKPOINT) begin
                     // enter debug due to ebreak
                     nxt_dcsr.cause = 3'b001;
                 end
-                
-                // TODO:
-                    // enter due to single step
-                    // cause = 0
-
             end
         end
 

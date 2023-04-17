@@ -104,6 +104,10 @@ interface priv_1_12_internal_if;
     // when in debug mode, curr_privilege_level is still set to machine mode, the extra flag indicates that current effective mode is debug 
     logic curr_priv_dmode;
 
+    // Singlestep bit
+    logic singlestep, singlestep_rising_edge;
+    logic singlestep_debug_int;
+
     modport csr (
         input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, valid_write,
             inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
@@ -147,9 +151,14 @@ interface priv_1_12_internal_if;
     //debug*
     // TODO: make sure the pipe_control unit can receive this curr_dpc signal
     modport debug (
-        input inject_dpc, inject_mcause,
+        input inject_dpc, inject_mcause, singlestep_debug_int,
               next_dpc, next_mcause, curr_priv_dmode, intr, curr_privilege_level, 
-        output curr_dpc, mprv_disable, ebreakm_debug, ebreaks_debug, ebreaku_debug, curr_dcsr
+        output curr_dpc, mprv_disable, ebreakm_debug, ebreaks_debug, ebreaku_debug, curr_dcsr, singlestep, singlestep_rising_edge
+    );
+
+    modport hazard (
+        input curr_priv_dmode, curr_dpc, singlestep, singlestep_rising_edge, insert_pc,
+        output singlestep_debug_int
     );
 
 endinterface
