@@ -18,6 +18,7 @@ filesets:
             - "socet:riscv:rv32c"
             - "socet:riscv:rv32m"
         files:
+            - source_code/bus_bridges/ahb.sv
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
@@ -41,7 +42,7 @@ filesets:
         files:
             #- "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
             #- "!tool_verilator? (source_code/bus_bridges/apb.sv)"
-            - source_code/bus_bridges/ahb.sv
+            #- source_code/bus_bridges/ahb.sv
             #- source_code/bus_bridges/apb.sv
         file_type: systemVerilogSource
 
