@@ -31,7 +31,7 @@
 module stage3_hazard_unit (
     input logic CLK, nRST,
     stage3_hazard_unit_if.hazard_unit hazard_if,
-    prv_pipeline_if.hazard prv_pipe_if
+    prv_pipeline_if.hazard prv_pipe_if,
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
     //priv_1_12_internal_if.hazard prv_pipe_if  // for singlestep
