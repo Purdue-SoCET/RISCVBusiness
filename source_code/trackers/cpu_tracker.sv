@@ -39,6 +39,7 @@ module cpu_tracker (
 );
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
+    import rv32m_pkg::*;
 
     parameter int CPUID = 0;
 
@@ -132,23 +133,38 @@ module cpu_tracker (
                 endcase
             end
             REGREG: begin
-                case (regreg_t'(funct3))
-                    ADDSUB: begin
-                        if (instr_30) instr_mnemonic = "sub";
-                        else instr_mnemonic = "add";
-                    end
-                    SLL:     instr_mnemonic = "sll";
-                    SLT:     instr_mnemonic = "slt";
-                    SLTU:    instr_mnemonic = "sltu";
-                    XOR:     instr_mnemonic = "xor";
-                    SR: begin
-                        if (instr_30) instr_mnemonic = "sra";
-                        else instr_mnemonic = "srl";
-                    end
-                    OR:      instr_mnemonic = "or";
-                    AND:     instr_mnemonic = "and";
-                    default: instr_mnemonic = "unknown regreg op";
-                endcase
+                if(instr[31 -: 7] == RV32M_OPCODE_MINOR) begin
+                    case (rv32m_op_t'(funct3))
+                        MUL:    instr_mnemonic = "mul";
+                        MULH:   instr_mnemonic = "mulh";
+                        MULHSU: instr_mnemonic = "mulhsu";
+                        MULHU:  instr_mnemonic = "mulhu";
+                        DIV:    instr_mnemonic = "div";
+                        DIVU:   instr_mnemonic = "divu";
+                        REM:    instr_mnemonic = "rem";
+                        REMU:   instr_mnemonic = "remu";
+                        // No default -- full case
+                    endcase
+                end else begin
+                    case (regreg_t'(funct3))
+                        ADDSUB: begin
+                            if (instr_30) instr_mnemonic = "sub";
+                            else instr_mnemonic = "add";
+                        end
+                        SLL:     instr_mnemonic = "sll";
+                        SLT:     instr_mnemonic = "slt";
+                        SLTU:    instr_mnemonic = "sltu";
+                        XOR:     instr_mnemonic = "xor";
+                        SR: begin
+                            if (instr_30) instr_mnemonic = "sra";
+                            else instr_mnemonic = "srl";
+                        end
+                        OR:      instr_mnemonic = "or";
+                        AND:     instr_mnemonic = "and";
+
+                        default: instr_mnemonic = "unknown regreg op";
+                    endcase
+                end
             end
             SYSTEM: begin
                 case (rv32i_system_t'(funct3))
