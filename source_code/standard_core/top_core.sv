@@ -33,8 +33,21 @@ module top_core #(
     input timer_int,
     timer_int_clear
 );
+    function [31:0] get_pc;
+        // verilator public
+        get_pc = CORE.pipeline.mem_pipe_if.ex_mem_reg.pc;
+    endfunction
 
+    function [31:0] get_instr;
+        // verilator public
+        get_instr = CORE.pipeline.mem_pipe_if.ex_mem_reg.instr;
+    endfunction
 
+    function [31:0] get_wb_stall;
+        // verilator public
+        get_wb_stall = CORE.pipeline.mem_stage_i.wb_stall;
+    endfunction
+    
     function [31:0] get_x28;
         // verilator public
         get_x28 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[28];
@@ -45,6 +58,14 @@ module top_core #(
         get_x03 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[3];
     endfunction
 
+    function automatic reg [31:0] get_register_value(input reg [31:0] register_address);
+        // verilator public
+        reg [31:0] register_value;
+        // Read the value of the register using the provided address
+        register_value = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[register_address];
+        // Return the value of the register
+        return register_value;
+    endfunction
 
     bind stage3_mem_stage cpu_tracker cpu_track1 (
         .CLK(CLK),

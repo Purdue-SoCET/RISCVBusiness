@@ -5,6 +5,7 @@
 #include <sstream>
 #include <map>
 #include <csignal>
+#include <vector>
 
 #include "verilated.h"
 #include "verilated_fst_c.h"
@@ -23,6 +24,13 @@
 // Inclusive range of memory-mapped peripherals
 #define MMIO_RANGE_BEGIN (MTIME_ADDR)
 #define MMIO_RANGE_END   (MAGIC_ADDR)
+
+// Define a struct to hold instruction data
+struct Instruction {
+    uint32_t pc;
+    uint32_t instruction;
+    std::vector<uint32_t> registers;
+};
 
 // doubles as mtime counter
 vluint64_t sim_time = 0;
@@ -249,9 +257,48 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
     tick(dut, trace);
 }
 
+std::vector<uint32_t> get_all_register_values(Vtop_core& dut, int num_registers) {
+    std::vector<uint32_t> registers;
+    for (int i = 0; i < num_registers; i++) {
+      registers.push_back(dut.top_core->get_register_value(i)); // read the value of the register at address i
+    //   std::cout << "Reg  " << i << ":"<< (uint32_t)dut.top_core->get_register_value(i) << std::endl;
+    }
+    return registers;
+}
+
+// Function to convert instruction data to CSV string
+std::string instructionToCsv(const Instruction& inst) {
+    std::string csv_string = std::to_string(inst.pc) + ",";
+    csv_string += "\"" + std::to_string(inst.instruction) + "\",";
+    for (int i = 0; i < 32; i++) {
+        csv_string += std::to_string(inst.registers[i]) + ",";
+    }
+    // Remove the trailing comma
+    csv_string.pop_back();
+    return csv_string;
+}
+
+// Function to output instruction data to CSV file
+void outputInstructionsToCsv(const std::vector<Instruction>& instructions, const std::string& filename) {
+    std::ofstream output_file(filename);
+    if (output_file.is_open()) {
+        // Output CSV header row
+        output_file << "PC,Instruction";
+        for (int i = 0; i < 32; i++) {
+          output_file << ",Reg" << i;
+        }
+        output_file << "\n";
+        // Output instruction data
+        for (const auto& inst : instructions) {
+            output_file << instructionToCsv(inst) << "\n";
+        }
+        output_file.close();
+    }
+}
 
 int main(int argc, char **argv) {
 
+    std::vector<Instruction> instructions;
     const char *fname; 
     if(argc < 3) {
         std::cout << "Warning: No bin file name provided, assuming './meminit.bin' as file location!" << std::endl;
@@ -313,20 +360,35 @@ int main(int argc, char **argv) {
             dut.busy = 1;
         }
 
+        if(!dut.top_core->get_wb_stall() && dut.top_core->get_instr() !=0) {
+            // std::cout << "The pc is " << (uint32_t)dut.top_core->get_pc() << std::endl;
+            // std::cout << "The instr is " << (uint32_t)dut.top_core->get_instr() << std::endl;
+            instructions.push_back({(uint32_t)dut.top_core->get_pc(), (uint32_t)dut.top_core->get_instr(), get_all_register_values(dut, 32)});
+        } 
+        // else {
+        //     std::cout << "not hit" << std::endl;
+        //     // std::cout << "The pchit is " << (int)dut.pc_hit << std::endl;
+        // }
         dut.mtime = sim_time;
 
         tick(dut, m_trace);
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 100000) {
+    int index = 3;
+    int registers[32];
+    if(sim_time >= 100000000) {
         std::cout << "Test TIMED OUT" << std::endl;
         m_trace.close();
         memory.dump();
         dut.final();
         exit(1);
-    } else if(dut.top_core->get_x03() == 1) {
+    } else if(dut.top_core->get_register_value(index) == 1) {
         std::cout << "Test PASSED" << std::endl;
+        
+        // get_all_register_values(dut, registers, 32);
+        // print_registers(registers, 32);
+        outputInstructionsToCsv(instructions, "instructions.csv");
         m_trace.close();
         memory.dump();
         dut.final();

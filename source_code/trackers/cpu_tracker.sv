@@ -46,7 +46,7 @@ module cpu_tracker (
     string instr_mnemonic, output_str, src1, src2, dest, operands;
     string csr, temp_str;
     logic [63:0] pc64;
-    assign pc64 = {{32{1'b0}}, pc};
+    assign pc64 = {{32{1'hf}}, pc};
     initial begin : INIT_FILE
         fptr = $fopen(`TRACE_FILE_NAME, "w");
     end
@@ -242,6 +242,7 @@ module cpu_tracker (
         endcase
     endfunction
 
+    assign pc_hit = (!wb_stall && instr != 0);
     always_ff @(posedge CLK) begin
         if (!wb_stall && instr != 0) begin
             $sformat(temp_str, "core%d: 0x%h (0x%h)", CPUID, pc64, instr);
