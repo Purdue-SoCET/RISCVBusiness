@@ -55,7 +55,7 @@ module stage3_fetch_stage (
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             pc <= RESET_PC;
-        end else if (hazard_if.pc_en | rv32cif.done_earlier) begin
+        end else if (hazard_if.pc_en /* | rv32cif.done_earlier*/) begin
             pc <= npc;
         end
     end

@@ -169,7 +169,7 @@ module stage3_hazard_unit (
                                   // || (wait_for_imem && !dmem_access) // ???
                                   //& (~ex_flush_hazard | e_ex_stage) // ???
                                   //|| rm_if.execute_stall //
-                                  || hazard_if.ex_busy // Waiting for extension
+                                  || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump) // Ugly case -- need to flush for control hazards when X busy, but other cases require stalling to take priority to prevent data loss (e.g. slow instruction fetch, valid insn in X, load in M --> giving flush priority would destroy insn in X)
                                   || mem_use_stall 
                                   || hazard_if.fence_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
      // TODO: Exceptions
