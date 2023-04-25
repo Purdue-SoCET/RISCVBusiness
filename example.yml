@@ -11,11 +11,11 @@ microarch_params:
   cache_config  : "separate"
   dcache_type   : "l1"
   dcache_size : 1024
-  dcache_block_size : 1
+  dcache_block_size : 2
   dcache_assoc : 1
   icache_type   : "l1"
   icache_size : 1024
-  icache_block_size : 1
+  icache_block_size : 2
   icache_assoc : 1
   noncache_start_addr : 32'hF000_0000
   
