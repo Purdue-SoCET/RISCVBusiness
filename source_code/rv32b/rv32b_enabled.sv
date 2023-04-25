@@ -14,31 +14,29 @@
 *   limitations under the License.
 *
 *
-*   Filename:     bitmanip_execute.sv
+*   Filename:     rv32b_execute.sv
 *
-*   Created by:   John Skubic
-*   Email:        jskubic@purdue.edu
-*   Date Created: 02/07/2017
+*   Created by:   Tanuj Sengupta
+*   Email:        tsengup@purdue.edu
+*   Date Created: 04/25/2023
 *   Description:  Execute stage for Bitmanipulation
 */
 
-// `include "component_selection_defines.vh"
+`include "component_selection_defines.vh"
 
-`timescale 1ns/1ps
-
-module rv32m_enabled (
+module rv32b_enabled (
     input CLK,
     input nRST,
     input valid_cmd,
     input [31:0] instr,
-    input [31:0] rs1,
-    input [31:0] rs2,
+    input [31:0] rs1_val,
+    input [31:0] rs2_val,
     output valid,
-    output logic [31:0] bitmanip_out
+    output logic [31:0] rv32b_out
 );
-    //import rv32i_types_pkg::*;
-    //import bitmanip_pkg::*;
-    //bitmanip_insn_t instr_in;
+//    import rv32i_types_pkg::*;
+//    import rv32b_pkg::*;
+//    rv32b_insn_t instr_in;
 
     logic [47:0] valid_out;
     logic [31:0] andn_out;
@@ -87,7 +85,7 @@ module rv32m_enabled (
 // Selection of the appropriate output
 /////////////////////////////////////////////////
 
-assign bitmanip_out = valid_out[0] ? andn_out :
+assign rv32b_out = valid_out[0] ? andn_out :
                       valid_out[1] ? orn_out  :  
                       valid_out[2] ? xnor_out  :  
                       valid_out[3] ? max_out  :  
@@ -146,7 +144,7 @@ assign valid = |valid_out[47:0];
 
 always_comb begin //{
 if (valid_cmd && instr[31:25]==7'b010_0000 && instr[14:12]==3'b111 && instr[6:0]==7'b011_0011) begin //{
- andn_out = rs1 & (~rs2);
+ andn_out = rs1_val & (~rs2_val);
  valid_out[0] = 1'b1;
 end //}
 else begin //{
@@ -161,7 +159,7 @@ end //}
 
 always_comb begin //{
 if (valid_cmd && instr[31:25]==7'b010_0000 && instr[14:12]==3'b110 && instr[6:0]==7'b011_0011) begin //{
- orn_out = rs1 | (~rs2);
+ orn_out = rs1_val | (~rs2_val);
  valid_out[1] = 1'b1;
 end //}
 else begin //{
@@ -176,7 +174,7 @@ end //}
 
 always_comb begin //{
 if (valid_cmd && instr[31:25]==7'b010_0000 && instr[14:12]==3'b100 && instr[6:0]==7'b011_0011) begin //{
- xnor_out = ~(rs1 ^ rs2);
+ xnor_out = ~(rs1_val ^ rs2_val);
  valid_out[2] = 1'b1;
 end //}
 else begin //{
@@ -193,21 +191,21 @@ end //}
 // Compare signed integers
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b110 && instr[6:0]==7'b011_0011) begin //{
-    if (rs1[31]>rs2[31]) begin //{ // ie rs1 is -vs and rs2 is +ve
-     max_out = rs2;
+    if (rs1_val[31]>rs2_val[31]) begin //{ // ie rs1_val is -vs and rs2_val is +ve
+     max_out = rs2_val;
      valid_out[3] = 1'b1;
     end //}
-    else if (rs2[31]>rs1[31]) begin //{ // ie rs1 is +ve and rs2 is -ve
-     max_out = rs1;
+    else if (rs2_val[31]>rs1_val[31]) begin //{ // ie rs1_val is +ve and rs2_val is -ve
+     max_out = rs1_val;
      valid_out[3] = 1'b1;
     end //} 
     else begin //{
-     if (rs1>=rs2) begin //{
-      max_out = rs1;
+     if (rs1_val>=rs2_val) begin //{
+      max_out = rs1_val;
       valid_out[3] = 1'b1;
      end //}
      else begin //{
-      max_out = rs2;
+      max_out = rs2_val;
       valid_out[3] = 1'b1;
      end //}
     end //}
@@ -226,12 +224,12 @@ end //}
 // Compare unsigned integers
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b111 && instr[6:0]==7'b011_0011) begin //{
-     if (rs1>=rs2) begin //{
-      maxu_out = rs1;
+     if (rs1_val>=rs2_val) begin //{
+      maxu_out = rs1_val;
       valid_out[4] = 1'b1;
      end //}
      else begin //{
-      maxu_out = rs2;
+      maxu_out = rs2_val;
       valid_out[4] = 1'b1;
      end //}
    end //}
@@ -248,21 +246,21 @@ end //}
 // Compare signed integers
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b100 && instr[6:0]==7'b011_0011) begin //{
-    if (rs1[31]>rs2[31]) begin //{ // ie rs1 is -ve and rs2 is +ve
-     min_out = rs1;
+    if (rs1_val[31]>rs2_val[31]) begin //{ // ie rs1_val is -ve and rs2_val is +ve
+     min_out = rs1_val;
      valid_out[5] = 1'b1;
     end //}
-    else if (rs2[31]>rs1[31]) begin //{ // ie rs1 is +ve and rs2 is -ve
-     min_out = rs2;
+    else if (rs2_val[31]>rs1_val[31]) begin //{ // ie rs1_val is +ve and rs2_val is -ve
+     min_out = rs2_val;
      valid_out[5] = 1'b1;
     end //} 
     else begin //{
-     if (rs1>=rs2) begin //{
-      min_out = rs2;
+     if (rs1_val>=rs2_val) begin //{
+      min_out = rs2_val;
       valid_out[5] = 1'b1;
      end //}
      else begin //{
-      min_out = rs1;
+      min_out = rs1_val;
       valid_out[5] = 1'b1;
      end //}
     end //}
@@ -281,12 +279,12 @@ end //}
 // Compare unsigned integers
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b101 && instr[6:0]==7'b011_0011) begin //{
-     if (rs1>=rs2) begin //{
-      minu_out = rs2;
+     if (rs1_val>=rs2_val) begin //{
+      minu_out = rs2_val;
       valid_out[6] = 1'b1;
      end //}
      else begin //{
-      minu_out = rs1;
+      minu_out = rs1_val;
       valid_out[6] = 1'b1;
      end //}
    end //}
@@ -300,10 +298,10 @@ end //}
 // ROL
 ///////////////////////////////////////////
 
-// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2
+// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2_val
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b011_0000 && instr[14:12]==3'b001 && instr[6:0]==7'b011_0011) begin //{
-     rol_out = (rs1 << rs2[4:0]) | (rs1>>(6'd32 - rs2[4:0])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2
+     rol_out = (rs1_val << rs2_val[4:0]) | (rs1_val>>(6'd32 - rs2_val[4:0])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2_val
      valid_out[7] = 1'b1;
    end //}
    else begin //{
@@ -316,10 +314,10 @@ end //}
 // ROR
 ///////////////////////////////////////////
 
-// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2
+// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2_val
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b011_0000 && instr[14:12]==3'b101 && instr[6:0]==7'b011_0011) begin //{
-     ror_out = (rs1 >> rs2[4:0]) | (rs1 << (6'd32 - rs2[4:0])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2
+     ror_out = (rs1_val >> rs2_val[4:0]) | (rs1_val << (6'd32 - rs2_val[4:0])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2_val
      valid_out[8] = 1'b1;
    end //}
    else begin //{
@@ -334,7 +332,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0000 && instr[14:12]==3'b010 && instr[6:0]==7'b011_0011) begin //{
-     sh1add_out = rs2 + (rs1<<1); 
+     sh1add_out = rs2_val + (rs1_val<<1); 
      valid_out[9] = 1'b1;
    end //}
    else begin //{
@@ -349,7 +347,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0000 && instr[14:12]==3'b100 && instr[6:0]==7'b011_0011) begin //{
-     sh2add_out = rs2 + (rs1<<2); 
+     sh2add_out = rs2_val + (rs1_val<<2); 
      valid_out[10] = 1'b1;
    end //}
    else begin //{
@@ -364,7 +362,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0000 && instr[14:12]==3'b110 && instr[6:0]==7'b011_0011) begin //{
-     sh3add_out = rs2 + (rs1<<3); 
+     sh3add_out = rs2_val + (rs1_val<<3); 
      valid_out[11] = 1'b1;
    end //}
    else begin //{
@@ -379,7 +377,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b010_0100 && instr[14:12]==3'b001 && instr[6:0]==7'b011_0011) begin //{
-     bclr_out = rs1 & (~(1<<rs2[4:0]));  // Assuming its a 32 bit architecture. 
+     bclr_out = rs1_val & (~(1<<rs2_val[4:0]));  // Assuming its a 32 bit architecture. 
      valid_out[12] = 1'b1;
    end //}
    else begin //{
@@ -394,7 +392,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b010_0100 && instr[14:12]==3'b101 && instr[6:0]==7'b011_0011) begin //{
-     bext_out = (rs1>>rs2[4:0]) & (32'd1);  // Assuming its a 32 bit architecture. 
+     bext_out = (rs1_val>>rs2_val[4:0]) & (32'd1);  // Assuming its a 32 bit architecture. 
      valid_out[13] = 1'b1;
    end //}
    else begin //{
@@ -409,7 +407,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b011_0100 && instr[14:12]==3'b001 && instr[6:0]==7'b011_0011) begin //{
-     binv_out = rs1 ^ (1<<rs2[4:0]);  // Assuming its a 32 bit architecture. 
+     binv_out = rs1_val ^ (1<<rs2_val[4:0]);  // Assuming its a 32 bit architecture. 
      valid_out[14] = 1'b1;
    end //}
    else begin //{
@@ -421,10 +419,9 @@ end //}
 ///////////////////////////////////////////
 // BSET
 ///////////////////////////////////////////
-
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0100 && instr[14:12]==3'b001 && instr[6:0]==7'b011_0011) begin //{
-     bset_out = rs1 | (1<<rs2[4:0]);  // Assuming its a 32 bit architecture. 
+     bset_out = rs1_val | (1<<rs2_val[4:0]);  // Assuming its a 32 bit architecture. 
      valid_out[15] = 1'b1;
    end //}
    else begin //{
@@ -441,8 +438,8 @@ always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b001 && instr[6:0]==7'b011_0011) begin //{
      clmul_out = 32'd0;
      for (integer i=0;i<32;i++) begin//{
-      if (((rs2>>i) & 32'd1)==32'd1)
-      clmul_out = clmul_out ^ (rs1<<i);
+      if (((rs2_val>>i) & 32'd1)==32'd1)
+      clmul_out = clmul_out ^ (rs1_val<<i);
       else
       clmul_out = clmul_out ^ 0; // Retains the same value . Can also just keep it as clmul_out = clmul_out
      end//}
@@ -462,8 +459,8 @@ always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b011 && instr[6:0]==7'b011_0011) begin //{
      clmulh_out = 32'd0;
      for (integer i=1;i<32;i++) begin//{
-      if (((rs2>>i) & 32'd1)==32'd1)
-      clmulh_out = clmulh_out ^ (rs1>>(32-i));
+      if (((rs2_val>>i) & 32'd1)==32'd1)
+      clmulh_out = clmulh_out ^ (rs1_val>>(32-i));
       else
       clmulh_out = clmulh_out ^ 0; // Retains the same value . Can also just keep it as clmulh_out = clmulh_out
      end//}
@@ -483,8 +480,8 @@ always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b000_0101 && instr[14:12]==3'b010 && instr[6:0]==7'b011_0011) begin //{
      clmulr_out = 32'd0;
      for (integer i=1;i<32;i++) begin//{
-      if (((rs2>>i) & 32'd1)==32'd1)
-      clmulr_out = clmulr_out ^ (rs1>>(32-i-1));
+      if (((rs2_val>>i) & 32'd1)==32'd1)
+      clmulr_out = clmulr_out ^ (rs1_val>>(32-i-1));
       else
       clmulr_out = clmulr_out ^ 0; // Retains the same value . Can also just keep it as clmulr_out = clmulr_out
      end//}
@@ -515,7 +512,7 @@ always_comb begin //{
     
     // Finding out the highest bit set
     for (integer i=31;i>0;i--) begin//{
-     if (rs1[i] && !flag_clz ) begin //{
+     if (rs1_val[i] && !flag_clz ) begin //{
       highest_bit_set_clz = i;
       flag_clz  = 1'b1;
      end //}
@@ -552,7 +549,7 @@ always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b011_0000_00010 && instr[14:12]==3'b001 && instr[6:0]==7'b001_0011) begin //{
       sum_cpop = 0;
       for (integer i=0;i<32;i++)
-      sum_cpop = sum_cpop + {31'd0,rs1[i]}; // Check if this leads to combo loop #DOUBT
+      sum_cpop = sum_cpop + {31'd0,rs1_val[i]}; // Check if this leads to combo loop #DOUBT
      
      // Setting the valid flag
      valid_out[20] = 1'b1;
@@ -580,7 +577,7 @@ always_comb begin //{
     flag_ctz = 0;  
     // Finding out the lowest set bit 
     for (integer i=0;i<32;i++) begin//{
-     if (rs1[i] && !flag_ctz) begin //{
+     if (rs1_val[i] && !flag_ctz) begin //{
       lowest_set_bit_ctz = i;
       flag_ctz = 1'b1;
      end //}
@@ -610,22 +607,22 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b001_0100_00111 && instr[14:12]==3'b101 && instr[6:0]==7'b001_0011) begin //{
-     if (|rs1[7:0])
+     if (|rs1_val[7:0])
         orc_b_out[7:0] = 8'hff;
      else
         orc_b_out[7:0] = 0;
 
-     if (|rs1[15:8])
+     if (|rs1_val[15:8])
         orc_b_out[15:8] = 8'hff;
      else
         orc_b_out[15:8] = 0;
 
-     if (|rs1[23:16])
+     if (|rs1_val[23:16])
         orc_b_out[23:16] = 8'hff;
      else
         orc_b_out[23:16] = 0;
 
-     if (|rs1[31:24])
+     if (|rs1_val[31:24])
         orc_b_out[31:24] = 8'hff;
      else
         orc_b_out[31:24] = 0;
@@ -645,10 +642,10 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b011_0100_11000 && instr[14:12]==3'b101 && instr[6:0]==7'b001_0011) begin //{
-     rev8_out [7:0] = rs1[31:24];  // All the below 4 lines assume 32 bit architecture 
-     rev8_out [15:8] = rs1[23:16];
-     rev8_out [23:16] = rs1[15:8];
-     rev8_out [31:24] = rs1[7:0];
+     rev8_out [7:0] = rs1_val[31:24];  // All the below 4 lines assume 32 bit architecture 
+     rev8_out [15:8] = rs1_val[23:16];
+     rev8_out [23:16] = rs1_val[15:8];
+     rev8_out [31:24] = rs1_val[7:0];
       
      // Setting the valid flag
      valid_out[23] = 1'b1;
@@ -663,12 +660,12 @@ end //}
 // RORI
 ///////////////////////////////////////////
 
-// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2
-// Consider rs2 as shamt
+// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2_val
+// Consider rs2_val as shamt
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b011_0000 && instr[14:12]==3'b101 && instr[6:0]==7'b001_0011) begin //{
-     rori_out = (rs1 >> instr[24:20]) | (rs1 << (6'd32 - instr[24:20])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2
+     rori_out = (rs1_val >> instr[24:20]) | (rs1_val << (6'd32 - instr[24:20])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2_val
      valid_out[24] = 1'b1;
    end //}
    else begin //{
@@ -684,7 +681,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b011_0000_00100 && instr[14:12]==3'b001 && instr[6:0]==7'b001_0011) begin //{
-     sext_b_out = {{24{rs1[7]}},rs1[7:0]};
+     sext_b_out = {{24{rs1_val[7]}},rs1_val[7:0]};
      valid_out[25] = 1'b1;
    end //}
    else begin //{
@@ -699,7 +696,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b011_0000_00101 && instr[14:12]==3'b001 && instr[6:0]==7'b001_0011) begin //{
-     sext_h_out = {{16{rs1[15]}},rs1[15:0]};
+     sext_h_out = {{16{rs1_val[15]}},rs1_val[15:0]};
      valid_out[26] = 1'b1;
    end //}
    else begin //{
@@ -714,7 +711,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b010_0100 && instr[14:12]==3'b001 && instr[6:0]==7'b001_0011) begin //{
-     bclri_out = rs1 & (~(1<<instr[24:20]));  // Assuming its a 32 bit architecture. 
+     bclri_out = rs1_val & (~(1<<instr[24:20]));  // Assuming its a 32 bit architecture. 
      valid_out[27] = 1'b1;
    end //}
    else begin //{
@@ -729,7 +726,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b010_0100 && instr[14:12]==3'b101 && instr[6:0]==7'b001_0011) begin //{
-     bexti_out = (rs1>>instr[24:20]) & (32'd1);  // Assuming its a 32 bit architecture. 
+     bexti_out = (rs1_val>>instr[24:20]) & (32'd1);  // Assuming its a 32 bit architecture. 
      valid_out[28] = 1'b1;
    end //}
    else begin //{
@@ -744,7 +741,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b011_0100 && instr[14:12]==3'b001 && instr[6:0]==7'b001_0011) begin //{
-     binvi_out = rs1 ^ (1<<instr[24:20])  ;  // Assuming its a 32 bit architecture. 
+     binvi_out = rs1_val ^ (1<<instr[24:20])  ;  // Assuming its a 32 bit architecture. 
      valid_out[29] = 1'b1;
    end //}
    else begin //{
@@ -759,7 +756,7 @@ end //}
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0100 && instr[14:12]==3'b001 && instr[6:0]==7'b001_0011) begin //{
-     bseti_out = rs1 | (1<<instr[24:20]);  // Assuming its a 32 bit architecture. 
+     bseti_out = rs1_val | (1<<instr[24:20]);  // Assuming its a 32 bit architecture. 
      valid_out[30] = 1'b1;
    end //}
    else begin //{
@@ -789,7 +786,7 @@ always_comb begin //{
     
     // Finding out the highest bit set
     for (integer i=31;i>0;i--) begin//{
-     if (rs1[i] && !flag_clzw) begin //{
+     if (rs1_val[i] && !flag_clzw) begin //{
       highest_bit_set_clzw = i;
       flag_clzw = 1'b1;
      end //}
@@ -825,7 +822,7 @@ always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b011_0000_00010 && instr[14:12]==3'b001 && instr[6:0]==7'b001_1011) begin //{
      sum_cpopw = 0;
      for (integer i=0;i<32;i++)
-      sum_cpopw = sum_cpopw + {31'd0,rs1[i]}; // Check if this leads to combo loop #DOUBT
+      sum_cpopw = sum_cpopw + {31'd0,rs1_val[i]}; // Check if this leads to combo loop #DOUBT
      // Setting the valid flag
      valid_out[32] = 1'b1;
    end //}
@@ -851,7 +848,7 @@ always_comb begin //{
     flag_ctzw = 0;  
     // Finding out the lowest set bit 
     for (integer i=0;i<32;i++) begin//{
-     if (rs1[i] && !flag_ctzw) begin //{
+     if (rs1_val[i] && !flag_ctzw) begin //{
       lowest_set_bit_ctzw = i;
       flag_ctzw = 1'b1;
      end //}
@@ -878,12 +875,12 @@ end //}
 // RORIW
 ///////////////////////////////////////////
 
-// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2
-// Consider rs2 as shamt
+// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2_val
+// Consider rs2_val as shamt
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b011_0000 && instr[14:12]==3'b101 && instr[6:0]==7'b001_1011) begin //{
-     roriw_out = (rs1 >> instr[24:20]) | (rs1 << (6'd32 - instr[24:20])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2
+     roriw_out = (rs1_val >> instr[24:20]) | (rs1_val << (6'd32 - instr[24:20])); // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2_val
      valid_out[34] = 1'b1;
    end //}
    else begin //{
@@ -896,13 +893,13 @@ end //}
 // SLLI_UW
 ///////////////////////////////////////////
 
-// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2
+// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2_val
 // Since it is a 32 bit architecture, zero extending the word does not make sense
 // since there is no available space to extend into.
 
 always_comb begin //{
    if (valid_cmd && instr[31:26]==6'b00_0010 && instr[14:12]==3'b001 && instr[6:0]==7'b001_1011) begin //{
-     slli_uw_out = rs1<<instr[25:20]; // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2
+     slli_uw_out = rs1_val<<instr[25:20]; // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2_val
      valid_out[35] = 1'b1;
    end //}
    else begin //{
@@ -919,13 +916,13 @@ end //}
 // ADD_UW
 ///////////////////////////////////////////
 
-// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2
-// Since it is a 32 bit architecture, zero extending rs1 does not make sense
+// Assuming its a 32 bit architecture and hence shift amount is 5 LSB of rs2_val
+// Since it is a 32 bit architecture, zero extending rs1_val does not make sense
 // since there is no available space to extend into.
 
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b00_00100 && instr[14:12]==3'b000 && instr[6:0]==7'b011_1011) begin //{
-     add_uw_out = rs1 + rs2; // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2
+     add_uw_out = rs1_val + rs2_val; // 4:0 only for 32 bit architecture. Otherwise log2(XLEN) bits of rs2_val
      valid_out[36] = 1'b1;
    end //}
    else begin //{
@@ -941,7 +938,7 @@ end //}
 // Zero extension for 32 bit architecture does not make sense
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0000 && instr[14:12]==3'b010 && instr[6:0]==7'b011_1011) begin //{
-     sh1add_uw_out = rs2 + (rs1<<1); 
+     sh1add_uw_out = rs2_val + (rs1_val<<1); 
      valid_out[37] = 1'b1;
    end //}
    else begin //{
@@ -957,7 +954,7 @@ end //}
 // Zero extension for 32 bit architecture does not make sense
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0000 && instr[14:12]==3'b100 && instr[6:0]==7'b011_1011) begin //{
-     sh2add_uw_out = rs2 + (rs1<<2); 
+     sh2add_uw_out = rs2_val + (rs1_val<<2); 
      valid_out[38] = 1'b1;
    end //}
    else begin //{
@@ -973,7 +970,7 @@ end //}
 // Zero extension for 32 bit architecture does not make sense
 always_comb begin //{
    if (valid_cmd && instr[31:25]==7'b001_0000 && instr[14:12]==3'b110 && instr[6:0]==7'b011_1011) begin //{
-     sh3add_uw_out = rs2 + (rs1<<3); 
+     sh3add_uw_out = rs2_val + (rs1_val<<3); 
      valid_out[39] = 1'b1;
    end //}
    else begin //{
@@ -989,7 +986,7 @@ end //}
 // Zero extension for 32 bit architecture does not make sense
 always_comb begin //{
    if (valid_cmd && instr[31:20]==12'b000_0100_00000 && instr[14:12]==3'b100 && instr[6:0]==7'b011_0011) begin //{
-     zext_h_out = {16'd0,rs1[15:0]}; 
+     zext_h_out = {16'd0,rs1_val[15:0]}; 
      valid_out[40] = 1'b1;
    end //}
    else begin //{

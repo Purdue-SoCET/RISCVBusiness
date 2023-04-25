@@ -107,6 +107,7 @@ module stage3_execute_stage (
     *******************/
     logic rv32m_busy;
     word_t rv32m_out;
+    word_t rv32b_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
 
@@ -130,6 +131,15 @@ module stage3_execute_stage (
     assign rs1_post_fwd = fw_if.fwd_rs1 ? fw_if.rd_mem_data : rf_if.rs1_data;
     assign rs2_post_fwd = fw_if.fwd_rs2 ? fw_if.rd_mem_data : rf_if.rs2_data;
 
+    rv32b_wrapper RV32B_FU (
+        .CLK,
+        .nRST,
+        .instr(cu_if.instr),
+        .valid_cmd(cu_if.valid_rv32b_instr),
+        .rs1_val(rs1_post_fwd), 
+        .rs2_val(rs2_post_fwd),
+        .rv32b_out
+    );
 
     /******************
     * Sign Extensions
@@ -185,7 +195,9 @@ module stage3_execute_stage (
     // FU output mux -- feeds into pipeline register
     // Add to this when more FUs are added
     // TODO: Make this nicer, with enum for FU selection
-    assign ex_out = (cu_if.rv32m_control.select) ? rv32m_out : alu_if.port_out;
+    assign ex_out = (cu_if.rv32m_control.select) ? rv32m_out : 
+                    (cu_if.valid_rv32b_instr) ? rv32b_out : 
+                    alu_if.port_out;
 
     /*************************
     * Register File Writeback
