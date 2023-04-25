@@ -48,9 +48,9 @@ module l1_cache #(
     localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
     localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
-    localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
-    localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
-    localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
+    localparam N_FRAME_BITS       = $clog2(ASSOC);// + (ASSOC == 1);
+    localparam N_SET_BITS         = $clog2(N_SETS);// + (N_SETS == 1);
+    localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE);// + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2; // in bits
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
@@ -153,18 +153,43 @@ module l1_cache #(
         // flush counter logic
         if (clear_flush_count)
             next_flush_idx = 0;
-        else if (enable_flush_count_nowb)
-            next_flush_idx = flush_idx + BLOCK_SIZE;
-        else if (enable_flush_count)
+        else if (enable_flush_count_nowb && BLOCK_SIZE != 1)
+            next_flush_idx = flush_idx + BLOCK_SIZE; // kinda sus
+        else if (enable_flush_count || enable_flush_count_nowb)
             next_flush_idx = flush_idx + 1;
 
-        // correction for non-powers of 2 or 1
-        if (next_flush_idx.set_num == N_SETS)
-            next_flush_idx = {1'b1, (N_SET_BITS + N_FRAME_BITS + N_BLOCK_BITS)'('0)};
-        if (next_flush_idx.frame_num == ASSOC)
-            next_flush_idx = {({flush_idx.finish, flush_idx.set_num} + 1'b1), (N_FRAME_BITS + N_BLOCK_BITS)'('0)};
-        if (next_flush_idx.word_num == BLOCK_SIZE)
-            next_flush_idx = {({flush_idx.finish, flush_idx.set_num, flush_idx.frame_num} + 1'b1), N_BLOCK_BITS'('0)};
+        // correction for non-powers of 2
+        if (next_flush_idx.set_num == N_SETS) begin
+            next_flush_idx.finish = 1;
+            next_flush_idx.set_num = 0;
+            next_flush_idx.frame_num = 0;
+            next_flush_idx.word_num = 0;
+        end
+        else if (next_flush_idx.frame_num == ASSOC) begin
+            next_flush_idx.set_num = flush_idx.set_num + 1;
+            next_flush_idx.frame_num = 0;
+            next_flush_idx.word_num = 0;
+        end
+        // should be rewritten to be more concise
+        else if (next_flush_idx.word_num == BLOCK_SIZE) begin
+            if (ASSOC == 1) begin
+                next_flush_idx.set_num = flush_idx.set_num + 1;
+                next_flush_idx.frame_num = 0;
+                next_flush_idx.word_num = 0;
+            end
+            else begin
+                next_flush_idx.frame_num = flush_idx.frame_num + 1;
+                next_flush_idx.word_num = 0;
+            end
+        end
+
+        // FOR ASSOC == 1 FINISH FLAG
+        if (next_flush_idx.set_num == 0 && flush_idx.set_num == N_SETS - 1) begin
+            next_flush_idx.finish = 1;
+            next_flush_idx.set_num = 0;
+            next_flush_idx.frame_num = 0;
+            next_flush_idx.word_num = 0;
+        end
     end
 
     // decoded address conversion
@@ -283,12 +308,12 @@ module l1_cache #(
                 // cache miss on a clean block
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
-                	next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                	next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, (N_BLOCK_BITS + 2)'('0)};
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
-			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, (N_BLOCK_BITS + 2)'('0)};
             	end
             end 
             FETCH: begin
@@ -333,7 +358,7 @@ module l1_cache #(
                     sramMask.frames[ridx].dirty = 0;
                     sramWrite.frames[ridx].valid = 0;
                     sramMask.frames[ridx].valid = 0;
-                    next_read_addr = {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                    next_read_addr = {decoded_addr.tag_bits, decoded_addr.idx_bits, (N_BLOCK_BITS + 2)'('0)};
                 end
             end
             FLUSH_CACHE: begin
