@@ -27,7 +27,7 @@
 
 // parameters
 parameter CPUS = 2;
-parameter BLOCK_SIZE = 1;
+parameter BLOCK_SIZE = 2;
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
 localparam CPU_ID_LENGTH = $clog2(CPUS);
 
@@ -78,7 +78,7 @@ interface bus_ctrl_if;
     logic               [CPUS-1:0] cctrans;     // indicates that the requester is undergoing a miss
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
     logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
-    logic               [CPUS-1:0] ccsnoopdone;  // indicates that the responder has the data
+    logic               [CPUS-1:0] ccsnoopdone; // indicates that the responder has the data
     logic               [CPUS-1:0] ccIsPresent; // indicates that nonrequesters have the data valid
     logic               [CPUS-1:0] ccdirty;     // indicates that we have [I -> S, M -> S]
     // L1 coherence OUTPUTS
