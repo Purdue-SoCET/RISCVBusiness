@@ -26,8 +26,8 @@
 `define BUS_CTRL_IF_VH
 
 // parameters
-parameter CPUS = 8;
-parameter BLOCK_SIZE = 2;
+parameter CPUS = 2;
+parameter BLOCK_SIZE = 1;
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
 localparam CPU_ID_LENGTH = $clog2(CPUS);
 
@@ -60,7 +60,7 @@ typedef enum logic [1:0] {
 } l2_state_t;
 
 // taken from coherence_ctrl_if.vh
-typedef logic [31:0] word_t;
+typedef logic [31:0] bus_word_t;
 typedef logic [DATA_WIDTH-1:0] transfer_width_t;
 typedef logic [CPUS-1:0] cpus_bitvec_t;
 typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
@@ -73,7 +73,7 @@ interface bus_ctrl_if;
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
-    word_t              [CPUS-1:0] daddr;
+    bus_word_t          [CPUS-1:0] daddr;
     // L1 coherence INPUTS to bus 
     logic               [CPUS-1:0] cctrans;     // indicates that the requester is undergoing a miss
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
@@ -85,12 +85,12 @@ interface bus_ctrl_if;
     logic               [CPUS-1:0] ccwait;      // indicates a potential snoophit wait request
     logic               [CPUS-1:0] ccinv;       // indicates an invalidation request
     logic               [CPUS-1:0] ccexclusive; // indicates an exclusivity update
-    word_t              [CPUS-1:0] ccsnoopaddr; 
+    bus_word_t          [CPUS-1:0] ccsnoopaddr; 
     // L2 signals
     l2_state_t l2state; 
     transfer_width_t l2load, l2store; 
     logic l2WEN, l2REN; 
-    word_t l2addr; 
+    bus_word_t l2addr; 
 
     always_comb begin
         for(int i = 0; i < CPUS; i++) begin

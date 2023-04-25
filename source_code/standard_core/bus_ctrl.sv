@@ -39,9 +39,8 @@ module bus_ctrl #(
     // requester/supplier
     logic [CPU_ID_LENGTH-1:0] requester_cpu, nrequester_cpu;
     logic [CPU_ID_LENGTH-1:0] supplier_cpu, nsupplier_cpu;
-    logic [CPU_ID_LENGTH-1:0] last_requester_cpu, nlast_requester_cpu;
     // internal register next signals
-    word_t [CPUS-1:0] nccsnoopaddr, nl2_addr;
+    bus_word_t [CPUS-1:0] nccsnoopaddr, nl2_addr;
     logic [CPUS-1:0] nccwait, nccinv;
     transfer_width_t ndload, nl2_store;
     // stores whether we need to update requester to exclusive or if WRITEBACK is needed after transfer
@@ -57,18 +56,16 @@ module bus_ctrl #(
             ccif.dload <= '0;
             ccif.l2store <= '0;
             ccif.l2addr <= '0;
-            last_requester_cpu <= '0;
         end
         else begin
-            requester_cpu <= nrequester_cpu;            // requester
-            supplier_cpu <= nsupplier_cpu;              // supplier
-            state <= nstate;                            // current bus controller state
-            exclusiveUpdate <= nexclusiveUpdate;        // whether to update to exclusive
-            ccif.ccsnoopaddr <= nccsnoopaddr;           // snoopaddr to other l1 caches
-            ccif.dload[requester_cpu] <= ndload;        // bus to requester
-            ccif.l2store <= nl2_store;                  // l2 store value
-            ccif.l2addr <= nl2_addr;                    // l2 addr to store at
-            last_requester_cpu <= nlast_requester_cpu;  // last requester cpu
+            requester_cpu <= nrequester_cpu;        // requester
+            supplier_cpu <= nsupplier_cpu;          // supplier
+            state <= nstate;                        // current bus controller state
+            exclusiveUpdate <= nexclusiveUpdate;    // whether to update to exclusive
+            ccif.ccsnoopaddr <= nccsnoopaddr;       // snoopaddr to other l1 caches
+            ccif.dload[requester_cpu] <= ndload;    // bus to requester
+            ccif.l2store <= nl2_store;              // l2 store value
+            ccif.l2addr <= nl2_addr;                // l2 addr to store at
         end
     end
 
@@ -101,9 +98,6 @@ module bus_ctrl #(
             BUS_TO_CACHE:       nstate = IDLE;
             INVALIDATE:         nstate = IDLE;
         endcase
-        // interrupt
-        if (!ccif.dREN[0])
-            nstate == IDLE;
     end
     
     // output logic for bus FSM
@@ -125,14 +119,13 @@ module bus_ctrl #(
         casez(state)
             IDLE: begin // obtain the requester CPU id
                 if (|ccif.dWEN)
-                    nrequester_cpu = priorityEncode(ccif.dWEN, last_requester_cpu);
+                    nrequester_cpu = priorityEncode(ccif.dWEN);
                 else if (|(ccif.dREN & ccif.ccwrite))                  
-                    nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite), last_requester_cpu);
+                    nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite));
                 else if (|ccif.dREN)                  
-                    nrequester_cpu = priorityEncode(ccif.dREN, last_requester_cpu);
+                    nrequester_cpu = priorityEncode(ccif.dREN);
                 else if (|ccif.ccwrite)
-                    nrequester_cpu = priorityEncode(ccif.ccwrite, last_requester_cpu);
-                nlast_requester_cpu = nrequester_cpu;
+                    nrequester_cpu = priorityEncode(ccif.ccwrite);
             end
             GRANT_R, GRANT_RX, GRANT_INV: begin // set the stimulus for snooping
                 for (int i = 0; i < CPUS; i++) begin
@@ -148,14 +141,14 @@ module bus_ctrl #(
             SNOOP_R: begin  // determine what to do on busRD
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
-                nsupplier_cpu = priorityEncode(ccif.ccsnoophit, 0);
+                nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
             end
             SNOOP_RX: begin // determine what to do on busRDX
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
                 ccif.ccinv = nonRequesterEnable(requester_cpu);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
-                nsupplier_cpu = priorityEncode(ccif.ccsnoophit, 0);
+                nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
             end
             SNOOP_INV: begin // snoop and invalidate non_requesters
@@ -208,10 +201,9 @@ module bus_ctrl #(
     // function to do priority encoding to determine the requester or supplier
     function logic [CPU_ID_LENGTH-1:0] priorityEncode;
         input logic [CPUS-1:0] to_encode;
-        input logic [CPU_ID_LENGTH-1:0] start_idx;
-        for (int i = start_idx; i < CPUS + start_idx; i++) begin
-            if (to_encode[i >> CPU_ID_LENGTH])
-                priorityEncode = i >> CPU_ID_LENGTH;
+        for (int i = 0; i < CPUS; i++) begin
+            if (to_encode[i])
+                priorityEncode = i;
         end
     endfunction
 endmodule
