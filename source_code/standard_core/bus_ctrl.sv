@@ -190,7 +190,8 @@ module bus_ctrl #(
                     
                 if (block_count == 0) begin
                     nblock_count = ccif.l2state == L2_ACCESS;
-                    nl2_addr = ccif.l2addr + 4;
+                    if (ccif.l2addr[2] == 0)
+                        nl2_addr = ccif.l2addr + 4;
                     if (ccif.l2state == L2_ACCESS)
                         ndload = ccif.l2load;
                 end
@@ -239,29 +240,34 @@ module bus_ctrl #(
                     block_count_done = 1;
                 end
             end
-            WRITEBACK_MS: begin // writeback to 
-                ccif.l2WEN = 1;
+            WRITEBACK_MS: begin // writeback using supplier while also doing cache to cache transfer
+                ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
-                nblock_count = block_count;
+
+                ccif.l2WEN = 1;
                 if (block_count == 0) begin
-                    nblock_count = (ccif.l2state == L2_ACCESS);
-                    ccif.dwait[requester_cpu] = (ccif.l2state == L2_ACCESS);
-                    nl2_addr = ccif.l2addr + 4 * (ccif.l2state == L2_ACCESS);
+                    nblock_count = 1;
+                    ndload = ccif.dload[requester_cpu] >> 32;
+                    nl2_addr = ccif.l2addr + 4;
+                    nl2_store = ccif.l2store >> 32;
                 end
                 else begin
-                    block_count_done = (ccif.l2state == L2_ACCESS);
-                    ccif.dwait[requester_cpu] = (ccif.l2state == L2_ACCESS);
+                    block_count_done = 1;
                 end
             end
             WRITEBACK: begin
                 ccif.l2WEN = 1;
                 nblock_count = block_count;
+                // assume that ahb will eventually complete each transaction
                 if (block_count == 0) begin
-                    nblock_count = hit_delay;
-                    nl2_addr = ccif.l2addr + 4 * hit_delay;
+                    nblock_count = 1;
+                    nl2_addr = ccif.l2addr + 4;
+                    nl2_store = ccif.l2store >> 32;
+                    // nblock_count = (ccif.l2state == L2_ACCESS);
+                    // nl2_addr = ccif.l2addr + 4 * (ccif.l2state == L2_ACCESS);
                 end
                 else begin
-                    block_count_done = hit_delay;
+                    block_count_done = 1;
                 end
             end
             INVALIDATE:
