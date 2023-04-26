@@ -29,7 +29,8 @@ module bus_ctrl #(
     parameter CPUS = 4
 )(  
     input logic CLK, nRST, 
-    bus_ctrl_if.cc ccif
+    bus_ctrl_if.cc ccif,
+    input logic abort_bus
 );  
     // localparams/imports
     localparam CLEAR_LENGTH = $clog2(BLOCK_SIZE) + 2;
@@ -48,6 +49,7 @@ module bus_ctrl #(
     logic exclusiveUpdate, nexclusiveUpdate;
     logic [$clog2(BLOCK_CYCLES):0] block_count, nblock_count;
     logic block_count_done;
+    logic hit_delay;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
@@ -60,6 +62,7 @@ module bus_ctrl #(
             ccif.l2store <= '0;
             ccif.l2addr <= '0;
             block_count <= 0;
+            hit_delay <= '0;
         end
         else begin
             requester_cpu <= nrequester_cpu;        // requester
@@ -67,10 +70,11 @@ module bus_ctrl #(
             state <= nstate;                        // current bus controller state
             exclusiveUpdate <= nexclusiveUpdate;    // whether to update to exclusive
             ccif.ccsnoopaddr <= nccsnoopaddr;       // snoopaddr to other l1 caches
-            ccif.dload[requester_cpu] <= ndload >> 32 * block_count;    // bus to requester
-            ccif.l2store <= nl2_store >> 32 * block_count;              // l2 store value
+            ccif.dload[requester_cpu] <= ndload;    // bus to requester
+            ccif.l2store <= nl2_store;              // l2 store value
             ccif.l2addr <= nl2_addr;                // l2 addr to store at
             block_count <= nblock_count;            // temp to deal with current cache block setup
+            hit_delay <= ccif.l2state == L2_ACCESS;
         end
     end
 
@@ -109,6 +113,9 @@ module bus_ctrl #(
             BUS_TO_CACHE:       nstate = block_count_done ? IDLE : state;
             INVALIDATE:         nstate = IDLE;
         endcase
+        // handle exception
+        if (abort_bus)
+            nstate = IDLE;
     end
     
     // output logic for bus FSM
@@ -182,43 +189,51 @@ module bus_ctrl #(
                 ccif.l2REN = 1; 
                     
                 if (block_count == 0) begin
-                    nblock_count = (ccif.l2state == L2_ACCESS);
-                    ndload = ccif.l2load;
+                    nblock_count = ccif.l2state == L2_ACCESS;
+                    nl2_addr = ccif.l2addr + 4;
+                    if (ccif.l2state == L2_ACCESS)
+                        ndload = ccif.l2load;
                 end
                 else begin
-                    block_count_done = (ccif.l2state == L2_ACCESS);
+                    block_count_done = ccif.l2state == L2_ACCESS;
                     ndload[63:32] = ccif.l2load;
                 end
             end
             TRANSFER_R: begin // move data from cache to bus
-                ndload = ccif.dstore[supplier_cpu];
+                
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 
-                // if (block_count == 0) begin
-                //     nblock_count == 1;
-                //     nl2_store = ccif.dstore[supplier_cpu]; 
-                //     nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
-                // end
-                // else begin
-                //     block_count_done = 1;
-                // end
+                if (block_count == 0) begin
+                    nblock_count = 1;
+                    nl2_store = ccif.dstore[supplier_cpu];
+                    ndload = ccif.dstore[supplier_cpu];
+                end
+                else begin
+                    block_count_done = 1;
+                    nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
+                    nl2_store[63:32] = ccif.dstore[supplier_cpu];
+                    ndload[63:32] = ccif.dstore[supplier_cpu]; 
+                end
             end
             TRANSFER_RX: begin // move data from cache to bus
-                ndload = ccif.dstore[supplier_cpu];
+                
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
 
-                // if (block_count == 0) begin
-                //     nblock_count == 1;
-                // end
-                // else begin
-                //     block_count_done = 1;
-                // end
+                if (block_count == 0) begin
+                    nblock_count = 1;
+                    ndload = ccif.dstore[supplier_cpu];
+                end
+                else begin
+                    block_count_done = 1;
+                    ndload[63:32] = ccif.dstore[supplier_cpu];
+                end
             end
             BUS_TO_CACHE: begin // move data from bus to cache (upwards or downwards); alert requester
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
                 if (block_count == 0) begin
                     nblock_count = 1;
+                    ndload = ccif.dload[requester_cpu] >> 32;
                 end
                 else begin
                     block_count_done = 1;
@@ -226,23 +241,35 @@ module bus_ctrl #(
             end
             WRITEBACK_MS: begin // writeback to 
                 ccif.l2WEN = 1;
-                ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
+                nblock_count = block_count;
+                if (block_count == 0) begin
+                    nblock_count = (ccif.l2state == L2_ACCESS);
+                    ccif.dwait[requester_cpu] = (ccif.l2state == L2_ACCESS);
+                    nl2_addr = ccif.l2addr + 4 * (ccif.l2state == L2_ACCESS);
+                end
+                else begin
+                    block_count_done = (ccif.l2state == L2_ACCESS);
+                    ccif.dwait[requester_cpu] = (ccif.l2state == L2_ACCESS);
+                end
             end
             WRITEBACK: begin
                 ccif.l2WEN = 1;
                 nblock_count = block_count;
                 if (block_count == 0) begin
-                    nblock_count = (ccif.l2state == L2_ACCESS);
-                    nl2_addr = ccif.l2addr + 4;
+                    nblock_count = hit_delay;
+                    nl2_addr = ccif.l2addr + 4 * hit_delay;
                 end
                 else begin
-                    block_count_done = (ccif.l2state == L2_ACCESS);
+                    block_count_done = hit_delay;
                 end
             end
             INVALIDATE:
                 ccif.dwait[requester_cpu] = 0;
         endcase
+
+        if (block_count_done)
+            nblock_count = 0;
     end
 
     // function to obtain all non requesters
