@@ -33,7 +33,8 @@ module separate_caches (
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
-    cache_control_if.caches cc_if
+    cache_control_if.caches cc_if,
+    output logic abort_bus
 );
     generate
         /* verilator lint_off width */
@@ -115,6 +116,7 @@ module separate_caches (
             icache (
                 .CLK(CLK),
                 .nRST(nRST),
+                .abort_bus(abort_bus),
                 .mem_gen_bus_if(icache_mem_gen_bus_if),
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
                 .flush(cc_if.icache_flush),

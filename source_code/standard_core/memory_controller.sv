@@ -33,11 +33,12 @@ module memory_controller (
     nRST,
     generic_bus_if.generic_bus d_gen_bus_if,
     generic_bus_if.generic_bus i_gen_bus_if,
-    generic_bus_if.cpu out_gen_bus_if
+    generic_bus_if.cpu out_gen_bus_if,
+    input logic abort_bus
 );
     bus_ctrl_if internal_bus_if();
-    bus_ctrl #(.BLOCK_SIZE(1), .CPUS(2))
-        SRAM(CLK, nRST, internal_bus_if);
+    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(2))
+        BUS_CTRL(CLK, nRST, internal_bus_if, abort_bus);
 
     // assignments to bus controller
     assign internal_bus_if.dREN = {d_gen_bus_if.ren, i_gen_bus_if.ren};

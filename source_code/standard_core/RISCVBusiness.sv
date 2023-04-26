@@ -161,7 +161,7 @@ module RISCVBusiness (
     .cc_if(cc_if)
   );
 */
-
+    logic abort_bus;
     separate_caches sep_caches (
         .CLK(CLK),
         .nRST(nRST),
@@ -169,7 +169,8 @@ module RISCVBusiness (
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
-        .cc_if(cc_if)
+        .cc_if(cc_if),
+        .abort_bus(abort_bus)
     );
 
     memory_controller mc (
@@ -177,7 +178,8 @@ module RISCVBusiness (
         .nRST(nRST),
         .d_gen_bus_if(dcache_mc_if),
         .i_gen_bus_if(icache_mc_if),
-        .out_gen_bus_if(pipeline_trans_if)
+        .out_gen_bus_if(pipeline_trans_if),
+        .abort_bus(abort_bus)
     );
 
     /*

@@ -37,7 +37,7 @@ module l1_cache #(
 (
     input logic CLK, nRST,
     input logic clear, flush,
-    output logic clear_done, flush_done,
+    output logic clear_done, flush_done, abort_bus,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if
 );
@@ -127,6 +127,7 @@ module l1_cache #(
             read_addr <= 0;
             decoded_req_addr <= 0;
             flush_req <= 0;
+            abort_bus <= 0;
         end
         else begin
             state <= next_state;                        // cache state machine
@@ -136,6 +137,7 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
+            abort_bus <= !proc_gen_bus_if.ren;
         end
     end
     
@@ -153,8 +155,8 @@ module l1_cache #(
         // flush counter logic
         if (clear_flush_count)
             next_flush_idx = 0;
-        else if (enable_flush_count_nowb && BLOCK_SIZE != 1)
-            next_flush_idx = flush_idx + BLOCK_SIZE; // kinda sus
+        else if (enable_flush_count_nowb && BLOCK_SIZE != 1) // kinda sus
+            next_flush_idx = flush_idx + BLOCK_SIZE; 
         else if (enable_flush_count || enable_flush_count_nowb)
             next_flush_idx = flush_idx + 1;
 
