@@ -37,7 +37,8 @@ module priv_1_12_mode (
 
     priv_level_t curr_priv_level, next_priv_level;
     logic curr_priv_dmode, next_priv_dmode;
-
+    
+    //EXT_DEBUG_SUP
     logic ebreakm_debug_mode, ebreaku_debug_mode;   // ebreak in M/U will cause hart to enter Debug-Mode instead of M-Mode
     logic debug_intr;                               // interrupt caused by debug intr
     assign ebreakm_debug_mode = (prv_intern_if.next_mcause.cause == BREAKPOINT && 
@@ -83,7 +84,7 @@ module priv_1_12_mode (
             end
 
         end else if (prv_intern_if.dret) begin
-            //next_priv_level = prv_intern_if.curr_mstatus.mpp;
+            // when resume, clear the debug mode flag and return to the priv mode user specified
             next_priv_level = prv_intern_if.curr_dcsr.prv;
             next_priv_dmode = 1'b0;
         end

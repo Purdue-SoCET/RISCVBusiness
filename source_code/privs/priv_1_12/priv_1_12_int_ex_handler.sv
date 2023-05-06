@@ -63,7 +63,7 @@ module priv_1_12_int_ex_handler (
             int_src = TIMER_INT_S;
         end
         else if (prv_intern_if.debug_int_m)
-            int_src = DEBUG_INT_M; //debug*
+            int_src = DEBUG_INT_M; //EXT_DEBUG_SUP
         else begin
             interrupt = 1'b0;
         end
@@ -72,7 +72,7 @@ module priv_1_12_int_ex_handler (
     assign clear_interrupt = (prv_intern_if.clear_timer_int_m | prv_intern_if.clear_soft_int_m
                              | prv_intern_if.clear_ext_int_m  | prv_intern_if.clear_timer_int_s
                              | prv_intern_if.clear_soft_int_s | prv_intern_if.clear_ext_int_s
-                             | prv_intern_if.clear_debug_int_m); // debug*
+                             | prv_intern_if.clear_debug_int_m); //EXT_DEBUG_SUP
 
     // Determine whether an exception occured
     always_comb begin
@@ -80,7 +80,7 @@ module priv_1_12_int_ex_handler (
         ex_src = INSN_MAL;
 
         if (prv_intern_if.breakpoint)
-            ex_src = BREAKPOINT;
+            ex_src = BREAKPOINT; //EXT_DEBUG_SUP, already exist but relevant to debug module
         else if (prv_intern_if.fault_insn_page)
             ex_src = INSN_PAGE;
         else if (prv_intern_if.fault_insn_access)
@@ -122,10 +122,11 @@ module priv_1_12_int_ex_handler (
                                 ((prv_intern_if.curr_mie.mtie & prv_intern_if.curr_mip.mtip)
                                     | (prv_intern_if.curr_mie.msie & prv_intern_if.curr_mip.msip)
                                     | (prv_intern_if.curr_mie.meie & prv_intern_if.curr_mip.meip)
-                                    | (prv_intern_if.curr_mie.mdie & prv_intern_if.curr_mip.mdip))); // debug*
+                                    | (prv_intern_if.curr_mie.mdie & prv_intern_if.curr_mip.mdip))); //EXT_DEBUG_SUP
 
     // Register updates on Interrupts/Exceptions
     // don't update mcause when in debug mode
+    // EXT_DEBUG_SUP
     assign prv_intern_if.inject_mcause = (exception | interrupt_fired) & ~(prv_intern_if.curr_priv_dmode);
     
     assign prv_intern_if.next_mcause.interrupt = ~exception;
@@ -153,11 +154,12 @@ module priv_1_12_int_ex_handler (
         if (prv_intern_if.timer_int_s) prv_intern_if.next_mip.stip = 1'b1;
         else if (prv_intern_if.clear_timer_int_s) prv_intern_if.next_mip.stip = 1'b0;
         
-        // debug*
+        //EXT_DEBUG_SUP
         if (prv_intern_if.debug_int_m) prv_intern_if.next_mip.mdip = 1'b1;
         else if (prv_intern_if.clear_debug_int_m) prv_intern_if.next_mip.mdip = 1'b0;
     end
 
+    //EXT_DEBUG_SUP
     always_comb begin
         prv_intern_if.inject_mstatus = prv_intern_if.intr | prv_intern_if.mret | prv_intern_if.dret;
         if(prv_intern_if.curr_priv_dmode == 1'b1 && ~prv_intern_if.dret) begin
@@ -166,6 +168,7 @@ module priv_1_12_int_ex_handler (
         end
     end
 
+    //EXT_DEBUG_SUP
     always_comb begin
         prv_intern_if.next_mstatus = prv_intern_if.curr_mstatus;
         // interrupt has truly been registered and it is time to go to the vector table
@@ -173,7 +176,7 @@ module priv_1_12_int_ex_handler (
             // when a trap is taken mpie is set to the current mie
             prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mie;
             prv_intern_if.next_mstatus.mie = 1'b0;
-        end else if (prv_intern_if.mret || prv_intern_if.dret) begin
+        end else if (prv_intern_if.mret || prv_intern_if.dret) begin 
             prv_intern_if.next_mstatus.mpie = 1'b0; // leaving the vector table
             prv_intern_if.next_mstatus.mie = prv_intern_if.curr_mstatus.mpie;
         end
@@ -189,12 +192,11 @@ module priv_1_12_int_ex_handler (
         end
     end
     
-    assign prv_intern_if.inject_mepc = (exception | interrupt_fired) & ~(prv_intern_if.curr_priv_dmode);
+    assign prv_intern_if.inject_mepc = (exception | interrupt_fired) & ~(prv_intern_if.curr_priv_dmode); //EXT_DEBUG_SUP
     assign prv_intern_if.next_mepc = prv_intern_if.epc;
 
-    // debug*
-    // only update dpc UPON entry to the debug mode
-    // Implement it with real Debug Mode
+    // //EXT_DEBUG_SUP
+    // only update dpc upon entry to the debug mode
     assign prv_intern_if.inject_dpc = (exception | interrupt_fired) & ~(prv_intern_if.curr_priv_dmode);
     assign prv_intern_if.next_dpc = prv_intern_if.epc;
     
@@ -206,7 +208,7 @@ module priv_1_12_int_ex_handler (
                                         | prv_intern_if.mal_insn
                                         | prv_intern_if.breakpoint
                                         | prv_intern_if.ex_rmgmt)
-                                        & prv_intern_if.pipe_clear & ~(prv_intern_if.curr_priv_dmode);
+                                        & prv_intern_if.pipe_clear & ~(prv_intern_if.curr_priv_dmode); //EXT_DEBUG_SUP
     assign prv_intern_if.next_mtval = prv_intern_if.curr_mtval;
 
 endmodule

@@ -35,7 +35,7 @@ module priv_1_12_pipe_control (
     int_code_t debug_handler_offset;
     assign debug_handler_offset = DEBUG_INT_M;
 
-    assign prv_intern_if.insert_pc = prv_intern_if.mret | prv_intern_if.dret | prv_intern_if.sret | prv_intern_if.intr;
+    assign prv_intern_if.insert_pc = prv_intern_if.mret | prv_intern_if.dret | prv_intern_if.sret | prv_intern_if.intr; //EXT_DEBUG_SUP
 
     always_comb begin
         prv_intern_if.priv_pc = '0;
@@ -45,8 +45,10 @@ module priv_1_12_pipe_control (
                 prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2)
                                             + (prv_intern_if.next_mcause.cause << 2);
             end else begin
+                //EXT_DEBUG_SUP
                 if(prv_intern_if.curr_priv_dmode) begin
                     // exception in debug mode should redirect the hart to debug handler
+                    // TODO:
                     // the error field in abstract status should also be updated
                     prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2)
                                             + (debug_handler_offset << 2);
@@ -56,6 +58,7 @@ module priv_1_12_pipe_control (
                 end
             end
         end else if (prv_intern_if.mret) begin
+            //EXT_DEBUG_SUP
             prv_intern_if.priv_pc = prv_intern_if.curr_mepc; // Leaving ISR
         end else if (prv_intern_if.dret) begin
             prv_intern_if.priv_pc = prv_intern_if.curr_dpc; // Leaving ISR

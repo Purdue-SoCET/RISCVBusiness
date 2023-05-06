@@ -69,7 +69,7 @@ module priv_1_12_debug (
     // for for dcsr WARL check
     assign dcsr_mask = dcsr_t'(priv_ext_if.value_in & {4'b0, 12'b0, 1'b1, 1'b0, 2'b11, 3'b0, 3'b000, 1'b0, 1'b1, 1'b0, 3'b111});
             //                                         31:28          15    14  13:12  11:9    8:6     5     4     3     2:0
-            //                                         xdebugver    ebrkm      ebrks/u stpie  cause        mrpven nmip    prv
+            //                                         xdebugver    ebrkm      ebrks/u stpie  cause        mrpven nmip   step prv
     //                                                                        stopc/t 
 
     assign epc_4 = prv_intern_if.next_dpc + 4'b0100;
@@ -158,8 +158,7 @@ module priv_1_12_debug (
         // dcsr prv
         if (prv_intern_if.intr && prv_intern_if.curr_priv_dmode != 1'b1) begin
             // this may capture the curr priv level when not debug mode, but it does not matter
-            // when debug mode is entered, .intr will be high, curr_priv_dmode will be low
-            
+            // before debug mode is entered, .intr will be high, curr_priv_dmode will be low
             nxt_dcsr.prv = prv_intern_if.curr_privilege_level;
         end
     end
