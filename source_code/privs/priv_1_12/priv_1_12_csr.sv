@@ -467,7 +467,7 @@ module priv_1_12_csr #(
             prv_intern_if.old_csr_val = priv_ext_pmp_if.value_out;
           end
           else if (priv_ext_debug_if.ack) begin //EXT_DEBUG_SUP
-            prv_intern_if.old_csr_val = priv_ext_pmp_if.value_out;
+            prv_intern_if.old_csr_val = priv_ext_debug_if.value_out;
           end
           `ifdef RV32F_SUPPORTED
             else if (priv_ext_f_if.ack) begin
