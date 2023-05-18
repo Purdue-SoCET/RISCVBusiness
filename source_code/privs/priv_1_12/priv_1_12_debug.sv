@@ -42,7 +42,7 @@ module priv_1_12_debug (
             // Debug Control and status register
             dcsr.xdebugver <= 4'd4;
                 //TODO; check ebreakm/s/u
-            dcsr.ebreakm <= 1;
+            dcsr.ebreakm <= 0;
             dcsr.ebreaks <= 0;
             dcsr.ebreaku <= 0;
             dcsr.stepie <= 0;   // WARL
