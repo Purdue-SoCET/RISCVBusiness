@@ -86,6 +86,7 @@ module ahb (
 
     assign out_gen_bus_if.busy  = state == IDLE || ~((ahb_m.HREADY && (state == DATA)));
     assign out_gen_bus_if.rdata = ahb_m.HRDATA;
+    assign out_gen_bus_if.error = ahb_m.HRESP;
     // Unused signals
     assign ahb_m.HMASTLOCK = 1'b0;
     assign ahb_m.HBURST = 3'b000;

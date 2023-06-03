@@ -40,5 +40,6 @@ module pass_through_cache (
 
     assign proc_gen_bus_if.rdata  = mem_gen_bus_if.rdata;
     assign proc_gen_bus_if.busy   = mem_gen_bus_if.busy;
+    assign proc_gen_bus_if.error  = mem_gen_bus_if.error;
 
 endmodule

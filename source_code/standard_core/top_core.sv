@@ -13,6 +13,7 @@ module top_core #(
     // generic bus if case
 `ifdef BUS_INTERFACE_GENERIC_BUS
     input busy,
+    input error,
     input [31:0] rdata,
     output ren,
     wen,
@@ -74,6 +75,7 @@ module top_core #(
     generic_bus_if gen_bus_if ();
     assign gen_bus_if.busy = busy;
     assign gen_bus_if.rdata = rdata;
+    assign gen_bus_if.error = error;
     assign ren = gen_bus_if.ren;
     assign wen = gen_bus_if.wen;
     assign byte_en = gen_bus_if.byte_en;

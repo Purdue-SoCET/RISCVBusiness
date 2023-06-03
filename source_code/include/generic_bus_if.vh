@@ -33,15 +33,16 @@ interface generic_bus_if ();
   word_t rdata;
   logic ren,wen;
   logic busy;
+  logic error;
   logic [3:0] byte_en;
 
   modport generic_bus (
     input addr, ren, wen, wdata, byte_en,
-    output rdata, busy
+    output rdata, busy, error
   );
 
   modport cpu (
-    input rdata, busy,
+    input rdata, busy, error,
     output addr, ren, wen, wdata, byte_en
   );
 

@@ -143,7 +143,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = 0;
                 out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
                 d_gen_bus_if.busy      = 1'b1;
+                d_gen_bus_if.error     = 1'b0;
                 i_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.error     = 1'b0;
             end
 
             //-- INSTRUCTION REQUEST --//
@@ -154,7 +156,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = i_gen_bus_if.addr;
                 out_gen_bus_if.byte_en = i_gen_bus_if.byte_en;
                 d_gen_bus_if.busy      = 1'b1;
+                d_gen_bus_if.error     = 1'b0;
                 i_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.error     = 1'b0;
             end
             INSTR_DATA_REQ: begin
                 out_gen_bus_if.wen     = d_gen_bus_if.wen;
@@ -162,7 +166,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = d_gen_bus_if.addr;
                 out_gen_bus_if.byte_en = i_gen_bus_if.byte_en;
                 i_gen_bus_if.busy      = out_gen_bus_if.busy;
+                i_gen_bus_if.error     = out_gen_bus_if.error;
                 d_gen_bus_if.busy      = 1'b1;
+                d_gen_bus_if.error     = 1'b0;
             end
             INSTR_WAIT: begin
                 out_gen_bus_if.wen     = 0;
@@ -170,7 +176,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = 0;
                 out_gen_bus_if.byte_en = i_gen_bus_if.byte_en;
                 d_gen_bus_if.busy      = 1'b1;
+                d_gen_bus_if.error     = 1'b0;
                 i_gen_bus_if.busy      = out_gen_bus_if.busy;
+                i_gen_bus_if.error     = out_gen_bus_if.error;
             end
 
             //-- DATA REQUEST --//
@@ -180,7 +188,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = d_gen_bus_if.addr;
                 out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
                 d_gen_bus_if.busy      = 1'b1;
+                d_gen_bus_if.error     = 1'b0;
                 i_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.error     = 1'b0;
             end
             DATA_INSTR_REQ: begin
                 out_gen_bus_if.wen     = i_gen_bus_if.wen;
@@ -188,7 +198,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = i_gen_bus_if.addr;
                 out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
                 d_gen_bus_if.busy      = out_gen_bus_if.busy;
+                d_gen_bus_if.error     = out_gen_bus_if.error;
                 i_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.error     = 1'b0;
             end
             DATA_WAIT: begin
                 //out_gen_bus_if.wen     = d_gen_bus_if.wen;
@@ -199,7 +211,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = 0;
                 out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
                 i_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.error     = 1'b0;
                 d_gen_bus_if.busy      = out_gen_bus_if.busy;
+                d_gen_bus_if.error     = out_gen_bus_if.error;
             end
 
             CANCEL_REQ_WAIT: begin
@@ -208,7 +222,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = 0;
                 out_gen_bus_if.byte_en = 0;
                 i_gen_bus_if.busy      = 1;
+                i_gen_bus_if.error     = 0;
                 d_gen_bus_if.busy      = 1;
+                d_gen_bus_if.error     = 0;
             end
 
             default: begin
@@ -217,7 +233,9 @@ module memory_controller (
                 out_gen_bus_if.addr    = 0;
                 out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
                 d_gen_bus_if.busy      = 1'b1;
+                d_gen_bus_if.error     = 1'b0;
                 i_gen_bus_if.busy      = 1'b1;
+                i_gen_bus_if.error     = 1'b0;
             end
         endcase
     end

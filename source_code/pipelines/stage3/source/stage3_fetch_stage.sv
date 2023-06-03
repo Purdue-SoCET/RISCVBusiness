@@ -99,7 +99,7 @@ module stage3_fetch_stage (
     word_t badaddr;
 
     assign mal_addr = (igen_bus_if.addr[1:0] != 2'b00);
-    assign fault_insn = prv_pipe_if.prot_fault_i; // TODO: Set this up to fault on bus error
+    assign fault_insn = prv_pipe_if.prot_fault_i || (igen_bus_if.ren && igen_bus_if.error); // TODO: Set this up to fault on bus error
     assign mal_insn = mal_addr;
     assign badaddr = igen_bus_if.addr;
     assign hazard_if.pc_f = pc;

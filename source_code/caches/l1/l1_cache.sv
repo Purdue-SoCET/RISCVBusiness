@@ -112,6 +112,9 @@ module l1_cache #(
     logic flush_req, nflush_req;
     logic idle_done;
 
+    // error handling
+    assign proc_gen_bus_if.error = mem_gen_bus_if.error;
+
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
@@ -386,13 +389,13 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (decoded_addr != decoded_req_addr)
+                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr)
                     next_state = HIT; 
                 else if (word_count_done)
                     next_state = HIT;
 	        end
 	        WB: begin
-                if (decoded_addr != decoded_req_addr)
+                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr)
                     next_state = HIT; 
                 else if (word_count_done)
                     next_state = FETCH;
