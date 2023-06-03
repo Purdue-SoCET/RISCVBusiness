@@ -99,7 +99,7 @@ module stage3_fetch_stage (
     word_t badaddr;
 
     assign mal_addr = (igen_bus_if.addr[1:0] != 2'b00);
-    assign fault_insn = 1'b0;
+    assign fault_insn = prv_pipe_if.prot_fault_i; // TODO: Set this up to fault on bus error
     assign mal_insn = mal_addr;
     assign badaddr = igen_bus_if.addr;
     assign hazard_if.pc_f = pc;
@@ -113,6 +113,13 @@ module stage3_fetch_stage (
         if (!nRST) fetch_ex_if.fetch_ex_reg <= '0;
         else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_ex_if.fetch_ex_reg <= '0;
         else if (!hazard_if.if_ex_stall) begin
+            if(mal_insn || fault_insn) begin
+                // Squash to NOP if exception
+                // Still valid for exception handling
+                fetch_ex_if.fetch_ex_reg.instr <= '0;
+            end else begin
+                fetch_ex_if.fetch_ex_reg.instr      <= instr_to_ex;
+            end
             fetch_ex_if.fetch_ex_reg.valid      <= 1'b1;
             fetch_ex_if.fetch_ex_reg.token      <= 1'b1;
             fetch_ex_if.fetch_ex_reg.mal_insn   <= mal_insn;
@@ -120,7 +127,6 @@ module stage3_fetch_stage (
             fetch_ex_if.fetch_ex_reg.badaddr    <= badaddr;
             fetch_ex_if.fetch_ex_reg.pc         <= pc;
             fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
-            fetch_ex_if.fetch_ex_reg.instr      <= instr_to_ex;
             fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
         end
     end

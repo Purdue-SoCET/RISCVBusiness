@@ -12,11 +12,16 @@ volatile uint32_t *pma_ram_addr = (uint32_t*) PMA_RAM_ADDR;
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     // In a real program, a fault should be handled differently
     uint32_t mepc_value;
+    uint32_t mtval_value;
     asm volatile("csrr %0, mepc" : "=r"(mepc_value));
+    asm volatile("csrr %0, mtval" : "=r"(mtval_value));
     mepc_value = (uint32_t)done; // return to the spot after we did the bad jump
     asm volatile("csrw mepc, %0" : : "r"(mepc_value));
 
     print("PMA Checker failed (expected)\n");
+    print("MTVAL: ");
+    put_uint32_hex(mtval_value);
+    print("\n");
     flag = 1;
 }
 

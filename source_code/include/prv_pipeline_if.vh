@@ -77,6 +77,7 @@ interface prv_pipeline_if();
   );
 
   modport fetch (
+    input prot_fault_i,
     output iren, iaddr, i_acc_width
   );
 
