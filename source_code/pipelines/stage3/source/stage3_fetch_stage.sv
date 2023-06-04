@@ -85,7 +85,7 @@ module stage3_fetch_stage (
                  : pc4or2))));
 
     //Instruction Access logic
-    assign hazard_if.i_mem_busy = igen_bus_if.busy;
+    assign hazard_if.i_mem_busy = igen_bus_if.busy && !fault_insn;
     assign igen_bus_if.addr = rv32cif.rv32c_ena ? rv32cif.imem_pc : pc;
     assign igen_bus_if.ren = hazard_if.iren && !rv32cif.done_earlier && !hazard_if.suppress_iren;
     assign igen_bus_if.wen = 1'b0;
