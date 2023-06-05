@@ -264,7 +264,7 @@ module l1_cache #(
 		            next_last_used[decoded_addr.idx_bits] = hit_idx;
                 end
                 // passthrough
-                else if(pass_through) begin
+                else if(pass_through && (proc_gen_bus_if.wen || proc_gen_bus_if.ren)) begin
                     mem_gen_bus_if.wen      = proc_gen_bus_if.wen;
                     mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
                     mem_gen_bus_if.addr     = proc_gen_bus_if.addr;
@@ -389,13 +389,13 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr)
+                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
                     next_state = HIT; 
                 else if (word_count_done)
                     next_state = HIT;
 	        end
 	        WB: begin
-                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr)
+                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
                     next_state = HIT; 
                 else if (word_count_done)
                     next_state = FETCH;
