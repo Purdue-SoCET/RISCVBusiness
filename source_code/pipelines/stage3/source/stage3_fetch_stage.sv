@@ -49,6 +49,12 @@ module stage3_fetch_stage (
     parameter logic [31:0] RESET_PC = 32'h80000000;
 
     word_t pc, pc4or2, npc, instr;
+    
+    //Send exceptions through pipeline
+    logic mal_addr;
+    logic fault_insn;
+    logic mal_insn;
+    word_t badaddr;
 
     //PC logic
 
@@ -92,11 +98,6 @@ module stage3_fetch_stage (
     assign igen_bus_if.byte_en = 4'b1111;
     assign igen_bus_if.wdata = '0;
 
-    //Send exceptions through pipeline
-    logic mal_addr;
-    logic fault_insn;
-    logic mal_insn;
-    word_t badaddr;
 
     assign mal_addr = (igen_bus_if.addr[1:0] != 2'b00);
     assign fault_insn = prv_pipe_if.prot_fault_i || (igen_bus_if.ren && igen_bus_if.error); // TODO: Set this up to fault on bus error
