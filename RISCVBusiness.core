@@ -71,6 +71,7 @@ targets:
         filesets:
             - rtl
             - buses
+            - trackers
         toplevel: RISCVBusiness
 
     sim:
@@ -78,7 +79,7 @@ targets:
         description: Simulate w/TB
         default_tool: verilator
         filesets_append:
-            - trackers
+            #- trackers
             - "tool_verilator? (verilator_tb)"
             - "!tool_verilator? (tb)"
         toplevel:

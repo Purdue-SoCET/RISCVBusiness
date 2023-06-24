@@ -180,7 +180,7 @@ def compile_asm(filepath: Type[pathlib.Path], outpath: Type[pathlib.Path],\
     # notes: need to parameratize the .T, .I, abi, and xlen flags
     # also probably pass the filepath too
     compile_cmd_arr = ["riscv64-unknown-elf-gcc", 
-                "-march=" + config.xlen, "-mabi=" + config.abi,
+                "-march=" + config.xlen + "_zicsr_zifencei", "-mabi=" + config.abi,
                 "-static", "-mcmodel=medany", "-fvisibility=hidden",
                 "-nostdlib", "-nostartfiles",
                 "-T"+str(config.link_file),
