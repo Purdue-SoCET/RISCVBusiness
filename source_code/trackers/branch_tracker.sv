@@ -76,6 +76,7 @@ module branch_tracker (
     final begin : OUTPUT_STATS
         integer stats_fptr;
         stats_fptr = $fopen(`STATS_FILE_NAME, "a");
+		$fwrite(stats_fptr, "Branch Stats:\n");
         $fwrite(stats_fptr, "Conditional branches predicted: %2d\n", prediction_count);
         $fwrite(stats_fptr, "Conditional branches predicted incorrectly: %2d\n",
                 misprediction_count);
@@ -89,7 +90,7 @@ module branch_tracker (
         $fwrite(stats_fptr, "Branches predicted as not taken: %2d\n", pred_not_taken_count);
         $fwrite(stats_fptr, "Branches predicted as not taken, incorrect: %2d\n",
                 not_taken_incorrect_count);
-        $fwrite(stats_fptr, "Branches predicted as not taken, correct: %2d\n",
+        $fwrite(stats_fptr, "Branches predicted as not taken, correct: %2d\n\n",
                 pred_not_taken_count - not_taken_incorrect_count);
         $fclose(stats_fptr);
     end : OUTPUT_STATS
