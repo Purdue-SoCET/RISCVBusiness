@@ -143,7 +143,7 @@ module branch_tracker (
         $fwrite(stats_fptr, "Branches predicted as not taken: %2d\n", pred_not_taken_count);
         $fwrite(stats_fptr, "Branches predicted as not taken, incorrect: %2d\n",
                 not_taken_incorrect_count);
-        $fwrite(stats_fptr, "Branches predicted as not taken, correct: %2d\n",
+        $fwrite(stats_fptr, "Branches predicted as not taken, correct: %2d\n\n",
                 pred_not_taken_count - not_taken_incorrect_count);
         $fwrite(stats_fptr, "----------------------------------------------\n");
 		$fwrite(stats_fptr, "Forward branches predicted: %2d\n", forward_branch_count);
