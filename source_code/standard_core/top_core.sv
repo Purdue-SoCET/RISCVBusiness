@@ -61,13 +61,14 @@ module top_core #(
         .cache_statistics(cache_statistics)
     );
 
-	bind branch_predictor_wrapper branch_tracker branch_track1 (
-		.CLK(CLK),
-		.nRST(nRST),
-		.update_predictor(predict_if.update_predictor),
-		.prediction(predict_if.prediction),
-		.branch_result(predict_if.branch_result)
-	);
+    bind branch_predictor_wrapper branch_tracker branch_track1 (
+        .CLK(CLK),
+        .nRST(nRST),
+        .update_predictor(predict_if.update_predictor),
+        .imm_sb(predict_if.imm_sb),
+        .prediction(predict_if.prediction),
+        .branch_result(predict_if.branch_result)
+    );
 
     core_interrupt_if interrupt_if ();
     assign interrupt_if.ext_int = ext_int;
