@@ -14,29 +14,31 @@
 *   limitations under the License.
 *
 *
-*   Filename:     branch_predictor_wrapper.sv
+*   Filename:     btfnt_predictor.sv
 *
-*   Created by:   John Skubic
-*   Email:        jskubic@purdue.edu
-*   Date Created: 06/19/2016
-*   Description:  Branch Predictor, BTB, RAS
-*                 Replace declaration of not taken predictor as desired
+*   Created by:   Yueting Mary Zhao
+*   Email:        zhao979@purdue.edu
+*   Date Created: 06/30/2023
+*   Description:  A static branch predictor that predicts taken if the branch
+*				  is backward, and not taken if it is forward.
 */
 
 `include "predictor_pipeline_if.vh"
-`include "component_selection_defines.vh"
 
-module branch_predictor_wrapper (
+module btfnt_predictor (
     input logic CLK,
     nRST,
     predictor_pipeline_if.predictor predict_if
 );
-    // Predictor used based on the BR_PREDICTOR_TYPE definition
-    generate
-        case (BR_PREDICTOR_TYPE)
-            "not_taken": nottaken_predictor predictor (.*);	// static not taken predictor
-			"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
-        endcase
-    endgenerate
-endmodule
+	
+	import rv32i_types_pkg::*;
 
+	word_t offset;
+
+	assign offset = $signed(predict_if.imm_sb);
+    assign predict_if.predict_taken = offset[WORD_SIZE-1] ? 1 : 0;		// offset < 0 taken; otherwise not taken
+    assign predict_if.target_addr   = predict_if.predict_taken ? predict_if.current_pc + offset
+									  : (predict_if.is_rv32c	   ? predict_if.current_pc + 2
+									  : predict_if.current_pc + 4);
+
+endmodule

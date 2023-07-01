@@ -26,6 +26,7 @@ module branch_tracker (
     input logic CLK,
     nRST,
     input logic update_predictor,
+    input logic[12:0] imm_sb,
     input logic prediction,
     input logic branch_result
 );
@@ -37,7 +38,17 @@ module branch_tracker (
         pred_taken_count,
         pred_not_taken_count,
         taken_incorrect_count,
-        not_taken_incorrect_count;
+        not_taken_incorrect_count,
+        forward_branch_count,
+        forward_pred_taken_count,
+        forward_taken_correct_count,
+        forward_not_taken_correct_count,
+        backward_branch_count,
+        backward_pred_taken_count,
+        backward_taken_correct_count,
+        backward_not_taken_correct_count;
+
+    logic [31:0] offset = $signed(imm_sb);
 
     always_ff @(posedge CLK, negedge nRST) begin : tracked_registers
         if (!nRST) begin
@@ -48,28 +59,64 @@ module branch_tracker (
             pred_not_taken_count <= '0;
             taken_incorrect_count <= '0;
             not_taken_incorrect_count <= '0;
+            forward_branch_count <= '0;
+            forward_pred_taken_count <= '0;
+            forward_taken_correct_count <= '0;
+            forward_not_taken_correct_count <= '0;
+            backward_branch_count <= '0;
+            backward_pred_taken_count <= '0;
+            backward_taken_correct_count <= '0;
+            backward_not_taken_correct_count <= '0;
         end else if (update_predictor & !prediction & !branch_result) begin
             // Predicted not taken and branch result is not taken
             prediction_count <= prediction_count + 1;
             correct_pred_count <= correct_pred_count + 1;
             pred_not_taken_count <= pred_not_taken_count + 1;
+            if (offset[31]) begin
+                backward_branch_count <= backward_branch_count + 1;
+                backward_not_taken_correct_count <= backward_not_taken_correct_count + 1;
+            end else begin
+                forward_branch_count <= forward_branch_count + 1;
+                forward_not_taken_correct_count <= forward_not_taken_correct_count + 1;
+            end
         end else if (update_predictor & !prediction & branch_result) begin
             // Predicted not taken and branch result is taken
             prediction_count <= prediction_count + 1;
             misprediction_count <= misprediction_count + 1;
             pred_not_taken_count <= pred_not_taken_count + 1;
             not_taken_incorrect_count <= not_taken_incorrect_count + 1;
+            if (offset[31]) begin
+                backward_branch_count <= backward_branch_count + 1;
+            end else begin
+                forward_branch_count <= forward_branch_count + 1;
+            end
         end else if (update_predictor & prediction & !branch_result) begin
             // Predicted taken and branch result is not taken
             prediction_count <= prediction_count + 1;
             misprediction_count <= misprediction_count + 1;
             pred_taken_count <= pred_taken_count + 1;
             taken_incorrect_count <= taken_incorrect_count + 1;
+            if (offset[31]) begin
+                backward_branch_count <= backward_branch_count + 1;
+                backward_pred_taken_count <= backward_pred_taken_count + 1;
+            end else begin
+                forward_branch_count <= forward_branch_count + 1;
+                forward_pred_taken_count <= forward_pred_taken_count + 1;
+            end
         end else if (update_predictor & prediction & branch_result) begin
             // Predicted taken and branch result is taken
             prediction_count   <= prediction_count + 1;
             correct_pred_count <= correct_pred_count + 1;
             pred_taken_count   <= pred_taken_count + 1;
+            if (offset[31]) begin
+                backward_branch_count <= backward_branch_count + 1;
+                backward_pred_taken_count <= backward_pred_taken_count + 1;
+                backward_taken_correct_count <= backward_taken_correct_count + 1;
+            end else begin
+                forward_branch_count <= forward_branch_count + 1;
+                forward_pred_taken_count <= forward_pred_taken_count + 1;
+                forward_taken_correct_count <= forward_taken_correct_count + 1;
+            end
         end
     end : tracked_registers
 
@@ -90,8 +137,27 @@ module branch_tracker (
         $fwrite(stats_fptr, "Branches predicted as not taken: %2d\n", pred_not_taken_count);
         $fwrite(stats_fptr, "Branches predicted as not taken, incorrect: %2d\n",
                 not_taken_incorrect_count);
-        $fwrite(stats_fptr, "Branches predicted as not taken, correct: %2d\n\n",
+        $fwrite(stats_fptr, "Branches predicted as not taken, correct: %2d\n",
                 pred_not_taken_count - not_taken_incorrect_count);
+        $fwrite(stats_fptr, "----------------------------------------------\n");
+		$fwrite(stats_fptr, "Forward branches predicted: %2d\n", forward_branch_count);
+		$fwrite(stats_fptr, "Forward branches predicted as taken: %2d\n", forward_pred_taken_count);
+		$fwrite(stats_fptr, "Forward branches predicted as taken, incorrect: %2d\n", forward_pred_taken_count - forward_taken_correct_count);
+		$fwrite(stats_fptr, "Forward branches predicted as taken, correct: %2d\n", forward_taken_correct_count);
+		$fwrite(stats_fptr, "Forward branches predicted as not taken: %2d\n", forward_branch_count - forward_pred_taken_count);
+		$fwrite(stats_fptr, "Forward branches predicted as not taken, incorrect: %2d\n", forward_branch_count - forward_pred_taken_count - forward_not_taken_correct_count);
+		$fwrite(stats_fptr, "Forward branches predicted as not taken, correct: %2d\n", forward_not_taken_correct_count);
+        $fwrite(stats_fptr, "----------------------------------------------\n");
+		$fwrite(stats_fptr, "Backward branches predicted: %2d\n", backward_branch_count);
+		$fwrite(stats_fptr, "Backward branches predicted as taken: %2d\n", backward_pred_taken_count);
+		$fwrite(stats_fptr, "Backward branches predicted as taken, incorrect: %2d\n", backward_pred_taken_count - backward_taken_correct_count);
+		$fwrite(stats_fptr, "Backward branches predicted as taken, correct: %2d\n", backward_taken_correct_count);
+		$fwrite(stats_fptr, "Backward branches predicted as not taken: %2d\n", backward_branch_count - backward_pred_taken_count);
+		$fwrite(stats_fptr, "Backward branches predicted as not taken, incorrect: %2d\n", backward_branch_count - backward_pred_taken_count - backward_not_taken_correct_count);
+		$fwrite(stats_fptr, "Backward branches predicted as not taken, correct: %2d\n\n", backward_not_taken_correct_count);
         $fclose(stats_fptr);
+
+        fb_total: assert (prediction_count == forward_branch_count + backward_branch_count);
+        nt_total: assert (prediction_count == pred_taken_count + pred_not_taken_count);
     end : OUTPUT_STATS
 endmodule
