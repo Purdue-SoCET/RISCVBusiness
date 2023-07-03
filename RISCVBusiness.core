@@ -40,8 +40,10 @@ filesets:
 
     buses:
         files:
-            - "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
-            - "!tool_verilator? (source_code/bus_bridges/apb.sv)"
+            #- "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
+            #- "!tool_verilator? (source_code/bus_bridges/apb.sv)"
+            #- source_code/bus_bridges/apb.sv
+            - source_code/bus_bridges/ahb.sv
         file_type: systemVerilogSource
 
     fpga_wrapper:
