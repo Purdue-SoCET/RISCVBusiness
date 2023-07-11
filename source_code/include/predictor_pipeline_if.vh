@@ -28,7 +28,7 @@
 interface predictor_pipeline_if;
   import rv32i_types_pkg::*;
 
-  word_t current_pc, target_addr, update_addr;
+  word_t current_pc, target_addr, update_addr, pc_to_update;
   logic update_predictor;
   logic predict_taken, prediction, branch_result;
   logic is_rv32c;
@@ -36,13 +36,13 @@ interface predictor_pipeline_if;
 
   modport predictor(
     input current_pc, update_predictor, prediction, branch_result, update_addr,
-		  is_rv32c, imm_sb,
+		  is_rv32c, imm_sb, pc_to_update,
     output predict_taken, target_addr
   );
 
   modport update(
     output update_predictor, prediction, branch_result,
-           update_addr
+           update_addr, pc_to_update
   );
 
   modport access(
