@@ -26,7 +26,7 @@ module branch_tracker (
     input logic CLK,
     nRST,
     input logic update_predictor,
-    input logic[12:0] imm_sb,
+    input logic direction,
     input logic prediction,
     input logic branch_result
 );
@@ -47,8 +47,6 @@ module branch_tracker (
         backward_pred_taken_count,
         backward_taken_correct_count,
         backward_not_taken_correct_count;
-
-    logic [31:0] offset = $signed(imm_sb);
 
     always_ff @(posedge CLK, negedge nRST) begin : tracked_registers
         if (!nRST) begin
@@ -72,7 +70,7 @@ module branch_tracker (
             prediction_count <= prediction_count + 1;
             correct_pred_count <= correct_pred_count + 1;
             pred_not_taken_count <= pred_not_taken_count + 1;
-            if (offset[31]) begin
+            if (direction) begin
                 backward_branch_count <= backward_branch_count + 1;
                 backward_not_taken_correct_count <= backward_not_taken_correct_count + 1;
             end else begin
@@ -85,7 +83,7 @@ module branch_tracker (
             misprediction_count <= misprediction_count + 1;
             pred_not_taken_count <= pred_not_taken_count + 1;
             not_taken_incorrect_count <= not_taken_incorrect_count + 1;
-            if (offset[31]) begin
+            if (direction) begin
                 backward_branch_count <= backward_branch_count + 1;
             end else begin
                 forward_branch_count <= forward_branch_count + 1;
@@ -96,7 +94,7 @@ module branch_tracker (
             misprediction_count <= misprediction_count + 1;
             pred_taken_count <= pred_taken_count + 1;
             taken_incorrect_count <= taken_incorrect_count + 1;
-            if (offset[31]) begin
+            if (direction) begin
                 backward_branch_count <= backward_branch_count + 1;
                 backward_pred_taken_count <= backward_pred_taken_count + 1;
             end else begin
@@ -108,7 +106,7 @@ module branch_tracker (
             prediction_count   <= prediction_count + 1;
             correct_pred_count <= correct_pred_count + 1;
             pred_taken_count   <= pred_taken_count + 1;
-            if (offset[31]) begin
+            if (direction) begin
                 backward_branch_count <= backward_branch_count + 1;
                 backward_pred_taken_count <= backward_pred_taken_count + 1;
                 backward_taken_correct_count <= backward_taken_correct_count + 1;

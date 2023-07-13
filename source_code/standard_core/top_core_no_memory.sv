@@ -67,7 +67,7 @@ module top_core #(
         .CLK(CLK),
         .nRST(nRST),
         .update_predictor(predict_if.update_predictor),
-        .imm_sb(predict_if.imm_sb),
+        .direction(predict_if.direction),
         .prediction(predict_if.prediction),
         .branch_result(predict_if.branch_result)
     );
