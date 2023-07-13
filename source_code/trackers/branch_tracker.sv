@@ -52,8 +52,6 @@ module branch_tracker (
         backward_taken_correct_count,
         backward_not_taken_correct_count;
 
-    logic [31:0] offset = $signed(imm_sb);
-
     always_ff @(posedge CLK, negedge nRST) begin : tracked_registers
         if (!nRST) begin
    	    unconditional_count <= '0;
