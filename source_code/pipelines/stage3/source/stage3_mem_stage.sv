@@ -31,7 +31,7 @@ module stage3_mem_stage(
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
 	assign predict_if.pc_to_update = ex_mem_if.ex_mem_reg.pc;
-
+	assign predict_if.direction = ex_mem_if.ex_mem_reg.instr[WORD_SIZE-1];
 
 
     /*************
