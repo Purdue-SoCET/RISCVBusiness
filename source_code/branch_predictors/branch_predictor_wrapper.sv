@@ -37,6 +37,7 @@ module branch_predictor_wrapper (
             "not_taken": nottaken_predictor predictor (.*);	// static not taken predictor
 			"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
 			"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
+			"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
         endcase
     endgenerate
 endmodule
