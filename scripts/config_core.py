@@ -37,7 +37,7 @@ ISA_PARAMS = \
 UARCH_PARAMS = \
   {
     # Branch/Jump Configurations
-    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1'],
+    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2'],
     # Cache Configurations
     'cache_config' : ['separate'],
     'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
