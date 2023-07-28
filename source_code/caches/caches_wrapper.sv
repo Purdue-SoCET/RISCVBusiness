@@ -36,7 +36,8 @@ module caches_wrapper (
     cache_control_if cc_if
 );
     generate
-        case (CACHE_CONFIG)
+        //case (CACHE_CONFIG)
+        case ("separate")
             "separate": separate_caches sep_caches (.*);
         endcase
     endgenerate

@@ -1,0 +1,452 @@
+# SimVision Command Script (Fri Jul 28 05:47:09 PM EDT 2023)
+#
+# Version 23.03.s004
+#
+# You can restore this configuration with:
+#
+#      xrun -q -f edalize_main.f +xmtimescale+1ns/100ps -input /home/asicfab/a/socet136/AFTx07/RISCVBusiness/source_code/caches/wave.tcl -top tb_caches -access rwc
+#
+
+
+#
+# Preferences
+#
+preferences set plugin-enable-svdatabrowser-new 1
+preferences set plugin-enable-groupscope 0
+preferences set plugin-enable-interleaveandcompare 0
+preferences set plugin-enable-waveformfrequencyplot 0
+
+#
+# Simulator
+#
+database require simulator -hints {
+	simulator "xrun -q -f edalize_main.f +xmtimescale+1ns/100ps -input /home/asicfab/a/socet136/AFTx07/RISCVBusiness/source_code/caches/wave.tcl -top tb_caches -gui -access rwc -input wave.tcl"
+}
+#
+# Groups
+#
+catch {group new -name sys -overlay 0}
+catch {group new -name {gold bus} -overlay 0}
+catch {group new -name {CPU <-> CACHE bus} -overlay 0}
+catch {group new -name {RAM <-> CACHE bus} -overlay 0}
+catch {group new -name {TB <-> RAM bus} -overlay 0}
+catch {group new -name {RAM bus} -overlay 0}
+catch {group new -name {CACHE <-> RAM bus} -overlay 0}
+catch {group new -name {TB -> RAM bus} -overlay 0}
+catch {group new -name busses -overlay 0}
+catch {group new -name RAM -overlay 0}
+catch {group new -name {RAM Signals} -overlay 0}
+catch {group new -name {CACHE MEM} -overlay 0}
+catch {group new -name {CACHE MEM SIGNALS} -overlay 0}
+catch {group new -name CACHE -overlay 0}
+catch {group new -name {CPU bus} -overlay 0}
+catch {group new -name {CACHE SIGNALS} -overlay 0}
+catch {group new -name {CACHE FLUSH} -overlay 0}
+catch {group new -name {CACHE CLEAR} -overlay 0}
+group using sys
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.nRST}]} ] \
+    [subst  {simulator::[format {tb_caches.test}]} ] \
+    [subst  {simulator::[format {tb_caches.CLK}]} ]
+group using {gold bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.gold_ram.v_lat_ram.memory}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.gold_bus_if.wen}]} ]
+group using {CPU <-> CACHE bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.wen}]} ]
+group using {RAM <-> CACHE bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.wen}]} ]
+group using {TB <-> RAM bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.wen}]} ]
+group using {RAM bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram_if.wen}]} ]
+group using {CACHE <-> RAM bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.cache_2_ram_if.wen}]} ]
+group using {TB -> RAM bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.tb_bus_if.wen}]} ]
+group using busses
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    {CPU bus} \
+    {RAM bus} \
+    [subst  {simulator::[format {tb_caches.mem_ctrl}]} ] \
+    {CACHE <-> RAM bus} \
+    {TB -> RAM bus}
+group using RAM
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.memory}]} ] \
+    {RAM Signals}
+group using {RAM Signals}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.wdata_in[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.addr_in[12:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.byte_en_in[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.wen_in}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.ren_in}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.rdata_out[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.busy_out}]} ]
+group using {CACHE MEM}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.v_lat_ram.memory}]} ] \
+    {CACHE MEM SIGNALS}
+group using {CACHE MEM SIGNALS}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.wdata[95:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.addr[6:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.byte_en[11:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.wen}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.rdata[95:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_mem.busy}]} ]
+group using CACHE
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT.next_state[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.curr_state[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.frame_buffer}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.frame_buffer_next}]} ] \
+    {CACHE SIGNALS}
+group using {CPU bus}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.ren}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT_bus_if.wen}]} ]
+group using {CACHE SIGNALS}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT.hit}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.request}]} ] \
+    {CACHE FLUSH} \
+    {CACHE CLEAR} \
+    [subst  {simulator::[format {tb_caches.DUT.curr_addr}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.curr_addr_next}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.req_addr}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.req_byte_en[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.req_byte_en_expand[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.direct_mem_req}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.clear_flag}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.flush_flag}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.cache_busy}]} ]
+group using {CACHE FLUSH}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT.flush}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.flush_reg}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.flush_cnt[7:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.flush_done}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.init_flag}]} ]
+group using {CACHE CLEAR}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.DUT.clear}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.clear_reg}]} ]
+
+#
+# Mnemonic Maps
+#
+mmap new  -reuse -name {Boolean as Logic} -radix %b -contents {{%c=FALSE -edgepriority 1 -shape low}
+{%c=TRUE -edgepriority 1 -shape high}}
+mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor orange -label REG:%x -linecolor yellow -shape bus}
+{%x=1F -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=* -label %x -linecolor gray -shape bus}}
+
+#
+# Design Browser windows
+#
+if {[catch {window new WatchList -name "Design Browser 1" -geometry 730x500+261+33}] != ""} {
+    window geometry "Design Browser 1" 730x500+261+33
+}
+window target "Design Browser 1" on
+browser using {Design Browser 1}
+browser set \
+    -signalsort name
+browser timecontrol set -lock 0
+
+#
+# Waveform windows
+#
+if {[catch {window new WaveWindow -name "Waveform 2" -geometry 1920x887+0+49}] != ""} {
+    window geometry "Waveform 2" 1920x887+0+49
+}
+window target "Waveform 2" on
+waveform using {Waveform 2}
+waveform sidebar select designbrowser
+waveform set \
+    -primarycursor TimeA \
+    -signalnames name \
+    -signalwidth 175 \
+    -units ps \
+    -valuewidth 204
+waveform baseline set -time 0
+
+
+set groupId0 [waveform add -groups sys]
+
+
+set groupId0 [waveform add -groups {{gold bus}}]
+set gpGlist0 [waveform hierarchy contents $groupId0]
+set gpID0 [lindex $gpGlist0 0]
+foreach {name attrs} [subst  {
+    {simulator::[format {tb_caches.gold_ram.v_lat_ram.memory}]} {-height 95 -trace assocarray}
+    {simulator::[format {tb_caches.gold_bus_if.addr[31:0]}]} {}
+    {simulator::[format {tb_caches.gold_bus_if.busy}]} {}
+    {simulator::[format {tb_caches.gold_bus_if.byte_en[3:0]}]} {-radix %b}
+    {simulator::[format {tb_caches.gold_bus_if.error}]} {}
+    {simulator::[format {tb_caches.gold_bus_if.rdata[31:0]}]} {}
+    {simulator::[format {tb_caches.gold_bus_if.ren}]} {}
+    {simulator::[format {tb_caches.gold_bus_if.wdata[31:0]}]} {}
+    {simulator::[format {tb_caches.gold_bus_if.wen}]} {}
+}] childcmds {
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+} {
+    set expected [ join [waveform signals -format fullpath $gpID0] ]
+    if {[string equal $name $expected] || $name == "cdivider"} {
+        if {$attrs != ""} {
+            eval waveform format $gpID0 $attrs
+        }
+        if { $childcmds != ""} {
+            eval $childcmds
+        }
+    }
+    set gpGlist0 [lrange $gpGlist0 1 end]
+    set gpID0 [lindex $gpGlist0 0]
+}
+
+
+set groupId0 [waveform add -groups busses]
+
+set groupId1 [waveform find -name {CPU bus}]
+
+
+set groupId1 [waveform find -name {RAM bus}]
+waveform hierarchy collapse $groupId1
+
+
+set groupId1 [waveform find -name {CACHE <-> RAM bus}]
+waveform hierarchy collapse $groupId1
+
+
+set groupId1 [waveform find -name {TB -> RAM bus}]
+waveform hierarchy collapse $groupId1
+
+
+
+set groupId0 [waveform add -groups RAM]
+
+set groupId1 [waveform find -name {RAM Signals}]
+waveform hierarchy collapse $groupId1
+
+set gpGlist0 [waveform hierarchy contents $groupId0]
+set gpID0 [lindex $gpGlist0 0]
+foreach {name attrs} [subst  {
+    {simulator::[format {tb_caches.DUT_ram.v_lat_ram.memory}]} {-height 95 -trace assocarray}
+    groupId55 {}
+}] childcmds {
+    {}
+} {
+    set expected [ join [waveform signals -format fullpath $gpID0] ]
+    if {[string equal $name $expected] || $name == "cdivider"} {
+        if {$attrs != ""} {
+            eval waveform format $gpID0 $attrs
+        }
+        if { $childcmds != ""} {
+            eval $childcmds
+        }
+    }
+    set gpGlist0 [lrange $gpGlist0 1 end]
+    set gpID0 [lindex $gpGlist0 0]
+}
+
+
+set groupId0 [waveform add -groups {{CACHE MEM}}]
+
+set groupId1 [waveform find -name {CACHE MEM SIGNALS}]
+
+set gpGlist0 [waveform hierarchy contents $groupId0]
+set gpID0 [lindex $gpGlist0 0]
+foreach {name attrs} [subst  {
+    {simulator::[format {tb_caches.DUT.cache_mem.v_lat_ram.memory}]} {-height 124 -trace assocarray}
+    groupId65 {}
+}] childcmds {
+    {}
+} {
+    set expected [ join [waveform signals -format fullpath $gpID0] ]
+    if {[string equal $name $expected] || $name == "cdivider"} {
+        if {$attrs != ""} {
+            eval waveform format $gpID0 $attrs
+        }
+        if { $childcmds != ""} {
+            eval $childcmds
+        }
+    }
+    set gpGlist0 [lrange $gpGlist0 1 end]
+    set gpID0 [lindex $gpGlist0 0]
+}
+
+
+set groupId0 [waveform add -groups CACHE]
+
+set groupId1 [waveform find -name {CACHE SIGNALS}]
+
+set groupId2 [waveform find -name {CACHE FLUSH}]
+waveform hierarchy collapse $groupId2
+
+
+set groupId2 [waveform find -name {CACHE CLEAR}]
+waveform hierarchy collapse $groupId2
+
+
+
+
+waveform xview limits 28203400ps 28735000ps
+
+#
+# Waveform Window Links
+#
+
+#
+# Console windows
+#
+console set -windowname Console
+window geometry Console 730x628+261+186
+
+#
+# Layout selection
+#
+

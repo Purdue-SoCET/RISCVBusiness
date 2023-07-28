@@ -35,6 +35,7 @@ module direct_mapped_tpf_cache (
     flush,
     output logic clear_done,
     flush_done,
+    output logic idle,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if
 );
@@ -147,6 +148,8 @@ module direct_mapped_tpf_cache (
         .busy(cache_busy_raw)
     );
 
+    assign idle = curr_state == IDLE;
+
     assign cache_busy = cache_busy_raw | ~(cache_wen | cache_ren);
 
     /* --- Glue Logic and Output Logic --- */
@@ -182,7 +185,7 @@ module direct_mapped_tpf_cache (
     assign mem_gen_bus_if.ren = direct_mem_req ? proc_gen_bus_if.ren : sm_bus_if.ren;
     assign mem_gen_bus_if.wen = direct_mem_req ? proc_gen_bus_if.wen : sm_bus_if.wen;
     assign mem_gen_bus_if.byte_en = direct_mem_req ? proc_gen_bus_if.byte_en : sm_bus_if.byte_en;
-    assign proc_gen_bus_if.rdata = direct_mem_req ? mem_gen_bus_if.rdata :frame_buffer.data[req_addr.blk_off] ;
+    assign proc_gen_bus_if.rdata = direct_mem_req ? mem_gen_bus_if.rdata : frame_buffer.data[req_addr.blk_off];
     assign sm_bus_if.rdata = mem_gen_bus_if.rdata;
     assign proc_gen_bus_if.busy = direct_mem_req ? mem_gen_bus_if.busy : ~hit;
     assign sm_bus_if.busy = direct_mem_req ? 1'b1 : mem_gen_bus_if.busy;

@@ -6,6 +6,16 @@ Design documents and project information for the RISC-V Business project can be 
 **Current User-Level ISA Spec :** v2.1
 **Current Privileged ISA Spec :** v1.12
 
+---
+
+# Cole would know the most about the core
+-> ask him about 
+
+-> run the testbench with the core file,
+-> look at the AFTx07.core file for inspo, there is a caches.core file somewhere
+
+---
+
 # Getting Started
 
 Getting started with RISCV Business consists of three steps: setting up the RISCV tool-chain, setting up the WAF build system, and finally interacting with the RISCV Business project itself. 

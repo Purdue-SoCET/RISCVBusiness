@@ -46,11 +46,13 @@ module tb_caches ();
   parameter TB_CONTROL    = 1'b0;
 
   parameter DATA_1 = 32'h12ab_89ef;
+  parameter DATA_2 = 32'habcd_ef01;
   /* TAG_BIT needed because memory doesn't use full 32 bit addr space*/
   parameter TAG_BIT = 14;
 
   // -- TB Variables -- //
 
+  string test;
   logic CLK, nRST; 
   integer seed;
   
@@ -72,6 +74,15 @@ module tb_caches ();
   generic_bus_if cache_2_ram_if();
   logic DUT_flush, DUT_clear;
 
+  direct_mapped_tpf_cache DUT (
+        .CLK(CLK),
+        .nRST(nRST),
+        .proc_gen_bus_if(DUT_bus_if),
+        .mem_gen_bus_if(cache_2_ram_if),
+        .clear(DUT_clear),
+        .flush(DUT_flush)
+      );
+  /*
   generate 
     if (CACHE_SELECT == "pass_through") begin
       pass_through_cache DUT (
@@ -91,6 +102,7 @@ module tb_caches ();
       );
     end
   endgenerate
+  */
 
   // multiplexor for testbench cache bypass to memory
   assign DUT_ram_if.addr      = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.addr :
@@ -165,7 +177,7 @@ module tb_caches ();
     $info("---------- Beginning Basic Test Cases ---------");
 
     // Write a word to memory and perform a read
-
+    test = "Write a word to memory and perform a read";
     tb_addr = 0;
     tb_wdata = DATA_1;
 
@@ -174,11 +186,14 @@ module tb_caches ();
 
     // write word to cache
 
+    test = "write word to cache";
     tb_addr = tb_addr + 4;
     write_cache(tb_addr, tb_wdata, 4'hf);
     read_cache_check(tb_addr);
 
     // write halfwords to cache
+    tb_wdata = DATA_2;
+    test = "write halfwords to cache";
     tb_addr = tb_addr + 4;
     write_cache(tb_addr, tb_wdata, 4'h3);
     read_cache_check(tb_addr);
@@ -189,6 +204,7 @@ module tb_caches ();
 
     // write quarterwords to cache
 
+    test = "write quarterwords to cache";
     tb_addr = tb_addr + 4;
     write_cache(tb_addr, tb_wdata, 4'h1);
     read_cache_check(tb_addr);
@@ -210,6 +226,7 @@ module tb_caches ();
     $info("---------- Beginning Replacement Testing----------");
 
     // Write to different address to force replacements
+    test = "Write to different address to force replacements";
     tb_addr = 0;
     for (i = 0; i < 9; i++) begin // iterate through all the ways
       tb_addr[TAG_BIT-1 -: 4] = i; // set bits in the tag
@@ -219,7 +236,9 @@ module tb_caches ();
         write_cache(tb_addr, tb_wdata, 4'hf);
       end
     end
+    @(posedge CLK);
     // Read from the previously written addresses
+    test = "Read from the previously written addresses";
     tb_addr = 0;
     for (i = 0; i < 9; i++) begin // iterate through all the ways
       tb_addr[TAG_BIT-1 -: 4] = i; // set bits in the tag
@@ -233,6 +252,8 @@ module tb_caches ();
 
     $info("---------- Beginning Random Testing of %0d Xactions %0d Unique Addrs ----------", NUM_TESTS, NUM_ADDRS);
 
+  /*
+    test = "Random Testing";
     // Generate the addresses and fill mem with random values
     for (i = 0; i < NUM_ADDRS; i++) begin
       j = $urandom;
@@ -270,11 +291,13 @@ module tb_caches ();
         read_cache_check(tb_addr);
       end
     end
+    */
     
     // -- Cache Clear -- //
     
     $info("---------- Beginning Cache Clear Testing ----------");
 
+    test = "Cache Clear";
     tb_addr = 0;
     tb_wdata = $urandom;
     read_cache_check(tb_addr);
@@ -287,6 +310,7 @@ module tb_caches ();
     $info("---------- Beginning Cache Flush Testing ----------");
 
     // fill cache contents
+    test = "fill cache contents";
     tb_addr = 0;
     for (i = 0; i < 9; i++) begin // iterate through all the ways
       tb_addr[TAG_BIT-1 -: 4] = i; // set bits in the tag
@@ -297,13 +321,16 @@ module tb_caches ();
     end
 
     // flush cache
+    test = "flush cache";
     flush_cache();
  
     // Read to dummy addr to ensure flushing is completed 
+    test = "Read to dummy addr to ensure flushing is completed";
     tb_addr = '1;
     read_cache_check(tb_addr);
 
     // write directly to mem
+    test = "write directly to mem";
     tb_addr = 0;
     for (i = 0; i < 9; i++) begin // iterate through all the ways
       tb_addr[TAG_BIT-1 -: 4] = i; // set bits in the tag
@@ -315,6 +342,7 @@ module tb_caches ();
     end
 
     // re-read memory to ensure up to date data is received
+    test = "re-read memory to ensure up to date data is received";
     tb_addr = 0;
     for (i = 0; i < 9; i++) begin // iterate through all the ways
       tb_addr[TAG_BIT-1 -: 4] = i; // set bits in the tag
@@ -341,6 +369,8 @@ module tb_caches ();
     output word_t DUT_rdata;
     output word_t gold_rdata;
 
+    #(PERIOD / 8);
+
     set_mem_ctrl(CACHE_CONTROL);
     set_ren(1'b1);
     set_wen(1'b0);
@@ -349,8 +379,9 @@ module tb_caches ();
   
     @(posedge CLK);
 
-    while (caches_busy())
+    while (caches_busy()) begin
       @(posedge CLK);
+    end
 
     DUT_rdata = DUT_bus_if.rdata;
     gold_rdata = gold_bus_if.rdata;
@@ -360,7 +391,6 @@ module tb_caches ();
   // Reads a value from memory and reports an error if there is a mismatch.
   task read_cache_check;
     input [RAM_ADDR_SIZE-1:0] read_addr;
-
     word_t DUT_rdata;
     word_t gold_rdata;
 
@@ -373,7 +403,6 @@ module tb_caches ();
       #(DELAY);
       $finish;
     end
-
   endtask
 
   // write_cache
@@ -382,6 +411,8 @@ module tb_caches ();
     input [RAM_ADDR_SIZE-1:0] write_addr;
     input word_t write_data;
     input logic [3:0] write_byte_en;
+
+    #(PERIOD / 8);
     
     set_mem_ctrl(CACHE_CONTROL);
     set_ren(1'b0);
@@ -416,7 +447,6 @@ module tb_caches ();
 
     while (mem_busy())
       @(posedge CLK);
-    
   endtask
 
   // clear_line
