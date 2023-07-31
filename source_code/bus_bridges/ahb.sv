@@ -23,6 +23,20 @@
 *   TODO: 1. HRESP -> has to be added to the state transitions
 */
 
+/**
+ * HBURST Docs
+ * Transfers align to burst boundary
+ * ------------------------------------
+ * 000: SINGLE      single transfer 
+ * 001: INCR        incrementing burst of undefined length
+ * 010: WRAP4       wrapping burst of 4             1
+ * 011: INCR4       incrementing burst of 4         1
+ * 100: WRAP8       wrapping burst of 8             2
+ * 101: INCR8       incrementing burst of 8         2
+ * 110: WRAP16      wrapping burst of 16            3
+ * 111: INCR16      incremeneting burst of 16       3
+**/
+
 `include "generic_bus_if.vh"
 
 module ahb (
@@ -38,6 +52,7 @@ module ahb (
     } state_t;
 
     state_t state, n_state;
+    logic [4:0] beat;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) state <= IDLE;
@@ -87,6 +102,7 @@ module ahb (
     assign out_gen_bus_if.busy  = state == IDLE || ~((ahb_m.HREADY && (state == DATA)));
     assign out_gen_bus_if.rdata = ahb_m.HRDATA;
     assign out_gen_bus_if.error = ahb_m.HRESP;
+
     // Unused signals
     assign ahb_m.HMASTLOCK = 1'b0;
     assign ahb_m.HBURST = 3'b000;

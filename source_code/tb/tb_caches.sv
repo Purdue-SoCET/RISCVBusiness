@@ -37,7 +37,7 @@ module tb_caches ();
   parameter NUM_ADDRS = 20;
   parameter PERIOD = 20; 
   parameter DELAY = 5;
-  parameter CACHE_SELECT = "direct_mapped_tpf";// "pass_through";
+  parameter CACHE_SELECT = "l1_cache";// "pass_through";
 
   parameter SEED = 11;
   parameter VERBOSE = 0;
@@ -74,7 +74,7 @@ module tb_caches ();
   generic_bus_if cache_2_ram_if();
   logic DUT_flush, DUT_clear;
 
-  direct_mapped_tpf_cache DUT (
+  l1_cache DUT (
         .CLK(CLK),
         .nRST(nRST),
         .proc_gen_bus_if(DUT_bus_if),
