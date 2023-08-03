@@ -39,7 +39,7 @@ module ram_wrapper (
     assign gen_bus_if.error = (gen_bus_if.addr < 32'h8000_0000);
 
     ram_sim_model #(
-        .LAT(0),
+        .LAT(9),
         .ENDIANNESS(BUS_ENDIANNESS),
         .N_BYTES(4)
     ) v_lat_ram (

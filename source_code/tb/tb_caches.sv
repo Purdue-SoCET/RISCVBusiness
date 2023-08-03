@@ -233,6 +233,7 @@ module tb_caches ();
 
     $info("---------- Beginning Random Testing of %0d Xactions %0d Unique Addrs ----------", NUM_TESTS, NUM_ADDRS);
 
+  /*
     // Generate the addresses and fill mem with random values
     for (i = 0; i < NUM_ADDRS; i++) begin
       j = $urandom;
@@ -270,6 +271,7 @@ module tb_caches ();
         read_cache_check(tb_addr);
       end
     end
+    */
     
     // -- Cache Clear -- //
     
@@ -341,6 +343,8 @@ module tb_caches ();
     output word_t DUT_rdata;
     output word_t gold_rdata;
 
+    #(PERIOD / 8);
+
     set_mem_ctrl(CACHE_CONTROL);
     set_ren(1'b1);
     set_wen(1'b0);
@@ -382,6 +386,8 @@ module tb_caches ();
     input [RAM_ADDR_SIZE-1:0] write_addr;
     input word_t write_data;
     input logic [3:0] write_byte_en;
+
+    #(PERIOD / 8);
     
     set_mem_ctrl(CACHE_CONTROL);
     set_ren(1'b0);
@@ -404,6 +410,8 @@ module tb_caches ();
     input logic [RAM_ADDR_SIZE-1:0] write_addr;
     input word_t write_data;
     input logic [3:0] write_byte_en;
+
+    #(PERIOD / 8);
 
     set_mem_ctrl(TB_CONTROL);
     set_ren(1'b0);

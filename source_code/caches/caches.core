@@ -6,6 +6,7 @@ filesets:
     rtl:
         depend:
             - "socet:riscv:packages"
+            - "socet:bus-components:bus_if"
         files:
             - caches_wrapper.sv
             - separate_caches.sv
@@ -13,6 +14,17 @@ filesets:
             - pass_through/pass_through_cache.sv
             - l1/l1_cache.sv
             - sram/sram.sv
+            - ../include/generic_bus_if.vh : { is_include_file: true }
+            - ../include/cache_control_if.vh : { is_include_file: true }
+            - ../include/component_selection_defines.vh : { is_include_file: true }
+            - ../ram/ram_wrapper.sv
+            - ../ram/config_ram_wrapper.sv
+            - ../ram/ram_sim_model.sv
+            - ../standard_core/endian_swapper.sv
+        file_type: systemVerilogSource
+    tb:
+        files:
+            - ../tb/tb_caches.sv
         file_type: systemVerilogSource
 
 targets:
@@ -20,3 +32,44 @@ targets:
         filesets:
             - rtl
         toplevel: caches_wrapper
+
+    sim:
+        <<: *default
+        description: Simulate with TB
+        default_tool: modelsim
+        filesets_append:
+            - "!tool_verilator? (tb)"
+            - "tool_verilator? (verilator_tb)"
+        
+        toplevel:
+            - "tool_verilator? (caches_wrapper)"
+            - "!tool_verilator? (tb_caches)"
+        tools:
+            modelsim:
+                vlog_options:
+                    - -suppress 7061
+                vsim_options:
+                    - -vopt
+                    #- -voptargs='+acc'
+                    - -t ps
+        
+            xcelium:
+                xrun_options:
+                    - +xmtimescale+1ns/100ps
+                    - -input ./wave.tcl
+            vcs:
+                vcs_options:
+                    - -assert svaext
+            
+            verilator:
+                verilator_options:
+                    - --trace
+                    - --trace-fst
+                    - --trace-structs
+                    #- -Wno-IMPLICIT
+                    - -Wno-lint
+                    - -Wno-SYMRSVDWORD
+                    - -Wno-TIMESCALEMOD
+                    - -Wno-UNPACKED
+                make_options:
+                    - -j
