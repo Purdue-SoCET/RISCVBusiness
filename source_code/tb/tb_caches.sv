@@ -19,6 +19,7 @@
 *   Created by:   John Skubic
 *   Email:        jjs.skubic@gmail.com
 *   Date Created: 05/26/2017
+*   Revised:      08/02/2023
 *   Description:  Blackbox testbench for the caches.  This should be used to test any
 *                 newly developed cache for correctness.  Test cases include:
 *                   - replacement up to 8 ways and 8 word blocks
@@ -26,8 +27,6 @@
 *                   - cache flush
 *                   - constrained random testing of read and write xactions
 */
-
-`include "generic_bus_if.vh" 
 
 module tb_caches ();
   
@@ -68,17 +67,17 @@ module tb_caches ();
 
   // -- DUT -- //
 
-  generic_bus_if DUT_bus_if();
-  generic_bus_if tb_bus_if();
-  generic_bus_if DUT_ram_if();
-  generic_bus_if cache_2_ram_if();
+  bus_if DUT_bus_if();
+  bus_if tb_bus_if();
+  bus_if DUT_ram_if();
+  bus_if cache_2_ram_if();
   logic DUT_flush, DUT_clear;
 
   l1_cache DUT (
         .CLK(CLK),
         .nRST(nRST),
-        .proc_gen_bus_if(DUT_bus_if),
-        .mem_gen_bus_if(cache_2_ram_if),
+        .proc_bus_if(DUT_bus_if),
+        .mem_bus_if(cache_2_ram_if),
         .clear(DUT_clear),
         .flush(DUT_flush)
       );
@@ -105,35 +104,35 @@ module tb_caches ();
   */
 
   // multiplexor for testbench cache bypass to memory
-  assign DUT_ram_if.addr      = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.addr :
-                                tb_bus_if.addr;
-  assign DUT_ram_if.wdata     = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.wdata : 
-                                tb_bus_if.wdata;
-  assign DUT_ram_if.ren       = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.ren :
-                                tb_bus_if.ren;
-  assign DUT_ram_if.wen       = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.wen :
-                                tb_bus_if.wen; 
-  assign DUT_ram_if.byte_en   = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.byte_en :
-                                tb_bus_if.byte_en;
-  assign cache_2_ram_if.rdata = DUT_ram_if.rdata;
-  assign tb_bus_if.rdata      = DUT_ram_if.rdata;
-  assign cache_2_ram_if.busy  = !(mem_ctrl == CACHE_CONTROL) || DUT_ram_if.busy;
-  assign tb_bus_if.busy       = !(mem_ctrl == TB_CONTROL) || DUT_ram_if.busy;
+  assign DUT_ram_if.trans          = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.trans :
+                                    tb_bus_if.trans;
+  assign DUT_ram_if.addr          = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.addr :
+                                    tb_bus_if.addr;
+  assign DUT_ram_if.wdata         = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.wdata : 
+                                    tb_bus_if.wdata;
+  assign DUT_ram_if.write_enable  = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.write_enable :
+                                    tb_bus_if.write_enable;
+  assign DUT_ram_if.size          = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.size :
+                                    tb_bus_if.size;
+  assign cache_2_ram_if.rdata     = DUT_ram_if.rdata;
+  assign tb_bus_if.rdata          = DUT_ram_if.rdata;
+  assign cache_2_ram_if.busy      = !(mem_ctrl == CACHE_CONTROL) || DUT_ram_if.busy;
+  assign tb_bus_if.busy           = !(mem_ctrl == TB_CONTROL) || DUT_ram_if.busy;
 
   ram_wrapper DUT_ram (
     .CLK(CLK),
     .nRST(nRST),
-    .gen_bus_if(DUT_ram_if)
+    .bus(DUT_ram_if)
   );
 
   // -- Gold Model -- //
 
-  generic_bus_if gold_bus_if();
+  bus_if gold_bus_if();
 
   ram_wrapper gold_ram (
     .CLK(CLK),
     .nRST(nRST),
-    .gen_bus_if(gold_bus_if)
+    .bus(gold_bus_if)
   );
 
   // -- Clock Generation -- //
@@ -156,11 +155,11 @@ module tb_caches ();
     DUT_flush = 0;
     DUT_clear = 0; 
     set_mem_ctrl(CACHE_CONTROL);
-    set_ren(1'b0);
-    set_wen(1'b0);
+    set_trans(bus_pkg::IDLE);
+    set_write_enable('0);
     set_addr('0);
     set_wdata('0);
-    set_byte_en('0);
+    set_size(bus_pkg::WORD);
 
     // -- Setup Seed for randomized testing -- //
     error_cnt = 0;
@@ -181,45 +180,45 @@ module tb_caches ();
     tb_addr = 0;
     tb_wdata = DATA_1;
 
-    write_mem(tb_addr, tb_wdata, 4'hf);
+    write_mem(tb_addr, tb_wdata, bus_pkg::WORD);
     read_cache_check(tb_addr);
 
     // write word to cache
 
     test = "write word to cache";
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'hf);
+    write_cache(tb_addr, tb_wdata, bus_pkg::WORD);
     read_cache_check(tb_addr);
 
     // write halfwords to cache
     tb_wdata = DATA_2;
     test = "write halfwords to cache";
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'h3);
+    write_cache(tb_addr, tb_wdata, bus_pkg::HALFWORD);
     read_cache_check(tb_addr);
 
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'hc);  
-    read_cache_check(tb_addr); 
+    write_cache(tb_addr+2, tb_wdata, bus_pkg::HALFWORD);  
+    read_cache_check(tb_addr+2); 
 
     // write quarterwords to cache
 
     test = "write quarterwords to cache";
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'h1);
+    write_cache(tb_addr, tb_wdata, bus_pkg::BYTE);
     read_cache_check(tb_addr);
 
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'h2);
-    read_cache_check(tb_addr);
+    write_cache(tb_addr+1, tb_wdata, bus_pkg::BYTE);
+    read_cache_check(tb_addr+1);
 
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'h4);
-    read_cache_check(tb_addr);
+    write_cache(tb_addr+2, tb_wdata, bus_pkg::BYTE);
+    read_cache_check(tb_addr+1);
 
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'h8);
-    read_cache_check(tb_addr);
+    write_cache(tb_addr+3, tb_wdata, bus_pkg::BYTE);
+    read_cache_check(tb_addr+1);
 
     // -- Testing Replacement -- //
 
@@ -233,7 +232,7 @@ module tb_caches ();
       for (j = 0; j < 8; j++) begin // iterate through blocks and write to each word
         tb_addr[4:2] = j;
         tb_wdata = $urandom;
-        write_cache(tb_addr, tb_wdata, 4'hf);
+        write_cache(tb_addr, tb_wdata, bus_pkg::WORD);
       end
     end
     @(posedge CLK);
@@ -302,7 +301,7 @@ module tb_caches ();
     tb_wdata = $urandom;
     read_cache_check(tb_addr);
     clear_line(tb_addr);
-    write_mem(tb_addr, tb_wdata, 4'hf);
+    write_mem(tb_addr, tb_wdata, bus_pkg::WORD);
     read_cache_check(tb_addr);
 
     // -- Cache Flush -- //
@@ -337,7 +336,7 @@ module tb_caches ();
       for (j = 0; j < 8; j++) begin // iterate through blocks and write to each word
         tb_addr[4:2] = j;
         tb_wdata = $urandom;
-        write_mem(tb_addr, tb_wdata, 4'hf);
+        write_mem(tb_addr, tb_wdata, bus_pkg::WORD);
       end
     end
 
@@ -372,10 +371,10 @@ module tb_caches ();
     #(PERIOD / 8);
 
     set_mem_ctrl(CACHE_CONTROL);
-    set_ren(1'b1);
-    set_wen(1'b0);
+    set_trans(bus_pkg::NONSEQ);
+    set_write_enable('0);
     set_addr(read_addr);
-    set_byte_en(4'b1111);
+    set_size(bus_pkg::WORD);
   
     @(posedge CLK);
 
@@ -410,16 +409,16 @@ module tb_caches ();
   task write_cache;
     input [RAM_ADDR_SIZE-1:0] write_addr;
     input word_t write_data;
-    input logic [3:0] write_byte_en;
+    input bus_pkg::size_t size;
 
     #(PERIOD / 8);
     
     set_mem_ctrl(CACHE_CONTROL);
-    set_ren(1'b0);
-    set_wen(1'b1);
+    set_trans(bus_pkg::NONSEQ);
+    set_write_enable(1'b1);
     set_addr(write_addr);
     set_wdata(write_data);
-    set_byte_en(write_byte_en);
+    set_size(size);
 
     @(posedge CLK);
 
@@ -434,14 +433,14 @@ module tb_caches ();
   task write_mem;
     input logic [RAM_ADDR_SIZE-1:0] write_addr;
     input word_t write_data;
-    input logic [3:0] write_byte_en;
+    input bus_pkg::size_t size;
 
     set_mem_ctrl(TB_CONTROL);
-    set_ren(1'b0);
-    set_wen(1'b1);
+    set_trans(bus_pkg::NONSEQ);
+    set_write_enable(1'b1);
     set_addr(write_addr);
     set_wdata(write_data);
-    set_byte_en(write_byte_en);
+    set_size(size);
 
     @(posedge CLK);
 
@@ -490,6 +489,16 @@ module tb_caches ();
     tb_bus_if.addr = new_addr;
   endtask
 
+    // set_ren
+  // sets the read enable to the DUT and gold model
+  task set_trans;
+    input bus_pkg::trans_t new_trans;
+
+    DUT_bus_if.trans = new_trans;
+    gold_bus_if.trans = new_trans;
+    tb_bus_if.trans = new_trans;
+  endtask
+
   // set_wdata
   // sets the write data to the DUT and gold model
   task set_wdata;
@@ -502,32 +511,23 @@ module tb_caches ();
 
   // set_wen
   // sets the write enable to the DUT and gold model
-  task set_wen;
-    input logic new_wen;
+  task set_write_enable;
+    input logic new_write_enable;
 
-    DUT_bus_if.wen = new_wen;
-    gold_bus_if.wen = new_wen;
-    tb_bus_if.wen = new_wen;
-  endtask
-
-  // set_ren
-  // sets the read enable to the DUT and gold model
-  task set_ren;
-    input logic new_ren;
-
-    DUT_bus_if.ren = new_ren;
-    gold_bus_if.ren = new_ren;
-    tb_bus_if.ren = new_ren;
+    $info("enable write");
+    DUT_bus_if.write_enable = new_write_enable;
+    gold_bus_if.write_enable = new_write_enable;
+    tb_bus_if.write_enable = new_write_enable;
   endtask
 
   // set_byte_en
   // sets the byte enable to the DUT and gold model
-  task set_byte_en;
-    input logic [3:0] new_byte_en;
+  task set_size;
+    input logic [3:0] new_size;
 
-    DUT_bus_if.byte_en = new_byte_en;
-    gold_bus_if.byte_en = new_byte_en;
-    tb_bus_if.byte_en = new_byte_en;
+    DUT_bus_if.size = new_size;
+    gold_bus_if.size = new_size;
+    tb_bus_if.size = new_size;
   endtask
 
   // set_mem_ctrl

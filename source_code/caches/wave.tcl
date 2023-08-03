@@ -5,7 +5,7 @@
 #
 # You can restore this configuration with:
 #
-#      xrun -q -f edalize_main.f +xmtimescale+1ns/100ps -input /home/asicfab/a/socet136/AFTx07/RISCVBusiness/source_code/caches/wave.tcl -top tb_caches -access rwc
+#      xrun -q -f edalize_main.f +xmtimescale+1ns/100ps -input ./wave.tcl -top tb_caches -access rwc -input /home/asicfab/a/socet136/AFTx07/RISCVBusiness/source_code/caches/wave.tcl
 #
 
 set tcl_prompt1 {puts -nonewline "xcelium> "}
@@ -48,12 +48,9 @@ set svseed 1
 set assert_reporting_mode 0
 set vcd_compact_mode 0
 database -open -shm -into waves.shm waves -default
-probe -create -database waves tb_caches.nRST tb_caches.test tb_caches.CLK tb_caches.DUT_bus_if.addr tb_caches.DUT_bus_if.busy tb_caches.DUT_bus_if.byte_en tb_caches.DUT_bus_if.error tb_caches.DUT_bus_if.rdata tb_caches.DUT_bus_if.ren tb_caches.DUT_bus_if.wdata tb_caches.DUT_bus_if.wen tb_caches.mem_ctrl tb_caches.cache_2_ram_if.addr tb_caches.cache_2_ram_if.busy tb_caches.cache_2_ram_if.byte_en tb_caches.cache_2_ram_if.error tb_caches.cache_2_ram_if.rdata tb_caches.cache_2_ram_if.ren tb_caches.cache_2_ram_if.wdata tb_caches.cache_2_ram_if.wen tb_caches.tb_bus_if.addr tb_caches.tb_bus_if.busy tb_caches.tb_bus_if.byte_en tb_caches.tb_bus_if.error tb_caches.tb_bus_if.rdata tb_caches.tb_bus_if.ren tb_caches.tb_bus_if.wdata tb_caches.tb_bus_if.wen tb_caches.DUT.next_state tb_caches.DUT.curr_state tb_caches.DUT.req_addr tb_caches.DUT.hit tb_caches.DUT.frame_buffer tb_caches.DUT.frame_buffer_next tb_caches.DUT.direct_mem_req tb_caches.gold_bus_if.addr tb_caches.gold_bus_if.busy tb_caches.gold_bus_if.byte_en tb_caches.gold_bus_if.error tb_caches.gold_bus_if.rdata tb_caches.gold_bus_if.ren tb_caches.gold_bus_if.wdata tb_caches.gold_bus_if.wen tb_caches.DUT_ram_if.addr tb_caches.DUT_ram_if.busy tb_caches.DUT_ram_if.byte_en tb_caches.DUT_ram_if.error tb_caches.DUT_ram_if.rdata tb_caches.DUT_ram_if.ren tb_caches.DUT_ram_if.wdata tb_caches.DUT_ram_if.wen tb_caches.DUT_ram.v_lat_ram.memory tb_caches.DUT_ram.v_lat_ram.wdata_in tb_caches.DUT_ram.v_lat_ram.addr_in tb_caches.DUT_ram.v_lat_ram.byte_en_in tb_caches.DUT_ram.v_lat_ram.wen_in tb_caches.DUT_ram.v_lat_ram.ren_in tb_caches.DUT_ram.v_lat_ram.rdata_out tb_caches.DUT_ram.v_lat_ram.busy_out tb_caches.DUT.cache_mem.v_lat_ram.memory tb_caches.DUT.cache_mem.wdata tb_caches.DUT.cache_mem.addr tb_caches.DUT.cache_mem.byte_en tb_caches.DUT.cache_mem.wen tb_caches.DUT.cache_mem.ren tb_caches.DUT.cache_mem.rdata tb_caches.DUT.cache_mem.busy
-probe -create -database waves tb_caches.DUT.clear_flag tb_caches.DUT.flush_flag tb_caches.DUT.cache_busy tb_caches.DUT.request
-probe -create -database waves tb_caches.DUT.flush tb_caches.DUT.flush_reg tb_caches.DUT.init_flag tb_caches.DUT.clear tb_caches.DUT.clear_reg
-probe -create -database waves tb_caches.DUT.flush_cnt tb_caches.DUT.flush_done
-probe -create -database waves tb_caches.DUT.req_byte_en tb_caches.DUT.req_byte_en_expand
-probe -create -database waves tb_caches.gold_ram.v_lat_ram.memory
+probe -create -database waves tb_caches.DUT.state tb_caches.DUT.word_count_done tb_caches.DUT.word_num tb_caches.DUT.idle_done tb_caches.test tb_caches.CLK tb_caches.cache_2_ram_if.request.addr tb_caches.cache_2_ram_if.request.burst_length tb_caches.cache_2_ram_if.request.busy tb_caches.cache_2_ram_if.request.error tb_caches.cache_2_ram_if.request.rdata tb_caches.cache_2_ram_if.request.size tb_caches.cache_2_ram_if.request.trans tb_caches.cache_2_ram_if.request.wdata tb_caches.cache_2_ram_if.request.write_enable tb_caches.DUT_bus_if.response.addr tb_caches.DUT_bus_if.response.burst_length tb_caches.DUT_bus_if.response.busy tb_caches.DUT_bus_if.response.error tb_caches.DUT_bus_if.response.rdata tb_caches.DUT_bus_if.response.size tb_caches.DUT_bus_if.response.trans tb_caches.DUT_bus_if.response.wdata tb_caches.DUT_bus_if.response.write_enable tb_caches.tb_bus_if.addr tb_caches.tb_bus_if.burst_length tb_caches.tb_bus_if.busy tb_caches.tb_bus_if.error tb_caches.tb_bus_if.rdata tb_caches.tb_bus_if.req_ready tb_caches.tb_bus_if.size tb_caches.tb_bus_if.trans tb_caches.tb_bus_if.wdata tb_caches.tb_bus_if.write_enable tb_caches.DUT.hit_idx tb_caches.DUT.hit_data tb_caches.DUT.hit tb_caches.DUT.flush_req tb_caches.DUT.flush_idx tb_caches.DUT.flush_done tb_caches.DUT.flush tb_caches.DUT.sramWrite tb_caches.DUT.sramWEN tb_caches.DUT.sramSEL tb_caches.DUT.sramRead tb_caches.DUT.sramMask tb_caches.DUT.SRAM.sramMemory
+probe -create -database waves tb_caches.DUT_ram.v_lat_ram.memory
+probe -create -database waves tb_caches.DUT_ram_if.addr tb_caches.DUT_ram_if.burst_length tb_caches.DUT_ram_if.busy tb_caches.DUT_ram_if.error tb_caches.DUT_ram_if.rdata tb_caches.DUT_ram_if.req_ready tb_caches.DUT_ram_if.size tb_caches.DUT_ram_if.trans tb_caches.DUT_ram_if.wdata tb_caches.DUT_ram_if.write_enable
 probe -create -database waves
 
 simvision -input wave.tcl.svcf

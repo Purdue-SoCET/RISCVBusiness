@@ -6,6 +6,7 @@ filesets:
     rtl:
         depend:
             - "socet:riscv:packages"
+            - "socet:bus-components:bus_if"
         files:
             - caches_wrapper.sv
             - separate_caches.sv
@@ -55,7 +56,7 @@ targets:
             xcelium:
                 xrun_options:
                     - +xmtimescale+1ns/100ps
-                    - -input /home/asicfab/a/socet136/AFTx07/RISCVBusiness/source_code/caches/wave.tcl.svcf
+                    - -input ./wave.tcl
             vcs:
                 vcs_options:
                     - -assert svaext
