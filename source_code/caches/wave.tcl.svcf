@@ -1,4 +1,4 @@
-# SimVision Command Script (Thu Aug 03 01:53:48 PM EDT 2023)
+# SimVision Command Script (Thu Aug 03 09:18:42 PM EDT 2023)
 #
 # Version 23.03.s004
 #
@@ -11,10 +11,26 @@
 #
 # Preferences
 #
+preferences set toolbar-Standard-WatchWindow {
+  usual
+  shown 0
+}
 preferences set plugin-enable-svdatabrowser-new 1
+preferences set toolbar-Windows-WatchWindow {
+  usual
+  shown 0
+}
 preferences set plugin-enable-groupscope 0
 preferences set plugin-enable-interleaveandcompare 0
 preferences set plugin-enable-waveformfrequencyplot 0
+preferences set toolbar-SimControl-WatchWindow {
+  usual
+  shown 0
+}
+preferences set toolbar-TimeSearch-WatchWindow {
+  usual
+  shown 0
+}
 
 #
 # Simulator
@@ -34,6 +50,8 @@ catch {group new -name SRAM -overlay 0}
 catch {group new -name tb_bus -overlay 0}
 catch {group new -name RAM -overlay 0}
 catch {group new -name ram_bus -overlay 0}
+catch {group new -name ahb-ram_bus -overlay 0}
+catch {group new -name {Group 2} -overlay 0}
 group using System
 group set -overlay 0
 group set -comment {}
@@ -97,14 +115,15 @@ group set -comment {}
 group clear 0 end
 
 group insert \
+    [subst  {simulator::[format {tb_caches.DUT.decoded_addr}]} ] \
     [subst  {simulator::[format {tb_caches.DUT.sramWrite}]} ] \
     [subst  {simulator::[format {tb_caches.DUT.sramWEN}]} ] \
     [subst  {simulator::[format {tb_caches.DUT.sramSEL[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.SRAM.rVal[90:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.DUT.SRAM.wVal[90:0]}]} ] \
     [subst  {simulator::[format {tb_caches.DUT.sramRead}]} ] \
     [subst  {simulator::[format {tb_caches.DUT.sramMask}]} ] \
-    [subst  {simulator::[format {tb_caches.DUT.SRAM.sramMemory[15:0]}]} ] \
-    [subst  {simulator::[format {tb_caches.tb_bus_if.ADDR_WIDTH}]} ] \
-    [subst  {simulator::[format {tb_caches.tb_bus_if.DATA_WIDTH}]} ]
+    [subst  {simulator::[format {tb_caches.DUT.SRAM.sramMemory[15:0]}]} ]
 group using tb_bus
 group set -overlay 0
 group set -comment {}
@@ -127,7 +146,8 @@ group set -comment {}
 group clear 0 end
 
 group insert \
-    ram_bus \
+    ahb-ram_bus \
+    [subst  {simulator::[format {tb_caches.DUT.decoded_req_addr}]} ] \
     [subst  {simulator::[format {tb_caches.DUT_ram.mask[3:0]}]} ] \
     [subst  {simulator::[format {tb_caches.DUT_ram.v_lat_ram.memory}]} ]
 group using ram_bus
@@ -146,6 +166,27 @@ group insert \
     [subst  {simulator::[format {tb_caches.DUT_ram_if.trans[1:0]}]} ] \
     [subst  {simulator::[format {tb_caches.DUT_ram_if.wdata[31:0]}]} ] \
     [subst  {simulator::[format {tb_caches.DUT_ram_if.write_enable}]} ]
+group using ahb-ram_bus
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.addr[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.burst_length[3:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.busy}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.error}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.rdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.req_ready}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.size[2:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.trans[1:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.wdata[31:0]}]} ] \
+    [subst  {simulator::[format {tb_caches.ram_bus_if.write_enable}]} ]
+group using {Group 2}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
 
 #
 # Mnemonic Maps
@@ -156,6 +197,20 @@ mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor or
 {%x=1F -bgcolor red -label ERROR -linecolor white -shape EVENT}
 {%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
 {%x=* -label %x -linecolor gray -shape bus}}
+
+#
+# Design Browser windows
+#
+if {[catch {window new WatchList -name "Design Browser 1" -geometry 730x500+261+33}] != ""} {
+    window geometry "Design Browser 1" 730x500+261+33
+}
+window target "Design Browser 1" on
+browser using {Design Browser 1}
+browser set -scope [subst  {simulator::[format {tb_caches.ram_bus_if}]} ]
+browser set \
+    -signalsort name
+browser yview see [subst  {simulator::[format {tb_caches.ram_bus_if}]} ]
+browser timecontrol set -lock 0
 
 #
 # Waveform windows
@@ -183,9 +238,11 @@ waveform hierarchy collapse $groupId0
 
 
 set groupId0 [waveform add -groups proc_bus]
+waveform hierarchy collapse $groupId0
 
 
 set groupId0 [waveform add -groups tb_bus]
+waveform hierarchy collapse $groupId0
 
 set id [waveform add -signals [subst  {
 	{simulator::[format {tb_caches.DUT.state}]}
@@ -213,16 +270,18 @@ set groupId0 [waveform add -groups SRAM]
 
 set groupId0 [waveform add -groups RAM]
 
-set groupId1 [waveform find -name ram_bus]
+set groupId1 [waveform find -name ahb-ram_bus]
 waveform hierarchy collapse $groupId1
 
 set gpGlist0 [waveform hierarchy contents $groupId0]
 set gpID0 [lindex $gpGlist0 0]
 foreach {name attrs} [subst  {
-    groupId58 {}
+    groupId189 {}
+    {simulator::[format {tb_caches.DUT.decoded_req_addr}]} {}
     {simulator::[format {tb_caches.DUT_ram.mask[3:0]}]} {}
     {simulator::[format {tb_caches.DUT_ram.v_lat_ram.memory}]} {-trace assocarray}
 }] childcmds {
+    {}
     {}
     {}
 } {
@@ -239,8 +298,14 @@ foreach {name attrs} [subst  {
     set gpID0 [lindex $gpGlist0 0]
 }
 
+set id [waveform add -signals [subst  {
+	{simulator::[format {tb_caches.ram_bus_if.ADDR_WIDTH}]}
+	} ]]
+set id [waveform add -signals [subst  {
+	{simulator::[format {tb_caches.ram_bus_if.DATA_WIDTH}]}
+	} ]]
 
-waveform xview limits 100000ps 535000ps
+waveform xview limits 671600ps 923000ps
 
 #
 # Waveform Window Links

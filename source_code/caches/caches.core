@@ -23,6 +23,9 @@ filesets:
             - ../standard_core/endian_swapper.sv
         file_type: systemVerilogSource
     tb:
+        depend:
+            - "socet:bus-components:ahb_manager"
+            - "socet:bus-components:ahb_subordinate"
         files:
             - ../tb/tb_caches.sv
         file_type: systemVerilogSource

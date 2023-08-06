@@ -71,6 +71,8 @@ module tb_caches ();
   bus_if tb_bus_if();
   bus_if DUT_ram_if();
   bus_if cache_2_ram_if();
+  bus_if ram_bus_if();
+  ahb_if ahb_bus(CLK, nRST);
   logic DUT_flush, DUT_clear;
 
   l1_cache DUT (
@@ -119,10 +121,22 @@ module tb_caches ();
   assign cache_2_ram_if.busy      = !(mem_ctrl == CACHE_CONTROL) || DUT_ram_if.busy;
   assign tb_bus_if.busy           = !(mem_ctrl == TB_CONTROL) || DUT_ram_if.busy;
 
+
+  ahb_manager mem_bus_manager (
+    .bus(DUT_ram_if),
+    .ahb(ahb_bus)
+  );
+  
+  ahb_subordinate ram_sub (
+    .ahb(ahb_bus),
+    .bus(ram_bus_if)
+  );
+  
+
   ram_wrapper DUT_ram (
     .CLK(CLK),
     .nRST(nRST),
-    .bus(DUT_ram_if)
+    .bus(ram_bus_if)
   );
 
   // -- Gold Model -- //
@@ -191,8 +205,8 @@ module tb_caches ();
     read_cache_check(tb_addr);
 
     // write halfwords to cache
-    tb_wdata = DATA_2;
     test = "write halfwords to cache";
+    tb_wdata = DATA_2;
     tb_addr = tb_addr + 4;
     write_cache(tb_addr, tb_wdata, bus_pkg::HALFWORD);
     read_cache_check(tb_addr);
@@ -377,6 +391,7 @@ module tb_caches ();
     set_size(bus_pkg::WORD);
   
     @(posedge CLK);
+    
 
     while (caches_busy()) begin
       @(posedge CLK);
@@ -435,8 +450,11 @@ module tb_caches ();
     input word_t write_data;
     input bus_pkg::size_t size;
 
+    #(PERIOD / 8);
+
     set_mem_ctrl(TB_CONTROL);
     set_trans(bus_pkg::NONSEQ);
+    DUT_bus_if.trans = bus_pkg::IDLE;
     set_write_enable(1'b1);
     set_addr(write_addr);
     set_wdata(write_data);
@@ -453,7 +471,10 @@ module tb_caches ();
   task clear_line;
     input logic [RAM_ADDR_SIZE-1:0] clear_addr;
     
+    #(PERIOD / 8);
+
     DUT_clear = 1'b1;
+    set_trans(bus_pkg::IDLE);
     set_addr(clear_addr);
     @(posedge CLK);
     DUT_clear = 1'b0;
@@ -462,6 +483,9 @@ module tb_caches ();
   // flush
   // Sends the request to flush the entire contents of the cache
   task flush_cache;
+
+    #(PERIOD / 8);
+
     DUT_flush = 1'b1;
     @(posedge CLK);
     DUT_flush = 1'b0;
@@ -514,7 +538,6 @@ module tb_caches ();
   task set_write_enable;
     input logic new_write_enable;
 
-    $info("enable write");
     DUT_bus_if.write_enable = new_write_enable;
     gold_bus_if.write_enable = new_write_enable;
     tb_bus_if.write_enable = new_write_enable;
