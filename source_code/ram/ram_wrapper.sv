@@ -49,7 +49,7 @@ module ram_wrapper #(
     assign mask = { bus.size[1], bus.size[1], |bus.size[1:0], 1'b1 } << (bus.addr[1:0] >> bus.size);
     
     ram_sim_model #(
-        .LAT(0),
+        .LAT(9),
         .ENDIANNESS(BUS_ENDIANNESS),
         .N_BYTES(N_BYTES)
     ) v_lat_ram (

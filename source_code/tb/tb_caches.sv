@@ -437,6 +437,7 @@ module tb_caches ();
 
     set_mem_ctrl(TB_CONTROL);
     set_trans(bus_pkg::NONSEQ);
+    DUT_bus_if.trans = bus_pkg::IDLE;
     set_write_enable(1'b1);
     set_addr(write_addr);
     set_wdata(write_data);

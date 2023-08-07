@@ -79,7 +79,7 @@ module l1_cache #(
     } flush_idx_t;             // flush counter type
 
     typedef enum {
-       IDLE, HIT, FETCH, WB, FLUSH_CACHE
+       IDLE, HIT, FETCH, WB, FLUSH_CACHE, CLEAR_CACHE
     } cache_fsm_t;            // cache state machine
     
     // counter signals
@@ -244,17 +244,6 @@ module l1_cache #(
 
                             sramWEN = 1;
                             sramMask.frames[hit_idx].data[decoded_addr.block_bits] = ~({proc_bus_if.size[1] ? 16'hFFFF : 16'h0, |proc_bus_if.size[1:0] ? 8'hFF : 8'h0, 8'hFF } << 8*(decoded_addr.byte_bits >> proc_bus_if.size));
-                            /*
-                            casez (proc_bus_if.byte_en)
-                                4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'hFFFFFF00;
-                                4'b0010:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'hFFFF00FF;
-                                4'b0100:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'hFF00FFFF;
-                                4'b1000:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h00FFFFFF;
-                                4'b0011:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'hFFFF0000;
-                                4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h0000FFFF;
-                                default:    sramMask.frames[hit_idx].data[decoded_addr.block_bits] = 32'h0;
-                            endcase
-                            */
                             sramMask.frames[hit_idx].dirty = 0;														   				   
                             sramWrite.frames[hit_idx].data[decoded_addr.block_bits] = proc_bus_if.wdata;
                             sramWrite.frames[hit_idx].dirty = 1;
@@ -358,6 +347,38 @@ module l1_cache #(
                     flush_done 	       = 1;
                 end
             end
+            CLEAR_CACHE: begin
+                // clear to memory if valid & dirty
+                if (sramRead.frames[ridx].valid && sramRead.frames[ridx].dirty) begin
+                    mem_bus_if.write_enable    = 1'b1;
+                    mem_bus_if.trans  = bus_pkg::NONSEQ;
+                    mem_bus_if.addr   = {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00}; 
+                    mem_bus_if.wdata  = sramRead.frames[ridx].data[word_num];
+                    // increment to next word when flush of word is done
+                    if (~mem_bus_if.busy) begin
+                        // clears entry when flushed
+                        if (word_count_done) begin
+                            sramWEN = 1;
+                            clear_word_count = 1;
+                            clear_done = 1;
+                            sramWrite.frames[ridx].dirty = 0;
+                            sramMask.frames[ridx].dirty = 0;
+                            sramWrite.frames[ridx].valid = 0;
+                            sramMask.frames[ridx].valid = 0;
+                        end else begin
+                            enable_word_count = 1;
+                        end
+                    end
+                end
+
+                sramWEN = 1;
+                clear_word_count = 1;
+                clear_done = 1;
+                sramWrite.frames[ridx].dirty = 0;
+                sramMask.frames[ridx].dirty = 0;
+                sramWrite.frames[ridx].valid = 0;
+                sramMask.frames[ridx].valid = 0;
+            end
         endcase
     end
 
@@ -374,8 +395,10 @@ module l1_cache #(
                     next_state = WB;
                 else if ((proc_bus_if.trans == bus_pkg::NONSEQ || proc_bus_if.trans == bus_pkg::NONSEQ) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
-                if (flush || flush_req)  
+                else if (flush || flush_req)
                     next_state = FLUSH_CACHE;
+                else if (clear)
+                    next_state = CLEAR_CACHE;
 	        end
 	        FETCH: begin
                 if (mem_bus_if.error || decoded_addr != decoded_req_addr || proc_bus_if.trans == bus_pkg::IDLE)
@@ -393,6 +416,9 @@ module l1_cache #(
                 if (flush_done)
                     next_state = HIT;
 	        end
+            CLEAR_CACHE: begin
+                if(clear_done) next_state = HIT;
+            end
 	    endcase
     end
 
