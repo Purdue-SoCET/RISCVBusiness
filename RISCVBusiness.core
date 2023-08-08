@@ -5,7 +5,7 @@ description: RISC-V Core for AFTx series
 filesets:
     rtl:
         depend:
-            - "socet:bus-components:bus_protocol_if"
+            - "socet:bus-components:bus_if"
             - "socet:bus-components:ahb_if"
             - "socet:bus-components:apb_if"
             - "socet:riscv:packages"

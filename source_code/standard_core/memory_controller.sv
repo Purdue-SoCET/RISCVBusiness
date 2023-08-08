@@ -30,9 +30,9 @@
 module memory_controller (
     input logic CLK,
     nRST,
-    generic_bus_if.generic_bus d_gen_bus_if,
-    generic_bus_if.generic_bus i_gen_bus_if,
-    generic_bus_if.cpu out_gen_bus_if
+    bus_if.response d_bus,
+    bus_if.response i_bus,
+    bus_if.request out_bus
 );
 
     /* State Declaration */
@@ -75,55 +75,61 @@ module memory_controller (
     always_comb begin
         case (current_state)
             IDLE: begin
-                if (d_gen_bus_if.ren || d_gen_bus_if.wen) next_state = DATA_REQ;
-                else if (i_gen_bus_if.ren) next_state = INSTR_REQ;
+                //if (d_bus.trans == bus_pkg::NONSEQ) next_state = DATA_REQ;
+                //else if (i_bus.trans == bus_pkg::NONSEQ) next_state = INSTR_REQ;
+                if (d_bus.trans == bus_pkg::NONSEQ) next_state = DATA_WAIT;
+                else if (i_bus.trans == bus_pkg::NONSEQ) next_state = INSTR_WAIT;
                 else next_state = IDLE;
             end
 
+            /*
             INSTR_REQ: begin
-                if (!i_gen_bus_if.ren)  // Abort request, received an interrupt
+                if (~(i_bus.trans == bus_pkg::NONSEQ || i_bus.trans == bus_pkg::SEQ))  // Abort request, received an interrupt
                     next_state = IDLE;
-                else if (d_gen_bus_if.ren || d_gen_bus_if.wen) next_state = INSTR_DATA_REQ;
+                //else if (d_bus.trans == bus_pkg::NONSEQ) next_state = INSTR_DATA_REQ;
                 else next_state = INSTR_WAIT;
             end
 
             INSTR_DATA_REQ: begin
-                if (out_gen_bus_if.busy == 1'b0) next_state = DATA_WAIT;
+                if (~out_bus.busy) next_state = DATA_WAIT;
                 else next_state = INSTR_DATA_REQ;
             end
 
             DATA_REQ: begin
-                if (i_gen_bus_if.ren) next_state = DATA_INSTR_REQ;
+                if (i_bus.ren) next_state = DATA_INSTR_REQ;
                 else next_state = DATA_WAIT;
             end
 
             DATA_INSTR_REQ: begin
                 // Abort request, received an interrupt
-                if(!i_gen_bus_if.ren && out_gen_bus_if.busy == 1'b0)
+                if(!i_bus.ren && out_bus.busy == 1'b0)
                     next_state = IDLE;
-                else if (out_gen_bus_if.busy == 1'b0) next_state = INSTR_WAIT;
+                else if (out_bus.busy == 1'b0) next_state = INSTR_WAIT;
                 else next_state = DATA_INSTR_REQ;
             end
+            */
 
             INSTR_WAIT: begin
-                if (out_gen_bus_if.busy == 1'b0) begin
-                    if (d_gen_bus_if.ren || d_gen_bus_if.wen) next_state = DATA_REQ;
+                if (~out_bus.busy ) begin
+                    if (i_bus.trans == bus_pkg::SEQ) next_state = INSTR_REQ;
+                    else if (d_bus.trans == bus_pkg::NONSEQ) next_state = DATA_WAIT;
                     else next_state = IDLE;
-                end else if (d_gen_bus_if.ren || d_gen_bus_if.wen) next_state = INSTR_DATA_REQ;
-                else if(!i_gen_bus_if.ren) next_state = CANCEL_REQ_WAIT;
+                end
+                else if(~(i_bus.trans == bus_pkg::NONSEQ || i_bus.trans == bus_pkg::SEQ)) next_state = CANCEL_REQ_WAIT;
                 else next_state = INSTR_WAIT;
             end
 
             DATA_WAIT: begin
-                if (out_gen_bus_if.busy == 1'b0) begin
-                    if (i_gen_bus_if.ren) next_state = INSTR_REQ;
+                if (~out_bus.busy ) begin
+                    if (d_bus.trans == bus_pkg::SEQ) next_state = DATA_REQ;
+                    else if (i_bus.trans == bus_pkg::NONSEQ) next_state = INSTR_WAIT;
                     else next_state = IDLE;
-                end else if (i_gen_bus_if.ren) next_state = DATA_INSTR_REQ;
+                end
                 else next_state = DATA_WAIT;
             end
 
             CANCEL_REQ_WAIT: begin
-                if(out_gen_bus_if.busy == 1'b0) begin
+                if(~out_bus.busy) begin
                     next_state = IDLE;
                 end else begin
                     next_state = CANCEL_REQ_WAIT;
@@ -138,120 +144,133 @@ module memory_controller (
     always_comb begin
         case (current_state)
             IDLE: begin
-                out_gen_bus_if.wen     = 0;
-                out_gen_bus_if.ren     = 0;
-                out_gen_bus_if.addr    = 0;
-                out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
-                d_gen_bus_if.busy      = 1'b1;
-                d_gen_bus_if.error     = 1'b0;
-                i_gen_bus_if.busy      = 1'b1;
-                i_gen_bus_if.error     = 1'b0;
+                if(i_bus.trans == bus_pkg::NONSEQ) begin
+                    out_bus.trans           = i_bus.trans;
+                    out_bus.addr            = i_bus.addr;
+                    out_bus.size            = i_bus.size;
+                    out_bus.write_enable    = 1'b0;
+                end else if(d_bus.trans == bus_pkg::NONSEQ) begin
+                    out_bus.trans           = d_bus.trans;
+                    out_bus.write_enable    = d_bus.write_enable;
+                    out_bus.addr            = d_bus.addr;
+                    out_bus.size            = d_bus.size;
+                end else begin
+                    out_bus.trans           = bus_pkg::IDLE;
+                    out_bus.addr            = 0;
+                    out_bus.size            = bus_pkg::WORD;
+                    out_bus.write_enable    = 1'b0;
+                end
+                d_bus.busy      = 1'b0;
+                d_bus.error     = 1'b0;
+                i_bus.busy      = 1'b0;
+                i_bus.error     = 1'b0;
             end
 
             //-- INSTRUCTION REQUEST --//
             // Byte enable is relevant to data phase
+            /*
             INSTR_REQ: begin
-                out_gen_bus_if.wen     = i_gen_bus_if.wen;
-                out_gen_bus_if.ren     = i_gen_bus_if.ren;
-                out_gen_bus_if.addr    = i_gen_bus_if.addr;
-                out_gen_bus_if.byte_en = i_gen_bus_if.byte_en;
-                d_gen_bus_if.busy      = 1'b1;
-                d_gen_bus_if.error     = 1'b0;
-                i_gen_bus_if.busy      = 1'b1;
-                i_gen_bus_if.error     = 1'b0;
+                out_bus.wen     = i_bus.wen;
+                out_bus.ren     = i_bus.ren;
+                out_bus.addr    = i_bus.addr;
+                out_bus.byte_en = i_bus.byte_en;
+                d_bus.busy      = 1'b1;
+                d_bus.error     = 1'b0;
+                i_bus.busy      = 1'b1;
+                i_bus.error     = 1'b0;
             end
             INSTR_DATA_REQ: begin
-                out_gen_bus_if.wen     = d_gen_bus_if.wen;
-                out_gen_bus_if.ren     = d_gen_bus_if.ren;
-                out_gen_bus_if.addr    = d_gen_bus_if.addr;
-                out_gen_bus_if.byte_en = i_gen_bus_if.byte_en;
-                i_gen_bus_if.busy      = out_gen_bus_if.busy;
-                i_gen_bus_if.error     = out_gen_bus_if.error;
-                d_gen_bus_if.busy      = 1'b1;
-                d_gen_bus_if.error     = 1'b0;
+                out_bus.wen     = d_bus.wen;
+                out_bus.ren     = d_bus.ren;
+                out_bus.addr    = d_bus.addr;
+                out_bus.byte_en = i_bus.byte_en;
+                i_bus.busy      = out_bus.busy;
+                i_bus.error     = out_bus.error;
+                d_bus.busy      = 1'b1;
+                d_bus.error     = 1'b0;
             end
+            */
             INSTR_WAIT: begin
-                out_gen_bus_if.wen     = 0;
-                out_gen_bus_if.ren     = 0;
-                out_gen_bus_if.addr    = 0;
-                out_gen_bus_if.byte_en = i_gen_bus_if.byte_en;
-                d_gen_bus_if.busy      = 1'b1;
-                d_gen_bus_if.error     = 1'b0;
-                i_gen_bus_if.busy      = out_gen_bus_if.busy;
-                i_gen_bus_if.error     = out_gen_bus_if.error;
+                out_bus.trans           = i_bus.trans;
+                out_bus.write_enable    = 0;
+                out_bus.addr            = i_bus.addr;
+                out_bus.size            = i_bus.size;
+                d_bus.busy      = 1'b1;
+                d_bus.error     = 1'b0;
+                i_bus.busy      = out_bus.busy;
+                i_bus.error     = out_bus.error;
             end
 
             //-- DATA REQUEST --//
+            /*
             DATA_REQ: begin
-                out_gen_bus_if.wen     = d_gen_bus_if.wen;
-                out_gen_bus_if.ren     = d_gen_bus_if.ren;
-                out_gen_bus_if.addr    = d_gen_bus_if.addr;
-                out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
-                d_gen_bus_if.busy      = 1'b1;
-                d_gen_bus_if.error     = 1'b0;
-                i_gen_bus_if.busy      = 1'b1;
-                i_gen_bus_if.error     = 1'b0;
+                out_bus.wen     = d_bus.wen;
+                out_bus.ren     = d_bus.ren;
+                out_bus.addr    = d_bus.addr;
+                out_bus.byte_en = d_bus.byte_en;
+                d_bus.busy      = 1'b1;
+                d_bus.error     = 1'b0;
+                i_bus.busy      = 1'b1;
+                i_bus.error     = 1'b0;
             end
             DATA_INSTR_REQ: begin
-                out_gen_bus_if.wen     = i_gen_bus_if.wen;
-                out_gen_bus_if.ren     = i_gen_bus_if.ren;
-                out_gen_bus_if.addr    = i_gen_bus_if.addr;
-                out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
-                d_gen_bus_if.busy      = out_gen_bus_if.busy;
-                d_gen_bus_if.error     = out_gen_bus_if.error;
-                i_gen_bus_if.busy      = 1'b1;
-                i_gen_bus_if.error     = 1'b0;
+                out_bus.wen     = i_bus.wen;
+                out_bus.ren     = i_bus.ren;
+                out_bus.addr    = i_bus.addr;
+                out_bus.byte_en = d_bus.byte_en;
+                d_bus.busy      = out_bus.busy;
+                d_bus.error     = out_bus.error;
+                i_bus.busy      = 1'b1;
+                i_bus.error     = 1'b0;
             end
+            */
             DATA_WAIT: begin
-                //out_gen_bus_if.wen     = d_gen_bus_if.wen;
-                //out_gen_bus_if.ren     = d_gen_bus_if.ren;
-                //out_gen_bus_if.addr    = d_gen_bus_if.addr;
-                out_gen_bus_if.wen     = 0;
-                out_gen_bus_if.ren     = 0;
-                out_gen_bus_if.addr    = 0;
-                out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
-                i_gen_bus_if.busy      = 1'b1;
-                i_gen_bus_if.error     = 1'b0;
-                d_gen_bus_if.busy      = out_gen_bus_if.busy;
-                d_gen_bus_if.error     = out_gen_bus_if.error;
+                out_bus.trans           = d_bus.trans;
+                out_bus.write_enable    = d_bus.write_enable;
+                out_bus.addr            = d_bus.addr;
+                out_bus.size            = d_bus.size;
+                i_bus.busy              = 1'b1;
+                i_bus.error             = 1'b0;
+                d_bus.busy              = out_bus.busy;
+                d_bus.error             = out_bus.error;
             end
 
             CANCEL_REQ_WAIT: begin
-                out_gen_bus_if.wen     = 0;
-                out_gen_bus_if.ren     = 0;
-                out_gen_bus_if.addr    = 0;
-                out_gen_bus_if.byte_en = 0;
-                i_gen_bus_if.busy      = 1;
-                i_gen_bus_if.error     = 0;
-                d_gen_bus_if.busy      = 1;
-                d_gen_bus_if.error     = 0;
+                out_bus.trans           = bus_pkg::IDLE;
+                out_bus.write_enable    = 0;
+                out_bus.addr            = 0;
+                out_bus.size            = bus_pkg::WORD;
+                i_bus.busy              = 1;
+                i_bus.error             = 0;
+                d_bus.busy              = 1;
+                d_bus.error             = 0;
             end
 
             default: begin
-                out_gen_bus_if.wen     = 0;
-                out_gen_bus_if.ren     = 0;
-                out_gen_bus_if.addr    = 0;
-                out_gen_bus_if.byte_en = d_gen_bus_if.byte_en;
-                d_gen_bus_if.busy      = 1'b1;
-                d_gen_bus_if.error     = 1'b0;
-                i_gen_bus_if.busy      = 1'b1;
-                i_gen_bus_if.error     = 1'b0;
+                out_bus.trans           = bus_pkg::IDLE;
+                out_bus.write_enable     = 0;
+                out_bus.addr            = 0;
+                out_bus.size            = bus_pkg::WORD;
+                d_bus.busy              = 1'b1;
+                d_bus.error             = 1'b0;
+                i_bus.busy              = 1'b1;
+                i_bus.error             = 1'b0;
             end
         endcase
     end
 
     generate
         if (BUS_ENDIANNESS == "big") begin : g_mc_bus_be
-            assign wdata = d_gen_bus_if.wdata;
-            assign rdata = out_gen_bus_if.rdata;
+            assign wdata = d_bus.wdata;
+            assign rdata = out_bus.rdata;
         end else if (BUS_ENDIANNESS == "little") begin : g_mc_bus_le
             logic [31:0] little_endian_wdata, little_endian_rdata;
             endian_swapper wswap (
-                .word_in(d_gen_bus_if.wdata),
+                .word_in(d_bus.wdata),
                 .word_out(little_endian_wdata)
             );
             endian_swapper rswap (
-                .word_in(out_gen_bus_if.rdata),
+                .word_in(out_bus.rdata),
                 .word_out(little_endian_rdata)
             );
             assign wdata = little_endian_wdata;
@@ -259,7 +278,7 @@ module memory_controller (
         end
     endgenerate
 
-    assign out_gen_bus_if.wdata = wdata;
-    assign d_gen_bus_if.rdata   = rdata;
-    assign i_gen_bus_if.rdata   = rdata;
+    assign out_bus.wdata = wdata;
+    assign d_bus.rdata   = rdata;
+    assign i_bus.rdata   = rdata;
 endmodule

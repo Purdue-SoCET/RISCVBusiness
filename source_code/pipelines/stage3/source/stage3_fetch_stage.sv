@@ -38,7 +38,7 @@ module stage3_fetch_stage (
     stage3_mem_pipe_if.fetch mem_fetch_if,
     stage3_hazard_unit_if.fetch hazard_if,
     predictor_pipeline_if.access predict_if,
-    generic_bus_if.cpu igen_bus_if,
+    bus_if.request i_bus,
     sparce_pipeline_if.pipe_fetch sparce_if,
     rv32c_if.fetch rv32cif,
     prv_pipeline_if.fetch prv_pipe_if
@@ -67,7 +67,7 @@ module stage3_fetch_stage (
     end
 
     //RV32C
-    assign rv32cif.inst = igen_bus_if.rdata;
+    assign rv32cif.inst = i_bus.rdata;
     assign rv32cif.inst_arrived = hazard_if.if_ex_flush == 0 & hazard_if.if_ex_stall == 0;
     assign rv32cif.reset_en = hazard_if.insert_priv_pc | hazard_if.rollback | sparce_if.skipping
                               | hazard_if.npc_sel | predict_if.predict_taken;
@@ -91,25 +91,25 @@ module stage3_fetch_stage (
                  : pc4or2))));
 
     //Instruction Access logic
-    assign hazard_if.i_mem_busy = igen_bus_if.busy && !fault_insn;
-    assign igen_bus_if.addr = rv32cif.rv32c_ena ? rv32cif.imem_pc : pc;
-    assign igen_bus_if.ren = hazard_if.iren && !rv32cif.done_earlier && !hazard_if.suppress_iren;
-    assign igen_bus_if.wen = 1'b0;
-    assign igen_bus_if.byte_en = 4'b1111;
-    assign igen_bus_if.wdata = '0;
+    assign hazard_if.i_mem_busy = i_bus.busy && !fault_insn;
+    assign i_bus.trans = hazard_if.iren && !rv32cif.done_earlier && !hazard_if.suppress_iren ? bus_pkg::NONSEQ : bus_pkg::IDLE;
+    assign i_bus.addr = rv32cif.rv32c_ena ? rv32cif.imem_pc : pc;
+    assign i_bus.write_enable = 1'b0;
+    assign i_bus.size = bus_pkg::WORD;
+    assign i_bus.wdata = '0;
 
 
-    assign mal_addr = (igen_bus_if.addr[1:0] != 2'b00);
-    assign fault_insn = prv_pipe_if.prot_fault_i || (igen_bus_if.ren && igen_bus_if.error); // TODO: Set this up to fault on bus error
+    assign mal_addr = (i_bus.addr[1:0] != 2'b00);
+    assign fault_insn = prv_pipe_if.prot_fault_i || (i_bus.trans == bus_pkg::NONSEQ && i_bus.error); // TODO: Set this up to fault on bus error
     assign mal_insn = mal_addr;
-    assign badaddr = igen_bus_if.addr;
+    assign badaddr = i_bus.addr;
     assign hazard_if.pc_f = pc;
     assign hazard_if.rv32c_ready = rv32cif.done_earlier && rv32cif.rv32c_ena; // TODO: Is rv32cif.done needed? Seems like it coincides with busy = 0
 
 
     //Fetch Execute Pipeline Signals
     word_t instr_to_ex;
-    assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
+    assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : i_bus.rdata;
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) fetch_ex_if.fetch_ex_reg <= '0;
         else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_ex_if.fetch_ex_reg <= '0;
@@ -135,15 +135,15 @@ module stage3_fetch_stage (
 
     // Send memory protection signals
     assign prv_pipe_if.iren = hazard_if.iren;
-    assign prv_pipe_if.iaddr = igen_bus_if.addr;
+    assign prv_pipe_if.iaddr = i_bus.addr;
     assign prv_pipe_if.i_acc_width = WordAcc;
 
     // Choose the endianness of the data coming into the processor
     generate
-        if (BUS_ENDIANNESS == "big") assign instr = igen_bus_if.rdata;
+        if (BUS_ENDIANNESS == "big") assign instr = i_bus.rdata;
         else if (BUS_ENDIANNESS == "little")
             endian_swapper ltb_endian (
-                .word_in(igen_bus_if.rdata),
+                .word_in(i_bus.rdata),
                 .word_out(instr)
             );
     endgenerate
@@ -153,7 +153,7 @@ module stage3_fetch_stage (
       *********************************************************/
 
     assign sparce_if.pc = pc;
-    assign sparce_if.rdata = igen_bus_if.rdata;
+    assign sparce_if.rdata = i_bus.rdata;
 endmodule
 
 

@@ -265,6 +265,8 @@ module l1_cache #(
                         end 
                     end else if(~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin // cache miss on a clean block
                         next_decoded_req_addr = decoded_addr;
+                        mem_bus_if.trans = bus_pkg::NONSEQ;
+                        mem_bus_if.addr = decoded_addr;
                         next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                     end else if(~hit && sramRead.frames[ridx].dirty && ~pass_through) begin // cache miss on a dirty block
                         next_decoded_req_addr = decoded_addr;

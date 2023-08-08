@@ -12,7 +12,7 @@ module stage3_mem_stage(
     stage3_mem_pipe_if.mem ex_mem_if,
     stage3_hazard_unit_if.mem hazard_if,
     stage3_forwarding_unit_if.mem fw_if,
-    generic_bus_if.cpu dgen_bus_if,
+    bus_if.request d_bus,
     prv_pipeline_if.pipe prv_pipe_if,
     cache_control_if.pipeline cc_if,
     predictor_pipeline_if.update predict_if,
@@ -46,10 +46,10 @@ module stage3_mem_stage(
 
 
     // TODO: RISC-MGMT
-    assign dgen_bus_if.ren = ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data;
-    assign dgen_bus_if.wen = ex_mem_if.ex_mem_reg.dwen && !hazard_if.suppress_data;
-    assign dgen_bus_if.byte_en = byte_en;
-    assign dgen_bus_if.addr = ex_mem_if.ex_mem_reg.port_out;
+    assign d_bus.trans = (ex_mem_if.ex_mem_reg.dren || ex_mem_if.ex_mem_reg.dwen)  && !hazard_if.suppress_data ? bus_pkg::NONSEQ : bus_pkg::IDLE;
+    assign d_bus.write_enable = ex_mem_if.ex_mem_reg.dwen && !hazard_if.suppress_data;
+    assign d_bus.size = bus_pkg::WORD; //byte_en;
+    assign d_bus.addr = ex_mem_if.ex_mem_reg.port_out;
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
 
     // TODO: RISC-MGMT
@@ -57,9 +57,9 @@ module stage3_mem_stage(
 
     // Address alignment
     always_comb begin
-        if (byte_en == 4'hf) mal_addr = (dgen_bus_if.addr[1:0] != 2'b00);
+        if (byte_en == 4'hf) mal_addr = (d_bus.addr[1:0] != 2'b00);
         else if (byte_en == 4'h3 || byte_en == 4'hc) begin
-            mal_addr = (dgen_bus_if.addr[1:0] == 2'b01 || dgen_bus_if.addr[1:0] == 2'b11);
+            mal_addr = (d_bus.addr[1:0] == 2'b01 || d_bus.addr[1:0] == 2'b11);
         end else mal_addr = 1'b0;
     end
 
@@ -69,7 +69,7 @@ module stage3_mem_stage(
     );
 
     dmem_extender dmem_ext(
-        .dmem_in(dgen_bus_if.rdata),
+        .dmem_in(d_bus.rdata),
         .load_type(ex_mem_if.ex_mem_reg.load_type),
         .byte_en(byte_en),
         .ext_out(dload_ext)
@@ -106,10 +106,10 @@ module stage3_mem_stage(
     // TODO: RISC-MGMT
     always_comb begin : STORE_TYPE
         case(ex_mem_if.ex_mem_reg.load_type)
-            LB: dgen_bus_if.wdata = {4{ex_mem_if.ex_mem_reg.rs2_data[7:0]}};
-            LH: dgen_bus_if.wdata = {2{ex_mem_if.ex_mem_reg.rs2_data[15:0]}};
-            LW: dgen_bus_if.wdata = ex_mem_if.ex_mem_reg.rs2_data;
-            default: dgen_bus_if.wdata = '0;
+            LB: d_bus.wdata = {4{ex_mem_if.ex_mem_reg.rs2_data[7:0]}};
+            LH: d_bus.wdata = {2{ex_mem_if.ex_mem_reg.rs2_data[15:0]}};
+            LW: d_bus.wdata = ex_mem_if.ex_mem_reg.rs2_data;
+            default: d_bus.wdata = '0;
         endcase
     end : STORE_TYPE
 
@@ -167,7 +167,7 @@ module stage3_mem_stage(
     * Hazard/Forwarding Unit
     *************************/
     // Note: Some hazard unit signals are assigned below in the CSR section
-    assign hazard_if.d_mem_busy = dgen_bus_if.busy;
+    assign hazard_if.d_mem_busy = d_bus.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
     assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
@@ -204,15 +204,15 @@ module stage3_mem_stage(
     assign hazard_if.fault_insn = ex_mem_if.ex_mem_reg.fault_insn;
     assign hazard_if.mal_insn = ex_mem_if.ex_mem_reg.mal_insn;
     assign hazard_if.illegal_insn = ex_mem_if.ex_mem_reg.illegal_insn || prv_pipe_if.invalid_priv_isn;
-    assign hazard_if.fault_l = ex_mem_if.ex_mem_reg.dren && dgen_bus_if.error;
+    assign hazard_if.fault_l = ex_mem_if.ex_mem_reg.dren && d_bus.error;
     assign hazard_if.mal_l = ex_mem_if.ex_mem_reg.dren & mal_addr;
-    assign hazard_if.fault_s = ex_mem_if.ex_mem_reg.dwen && dgen_bus_if.error;
+    assign hazard_if.fault_s = ex_mem_if.ex_mem_reg.dwen && d_bus.error;
     assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & mal_addr;
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
     assign hazard_if.ret = ex_mem_if.ex_mem_reg.ret_insn;
     assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
-    assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.badaddr : dgen_bus_if.addr;
+    assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.badaddr : d_bus.addr;
 
     // NEW
     assign hazard_if.pc_m = ex_mem_if.ex_mem_reg.pc;

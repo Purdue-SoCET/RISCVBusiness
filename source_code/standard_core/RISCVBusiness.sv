@@ -41,7 +41,7 @@ module RISCVBusiness (
 `ifdef BUS_INTERFACE_GENERIC_BUS
     generic_bus_if.cpu gen_bus_if
 `elsif BUS_INTERFACE_AHB
-    ahb_if.manager ahb_manager
+    ahb_if.manager ahb_bus
 `elsif BUS_INTERFACE_APB
     apb_if.requester apb_requester
 `endif
@@ -52,11 +52,11 @@ module RISCVBusiness (
 
     // Interface instantiations
 
-    generic_bus_if tspp_icache_gen_bus_if ();
-    generic_bus_if tspp_dcache_gen_bus_if ();
-    generic_bus_if icache_mc_if ();
-    generic_bus_if dcache_mc_if ();
-    generic_bus_if pipeline_trans_if ();
+    bus_if tspp_icache_bus ();
+    bus_if tspp_dcache_bus ();
+    bus_if icache_mc_bus ();
+    bus_if dcache_mc_bus ();
+    bus_if pipeline_trans_bus ();
     risc_mgmt_if rm_if ();
     predictor_pipeline_if predict_if ();
     prv_pipeline_if prv_pipe_if ();
@@ -69,8 +69,8 @@ module RISCVBusiness (
     tspp_hazard_unit_if hazard_if ();
 
     stage3 #(.RESET_PC(RESET_PC)) pipeline(
-        .igen_bus_if(tspp_icache_gen_bus_if),
-        .dgen_bus_if(tspp_dcache_gen_bus_if),
+        .i_bus(tspp_icache_bus),
+        .d_bus(tspp_dcache_bus),
         .*
     );
 
@@ -162,22 +162,23 @@ module RISCVBusiness (
   );
 */
 
+    // new bus implemented
     separate_caches sep_caches (
         .CLK(CLK),
         .nRST(nRST),
-        .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
-        .icache_mem_gen_bus_if(icache_mc_if),
-        .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
-        .dcache_mem_gen_bus_if(dcache_mc_if),
+        .icache_proc_bus(tspp_icache_bus),
+        .icache_mem_bus(icache_mc_bus),
+        .dcache_proc_bus(tspp_dcache_bus),
+        .dcache_mem_bus(dcache_mc_bus),
         .cc_if(cc_if)
     );
 
     memory_controller mc (
         .CLK(CLK),
         .nRST(nRST),
-        .d_gen_bus_if(dcache_mc_if),
-        .i_gen_bus_if(icache_mc_if),
-        .out_gen_bus_if(pipeline_trans_if)
+        .d_bus(dcache_mc_bus),
+        .i_bus(icache_mc_bus),
+        .out_bus(pipeline_trans_bus)
     );
 
     /*
@@ -201,11 +202,9 @@ module RISCVBusiness (
 
     // Instantiate the chosen bus interface
 
-    ahb bt (
-        .CLK(CLK),
-        .nRST(nRST),
-        .out_gen_bus_if(pipeline_trans_if),
-        .ahb_m(ahb_manager)
+    ahb_manager bt (
+        .bus(pipeline_trans_bus),
+        .ahb(ahb_bus)
     );
 
     /*
