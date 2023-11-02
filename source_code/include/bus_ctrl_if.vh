@@ -92,12 +92,17 @@ interface bus_ctrl_if;
     logic l2WEN, l2REN; 
     bus_word_t l2addr; 
 
+    // HACK: dstore becomes multidriven here. memory_controller expects to drive dstore but
+    // this is also used when testbenching
+    `ifndef VERILATOR
     always_comb begin
         for(int i = 0; i < CPUS; i++) begin
             if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
             else dstore[i] = driver_dstore[i];
         end
     end
+    `endif
+
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, 
