@@ -237,7 +237,7 @@ module stage3_execute_stage (
     // TODO: NEW
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
-            ex_mem_if.ex_mem_reg <= '{default: '0};
+            ex_mem_if.ex_mem_reg <= '0;
         end else begin
             // TODO: This register is ~180b. Not awful, but can it be smaller?
             // PS: Does it even matter? Synth. tools may be able to merge regs.
@@ -298,7 +298,7 @@ module stage3_execute_stage (
                 ex_mem_if.ex_mem_reg.tracker_signals.imm_U  <= cu_if.imm_U;
 
             end else if(hazard_if.ex_mem_flush && !hazard_if.ex_mem_stall) begin
-                ex_mem_if.ex_mem_reg <= '{default: '0};
+                ex_mem_if.ex_mem_reg <= '0;
             end
             // else: retain state
         end
