@@ -14,41 +14,32 @@
 *   limitations under the License.
 *
 *
-*   Filename:     include/rv32v_ex_lane_if.vh
+*   Filename:     include/rv32v_align_unit_if.vh
 *
 *   Created by:   Om Gupta
 *   Email:        guptao@purdue.edu
 *   Date Created: 11/03/2023
-*   Description:  Interface for a single vector execution lane
+*   Description:  Interface for the data alignment unit
 */
 
-`ifndef RV32V_EX_LANE_IF_VH
-`define RV32V_EX_LANE_IF_VH
+`ifndef RV32V_ALIGN_UNIT_IF_VH
+`define RV32V_ALIGN_UNIT_IF_VH
 
-interface rv32v_ex_lane_if();
+interface rv32v_align_unit_if();
 
   import rv32v_types_pkg::*;
 
-  // Input and output data lines
-  word_t vin1_data, vin2_data, vout_data;
+  word_t vin_data, vout_data;
 
-  // Functional unit to use
-  vfu_t vfu;
+  sew_t vsew_src;
+  logic [1:0] velemoffset;
+  logic vsignext;  // 0 -> zero extend; 1 -> sign extend
 
-  // Ops for each functional unit (MUL and DIV ops implicit as they are single-purpose)
-  valuop_t valuop;
-  vredop_t vredop;
-  vmaskop_t vmaskop;
-  vpermop_t vpermop;
-
-  logic vxbusy;
-
-  modport vxl(
-    input vin1_data, vin2_data,
-    input vfu, valuop, vredop, vmaskop, vpermop,
-    output vout_data, vxbusy
+  modport vau(
+    input vin_data, vsew_src, velemoffset, vsignext,
+    output vout_data
   );
 
 endinterface
 
-`endif //RV32V_EX_LANE_IF_VH
+`endif //RV32V_ALIGN_UNIT_IF_VH
