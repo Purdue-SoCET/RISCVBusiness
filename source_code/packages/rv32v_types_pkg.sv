@@ -77,14 +77,6 @@ package rv32v_types_pkg;
     MOP_OINDEXED = 3 
   } mop_t;
 
-  // typedef enum logic [2:0] { 
-  //   ARITH,
-  //   MASK,
-  //   PERM,
-  //   LOADSTORE,
-  //   NOOP
-  // } funit_type;
-
   typedef enum logic [2:0] { 
     OPIVV = 3'b0,
     OPFVV = 3'd1,
@@ -353,78 +345,93 @@ package rv32v_types_pkg;
   typedef logic [7:0] byte_t;
   typedef byte_t [VLENB-1:0]  vreg_t;
 
+  /**********************************************************/
+  /* FUNCTIONAL UNIT CONTROL ENUMS
+  /**********************************************************/
+  // Functional unit to utilize
   typedef enum logic [3:0] {
-    ARITH,
-    RED,  //WRONG
-    MUL,
-    DIV,
-    MASK,
-    PEM,
-    LOAD_UNIT,
-    STORE_UNIT,
-    MOVE,
-    MADD, //WRONG
-  } fu_t;
+    VFU_ALU,
+    VFU_MUL,
+    VFU_DIV,
+    VFU_RED,
+    VFU_MSK,
+    VFU_PRM
+  } vfu_t;
 
-  typedef enum logic [3:0] {
-    VALU_SLL   = 4'b0000,
-    VALU_SRL   = 4'b0001,
-    VALU_SRA   = 4'b0010,
-    VALU_ADD   = 4'b0011,
-    VALU_SUB   = 4'b0100,
-    VALU_AND   = 4'b0101,
-    VALU_OR    = 4'b0110,
-    VALU_XOR   = 4'b0111,
-    VALU_COMP  = 4'b1000,
-    VALU_MERGE = 4'b1001,
-    // VALU_MOVE  = 4'b1010,
-    VALU_MM    = 4'b1011,
-    VALU_EXT   = 4'b1100,
+  // Operation codes for integer ALU
+  typedef enum logic [7:0] {
+    // Integer add/sub
+    VALU_ADD,
+    VALU_SUB,
+    VALU_RSB,  // reverse subtract
+    VALU_ADC,  // add-with-carry
+    VALU_SBC,  // sub-with-borrow
+    // Integer logical
+    VALU_AND,
+    VALU_OR ,
+    VALU_XOR,
+    // Integer shift
+    VALU_SLL,
+    VALU_SRL,
+    VALU_SRA,
+    // Integer compare
+    VALU_SEQ,
+    VALU_SNE,
+    VALU_ULT,
+    VALU_SLT,
+    VALU_ULE,
+    VALU_SLE,
+    VALU_UGT,
+    VALU_SGT,
+    // Integer min/max
+    VALU_UMN,
+    VALU_MIN,
+    VALU_UMX,
+    VALU_MAX,
   } valuop_t;
 
-  typedef enum logic [2:0] {
-    VSEQ   = 3'b000,
-    VSNE   = 3'b001,
-    VSLTU  = 3'b010,
-    VSLT   = 3'b011,
-    VSLEU  = 3'b100,
-    VSLE   = 3'b101,
-    VSGTU  = 3'b110,
-    VSGT   = 3'b111
-  } comp_t;
+  // Operation codes for integer reduction unit
+  typedef enum logic [7:0] {
+    VRED_SUM,
+    VRED_UMX,
+    VRED_MAX,
+    VRED_UMN,
+    VRED_MIN,
+    VRED_AND,
+    VRED_OR ,
+    VRED_XOR
+  } vredop_t;
 
-  typedef enum logic [2:0] {
-    MIN   = 3'b00,
-    MINU  = 3'b01,
-    MAX   = 3'b10,
-    MAXU  = 3'b11
-  } mm_t;
+  // Operation codes for mask unit
+  typedef enum logic [7:0] {
+    VMSK_AND,
+    VMSK_NND,  // nand
+    VMSK_NDN,  // and not
+    VMSK_XOR,
+    VMSK_OR ,
+    VMSK_NOR,
+    VMSK_ORN,
+    VMSK_XNR,
+    VMSK_CNT,  // count pop
+    VMSK_FST,
+    VMSK_SBF,
+    VMSK_SIF,
+    VMSK_SOF,
+    VMSK_ITA,
+    VMSK_IDX,
+  } vmaskop_t;
 
-  typedef enum logic [3:0] {
-    NORMAL  = 4'b0000,
-    A_S     = 4'b0001,
-    MULTI   = 4'b0010,
-    DIVI    = 4'b0011,
-    REM     = 4'b0100
-  } athresult_t;
-
-  typedef enum logic [3:0] {
-    VMASK_AND,
-    VMASK_NAND,
-    VMASK_ANDN,
-    VMASK_OR,
-    VMASK_NOR,
-    VMASK_ORN,
-    VMASK_XOR,
-    VMASK_XNOR,
-    VMASK_POPC,
-    VMASK_FIRST,
-    VMASK_SBF,
-    VMASK_SIF,
-    VMASK_SOF,
-    VMASK_IOTA,
-    VMASK_ID    
-  } ma_t;
+  // Operation codes for permutation unit
+  typedef enum logic [7:0] {
+    VPRM_SMV,  // scalar move
+    VPRM_SLU,  // slide up
+    VPRM_SLD,  // slide down
+    VPRM_S1U,  // slide 1 up
+    VPRM_S1D,  // slide 1 down
+    VPRM_GTR,  // gather
+    VPRM_CPS,  // compress
+    VPRM_VMV   // whole vector move
+  } vpermop_t;
 
   typedef enum logic [2:0] {
     F2Z = 3'b000,
