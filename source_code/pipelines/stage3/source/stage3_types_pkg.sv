@@ -69,4 +69,14 @@ package stage3_types_pkg;
         // TODO: imm_U? Maybe needed
     } ex_mem_t;
 
+    // typedef struct packed {
+    //     logic dren;
+    //     logic dwen;
+    //     logic ifence;
+    //     logic [4:0] rd_m;
+    //     load_t load_type;
+    //     word_t port_out;
+    //     word_t rs2_data;
+    // } lsc_entry_t;
+
 endpackage

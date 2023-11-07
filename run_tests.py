@@ -63,7 +63,7 @@ def parse_arguments():
     TEST_TYPE = args.test_type
 
     if TEST_TYPE not in SUPPORTED_TEST_TYPES:
-        print "ERROR: " + TEST_TYPE + " is not a supported test type"
+        print("ERROR: " + TEST_TYPE + " is not a supported test type.")
         sys.exit(1)
 
     if TEST_TYPE == "":
@@ -76,7 +76,7 @@ def parse_arguments():
         SUPPORTED_ARCHS = [a.split('/'+test_file_dir)[1] for a in SUPPORTED_ARCHS]
         if ARCH not in SUPPORTED_ARCHS:
            if test_type != 'sparce':
-              print "ERROR: No " + test_type + " tests exist for " + ARCH
+              print("ERROR: No " + test_type + " tests exist for " + ARCH)
               sys.exit(1)
         else:
           if TEST_TYPE == 'sparce':
@@ -88,7 +88,7 @@ def parse_arguments():
           SUPPORTED_ARCHS = glob.glob('./verification/' + test_file_dir + '*')
           SUPPORTED_ARCHS = [a.split('/'+test_file_dir)[1] for a in SUPPORTED_ARCHS]
           if ARCH not in SUPPORTED_ARCHS:
-            print "ERROR: No " + TEST_TYPE + " tests exist for " + ARCH
+            print("ERROR: No " + TEST_TYPE + " tests exist for " + ARCH)
             sys.exit(1)
 
 # compile_asm takes a file_name as input and assembles the file pointed
@@ -403,7 +403,7 @@ def run_sim(file_name):
         log.close()
         log = open(output_dir + 'waf_output.log', 'r')
         for line in log:
-            print line
+            print(line)
         return -2
     subprocess.call(['mv', 'build/cpu.hex', output_dir + 'cpu.hex'])
     if(os.path.exists('build/stats.txt')):
@@ -426,7 +426,7 @@ def run_self_sim(file_name):
         log.close()
         log = open(output_dir + 'waf_output.log', 'r')
         for line in log:
-            print line
+            print(line)
         return -2
     if(os.path.exists('build/stats.txt')):
         subprocess.call(['mv', 'build/stats.txt', output_dir + 'stats.txt'])
@@ -462,10 +462,10 @@ def compare_results(f):
     cmd_arr += [output_dir + short_name + '_sim.trace']
     #subprocess.call(cmd_arr)
     if failure:
-        print fail_msg
+        print(fail_msg)
         return 1
     else:
-        print pass_msg
+        print(pass_msg)
         return 0
 
 def check_results(f):
@@ -480,10 +480,10 @@ def check_results(f):
         waf_output_text = waf_output.read()
         match = re.search(pattern, waf_output_text)
         if match:
-            print pass_msg
+            print(pass_msg)
             return 0
         else:
-            print fail_msg
+            print(fail_msg)
             return 1
 
 def run_asm():
@@ -492,7 +492,7 @@ def run_asm():
         files = glob.glob("./verification/"+"asm"+"-tests/"+ARCH+"/*.S")
     else:
         files = glob.glob("./verification/"+"asm"+"-tests/"+ARCH+"/"+FILE_NAME+"*.S")
-    print "Starting asm tests..."
+    print("Starting asm tests...")
     for f in files:
         if 'asicfab' in os.environ['HOSTNAME']:
             # Need to do the work on EE256
@@ -530,14 +530,14 @@ def run_asm():
             ret = compile_asm(f)
             if ret != 0:
                 if ret == -1:
-                    print "An error has occured during GCC compilation"
+                    print("An error has occured during GCC compilation")
                 elif ret == -2:
-                    print "An error has occured converting elf to hex"
+                    print("An error has occured converting elf to hex")
                 sys.exit(1)
             clean_init_hex(f)
             ret = run_spike_asm(f)
             if ret != 0:
-                print "An error has occurred during running Spike"
+                print("An error has occurred during running Spike")
                 sys.exit(ret)
 
         clean_spike_output(f)
@@ -545,9 +545,9 @@ def run_asm():
         ret = run_sim(f)
         if ret != 0:
             if ret == -1:
-              print "An error has occurred while setting waf's top level"
+              print("An error has occurred while setting waf's top level")
             elif ret == -2:
-                print "An error has occurred while running " + f
+                print("An error has occurred while running " + f)
             sys.exit(ret)
         clean_sim_trace(f)
         failures += compare_results(f)
@@ -556,7 +556,7 @@ def run_asm():
 
 def run_sparce():
    failures = 0
-   print "starting sparce module tests..."
+   print("starting sparce module tests...")
    for module in SPARCE_MODULES:
       
       pass_msg = '{0:<40}{1:>20}'.format(module,START_GREEN + '[PASSED]' + END_COLOR)
@@ -572,7 +572,7 @@ def run_sparce():
       cmd_arr = ['waf', 'configure', '--top_level=' + module]
       failure = subprocess.call(cmd_arr, stdout=FNULL)
       if failure:
-         print "Error configuring test for " + module
+         print("Error configuring test for " + module)
          failures += 1
       else:
          cmd_arr = ['waf', 'verify_source']
@@ -583,11 +583,11 @@ def run_sparce():
             log.close()
             log = open(output_dir + 'waf_output.log', 'r')
             for line in log:
-                print line
+                print(line)
             failures += 1
-            print fail_msg
+            print(fail_msg)
          else:
-            print pass_msg
+            print(pass_msg)
 
    return failures
 
@@ -598,7 +598,7 @@ def run_selfasm():
     else:
         loc = "./verification/self-tests/" + ARCH + "/" + FILE_NAME + "*.S"
         files = glob.glob(loc)
-    print "Starting self tests..."
+    print("Starting self tests...")
     for f in files:
         # TODO: Fix timer error
         #if 'timer2' in f: continue
@@ -638,18 +638,18 @@ def run_selfasm():
             ret = compile_asm_for_self(f)
             if ret != 0:
                 if ret == -1:
-                    print "An error has occured during GCC compilation"
+                    print("An error has occured during GCC compilation")
                 elif ret == -2:
-                    print "An error has occured converting elf to hex"
+                    print("An error has occured converting elf to hex")
                 sys.exit(ret)
 
         clean_init_hex_for_self(f)
         ret = run_self_sim(f)
         if ret != 0:
             if ret == -1:
-                print "An error has occured while seting waf's top level"
+                print("An error has occured while seting waf's top level")
             elif ret == -2:
-                print "An error has occured while running " + f
+                print("An error has occured while running " + f)
             sys.exit(ret)
         failures += check_results(f)
     return failures
@@ -661,7 +661,7 @@ def run_c():
     else:
         loc = "./verification/c-tests/" + ARCH + "/" + FILE_NAME + "*.c"
         files = glob.glob(loc)
-    print "Starting c tests..."
+    print("Starting c tests...")
     for f in files:
         if 'asicfab' in os.environ['HOSTNAME']:
             # Do work remotely
@@ -696,17 +696,17 @@ def run_c():
             ret = compile_c(f)
             if ret != 0:
                 if ret == -1:
-                    print "An error has occured during GCC compilation"
+                    print("An error has occured during GCC compilation")
                 elif ret == -2:
-                    print "An error has occured converting elf to hex"
+                    print("An error has occured converting elf to hex")
                 sys.exit(ret)
         clean_init_hex_for_self(f)
         ret = run_self_sim(f)
         if ret != 0:
             if ret == -1:
-                print "An error has occured while seting waf's top level"
+                print("An error has occured while seting waf's top level")
             elif ret == -2:
-                print "An error has occured while running " + f
+                print("An error has occured while running " + f)
             sys.exit(ret)
         failures += check_results(f)
     return failures
@@ -732,5 +732,5 @@ if __name__ == '__main__':
       failures += run_c()
       failures += run_sparce()
     else:
-        print "To be implemented"
+        print("To be implemented")
     sys.exit(failures)

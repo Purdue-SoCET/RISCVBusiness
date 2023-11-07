@@ -5,6 +5,7 @@
 `include "predictor_pipeline_if.vh"
 `include "cache_control_if.vh"
 `include "prv_pipeline_if.vh"
+`include "load_store_controller_if.vh"
 
 module stage3_mem_stage(
     input CLK,
@@ -22,14 +23,20 @@ module stage3_mem_stage(
 
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
+    import stage3_types_pkg::ex_mem_t;
+
+    ex_mem_t current_instr;
+    logic queue_full, mal_addr;
+    logic [4:0] [3:0] queue_rd_m;
+    word_t dload_ext;
 
     /***************
     * Branch Update
     ****************/
-    assign predict_if.update_predictor = ex_mem_if.ex_mem_reg.branch;
-    assign predict_if.prediction = ex_mem_if.ex_mem_reg.prediction;
-    assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
-    assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
+    assign predict_if.update_predictor = current_instr.branch;
+    assign predict_if.prediction = current_instr.prediction;
+    assign predict_if.branch_result = current_instr.branch_taken;
+    assign predict_if.update_addr = current_instr.brj_addr;
 
 
 
@@ -37,6 +44,20 @@ module stage3_mem_stage(
     /*************
     * Data Access
     **************/
+
+    load_store_controller_if lsc_if();
+
+    assign lsc_if.ex_mem_stall = hazard_if.ex_mem_stall;
+    assign lsc_if.suppress_data = hazard_if.suppress_data;
+    assign lsc_if.ex_mem_reg = ex_mem_if.ex_mem_reg;
+    assign current_instr = lsc_if.current_instr;
+    assign queue_full = lsc_if.queue_full;
+    assign mal_addr = lsc_if.mal_addr;
+    assign queue_rd_m = lsc_if.queue_rd_m;
+    assign dload_ext = lsc_if.dload_ext;
+
+    load_store_controller LSC (.*);
+/*
     word_t store_swapped;
     word_t dload_ext;
     logic mal_addr;
@@ -123,11 +144,12 @@ module stage3_mem_stage(
                                                        byte_en_temp[2], byte_en_temp[3]};
         end
     endgenerate
-
+*/
 
     /******************
     * Cache management
     *******************/
+/*
     logic ifence_reg;
     logic ifence_pulse;
     logic iflushed, iflushed_next;
@@ -162,67 +184,69 @@ module stage3_mem_stage(
         if (cc_if.dflush_done)
             dflushed_next = 1;
     end
+*/
 
     /************************
     * Hazard/Forwarding Unit
     *************************/
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
-    assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
-    assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
-    assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
-    assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
-    assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
-    assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
-    assign hazard_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
-    assign hazard_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
+    assign hazard_if.ifence = current_instr.ifence;
+    assign hazard_if.fence_stall = lsc_if.ifence_reg && !(lsc_if.iflushed && lsc_if.dflushed);
+    assign hazard_if.dren = current_instr.dren;
+    assign hazard_if.dwen = current_instr.dwen;
+    assign hazard_if.jump = current_instr.jump;
+    assign hazard_if.branch = current_instr.branch;
+    assign hazard_if.halt = current_instr.halt;
+    assign hazard_if.rd_m = current_instr.rd_m;
+    assign hazard_if.reg_write = current_instr.reg_write;
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
-    assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
+    assign hazard_if.mispredict = current_instr.prediction ^ current_instr.branch_taken;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
 
-    assign halt = ex_mem_if.ex_mem_reg.halt;
-    assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
-    assign fw_if.reg_write = ex_mem_if.reg_write;
-    assign fw_if.load = (ex_mem_if.ex_mem_reg.dren || ex_mem_if.ex_mem_reg.dwen);
+    assign halt = current_instr.halt;
+    assign fw_if.rd_m = current_instr.rd_m;
+    // assign fw_if.reg_write = ex_mem_if.reg_write;
+    assign fw_if.reg_write = current_instr.reg_write;
+    assign fw_if.load = (current_instr.dren || current_instr.dwen);
 
 
     /******
     * CSRs
     *******/
-    assign prv_pipe_if.swap = ex_mem_if.ex_mem_reg.csr_swap;
-    assign prv_pipe_if.clr = ex_mem_if.ex_mem_reg.csr_clr;
-    assign prv_pipe_if.set = ex_mem_if.ex_mem_reg.csr_set;
-    assign prv_pipe_if.read_only = ex_mem_if.ex_mem_reg.csr_read_only;
-    assign prv_pipe_if.wdata = ex_mem_if.ex_mem_reg.csr_imm ? {27'h0, ex_mem_if.ex_mem_reg.zimm} : ex_mem_if.ex_mem_reg.rs1_data;
-    assign prv_pipe_if.csr_addr = ex_mem_if.ex_mem_reg.csr_addr;
+    assign prv_pipe_if.swap = current_instr.csr_swap;
+    assign prv_pipe_if.clr = current_instr.csr_clr;
+    assign prv_pipe_if.set = current_instr.csr_set;
+    assign prv_pipe_if.read_only = current_instr.csr_read_only;
+    assign prv_pipe_if.wdata = current_instr.csr_imm ? {27'h0, current_instr.zimm} : current_instr.rs1_data;
+    assign prv_pipe_if.csr_addr = current_instr.csr_addr;
     assign prv_pipe_if.valid_write = (prv_pipe_if.swap | prv_pipe_if.clr
                                         | prv_pipe_if.set) & ~hazard_if.ex_mem_stall;
-    assign prv_pipe_if.instr = (ex_mem_if.ex_mem_reg.instr != '0);
+    assign prv_pipe_if.instr = (current_instr.instr != '0);
 
-    assign hazard_if.fault_insn = ex_mem_if.ex_mem_reg.fault_insn;
-    assign hazard_if.mal_insn = ex_mem_if.ex_mem_reg.mal_insn;
-    assign hazard_if.illegal_insn = ex_mem_if.ex_mem_reg.illegal_insn || prv_pipe_if.invalid_priv_isn;
-    assign hazard_if.fault_l = ex_mem_if.ex_mem_reg.dren && dgen_bus_if.error;
-    assign hazard_if.mal_l = ex_mem_if.ex_mem_reg.dren & mal_addr;
-    assign hazard_if.fault_s = ex_mem_if.ex_mem_reg.dwen && dgen_bus_if.error;
-    assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & mal_addr;
-    assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
-    assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
-    assign hazard_if.ret = ex_mem_if.ex_mem_reg.ret_insn;
-    assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
-    assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.badaddr : dgen_bus_if.addr;
+    assign hazard_if.fault_insn = current_instr.fault_insn;
+    assign hazard_if.mal_insn = current_instr.mal_insn;
+    assign hazard_if.illegal_insn = current_instr.illegal_insn || prv_pipe_if.invalid_priv_isn;
+    assign hazard_if.fault_l = current_instr.dren && dgen_bus_if.error;
+    assign hazard_if.mal_l = current_instr.dren & mal_addr;
+    assign hazard_if.fault_s = current_instr.dwen && dgen_bus_if.error;
+    assign hazard_if.mal_s = current_instr.dwen & mal_addr;
+    assign hazard_if.breakpoint = current_instr.breakpoint;
+    assign hazard_if.env = current_instr.ecall_insn;
+    assign hazard_if.ret = current_instr.ret_insn;
+    assign hazard_if.wfi = current_instr.wfi_insn;
+    assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? current_instr.badaddr : dgen_bus_if.addr;
 
     // NEW
-    assign hazard_if.pc_m = ex_mem_if.ex_mem_reg.pc;
-    assign hazard_if.valid_m = ex_mem_if.ex_mem_reg.valid;
-    assign ex_mem_if.pc4 = ex_mem_if.ex_mem_reg.pc4;
+    assign hazard_if.pc_m = current_instr.pc;
+    assign hazard_if.valid_m = current_instr.valid;
+    assign ex_mem_if.pc4 = current_instr.pc4;
 
     // Memory protection (doesn't consider RISC-MGMT)
-    assign prv_pipe_if.dren  = ex_mem_if.ex_mem_reg.dren;
-    assign prv_pipe_if.dwen  = ex_mem_if.ex_mem_reg.dwen;
-    assign prv_pipe_if.daddr = ex_mem_if.ex_mem_reg.port_out;
+    assign prv_pipe_if.dren  = current_instr.dren;
+    assign prv_pipe_if.dwen  = current_instr.dwen;
+    assign prv_pipe_if.daddr = current_instr.port_out;
     assign prv_pipe_if.d_acc_width = WordAcc;
 
     // TODO: Currently omitting SparCE
@@ -230,26 +254,26 @@ module stage3_mem_stage(
     /***********
     * Writeback
     ************/
-    assign ex_mem_if.brj_addr = ex_mem_if.ex_mem_reg.brj_addr;
-    assign ex_mem_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
-    assign ex_mem_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
+    assign ex_mem_if.brj_addr = current_instr.brj_addr;
+    assign ex_mem_if.reg_write = current_instr.reg_write;
+    assign ex_mem_if.rd_m = current_instr.rd_m;
 
     always_comb begin
         // TODO: RISC-MGMT
-        case (ex_mem_if.ex_mem_reg.w_sel)
+        case (current_instr.w_sel)
             3'd0:    ex_mem_if.reg_wdata = dload_ext;
-            3'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
+            3'd1:    ex_mem_if.reg_wdata = current_instr.pc4;
+            3'd2:    ex_mem_if.reg_wdata = current_instr.imm_U;
+            3'd3:    ex_mem_if.reg_wdata = current_instr.port_out;
             3'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
         // Forwarding unit
-        case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
+        case (current_instr.w_sel)
+            3'd1:    fw_if.rd_mem_data = current_instr.pc4;
+            3'd2:    fw_if.rd_mem_data = current_instr.imm_U;
+            3'd3:    fw_if.rd_mem_data = current_instr.port_out;
             3'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
             default: fw_if.rd_mem_data = '0;
         endcase
@@ -264,9 +288,9 @@ module stage3_mem_stage(
     logic instr_30;
 
     // TODO: Fix up hazard unit
-    assign funct3 = ex_mem_if.ex_mem_reg.instr[14:12];
-    assign funct12 = ex_mem_if.ex_mem_reg.instr[31:20];
-    assign instr_30 = ex_mem_if.ex_mem_reg.instr[30];
+    assign funct3 = current_instr.instr[14:12];
+    assign funct12 = current_instr.instr[31:20];
+    assign instr_30 = current_instr.instr[30];
     assign wb_stall = hazard_if.ex_mem_stall & ~hazard_if.jump & ~hazard_if.branch; // TODO: Is this right?
 
 

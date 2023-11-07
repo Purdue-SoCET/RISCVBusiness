@@ -30,7 +30,8 @@ interface stage3_hazard_unit_if();
   import rv32i_types_pkg::word_t;
 
   // Pipeline status signals (inputs)
-  logic [4:0] rs1_e, rs2_e, rd_m;
+  logic [4:0] rs1_e, rs2_e;
+  logic [3:0] [4:0] rd_m;
   logic reg_write, csr_read;
   logic i_mem_busy, d_mem_busy, dren, dwen, ret, suppress_data;
   logic jump, branch, fence_stall;
@@ -39,6 +40,7 @@ interface stage3_hazard_unit_if();
   logic valid_e, valid_m; // f always valid since it's the PC
   logic ifence;
   logic ex_busy;
+  logic lsc_queue_full;
 
   // Control (outputs)
   logic pc_en, npc_sel;
