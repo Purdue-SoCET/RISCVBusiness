@@ -41,6 +41,7 @@ SUPPORTED_ARCHS = []
 SUPPORTED_TEST_TYPES = ['asm', 'c', 'selfasm', "sparce", ""]
 SPARCE_MODULES = ['sparce_svc', 'sparce_sprf', 'sparce_sasa_table', 'sparce_psru', 'sparce_cfid']
 TEST_TYPE = ""
+ELF2HEX_COMMAND = "/home/ecegrid/a/socpub/Public/riscv_dev/riscv_installs/RV_current/bin/elf2hex"
 # Change this variable to the filename (minus extension)
 # of the top level file for your project. This should
 # match the file name given in the top level wscript
@@ -116,7 +117,7 @@ def compile_asm(file_name):
         return -1
 
     # create an meminit.hex file from the elf file produced above
-    cmd_arr = ['elf2hex', '8', '65536', output_name, '2147483648']
+    cmd_arr = [ELF2HEX_COMMAND, '8', '65536', output_name, '2147483648']
     hex_file_loc = output_dir + 'meminit.hex'
     with open(hex_file_loc, 'w') as hex_file:
         failure = subprocess.call(cmd_arr, stdout=hex_file)
@@ -151,7 +152,7 @@ def compile_asm_for_self(file_name):
         return -1
 
     # create an meminit.hex file from the elf file produced above
-    cmd_arr = ['elf2hex', '8', '65536', output_name, '2147483648']
+    cmd_arr = [ELF2HEX_COMMAND, '8', '65536', output_name, '2147483648']
     hex_file_loc = output_dir + 'meminit.hex'
     with open(hex_file_loc, 'w') as hex_file:
         failure = subprocess.call(cmd_arr, stdout=hex_file)
