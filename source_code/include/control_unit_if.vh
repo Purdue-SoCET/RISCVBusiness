@@ -30,6 +30,7 @@ interface control_unit_if;
   import alu_types_pkg::*;
   import rv32i_types_pkg::*;
   import machine_mode_types_1_12_pkg::*;
+  import rv32a_pkg::*;
   import rv32m_pkg::*;
   import rv32b_pkg::*;
 
@@ -56,6 +57,7 @@ interface control_unit_if;
   // Extension control signals
   rv32m_decode_t rv32m_control;
   rv32b_decode_t rv32b_control;
+  rv32a_decode_t rv32a_control;
 
   modport control_unit(
     input instr,
@@ -64,7 +66,8 @@ interface control_unit_if;
     imm_I, imm_S, imm_SB, imm_UJ, imm_U, imm_shamt_sel, alu_op,
     opcode, halt, wen, fault_insn, illegal_insn, ret_insn, breakpoint,
     ecall_insn, csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid,
-    csr_addr, zimm, ifence, wfi, rd, rv32m_control, rv32b_control
+    csr_addr, zimm, ifence, wfi, rd, rv32m_control, rv32a_control,
+    rv32b_control
   );
 
 endinterface
