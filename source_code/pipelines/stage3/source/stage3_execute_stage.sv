@@ -44,7 +44,6 @@ module stage3_execute_stage (
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif
 );
-
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
     import stage3_types_pkg::*;
@@ -101,7 +100,6 @@ module stage3_execute_stage (
         end
     endgenerate
 
-
     /******************
     * Functional Units
     *******************/
@@ -139,7 +137,6 @@ module stage3_execute_stage (
     // These rs*_post_fwd values should be used in place of rs1/rs2 anywhere they are used
     assign rs1_post_fwd = fw_if.fwd_rs1 ? fw_if.rd_mem_data : rf_if.rs1_data;
     assign rs2_post_fwd = fw_if.fwd_rs2 ? fw_if.rd_mem_data : rf_if.rs2_data;
-
 
     /******************
     * Sign Extensions
@@ -190,7 +187,6 @@ module stage3_execute_stage (
             2'd3: alu_if.port_b = cu_if.imm_U;
         endcase
     end
-
 
     // FU output mux -- feeds into pipeline register
     // Add to this when more FUs are added
@@ -339,5 +335,4 @@ module stage3_execute_stage (
     assign sparce_if.sasa_addr = alu_if.port_out;
     assign sparce_if.sasa_wen = cu_if.dwen;
     assign sparce_if.rd = rf_if.rd;*/
-
 endmodule

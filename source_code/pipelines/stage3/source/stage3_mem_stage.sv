@@ -19,7 +19,6 @@ module stage3_mem_stage(
     output logic halt,
     output logic wfi
 );
-
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
 
@@ -31,9 +30,6 @@ module stage3_mem_stage(
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
 
-
-
-
     /*************
     * Data Access
     **************/
@@ -42,8 +38,6 @@ module stage3_mem_stage(
     logic mal_addr;
     logic [1:0] byte_offset;
     logic [3:0] byte_en, byte_en_temp, byte_en_standard;
-
-
 
     // TODO: RISC-MGMT
     assign dgen_bus_if.ren = ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data;
@@ -128,7 +122,6 @@ module stage3_mem_stage(
         end
     endgenerate
 
-
     /******************
     * Cache management
     *******************/
@@ -190,7 +183,6 @@ module stage3_mem_stage(
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign fw_if.reg_write = ex_mem_if.reg_write;
     assign fw_if.load = (ex_mem_if.ex_mem_reg.dren || ex_mem_if.ex_mem_reg.dwen);
-
 
     /******
     * CSRs
@@ -272,6 +264,4 @@ module stage3_mem_stage(
     assign funct12 = ex_mem_if.ex_mem_reg.instr[31:20];
     assign instr_30 = ex_mem_if.ex_mem_reg.instr[30];
     assign wb_stall = hazard_if.ex_mem_stall & ~hazard_if.jump & ~hazard_if.branch; // TODO: Is this right?
-
-
 endmodule
