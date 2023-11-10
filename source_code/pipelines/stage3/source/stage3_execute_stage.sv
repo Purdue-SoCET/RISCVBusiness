@@ -286,6 +286,8 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.ret_insn       <= cu_if.ret_insn;
                     ex_mem_if.ex_mem_reg.wfi_insn       <= cu_if.wfi;
                     ex_mem_if.ex_mem_reg.was_compressed <= 1'b0; // TODO: RV32C support
+                    ex_mem_if.ex_mem_reg.reserve        <= cu_if.reserve;
+                    ex_mem_if.ex_mem_reg.exclusive      <= cu_if.exclusive;
                 end
                 ex_mem_if.ex_mem_reg.illegal_insn              <= cu_if.illegal_insn;
                 ex_mem_if.ex_mem_reg.badaddr                   <= fetch_ex_if.fetch_ex_reg.badaddr;

@@ -47,6 +47,7 @@ interface control_unit_if;
   load_t load_type;
   branch_t branch_type;
   opcode_t opcode;
+  logic reserve, exclusive; // Used for reservation set management
 
   // Privilege control signals
   logic fault_insn, illegal_insn, ret_insn, breakpoint, ecall_insn;
@@ -67,7 +68,7 @@ interface control_unit_if;
     opcode, halt, wen, fault_insn, illegal_insn, ret_insn, breakpoint,
     ecall_insn, csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid,
     csr_addr, zimm, ifence, wfi, rd, rv32m_control, rv32a_control,
-    rv32b_control
+    rv32b_control, reserve, exclusive
   );
 
 endinterface

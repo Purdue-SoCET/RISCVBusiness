@@ -57,6 +57,9 @@ module control_unit (
     logic claimed;
     // Per-extension claim signals
     logic rv32m_claim, rv32a_claim, rv32b_claim;
+    // A extension helpers
+    // TODO: Add cu plumbing for AMO execution
+    logic rv32a_lr, rv32a_sc, rv32a_amo;
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -86,12 +89,12 @@ module control_unit (
                             (instr_i.funct3 == SLLI || instr_i.funct3 == SRI));
 
     // Assign branch and load type
-    assign cu_if.load_type = load_t'(instr_i.funct3);
+    assign cu_if.load_type = rv32a_lr ? LW : load_t'(instr_i.funct3);
     assign cu_if.branch_type = branch_t'(instr_sb.funct3);
 
     // Assign memory read/write enables
-    assign cu_if.dwen = (cu_if.opcode == STORE);
-    assign cu_if.dren = (cu_if.opcode == LOAD);
+    assign cu_if.dwen = (cu_if.opcode == STORE) || rv32a_sc;
+    assign cu_if.dren = (cu_if.opcode == LOAD) || rv32a_lr;
     assign cu_if.ifence = (cu_if.opcode == MISCMEM) && (rv32i_miscmem_t'(instr_r.funct3) == FENCEI);
 
     // Assign control flow signals
@@ -129,6 +132,7 @@ module control_unit (
             SYSTEM:               cu_if.w_sel = W_SEL_FROM_PRIV_PIPE;
             default:              cu_if.w_sel = W_SEL_FROM_DLOAD;
         endcase
+        if (rv32a_lr || rv32a_sc) cu_if.w_sel = W_SEL_FROM_DLOAD;
     end
 
     // Assign register write enable
@@ -139,12 +143,12 @@ module control_unit (
             SYSTEM:                                     cu_if.wen = cu_if.csr_rw_valid;
             default:                                    cu_if.wen = 1'b0;
         endcase
+        if (rv32a_sc) cu_if.wen = 1'b1;
     end
 
     // Assign alu opcode
     logic sr, aluop_srl, aluop_sra, aluop_add, aluop_sub, aluop_and, aluop_or;
     logic aluop_sll, aluop_xor, aluop_slt, aluop_sltu, add_sub;
-
 
     assign sr = ((cu_if.opcode == IMMED && instr_i.funct3 == SRI) ||
                 (cu_if.opcode == REGREG && instr_r.funct3 == SR));
@@ -275,9 +279,19 @@ module control_unit (
         .claim(rv32a_claim),
         .rv32a_control(cu_if.rv32a_control)
     );
+    assign rv32a_lr = rv32a_claim && cu_if.rv32a_control.op == AMO_LR;
+    assign rv32a_sc = rv32a_claim && cu_if.rv32a_control.op == AMO_SC;
+    assign rv32a_amo = rv32a_claim && ~(rv32a_lr || rv32a_sc);
+    assign cu_if.reserve = rv32a_lr || rv32a_amo;
+    assign cu_if.exclusive = rv32a_amo;
     `else
     assign cu_if.rv32a_control = {1'b0, rv32a_op_e'(0)};
     assign rv32a_claim = 1'b0;
+    assign rv32a_lr = 1'b0;
+    assign rv32a_sc = 1'b0;
+    assign rv32a_amo = 1'b0;
+    assign cu_if.reserve = 1'b0;
+    assign cu_if.exclusive = 1'b0;
     `endif // RV32M_SUPPORTED
 
     `ifdef RV32B_SUPPORTED
