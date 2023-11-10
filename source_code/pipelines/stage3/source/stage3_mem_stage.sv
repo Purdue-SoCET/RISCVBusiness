@@ -233,20 +233,20 @@ module stage3_mem_stage(
     always_comb begin
         // TODO: RISC-MGMT
         case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd0:    ex_mem_if.reg_wdata = dload_ext;
-            3'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
-            3'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
+            W_SEL_FROM_DLOAD     : ex_mem_if.reg_wdata = dload_ext;
+            W_SEL_FROM_PC        : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
+            W_SEL_FROM_IMM_U     : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
+            W_SEL_FROM_ALU       : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
+            W_SEL_FROM_PRIV_PIPE : ex_mem_if.reg_wdata = prv_pipe_if.rdata;
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
         // Forwarding unit
         case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
-            3'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
+            W_SEL_FROM_PC        : fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
+            W_SEL_FROM_IMM_U     : fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
+            W_SEL_FROM_ALU       : fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
+            W_SEL_FROM_PRIV_PIPE : fw_if.rd_mem_data = prv_pipe_if.rdata;
             default: fw_if.rd_mem_data = '0;
         endcase
     end

@@ -47,6 +47,8 @@ package stage3_types_pkg;
         logic ret_insn;
         logic wfi_insn;
         logic was_compressed; // Determine if PC should advance by 4 or 2, avoid passing PC and PC + (2/4) through pipeline
+        logic reserve; // Determine if reservation set should be reserved
+        logic exclusive; // Determine if reservation set should be locked
         w_sel_t w_sel;
         logic [3:0] byte_en; // TODO: Where should this be generated?
         logic [4:0] zimm;
