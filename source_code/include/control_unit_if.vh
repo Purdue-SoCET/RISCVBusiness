@@ -37,7 +37,7 @@ interface control_unit_if;
   logic dwen, dren, j_sel, branch, jump, ex_pc_sel, imm_shamt_sel, halt, wen, ifence, wfi;
   aluop_t alu_op;
   logic [1:0] alu_a_sel, alu_b_sel;
-  logic [2:0] w_sel;
+  w_sel_t w_sel;
   logic [4:0] shamt;
   logic [4:0] rd;
   logic [11:0] imm_I, imm_S;
