@@ -282,7 +282,7 @@ module control_unit (
     assign rv32a_lr = rv32a_claim && cu_if.rv32a_control.op == AMO_LR;
     assign rv32a_sc = rv32a_claim && cu_if.rv32a_control.op == AMO_SC;
     assign rv32a_amo = rv32a_claim && ~(rv32a_lr || rv32a_sc);
-    assign cu_if.reserve = rv32a_lr || rv32a_amo;
+    assign cu_if.reserve = rv32a_lr || rv32a_sc || rv32a_amo;
     assign cu_if.exclusive = rv32a_amo;
     `else
     assign cu_if.rv32a_control = {1'b0, rv32a_op_e'(0)};

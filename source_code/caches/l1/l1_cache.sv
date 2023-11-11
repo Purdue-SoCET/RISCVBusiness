@@ -36,7 +36,7 @@ module l1_cache #(
 )
 (
     input logic CLK, nRST,
-    input logic clear, flush,
+    input logic clear, flush, reserve, exclusive,
     output logic clear_done, flush_done, abort_bus,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if
@@ -87,6 +87,12 @@ module l1_cache #(
     typedef enum {
        IDLE, HIT, FETCH, WB, FLUSH_CACHE
     } cache_fsm_t;            // cache state machine
+
+    typedef struct packed {
+        decoded_cache_idx_t idx;
+        logic valid;
+        logic exclusive;
+    } reservation_set_t;
     
     // counter signals
     flush_idx_t flush_idx, next_flush_idx;
@@ -115,6 +121,9 @@ module l1_cache #(
     // flush reg
     logic flush_req, nflush_req;
     logic idle_done;
+    // Reservation tracking
+    reservation_set_t reservation_set, next_reservation_set;
+    logic addr_is_exclusive;
 
     // error handling
     assign proc_gen_bus_if.error = mem_gen_bus_if.error;
@@ -135,6 +144,7 @@ module l1_cache #(
             decoded_req_addr <= 0;
             flush_req <= 0;
             abort_bus <= 0;
+            reservation_set <= 0;
         end
         else begin
             state <= next_state;                        // cache state machine
@@ -145,6 +155,7 @@ module l1_cache #(
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
             abort_bus <= !proc_gen_bus_if.ren;
+            reservation_set <= next_reservation_set;
         end
     end
     
@@ -385,7 +396,7 @@ module l1_cache #(
                     sramMask.frames[ridx].tag               = 1'b0;
                 end
             end
-            WB: begin
+            WB: if (~addr_is_exclusive) begin
                 // set stim for eviction
                 mem_gen_bus_if.wen = 1'b1;
                 mem_gen_bus_if.addr = read_addr; 
@@ -483,4 +494,16 @@ module l1_cache #(
             nflush_req = 0;
     end
 
+    // Reservation tracking logic
+    always_comb begin
+        next_reservation_set = reservation_set;
+        if (proc_gen_bus_if.ren && reserve) begin
+            next_reservation_set.idx = decoded_addr.idx;
+            next_reservation_set.valid = 1'b1;
+            next_reservation_set.exclusive = exclusive;
+        end else if (proc_gen_bus_if.ren || proc_gen_bus_if.wen || clear || flush) begin
+            next_reservation_set.valid = 1'b0;
+        end
+        addr_is_exclusive = reservation_set.valid && reservation_set.exclusive && reservation_set.idx == decoded_addr.idx;
+    end
 endmodule

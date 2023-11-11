@@ -75,6 +75,8 @@ module separate_caches (
                 .proc_gen_bus_if(dcache_proc_gen_bus_if),
                 .flush(cc_if.dcache_flush),
                 .clear(cc_if.dcache_clear),
+                .reserve(cc_if.dcache_reserve),
+                .exclusive(cc_if.dcache_exclusive),
                 .flush_done(cc_if.dflush_done),
                 .clear_done(cc_if.dclear_done)
             );
@@ -121,6 +123,8 @@ module separate_caches (
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
                 .flush(cc_if.icache_flush),
                 .clear(cc_if.icache_clear),
+                .reserve(1'b0),
+                .exclusive(1'b0),
                 .flush_done(cc_if.iflush_done),
                 .clear_done(cc_if.iclear_done)
             );
