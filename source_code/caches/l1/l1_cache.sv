@@ -396,7 +396,7 @@ module l1_cache #(
                     sramMask.frames[ridx].tag               = 1'b0;
                 end
             end
-            WB: if (~addr_is_exclusive) begin
+            WB: begin
                 // set stim for eviction
                 mem_gen_bus_if.wen = 1'b1;
                 mem_gen_bus_if.addr = read_addr; 
