@@ -180,11 +180,12 @@ module stage3_execute_stage (
     end
 
     always_comb begin
-        case (cu_if.alu_b_sel)
-            2'd0: alu_if.port_b = rs1_post_fwd;
-            2'd1: alu_if.port_b = rs2_post_fwd;
-            2'd2: alu_if.port_b = imm_or_shamt;
-            2'd3: alu_if.port_b = cu_if.imm_U;
+        casez ({cu_if.alu_b_sel, cu_if.reserve})
+            {2'd?, 1'b1}: alu_if.port_b = '0;
+            {2'd0, 1'b0}: alu_if.port_b = rs1_post_fwd;
+            {2'd1, 1'b0}: alu_if.port_b = rs2_post_fwd;
+            {2'd2, 1'b0}: alu_if.port_b = imm_or_shamt;
+            {2'd3, 1'b0}: alu_if.port_b = cu_if.imm_U;
         endcase
     end
 
