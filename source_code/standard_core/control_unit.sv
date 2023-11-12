@@ -110,6 +110,7 @@ module control_unit (
             AUIPC:               cu_if.alu_a_sel = 2'd2;
             default:             cu_if.alu_a_sel = 2'd2;
         endcase
+        if (rv32a_lr || rv32a_sc) cu_if.alu_a_sel = 2'd0;
     end
 
     always_comb begin
