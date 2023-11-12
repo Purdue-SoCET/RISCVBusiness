@@ -63,7 +63,7 @@ module stage3_hazard_unit (
     // Hazard detection
     assign rs1_match = (hazard_if.rs1_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
     assign rs2_match  = (hazard_if.rs2_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
-    assign cannot_forward = (hazard_if.dren || hazard_if.csr_read); // cannot forward outputs generated in mem stage
+    assign cannot_forward = (hazard_if.dren || (hazard_if.dwen && hazard_if.reserve) || hazard_if.csr_read); // cannot forward outputs generated in mem stage
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
     assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);

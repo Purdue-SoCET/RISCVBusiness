@@ -171,6 +171,7 @@ module stage3_mem_stage(
     assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
+    assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
     assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
