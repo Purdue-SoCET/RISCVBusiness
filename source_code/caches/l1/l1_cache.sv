@@ -123,7 +123,7 @@ module l1_cache #(
     logic idle_done;
     // Reservation tracking
     reservation_set_t reservation_set, next_reservation_set;
-    logic addr_is_exclusive;
+    logic addr_is_reserved, addr_is_exclusive;
 
     // error handling
     assign proc_gen_bus_if.error = mem_gen_bus_if.error;
@@ -340,6 +340,10 @@ module l1_cache #(
                     sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
                     sramWrite.frames[hit_idx].dirty = 1;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                    if (reserve) begin
+                        // 0 is success, 1 is failure
+                        proc_gen_bus_if.rdata = {31'b0, ~addr_is_reserved};
+                    end
                 end
                 // passthrough
                 else if(pass_through && (proc_gen_bus_if.wen || proc_gen_bus_if.ren)) begin
@@ -360,6 +364,11 @@ module l1_cache #(
                             default:    mem_gen_bus_if.wdata  = proc_gen_bus_if.wdata;
                         endcase
                     end 
+                end
+                // Cache miss of sc
+                else if (proc_gen_bus_if.wen && reserve && ~hit && ~pass_through) begin
+                    proc_gen_bus_if.busy = 0;
+                    proc_gen_bus_if.rdata = 32'b1;
                 end
                 // cache miss on a clean block
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
@@ -459,7 +468,9 @@ module l1_cache #(
                     next_state = HIT;
 	        end
 	        HIT: begin                    
-                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
+                if (proc_gen_bus_if.wen && reserve && ~hit) // Don't transition on a failed sc
+                    next_state = state;
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = WB;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
@@ -504,6 +515,7 @@ module l1_cache #(
         end else if (proc_gen_bus_if.ren || proc_gen_bus_if.wen || clear || flush) begin
             next_reservation_set.valid = 1'b0;
         end
-        addr_is_exclusive = reservation_set.valid && reservation_set.exclusive && reservation_set.idx == decoded_addr.idx;
+        addr_is_reserved = reservation_set.valid && reservation_set.idx == decoded_addr.idx;
+        addr_is_exclusive = addr_is_reserved && reservation_set.exclusive;
     end
 endmodule
