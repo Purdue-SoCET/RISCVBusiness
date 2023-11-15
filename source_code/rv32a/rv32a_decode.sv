@@ -20,7 +20,10 @@ module rv32a_decode(
         claim = (insn_decode.opcode == RV32A_OPCODE) &&
             valid_funct5 &&
             (insn_decode.funct3 == RV32A_FUNCT3) &&
-            (insn_decode.funct5 != AMO_LR || lr_valid_rs2);
+            (insn_decode.funct5 != AMO_LR || lr_valid_rs2) &&
+            // TODO: temporary hack to generate illegal instruction for AMO
+            // emulation
+            (insn_decode.funct5 == AMO_LR || insn_decode.funct5 == AMO_SC);
 
         rv32a_control.select = claim;
         rv32a_control.op = insn_op;
