@@ -94,7 +94,7 @@ module bus_ctrl #(
             end
             GRANT_R:            nstate = SNOOP_R;
             GRANT_RX:           nstate = SNOOP_RX;
-            GRANT_EVICT:        nstate = WRITEBACK;
+            GRANT_EVICT:        nstate = block_count_done ? WRITEBACK : state;
             GRANT_INV:          nstate = SNOOP_INV;
             SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
             SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
