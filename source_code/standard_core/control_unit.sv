@@ -144,7 +144,7 @@ module control_unit (
             SYSTEM:                                     cu_if.wen = cu_if.csr_rw_valid;
             default:                                    cu_if.wen = 1'b0;
         endcase
-        if (rv32a_sc) cu_if.wen = 1'b1;
+        if (rv32a_lr || rv32a_sc) cu_if.wen = 1'b1;
     end
 
     // Assign alu opcode
