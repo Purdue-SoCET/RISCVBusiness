@@ -10,5 +10,7 @@ SECTIONS
   .bss : { *(.bss) }
   . = 0x0000000080007000;
   .statuses : { *(.statuses) }
+  . = 0x0000000090000000;
+  __stack_top = .;
   _end = .;
 }
