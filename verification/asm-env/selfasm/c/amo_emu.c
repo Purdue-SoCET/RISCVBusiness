@@ -163,7 +163,15 @@ __attribute__((noreturn, aligned(4))) void exception_handler() {
     uint32_t epc = get_mepc();
     if (cause == ILLEGAL_INSN) {
         uint32_t instr, opcode, rd, rs1, rs2, funct3, funct7;
-        instr = *(uint32_t *)epc;
+        // Good case: instruction 32 bit aligned
+        if (!__builtin_expect(epc & 0x3, 0x00)) {
+            instr = *(uint32_t *)epc;
+        } else {
+            // Bad case: instruction on 16 bit boundary
+            uint16_t first = *(uint16_t *)epc;
+            uint16_t second = *((uint16_t *)epc + 1);
+            instr = second << 16 | first;
+        }
         opcode = instr & 0x0000007F;
         rd = (instr & 0x00000F80) >> 7;
         rs1 = regs[(instr & 0x000F8000) >> 15];
