@@ -9,16 +9,12 @@
 
 #include "riscv_test.h"
 #include "test_macros.h"
-
-.globl __stack_top
-.globl exception_handler
+#include "amo_emu.h"
 
 RVTEST_RV32U
 RVTEST_CODE_BEGIN
 
-la sp, __stack_top
-la t0, exception_handler
-csrw mtvec, t0
+WANT_AMO_EMU_SUPPORT
 
 TEST_CASE(2, a4, 0xffffffff80000000, \
     li a0, 0xffffffff80000000; \

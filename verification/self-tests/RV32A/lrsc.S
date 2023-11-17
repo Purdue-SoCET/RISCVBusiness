@@ -9,9 +9,12 @@
 
 #include "riscv_test.h"
 #include "test_macros.h"
+#include "amo_emu.h"
 
 RVTEST_RV32U
 RVTEST_CODE_BEGIN
+
+WANT_AMO_EMU_SUPPORT
 
 # get a unique core id
 la a0, coreid
