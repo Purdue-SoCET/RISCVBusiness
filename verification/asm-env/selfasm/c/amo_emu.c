@@ -14,11 +14,11 @@
 
 // clang-format off
 #define AMO_EMU_OP(op) \
-void amo_emu_##op(uint32_t *dest, uint32_t src, uint32_t addr) {                                  \
+void amo_emu_##op(uint32_t *dest, uint32_t src, uint32_t addr) {                                   \
     uint32_t d;                                                                                    \
     asm volatile("1:\n"                                                                            \
                  "lr.w %[d], (%[addr])\n"                                                          \
-                 #op " t0, %[d], %[src]\n"                                                        \
+                 #op " t0, %[d], %[src]\n"                                                         \
                  "sc.w t0, t0, (%[addr])\n"                                                        \
                  "bnez t0, 1b\n"                                                                   \
                  : [d] "=&r"(d)                                                                    \
@@ -27,10 +27,88 @@ void amo_emu_##op(uint32_t *dest, uint32_t src, uint32_t addr) {                
     *dest = d;                                                                                     \
 }
 // clang-format on
+
 AMO_EMU_OP(add)
 AMO_EMU_OP(xor)
 AMO_EMU_OP(or)
 AMO_EMU_OP(and)
+
+void amo_emu_min(uint32_t *dest, uint32_t src, uint32_t addr) {
+    uint32_t d;
+    asm volatile("1:\n"
+                 "lr.w %[d], (%[addr])\n"
+                 "mv t0, %[src]\n"
+                 "blt t0, %[d], 2f\n"
+                 "mv t0, %[d]\n"
+                 "2:\n"
+                 "sc.w t0, t0, (%[addr])\n"
+                 "bnez t0, 1b\n"
+                 : [d] "=&r"(d)
+                 : [addr] "r"(addr), [src] "r"(src)
+                 : "memory", "t0");
+    *dest = d;
+}
+
+void amo_emu_minu(uint32_t *dest, uint32_t src, uint32_t addr) {
+    uint32_t d;
+    asm volatile("1:\n"
+                 "lr.w %[d], (%[addr])\n"
+                 "mv t0, %[src]\n"
+                 "bltu t0, %[d], 2f\n"
+                 "mv t0, %[d]\n"
+                 "2:\n"
+                 "sc.w t0, t0, (%[addr])\n"
+                 "bnez t0, 1b\n"
+                 : [d] "=&r"(d)
+                 : [addr] "r"(addr), [src] "r"(src)
+                 : "memory", "t0");
+    *dest = d;
+}
+
+void amo_emu_max(uint32_t *dest, uint32_t src, uint32_t addr) {
+    uint32_t d;
+    asm volatile("1:\n"
+                 "lr.w %[d], (%[addr])\n"
+                 "mv t0, %[src]\n"
+                 "bge t0, %[d], 2f\n"
+                 "mv t0, %[d]\n"
+                 "2:\n"
+                 "sc.w t0, t0, (%[addr])\n"
+                 "bnez t0, 1b\n"
+                 : [d] "=&r"(d)
+                 : [addr] "r"(addr), [src] "r"(src)
+                 : "memory", "t0");
+    *dest = d;
+}
+
+void amo_emu_maxu(uint32_t *dest, uint32_t src, uint32_t addr) {
+    uint32_t d;
+    asm volatile("1:\n"
+                 "lr.w %[d], (%[addr])\n"
+                 "mv t0, %[src]\n"
+                 "bgeu t0, %[d], 2f\n"
+                 "mv t0, %[d]\n"
+                 "2:\n"
+                 "sc.w t0, t0, (%[addr])\n"
+                 "bnez t0, 1b\n"
+                 : [d] "=&r"(d)
+                 : [addr] "r"(addr), [src] "r"(src)
+                 : "memory", "t0");
+    *dest = d;
+}
+
+void amo_emu_swap(uint32_t *dest, uint32_t src, uint32_t addr) {
+    uint32_t d;
+    asm volatile("1:\n"
+                 "mv t0, %[src]\n"
+                 "lr.w %[d], (%[addr])\n"
+                 "sc.w t0, t0, (%[addr])\n"
+                 "bnez t0, 1b\n"
+                 : [d] "=&r"(d)
+                 : [addr] "r"(addr), [src] "r"(src)
+                 : "memory", "t0");
+    *dest = d;
+}
 
 static uint32_t get_mcause() {
     uint32_t ret;
@@ -100,6 +178,7 @@ __attribute__((noreturn, aligned(4))) void exception_handler() {
                 amo_emu_add(&regs[rd], rs2, rs1);
                 break;
             case AMO_SWAP_FUNCT5:
+                amo_emu_swap(&regs[rd], rs2, rs1);
                 break;
             case AMO_XOR_FUNCT5:
                 amo_emu_xor(&regs[rd], rs2, rs1);
@@ -111,12 +190,16 @@ __attribute__((noreturn, aligned(4))) void exception_handler() {
                 amo_emu_and(&regs[rd], rs2, rs1);
                 break;
             case AMO_MIN_FUNCT5:
+                amo_emu_min(&regs[rd], rs2, rs1);
                 break;
             case AMO_MAX_FUNCT5:
+                amo_emu_max(&regs[rd], rs2, rs1);
                 break;
             case AMO_MINU_FUNCT5:
+                amo_emu_minu(&regs[rd], rs2, rs1);
                 break;
             case AMO_MAXU_FUNCT5:
+                amo_emu_maxu(&regs[rd], rs2, rs1);
                 break;
             }
         }
