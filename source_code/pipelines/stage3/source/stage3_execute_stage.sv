@@ -57,7 +57,7 @@ module stage3_execute_stage (
     branch_res_if branch_if ();
 
     /**********************
-    * Decode/Register Read
+    * Decode/Register Read 
     ***********************/
 
     // RV32C inputs

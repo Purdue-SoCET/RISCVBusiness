@@ -16,6 +16,9 @@ filesets:
             - source/stage3_hazard_unit.sv
             - source/stage3_forwarding_unit.sv
             - source/stage3.sv
+            - source/decode_queue.sv
+            - source/decode_resolution.sv
+            - source/stage3_uop_stage.sv
         file_type: systemVerilogSource
 
 
