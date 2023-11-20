@@ -162,7 +162,7 @@ module stage3_hazard_unit (
 
     assign hazard_if.if_ex_flush  = //ex_flush_hazard // control hazard
                                   //branch_jump ||    // control hazard
-                                  branch_jump || (wait_for_imem); //&& !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
+                                  flush_queue || (wait_for_imem); //&& !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
     assign flush_queue = ex_flush_hazard // control hazard
                                   || branch_jump;    // control hazard
                                   //|| (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
