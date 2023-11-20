@@ -28,10 +28,11 @@
 interface stage3_hazard_unit_if();
 
   import rv32i_types_pkg::word_t;
+  import rv32i_types_pkg::regsel_t;
 
   // Pipeline status signals (inputs)
-  logic [4:0] rs1_e, rs2_e;
-  logic [3:0] [4:0] rd_m;
+  regsel_t rs1_e, rs2_e;
+  regsel_t rd_m [3:0];
   logic reg_write, csr_read;
   logic i_mem_busy, d_mem_busy, dren, dwen, ret, suppress_data;
   logic jump, branch, fence_stall;

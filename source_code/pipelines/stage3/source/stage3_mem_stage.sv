@@ -198,7 +198,7 @@ module stage3_mem_stage(
     assign hazard_if.jump = current_instr.jump;
     assign hazard_if.branch = current_instr.branch;
     assign hazard_if.halt = current_instr.halt;
-    assign hazard_if.rd_m = current_instr.rd_m;
+    assign hazard_if.rd_m[0] = current_instr.rd_m;
     assign hazard_if.reg_write = current_instr.reg_write;
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT

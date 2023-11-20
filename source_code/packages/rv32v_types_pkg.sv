@@ -24,16 +24,15 @@
 
 `ifndef RV32V_TYPES_PKG_SV
 `define RV32V_TYPES_PKG_SV
-// `include "rv32i_types_pkg.sv";
+
+`include "rv32i_types_pkg.sv";
 
 package rv32v_types_pkg;
   parameter VLEN_WIDTH = 7; // 128 bit registers
   parameter VL_WIDTH = VLEN_WIDTH; //width of largest vector = VLENB * 8 
   parameter VLEN = 1 << 7; 
   parameter VLENB = VLEN / 8; //VLEN in bytes- TODO change to use csr val
-  parameter NUM_LANES = 2;
-  // import rv32i_types_pkg::opcode_t;
-
+  parameter NUM_LANES = 4;
 
   typedef enum logic [2:0]  {
     SEW8    = 3'd0, 
@@ -44,7 +43,7 @@ package rv32v_types_pkg;
     SEW256  = 3'd5,
     SEW512  = 3'd6,
     SEW1024 = 3'd7
-  } sew_t;
+  } vsew_t;
 
   typedef enum logic [2:0] {
     LMUL1       = 3'd0,
@@ -62,6 +61,13 @@ package rv32v_types_pkg;
     WIDTH32 = 3'b110
     // RES = 3'd1, 3'd2, 3'd3, 3'd4, 3'd7 
   } width_t;
+
+  typedef enum logic [6:0] { 
+    VMOC_LOAD = 7'h7,
+    VMOC_STORE = 7'h27,
+    VMOC_AMO = 7'h2f,
+    VMOC_ALU_CFG = 7'h57
+  } vmajoropcode_t;
 
   typedef enum logic [4:0] { 
     LUMOP_UNIT = 5'd0, 
@@ -478,8 +484,8 @@ package rv32v_types_pkg;
     logic [3:0] reserved;
     logic vma;
     logic vta;
-    sew_t sew;
-    vlmul_t lmul;
+    vsew_t vsew;
+    vlmul_t vlmul;
     logic [4:0] rs1;
     vfunct3_t funct3;
     logic [4:0] rd;
@@ -503,6 +509,34 @@ package rv32v_types_pkg;
     UNSIGNED = 0
   } sign_type_t;
 
+  /**********************************************************/
+  /* VECTOR DECODE CONTROL STRUCT
+  /**********************************************************/
+
+  typedef struct packed {
+    // Register file signals
+    rv32i_types_pkg::regsel_t vs1_sel,
+    rv32i_types_pkg::regsel_t vs2_sel,
+    rv32i_types_pkg::regsel_t vd_sel,
+    logic vregwen,
+    // Alignment unit signals
+    vsew_t vvsew_src,
+    logic [1:0] velem_offset,
+    logic vsignext,  // 0 -> zero extend; 1 -> sign extend
+    // Execution value select signals
+    logic vxin1_use_imm,
+    logic vxin1_use_rs1,
+    logic vxin2_use_rs2,
+    logic [4:0] vimm,
+    // Execution lane signals
+    vfu_t vfu,
+    valuop_t valuop,
+    vredop_t vredop,
+    vmaskop_t vmaskop,
+    vpermop_t vpermop,
+    // Memory signals
+    /* TBD */
+  } vcontrol_t;
 
 endpackage
 `endif

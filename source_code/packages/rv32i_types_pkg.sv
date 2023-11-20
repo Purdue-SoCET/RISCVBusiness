@@ -203,5 +203,17 @@ package rv32i_types_pkg;
         word_t prediction;
     } fetch_ex_pipeline_reg_t;
 
+    typedef enum logic [1:0] {
+        RC_SCALAR,
+        RC_VECTOR,
+        RC_FLOAT,
+        RC_IMP
+    } regclass_t;
+
+    typedef struct packed {
+        regclass_t regclass;
+        logic [4:0] regidx;
+    } regsel_t;
+
 endpackage
 `endif

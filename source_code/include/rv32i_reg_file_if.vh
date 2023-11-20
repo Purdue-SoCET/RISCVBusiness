@@ -30,7 +30,7 @@ interface rv32i_reg_file_if();
   import rv32i_types_pkg::*;
 
   word_t        w_data, rs1_data, rs2_data;
-  logic   [4:0] rs1, rs2, rd;
+  regsel_t      rs1, rs2, rd;
   logic         wen;
 
   modport rf (

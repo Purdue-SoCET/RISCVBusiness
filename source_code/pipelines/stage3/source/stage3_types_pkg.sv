@@ -50,7 +50,7 @@ package stage3_types_pkg;
         logic [2:0] w_sel;
         logic [3:0] byte_en; // TODO: Where should this be generated?
         logic [4:0] zimm;
-        logic [4:0] rd_m;
+        regsel_t rd_m;
         logic mal_insn;
         logic fault_insn;
         logic illegal_insn;
