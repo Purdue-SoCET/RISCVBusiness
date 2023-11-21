@@ -100,7 +100,7 @@ module stage3_hazard_unit (
     assign hazard_if.rollback = (hazard_if.ifence && !hazard_if.fence_stall); // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
 
     // EPC priority logic
-    assign epc = hazard_if.valid_m && !intr ? hazard_if.pc_m :
+    assign epc = hazard_if.valid_m && (!intr || branch_jump) ? hazard_if.pc_m :
                 (hazard_if.valid_e ? hazard_if.pc_e : hazard_if.pc_f);
 
     /* Send Exception notifications to Prv Block */
