@@ -289,6 +289,7 @@ module stage3_execute_stage (
                 ex_mem_if.ex_mem_reg.instr      <= cu_if.instr;
                 ex_mem_if.ex_mem_reg.pc         <= fetch_ex_if.fetch_ex_reg.pc;
                 ex_mem_if.ex_mem_reg.pc4        <= fetch_ex_if.fetch_ex_reg.pc4;
+                ex_mem_if.ex_mem_reg.hart_id    <= fetch_ex_if.fetch_ex_reg.hart_id;
                 ex_mem_if.ex_mem_reg.imm_U      <= cu_if.imm_U;
 
                 // CPU Tracker
