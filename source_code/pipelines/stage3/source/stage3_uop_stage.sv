@@ -21,14 +21,15 @@
 *   Date Created: 11/19/2023
 *   Description:  uop stage in pipeline that recieves input from the IF stage and generates output to the EX stage. 
 */
-//`include "stage3_types_pkg.sv"
+//'include "stage3_types_pkg.sv"
 
 import stage3_types_pkg::*;
+import rv32i_types_pkg::*;
 
 module stage3_uop_stage 
 #(
     QUEUE_LEN=8,
-    DISPATCH_SIZE=2
+    DISPATCH_SIZE=1
 )
 (
     input logic CLK,
@@ -37,7 +38,9 @@ module stage3_uop_stage
     input logic stall_queue, flush_queue, 
 
     output fetch_ex_t ex_stage_in,
-    output logic is_queue_full
+    output logic is_queue_full,
+    output word_t pc_decode,
+    output logic valid_decode
 );
 
 fetch_ex_t[DISPATCH_SIZE-1:0] ctrls; 
@@ -49,7 +52,7 @@ logic store;
 decode_resolution #(.QUEUE_LEN(QUEUE_LEN), .DISPATCH_SIZE(DISPATCH_SIZE)) 
                   DEC_RES(.s_ctrls(if_stage_in), .num_free_slots(num_free_slots),
                            .num_uops(num_uops),
-                           .ctrls(ctrls), .store(store)); 
+                           .ctrls(ctrls), .store(store), .valid_decode(valid_decode), .pc_decode(pc_decode)); 
 
 
 decode_queue #(.QUEUE_LEN(QUEUE_LEN), .DISPATCH_SIZE(DISPATCH_SIZE))

@@ -27,19 +27,23 @@
 `include "prv_pipeline_if.vh"
 //`include "risc_mgmt_if.vh"
 
+import alu_types_pkg::*;
+import rv32i_types_pkg::*;
+import stage3_types_pkg::*;
+
 module stage3_hazard_unit (
     stage3_hazard_unit_if.hazard_unit hazard_if,
     prv_pipeline_if.hazard prv_pipe_if,
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
 
-    input logic is_queue_full,
+    input logic is_queue_full, valid_decode, 
+    input word_t pc_decode,
     output logic stall_queue, flush_queue
 
 
 );
-    import alu_types_pkg::*;
-    import rv32i_types_pkg::*;
+    
 
     // Pipeline hazard signals
     logic dmem_access;
@@ -106,7 +110,7 @@ module stage3_hazard_unit (
 
     // EPC priority logic
     assign epc = hazard_if.valid_m && !intr ? hazard_if.pc_m :
-                (hazard_if.valid_e ? hazard_if.pc_e : hazard_if.pc_f);
+                (hazard_if.valid_e ? hazard_if.pc_e : ( valid_decode ? pc_decode : hazard_if.pc_f));
 
     /* Send Exception notifications to Prv Block */
     // TODO: Correct execution of exceptions
@@ -162,7 +166,7 @@ module stage3_hazard_unit (
 
     assign hazard_if.if_ex_flush  = //ex_flush_hazard // control hazard
                                   //branch_jump ||    // control hazard
-                                  flush_queue || (wait_for_imem); //&& !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
+                                  branch_jump || ex_flush_hazard || (wait_for_imem); //&& !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
     assign flush_queue = ex_flush_hazard // control hazard
                                   || branch_jump;    // control hazard
                                   //|| (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving

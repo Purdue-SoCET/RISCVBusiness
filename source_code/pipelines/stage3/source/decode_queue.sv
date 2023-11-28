@@ -33,7 +33,7 @@
 module decode_queue
 #(
     QUEUE_LEN=8,
-    DISPATCH_SIZE=2
+    DISPATCH_SIZE=1
 )
 (
     input logic CLK, nRST,

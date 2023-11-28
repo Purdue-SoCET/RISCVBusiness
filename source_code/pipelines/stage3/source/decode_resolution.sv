@@ -23,11 +23,13 @@
 */
 
 //`include "stage3_types_pkg.sv"
+import stage3_types_pkg::*;
+import rv32i_types_pkg::*;
 
 module decode_resolution
 #(
     QUEUE_LEN = 8,
-    DISPATCH_SIZE = 2
+    DISPATCH_SIZE = 1
 )
 (
     input fetch_ex_t[DISPATCH_SIZE-1:0] s_ctrls,
@@ -35,12 +37,19 @@ module decode_resolution
     
     output fetch_ex_t[DISPATCH_SIZE-1:0] ctrls, 
     output logic[$clog2(DISPATCH_SIZE):0] num_uops, 
-    output logic store
+    output logic store,
+    output word_t pc_decode,
+    output logic valid_decode
 );
 
 assign ctrls = s_ctrls; 
 
 assign num_uops = s_ctrls[0].valid ? DISPATCH_SIZE : 0; 
+
+
+// EPC signals for interrupts 
+assign valid_decode = s_ctrls[0].valid; 
+assign pc_decode = s_ctrls[0].pc; 
 
 always_comb begin
     if((num_uops > 0) && (num_free_slots >= num_uops))
