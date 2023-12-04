@@ -14,32 +14,41 @@
 *   limitations under the License.
 *
 *
-*   Filename:     include/rv32v_align_unit_if.vh
+*   Filename:     include/rv32v_control_unit_if.vh
 *
 *   Created by:   Om Gupta
 *   Email:        guptao@purdue.edu
-*   Date Created: 11/03/2023
-*   Description:  Interface for the data alignment unit
+*   Date Created: 11/13/2023
+*   Description:  Interface for the instruction decode for vector instructions
 */
 
-`ifndef RV32V_ALIGN_UNIT_IF_VH
-`define RV32V_ALIGN_UNIT_IF_VH
+`ifndef RV32V_CONTROL_UNIT_IF_VH
+`define RV32V_CONTROL_UNIT_IF_VH
 
-interface rv32v_align_unit_if();
+interface rv32v_control_unit_if();
 
+  import rv32i_types_pkg::*;
   import rv32v_types_pkg::*;
 
-  word_t vin_data, vout_data;
+  // Incoming instruction
+  word_t instr;
 
-  vsew_t vsew_src;
-  logic [1:0] velemoffset;
-  logic vsignext;  // 0 -> zero extend; 1 -> sign extend
+  // Vector CSR values
+  vsew_t vsew;
+  vlmul_t vlmul;
+  logic vta, vma;
 
-  modport vau(
-    input vin_data, vsew_src, velemoffset, vsignext,
-    output vout_data
+  // Control signals
+  vcontrol_t vcontrol;
+
+  // Valid output flag
+  logic vvalid;
+
+  modport vcu(
+    input instr,
+    output vcontrol, vvalid
   );
 
 endinterface
 
-`endif //RV32V_ALIGN_UNIT_IF_VH
+`endif //RV32V_CONTROL_UNIT_IF_VH

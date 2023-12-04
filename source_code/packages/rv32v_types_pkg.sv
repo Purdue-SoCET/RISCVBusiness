@@ -84,7 +84,7 @@ package rv32v_types_pkg;
   } mop_t;
 
   typedef enum logic [2:0] { 
-    OPIVV = 3'b0,
+    OPIVV = 3'd0,
     OPFVV = 3'd1,
     OPMVV = 3'd2,
     OPIVI = 3'd3,
@@ -383,25 +383,18 @@ package rv32v_types_pkg;
     // Integer compare
     VALU_SEQ,
     VALU_SNE,
-    VALU_ULT,
     VALU_SLT,
-    VALU_ULE,
     VALU_SLE,
-    VALU_UGT,
     VALU_SGT,
     // Integer min/max
-    VALU_UMN,
     VALU_MIN,
-    VALU_UMX,
     VALU_MAX,
   } valuop_t;
 
   // Operation codes for integer reduction unit
   typedef enum logic [7:0] {
     VRED_SUM,
-    VRED_UMX,
     VRED_MAX,
-    VRED_UMN,
     VRED_MIN,
     VRED_AND,
     VRED_OR ,
@@ -514,28 +507,38 @@ package rv32v_types_pkg;
   /**********************************************************/
 
   typedef struct packed {
+    vfu_t vfu;
+    valuop_t valuop;
+    vredop_t vredop;
+    vmaskop_t vmaskop;
+    vpermop_t vpermop;
+    logic vopunsigned;
+  } vexec_t;
+
+  typedef struct packed {
     // Register file signals
-    rv32i_types_pkg::regsel_t vs1_sel,
-    rv32i_types_pkg::regsel_t vs2_sel,
-    rv32i_types_pkg::regsel_t vd_sel,
-    logic vregwen,
+    rv32i_types_pkg::regsel_t vs1_sel;
+    rv32i_types_pkg::regsel_t vs2_sel;
+    rv32i_types_pkg::regsel_t vd_sel;
+    logic vregwen;
+    logic sregwen;
     // Alignment unit signals
-    vsew_t vvsew_src,
-    logic [1:0] velem_offset,
-    logic vsignext,  // 0 -> zero extend; 1 -> sign extend
+    vsew_t veew_src1;
+    vsew_t veew_src2;
+    vsew_t veew_dest;
+    logic [1:0] velem_offset;
+    logic vsignext;  // 0 -> zero extend; 1 -> sign extend
     // Execution value select signals
-    logic vxin1_use_imm,
-    logic vxin1_use_rs1,
-    logic vxin2_use_rs2,
-    logic [4:0] vimm,
+    logic vxin1_use_imm;
+    logic vxin1_use_rs1;
+    logic vxin2_use_rs2;
+    logic [4:0] vimm;
     // Execution lane signals
-    vfu_t vfu,
-    valuop_t valuop,
-    vredop_t vredop,
-    vmaskop_t vmaskop,
-    vpermop_t vpermop,
+    vexec_t vexec;
     // Memory signals
-    /* TBD */
+    logic vmemrden;
+    logic vmemwren;
+    logic vmemtoreg;
   } vcontrol_t;
 
 endpackage
