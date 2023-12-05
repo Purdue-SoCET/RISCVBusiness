@@ -1,8 +1,10 @@
 
 package stage3_types_pkg;
 
+    import alu_types_pkg::*;
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
+    import rv32m_pkg::*;
 
     typedef struct packed {
         logic valid;
@@ -50,7 +52,7 @@ package stage3_types_pkg;
         logic [2:0] w_sel;
         logic [3:0] byte_en; // TODO: Where should this be generated?
         logic [4:0] zimm;
-        logic [4:0] rd_m;
+        regsel_t rd_m;
         logic mal_insn;
         logic fault_insn;
         logic illegal_insn;
@@ -69,4 +71,60 @@ package stage3_types_pkg;
         // TODO: imm_U? Maybe needed
     } ex_mem_t;
 
+    typedef struct packed {
+        logic dwen;
+        logic dren;
+        logic j_sel; 
+        logic branch; 
+        logic jump;
+        logic ex_pc_sel; 
+        logic imm_shamt_sel;
+        logic halt;
+        logic wen; 
+        logic ifence;
+        logic wfi;
+
+        aluop_t alu_op;
+        logic [1:0] alu_a_sel;
+        logic[1:0] alu_b_sel;
+        logic [2:0] w_sel;
+        logic [4:0] shamt;
+        regsel_t rd;
+        logic [11:0] imm_I;
+        logic[11:0] imm_S;
+        logic [20:0] imm_UJ;
+        logic [12:0] imm_SB;
+        // word_t instr;
+        word_t imm_U;
+        load_t load_type;
+        branch_t branch_type;
+        opcode_t opcode;
+
+        // Privilege control signals
+        logic fault_insn;
+        logic illegal_insn;
+        logic ret_insn;
+        logic breakpoint; 
+        logic ecall_insn;
+        logic csr_swap;
+        logic csr_set;
+        logic csr_clr;
+        logic csr_imm;
+        logic csr_rw_valid;
+        csr_addr_t csr_addr;
+        logic [4:0] zimm;
+
+        // Extension control signals
+        rv32m_decode_t rv32m_control;
+
+        // RF interface signals
+        regsel_t rs1;
+        regsel_t rs2; 
+    } control_t; 
+
+
+    typedef struct packed {
+        fetch_ex_t if_out; 
+        control_t ctrl_out; 
+    } uop_t; 
 endpackage

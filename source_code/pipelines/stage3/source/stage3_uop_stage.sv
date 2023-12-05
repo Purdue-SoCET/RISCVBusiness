@@ -28,34 +28,48 @@ import rv32i_types_pkg::*;
 
 module stage3_uop_stage 
 #(
-    QUEUE_LEN=8,
-    DISPATCH_SIZE=1
+    parameter type D_TYPE = uop_t, 
+    parameter QUEUE_LEN = 8,
+    parameter DISPATCH_SIZE = 1
 )
 (
     input logic CLK,
     input logic nRST,
-    input fetch_ex_t[DISPATCH_SIZE-1:0] if_stage_in,
+    input fetch_ex_t if_stage_in,
     input logic stall_queue, flush_queue, 
 
-    output fetch_ex_t ex_stage_in,
+    output D_TYPE ex_stage_in,
     output logic is_queue_full,
     output word_t pc_decode,
-    output logic valid_decode
+    output logic valid_decode, 
+
+    rv32c_if rv32cif
 );
 
-fetch_ex_t[DISPATCH_SIZE-1:0] ctrls; 
+D_TYPE[DISPATCH_SIZE-1:0] ctrls; 
 logic[$clog2(QUEUE_LEN)+1:0] num_free_slots;
+logic[$clog2(DISPATCH_SIZE):0] s_num_uops; 
+
 logic[$clog2(DISPATCH_SIZE):0] num_uops; 
 logic store;
 
+// uop_t [DISPATCH_SIZE-1:0] sctrls2; 
 
-decode_resolution #(.QUEUE_LEN(QUEUE_LEN), .DISPATCH_SIZE(DISPATCH_SIZE)) 
-                  DEC_RES(.s_ctrls(if_stage_in), .num_free_slots(num_free_slots),
+D_TYPE[DISPATCH_SIZE-1:0] s_ctrls; 
+
+
+scalar_decode #(.D_TYPE(uop_t), .DISPATCH_SIZE(DISPATCH_SIZE))
+              S_DECODE(.*); 
+
+
+
+decode_resolution #(.D_TYPE(D_TYPE), .QUEUE_LEN(QUEUE_LEN), .DISPATCH_SIZE(DISPATCH_SIZE)) 
+                  DEC_RES(.num_free_slots(num_free_slots),
                            .num_uops(num_uops),
-                           .ctrls(ctrls), .store(store), .valid_decode(valid_decode), .pc_decode(pc_decode)); 
+                           .ctrls(ctrls), .store(store), .valid_decode(valid_decode), .pc_decode(pc_decode), .*); 
 
 
-decode_queue #(.QUEUE_LEN(QUEUE_LEN), .DISPATCH_SIZE(DISPATCH_SIZE))
+decode_queue #(.D_TYPE(D_TYPE), .QUEUE_LEN(QUEUE_LEN), .DISPATCH_SIZE(DISPATCH_SIZE))
              DEC_QUEUE(.CLK(CLK),
                        .nRST(nRST),
                        .ctrls(ctrls),

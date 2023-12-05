@@ -32,22 +32,23 @@
 
 module decode_queue
 #(
-    QUEUE_LEN=8,
-    DISPATCH_SIZE=1
+    parameter type D_TYPE = fetch_ex_t, 
+    parameter QUEUE_LEN = 8,
+    parameter DISPATCH_SIZE = 1
 )
 (
     input logic CLK, nRST,
-    input fetch_ex_t [DISPATCH_SIZE-1:0] ctrls, 
+    input D_TYPE [DISPATCH_SIZE-1:0] ctrls, 
     input logic stall_queue, flush_queue, store,
     input logic[$clog2(DISPATCH_SIZE):0] num_uops,  
 
     output logic[$clog2(QUEUE_LEN)+1:0] num_free_slots,
-    output fetch_ex_t uop0
+    output D_TYPE uop0
 );
 
 logic[$clog2(QUEUE_LEN)+1:0] tail_idx, nxt_tail_idx; 
 
-fetch_ex_t[QUEUE_LEN:1] queue_data, nxt_queue_data; // start counting from 1 instead of 0 so I don't have to deal with negative numbers (if tail_idx == 0, then tail_idx - 1= -1) 
+D_TYPE[QUEUE_LEN:1] queue_data, nxt_queue_data; // start counting from 1 instead of 0 so I don't have to deal with negative numbers (if tail_idx == 0, then tail_idx - 1= -1) 
 
 
 assign uop0 = queue_data[1]; // assign up0 to the head to of the queue 
@@ -138,64 +139,3 @@ end
 
 
 endmodule 
-
-
-
-// typedef struct packed {
-//         // ** fetch_ex_if **  
-//         logic valid;
-//         logic token;
-//         logic mal_insn;
-//         logic fault_insn;
-//         word_t pc;
-//         word_t pc4;
-//         word_t instr;
-//         word_t prediction;
-//         word_t badaddr;
-
-//         // ** cu_if ** 
-//         logic dwen, dren;
-//         logic j_sel;
-//         logic branch; 
-//         logic jump; 
-//         logic ex_pc_sel;
-//         logic imm_shamt_sel; 
-//         logic halt; 
-//         logic wen; 
-//         logic ifence;
-//         logic wfi;
-//         aluop_t alu_op;
-//         logic [1:0] alu_a_sel;
-//         logic[1:0] alu_b_sel;
-//         logic [2:0] w_sel;
-//         logic [4:0] shamt;
-//         logic [4:0] rd;
-//         logic [11:0] imm_I;
-//         logic[11:0] imm_S;
-//         logic [20:0] imm_UJ;
-//         logic [12:0] imm_SB;
-//         word_t imm_U;
-//         load_t load_type;
-//         branch_t branch_type;
-//         opcode_t opcode;
-
-//         logic fault_insn; 
-//         logic illegal_insn;
-//         logic ret_insn;
-//         logic breakpoint;
-//         logic ecall_insn;
-//         logic csr_swap;
-//         logic csr_set;
-//         logic csr_clr;
-//         logic csr_imm;
-//         logic csr_rw_valid;
-//         csr_addr_t csr_addr;
-//         logic [4:0] zimm;
-
-//         rv32m_decode_t rv32m_control;
-
-//         // ** rf_if ** 
-//         logic [4:0] rs1;
-//         logic [4:0] rs2; 
-
-// } uop_type;

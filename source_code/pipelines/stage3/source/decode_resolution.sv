@@ -28,14 +28,17 @@ import rv32i_types_pkg::*;
 
 module decode_resolution
 #(
-    QUEUE_LEN = 8,
-    DISPATCH_SIZE = 1
+    parameter type D_TYPE = fetch_ex_t, 
+    parameter QUEUE_LEN = 8,
+    parameter DISPATCH_SIZE = 1
 )
 (
-    input fetch_ex_t[DISPATCH_SIZE-1:0] s_ctrls,
+    input D_TYPE[DISPATCH_SIZE-1:0] s_ctrls,
     input logic[$clog2(QUEUE_LEN)+1:0] num_free_slots, 
+    input logic[$clog2(DISPATCH_SIZE):0] s_num_uops, 
+
     
-    output fetch_ex_t[DISPATCH_SIZE-1:0] ctrls, 
+    output D_TYPE[DISPATCH_SIZE-1:0] ctrls, 
     output logic[$clog2(DISPATCH_SIZE):0] num_uops, 
     output logic store,
     output word_t pc_decode,
@@ -44,12 +47,12 @@ module decode_resolution
 
 assign ctrls = s_ctrls; 
 
-assign num_uops = s_ctrls[0].valid ? DISPATCH_SIZE : 0; 
+assign num_uops = s_ctrls[0].if_out.valid ? DISPATCH_SIZE : 0; 
 
 
 // EPC signals for interrupts 
-assign valid_decode = s_ctrls[0].valid; 
-assign pc_decode = s_ctrls[0].pc; 
+assign valid_decode = s_ctrls[0].if_out.valid; 
+assign pc_decode = s_ctrls[0].if_out.pc; 
 
 always_comb begin
     if((num_uops > 0) && (num_free_slots >= num_uops))

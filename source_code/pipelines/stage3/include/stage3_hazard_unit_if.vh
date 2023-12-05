@@ -28,9 +28,11 @@
 interface stage3_hazard_unit_if();
 
   import rv32i_types_pkg::word_t;
+  import rv32i_types_pkg::regsel_t;
 
   // Pipeline status signals (inputs)
-  logic [4:0] rs1_e, rs2_e, rd_m;
+  regsel_t rs1_e, rs2_e;
+  regsel_t rd_m;
   logic reg_write, csr_read;
   logic i_mem_busy, d_mem_busy, dren, dwen, ret, suppress_data;
   logic jump, branch, fence_stall;
@@ -39,6 +41,7 @@ interface stage3_hazard_unit_if();
   logic valid_e, valid_m; // f always valid since it's the PC
   logic ifence;
   logic ex_busy;
+  logic lsc_queue_full;
 
   // Control (outputs)
   logic pc_en, npc_sel;
@@ -63,6 +66,14 @@ interface stage3_hazard_unit_if();
   // RV32C
   logic rv32c_ready;
 
+
+  // uop stage 
+  logic stall_queue, flush_queue, is_queue_full;
+  logic valid_decode; 
+  word_t
+  pc_decode; 
+
+
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
             reg_write, csr_read,
@@ -72,10 +83,15 @@ interface stage3_hazard_unit_if();
             badaddr, ifence,
             token_ex, token_mem, rv32c_ready,
             valid_e, valid_m, ex_busy,
+
+
     output  pc_en, npc_sel,
             if_ex_flush, ex_mem_flush,
             if_ex_stall, ex_mem_stall,
-            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback
+            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback,
+
+            // uop unit
+            is_queue_full
   );
 
   modport fetch (
