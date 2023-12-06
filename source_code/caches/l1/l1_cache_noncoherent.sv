@@ -28,19 +28,18 @@
 
 `include "generic_bus_if.vh"
 
-module l1_cache #(
+module l1_cache_noncoherent #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
     parameter ASSOC               = 1, // dont set this to 0
-    parameter NONCACHE_START_ADDR = 32'hF000_0000, // sh/sb still have issues when uncached; not sure whats up with that still tbh
-    parameter CPUS = 1
+    parameter NONCACHE_START_ADDR = 32'hF000_0000 // sh/sb still have issues when uncached; not sure whats up with that still tbh
 )
 (
     input logic CLK, nRST,
     input logic clear, flush, reserve, exclusive,
     output logic clear_done, flush_done, abort_bus,
     generic_bus_if.cpu mem_gen_bus_if,
-    generic_bus_if.generic_bus proc_gen_bus_if
+    generic_bus_if.generic_bus proc_gen_bus_if,
     bus_ctrl_if.tb ccif //Coherency interface, connect to bus
 );
     import rv32i_types_pkg::*;
@@ -54,15 +53,11 @@ module l1_cache #(
     localparam N_SET_BITS         = $clog2(N_SETS);// + (N_SETS == 1);
     localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE);// + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
-    localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2 + 1; // in bits (+1 for exclusive bit)
+    localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2; // in bits
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
     
-    
-    //typedef enum logic[1:0] {INVALID=0, EXCLUSIVE, SHARED, MODIFIED} frame_state_t;
-
+   
     typedef struct packed{
-	//frame_state_t mesi_state;
-	logic exclusive;
         logic valid;
         logic dirty;
         logic [N_TAG_BITS - 1:0] tag;
@@ -122,7 +117,7 @@ module l1_cache #(
     word_t [BLOCK_SIZE-1:0] hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
-    cache_set_t sramWrite, sramRead, sramMask, sramBus;
+    cache_set_t sramWrite, sramRead, sramMask;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL;
     // flush reg
@@ -132,15 +127,10 @@ module l1_cache #(
     reservation_set_t reservation_set, next_reservation_set;
     logic addr_is_reserved, addr_is_exclusive;
 
-    // error handling
-    assign proc_gen_bus_if.error = mem_gen_bus_if.error;
-
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
-        CPU_SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
-    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
-        BUS_SRAM(CLK, nRST, sramWrite, sramBus, 1'b1, sramWEN, sramSEL, sramMask);
+        SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -245,7 +235,6 @@ module l1_cache #(
     // cache output logic
     // Outputs: counter control signals, cache, signals to memory, signals to processor
     always_comb begin
-<<<<<<< HEAD
         sramWEN                 = 0;
         sramWrite               = 0;
         sramMask                = '1;
@@ -275,41 +264,6 @@ module l1_cache #(
             ridx = last_used[decoded_addr.idx.idx_bits] + 1;
 
         // state dependent output logic
-=======
-        proc_gen_bus_if.busy    = 1'b1;
-        mem_gen_bus_if.ren      = 1'b0;
-        mem_gen_bus_if.wen      = 1'b0;
-        mem_gen_bus_if.addr     = '0; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
-        mem_gen_bus_if.wdata    = '0; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
-        mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en; //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
-        next_read_addr          = read_addr;               //FIXME: THIS WAS ADDED TO THE DESIGN BY VERIFICATION
-        en_set_ctr 	            = 1'b0;
-        en_word_ctr 	        = 1'b0;
-        en_frame_ctr 	        = 1'b0;
-        clr_set_ctr 	        = 1'b0;
-        clr_word_ctr 	        = 1'b0;
-        clr_frame_ctr 	        = 1'b0;
-        flush_done 	            = 1'b0;
-        // flush_done 	            = 1'b0; //Duplicated?
-
-       	if(ASSOC == 1) begin
-	        ridx  = 1'b0;
-	    end
-	    else if (ASSOC == 2) begin
-	        ridx  = ~last_used[decoded_addr.set_bits];
-	    end
-       
-        for(int i = 0; i < N_SETS; i++) begin // next = orginal Use blocking to go through array?
-            for(int j = 0; j < ASSOC; j++) begin
-                next_cache[i].frames[j].data   = cache[i].frames[j].data;
-                next_cache[i].frames[j].tag    = cache[i].frames[j].tag;
-                next_cache[i].frames[j].valid  = cache[i].frames[j].valid;
-                next_cache[i].frames[j].dirty  = cache[i].frames[j].dirty;
-            end // for (int j = 0; j < ASSOC; j++)
-	    next_last_used[i] = last_used[i]; //keep same last used
-        end
-
->>>>>>> e238035a... testbench running without stall
         casez(state)
             IDLE: begin
                 // clear out caches with flush
@@ -355,7 +309,7 @@ module l1_cache #(
                     end
                 end
                 // passthrough
-                else if(pass_through && (proc_gen_bus_if.wen || proc_gen_bus_if.ren)) begin
+                else if(pass_through) begin
                     mem_gen_bus_if.wen      = proc_gen_bus_if.wen;
                     mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
                     mem_gen_bus_if.addr     = proc_gen_bus_if.addr;
@@ -487,13 +441,13 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
+                if (decoded_addr != decoded_req_addr)
                     next_state = HIT; 
                 else if (word_count_done)
                     next_state = HIT;
 	        end
 	        WB: begin
-                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
+                if (decoded_addr != decoded_req_addr)
                     next_state = HIT; 
                 else if (word_count_done)
                     next_state = FETCH;

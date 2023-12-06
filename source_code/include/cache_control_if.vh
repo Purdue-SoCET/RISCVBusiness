@@ -39,6 +39,33 @@ interface cache_control_if;
   // Used to signal that cache line should be locked.
   logic dcache_exclusive;
 
+  // Cache coherency signals for MESI, taken from bus_ctrl_if
+  // L1 generic control signals
+  logic               [CPUS-1:0] dREN, dWEN, dwait; 
+  transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
+  bus_word_t          [CPUS-1:0] daddr;
+  // L1 coherence INPUTS to bus 
+  logic               [CPUS-1:0] cctrans;     // indicates that the requester is undergoing a miss
+  logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
+  logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
+  logic               [CPUS-1:0] ccsnoopdone; // indicates that the responder has the data
+  logic               [CPUS-1:0] ccIsPresent; // indicates that nonrequesters have the data valid
+  logic               [CPUS-1:0] ccdirty;     // indicates that we have [I -> S, M -> S]
+  // L1 coherence OUTPUTS
+  logic               [CPUS-1:0] ccwait;      // indicates a potential snoophit wait request
+  logic               [CPUS-1:0] ccinv;       // indicates an invalidation request
+  logic               [CPUS-1:0] ccexclusive; // indicates an exclusivity update
+  bus_word_t          [CPUS-1:0] ccsnoopaddr; 
+  // L2 signals
+  l2_state_t l2state; 
+  transfer_width_t l2load, l2store; 
+  logic l2WEN, l2REN; 
+  bus_word_t l2addr; 
+
+
+
+
+
   modport pipeline (
     output icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
     input iclear_done, iflush_done, dclear_done, dflush_done
@@ -56,7 +83,16 @@ interface cache_control_if;
 
   modport dcache ( 
     input dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
-    output dclear_done, dflush_done
+    output dclear_done, dflush_done,
+
+    //Inserted from bus_ctrl_if.tb modport
+    input   dwait, dload, 
+            ccwait, ccinv, ccsnoopaddr, ccexclusive, 
+            l2addr, l2store, l2REN, l2WEN,
+
+    output  dREN, dWEN, daddr, dstore, 
+            cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+            l2load, l2state
   );
 
 endinterface
