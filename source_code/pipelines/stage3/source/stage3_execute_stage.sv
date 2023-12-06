@@ -105,7 +105,7 @@ module stage3_execute_stage (
     /******************
     * Functional Units
     *******************/
-    logic rv32m_busy;
+    logic rv32m_done;
     word_t rv32m_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
@@ -121,7 +121,7 @@ module stage3_execute_stage (
         .operation(cu_if.rv32m_control.op), // TODO: Better way?
         .rv32m_a(rs1_post_fwd), // All RV32M are reg-reg, so just feed post-fwd regs
         .rv32m_b(rs2_post_fwd),
-        .rv32m_busy,
+        .rv32m_done,
         .rv32m_out
     );
 
@@ -230,7 +230,7 @@ module stage3_execute_stage (
     assign fw_if.rs2_e = rf_if.rs2;
 
     assign hazard_if.pc_e = fetch_ex_if.fetch_ex_reg.pc;
-    assign hazard_if.ex_busy = (rv32m_busy && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
+    assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
 
 
