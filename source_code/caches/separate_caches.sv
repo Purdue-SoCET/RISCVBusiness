@@ -25,6 +25,7 @@
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
 `include "component_selection_defines.vh"
+`include "bus_ctrl_if.vh"
 
 module separate_caches (
     input logic CLK,
@@ -34,6 +35,7 @@ module separate_caches (
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches cc_if,
+    bus_ctrl_if.cc cache_coherency_if,
     output logic abort_bus
 );
     generate
@@ -78,7 +80,8 @@ module separate_caches (
                 .reserve(cc_if.dcache_reserve),
                 .exclusive(cc_if.dcache_exclusive),
                 .flush_done(cc_if.dflush_done),
-                .clear_done(cc_if.dclear_done)
+                .clear_done(cc_if.dclear_done),
+		.ccif(cache_coherency_if.tb)
             );
         endcase
     endgenerate
@@ -126,7 +129,8 @@ module separate_caches (
                 .reserve(1'b0),
                 .exclusive(1'b0),
                 .flush_done(cc_if.iflush_done),
-                .clear_done(cc_if.iclear_done)
+                .clear_done(cc_if.iclear_done),
+		.ccif(cache_coherency_if.tb) //Note, use the old, non-coherent cache for icache probably. Icache coherency not meant to be supported
             );
         endcase
     endgenerate

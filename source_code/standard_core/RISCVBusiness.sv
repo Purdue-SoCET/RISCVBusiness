@@ -31,6 +31,7 @@
 `include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
+`include "bus_ctrl_if.vh"
 
 module RISCVBusiness (
     input logic CLK, nRST,
@@ -63,6 +64,9 @@ module RISCVBusiness (
     cache_control_if cc_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
+
+    //Added for coherency
+    bus_ctrl_if cache_coherency_if ();
 
     //interface instantiations
     tspp_fetch_execute_if fetch_ex_if ();
@@ -170,6 +174,7 @@ module RISCVBusiness (
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .cc_if(cc_if),
+	.cache_coherency_if(cache_coherency_if),
         .abort_bus(abort_bus)
     );
 

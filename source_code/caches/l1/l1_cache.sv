@@ -40,7 +40,7 @@ module l1_cache #(
     input logic clear, flush, reserve, exclusive,
     output logic clear_done, flush_done, abort_bus,
     generic_bus_if.cpu mem_gen_bus_if,
-    generic_bus_if.generic_bus proc_gen_bus_if
+    generic_bus_if.generic_bus proc_gen_bus_if,
     bus_ctrl_if.tb ccif //Coherency interface, connect to bus
 );
     import rv32i_types_pkg::*;
@@ -116,7 +116,7 @@ module l1_cache #(
     // address
     word_t read_addr, next_read_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
-    decoded_cache_addr_t decoded_addr;
+    decoded_cache_addr_t decoded_addr, decoded_snoop_addr;
     // Cache Hit
     logic hit, pass_through;
     word_t [BLOCK_SIZE-1:0] hit_data;
@@ -124,7 +124,7 @@ module l1_cache #(
     // sram signals
     cache_set_t sramWrite, sramRead, sramMask, sramBus;
     logic sramWEN; // no need for REN
-    logic [N_SET_BITS-1:0] sramSEL;
+    logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
     // flush reg
     logic flush_req, nflush_req;
     logic idle_done;
@@ -137,10 +137,13 @@ module l1_cache #(
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits;
+    assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
-    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
-        BUS_SRAM(CLK, nRST, sramWrite, sramBus, 1'b1, sramWEN, sramSEL, sramMask);
+    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS))  //Need to edit to only store and output tags and 
+        BUS_SRAM(CLK, nRST, sramWrite, sramBus, 1'b1, sramWEN, sramSNOOPSEL, sramMask);
+
+    assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -223,6 +226,7 @@ module l1_cache #(
 
     // decoded address conversion
     assign decoded_addr = decoded_cache_addr_t'(proc_gen_bus_if.addr);
+    assign decoded_snoop_addr = decoded_cache_addr_t'(ccif.ccsnoopaddr);
 
     // hit logic with pass through
     always_comb begin

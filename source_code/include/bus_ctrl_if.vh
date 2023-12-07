@@ -86,6 +86,7 @@ interface bus_ctrl_if;
     logic               [CPUS-1:0] ccinv;       // indicates an invalidation request
     logic               [CPUS-1:0] ccexclusive; // indicates an exclusivity update
     bus_word_t          [CPUS-1:0] ccsnoopaddr; 
+    logic [CPUS-1:0][2:0] frame_state; //Outputs exclusive, dirty, and valid bits for a frame
     // L2 signals
     l2_state_t l2state; 
     transfer_width_t l2load, l2store; 
@@ -107,7 +108,7 @@ interface bus_ctrl_if;
     modport cc(
         input   dREN, dWEN, daddr, dstore, 
                 cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state, 
+                l2load, l2state, frame_state,
         output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN
@@ -119,7 +120,7 @@ interface bus_ctrl_if;
                 l2addr, l2store, l2REN, l2WEN,
         output  dREN, dWEN, daddr, dstore, 
                 cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state
+                l2load, l2state, frame_state
     ); 
 
 endinterface
