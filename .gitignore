@@ -39,6 +39,7 @@ run_tests_cache.json
 # Ignore log files and Verilator outputs
 *.log
 *.fst
+*.gtkw
 memsim.dump
 meminit.bin
 
