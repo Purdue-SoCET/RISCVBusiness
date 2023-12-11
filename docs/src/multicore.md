@@ -45,6 +45,14 @@ when it adds 100 to it and stores it, it stores the correct value of 300.
 
 ![Cache Coherence](../fig/cache_coherence.png)
 
+## Coherency Unit
+
+The Coherency_unit module is intended for MESI Cache Coherence in multicore systems. It has address width, cache lines, and a CPU count that can be parameterized. Important characteristics include handling read/write
+requests, handling each cache line's coherency state (Modified, Exclusive, Shared, and Invalid), and assuring cache coherency using tasks like handleInvalidState, handleSharedState, handleExclusiveState, and
+handleModifiedState. 
+
+It interfaces with a bus controller (bus_ctrl_if.cc) and utilizes standard clock (CLK) and reset (nRST) signals as inputs; when the data cache changes are completed, a cache control interface will be provided. Cache_states, which is sized according to INDEX_WIDTH, tracks the cache line states (MODIFIED, EXCLUSIVE, SHARED, and INVALID). Snooping and invalidation are carried out using the snoop address, request, and write signals (cache_request, cache_write),  monitoring cache line accesses, and invalidating other caches as necessary. It additionally includes utility functions, such as all_caches_snooped_except for snooping validation, find_supplier to locate the cache holding the data and any_cache_has_hit to check for snoop hits.
+
 ## Atomics
 
 Atomic instructions can be used to provide memory ordering and ensure that
