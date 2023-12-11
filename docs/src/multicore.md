@@ -45,7 +45,7 @@ when it adds 100 to it and stores it, it stores the correct value of 300.
 
 ![Cache Coherence](../fig/cache_coherence.png)
 
-## Coherency Unit
+### Coherency Unit
 
 The Coherency_unit module is intended for MESI Cache Coherence in multicore systems. It has address width, cache lines, and a CPU count that can be parameterized. Important characteristics include handling read/write
 requests, handling each cache line's coherency state (Modified, Exclusive, Shared, and Invalid), and assuring cache coherency using tasks like handleInvalidState, handleSharedState, handleExclusiveState, and
