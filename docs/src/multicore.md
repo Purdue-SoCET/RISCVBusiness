@@ -17,6 +17,8 @@ a dual-core big/little design is planned.
 - [ ] 3 stage pipeline RV32IMACV big core
 - [ ] 2 stage pipeline RV32EAC little core
 
+## Current architecture plan for the Dual-core processor with MESI Coherence
+![Plan](../fig/mc_arch_idea.png)
 ## Cache coherence
 
 Incoherency can arise when programs acting on shared memory execute on a system
