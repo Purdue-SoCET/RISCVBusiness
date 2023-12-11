@@ -156,7 +156,7 @@ always_comb begin
     vcu_if.vcontrol.vexec.vpermop = VPRM_CPS;
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
 
-    unique case ({vopi_valid, vopm_valid, vcu_if.vcontrol.vmemtoreg})
+    unique case ({vopi_valid, vopm_valid, vcu_if.vcontrol.vmeminsn})
         3'b100: begin
             vcu_if.vcontrol.vexec = vexec_opi;
         end
@@ -182,7 +182,7 @@ end
 assign vcu_if.vcontrol.vmemrden = (vmajoropcode == VMOC_LOAD);
 assign vcu_if.vcontrol.vmemwren = (vmajoropcode == VMOC_STORE);
 
-assign vcu_if.vcontrol.vmemtoreg = vcu_if.vcontrol.vmemrden || vcu_if.vcontrol.vmemwren;
+assign vcu_if.vcontrol.vmeminsn = vcu_if.vcontrol.vmemrden || vcu_if.vcontrol.vmemwren;
 
 
 
