@@ -53,6 +53,25 @@ handleModifiedState.
 
 It interfaces with a bus controller (bus_ctrl_if.cc) and utilizes standard clock (CLK) and reset (nRST) signals as inputs; when the data cache changes are completed, a cache control interface will be provided. Cache_states, which is sized according to INDEX_WIDTH, tracks the cache line states (MODIFIED, EXCLUSIVE, SHARED, and INVALID). Snooping and invalidation are carried out using the snoop address, request, and write signals (cache_request, cache_write),  monitoring cache line accesses, and invalidating other caches as necessary. It additionally includes utility functions, such as all_caches_snooped_except for snooping validation, find_supplier to locate the cache holding the data and any_cache_has_hit to check for snoop hits.
 
+## Cache Modifications
+
+To enable coherency and atomics, a reservation set register, a duplicate SRAM tag array, 
+and a coherency interface were added to each L1 cache. Each cache is connected to an atomicity 
+unit that handles bus transactions. This is intended to reduce the complexity of 
+the cache and allows other cache designs to be used with few coherency-related modifications.
+
+The coherency interface grants read-only access to the duplicate SRAM array to the bus.
+This allows the bus to compare tags when snooping without interrupting the cache. The bus
+only gains access to the cache's SRAM data array if a snoop hit occurs, causing the cache
+FSM to enter a snooping state. The signals provided by the coherency interface, bus_ctrl_if,
+are available in the source_code/include/bus_ctrl_if.
+
+Currently, the duplicate SRAM array contains both the data and the tags. This duplicate
+data is not used, so the extra SRAM cells used to store them will need to be removed.
+Additionally, the seperate_caches.sv file in the source_code/caches/ directory can be
+modified to use a cache without coherency for the Icache. At present, both the Dcache and
+Icache use the same L1 module.
+
 ## Atomics
 
 Atomic instructions can be used to provide memory ordering and ensure that
