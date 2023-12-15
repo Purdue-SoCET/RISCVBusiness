@@ -88,10 +88,8 @@ interface stage3_hazard_unit_if();
     output  pc_en, npc_sel,
             if_ex_flush, ex_mem_flush,
             if_ex_stall, ex_mem_stall,
-            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback,
+            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback
 
-            // uop unit
-            is_queue_full
   );
 
   modport fetch (
