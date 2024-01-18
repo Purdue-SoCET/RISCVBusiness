@@ -14,12 +14,12 @@
 *   limitations under the License.
 *
 *
-*   Filename:     stage3_uop_stage.sv
+*   Filename:     scalar_decode.sv
 *
 *   Created by:   Fahad Aloufi
 *   Email:        faloufi@purdue.edu
 *   Date Created: 11/19/2023
-*   Description:  uop stage in pipeline that recieves input from the IF stage and generates output to the EX stage. 
+*   Description: scalar decode block for non-vector instructions
 */
 //'include "stage3_types_pkg.sv"
 
