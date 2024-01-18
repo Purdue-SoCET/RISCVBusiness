@@ -24,7 +24,7 @@
 
 //`include "stage3_types_pkg.sv"
 
-// import stage3_types_pkg::*;
+import stage3_types_pkg::*;
 // import alu_types_pkg::*;
 // import rv32i_types_pkg::*;
 // import machine_mode_types_1_12_pkg::*;
@@ -32,7 +32,7 @@
 
 module decode_queue
 #(
-    parameter type D_TYPE = fetch_ex_t, 
+    parameter type D_TYPE = uop_t, 
     parameter QUEUE_LEN = 8,
     parameter DISPATCH_SIZE = 1
 )

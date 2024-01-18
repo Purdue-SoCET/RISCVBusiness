@@ -38,24 +38,14 @@ import stage3_types_pkg::*;
 import rv32i_types_pkg::*;
 
 module scalar_decode
-#(
-    parameter type D_TYPE = fetch_ex_t, 
-    parameter DISPATCH_SIZE = 1
-)
 (
-    input fetch_ex_t if_stage_in,
+    stage3_fetch_execute_if.s_decode fetch_ex_if, 
     input stall_queue, 
-
-    output D_TYPE[DISPATCH_SIZE-1:0] s_ctrls,
-    output logic[$clog2(DISPATCH_SIZE):0] s_num_uops, 
-
-    
-    
     rv32c_if.execute rv32cif
 );
 
-assign s_ctrls[0].if_out = if_stage_in; 
-assign s_num_uops = s_ctrls[0].if_out.valid ? 1 : 0; 
+assign fetch_ex_if.s_ctrls[0].if_out = fetch_ex_if.fetch_ex_reg; 
+assign fetch_ex_if.s_num_uops = fetch_ex_if.s_ctrls[0].if_out.valid ? 1 : 0; 
 
 
 
@@ -67,7 +57,7 @@ rv32i_reg_file_if rf_if ();
 assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
 assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
 assign rv32cif.ex_busy = stall_queue; //cu_if.dren | cu_if.dwen | rm_if.risc_mgmt_start;
-assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : if_stage_in.instr;
+assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;  //if_stage_in.instr;
 //assign rm_if.insn = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
 
 // Control unit, inputs are post-decompression
@@ -87,55 +77,55 @@ control_unit cu (
 );
 
 // connect the ports between the interfaces and the struct type
-assign s_ctrls[0].ctrl_out.dwen = cu_if.dwen;
-assign s_ctrls[0].ctrl_out.dren =  cu_if.dren;
-assign s_ctrls[0].ctrl_out.j_sel = cu_if.j_sel; 
-assign s_ctrls[0].ctrl_out.branch =  cu_if.branch; 
-assign s_ctrls[0].ctrl_out.jump =  cu_if.jump;
-assign s_ctrls[0].ctrl_out.ex_pc_sel =  cu_if.ex_pc_sel; 
-assign s_ctrls[0].ctrl_out.imm_shamt_sel = cu_if.imm_shamt_sel;
-assign s_ctrls[0].ctrl_out.halt = cu_if.halt;
-assign s_ctrls[0].ctrl_out.wen =  cu_if.wen; 
-assign s_ctrls[0].ctrl_out.ifence =  cu_if.ifence;
-assign s_ctrls[0].ctrl_out.wfi =  cu_if.wfi;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.dwen = cu_if.dwen;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.dren =  cu_if.dren;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.j_sel = cu_if.j_sel; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.branch =  cu_if.branch; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.jump =  cu_if.jump;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.ex_pc_sel =  cu_if.ex_pc_sel; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_shamt_sel = cu_if.imm_shamt_sel;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.halt = cu_if.halt;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.wen =  cu_if.wen; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.ifence =  cu_if.ifence;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.wfi =  cu_if.wfi;
 
-assign s_ctrls[0].ctrl_out.alu_op = cu_if.alu_op;
-assign s_ctrls[0].ctrl_out.alu_a_sel =  cu_if.alu_a_sel;
-assign s_ctrls[0].ctrl_out.alu_b_sel = cu_if.alu_b_sel;
-assign s_ctrls[0].ctrl_out.w_sel =  cu_if.w_sel;
-assign s_ctrls[0].ctrl_out.shamt =  cu_if.shamt;
-assign s_ctrls[0].ctrl_out.rd =  cu_if.rd;
-assign s_ctrls[0].ctrl_out.imm_I = cu_if.imm_I;
-assign s_ctrls[0].ctrl_out.imm_S = cu_if.imm_S;
-assign s_ctrls[0].ctrl_out.imm_UJ =  cu_if.imm_UJ;
-assign s_ctrls[0].ctrl_out.imm_SB =  cu_if.imm_SB;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.alu_op = cu_if.alu_op;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.alu_a_sel =  cu_if.alu_a_sel;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.alu_b_sel = cu_if.alu_b_sel;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.w_sel =  cu_if.w_sel;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.shamt =  cu_if.shamt;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.rd =  cu_if.rd;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_I = cu_if.imm_I;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_S = cu_if.imm_S;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_UJ =  cu_if.imm_UJ;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_SB =  cu_if.imm_SB;
 // word_t instr;
-assign s_ctrls[0].ctrl_out.imm_U = cu_if.imm_U;
-assign s_ctrls[0].ctrl_out.load_type = cu_if.load_type;
-assign s_ctrls[0].ctrl_out.branch_type = cu_if.branch_type;
-assign s_ctrls[0].ctrl_out.opcode =  cu_if.opcode;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_U = cu_if.imm_U;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.load_type = cu_if.load_type;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.branch_type = cu_if.branch_type;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.opcode =  cu_if.opcode;
 
 // Privilege ctrl signals
-assign s_ctrls[0].ctrl_out.fault_insn = cu_if.fault_insn;
-assign s_ctrls[0].ctrl_out.illegal_insn = cu_if.illegal_insn;
-assign s_ctrls[0].ctrl_out.ret_insn = cu_if.ret_insn;
-assign s_ctrls[0].ctrl_out.breakpoint = cu_if.breakpoint; 
-assign s_ctrls[0].ctrl_out.ecall_insn = cu_if.ecall_insn;
-assign s_ctrls[0].ctrl_out.csr_swap = cu_if.csr_swap;
-assign s_ctrls[0].ctrl_out.csr_set = cu_if.csr_set;
-assign s_ctrls[0].ctrl_out.csr_clr = cu_if.csr_clr;
-assign s_ctrls[0].ctrl_out.csr_imm = cu_if.csr_imm;
-assign s_ctrls[0].ctrl_out.csr_rw_valid = cu_if.csr_rw_valid;
-assign s_ctrls[0].ctrl_out.csr_addr = cu_if.csr_addr;
-assign s_ctrls[0].ctrl_out.zimm = cu_if.zimm;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.fault_insn = cu_if.fault_insn;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.illegal_insn = cu_if.illegal_insn;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.ret_insn = cu_if.ret_insn;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.breakpoint = cu_if.breakpoint; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.ecall_insn = cu_if.ecall_insn;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_swap = cu_if.csr_swap;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_set = cu_if.csr_set;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_clr = cu_if.csr_clr;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_imm = cu_if.csr_imm;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_rw_valid = cu_if.csr_rw_valid;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_addr = cu_if.csr_addr;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.zimm = cu_if.zimm;
 
 // Extension ctrl signals
-assign s_ctrls[0].ctrl_out.rv32m_control = cu_if.rv32m_control;
+assign fetch_ex_if.s_ctrls[0].ctrl_out.rv32m_control = cu_if.rv32m_control;
 
 
 // RF interface signasl
-assign s_ctrls[0].ctrl_out.rs1 = rf_if.rs1; 
-assign s_ctrls[0].ctrl_out.rs2 = rf_if.rs2; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.rs1 = rf_if.rs1; 
+assign fetch_ex_if.s_ctrls[0].ctrl_out.rs2 = rf_if.rs2; 
 
 
 

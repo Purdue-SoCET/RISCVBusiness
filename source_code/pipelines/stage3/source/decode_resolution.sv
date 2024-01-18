@@ -26,9 +26,10 @@
 import stage3_types_pkg::*;
 import rv32i_types_pkg::*;
 
+
 module decode_resolution
 #(
-    parameter type D_TYPE = fetch_ex_t, 
+    parameter type D_TYPE = uop_t, 
     parameter QUEUE_LEN = 8,
     parameter DISPATCH_SIZE = 1
 )
@@ -62,15 +63,3 @@ always_comb begin
 end
 
 endmodule 
-
-
-// fetch_ex_reg connections
-// assign ctrls0.valid = s_ctrls.valid;
-// assign ctrls0.token = s_ctrls.token;
-// assign ctrls0.mal_insn = s_ctrls.mal_insn;
-// assign ctrls0.ault_insn = s_ctrls.ault_insn;
-// assign ctrls0.pc = s_ctrls.pc;
-// assign ctrls0.pc4 = s_ctrls.pc4;
-// assign ctrls0.instr = s_ctrls.instr;
-// assign ctrls0.prediction = s_ctrls.prediction;
-// assign ctrls0.badaddr = s_ctrls.badaddr;

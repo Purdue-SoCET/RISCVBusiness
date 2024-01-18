@@ -33,13 +33,13 @@ import stage3_types_pkg::*;
 
 module stage3_hazard_unit (
     stage3_hazard_unit_if.hazard_unit hazard_if,
-    prv_pipeline_if.hazard prv_pipe_if,
+    prv_pipeline_if.hazard prv_pipe_if
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
 
-    input logic is_queue_full, valid_decode, 
-    input word_t pc_decode,
-    output logic stall_queue, flush_queue
+    //input logic is_queue_full, valid_decode, 
+    //input word_t pc_decode,
+    //output logic stall_queue, flush_queue
 
 
 );
@@ -113,7 +113,7 @@ module stage3_hazard_unit (
 
     // EPC priority logic
     assign epc = hazard_if.valid_m && !intr ? hazard_if.pc_m :
-                (hazard_if.valid_e ? hazard_if.pc_e : ( valid_decode ? pc_decode : hazard_if.pc_f));
+                (hazard_if.valid_e ? hazard_if.pc_e : ( hazard_if.valid_decode ? hazard_if.pc_decode : hazard_if.pc_f));
 
     /* Send Exception notifications to Prv Block */
     // TODO: Correct execution of exceptions
@@ -170,14 +170,14 @@ module stage3_hazard_unit (
     assign hazard_if.if_ex_flush  = //ex_flush_hazard // control hazard
                                   //branch_jump ||    // control hazard
                                   branch_jump || ex_flush_hazard || (wait_for_imem); //&& !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
-    assign flush_queue = ex_flush_hazard // control hazard
+    assign hazard_if.flush_queue = ex_flush_hazard // control hazard
                                   || branch_jump;    // control hazard
                                   //|| (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
 
     assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
                                   || branch_jump     // Control hazard
                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
-                                  || (stall_queue && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
+                                  || (hazard_if.stall_queue && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
 
 
     // assign hazard_if.if_ex_stall  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
@@ -188,9 +188,9 @@ module stage3_hazard_unit (
     //                               || mem_use_stall 
     //                               || hazard_if.fence_stall // Data hazard -- stall until dependency clears (from E/M flush after writeback)
     //                               || is_queue_full;
-    assign hazard_if.if_ex_stall  = is_queue_full || hazard_if.fence_stall; // || hazard_if.fence_stall; 
+    assign hazard_if.if_ex_stall  = hazard_if.is_queue_full || hazard_if.fence_stall; // || hazard_if.fence_stall; 
 
-    assign stall_queue  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
+    assign hazard_if.stall_queue  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
                                   // || (wait_for_imem && !dmem_access) // ???
                                   //& (~ex_flush_hazard | e_ex_stage) // ???
                                   //|| rm_if.execute_stall //

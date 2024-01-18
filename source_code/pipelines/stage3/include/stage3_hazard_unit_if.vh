@@ -84,11 +84,15 @@ interface stage3_hazard_unit_if();
             token_ex, token_mem, rv32c_ready,
             valid_e, valid_m, ex_busy,
 
+            is_queue_full, pc_decode, valid_decode,
+
 
     output  pc_en, npc_sel,
             if_ex_flush, ex_mem_flush,
             if_ex_stall, ex_mem_stall,
-            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback
+            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback, 
+
+            stall_queue, flush_queue
 
   );
 
@@ -96,6 +100,11 @@ interface stage3_hazard_unit_if();
     input   pc_en, npc_sel, if_ex_stall, if_ex_flush, priv_pc, insert_priv_pc, iren, suppress_iren, rollback,
     output  i_mem_busy, rv32c_ready, pc_f
   );
+
+  modport queue (
+    input stall_queue, flush_queue, 
+    output is_queue_full, pc_decode, valid_decode
+  ); 
 
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,

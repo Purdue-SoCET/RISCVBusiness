@@ -52,39 +52,21 @@ module stage3 #(
     sparce_pipeline_if sparce_if,
     rv32c_if rv32cif
 );
-    // uop signals 
-    logic stall_queue, flush_queue, is_queue_full;
-    fetch_ex_t[0:0] if_stage_in;
-    uop_t ex_stage_in; 
-    word_t pc_decode; 
-    logic valid_decode; 
 
 
     //interface instantiations
     stage3_fetch_execute_if fetch_ex_if();
-    stage3_fetch_execute_if fetch_ex_if2();
     stage3_mem_pipe_if mem_pipe_if();
     stage3_hazard_unit_if hazard_if();
     stage3_forwarding_unit_if fw_if();
 
 
-    // explicit assignment
-    assign fetch_ex_if2.fetch_ex_reg = ex_stage_in; 
-    // assign if_stage_in[0] = fetch_ex_if.fetch_ex_reg;
-    assign if_stage_in = fetch_ex_if.fetch_ex_reg; 
-    // assign if_stage_in[1] = '0;
-    // assign if_stage_in[2] = '0;
-    // assign if_stage_in[3] = '0;
-    // assign if_stage_in[4] = '0;
-    // assign if_stage_in[5] = '0;
-    // assign if_stage_in[6] = '0;
-    // assign if_stage_in[7] = '0;
-
 
     //module instantiations
     stage3_fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
-    stage3_uop_stage #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*); 
-    stage3_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if), .uop_out(ex_stage_in), .*);
+    scalar_decode S_DECODE(.*, .stall_queue(hazard_if.stall_queue)); 
+    uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*); 
+    stage3_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_hazard_unit hazard_unit_i(.*);
     stage3_forwarding_unit forward_unit_i(.*);
