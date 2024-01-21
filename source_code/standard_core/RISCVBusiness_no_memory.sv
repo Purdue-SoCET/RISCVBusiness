@@ -62,7 +62,7 @@ module RISCVBusiness_no_memory (
     tspp_fetch_execute_if fetch_ex_if ();
     tspp_hazard_unit_if hazard_if ();
 
-    stage3 #(.RESET_PC(RESET_PC)) pipeline(
+    stage4 #(.RESET_PC(RESET_PC)) pipeline(
         .*
     );
 

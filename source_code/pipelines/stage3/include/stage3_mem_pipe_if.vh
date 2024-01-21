@@ -7,7 +7,7 @@ interface stage3_mem_pipe_if();
     import stage3_types_pkg::*;
 
     logic reg_write;
-    regsel_t rd_m;
+    logic [4:0] rd_m;
     ex_mem_t ex_mem_reg;
     word_t brj_addr;
     word_t reg_wdata;

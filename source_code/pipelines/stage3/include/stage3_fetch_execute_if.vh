@@ -32,29 +32,13 @@ interface stage3_fetch_execute_if;
   fetch_ex_t fetch_ex_reg;
   word_t brj_addr;
 
-  uop_t[0:0] s_ctrls; 
-  logic[3:0] s_num_uops;
-
-  uop_t uop;  
-
   modport fetch(
     output fetch_ex_reg
   );
 
   modport execute(
-    input uop
-    //input fetch_ex_reg
+    input fetch_ex_reg
   );
-
-  modport s_decode(
-    input fetch_ex_reg, 
-    output s_ctrls, s_num_uops
-  ); 
-
-  modport queue(
-    input s_ctrls, s_num_uops, 
-    output uop
-  ); 
 
 endinterface
 `endif

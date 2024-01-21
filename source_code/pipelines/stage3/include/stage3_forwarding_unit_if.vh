@@ -3,9 +3,9 @@
 
 interface stage3_forwarding_unit_if();
    
-    rv32i_types_pkg::regsel_t rd_m;
-    rv32i_types_pkg::regsel_t rs1_e;
-    rv32i_types_pkg::regsel_t rs2_e;
+    logic [4:0] rd_m;
+    logic [4:0] rs1_e;
+    logic [4:0] rs2_e;
     logic reg_write;
     logic load;
     logic fwd_rs1;
