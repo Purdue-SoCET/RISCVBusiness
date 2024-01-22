@@ -23,11 +23,7 @@ module flex_counter_mul #(
     end
 
     always_comb begin
-        if (clear == 1) next_flag = 0;
-        else if (count_enable == 0) next_flag = rollover_flag;
-        else if (count_out == (rollover_val - 1) & clear == 1'b0) next_flag = 1;
-        else next_flag = 0;
-
+        next_flag = count_out == (rollover_val - 1);
 
         if (clear) next_count = 0;
         else if (count_enable) begin

@@ -7,7 +7,7 @@ module rv32m_wrapper(
     input rv32m_pkg::rv32m_op_t operation,
     input [31:0] rv32m_a,
     input [31:0] rv32m_b,
-    output rv32m_busy,
+    output rv32m_done,
     output logic [31:0] rv32m_out
 );
     import rv32m_pkg::*;

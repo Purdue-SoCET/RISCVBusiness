@@ -25,65 +25,24 @@ module radix4_divider #(
 
     logic [NUM_BITS-1:0] usign_divisor, usign_dividend;
     logic adjustment_possible, adjust_quotient, adjust_remainder;
-    logic div_done;
 
     assign usign_divisor       = is_signed & divisor[NUM_BITS-1] ? (~divisor) + 1 : divisor;
     assign usign_dividend      = is_signed & dividend[NUM_BITS-1] ? (~dividend) + 1 : dividend;
     assign adjustment_possible = is_signed && (divisor[NUM_BITS-1] ^ dividend[NUM_BITS-1]);
     assign adjust_quotient     = adjustment_possible && ~quotient[NUM_BITS-1];
     assign adjust_remainder    = is_signed && dividend[NUM_BITS-1];
-    assign div_done            = (count == 0);
+    assign finished            = start && (count == 0);
     assign quotient            = temp_quotient;
     assign remainder           = temp_remainder;
 
-    /*
-    always_comb begin
-    quotient = temp_quotient;
-    remainder = temp_remainder;
-        if (count == 5'b1) begin
-            quotient = adjust_quotient ? ~temp_quotient + 1 : temp_quotient;
-            remainder = adjust_remainder ? ~temp_remainder + 1 : temp_remainder;
-        end
-    end
-*/
-    /*
-    always_ff @(posedge CLK, negedge nRST) begin
-        if (~finished && adjust_quotient)
-            quotient <= ~quotient + 1;
-
-        else if(~finished && adjust_remainder  )
-            remainder <= ~remainder + 1;
-
-        else begin
-            quotient <= quotient;
-            remainder <= remainder;
-        end
-    end
-*/
-
-    always_ff @(posedge CLK, negedge nRST) begin
-        if (nRST == 0) begin
-            finished <= 1'b0;
-        end else if (start) begin
-            finished <= 1'b0;
-        end else if (div_done) begin
-            finished <= 1'b1;
-        end
-    end
     //initialize d2 d3
     assign DivisorX2 = usign_divisor << 1;  //Divisor*2
     assign DivisorX3 = (usign_divisor << 1) + usign_divisor;  //Divisor*3
     always_ff @(posedge CLK, negedge nRST) begin
         if (nRST == 0) begin
-
-            count <= 5'd16;
+            count <= 5'd17;
             temp_quotient <= '0;
             temp_remainder <= '0;
-        end else if (start) begin
-            temp_quotient <= usign_dividend;
-            temp_remainder <= '0;
-            count <= 5'd16;
-
         end else begin
             temp_quotient <= next_quotient;
             temp_remainder <= next_remainder;
@@ -92,7 +51,6 @@ module radix4_divider #(
     end
 
     always_comb begin
-
         next_quotient = temp_quotient;
         next_remainder = temp_remainder;
         next_count = count;
@@ -102,7 +60,11 @@ module radix4_divider #(
         Result2 = '0;
         Result3 = '0;
 
-        if (count != 0) begin
+        if (start && count == 'd17) begin
+            next_quotient = usign_dividend;
+            next_remainder = '0;
+            next_count = count - 1;
+        end else if (start && count != '0) begin
             next_count = count - 1;
             shifted_remainder = (temp_remainder << 2) | temp_quotient[NUM_BITS-1:NUM_BITS-2];
             shifted_quotient = temp_quotient << 2;
@@ -115,7 +77,6 @@ module radix4_divider #(
                 if (count == 1 && adjust_quotient) next_quotient = ~next_quotient + 1;
 
                 if (count == 1 && adjust_remainder) next_remainder = ~next_remainder + 1;
-
             end else if (Result2[NUM_BITS-1] | Result2[NUM_BITS]) begin
                 next_remainder = Result1[NUM_BITS-1:0];
                 next_quotient  = shifted_quotient | 1;
@@ -135,7 +96,8 @@ module radix4_divider #(
 
                 if (count == 1 && adjust_remainder) next_remainder = ~next_remainder + 1;
             end
+        end else begin
+            next_count = 'd17;
         end
-
     end
 endmodule
