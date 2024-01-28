@@ -141,6 +141,7 @@ def run_tests(config: Type[run_config]) -> List[str]:
 
             # compile the assembly file
             print(f"    - Compiling...")
+            print(f" Outputting - {test_out_dir}")
             outpath = test_out_dir/str(filepath.stem+".elf")
             hex_filepath = compile_asm(filepath, outpath, config, build_logger)
             # clean up the hex file - needs writting

@@ -56,7 +56,6 @@
 #define RVTEST_CODE_BEGIN   \
   .align  6; \
   .globl _start;          \
-_start:
   
 
 #define RVTEST_CODE_END \
@@ -85,6 +84,19 @@ _start:
         or TESTNUM, TESTNUM, 1;                                         \
         j done
 
+
+//-----------------------------------------------------------------------
+// Threads Macros
+//-----------------------------------------------------------------------
+
+#define RVTEST_THREAD_ONE_BEGIN \
+  .globl _thread_one;  \
+  _thread_one:
+
+
+#define RVTEST_THREAD_TWO_BEGIN \
+  .globl _thread_two;  \
+  _thread_two: 
 
 //-----------------------------------------------------------------------
 // End Macro

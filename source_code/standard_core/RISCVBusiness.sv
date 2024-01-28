@@ -48,7 +48,7 @@ module RISCVBusiness (
 
 );
 
-    parameter logic [31:0] RESET_PC = 32'h80000000;
+    parameter logic [31:0] RESET_PC_ONE = 32'h80000000;
     parameter logic [31:0] NUM_HARTS = 1;
 
     // Interface instantiations
@@ -69,7 +69,7 @@ module RISCVBusiness (
     tspp_fetch_execute_if fetch_ex_if ();
     tspp_hazard_unit_if hazard_if ();
 
-    stage3 #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) pipeline(
+    stage3 #(.RESET_PC_ONE(RESET_PC_ONE), .NUM_HARTS(NUM_HARTS)) pipeline(
         .igen_bus_if(tspp_icache_gen_bus_if),
         .dgen_bus_if(tspp_dcache_gen_bus_if),
         .*
