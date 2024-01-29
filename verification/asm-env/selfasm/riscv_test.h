@@ -55,7 +55,10 @@
 
 #define RVTEST_CODE_BEGIN   \
   .align  6; \
-  .globl _start;          \
+  .globl _start; \
+  start_: \
+  j _thread_one; \
+  j _thread_two; 
   
 
 #define RVTEST_CODE_END \
@@ -93,10 +96,37 @@
   .globl _thread_one;  \
   _thread_one:
 
+#define RVTEST_THREAD_ONE_END \
+  la t0, t_count; \
+  li t1, 1; \
+  sw t1, 0(t0); \
+  j thread_wait; 
 
 #define RVTEST_THREAD_TWO_BEGIN \
   .globl _thread_two;  \
   _thread_two: 
+
+#define RVTEST_THREAD_TWO_END \
+  la t0, t_count; \
+  li t1, 1; \
+  sw t1, 4(t0); \
+  j thread_wait; 
+
+#define RVTEST_THREAD_WAIT \
+  .globl thread_wait;  \
+  thread_wait: \
+  la   t0, t_count; \
+  li t1, 1; /* 1 threads*/ \
+  li t2, 0; /* 0 threads done*/ \
+  li t5, 0; /* counter */ \
+  thread_add_loop: \
+  lw   t4, 0(t0); \
+  addi t0, t0, 4; \
+  add t2, t2, t4; \
+  addi t5, t5, 1; \
+  bne  t5, t1, thread_add_loop; \
+  bne t2, t1, thread_wait; \
+  TEST_PASSFAIL 
 
 //-----------------------------------------------------------------------
 // End Macro
@@ -113,7 +143,9 @@
 
 #define EXTRA_DATA
 
-#define RVTEST_DATA_BEGIN EXTRA_DATA .align 4; .global begin_signature; begin_signature:
+#define RVTEST_DATA_BEGIN EXTRA_DATA .align 4; .global begin_signature; begin_signature: \
+    .align 6; .global t_count; t_count: .dword 0;
+
 #define RVTEST_DATA_END .align 4; .global end_signature; end_signature: \
  .align 6; .global tohost; tohost: .dword 0; \
  .align 6; .global fromhost; fromhost: .dword 0; \

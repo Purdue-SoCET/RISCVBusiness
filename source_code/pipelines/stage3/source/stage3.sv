@@ -34,8 +34,7 @@
 
 module stage3 #(
     NUM_HARTS = 1,
-    RESET_PC_ONE = 32'h80000000,
-    RESET_PC_TWO = 32'h80000004
+    RESET_PC = 32'h80000000
 )(
     input CLK,
     input nRST,
@@ -59,9 +58,9 @@ module stage3 #(
     stage3_program_counter_if #(.NUM_HARTS(NUM_HARTS)) pc_if();
 
     //module instantiations
-    stage3_program_counter #(.RESET_PC(RESET_PC_ONE), .NUM_HARTS(NUM_HARTS)) program_counter_i(.mem_fetch_if(mem_pipe_if), .*);
-    stage3_hart_selector #(.NUM_HARTS(RESET_PC_ONE)) hart_selector_i(.mem_fetch_if(mem_pipe_if), .*);
-    stage3_fetch_stage #(.RESET_PC(RESET_PC_ONE)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
+    stage3_program_counter #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) program_counter_i(.mem_fetch_if(mem_pipe_if), .*);
+    stage3_hart_selector #(.NUM_HARTS(RESET_PC)) hart_selector_i(.mem_fetch_if(mem_pipe_if), .*);
+    stage3_fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
     stage3_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_hazard_unit hazard_unit_i(.*);

@@ -1,0 +1,98 @@
+# 1 "verification/multithread-tests/RV32I/example.S"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "verification/multithread-tests/RV32I/example.S"
+# 1 "verification/asm-env/selfasm/riscv_test.h" 1
+# 31 "verification/asm-env/selfasm/riscv_test.h"
+# 1 "verification/asm-env/selfasm/../encoding.h" 1
+# 32 "verification/asm-env/selfasm/riscv_test.h" 2
+# 2 "verification/multithread-tests/RV32I/example.S" 2
+# 1 "verification/asm-env/selfasm/test_macros.h" 1
+
+
+
+
+
+
+#-----------------------------------------------------------------------
+# Helper macros
+#-----------------------------------------------------------------------
+# 41 "verification/asm-env/selfasm/test_macros.h"
+# We use a macro hack to simpify code generation for various numbers
+# of bubble cycles.
+# 57 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# RV64UI MACROS
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+# Tests for instructions with immediate operand
+#-----------------------------------------------------------------------
+# 113 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Tests for vector config instructions
+#-----------------------------------------------------------------------
+# 141 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Tests for an instruction with register operands
+#-----------------------------------------------------------------------
+# 169 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Tests for an instruction with register-register operands
+#-----------------------------------------------------------------------
+# 263 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Test memory instructions
+#-----------------------------------------------------------------------
+# 340 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Test branch instructions
+#-----------------------------------------------------------------------
+# 425 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Test jump instructions
+#-----------------------------------------------------------------------
+# 454 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# RV64UF MACROS
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+# Tests floating-point instructions
+#-----------------------------------------------------------------------
+# 598 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Tests compressed instructions (RV32C)
+#-----------------------------------------------------------------------
+# 959 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Pass and fail code (assumes test num is in x28)
+#-----------------------------------------------------------------------
+# 971 "verification/asm-env/selfasm/test_macros.h"
+#-----------------------------------------------------------------------
+# Test data section
+#-----------------------------------------------------------------------
+# 3 "verification/multithread-tests/RV32I/example.S" 2
+
+.macro init; .endm
+.align 6; .globl _start; start_: j _thread_one; j _thread_two;
+.globl _thread_one; _thread_one:
+
+  test_2: li x1, 0x00000000; li x2, 0x00000005; add x3, x1, x2;; li x29, 0x00000005; li x28, 2; bne x3, x29, fail;;
+
+la x28, t_count; addi x29, x0, 1; sw x29, 0(x28); j thread_wait;
+
+.globl thread_wait; thread_wait: la t0, t_count; li t1, 1; li t2, 0; thread_wait_loop: lw t4, 0(t0); add t2, t4, x0; bne t2, t1, thread_wait_loop; bne x0, x28, pass; fail: fence; 1: beqz x28, 1b; sll x28, x28, 1; or x28, x28, 1; j done; pass: fence; li x28, 1; j done
+
+.globl _thread_two; _thread_two:
+
+la x28, t_count; addi x29, x0, 1; sw x29, 4(x28); j thread_wait;
+
+li x1, 1; li x2, 1; sw x2, tohost, x1; done: j done
+
+  .data
+ .align 4; .global begin_signature; begin_signature: .align 6; .global t_count; t_count: .dword 0;
+
+ 
+
+.align 4; .global end_signature; end_signature: .align 6; .global tohost; tohost: .dword 0; .align 6; .global fromhost; fromhost: .dword 0; .align 6; .global mtime; mtime: .dword 0; .align 6; .global mtimecmp; mtimecmp: .dword 0;
