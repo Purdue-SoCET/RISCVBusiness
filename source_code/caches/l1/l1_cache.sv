@@ -56,16 +56,20 @@ module l1_cache #(
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2 + 1; // in bits (+1 for exclusive bit)
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
-    
-    
+    localparam SRAM_TAG_W         = (N_TAG_BITS + 3) * ASSOC; // +3 for valid, dirty, and exclusive
+
     //typedef enum logic[1:0] {INVALID=0, EXCLUSIVE, SHARED, MODIFIED} frame_state_t;
 
-    typedef struct packed{
-	//frame_state_t mesi_state;
-	logic exclusive;
+    typedef struct packed {
+        logic exclusive;
         logic valid;
         logic dirty;
-        logic [N_TAG_BITS - 1:0] tag;
+        logic [N_TAG_BITS-1:0] tag_bits;
+    } cache_tag_t;
+
+    typedef struct packed{
+        //frame_state_t mesi_state;
+        cache_tag_t tag;
         word_t [BLOCK_SIZE - 1:0] data;
     } cache_frame_t;    // cache frame
 
@@ -123,6 +127,7 @@ module l1_cache #(
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
     cache_set_t sramWrite, sramRead, sramMask, sramBus;
+    cache_tag_t [ASSOC-1:0] sramTags;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
     // flush reg
@@ -140,8 +145,8 @@ module l1_cache #(
     assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
-    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS))  //Need to edit to only store and output tags and 
-        BUS_SRAM(CLK, nRST, sramWrite, sramBus, 1'b1, sramWEN, sramSNOOPSEL, sramMask);
+    sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
+        BUS_SRAM(CLK, nRST, sramTags, sramBus, 1'b1, sramWEN, sramSNOOPSEL, sramMask);
 
     assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
 
@@ -237,7 +242,7 @@ module l1_cache #(
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
-                if(sramRead.frames[i].tag == decoded_addr.idx.tag_bits && sramRead.frames[i].valid) begin
+                if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
                     hit       = 1'b1;
                     hit_data  = sramRead.frames[i].data;
                     hit_idx   = i;
@@ -349,9 +354,9 @@ module l1_cache #(
                         4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0000FFFF;
                         default:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0;
                     endcase
-                    sramMask.frames[hit_idx].dirty = 0;														   				   
+                    sramMask.frames[hit_idx].tag.dirty = 0;
                     sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
-                    sramWrite.frames[hit_idx].dirty = 1;
+                    sramWrite.frames[hit_idx].tag.dirty = 1;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                     if (reserve) begin
                         // 0 is success, 1 is failure
@@ -384,22 +389,22 @@ module l1_cache #(
                     proc_gen_bus_if.rdata = 32'b1;
                 end
                 // cache miss on a clean block
-		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
+		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
                     next_read_addr =  {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
 			    end
                 // cache miss on a dirty block
-			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
+			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
-                    next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
+                    next_read_addr  =  {sramRead.frames[ridx].tag.tag_bits, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
             	end
             end 
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
                 mem_gen_bus_if.ren = 1;
                 mem_gen_bus_if.addr = read_addr;
-                sramMask.frames[ridx].valid = 0;
-                sramWrite.frames[ridx].valid = 0;
+                sramMask.frames[ridx].tag.valid = 0;
+                sramWrite.frames[ridx].tag.valid = 0;
                 // fill data
                 if(~mem_gen_bus_if.busy) begin
                     sramWEN                                = 1'b1;
@@ -412,10 +417,10 @@ module l1_cache #(
                 if(word_count_done) begin
                     sramWEN = 1;
                     clear_word_count                        = 1'b1;
-                    sramWrite.frames[ridx].valid            = 1'b1;
-                    sramWrite.frames[ridx].tag              = decoded_req_addr.idx.tag_bits;
-                    sramMask.frames[ridx].valid             = 1'b0;
-                    sramMask.frames[ridx].tag               = 1'b0;
+                    sramWrite.frames[ridx].tag.valid        = 1'b1;
+                    sramWrite.frames[ridx].tag.tag_bits     = decoded_req_addr.idx.tag_bits;
+                    sramMask.frames[ridx].tag.valid         = 1'b0;
+                    sramMask.frames[ridx].tag.tag_bits      = 1'b0;
                 end
             end
             WB: begin
@@ -432,18 +437,18 @@ module l1_cache #(
                 if(word_count_done) begin
                     sramWEN = 1;
                     clear_word_count = 1;
-                    sramWrite.frames[ridx].dirty = 0;
-                    sramMask.frames[ridx].dirty = 0;
-                    sramWrite.frames[ridx].valid = 0;
-                    sramMask.frames[ridx].valid = 0;
+                    sramWrite.frames[ridx].tag.dirty = 0;
+                    sramMask.frames[ridx].tag.dirty = 0;
+                    sramWrite.frames[ridx].tag.valid = 0;
+                    sramMask.frames[ridx].tag.valid = 0;
                     next_read_addr = {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
                 end
             end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
-                if (sramRead.frames[flush_idx.frame_num].valid && sramRead.frames[flush_idx.frame_num].dirty) begin
+                if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].tag.dirty) begin
                     mem_gen_bus_if.wen    = 1'b1;
-                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag, flush_idx.set_num, flush_idx.word_num, 2'b00};
+                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, flush_idx.word_num, 2'b00};
                     mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].data[flush_idx.word_num];
                     // increment to next word when flush of word is done
                     if (~mem_gen_bus_if.busy) begin
@@ -470,6 +475,10 @@ module l1_cache #(
                 end
             end
         endcase
+
+        for (int i = 0; i < ASSOC; i++) begin
+            sramTags[i] = sramWrite.frames[i].tag;
+        end
     end
 
     // next state logic
@@ -483,9 +492,9 @@ module l1_cache #(
 	        HIT: begin                    
                 if (proc_gen_bus_if.wen && reserve && ~hit) // Don't transition on a failed sc
                     next_state = state;
-                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through)
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through)
                     next_state = WB;
-                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through)
                     next_state = FETCH;
                 if (flush || flush_req)  
                     next_state = FLUSH_CACHE;
