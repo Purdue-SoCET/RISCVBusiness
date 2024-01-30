@@ -154,18 +154,13 @@ module bus_ctrl #(
                 end
             end
             GRANT_EVICT: begin  // set the stimulus to WRITEBACK to L2
-                // nl2_store = ccif.dstore[requester_cpu]; 
+                // nl2_store = ccif.dstore[requester_cpu];
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
                 ccif.dwait[requester_cpu] = 0;
 
-                if (block_count == 0) begin
-                    nblock_count = 1;
-                    nl2_store = ccif.dstore[requester_cpu];
-                end
-                else begin
-                    block_count_done = 1;
-                    nl2_store[63:32] = ccif.dstore[requester_cpu]; // probably fine
-                end
+                block_count_done = block_count == BLOCK_SIZE - 1;
+                if (block_count < BLOCK_SIZE - 1) nblock_count = block_count + 1;
+                nl2_store[block_count * 32+:32] = ccif.dstore[requester_cpu];
             end
             SNOOP_R: begin  // determine what to do on busRD
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
@@ -186,57 +181,51 @@ module bus_ctrl #(
             end
             READ_L2: begin // reads data into bus from l2
                 nblock_count = block_count;
-                ccif.l2REN = 1; 
-                    
-                if (block_count == 0) begin
-                    nblock_count = ccif.l2state == L2_ACCESS;
-                    if (ccif.l2addr[2] == 0)
-                        nl2_addr = ccif.l2addr + 4;
-                    if (ccif.l2state == L2_ACCESS)
+                ccif.l2REN = 1;
+
+                if (block_count < BLOCK_SIZE - 1) begin
+                    if (ccif.l2state == L2_ACCESS) begin
+                        nblock_count = block_count + 1;
                         ndload = ccif.l2load;
-                end
-                else begin
+                    end
+                    nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
+                end else begin
                     block_count_done = ccif.l2state == L2_ACCESS;
-                    ndload[63:32] = ccif.l2load;
+                    ndload[block_count * 32+:32] = ccif.l2load;
                 end
             end
             TRANSFER_R: begin // move data from cache to bus
-                
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
-                
-                if (block_count == 0) begin
-                    nblock_count = 1;
+
+                if (block_count < BLOCK_SIZE - 1) begin
+                    nblock_count = block_count + 1;
                     nl2_store = ccif.dstore[supplier_cpu];
                     ndload = ccif.dstore[supplier_cpu];
-                end
-                else begin
+                end else begin
                     block_count_done = 1;
                     nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
-                    nl2_store[63:32] = ccif.dstore[supplier_cpu];
-                    ndload[63:32] = ccif.dstore[supplier_cpu]; 
+                    nl2_store[block_count * 32+:32] = ccif.dstore[supplier_cpu];
+                    ndload[block_count * 32+:32] = ccif.dstore[supplier_cpu];
                 end
             end
             TRANSFER_RX: begin // move data from cache to bus
-                
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
 
-                if (block_count == 0) begin
-                    nblock_count = 1;
+                if (block_count < BLOCK_SIZE - 1) begin
+                    nblock_count = block_count + 1;
                     ndload = ccif.dstore[supplier_cpu];
-                end
-                else begin
+                end else begin
                     block_count_done = 1;
-                    ndload[63:32] = ccif.dstore[supplier_cpu];
+                    ndload[block_count * 32+:32] = ccif.dstore[supplier_cpu];
                 end
             end
             BUS_TO_CACHE: begin // move data from bus to cache (upwards or downwards); alert requester
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
-                if (block_count == 0) begin
-                    nblock_count = 1;
-                    ndload = ccif.dload[requester_cpu] >> 32;
-                end
-                else begin
+                if (block_count < BLOCK_SIZE - 1) begin
+                    nblock_count = block_count + 1;
+                    ndload = ccif.dload[requester_cpu][(block_count + 1) * 32+:32];
+                end else begin
                     block_count_done = 1;
                 end
             end
@@ -245,13 +234,12 @@ module bus_ctrl #(
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
 
                 ccif.l2WEN = 1;
-                if (block_count == 0) begin
-                    nblock_count = 1;
-                    ndload = ccif.dload[requester_cpu] >> 32;
-                    nl2_addr = ccif.l2addr + 4;
-                    nl2_store = ccif.l2store >> 32;
-                end
-                else begin
+                if (block_count < BLOCK_SIZE - 1) begin
+                    nblock_count = block_count + 1;
+                    ndload = ccif.dload[requester_cpu][(block_count + 1) * 32+:32];
+                    nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
+                    nl2_store = ccif.l2store[(block_count + 1) * 32+:32];
+                end else begin
                     block_count_done = 1;
                 end
             end
@@ -259,14 +247,11 @@ module bus_ctrl #(
                 ccif.l2WEN = 1;
                 nblock_count = block_count;
                 // assume that ahb will eventually complete each transaction
-                if (block_count == 0) begin
-                    nblock_count = 1;
-                    nl2_addr = ccif.l2addr + 4;
-                    nl2_store = ccif.l2store >> 32;
-                    // nblock_count = (ccif.l2state == L2_ACCESS);
-                    // nl2_addr = ccif.l2addr + 4 * (ccif.l2state == L2_ACCESS);
-                end
-                else begin
+                if (block_count < BLOCK_SIZE - 1) begin
+                    nblock_count = block_count + 1;
+                    nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
+                    nl2_store = ccif.l2store[(block_count + 1) * 32+:32];
+                end else begin
                     block_count_done = 1;
                 end
             end
