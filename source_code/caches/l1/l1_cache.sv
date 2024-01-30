@@ -41,7 +41,7 @@ module l1_cache #(
     output logic clear_done, flush_done, abort_bus,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
-    bus_ctrl_if.tb ccif //Coherency interface, connect to bus
+    cache_coherence_if.cache ccif //Coherency interface, connected to coherency unit
 );
     import rv32i_types_pkg::*;
     
