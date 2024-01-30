@@ -24,14 +24,14 @@
 
 `include "bus_ctrl_if.vh"
 
-module bus_ctrl #( 
+module bus_ctrl #(
     parameter BLOCK_SIZE = 2,
     parameter CPUS = 4
-)(  
-    input logic CLK, nRST, 
+)(
+    input logic CLK, nRST,
     bus_ctrl_if.cc ccif,
     input logic abort_bus
-);  
+);
     // localparams/imports
     localparam CLEAR_LENGTH = $clog2(BLOCK_SIZE) + 2;
     localparam CPU_ID_LENGTH = $clog2(CPUS);
@@ -56,7 +56,7 @@ module bus_ctrl #(
             requester_cpu <= '0;
             supplier_cpu <= '0;
             exclusiveUpdate <= 0;
-            state <= IDLE; 
+            state <= IDLE;
             ccif.ccsnoopaddr <= '0;
             ccif.dload <= '0;
             ccif.l2store <= '0;
@@ -79,15 +79,15 @@ module bus_ctrl #(
     end
 
     // next state logic for bus FSM
-    always_comb begin 
+    always_comb begin
         nstate = state;
         casez (state)
             IDLE:  begin
                 if (|ccif.dWEN)
                     nstate = GRANT_EVICT;
-                else if (|(ccif.dREN & ccif.ccwrite))                  
+                else if (|(ccif.dREN & ccif.ccwrite))
                     nstate = GRANT_RX;
-                else if (|ccif.dREN)                  
+                else if (|ccif.dREN)
                     nstate = GRANT_R;
                 else if (|ccif.ccwrite)
                     nstate = GRANT_INV;
@@ -117,17 +117,17 @@ module bus_ctrl #(
         if (abort_bus)
             nstate = IDLE;
     end
-    
+
     // output logic for bus FSM
     always_comb begin
         // defaults
         nccsnoopaddr = ccif.ccsnoopaddr;
-        ccif.dwait = '1; 
-        ccif.ccwait = '0; 
-        nl2_addr = ccif.l2addr; 
-        nl2_store = ccif.l2store; 
-        ccif.l2REN = '0; 
-        ccif.l2WEN = '0; 
+        ccif.dwait = '1;
+        ccif.ccwait = '0;
+        nl2_addr = ccif.l2addr;
+        nl2_store = ccif.l2store;
+        ccif.l2REN = '0;
+        ccif.l2WEN = '0;
         ccif.ccexclusive = '0;
         ccif.ccinv = '0;
         ndload = ccif.dload[requester_cpu];
@@ -140,9 +140,9 @@ module bus_ctrl #(
             IDLE: begin // obtain the requester CPU id
                 if (|ccif.dWEN)
                     nrequester_cpu = priorityEncode(ccif.dWEN);
-                else if (|(ccif.dREN & ccif.ccwrite))                  
+                else if (|(ccif.dREN & ccif.ccwrite))
                     nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite));
-                else if (|ccif.dREN)                  
+                else if (|ccif.dREN)
                     nrequester_cpu = priorityEncode(ccif.dREN);
                 else if (|ccif.ccwrite)
                     nrequester_cpu = priorityEncode(ccif.ccwrite);
@@ -268,13 +268,13 @@ module bus_ctrl #(
         input [CPU_ID_LENGTH-1:0] requester_cpu;
         nonRequesterEnable = '1 & ~(1 << requester_cpu);
     endfunction
-    
+
     // function to get snoop status
     function logic snoopStatus;
         input logic [CPU_ID_LENGTH-1:0] requester_cpu;
         input logic [CPUS-1:0] snoopDone;
         snoopStatus = &((1'b1 << requester_cpu) | snoopDone);
-    endfunction 
+    endfunction
 
     // function to do priority encoding to determine the requester or supplier
     function logic [CPU_ID_LENGTH-1:0] priorityEncode;
