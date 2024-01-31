@@ -376,12 +376,12 @@ module l1_cache #(
                     proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;
                     if(proc_gen_bus_if.wen) begin
                         casez (proc_gen_bus_if.byte_en)
-                            4'b0001:    mem_gen_bus_if.wdata  = {24'd0, proc_gen_bus_if.wdata[7:0]};
-                            4'b0010:    mem_gen_bus_if.wdata  = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
-                            4'b0100:    mem_gen_bus_if.wdata  = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
-                            4'b1000:    mem_gen_bus_if.wdata  = {proc_gen_bus_if.wdata[31:24], 24'd0};
-                            4'b0011:    mem_gen_bus_if.wdata  = {16'd0, proc_gen_bus_if.wdata[15:0]};
-                            4'b1100:    mem_gen_bus_if.wdata  = {proc_gen_bus_if.wdata[31:16],16'd0};
+                            4'b0001:    mem_gen_bus_if.wdata  = {24'd0, proc_gen_bus_if.wdata[0][7:0]};
+                            4'b0010:    mem_gen_bus_if.wdata  = {16'd0,proc_gen_bus_if.wdata[0][15:8],8'd0};
+                            4'b0100:    mem_gen_bus_if.wdata  = {8'd0, proc_gen_bus_if.wdata[0][23:16], 16'd0};
+                            4'b1000:    mem_gen_bus_if.wdata  = {proc_gen_bus_if.wdata[0][31:24], 24'd0};
+                            4'b0011:    mem_gen_bus_if.wdata  = {16'd0, proc_gen_bus_if.wdata[0][15:0]};
+                            4'b1100:    mem_gen_bus_if.wdata  = {proc_gen_bus_if.wdata[0][31:16],16'd0};
                             default:    mem_gen_bus_if.wdata  = proc_gen_bus_if.wdata;
                         endcase
                     end 
