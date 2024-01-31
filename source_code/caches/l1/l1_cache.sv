@@ -100,6 +100,7 @@ module l1_cache #(
        IDLE, HIT, FETCH, WB, FLUSH_CACHE
     } cache_fsm_t;            // cache state machine
 
+    // TODO rename `valid` to `reserved` and use `exclusive` bit from tag
     typedef struct packed {
         decoded_cache_idx_t idx;
         logic valid;
