@@ -35,7 +35,7 @@ module separate_caches (
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches cc_if,
-    bus_ctrl_if.cc cache_coherency_if,
+    cache_coherence_if.cache cache_coherency_if,
     output logic abort_bus
 );
     generate
@@ -81,7 +81,7 @@ module separate_caches (
                 .exclusive(cc_if.dcache_exclusive),
                 .flush_done(cc_if.dflush_done),
                 .clear_done(cc_if.dclear_done),
-		.ccif(cache_coherency_if.tb)
+                .ccif(cache_coherency_if)
             );
         endcase
     endgenerate
@@ -130,7 +130,7 @@ module separate_caches (
                 .exclusive(1'b0),
                 .flush_done(cc_if.iflush_done),
                 .clear_done(cc_if.iclear_done),
-		.ccif(cache_coherency_if.tb) //Note, use the old, non-coherent cache for icache probably. Icache coherency not meant to be supported
+                .ccif(cache_coherency_if) //Note, use the old, non-coherent cache for icache probably. Icache coherency not meant to be supported
             );
         endcase
     endgenerate
