@@ -27,6 +27,7 @@
 */
 
 `include "generic_bus_if.vh"
+`include "cache_coherence_if.vh"
 
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
@@ -148,7 +149,8 @@ module l1_cache #(
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
         BUS_SRAM(CLK, nRST, sramTags, sramBus, 1'b1, sramWEN, sramSNOOPSEL, sramMask);
 
-    assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
+    // TODO: Update this with valid, dirty, exclusive bits
+    // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -231,7 +233,8 @@ module l1_cache #(
 
     // decoded address conversion
     assign decoded_addr = decoded_cache_addr_t'(proc_gen_bus_if.addr);
-    assign decoded_snoop_addr = decoded_cache_addr_t'(ccif.ccsnoopaddr);
+    // TODO: update this with idx_bits
+    // assign decoded_snoop_addr = decoded_cache_addr_t'(ccif.ccsnoopaddr);
 
     // hit logic with pass through
     always_comb begin
