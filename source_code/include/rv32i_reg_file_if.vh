@@ -28,13 +28,15 @@
 interface rv32i_reg_file_if();
 
   import rv32i_types_pkg::*;
+  parameter logic [31:0] NUM_HARTS = 1;
 
-  word_t        w_data, rs1_data, rs2_data;
-  logic   [4:0] rs1, rs2, rd;
-  logic         wen;
+  word_t        [NUM_HARTS - 1 : 0] w_data, rs1_data, rs2_data;
+  logic   [NUM_HARTS - 1 : 0][4:0] rs1, rs2, rd;
+  logic   [NUM_HARTS - 1 : 0]     wen;
+  word_t hart_id;
 
   modport rf (
-    input w_data, rs1, rs2, rd, wen,
+    input w_data, rs1, rs2, rd, wen, hart_id,
     output rs1_data, rs2_data
   );
 

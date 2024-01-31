@@ -51,7 +51,18 @@ module stage3_execute_stage (
 
     // Interface declarations
     control_unit_if cu_if ();
-    rv32i_reg_file_if rf_if ();
+
+    /**************
+    * Replication of the register file interface for multiple HARTS
+    **************/
+    // generate 
+    //     for (genvar reg_if_inst = 0; reg_if_inst < /* num harts*/; reg_if_inst++) begin : regfile_if
+    //         rv32i_reg_file_if rf_if ();
+    //     end
+    // endgenerate
+    rv32i_reg_file_if rf_if();
+
+
     alu_if alu_if ();
     jump_calc_if jump_if ();
     branch_res_if branch_if ();
@@ -93,6 +104,13 @@ module stage3_execute_stage (
                 .rf_if
             );
         end else begin : g_rfile_select
+            // for (genvar rfile_cnt = 0; rfile_cnt < /* num harts */; rfile_cnt++) begin
+            //     rv32i_reg_file rf (
+            //         .CLK,
+            //         .nRST,
+            //         .regfile_if[rfile_cnt].rf_if
+            //     );
+            // end
             rv32i_reg_file rf (
                 .CLK,
                 .nRST,

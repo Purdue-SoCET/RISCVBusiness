@@ -29,22 +29,20 @@ module rv32i_reg_file (
     nRST,
     rv32i_reg_file_if.rf rf_if
 );
-
     import rv32i_types_pkg::*;
 
     localparam int NUM_REGS = 32;
+    parameter logic [31:0] NUM_HARTS = 1;
 
-    word_t [NUM_REGS-1:0] registers;
+    word_t [NUM_HARTS - 1 : 0][NUM_REGS-1:0] registers; // updated to generate n registers per register (ex: 2 harts means 2 register 1's)
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             registers <= '0;
-        end else if (rf_if.wen && rf_if.rd) begin
-            registers[rf_if.rd] <= rf_if.w_data;
+        end else if (rf_if.wen[rfif.hart_id] && rf_if.rd[rfif.hart_id]) begin
+            registers[rfif.hart_id][rf_if.rd] <= rf_if.w_data[rfif.hart_id];
         end
     end
 
-    assign rf_if.rs1_data = registers[rf_if.rs1];
-    assign rf_if.rs2_data = registers[rf_if.rs2];
-
+    assign rf_if.rs1_data[rfif.hart_id] = registers[rfif.hart_id][rf_if.rs1];
 endmodule
