@@ -55,8 +55,8 @@ module RISCVBusiness (
 
     generic_bus_if tspp_icache_gen_bus_if ();
     generic_bus_if tspp_dcache_gen_bus_if ();
-    generic_bus_if icache_mc_if ();
-    generic_bus_if dcache_mc_if ();
+    generic_bus_if #(.BLOCK_SIZE(ICACHE_BLOCK_SIZE)) icache_mc_if ();
+    generic_bus_if #(.BLOCK_SIZE(DCACHE_BLOCK_SIZE)) dcache_mc_if ();
     generic_bus_if pipeline_trans_if ();
     risc_mgmt_if rm_if ();
     predictor_pipeline_if predict_if ();

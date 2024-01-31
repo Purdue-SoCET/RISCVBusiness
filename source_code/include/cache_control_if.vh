@@ -29,6 +29,8 @@
 `ifndef CACHE_CONTROL_IF_VH
 `define CACHE_CONTROL_IF_VH
 
+`include "bus_ctrl_if.vh"
+
 interface cache_control_if;
 
   logic icache_clear, icache_flush, iclear_done, iflush_done;
