@@ -50,7 +50,7 @@ package stage3_types_pkg;
         logic [2:0] w_sel;
         logic [3:0] byte_en; // TODO: Where should this be generated?
         logic [4:0] zimm;
-        regsel_t rd_m;
+        logic [4:0] rd_m;
         logic mal_insn;
         logic fault_insn;
         logic illegal_insn;
@@ -68,15 +68,5 @@ package stage3_types_pkg;
         tracker_ex_mem_t tracker_signals;
         // TODO: imm_U? Maybe needed
     } ex_mem_t;
-
-    // typedef struct packed {
-    //     logic dren;
-    //     logic dwen;
-    //     logic ifence;
-    //     logic [4:0] rd_m;
-    //     load_t load_type;
-    //     word_t port_out;
-    //     word_t rs2_data;
-    // } lsc_entry_t;
 
 endpackage
