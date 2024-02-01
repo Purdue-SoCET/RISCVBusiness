@@ -1,0 +1,115 @@
+[*]
+[*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
+[*] Sun Nov 19 07:35:21 2023
+[*]
+[dumpfile] "/home/asicfab/a/socet137/RISCVBusiness/waveform.fst"
+[dumpfile_mtime] "Sun Nov 19 07:29:59 2023"
+[dumpfile_size] 65171
+[savefile] "/home/asicfab/a/socet137/RISCVBusiness/waveform_format.gtkw"
+[timestart] 467
+[size] 1512 778
+[pos] 0 0
+*-3.700783 486 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[treeopen] TOP.top_core.
+[treeopen] TOP.top_core.CORE.
+[treeopen] TOP.top_core.CORE.pipeline.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.jump_calc.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.ex_mem_if.
+[treeopen] TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.QUEUE_DATA.
+[treeopen] TOP.top_core.CORE.pipeline.uop_stage.DEC_RES.
+[sst_width] 374
+[signals_width] 335
+[sst_expanded] 1
+[sst_vpaned_height] 323
+@28
+TOP.CLK
+@200
+-
+@22
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.badaddr[31:0]
+@28
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.fault_insn
+@22
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.instr[31:0]
+@28
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.mal_insn
+@22
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.pc4[31:0]
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.pc[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.jump_calc.jump_if.jalr_addr[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.ex_mem_if.brj_addr[31:0]
+TOP.top_core.CORE.pipeline.fetch_stage_i.npc[31:0]
+TOP.top_core.CORE.pipeline.fetch_stage_i.pc[31:0]
+@28
+TOP.top_core.CORE.pipeline.hazard_unit_i.branch_jump
+@22
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.prediction[31:0]
+@200
+-
+@22
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].badaddr[31:0]
+@28
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].fault_insn
+@22
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].instr[31:0]
+@28
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].mal_insn
+@22
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].pc4[31:0]
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].pc[31:0]
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].prediction[31:0]
+@28
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].token
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.nxt_queue_data[1].valid
+@200
+-
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.badaddr[31:0]
+@28
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.fault_insn
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.instr[31:0]
+@28
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.mal_insn
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.pc4[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.pc[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.prediction[31:0]
+@28
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.token
+TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.fetch_ex_reg.valid
+@200
+-
+@23
+TOP.top_core.CORE.pipeline.mem_stage_i.ex_mem_if.ex_mem_reg.pc[31:0]
+@200
+-
+@28
+TOP.top_core.CORE.pipeline.uop_stage.DEC_RES.store
+@200
+-
+@24
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.num_free_slots[4:0]
+@28
+TOP.top_core.CORE.pipeline.uop_stage.is_queue_full
+@24
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.tail_idx[4:0]
+@28
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
+TOP.top_core.CORE.pipeline.hazard_if.ifence
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.flush_queue
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.token
+TOP.top_core.CORE.pipeline.fetch_ex_if.fetch_ex_reg.valid
+TOP.top_core.CORE.pipeline.hazard_if.if_ex_flush
+TOP.top_core.CORE.pipeline.hazard_if.if_ex_stall
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.stall_queue
+TOP.top_core.CORE.pipeline.uop_stage.DEC_QUEUE.queue_data[1].fault_insn
+TOP.top_core.CORE.pipeline.hazard_if.fence_stall
+[pattern_trace] 1
+[pattern_trace] 0

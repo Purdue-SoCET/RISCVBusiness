@@ -1,5 +1,8 @@
 ROOT := $(shell pwd)
 
+TEST_FILE_NAME ?= add
+
+
 RISCV := $(ROOT)/source_code
 RISCV_CORE := $(RISCV)/standard_core
 PIPELINE := $(RISCV)/pipelines
@@ -55,6 +58,13 @@ config:
 	@echo " Running config_core"
 	@echo "----------------------"
 	@python3 scripts/config_core.py example.yml
+
+test_asm_file:
+	python3 compile_asm_for_self.py verification/self-tests/RV32I/$(TEST_FILE_NAME).S
+	riscv64-unknown-elf-objcopy -O binary sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).elf sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
+	./rvb_out/sim-verilator/Vtop_core sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
+
+
 
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
