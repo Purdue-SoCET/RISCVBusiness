@@ -27,7 +27,7 @@ module coherency_unit #(
     parameter CPUS = 2         // Number of CPUs
 )(
     input logic CLK, nRST,
-    bus_ctrl_if.cc ccif,            // Bus Controller Interface
+    bus_ctrl_if.cc bcif,            // Bus Controller Interface
     cache_coherence_if.coherency_unit ccif_cache // Cache Coherence Interface
 );
 
@@ -38,31 +38,36 @@ module coherency_unit #(
     typedef enum logic [1:0] {MODIFIED, EXCLUSIVE, SHARED, INVALID} cache_state_t;
     cache_state_t current_state = INVALID;
 
+    cache_line_t snoop_address;
+
     always_ff @(posedge CLK or negedge nRST) begin
-    if (!nRST) begin
-        current_state = INVALID;
-    end else begin
-        if (!ccif_cache.valid) begin
+        if (!nRST) begin
             current_state = INVALID;
-        end else if (ccif_cache.dirty) begin
-            current_state = MODIFIED;
-        end else if (ccif_cache.exclusive) begin
-            current_state = EXCLUSIVE;
         end else begin
-            current_state = SHARED;
+            if (!ccif_cache.valid) begin
+                current_state = INVALID;
+            end else if (ccif_cache.dirty) begin
+                current_state = MODIFIED;
+            end else if (ccif_cache.exclusive) begin
+                current_state = EXCLUSIVE;
+            end else begin
+                current_state = SHARED;
+            end
         end
-
-    if (ccif.cctrans[find_requesting_cpu()]) begin
-        int cpu = find_requesting_cpu(); // Find the cpu who is doing the transfer
-        cache_line_t line = ccif.daddr[cpu]; // Get the cache line being accessed
-
-        case (current_state)
-            INVALID: handleInvalidState(line, cpu);
-            SHARED: handleSharedState(line, cpu);
-            EXCLUSIVE: handleExclusiveState(line, cpu);
-            MODIFIED: handleModifiedState(line, cpu);
-        endcase
     end
+
+    always_comb begin
+        if (bcif.cctrans[find_requesting_cpu()]) begin
+            int cpu = find_requesting_cpu(); // Find the cpu who is doing the transfer
+            cache_line_t line = bcif.daddr[cpu]; // Get the cache line being accessed
+
+            case (current_state)
+                INVALID: handleInvalidState(line, cpu);
+                SHARED: handleSharedState(line, cpu);
+                EXCLUSIVE: handleExclusiveState(line, cpu);
+                MODIFIED: handleModifiedState(line, cpu);
+            endcase
+        end
     end
 end
 
@@ -70,7 +75,7 @@ function int find_requesting_cpu();
     // Loop through the caches to find which one is making a current request
     for (int i = 0; i < CPUS; i++) begin
         // Look for the transition signals
-        if (ccif.cctrans[i]) begin
+        if (bcif.cctrans[i]) begin
             find_requesting_cpu = i;
             return;
         end
@@ -86,28 +91,28 @@ endfunction
 
 task handleInvalidState(cache_line_t line, int cpu);
     ccif_cache.set_sel = get_set(line); // Set the cache set selector
-    cache_line_t snoop_address = ccif.daddr[cpu];
-    ccif.ccsnoopaddr = {CPUS{snoop_address}};
+    snoop_address = bcif.daddr[cpu];
+    bcif.ccsnoopaddr = {CPUS{snoop_address}};
 
-    if (ccif.dWEN[cpu]) begin
+    if (bcif.dWEN[cpu]) begin
         // Processor 'cpu' write miss
-        ccif.ccinv = ~ccif.ccsnoophit;
-        ccif.ccwait = ccif.ccinv;
+        bcif.ccinv = ~bcif.ccsnoophit;
+        bcif.ccwait = bcif.ccinv;
         current_state = MODIFIED;
         ccif_cache.state_transfer = MODIFIED;
-        ccif_cache.requested_data = ccif.dstore[!cpu];
-    end else if (ccif.dREN[cpu]) begin
+        ccif_cache.requested_data = bcif.dstore[!cpu];
+    end else if (bcif.dREN[cpu]) begin
         // Processor 'cpu' read miss
-        if (!ccif.ccIsPresent[cpu]) begin
+        if (!bcif.ccIsPresent[cpu]) begin
             current_state = EXCLUSIVE;
             ccif_cache.state_transfer = EXCLUSIVE;
         end else begin
             current_state = SHARED;
             ccif_cache.state_transfer = SHARED;
         end
-        ccif.ccwait[cpu] = ~ccif.ccsnoopdone[cpu];
+        bcif.ccwait[cpu] = ~bcif.ccsnoopdone[cpu];
     end
-    ccif.dload[cpu] = ccif.l2load; 
+    bcif.dload[cpu] = bcif.l2load; 
 endtask
 
 task handleSharedState(int line, int cpu);
