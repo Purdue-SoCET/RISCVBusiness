@@ -66,7 +66,8 @@ module RISCVBusiness (
     rv32c_if rv32cif ();
 
     //Added for coherency
-    cache_coherence_if cache_coherency_if ();
+    cache_coherence_if i_cache_coherency_if ();
+    cache_coherence_if d_cache_coherency_if ();
 
     //interface instantiations
     tspp_fetch_execute_if fetch_ex_if ();
@@ -173,8 +174,8 @@ module RISCVBusiness (
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
-        .cc_if(cc_if),
-        .cache_coherency_if(cache_coherency_if),
+        .i_cache_coherency_if(i_cache_coherency_if),
+        .d_cache_coherency_if(d_cache_coherency_if),
         .abort_bus(abort_bus)
     );
 
@@ -185,6 +186,18 @@ module RISCVBusiness (
         .i_gen_bus_if(icache_mc_if),
         .out_gen_bus_if(pipeline_trans_if),
         .abort_bus(abort_bus)
+    );
+
+    coherency_unit i_coherence_unit (
+        .CLK(CLK),
+        .nRST(nRST),
+        .ccif(i_cache_coherency_if)
+    );
+
+    coherency_unit d_coherence_unit (
+        .CLK(CLK),
+        .nRST(nRST),
+        .ccif(d_cache_coherency_if)
     );
 
     /*
