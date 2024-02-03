@@ -97,7 +97,7 @@ module l1_cache #(
     } flush_idx_t;             // flush counter type
 
     typedef enum {
-       IDLE, HIT, FETCH, WB, FLUSH_CACHE
+       IDLE, HIT, FETCH, WB, FLUSH_CACHE, SNOOP
     } cache_fsm_t;            // cache state machine
 
     // TODO rename `valid` to `reserved` and use `exclusive` bit from tag
@@ -146,9 +146,9 @@ module l1_cache #(
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits;
     assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
-        CPU_SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
+        CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
-        BUS_SRAM(CLK, nRST, sramTags, sramBus, 1'b1, sramWEN, sramSNOOPSEL, sramMask);
+        BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(ccif.frame_tag), .REN(1'b1), .WEN(sramWEN), .SEL(ccif.set_sel), .wMask(sramMask));
 
     // TODO: Update this with valid, dirty, exclusive bits
     // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
