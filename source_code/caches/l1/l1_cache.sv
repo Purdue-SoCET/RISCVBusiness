@@ -132,6 +132,7 @@ module l1_cache #(
     cache_tag_t [ASSOC-1:0] sramTags;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
+    logic [N_TAG_BITS-1:0] read_tag_bits; //Tag coming from bus
     // flush reg
     logic flush_req, nflush_req;
     logic idle_done;
@@ -148,10 +149,11 @@ module l1_cache #(
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
-        BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(ccif.frame_tag), .REN(1'b1), .WEN(sramWEN), .SEL(ccif.set_sel), .wMask(sramMask));
+        BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(sramWEN), .SEL(ccif.set_sel), .wMask(sramMask));
 
     // TODO: Update this with valid, dirty, exclusive bits
     // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
+    //Compare cccif.frame_tag with selected_tag later
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -334,6 +336,7 @@ module l1_cache #(
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
                     idle_done 	       = 1;
+                    ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
                 end
             end
             HIT: begin
@@ -490,8 +493,10 @@ module l1_cache #(
 	    next_state = state;
 	    casez(state)
             IDLE: begin        
-                if (idle_done)
+		if (idle_done) //Used when flushing
                     next_state = HIT;
+                else if(read_tag_bits == ccif.frame_tag && ccif.snoop_req) //Compare snoop tag
+                   next_state = SNOOP;
 	        end
 	        HIT: begin                    
                 if (proc_gen_bus_if.wen && reserve && ~hit) // Don't transition on a failed sc
