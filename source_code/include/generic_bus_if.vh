@@ -31,8 +31,8 @@ interface generic_bus_if #(
   import rv32i_types_pkg::*;
 
   logic [RAM_ADDR_SIZE-1:0] addr;
-  word_t [BLOCK_SIZE-1:0] wdata;
-  word_t [BLOCK_SIZE-1:0] rdata;
+  logic [(WORD_SIZE*BLOCK_SIZE)-1:0] wdata;
+  logic [(WORD_SIZE*BLOCK_SIZE)-1:0] rdata;
   logic ren,wen;
   logic busy;
   logic error;
