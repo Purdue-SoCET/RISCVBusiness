@@ -64,6 +64,7 @@ module RISCVBusiness (
     cache_control_if cc_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
+    bus_ctrl_if bus_ctrl_if();
 
     //Added for coherency
     cache_coherence_if i_cache_coherency_if ();
@@ -191,13 +192,15 @@ module RISCVBusiness (
     coherency_unit i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(i_cache_coherency_if)
+        .ccif_cache(i_cache_coherency_if),
+        .bcif(bus_ctrl_if)
     );
 
     coherency_unit d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(d_cache_coherency_if)
+        .ccif_cache(d_cache_coherency_if),
+        .bcif(bus_ctrl_if)
     );
 
     /*

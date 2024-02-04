@@ -31,43 +31,43 @@ module coherency_unit #(
     cache_coherence_if.coherency_unit ccif_cache // Cache Coherence Interface
 );
 
-    // Define cache_line_t based on ADDR_WIDTH
-    typedef logic [ADDR_WIDTH-1:0] cache_line_t;
+typedef logic [ADDR_WIDTH-1:0] cache_line_t;
+typedef enum logic [1:0] {MODIFIED, EXCLUSIVE, SHARED, INVALID} cache_state_t;
 
-    // Coherency state for the selected cache set
-    typedef enum logic [1:0] {MODIFIED, EXCLUSIVE, SHARED, INVALID} cache_state_t;
-    cache_state_t current_state = INVALID;
+cache_state_t current_state, next_state;
+cache_line_t snoop_address;
 
-    cache_line_t snoop_address;
+always_ff @(posedge CLK or negedge nRST) begin
+    if (!nRST) begin
+        current_state <= INVALID;
+    end else begin
+        current_state <= next_state;
+    end
+end
 
-    always_ff @(posedge CLK or negedge nRST) begin
-        if (!nRST) begin
-            current_state = INVALID;
-        end else begin
-            if (!ccif_cache.valid) begin
-                current_state = INVALID;
-            end else if (ccif_cache.dirty) begin
-                current_state = MODIFIED;
-            end else if (ccif_cache.exclusive) begin
-                current_state = EXCLUSIVE;
-            end else begin
-                current_state = SHARED;
-            end
-        end
+always_comb begin
+    next_state = current_state;
+
+    if (!ccif_cache.valid) begin
+        next_state = INVALID;
+    end else if (ccif_cache.dirty) begin
+        next_state = MODIFIED;
+    end else if (ccif_cache.exclusive) begin
+        next_state = EXCLUSIVE;
+    end else begin
+        next_state = SHARED;
     end
 
-    always_comb begin
-        if (bcif.cctrans[find_requesting_cpu()]) begin
-            int cpu = find_requesting_cpu(); // Find the cpu who is doing the transfer
-            cache_line_t line = bcif.daddr[cpu]; // Get the cache line being accessed
+    if (bcif.cctrans[find_requesting_cpu()]) begin
+        int cpu = find_requesting_cpu();
+        cache_line_t line = bcif.daddr[cpu];
 
-            case (current_state)
-                INVALID: handleInvalidState(line, cpu);
-                SHARED: handleSharedState(line, cpu);
-                EXCLUSIVE: handleExclusiveState(line, cpu);
-                MODIFIED: handleModifiedState(line, cpu);
-            endcase
-        end
+        case (next_state)
+            INVALID: handleInvalidState(line, cpu);
+            SHARED: handleSharedState(line, cpu);
+            EXCLUSIVE: handleExclusiveState(line, cpu);
+            MODIFIED: handleModifiedState(line, cpu);
+        endcase
     end
 end
 
@@ -77,16 +77,17 @@ function int find_requesting_cpu();
         // Look for the transition signals
         if (bcif.cctrans[i]) begin
             find_requesting_cpu = i;
-            return;
+            return i;
         end
     end
     find_requesting_cpu = -1; //default return value
+    return -1;
 endfunction
 
+localparam int NUM_SET_BITS = $clog2(N_SETS);
+
 function int get_set(cache_line_t line);
-        // Calculate set index from the line
-        int num_set_bits = $clog2(N_SETS);
-        get_set = line[num_set_bits-1:0];
+    get_set = line[NUM_SET_BITS-1:0]; // Extract the set bits from the address
 endfunction
 
 task handleInvalidState(cache_line_t line, int cpu);
@@ -98,17 +99,17 @@ task handleInvalidState(cache_line_t line, int cpu);
         // Processor 'cpu' write miss
         bcif.ccinv = ~bcif.ccsnoophit;
         bcif.ccwait = bcif.ccinv;
-        current_state = MODIFIED;
-        ccif_cache.state_transfer = MODIFIED;
-        ccif_cache.requested_data = bcif.dstore[!cpu];
+        //next_state = MODIFIED;
+        //ccif_cache.state_transfer = MODIFIED;
+        ccif_cache.responder_data = bcif.dstore[!cpu];
     end else if (bcif.dREN[cpu]) begin
         // Processor 'cpu' read miss
         if (!bcif.ccIsPresent[cpu]) begin
-            current_state = EXCLUSIVE;
-            ccif_cache.state_transfer = EXCLUSIVE;
+            //next_state = EXCLUSIVE;
+            //ccif_cache.state_transfer = EXCLUSIVE;
         end else begin
-            current_state = SHARED;
-            ccif_cache.state_transfer = SHARED;
+            //next_state = SHARED;
+            //ccif_cache.state_transfer = SHARED;
         end
         bcif.ccwait[cpu] = ~bcif.ccsnoopdone[cpu];
     end
@@ -121,19 +122,16 @@ task handleSharedState(int line, int cpu);
         // Processor i read/write, cache miss. Wait for dwait to go low.
         bcif.dwait[cpu] = 0; //Dwait logic needs to happen somewhere else
         bcif.l2addr = bcif.daddr[cpu]; // Prepare to writeback to L2
-        bcif.l2load = bcif.dload[cpu]; // Data to write back
         bcif.l2WEN = 1; // Write enable to L2
         // Transition to WB in bus controller
-        cache_states[line] = INVALID; // Update cache line state
+        //next_state = INVALID; // Update cache line state
     end
     // Handle bus invalidation (S -> I)
-    else if (bcif.BusState == GRANT_RX && bcif.ccinv[cpu]) begin
+    else if (bcif.ccinv[cpu]) begin
         // Bus invalidation scenario
         bcif.ccsnoopaddr = bcif.daddr[cpu]; // Broadcast snoop address
         bcif.ccwait = ~bcif.ccsnoopdone; // Wait for all snoops to complete
-        if (all_caches_snooped()) begin
-            cache_states[line] = INVALID; // Invalidate cache line
-        end
+            //next_state = INVALID; // Invalidate cache line
     end
     // Write Miss (S -> M)
     else if (bcif.dREN[cpu] && bcif.ccwrite[cpu]) begin
@@ -144,29 +142,26 @@ task handleSharedState(int line, int cpu);
         bcif.ccinv = '1 & ~(1 << cpu); // Invalidate all except the requester
         
         // Wait for all caches to acknowledge the invalidation
-        if (all_caches_snooped_except(cpu)) begin
-            cache_states[line] = MODIFIED; // Transition to Modified state
-        end
+        //next_state = MODIFIED; // Transition to Modified state
     end
 endtask
 
 task handleExclusiveState(int line, int cpu);
     // E -> I (Data Eviction) or (Bus Invalidation)
-    if (bcif.dWEN[cpu] || (bcif.state == GRANT_RX && bcif.ccinv[cpu])) begin
+    if (bcif.dWEN[cpu] || (/* bcif.state == GRANT_RX && */ bcif.ccinv[cpu])) begin
         // Processor i read/write, cache miss. Wait for dwait to go low.
         bcif.dwait[cpu] = 0;
         bcif.l2addr[cpu] = bcif.daddr[cpu]; // Writeback address to L2
-        bcif.l2load[cpu] = bcif.dload[cpu]; // Writeback data to L2
         bcif.l2WEN = 1; // Write enable to L2
-        cache_states[line] = INVALID; // Invalidate cache line
+        //next_state = INVALID; // Invalidate cache line
     end
     // E -> S (Bus snooping)
-    else if (bcif.state == GRANT_R && bcif.dREN[cpu]) begin
+    else if (/*bcif.state == GRANT_R && */bcif.dREN[cpu]) begin
         bcif.ccsnoopaddr = {CPUS{bcif.daddr[cpu]}}; // Snoop address broadcast
         bcif.ccwait = '1; // Set wait high for all
         
         // All non-requester CPUs raise ccsnoopdone after snooping
-        if (&bcif.ccsnoopdone) begin // All have snooped
+        /* if (&bcif.ccsnoopdone) begin // All have snooped
             int supplier = find_supplier(cpu);
             if (supplier != -1) begin
                 // At least one cache has a copy and it's the supplier
@@ -177,11 +172,11 @@ task handleExclusiveState(int line, int cpu);
                 bcif.l2WEN = 1; // Write enable to L2
                 bcif.l2addr = bcif.daddr[cpu]; // Address to write back
             end
-            
+            */
             // All caches with snoophit clear exclusive flag
             for (int i = 0; i < CPUS; i++) begin
                 if (bcif.ccsnoophit[i]) begin
-                    cache_states[bcif.daddr[i]] = SHARED; // Set state to Shared
+                    //next_state = SHARED; // Set state to Shared
                     bcif.ccexclusive[i] = 0; // Clear exclusive flag
                 end
             end
@@ -190,33 +185,31 @@ task handleExclusiveState(int line, int cpu);
             bcif.dwait[cpu] = 0;
             bcif.ccwait = '0;
         end
-    end
 endtask
 
 task handleModifiedState(int line, int cpu);
     // M -> I (Data Eviction) or (Bus Invalidation)
     if ((bcif.dWEN[cpu] && !bcif.ccwrite[cpu]) || 
-        (bcif.state == GRANT_RX && bcif.ccinv[cpu])) begin
+        (/* bcif.state == GRANT_RX && */bcif.ccinv[cpu])) begin
         // Processor i read/write, cache miss. Wait for dwait to go low.
         bcif.dwait[cpu] = 0;
         
         // Transition to writeback state in bus controller
         bcif.l2addr[cpu] = bcif.daddr[cpu]; // Writeback address to L2
-        bcif.l2load[cpu] = bcif.dload[cpu]; // Writeback data to L2
         bcif.l2WEN = 1; // Write enable to L2
         
         // Update cache line state
-        cache_states[line] = INVALID; // Invalidate cache line
+        //next_state = INVALID; // Invalidate cache line
     end
     // M -> S (Bus snooping)
-    else if (bcif.state == GRANT_R && bcif.dREN[cpu]) begin
+    else if (/*bcif.state == GRANT_R && */bcif.dREN[cpu]) begin
         // Bus sets snoop address and waits high for all non-requester CPUs
         bcif.ccsnoopaddr = {CPUS{bcif.daddr[cpu]}}; // Snoop address broadcast
         bcif.ccwait = '1; // Set wait high for all
         
         // All non-requester CPUs raise ccsnoopdone after snooping
         if (&bcif.ccsnoopdone) begin // All have snooped
-            int supplier = find_supplier(cpu);
+           /*  int supplier = find_supplier(cpu);
             if (supplier != -1) begin
                 bcif.dload[cpu] = bcif.dstore[supplier]; // Data from supplier
                 bcif.l2store = bcif.dstore[supplier]; // Prepare to writeback to L2
@@ -224,12 +217,12 @@ task handleModifiedState(int line, int cpu);
                 // Supplier cache writes back dirty data to L2
                 bcif.l2WEN = 1; // Write enable to L2
                 bcif.l2addr = bcif.daddr[cpu]; // Address to write back
-            end
+            end */
             
             // All caches with snoophit clear exclusive flag
             for (int i = 0; i < CPUS; i++) begin
                 if (bcif.ccsnoophit[i]) begin
-                    cache_states[bcif.daddr[i]] = SHARED; // Set state to Shared
+                    //next_state = SHARED; // Set state to Shared
                     bcif.ccexclusive[i] = 0; // Clear exclusive flag
                 end
             end

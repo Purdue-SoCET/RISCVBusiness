@@ -336,7 +336,7 @@ module l1_cache #(
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
                     idle_done 	       = 1;
-                    ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
+                    //ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
                 end
             end
             HIT: begin

@@ -29,12 +29,12 @@ interface cache_coherence_if;
 
     modport cache(
         input  set_sel, state_transfer, write_req, snoop_hit, frame_tag, responder_data, snoop_req,
-        output valid, exclusive, dirty, requested_data,
+        output valid, exclusive, dirty, requested_data
     );
 
     modport coherency_unit(
         output  set_sel, state_transfer, write_req, snoop_hit, frame_tag, responder_data, snoop_req,
-        input valid, exclusive, dirty, requested_data,
+        input valid, exclusive, dirty, requested_data
     );
 endinterface
 `endif // CACHE_COHERENCE_IF_VH
