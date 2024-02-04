@@ -67,9 +67,6 @@ typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if;
-    logic nRST;
-    logic clk;
-    
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
