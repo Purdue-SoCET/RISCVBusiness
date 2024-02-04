@@ -45,6 +45,7 @@ always_ff @(posedge CLK or negedge nRST) begin
     end
 end
 
+/*
 always_comb begin
     next_state = current_state;
 
@@ -70,7 +71,9 @@ always_comb begin
         endcase
     end
 end
+*/
 
+/*
 function int find_requesting_cpu();
     // Loop through the caches to find which one is making a current request
     for (int i = 0; i < CPUS; i++) begin
@@ -83,7 +86,7 @@ function int find_requesting_cpu();
     find_requesting_cpu = -1; //default return value
     return -1;
 endfunction
-
+*/
 localparam int NUM_SET_BITS = $clog2(N_SETS);
 
 function int get_set(cache_line_t line);

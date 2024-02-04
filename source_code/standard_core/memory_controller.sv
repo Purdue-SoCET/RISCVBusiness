@@ -45,7 +45,7 @@ module memory_controller (
     assign internal_bus_if.dWEN = {d_gen_bus_if.wen, i_gen_bus_if.wen};
     assign internal_bus_if.daddr = {d_gen_bus_if.addr, i_gen_bus_if.addr};
     assign internal_bus_if.dstore = {d_gen_bus_if.wdata, i_gen_bus_if.wdata};
-    assign internal_bus_if.cctrans = '0;
+    //assign internal_bus_if.cctrans = '0;
     assign internal_bus_if.ccwrite = '0;
     assign internal_bus_if.ccsnoophit = '0;
     assign internal_bus_if.ccIsPresent = '0;
