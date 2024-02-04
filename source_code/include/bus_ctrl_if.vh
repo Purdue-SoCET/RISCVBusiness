@@ -75,7 +75,6 @@ interface bus_ctrl_if;
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
     bus_word_t          [CPUS-1:0] daddr;
     // L1 coherence INPUTS to bus 
-    logic               [CPUS-1:0] cctrans;     // indicates that the requester is undergoing a miss
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
     logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
     logic               [CPUS-1:0] ccsnoopdone; // indicates that the responder has the data
@@ -86,7 +85,6 @@ interface bus_ctrl_if;
     logic               [CPUS-1:0] ccinv;       // indicates an invalidation request
     logic               [CPUS-1:0] ccexclusive; // indicates an exclusivity update
     bus_word_t          [CPUS-1:0] ccsnoopaddr; 
-    logic [CPUS-1:0][2:0] frame_state; //Outputs exclusive, dirty, and valid bits for a frame
     // L2 signals
     l2_state_t l2state; 
     transfer_width_t l2load, l2store; 
@@ -107,8 +105,8 @@ interface bus_ctrl_if;
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, 
-                cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state, frame_state,
+                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                l2load, l2state,
         output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN
@@ -119,8 +117,8 @@ interface bus_ctrl_if;
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN,
         output  dREN, dWEN, daddr, dstore, 
-                cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state, frame_state
+                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                l2load, l2state
     ); 
 
 endinterface
