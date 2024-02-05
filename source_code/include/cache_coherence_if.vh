@@ -25,16 +25,16 @@ interface cache_coherence_if;
     logic write_req; //Cache signifies a read or write miss
     logic snoop_req; //Signifies the bus is trying to snoop
     logic snoop_hit; //Bus signifies if tag from SRAM array matches a snoop
+    logic dWEN; //For write-back
     word_t frame_tag; //Tag from SRAM array in cache, compare it with the snoop tag
 
     modport cache(
-        input  set_sel, state_transfer, write_req, snoop_hit, frame_tag, responder_data, snoop_req,
-        output valid, exclusive, dirty, requested_data
+        input  set_sel, state_transfer, responder_data, snoop_req,
+        output valid, exclusive, dirty, requested_data, write_req, frame_tag, snoop_hit, dWEN
     );
-
     modport coherency_unit(
-        output  set_sel, state_transfer, write_req, snoop_hit, frame_tag, responder_data, snoop_req,
-        input valid, exclusive, dirty, requested_data
+        output  set_sel, state_transfer, responder_data, snoop_req,
+        input valid, exclusive, dirty, requested_data, write_req, frame_tag, snoop_hit, dWEN
     );
 endinterface
 `endif // CACHE_COHERENCE_IF_VH
