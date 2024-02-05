@@ -28,7 +28,8 @@ module coherency_unit #(
 )(
     input logic CLK, nRST,
     bus_ctrl_if.cc bcif,            // Bus Controller Interface
-    cache_coherence_if.coherency_unit ccif_cache // Cache Coherence Interface
+    cache_coherence_if.coherency_unit ccif_cache, // Cache Coherence Interface
+    generic_bus_if.generic_bus cache_data_if //Bus from cache
 );
 
 typedef logic [ADDR_WIDTH-1:0] cache_line_t;
