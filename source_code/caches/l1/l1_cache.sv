@@ -336,7 +336,7 @@ module l1_cache #(
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
                     idle_done 	       = 1;
-                    //ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
+                    ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
                 end
             end
             HIT: begin
@@ -451,6 +451,13 @@ module l1_cache #(
                     next_read_addr = {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
                 end
             end
+	    SNOOP: begin
+		//mem_gen_bus_if.wdata = Need to get syntax for this, data that bus can read from SRAM
+		//Need to route this into SRAM as needed = mem_gen_bus_if.rdata
+                mem_gen_bus_if.addr = read_addr;
+		ccif.write_req = proc_gen_bus_if.wen;
+
+	    end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].tag.dirty) begin
@@ -520,6 +527,9 @@ module l1_cache #(
                 else if (word_count_done)
                     next_state = FETCH;
 	        end
+		SNOOP: begin
+		    next_state = ccif.snoop_req ? SNOOP : IDLE;
+		end
 	        FLUSH_CACHE: begin        
                 if (flush_done)
                     next_state = HIT;
