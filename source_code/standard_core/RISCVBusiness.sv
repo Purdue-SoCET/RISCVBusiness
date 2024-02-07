@@ -183,28 +183,29 @@ module RISCVBusiness (
     memory_controller mc (
         .CLK(CLK),
         .nRST(nRST),
-        .d_gen_bus_if(dcache_mc_if),
-        .i_gen_bus_if(icache_mc_if),
         .out_gen_bus_if(pipeline_trans_if),
+        .bcif(bus_ctrl_if),
         .abort_bus(abort_bus)
     );
 
-    coherency_unit i_coherence_unit (
+    coherency_unit #(
+        .CPUID(0)
+    ) i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
-        .cpuid(0),
         .ccif(i_cache_coherency_if),
         .bcif(bus_ctrl_if),
-	    .gbif(icache_mc_if)
+        .gbif(icache_mc_if)
     );
 
-    coherency_unit d_coherence_unit (
+    coherency_unit #(
+        .CPUID(1)
+    ) d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
-        .cpuid(0),
         .ccif(d_cache_coherency_if),
         .bcif(bus_ctrl_if),
-	    .gbif(dcache_mc_if)
+        .gbif(dcache_mc_if)
     );
 
     /*
