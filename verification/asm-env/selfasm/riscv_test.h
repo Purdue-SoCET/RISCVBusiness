@@ -58,9 +58,9 @@
   .globl _start; \
   start_: \
   j _thread_one; \
-  j _thread_two; 
+  j _thread_two; \
+  j _thread_three; 
   
-
 #define RVTEST_CODE_END \
   li x1, 1; \
   li x2, 1; \
@@ -112,11 +112,21 @@
   sw t1, 4(t0); \
   j thread_wait; 
 
+#define RVTEST_THREAD_THREE_BEGIN \
+  .globl _thread_three;  \
+  _thread_three: 
+
+#define RVTEST_THREAD_THREE_END \
+  la t0, t_count; \
+  li t1, 1; \
+  sw t1, 8(t0); \
+  j thread_wait; 
+
 #define RVTEST_THREAD_WAIT \
   .globl thread_wait;  \
   thread_wait: \
   la   t0, t_count; \
-  li t1, 1; /* 1 threads*/ \
+  li t1, 3; /* 1 threads*/ \
   li t2, 0; /* 0 threads done*/ \
   li t5, 0; /* counter */ \
   thread_add_loop: \

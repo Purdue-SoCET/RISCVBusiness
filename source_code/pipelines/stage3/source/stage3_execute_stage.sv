@@ -52,6 +52,8 @@ module stage3_execute_stage (
     // Interface declarations
     control_unit_if cu_if ();
 
+    parameter logic [31:0] NUM_HARTS = 1;
+
     /**************
     * Replication of the register file interface for multiple HARTS
     **************/
@@ -60,7 +62,7 @@ module stage3_execute_stage (
     //         rv32i_reg_file_if rf_if ();
     //     end
     // endgenerate
-    rv32i_reg_file_if rf_if();
+    rv32i_reg_file_if #(.NUM_HARTS(NUM_HARTS)) rf_if();
 
 
     alu_if alu_if ();
@@ -95,6 +97,7 @@ module stage3_execute_stage (
     );
 
     assign wfi = cu_if.wfi;  //Added by rkannank
+    assign rf_if.hart_id = fetch_ex_if.fetch_ex_reg.hart_id;
 
     generate
         if (BASE_ISA == "RV32E") begin : g_rfile_select
@@ -111,7 +114,7 @@ module stage3_execute_stage (
             //         .regfile_if[rfile_cnt].rf_if
             //     );
             // end
-            rv32i_reg_file rf (
+            rv32i_reg_file #(.NUM_HARTS(NUM_HARTS)) rf (
                 .CLK,
                 .nRST,
                 .rf_if

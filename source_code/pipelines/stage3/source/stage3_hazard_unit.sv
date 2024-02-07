@@ -67,12 +67,13 @@ module stage3_hazard_unit (
     assign cannot_forward = (hazard_if.dren || hazard_if.csr_read); // cannot forward outputs generated in mem stage
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
-    assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);
+    //assign branch_jump = /* hazard_if.jump || */ (hazard_if.branch && hazard_if.mispredict); 
+    assign branch_jump = 1'b0;
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren && !hazard_if.rv32c_ready; // don't wait for imem when rv32c is done early
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
     assign mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
 
-    assign hazard_if.npc_sel = branch_jump;
+    assign hazard_if.npc_sel =  hazard_if.jump; // || branch_jump; 
 
 
 
@@ -86,7 +87,8 @@ module stage3_hazard_unit (
     assign intr = ~exception & prv_pipe_if.intr;
 
     assign prv_pipe_if.pipe_clear = 1'b1; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
-    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+    //assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+    assign ex_flush_hazard = 1'b0;
 
     assign hazard_if.insert_priv_pc = prv_pipe_if.insert_pc;
     assign hazard_if.priv_pc = prv_pipe_if.priv_pc;

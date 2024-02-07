@@ -49,7 +49,7 @@ module RISCVBusiness (
 );
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
-    parameter logic [31:0] NUM_HARTS = 1;
+    parameter logic [31:0] NUM_HARTS = 3;
 
     // Interface instantiations
 

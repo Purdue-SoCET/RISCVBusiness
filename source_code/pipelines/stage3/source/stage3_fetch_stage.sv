@@ -57,6 +57,7 @@ module stage3_fetch_stage (
     logic fault_insn;
     logic mal_insn;
     word_t badaddr;
+    word_t next_npc;
 
     //RV32C
     assign rv32cif.inst = igen_bus_if.rdata;
@@ -74,6 +75,7 @@ module stage3_fetch_stage (
 
     assign pc4or2 = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc_if.pc[hart_selector_if.hart_id] + 2) : (pc_if.pc[hart_selector_if.hart_id] + 4);
     assign predict_if.current_pc = pc_if.pc[hart_selector_if.hart_id];
+
     assign pc_if.npc = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
                  : (hazard_if.rollback        ? mem_fetch_if.pc4
                  : (sparce_if.skipping       ? sparce_if.sparce_target
@@ -81,6 +83,16 @@ module stage3_fetch_stage (
                  : (predict_if.predict_taken ? predict_if.target_addr
                  : rv32cif.rv32c_ena         ? rv32cif.nextpc
                  : pc4or2))));
+
+    // always_ff @(posedge CLK, negedge nRST) begin
+    //     if (~nRST) begin
+    //         pc_if.npc[0] <= RESET_PC + 32'h4;
+    //         pc_if.npc[1] <= RESET_PC + 32'h8;
+    //         pc_if.npc[2] <= RESET_PC + 32'hC;
+    //     end else begin // if (hazard_if.pc_en /*| rv32cif.done_earlier*/)
+    //         pc_if.npc[mem_fetch_if.ex_mem_reg.hart_id] <= next_npc;
+    //     end
+    // end
 
     //Instruction Access logic
     assign hazard_if.i_mem_busy = igen_bus_if.busy && !fault_insn;

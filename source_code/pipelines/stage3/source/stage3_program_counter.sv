@@ -46,17 +46,21 @@ module stage3_program_counter (
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
 
-    parameter logic [31:0] NUM_HARTS = 1;
+    parameter logic [31:0] NUM_HARTS = 2;
     parameter logic [31:0] RESET_PC = 32'h80000000;
 
-    always_ff @(posedge CLK, negedge nRST) begin
-        if (~nRST) begin
-            pc_if.pc <= {NUM_HARTS{RESET_PC}};
-        end else if (hazard_if.pc_en /*| rv32cif.done_earlier*/) begin
-            pc_if.pc[hart_selector_if.hart_id] <= pc_if.npc;
+    genvar i;
+
+    generate
+        for (i = 0; i < NUM_HARTS; i = i + 1) begin : pc
+          always_ff @(posedge CLK, negedge nRST) begin
+            if (~nRST) begin
+                pc_if.pc[i] <= RESET_PC + (i * 4);
+            end else if(hazard_if.pc_en || hazard_if.npc_sel) begin // if (hazard_if.pc_en /*| rv32cif.done_earlier*/)
+                if(hazard_if.npc_sel) pc_if.pc[mem_fetch_if.ex_mem_reg.hart_id] <= pc_if.npc;
+                else pc_if.pc[hart_selector_if.hart_id] <= pc_if.npc;
+            end
+          end
         end
-    end
-
-    
-
+      endgenerate
 endmodule

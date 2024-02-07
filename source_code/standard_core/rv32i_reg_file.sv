@@ -39,10 +39,10 @@ module rv32i_reg_file (
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             registers <= '0;
-        end else if (rf_if.wen[rfif.hart_id] && rf_if.rd[rfif.hart_id]) begin
-            registers[rfif.hart_id][rf_if.rd] <= rf_if.w_data[rfif.hart_id];
+        end else if (rf_if.wen[rf_if.hart_id] && rf_if.rd[rf_if.hart_id]) begin
+            registers[rf_if.hart_id][rf_if.rd] <= rf_if.w_data[rf_if.hart_id];
         end
     end
 
-    assign rf_if.rs1_data[rfif.hart_id] = registers[rfif.hart_id][rf_if.rs1];
+    assign rf_if.rs1_data[rf_if.hart_id] = registers[rf_if.hart_id][rf_if.rs1];
 endmodule

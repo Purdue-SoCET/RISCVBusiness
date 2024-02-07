@@ -14,7 +14,7 @@ interface stage3_mem_pipe_if();
     word_t pc4; // For flush in case of fence_i, CSR, etc.
 
     modport fetch(
-        input brj_addr, pc4
+        input brj_addr, pc4, ex_mem_reg
     );
 
 
