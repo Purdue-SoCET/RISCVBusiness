@@ -31,15 +31,18 @@
 module memory_controller (
     input logic CLK,
     nRST,
-    generic_bus_if.generic_bus d_gen_bus_if,
-    generic_bus_if.generic_bus i_gen_bus_if,
+    bus_ctrl_if.cc bcif,
     generic_bus_if.cpu out_gen_bus_if,
     input logic abort_bus
 );
-    bus_ctrl_if internal_bus_if();
-    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(2))
-        BUS_CTRL(CLK, nRST, internal_bus_if, abort_bus);
+    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(2)) BUS_CTRL(
+        .CLK(CLK),
+        .nRST(nRST),
+        .ccif(bcif),
+        .abort_bus(abort_bus)
+    );
 
+    /*
     // assignments to bus controller
     assign internal_bus_if.dREN = {d_gen_bus_if.ren, i_gen_bus_if.ren};
     assign internal_bus_if.dWEN = {d_gen_bus_if.wen, i_gen_bus_if.wen};
@@ -63,6 +66,7 @@ module memory_controller (
     assign out_gen_bus_if.wen = internal_bus_if.l2WEN;
     assign out_gen_bus_if.wdata = internal_bus_if.l2store;
     assign out_gen_bus_if.byte_en = '1;
+    */
 
     // /* State Declaration */
     // typedef enum {

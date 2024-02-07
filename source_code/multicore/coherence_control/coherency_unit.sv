@@ -22,28 +22,22 @@
 *	Description:  Coherency unit for MESI Coherence
 */
 
-/* Bus Controller Interface: To connect the coherency unit to the bus
+/* Bus Controller Interface
     modport cc(
-        input   dREN, dWEN, daddr, dstore, 
+        input   dREN, dWEN, daddr, dstore,
                 cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state, frame_state,
-        output  dwait, dload, 
-                ccwait, ccinv, ccsnoopaddr, ccexclusive, 
+        output  dwait, dload,
+                ccwait, ccinv, ccsnoopaddr, ccexclusive,
                 l2addr, l2store, l2REN, l2WEN
-    ); 
+    );
 */
 
-/* To respond back to the cache
+/* Coherency Unit - Cache Interface
 modport coherency_unit(
         output  set_sel, state_transfer, write_req, snoop_hit, frame_tag, responder_data, snoop_req,
         input valid, exclusive, dirty, requested_data
     );
-*/
-
-/*  modport generic_bus ( //To connect the cache to the coherency unit
-    input addr, ren, wen, wdata, byte_en,
-    output rdata, busy
-  );
 */
 
 `include "generic_bus_if.vh"
@@ -52,33 +46,21 @@ modport coherency_unit(
 
 module coherency_unit #(
     parameter ADDR_WIDTH = 32, // Address width for cache lines
-    parameter CPUS = 2        // Number of CPUs
-)
-
-(
-    input logic CLK, nRST, cpuid,
+    parameter CPUS = 2,         // Number of CPUs
+    parameter CPUID
+)(
+    input logic CLK, nRST,
     bus_ctrl_if.tb bcif,            // Bus Controller Interface
     cache_coherence_if.coherency_unit ccif, // Cache Coherence Interface
     generic_bus_if.generic_bus gbif //Bus from cache
 );
 
-localparam CACHE_SIZE         = 1024;
-localparam ASSOC              = 1;
-localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
-localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
-localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
-localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
-
-typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_INV, WRITE_BACK} state_type; //States for Coherency Unit
+typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_INV, WRITEBACK} state_type; //States for Coherency Unit
 state_type state, next_state;
 
-typedef enum logic[1:0] {  
-    MODIFIED,
-    EXCLUSIVE,
-    SHARED,
-    INVALID
-} cc_end_state;
+typedef logic [ADDR_WIDTH-1:0] cache_line_t;
 
+cache_line_t snoop_address;
 
 always_ff @(posedge CLK or negedge nRST) begin
     if (!nRST) begin
@@ -92,17 +74,17 @@ always_comb begin
     next_state = state;
     case(state)
         IDLE: begin
-            if (bcif.ccwait[cpuid]) begin 
+            if (bcif.ccwait[CPUID]) begin
                 next_state = RESP_CHKTAG;
             end else if (gbif.wen) begin
                 next_state = WRITE_REQ;
             end else if (gbif.ren) begin
                 next_state = READ_REQ;
-            end else if (ccif.dWEN) begin 
-                next_state = state_type'(WRITEBACK);
+            end else if (ccif.dWEN) begin
+                next_state = WRITEBACK;
             end
         end
-        RESP_CHKTAG: begin 
+        RESP_CHKTAG: begin
             if (ccif.snoop_hit) begin
                 next_state = RESP_SEND;
             end else begin
@@ -110,31 +92,31 @@ always_comb begin
             end
         end
         RESP_SEND: begin
-            if (!bcif.ccwait[cpuid]) begin
+            if (!bcif.ccwait[CPUID]) begin
                 next_state = IDLE;
             end
         end
         WRITE_REQ: begin //handle S -> M, I -> M here
-            if (bcif.ccwait[cpuid]) begin 
+            if (bcif.ccwait[CPUID]) begin
                 next_state = RESP_CHKTAG;
             end
-            else if (!bcif.dwait[cpuid]) begin
+            else if (!bcif.dwait[CPUID]) begin
                 next_state = IDLE;
             end
         end
         READ_REQ: begin //dren = 1, daddr = ..., final_state = ccexc ? E : S, handle I -> E and I -> S here
-            if (bcif.ccwait[cpuid]) begin 
+            if (bcif.ccwait[CPUID]) begin
                 next_state = RESP_CHKTAG;
             end
-            else if (!bcif.dwait[cpuid]) begin
+            else if (!bcif.dwait[CPUID]) begin
                 next_state = IDLE;
             end
         end
-        WRITE_BACK: begin
-            if (bcif.ccwait[cpuid]) begin 
+        WRITEBACK: begin
+            if (bcif.ccwait[CPUID]) begin
                 next_state = RESP_CHKTAG;
             end
-            else if (!bcif.dwait[cpuid]) begin
+            else if (!bcif.dwait[CPUID]) begin
                 next_state = IDLE;
             end
         end
@@ -146,51 +128,43 @@ always_comb begin: OUTPUTLOGIC
         IDLE: begin
         end
         RESP_CHKTAG: begin
-            ccif.set_sel = calculate_set_index(bcif.ccsnoopaddr);
+            //ccif.set_sel = //going t
             ccif.snoop_req = 1'b1;
-            bcif.ccsnoopdone[cpuid] = 1'b1;
-            bcif.ccsnoophit[cpuid] = ccif.snoop_hit;
-        end 
+            bcif.ccsnoopdone[CPUID] = 1'b1;
+            bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
+        end
         RESP_SEND: begin
             ccif.snoop_req = 1'b1;
-            bcif.dstore[cpuid] =  ccif.requested_data;
-            bcif.ccsnoophit[cpuid] = 1'b1;
-            bcif.ccsnoopdone[cpuid] = 1'b1; //debateable
-            if (bcif.ccinv[cpuid]) begin  //Anything -> I
-                ccif.state_transfer = cc_end_state'(INVALID); 
+            bcif.dstore[CPUID] =  ccif.requested_data;
+            bcif.ccsnoophit[CPUID] = 1'b1;
+            bcif.ccsnoopdone[CPUID] = 1'b1; //debateable
+            if (bcif.ccinv[CPUID]) begin  //Anything -> I
+                ccif.state_transfer = INVALID;
             end else begin //Anything -> S
-                ccif.state_transfer = cc_end_state'(SHARED); 
+                ccif.state_transfer = SHARED;
             end
             if (ccif.dirty) begin
-                bcif.ccdirty[cpuid] = 1'b1;
+                bcif.ccdirty[CPUID] = 1'b1;
             end
          end
         WRITE_REQ: begin //handle S -> M, I -> M here
-            bcif.ccwrite[cpuid] = 1'b1;
-            bcif.daddr[cpuid] = gbif.addr;
-            bcif.dstore[cpuid] = ccif.requested_data; //set dstore[supplier] to needed data
-            ccif.responder_data = bcif.dload[cpuid];
-            ccif.state_transfer = cc_end_state'(MODIFIED); 
+            bcif.ccwrite[CPUID] = 1'b1;
+            bcif.daddr[CPUID] = gbif.addr;
         end
         READ_REQ: begin //dren = 1, daddr = ..., final_state = ccexc ? E : S, handle I -> E and I -> S here
-            bcif.dREN[cpuid] = 1'b1;
-            bcif.daddr[cpuid] = gbif.addr;
-            if (bcif.ccexclusive[cpuid]) begin //I -> E
-                ccif.state_transfer = cc_end_state'(EXCLUSIVE); 
+            bcif.dREN[CPUID] = 1'b1;
+            bcif.daddr[CPUID] = gbif.addr;
+            if (bcif.ccexclusive[CPUID]) begin //I -> E
+                ccif.state_transfer = EXCLUSIVE;
             end else begin //I -> S
-                ccif.state_transfer = cc_end_state'(SHARED);
+                ccif.state_transfer = SHARED;
             end
         end
-        WRITE_BACK: begin
-            bcif.dWEN[cpuid] = 1'b1;
-            bcif.dstore[cpuid] = gbif.wdata;
+        WRITEBACK: begin
+            bcif.dWEN[CPUID] = 1'b1;
+            bcif.dstore[CPUID] = gbif.wdata;
         end
     endcase
 end
-
-//Function to calculate the set index
-function logic [$clog2(N_SETS)-1:0] calculate_set_index(logic [31:0] address);
-    return (address >> $clog2(BLOCK_SIZE)) & ((1 << $clog2(N_SETS)) - 1);;
-endfunction
 
 endmodule
