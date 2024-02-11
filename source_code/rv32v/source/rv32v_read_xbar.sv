@@ -25,38 +25,45 @@
 import rv32i_types_pkg::*;
 
 module rv32v_read_xbar
-#(
-    // parameter of which lane is receiving the output data
-    LANE_NUM = 0
-)
 (
     input word_t [3:0] bank_dat, 
     input logic[1:0] eew,
     input logic[1:0] bank_offset, 
+    input logic sign_ext, 
 
-    output word_t out_dat
+    output word_t [3:0] out_dat
 );
 
-typdef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; 
-
-
+typedef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; 
 
 always_comb begin
     if(EEW_TYPE'(eew) == BYTE_4) begin
-        out_dat = bank_dat[LANE_NUM]; 
+        out_dat[0] = bank_dat[0];
+        out_dat[1] = bank_dat[1]; 
+        out_dat[2] = bank_dat[2]; 
+        out_dat[3] = bank_dat[3];  
     end
     else if(EEW_TYPE'(eew) == BYTE_2) begin
-        case(LANE_NUM)
-            0,1: out_dat = bank_dat[bank_offset];  
-            default: out_dat = bank_dat[bank_offset + 1]; 
-        endcase 
-        out_dat = bank
+        out_dat[0] = sign_ext ? { {16{bank_dat[bank_offset][15]}}, bank_dat[bank_offset][15:0] } 
+                              : {16'b0, bank_dat[bank_offset][15:0]};
+        out_dat[1] = sign_ext ? { {16{bank_dat[bank_offset][31]}}, bank_dat[bank_offset][31:16] } 
+                              : {16'b0, bank_dat[bank_offset][31:16]};
+
+        out_dat[2] = sign_ext ? { {16{bank_dat[bank_offset + 1][15]}}, bank_dat[bank_offset + 1][15:0] } 
+                              : {16'b0, bank_dat[bank_offset + 1][15:0]};
+        out_dat[3] = sign_ext ? { {16{bank_dat[bank_offset + 1][31]}}, bank_dat[bank_offset + 1][31:16] } 
+                              : {16'b0, bank_dat[bank_offset + 1][31:16]};
     end 
     else begin
-        out_dat = bank_dat[bank_offset]; 
+        out_dat[0] = sign_ext ? { {24{bank_dat[bank_offset][7]}}, bank_dat[bank_offset][7:0] }
+                              : { 24'b0, bank_dat[bank_offset][7:0] };
+        out_dat[1] = sign_ext ? { {24{bank_dat[bank_offset][15]}}, bank_dat[bank_offset][15:8] }
+                              : { 24'b0, bank_dat[bank_offset][15:8] };
+        out_dat[2] = sign_ext ? { {24{bank_dat[bank_offset][23]}}, bank_dat[bank_offset][23:16] }
+                              : { 24'b0, bank_dat[bank_offset][23:16] };
+        out_dat[3] = sign_ext ? { {24{bank_dat[bank_offset][31]}}, bank_dat[bank_offset][31:16] }
+                              : { 24'b0, bank_dat[bank_offset][31:16] };
     end
 end
-
-
 
 endmodule

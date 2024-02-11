@@ -32,13 +32,14 @@ module rv32v_vector_bank
     input word_t vwdata, 
     input logic[3:0] byte_wen, 
 
-    output word_t vdat1, vdat2
+    output word_t vdat1, vdat2, v0
 );
 
 word_t[31:0]  bank_reg_file; 
 
 assign vdat1 = bank_reg_file[vs1];
 assign vdat2 = bank_reg_file[vs2];
+assign v0 = bank_reg_file[0]; 
 
 always_ff @(posedge CLK, negedge nRST) begin
     if(~nRST) begin
