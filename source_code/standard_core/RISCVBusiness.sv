@@ -192,17 +192,19 @@ module RISCVBusiness (
     coherency_unit i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif_cache(i_cache_coherency_if),
+        .cpuid(0),
+        .ccif(i_cache_coherency_if),
         .bcif(bus_ctrl_if),
-	.cache_data_if(dcache_mc_if)
+	    .gbif(icache_mc_if)
     );
 
     coherency_unit d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif_cache(d_cache_coherency_if),
+        .cpuid(0),
+        .ccif(d_cache_coherency_if),
         .bcif(bus_ctrl_if),
-	.cache_data_if(dcache_mc_if)
+	    .gbif(dcache_mc_if)
     );
 
     /*
