@@ -1,0 +1,31 @@
+#! /usr/bin/vvp -v
+:ivl_version "10.2 (stable)";
+:ivl_delay_selection "MAXIMUM";
+:vpi_time_precision - 11;
+:vpi_module "system";
+:vpi_module "vhdl_sys";
+:vpi_module "v2005_math";
+:vpi_module "va_math";
+:vpi_module "v2009";
+S_0x199d510 .scope module, "rv32v_read_xbar" "rv32v_read_xbar" 2 29;
+ .timescale 0 0;
+    .port_info 0 /INPUT 1 "A"
+    .port_info 1 /OUTPUT 1 "B"
+o0x7f0942b66018 .functor BUFZ 1, C4<z>; HiZ drive
+v0x199d830_0 .net "A", 0 0, o0x7f0942b66018;  0 drivers
+L_0x7f0942b0c018 .functor BUFT 1, C4<0>, C4<0>, C4<0>, C4<0>;
+v0x19abdf0_0 .net "B", 0 0, L_0x7f0942b0c018;  1 drivers
+S_0x199d690 .scope module, "tb_rv32v_read_xbar" "tb_rv32v_read_xbar" 3 27;
+ .timescale -9 -11;
+    .scope S_0x199d690;
+T_0 ;
+    %vpi_call/w 3 72 "$dumpfile", "dump.vcd" {0 0 0};
+    %vpi_call/w 3 73 "$dumpvars" {0 0 0};
+    %end;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "source_code/rv32v/source/rv32v_read_xbar.sv";
+    "source_code/rv32v/source/tb_rv32v_read_xbar.sv";

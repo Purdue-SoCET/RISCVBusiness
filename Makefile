@@ -65,6 +65,21 @@ test_asm_file:
 	./rvb_out/sim-verilator/Vtop_core sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
 
 
+# test_verilog_file: $(VERILOG_FILE) $(VERILOG_TB_FILE)
+# 	@echo "----------------------------------------------------------------"
+# 	@echo "Creating executable for source compilation ....."
+# 	@echo "----------------------------------------------------------------\n\n"
+# 	@mkdir -p ./sim_build/
+# 	@ iverilog -g2012 -gspecify -Tmax -v -o ./sim_build/sim_file.vvp $(VERILOG_FILE) $(VERILOG_TB_FILE)
+# 	@echo "\n\n"
+# 	@echo "Compilation complete\n\n"
+
+# 	@echo "----------------------------------------------------------------"
+# 	@echo "Simulating source ....."
+# 	@echo "----------------------------------------------------------------"
+# 	@vvp ./sim_build/sim_file.vvp
+# 	@ gtkwave dump.vcd
+
 
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
@@ -96,3 +111,5 @@ clean:
 veryclean:
 	rm -rf fusesoc_libraries
 	rm fusesoc.conf
+
+.PHONY: test_verilog_file

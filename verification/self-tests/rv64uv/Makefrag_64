@@ -1,0 +1,21 @@
+#=======================================================================
+# Makefrag for rv64uv tests
+#-----------------------------------------------------------------------
+
+rv64uv_sc_tests = \
+        vadd vsub vrsub vmul vdiv vrem vremu vmacc vmadd vnmsac vnmsub \
+        vmseq vmsgt vmsgtu vmsle vmsleu vmslt vmsltu vmsne \
+        vmax vmaxu vmin vminu vand vor vxor vsll vsrl vsra \
+        vmulh_64 vmulhu_64 vmulhsu_64 vdivu_64 vext \
+        vlse vsse vle vse vlxei_64 vsxei vlseg vsseg vlsseg vssseg vlxseg_64 vsxseg vlre vsre \
+        vredsum vredmax vredmaxu vredmin vredminu vredand vredor vredxor \
+        vsadd vsaddu vssub vssubu vaadd vaaddu vasub vasubu vsmul vssra vssrl \
+        vadc vmadc_64 vmrl_64 vsfmb viota vrgather vcompress vpopc vmre_64 vslide_64 vmv
+
+# Floating-Point only support VSEW=32 so far
+#        vfredmax vfredmin vfredosum vfredusum \
+#        vfadd vfsub vfmul vfdiv vfmacc vfnmacc vfmsac vfnmsac vfmadd vfnmadd vfmsub vfnmsub \
+#        vfsqrt vfmin vfmax vfsgnj  vfclass vfmerge vfcvt vfncvt vfrec vmfeq vmflt vmfgt  \
+
+rv64uv_p_tests = $(addprefix rv64uv-p-, $(rv64uv_sc_tests))
+rv64uv_v_tests = $(addprefix rv64uv-v-, $(rv64uv_sc_tests))
