@@ -144,7 +144,7 @@ module l1_cache #(
     assign proc_gen_bus_if.error = mem_gen_bus_if.error;
 
     // sram instance
-    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits;
+    assign sramSEL = (state == SNOOP) ? sramSNOOPSEL : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits);
     assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
@@ -249,9 +249,10 @@ module l1_cache #(
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
                 if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
-                    hit       = 1'b1;
-                    hit_data  = sramRead.frames[i].data;
-                    hit_idx   = i;
+			if(proc_gen_bus_if.ren || (proc_gen_bus_if.wen && (sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive))) //Read or write hit
+	                    hit       = 1'b1;
+        	            hit_data  = sramRead.frames[i].data;
+                	    hit_idx   = i;
                 end
             end
         end
@@ -364,6 +365,8 @@ module l1_cache #(
                     sramMask.frames[hit_idx].tag.dirty = 0;
                     sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
                     sramWrite.frames[hit_idx].tag.dirty = 1;
+		    sramWrite.frames[ridx].tag.exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
+                    sramMask.frames[ridx].tag.exclusive = 0;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                     if (reserve) begin
                         // 0 is success, 1 is failure
@@ -456,7 +459,46 @@ module l1_cache #(
 		//Need to route this into SRAM as needed = mem_gen_bus_if.rdata
                 mem_gen_bus_if.addr = read_addr;
 		ccif.write_req = proc_gen_bus_if.wen;
-
+                ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
+                mem_gen_bus_if.wdata = sramRead.frames[ridx].data;
+		case(ccif.state_transfer) //Do we need to add a signal to specify when to change states?
+			INVALID: begin
+				sramWEN = 1;
+				sramWrite.frames[ridx].tag.dirty = 0;
+                    		sramMask.frames[ridx].tag.dirty = 0;
+		                sramWrite.frames[ridx].tag.valid = 0;
+                		sramMask.frames[ridx].tag.valid = 0;
+				sramWrite.frames[ridx].tag.exclusive = 0;
+                    		sramMask.frames[ridx].tag.exclusive = 0;
+			end 
+			SHARED: begin
+				sramWEN = 1;
+				sramWrite.frames[ridx].tag.dirty = 0;
+                    		sramMask.frames[ridx].tag.dirty = 0;
+		                sramWrite.frames[ridx].tag.valid = 1;
+                		sramMask.frames[ridx].tag.valid = 0;
+				sramWrite.frames[ridx].tag.exclusive = 0;
+                    		sramMask.frames[ridx].tag.exclusive = 0;
+			end 
+			EXCLUSIVE: begin
+				sramWEN = 1;
+				sramWrite.frames[ridx].tag.dirty = 0;
+                    		sramMask.frames[ridx].tag.dirty = 0;
+		                sramWrite.frames[ridx].tag.valid = 1;
+                		sramMask.frames[ridx].tag.valid = 0;
+				sramWrite.frames[ridx].tag.exclusive = 1;
+                    		sramMask.frames[ridx].tag.exclusive = 0;
+			end 
+			MODIFIED: begin
+				sramWEN = 1;
+				sramWrite.frames[ridx].tag.dirty = 1;
+                    		sramMask.frames[ridx].tag.dirty = 0;
+		                sramWrite.frames[ridx].tag.valid = 1;
+                		sramMask.frames[ridx].tag.valid = 0;
+				sramWrite.frames[ridx].tag.exclusive = 0;
+                    		sramMask.frames[ridx].tag.exclusive = 0;
+			end 
+		endcase
 	    end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
