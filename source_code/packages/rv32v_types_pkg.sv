@@ -388,7 +388,7 @@ package rv32v_types_pkg;
     VALU_SGT,
     // Integer min/max
     VALU_MIN,
-    VALU_MAX,
+    VALU_MAX
   } valuop_t;
 
   // Operation codes for integer reduction unit
@@ -417,7 +417,7 @@ package rv32v_types_pkg;
     VMSK_SIF,
     VMSK_SOF,
     VMSK_ITA,
-    VMSK_IDX,
+    VMSK_IDX
   } vmaskop_t;
 
   // Operation codes for permutation unit
@@ -522,11 +522,11 @@ package rv32v_types_pkg;
     rv32i_types_pkg::regsel_t vd_sel;
     logic vregwen;
     logic sregwen;
-    // Alignment unit signals
+    // Alignment/crossbar signals
     vsew_t veew_src1;
     vsew_t veew_src2;
     vsew_t veew_dest;
-    logic [1:0] velem_offset;
+    logic [1:0] vbank_offset;
     logic vsignext;  // 0 -> zero extend; 1 -> sign extend
     // Execution value select signals
     logic vxin1_use_imm;
@@ -536,10 +536,43 @@ package rv32v_types_pkg;
     // Execution lane signals
     vexec_t vexec;
     // Memory signals
+    logic [3:0] vlaneactive;
     logic vmemrden;
     logic vmemwren;
     logic vmemtoreg;
+    logic [4:0] vuop_num;
+    logic vunitstride;
+    logic vstrided;
+    logic vindexed;
+
+    // CSR signals
+    cfgsel_t vsetvl_type, 
+    logic vkeep_vl; // if rs1 & rd == 0 
   } vcontrol_t;
+
+
+  typedef struct packed {
+    // lane specific 
+    word_t[3:0] valu_res; 
+    word_t[3:0] vs2;
+    logic[3:0]  vlane_mask; 
+
+    // general 
+    logic vindexed;
+    logic[4:0] vuop_num;
+  
+    logic vmemdren;
+    logic vmemdwen;  
+    logic vregwen; 
+    vsew_t veew; 
+    rv32i_types_pkg::regsel_t vd_sel;
+    logic [1:0] vbank_offset;
+
+    // CSR 
+    logic vsetvl; 
+    logic vkeepvl; 
+
+  } vexmem_t; 
 
 endpackage
 `endif
