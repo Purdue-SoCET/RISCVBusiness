@@ -60,9 +60,9 @@ config:
 	@python3 scripts/config_core.py example.yml
 
 test_asm_file:
-	python3 compile_asm_for_self.py verification/self-tests/RV32I/$(TEST_FILE_NAME).S
-	riscv64-unknown-elf-objcopy -O binary sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).elf sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
-	./rvb_out/sim-verilator/Vtop_core sim_out/RV32I/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
+	python3 compile_asm_for_self.py verification/self-tests/$(TEST_DIR)/$(TEST_FILE_NAME).S
+	riscv64-unknown-elf-objcopy -O binary sim_out/$(TEST_DIR)/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).elf sim_out/$(TEST_DIR)/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
+	./rvb_out/sim-verilator/Vtop_core sim_out/$(TEST_DIR)/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
 
 
 # test_verilog_file: $(VERILOG_FILE) $(VERILOG_TB_FILE)
