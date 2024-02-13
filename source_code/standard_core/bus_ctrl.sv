@@ -94,7 +94,7 @@ module bus_ctrl #(
             end
             GRANT_R:            nstate = SNOOP_R;
             GRANT_RX:           nstate = SNOOP_RX;
-            GRANT_EVICT:        nstate = block_count_done ? WRITEBACK : state;
+            GRANT_EVICT:        nstate = WRITEBACK;
             GRANT_INV:          nstate = SNOOP_INV;
             SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
             SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
@@ -105,12 +105,12 @@ module bus_ctrl #(
             // WRITEBACK_MS:       nstate = (ccif.l2state == L2_ACCESS) ? IDLE : WRITEBACK;
             // WRITEBACK:          nstate = (ccif.l2state == L2_ACCESS) ? IDLE : state;
             // BUS_TO_CACHE:       nstate = IDLE;
-            TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] && block_count_done ? WRITEBACK_MS : BUS_TO_CACHE;
-            TRANSFER_RX:        nstate = block_count_done ? IDLE : state;
+            TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
+            TRANSFER_RX:        nstate = IDLE;
             READ_L2:            nstate = block_count_done ? BUS_TO_CACHE : state;
             WRITEBACK_MS:       nstate = block_count_done ? IDLE : WRITEBACK;
             WRITEBACK:          nstate = block_count_done ? IDLE : state;
-            BUS_TO_CACHE:       nstate = block_count_done ? IDLE : state;
+            BUS_TO_CACHE:       nstate = IDLE;
             INVALIDATE:         nstate = IDLE;
         endcase
         // handle exception
@@ -158,9 +158,7 @@ module bus_ctrl #(
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
                 ccif.dwait[requester_cpu] = 0;
 
-                block_count_done = block_count == BLOCK_SIZE - 1;
-                if (block_count < BLOCK_SIZE - 1) nblock_count = block_count + 1;
-                nl2_store[block_count * 32+:32] = ccif.dstore[requester_cpu];
+                nl2_store = ccif.dstore[requester_cpu];
             end
             SNOOP_R: begin  // determine what to do on busRD
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
@@ -186,7 +184,7 @@ module bus_ctrl #(
                 if (block_count < BLOCK_SIZE - 1) begin
                     if (ccif.l2state == L2_ACCESS) begin
                         nblock_count = block_count + 1;
-                        ndload = ccif.l2load;
+                        ndload[block_count * 32+:32] = ccif.l2load;
                     end
                     nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
                 end else begin
@@ -197,37 +195,18 @@ module bus_ctrl #(
             TRANSFER_R: begin // move data from cache to bus
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
 
-                if (block_count < BLOCK_SIZE - 1) begin
-                    nblock_count = block_count + 1;
-                    nl2_store = ccif.dstore[supplier_cpu];
-                    ndload = ccif.dstore[supplier_cpu];
-                end else begin
-                    block_count_done = 1;
-                    nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
-                    nl2_store[block_count * 32+:32] = ccif.dstore[supplier_cpu];
-                    ndload[block_count * 32+:32] = ccif.dstore[supplier_cpu];
-                end
+                nl2_store = ccif.dstore[supplier_cpu];
+                ndload = ccif.dstore[supplier_cpu];
             end
             TRANSFER_RX: begin // move data from cache to bus
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
 
-                if (block_count < BLOCK_SIZE - 1) begin
-                    nblock_count = block_count + 1;
-                    ndload = ccif.dstore[supplier_cpu];
-                end else begin
-                    block_count_done = 1;
-                    ndload[block_count * 32+:32] = ccif.dstore[supplier_cpu];
-                end
+                ndload = ccif.dstore[supplier_cpu];
             end
             BUS_TO_CACHE: begin // move data from bus to cache (upwards or downwards); alert requester
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
-                if (block_count < BLOCK_SIZE - 1) begin
-                    nblock_count = block_count + 1;
-                    ndload = ccif.dload[requester_cpu][(block_count + 1) * 32+:32];
-                end else begin
-                    block_count_done = 1;
-                end
+                ndload = ccif.dload[requester_cpu];
             end
             WRITEBACK_MS: begin // writeback using supplier while also doing cache to cache transfer
                 ccif.dwait[requester_cpu] = 0;
@@ -236,9 +215,9 @@ module bus_ctrl #(
                 ccif.l2WEN = 1;
                 if (block_count < BLOCK_SIZE - 1) begin
                     nblock_count = block_count + 1;
-                    ndload = ccif.dload[requester_cpu][(block_count + 1) * 32+:32];
+                    ndload = ccif.dload[requester_cpu];
                     nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
-                    nl2_store = ccif.l2store[(block_count + 1) * 32+:32];
+                    nl2_store[(block_count + 1) * 32+:32] = ccif.l2store;
                 end else begin
                     block_count_done = 1;
                 end
@@ -250,7 +229,7 @@ module bus_ctrl #(
                 if (block_count < BLOCK_SIZE - 1) begin
                     nblock_count = block_count + 1;
                     nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
-                    nl2_store = ccif.l2store[(block_count + 1) * 32+:32];
+                    nl2_store[(block_count + 1) * 32+:32] = ccif.l2store;
                 end else begin
                     block_count_done = 1;
                 end
