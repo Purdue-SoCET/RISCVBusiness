@@ -55,22 +55,49 @@ module stage4 #(
 
 
     //interface instantiations
-    stage3_fetch_execute_if fetch_ex_if();
+    pipeline_stages_if stages_if();
 
     stage3_mem_pipe_if mem_pipe_if();
-    stage3_hazard_unit_if hazard_if();
+    hazard_unit_if hazard_if();
     stage3_forwarding_unit_if fw_if();
+
+    // decode & queue signals
+    logic queue_wen; 
+    uop_t uop_out;
+    uop_t[0:0] ctrls; 
+    uop_t ex_in; 
+    logic[4:0] num_uops; 
+
+    assign ctrls[0] = uop_out; 
+    assign num_uops = queue_wen ? 1 : 0; 
 
 
 
     //module instantiations
-    stage3_fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
-    scalar_decode S_DECODE(.*, .stall_queue(hazard_if.stall_queue)); 
-    uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*); 
-    stage3_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
-    stage3_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
-    stage3_hazard_unit hazard_unit_i(.*);
-    stage3_forwarding_unit forward_unit_i(.*);
+    fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .fetch_ex_if(stages_if));
+
+    //scalar_decode S_DECODE(.*, .stall_queue(hazard_if.stall_queue)); 
+    decode_stage decode(
+        .CLK(CLK), .nRST(nRST), 
+        .stall_decode(stall_decode), 
+        .fetch_in(stages_if.fetch_in), 
+        .uop_out(uop_out), 
+        .queue_wen(queue_wen)
+    ); 
+
+    decode_queue queue(
+        .CLK(CLK), 
+        .nRST(nRST), 
+        .ctrls(ctrls),
+        .num_uops(num_uops), 
+        .hazard_if(hazard_if), 
+        .ex_in(ex_in)
+    );
+    // uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*); 
+    execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
+    mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
+    hazard_unit hazard_unit_i(.*);
+    forwarding_unit forward_unit_i(.*);
 
 
 endmodule

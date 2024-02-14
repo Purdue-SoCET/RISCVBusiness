@@ -38,27 +38,16 @@ import stage3_types_pkg::*;
 import rv32i_types_pkg::*;
 
 module scalar_decode
-(
-    stage3_fetch_execute_if.s_decode fetch_ex_if, 
-    input stall_queue, 
-    rv32c_if.execute rv32cif
+( 
+    input word_t instr,
+    output control_t control_out
 );
-
-assign fetch_ex_if.s_ctrls[0].if_out = fetch_ex_if.fetch_ex_reg; 
-assign fetch_ex_if.s_num_uops = fetch_ex_if.s_ctrls[0].if_out.valid ? 1 : 0; 
-
 
 
 control_unit_if cu_if ();
 rv32i_reg_file_if rf_if ();
 
-
-// RV32C inputs
-assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
-assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
-assign rv32cif.ex_busy = stall_queue; //cu_if.dren | cu_if.dwen | rm_if.risc_mgmt_start;
-assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;  //if_stage_in.instr;
-//assign rm_if.insn = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
+assign cu_if.instr = instr; 
 
 // Control unit, inputs are post-decompression
 control_unit cu (
@@ -77,55 +66,55 @@ control_unit cu (
 );
 
 // connect the ports between the interfaces and the struct type
-assign fetch_ex_if.s_ctrls[0].ctrl_out.dwen = cu_if.dwen;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.dren =  cu_if.dren;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.j_sel = cu_if.j_sel; 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.branch =  cu_if.branch; 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.jump =  cu_if.jump;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.ex_pc_sel =  cu_if.ex_pc_sel; 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_shamt_sel = cu_if.imm_shamt_sel;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.halt = cu_if.halt;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.wen =  cu_if.wen; 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.ifence =  cu_if.ifence;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.wfi =  cu_if.wfi;
+assign control_out.dwen = cu_if.dwen;
+assign control_out.dren =  cu_if.dren;
+assign control_out.j_sel = cu_if.j_sel; 
+assign control_out.branch =  cu_if.branch; 
+assign control_out.jump =  cu_if.jump;
+assign control_out.ex_pc_sel =  cu_if.ex_pc_sel; 
+assign control_out.imm_shamt_sel = cu_if.imm_shamt_sel;
+assign control_out.halt = cu_if.halt;
+assign control_out.wen =  cu_if.wen; 
+assign control_out.ifence =  cu_if.ifence;
+assign control_out.wfi =  cu_if.wfi;
 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.alu_op = cu_if.alu_op;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.alu_a_sel =  cu_if.alu_a_sel;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.alu_b_sel = cu_if.alu_b_sel;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.w_sel =  cu_if.w_sel;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.shamt =  cu_if.shamt;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.rd =  cu_if.rd;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_I = cu_if.imm_I;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_S = cu_if.imm_S;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_UJ =  cu_if.imm_UJ;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_SB =  cu_if.imm_SB;
+assign control_out.alu_op = cu_if.alu_op;
+assign control_out.alu_a_sel =  cu_if.alu_a_sel;
+assign control_out.alu_b_sel = cu_if.alu_b_sel;
+assign control_out.w_sel =  cu_if.w_sel;
+assign control_out.shamt =  cu_if.shamt;
+assign control_out.rd =  cu_if.rd;
+assign control_out.imm_I = cu_if.imm_I;
+assign control_out.imm_S = cu_if.imm_S;
+assign control_out.imm_UJ =  cu_if.imm_UJ;
+assign control_out.imm_SB =  cu_if.imm_SB;
 // word_t instr;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.imm_U = cu_if.imm_U;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.load_type = cu_if.load_type;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.branch_type = cu_if.branch_type;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.opcode =  cu_if.opcode;
+assign control_out.imm_U = cu_if.imm_U;
+assign control_out.load_type = cu_if.load_type;
+assign control_out.branch_type = cu_if.branch_type;
+assign control_out.opcode =  cu_if.opcode;
 
 // Privilege ctrl signals
-assign fetch_ex_if.s_ctrls[0].ctrl_out.fault_insn = cu_if.fault_insn;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.illegal_insn = cu_if.illegal_insn;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.ret_insn = cu_if.ret_insn;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.breakpoint = cu_if.breakpoint; 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.ecall_insn = cu_if.ecall_insn;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_swap = cu_if.csr_swap;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_set = cu_if.csr_set;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_clr = cu_if.csr_clr;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_imm = cu_if.csr_imm;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_rw_valid = cu_if.csr_rw_valid;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.csr_addr = cu_if.csr_addr;
-assign fetch_ex_if.s_ctrls[0].ctrl_out.zimm = cu_if.zimm;
+assign control_out.fault_insn = cu_if.fault_insn;
+assign control_out.illegal_insn = cu_if.illegal_insn;
+assign control_out.ret_insn = cu_if.ret_insn;
+assign control_out.breakpoint = cu_if.breakpoint; 
+assign control_out.ecall_insn = cu_if.ecall_insn;
+assign control_out.csr_swap = cu_if.csr_swap;
+assign control_out.csr_set = cu_if.csr_set;
+assign control_out.csr_clr = cu_if.csr_clr;
+assign control_out.csr_imm = cu_if.csr_imm;
+assign control_out.csr_rw_valid = cu_if.csr_rw_valid;
+assign control_out.csr_addr = cu_if.csr_addr;
+assign control_out.zimm = cu_if.zimm;
 
 // Extension ctrl signals
-assign fetch_ex_if.s_ctrls[0].ctrl_out.rv32m_control = cu_if.rv32m_control;
+assign control_out.rv32m_control = cu_if.rv32m_control;
 
 
 // RF interface signasl
-assign fetch_ex_if.s_ctrls[0].ctrl_out.rs1 = rf_if.rs1; 
-assign fetch_ex_if.s_ctrls[0].ctrl_out.rs2 = rf_if.rs2; 
+assign control_out.rs1 = rf_if.rs1; 
+assign control_out.rs2 = rf_if.rs2; 
 
 
 

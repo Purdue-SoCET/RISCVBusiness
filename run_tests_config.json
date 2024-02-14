@@ -1,5 +1,5 @@
 {
-  "arch": "RV32V",
+  "arch": "RV32I",
   "abi": "ilp32",
   "xlen": "rv32imv_zicsr_zifencei",
   "test_type": "self-tests",
