@@ -8,6 +8,7 @@ typedef enum logic[1:0] {
     INVALID
 } cc_end_state;
 
+
 localparam CACHE_SIZE         = 1024;
 localparam ASSOC              = 1;
 localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
