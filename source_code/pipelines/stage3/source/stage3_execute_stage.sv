@@ -97,7 +97,7 @@ module stage3_execute_stage (
     );
 
     assign wfi = cu_if.wfi;  //Added by rkannank
-    assign rf_if.hart_id = fetch_ex_if.fetch_ex_reg.hart_id;
+    //assign rf_if.hart_id = fetch_ex_if.fetch_ex_reg.hart_id;
 
     generate
         if (BASE_ISA == "RV32E") begin : g_rfile_select
@@ -214,6 +214,8 @@ module stage3_execute_stage (
     assign rf_if.w_data = ex_mem_if.reg_wdata;
     assign rf_if.rd = ex_mem_if.rd_m;
     assign rf_if.wen = ex_mem_if.reg_write && !hazard_if.ex_mem_stall; // TODO: The second signal only matters for some miniscule power reduction by not writing each cycle. This is correct with only the wen signal due to no loop from reg read to reg write
+    assign rf_if.hart_id_write = ex_mem_if.ex_mem_reg.hart_id;
+    assign rf_if.hart_id_read = fetch_ex_if.fetch_ex_reg.hart_id;
 
     /***********************************************
     * Branch Target Resolution and Associated Logic

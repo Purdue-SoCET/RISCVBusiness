@@ -48,7 +48,7 @@ module RISCVBusiness_no_memory (
     // Interface instantiations
     function logic [31:0] get_x28();
         // verilator public
-        return pipeline.execute_stage_i.g_rfile_select.rf.registers[28];
+        return pipeline.execute_stage_i.g_rfile_select.rf.registers[0][28];
     endfunction
 
     risc_mgmt_if rm_if ();

@@ -29,6 +29,7 @@ module cpu_tracker (
     input logic CLK, wb_stall, instr_30,
     input rv32i_types_pkg::word_t instr, pc,
     input rv32i_types_pkg::opcode_t opcode,
+    input logic [31:0] hart_id,
     input logic [2:0] funct3,
     input logic [11:0] funct12,
     input logic [4:0] rs1, rs2, rd,
@@ -261,7 +262,7 @@ module cpu_tracker (
 
     always_ff @(posedge CLK) begin
         if (!wb_stall && instr != 0) begin
-            $sformat(temp_str, "core%d: 0x%h (0x%h)", CPUID, pc64, instr);
+            $sformat(temp_str, "core%d: 0x%h (0x%h)", hart_id, pc64, instr);
             $sformat(output_str, "%s %s %s\n", temp_str, instr_mnemonic, operands);
             $fwrite(fptr, output_str);
         end

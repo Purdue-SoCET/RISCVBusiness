@@ -38,7 +38,7 @@ module top_core #(
 
     function [31:0] get_x28;
         // verilator public
-        get_x28 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[28];
+        get_x28 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[0][28];
     endfunction
 
 
@@ -48,6 +48,7 @@ module top_core #(
         .instr(ex_mem_if.ex_mem_reg.instr),
         .pc(ex_mem_if.ex_mem_reg.pc),
         .opcode(rv32i_types_pkg::opcode_t'(ex_mem_if.ex_mem_reg.instr[6:0])),
+        .hart_id(ex_mem_if.ex_mem_reg.hart_id),
         .funct3(funct3),
         .funct12(funct12),
         .rs1(ex_mem_if.ex_mem_reg.instr[19:15]),

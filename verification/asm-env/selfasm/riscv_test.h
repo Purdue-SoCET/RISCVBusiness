@@ -79,7 +79,7 @@
         li TESTNUM, 1;                                                  \
         j done
 
-#define TESTNUM x28
+#define TESTNUM t3
 #define RVTEST_FAIL                                                     \
         fence;                                                          \
 1:      beqz TESTNUM, 1b;                                               \
@@ -92,11 +92,25 @@
 // Threads Macros
 //-----------------------------------------------------------------------
 
+#define CHECK_THREAD_PASSED( thread_num )                            \
+      bne x0, TESTNUM, thread_passed_ ## thread_num;                  \
+      fence;                                                          \
+1:    beqz TESTNUM, 1b;                                               \
+      sll TESTNUM, TESTNUM, 1;                                        \
+      or TESTNUM, TESTNUM, 1;                                         \
+      j check_thread_done_ ## thread_num;                             \
+  thread_passed_ ## thread_num: \
+      fence;                                                          \
+      li TESTNUM, 1;                                                  \
+  check_thread_done_ ## thread_num:                                                  
+
 #define RVTEST_THREAD_ONE_BEGIN \
   .globl _thread_one;  \
   _thread_one:
 
 #define RVTEST_THREAD_ONE_END \
+  _thread_one_end: \
+  CHECK_THREAD_PASSED(one); \
   la t0, t_count; \
   li t1, 1; \
   sw t1, 0(t0); \
@@ -107,6 +121,8 @@
   _thread_two: 
 
 #define RVTEST_THREAD_TWO_END \
+  _thread_two_end: \
+  CHECK_THREAD_PASSED(two); \
   la t0, t_count; \
   li t1, 1; \
   sw t1, 4(t0); \
@@ -117,6 +133,8 @@
   _thread_three: 
 
 #define RVTEST_THREAD_THREE_END \
+  _thread_three_end: \
+  CHECK_THREAD_PASSED(three); \
   la t0, t_count; \
   li t1, 1; \
   sw t1, 8(t0); \
@@ -135,7 +153,8 @@
   add t2, t2, t4; \
   addi t5, t5, 1; \
   bne  t5, t1, thread_add_loop; \
-  bne t2, t1, thread_wait; \
+  beq t2, t1, threads_done; \
+  threads_done: \
   TEST_PASSFAIL 
 
 //-----------------------------------------------------------------------
