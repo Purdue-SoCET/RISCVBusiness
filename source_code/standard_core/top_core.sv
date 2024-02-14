@@ -3,7 +3,8 @@
 `include "component_selection_defines.vh"
 
 module top_core #(
-    parameter logic [31:0] RESET_PC = 32'h80000000
+    parameter logic [31:0] RESET_PC = 32'h80000000,
+    parameter logic [31:0] NUM_HARTS = 32'h3
 ) (
     input CLK,
     nRST,
@@ -38,7 +39,12 @@ module top_core #(
 
     function [31:0] get_x28;
         // verilator public
-        get_x28 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[0][28];
+        get_x28 = 1;
+        for(int i = 0; i < NUM_HARTS; i = i + 1) begin
+            if(get_x28 & CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[i][28] != 1) begin
+              get_x28 = 0;
+            end
+        end
     endfunction
 
 
@@ -93,6 +99,6 @@ module top_core #(
 `endif
 
 
-    RISCVBusiness #(.RESET_PC(RESET_PC)) CORE (.*);
+    RISCVBusiness #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) CORE (.*);
 
 endmodule

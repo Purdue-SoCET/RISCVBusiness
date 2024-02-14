@@ -32,7 +32,7 @@ interface stage3_program_counter_if #(
   import stage3_types_pkg::*;
  
   word_t [NUM_HARTS-1:0] pc;
-  word_t npc;
+  word_t [NUM_HARTS-1:0] npc;
 
   modport pc_unit(
     input npc,

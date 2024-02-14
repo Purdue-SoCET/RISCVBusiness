@@ -56,9 +56,9 @@ module stage3_program_counter (
           always_ff @(posedge CLK, negedge nRST) begin
             if (~nRST) begin
                 pc_if.pc[i] <= RESET_PC + (i * 4);
-            end else if(hazard_if.pc_en || hazard_if.npc_sel) begin // if (hazard_if.pc_en /*| rv32cif.done_earlier*/)
-                if(hazard_if.npc_sel) pc_if.pc[mem_fetch_if.ex_mem_reg.hart_id] <= pc_if.npc;
-                else pc_if.pc[hart_selector_if.hart_id] <= pc_if.npc;
+            end else if((hazard_if.pc_en && hart_selector_if.hart_id == i) || (hazard_if.npc_sel && mem_fetch_if.ex_mem_reg.hart_id == i)) begin // if (hazard_if.pc_en /*| rv32cif.done_earlier*/)
+                if(hazard_if.npc_sel && mem_fetch_if.ex_mem_reg.hart_id == i) pc_if.pc[mem_fetch_if.ex_mem_reg.hart_id] <= pc_if.npc[mem_fetch_if.ex_mem_reg.hart_id];
+                else pc_if.pc[hart_selector_if.hart_id] <= pc_if.npc[hart_selector_if.hart_id];
             end
           end
         end

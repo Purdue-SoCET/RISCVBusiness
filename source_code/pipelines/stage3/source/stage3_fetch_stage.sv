@@ -49,8 +49,10 @@ module stage3_fetch_stage (
     import pma_types_1_12_pkg::*;
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
+    parameter logic [31:0] NUM_HARTS = 3;
 
-    word_t pc4or2, instr;
+    word_t instr;
+    word_t [NUM_HARTS-1:0] pc4or2;
     
     //Send exceptions through pipeline
     logic mal_addr;
@@ -70,19 +72,23 @@ module stage3_fetch_stage (
                             : (sparce_if.skipping       ? sparce_if.sparce_target
                             : (hazard_if.npc_sel        ? mem_fetch_if.brj_addr
                             : (predict_if.predict_taken ? predict_if.target_addr
-                            : pc4or2))));
+                            : pc4or2[hart_selector_if.hart_id]))));
     assign rv32cif.reset_pc_val = RESET_PC;
 
-    assign pc4or2 = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc_if.pc[hart_selector_if.hart_id] + 2) : (pc_if.pc[hart_selector_if.hart_id] + 4);
     assign predict_if.current_pc = pc_if.pc[hart_selector_if.hart_id];
 
-    assign pc_if.npc = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
-                 : (hazard_if.rollback        ? mem_fetch_if.pc4
-                 : (sparce_if.skipping       ? sparce_if.sparce_target
-                 : (hazard_if.npc_sel        ? mem_fetch_if.brj_addr
-                 : (predict_if.predict_taken ? predict_if.target_addr
-                 : rv32cif.rv32c_ena         ? rv32cif.nextpc
-                 : pc4or2))));
+    genvar i;
+
+    generate for (i = 0; i < NUM_HARTS; i = i + 1) begin : pc
+      assign pc4or2[i] = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc_if.pc[i] + 2) : (pc_if.pc[i] + 4);
+      assign pc_if.npc[i] = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
+            : (hazard_if.rollback        ? mem_fetch_if.pc4
+            : (sparce_if.skipping       ? sparce_if.sparce_target
+            : (hazard_if.npc_sel && (mem_fetch_if.ex_mem_reg.hart_id == i) ? mem_fetch_if.brj_addr
+            : (predict_if.predict_taken ? predict_if.target_addr
+            : rv32cif.rv32c_ena         ? rv32cif.nextpc
+            : pc4or2[i]))));
+    end endgenerate
 
     // always_ff @(posedge CLK, negedge nRST) begin
     //     if (~nRST) begin
@@ -132,7 +138,7 @@ module stage3_fetch_stage (
             fetch_ex_if.fetch_ex_reg.badaddr    <= badaddr;
             fetch_ex_if.fetch_ex_reg.pc         <= pc_if.pc[hart_selector_if.hart_id];
             fetch_ex_if.fetch_ex_reg.hart_id    <= hart_selector_if.hart_id;
-            fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
+            fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2[hart_selector_if.hart_id];
             fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
         end
     end

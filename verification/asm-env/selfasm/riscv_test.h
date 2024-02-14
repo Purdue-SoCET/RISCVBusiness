@@ -144,7 +144,7 @@
   .globl thread_wait;  \
   thread_wait: \
   la   t0, t_count; \
-  li t1, 3; /* 1 threads*/ \
+  li t1, 3; /* 3 threads*/ \
   li t2, 0; /* 0 threads done*/ \
   li t5, 0; /* counter */ \
   thread_add_loop: \
@@ -153,9 +153,9 @@
   add t2, t2, t4; \
   addi t5, t5, 1; \
   bne  t5, t1, thread_add_loop; \
-  beq t2, t1, threads_done; \
+  bne t2, t1, thread_wait; \
   threads_done: \
-  TEST_PASSFAIL 
+  j done; 
 
 //-----------------------------------------------------------------------
 // End Macro

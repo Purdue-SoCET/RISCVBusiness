@@ -85,9 +85,12 @@ RVTEST_THREAD_TWO_BEGIN
   TEST_RR_SRC1_EQ_DEST( 17, add, 24, 13, 11 );
   TEST_RR_SRC2_EQ_DEST( 18, add, 25, 14, 11 );
 
+  RVTEST_THREAD_TWO_END
+
   # -------------------------------------------------------------
   # Bypassing tests
   # -------------------------------------------------------------
+  RVTEST_THREAD_THREE_BEGIN
 
   TEST_RR_DEST_BYPASS( 20, 0, add, 24, 13, 11 );
   TEST_RR_DEST_BYPASS( 21, 1, add, 25, 14, 11 );
@@ -100,7 +103,9 @@ RVTEST_THREAD_TWO_BEGIN
   TEST_RR_SRC12_BYPASS( 27, 1, 1, add, 25, 14, 11 );
   TEST_RR_SRC12_BYPASS( 28, 2, 0, add, 26, 15, 11 );
 
-RVTEST_THREAD_TWO_END
+  RVTEST_THREAD_THREE_END
+
+  RVTEST_THREAD_WAIT
 
   TEST_PASSFAIL
 
