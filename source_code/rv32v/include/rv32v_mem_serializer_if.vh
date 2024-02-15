@@ -52,7 +52,7 @@ interface rv32v_mem_serializer_if;
     // logic serial_busy;
 
     modport serial (
-        input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, lsc_ready,
+        input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, vlane_store_data, lsc_ready,
         output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vdata_store_lsc, vcurr_lane, vload_type
     );
 

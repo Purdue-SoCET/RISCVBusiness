@@ -36,7 +36,7 @@ import stage4_types_pkg::*;
 module stage4_fetch_stage (
     input logic CLK,nRST,
     output fetch_out_t fetch_out,
-    stage4_mem_pipe_if.fetch mem_fetch_if,
+    stage4_mem_stage_if.fetch mem_fetch_if,
     stage4_hazard_unit_if.fetch hazard_if,
     predictor_pipeline_if.access predict_if,
     generic_bus_if.cpu igen_bus_if,

@@ -6,6 +6,13 @@ filesets:
     rtl:
         files:
             - include/rv32v_uop_gen_if.vh : {is_include_file: true}
+            - include/rv32v_shadow_csr_if.vh: {is_include_file: true}
+            - include/rv32v_mem_serializer_if.vh: {is_include_file: true}
+            - include/rv32v_lsc_if.vh: {is_include_file: true}
+            - source/rv32v_load_store_controller.sv
+            - source/rv32v_mem_serializer.sv
+            - source/rv32v_write_xbar.sv
+            - source/rv32v_shadow_csr.sv
             - source/rv32v_control_unit.sv
             - source/rv32v_opi_decode.sv
             - source/rv32v_opm_decode.sv

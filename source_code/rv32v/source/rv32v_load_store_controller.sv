@@ -22,7 +22,6 @@
 *   Description:  Load-store controller for RV32V core
 */
 
-`include "rv32v_types_pkg.vh"
 `include "rv32v_lsc_if.vh"
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
@@ -36,7 +35,7 @@ module rv32v_load_store_controller (
 );
 
     import rv32i_types_pkg::*;
-
+    import rv32v_types_pkg::*; 
     word_t store_swapped;
     word_t dload_ext;
     logic mal_addr;
@@ -51,6 +50,7 @@ module rv32v_load_store_controller (
     assign byte_offset = lsc_if.addr[1:0];
     assign lsc_if.dload_ext = dload_ext;
     assign lsc_if.lsc_ready = ~dgen_bus_if.busy;
+    assign lsc_if.mal_addr = mal_addr;
 
     assign byte_en_temp = byte_en_standard;
 

@@ -1,7 +1,7 @@
 {
-  "arch": "RV32I",
+  "arch": "RV32V",
   "abi": "ilp32",
-  "xlen": "rv32im_zicsr_zifencei",
+  "xlen": "rv32imv_zicsr_zifencei",
   "test_type": "self-tests",
   "top_level": "RISCVBusiness_self_test",
   "test_filenames": ["*.S"],

@@ -57,7 +57,7 @@ control_t control;
 logic svalid;
 
 
-rv32v_control_unit_if vcu_if; 
+rv32v_control_unit_if vcu_if(); 
 
 
 // RV32C inputs

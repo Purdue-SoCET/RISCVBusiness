@@ -26,7 +26,6 @@
 `define RV32V_TYPES_PKG_SV
 
 // `include "rv32i_types_pkg.sv";
-import rv32i_types_pkg::*; 
 
 package rv32v_types_pkg;
   parameter VLEN_WIDTH = 7; // 128 bit registers
@@ -34,6 +33,7 @@ package rv32v_types_pkg;
   parameter VLEN = 1 << 7; 
   parameter VLENB = VLEN / 8; //VLEN in bytes- TODO change to use csr val
   parameter NUM_LANES = 4;
+  parameter VLMAX = 128;
 
   typedef enum logic [2:0]  {
     SEW8    = 3'd0, 
@@ -55,6 +55,15 @@ package rv32v_types_pkg;
     LMULFOURTH  = 3'd6,
     LMULEIGHTH  = 3'd7
   } vlmul_t;
+
+  typedef struct packed {
+    logic vill;
+    logic [22:0] reserved;
+    logic vma;
+    logic vta;
+    vsew_t vsew;
+    vlmul_t vlmul;
+  } vtype_t;
 
   typedef enum logic [2:0] { 
     WIDTH8  = 3'd0, 
@@ -518,9 +527,9 @@ package rv32v_types_pkg;
 
   typedef struct packed {
     // Register file signals
-    regsel_t vs1_sel;
-    regsel_t vs2_sel;
-    regsel_t vd_sel;
+    rv32i_types_pkg::regsel_t vs1_sel;
+    rv32i_types_pkg::regsel_t vs2_sel;
+    rv32i_types_pkg::regsel_t vd_sel;
     logic vregwen;
     logic sregwen;
     // Alignment/crossbar signals
@@ -554,26 +563,41 @@ package rv32v_types_pkg;
 
   typedef struct packed {
     // lane specific 
-    word_t[3:0] valu_res; 
-    word_t[3:0] vs2;
-    logic[3:0]  vlane_mask; 
+    rv32i_types_pkg::word_t [3:0] valu_res;
+    rv32i_types_pkg::word_t [3:0] vs2;
+    logic [3:0] vlane_mask;
 
     // general 
     logic vindexed;
-    logic[4:0] vuop_num;
+    logic [4:0] vuop_num;
   
     logic vmemdren;
     logic vmemdwen;  
     logic vregwen; 
     vsew_t veew; 
-    regsel_t vd_sel;
+    rv32i_types_pkg::regsel_t vd_sel;
     logic [1:0] vbank_offset;
 
     // CSR 
     logic vsetvl; 
     logic vkeepvl; 
+  } vexmem_t;
 
-  } vexmem_t; 
+  typedef struct packed {
+    logic [4:0] vd;
+    logic [3:0][3:0] vbyte_wen;
+    rv32i_types_pkg::word_t [3:0] vwdata;
+  } vwb_t;
+
+  typedef enum logic [11:0] { 
+    VSTART_ADDR   = 12'h008,
+    VXSAT_ADDR    = 12'h009,
+    VXRM_ADDR     = 12'h00A,
+    VCSR_ADDR     = 12'h00F,
+    VL_ADDR       = 12'hC20,
+    VTYPE_ADDR    = 12'hC21,
+    VLENB_ADDR    = 12'hC22
+  } vcsr_addr_t;
 
 endpackage
 `endif
