@@ -28,6 +28,9 @@ microarch_params:
 
   # RV32C
   rv32c_enabled : "disabled"
+
+  # RV32V
+  rv32v_supported : "true"
   
   # Halt
   infinite_loop_halts : "true"

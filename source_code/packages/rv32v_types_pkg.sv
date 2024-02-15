@@ -589,5 +589,15 @@ package rv32v_types_pkg;
     rv32i_types_pkg::word_t [3:0] vwdata;
   } vwb_t;
 
+  typedef enum logic [11:0] { 
+    VSTART_ADDR   = 12'h008,
+    VXSAT_ADDR    = 12'h009,
+    VXRM_ADDR     = 12'h00A,
+    VCSR_ADDR     = 12'h00F,
+    VL_ADDR       = 12'hC20,
+    VTYPE_ADDR    = 12'hC21,
+    VLENB_ADDR    = 12'hC22
+  } vcsr_addr_t;
+
 endpackage
 `endif

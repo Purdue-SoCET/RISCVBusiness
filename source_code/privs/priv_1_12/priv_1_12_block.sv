@@ -114,6 +114,8 @@ module priv_1_12_block (
     assign prv_intern_if.sret              = 1'b0;
     `ifdef RV32V_SUPPORTED
         assign prv_intern_if.vsetvl = prv_pipe_if.vsetvl;
+        assign prv_intern_if.vkeepvl = prv_pipe_if.vkeepvl;
+        assign prv_intern_if.new_vtype = prv_pipe_if.new_vtype;
         assign prv_pipe_if.vl = prv_intern_if.vl;
         assign prv_pipe_if.vtype = prv_intern_if.vtype;
         assign prv_pipe_if.vstart = prv_intern_if.vstart;

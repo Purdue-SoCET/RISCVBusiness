@@ -32,15 +32,9 @@ module priv_1_12_vector (
     priv_ext_if.ext priv_ext_if
 );
 
-    import pma_types_1_12_pkg::*;
     import machine_mode_types_1_12_pkg::*;
     import rv32i_types_pkg::*;
     import rv32v_types_pkg::*;
-
-    localparam VLENB_ADDR = 0;
-    localparam VTYPE_ADDR = 0;
-    localparam VSTART_ADDR = 0;
-    localparam VL_ADDR = 0;
 
     csr_reg_t         vstart, vstart_next;
     // vxsat

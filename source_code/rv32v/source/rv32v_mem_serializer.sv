@@ -22,7 +22,6 @@
 *   Description:  Vector memory access serializer
 */
 
-// `include "rv32v_types_pkg.vh"
 `include "rv32v_mem_serializer_if.vh"
 
 module rv32v_mem_serializer (
@@ -60,18 +59,18 @@ module rv32v_mem_serializer (
         next_serial_state = VL0;
         next_next_addr = next_addr;
         serial_if.vcurr_lane = '0;
-        serial_if.vaddr = '0;
+        serial_if.vaddr_lsc = '0;
 
         if (serial_if.vmemdwen | serial_if.vmemdren) begin
             casez (serial_state)
                 VL0: begin
                     serial_if.vcurr_lane = 2'd0;
                     if (serial_if.vindexed) begin
-                        serial_if.vaddr = serial_if.vlane_addr[0];
+                        serial_if.vaddr_lsc = serial_if.vlane_addr[0];
                     end else if (serial_if.vuop_num == '0) begin
-                        serial_if.vaddr = serial_if.base;
+                        serial_if.vaddr_lsc = serial_if.base;
                     end else begin
-                        serial_if.vaddr = next_addr;
+                        serial_if.vaddr_lsc = next_addr;
                     end
 
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[0]) begin
@@ -86,9 +85,9 @@ module rv32v_mem_serializer (
                 VL1: begin
                     serial_if.vcurr_lane = 2'd1;
                     if (serial_if.vindexed) begin
-                        serial_if.vaddr = serial_if.vlane_addr[1];
+                        serial_if.vaddr_lsc = serial_if.vlane_addr[1];
                     end else begin
-                        serial_if.vaddr = next_addr;
+                        serial_if.vaddr_lsc = next_addr;
                     end
 
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[1]) begin
@@ -99,9 +98,9 @@ module rv32v_mem_serializer (
                 VL2: begin
                     serial_if.vcurr_lane = 2'd2;
                     if (serial_if.vindexed) begin
-                        serial_if.vaddr = serial_if.vlane_addr[2];
+                        serial_if.vaddr_lsc = serial_if.vlane_addr[2];
                     end else begin
-                        serial_if.vaddr = next_addr;
+                        serial_if.vaddr_lsc = next_addr;
                     end
 
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[2]) begin
@@ -112,9 +111,9 @@ module rv32v_mem_serializer (
                 VL3: begin
                     serial_if.vcurr_lane = 2'd3;
                     if (serial_if.vindexed) begin
-                        serial_if.vaddr = serial_if.vlane_addr[3];
+                        serial_if.vaddr_lsc = serial_if.vlane_addr[3];
                     end else begin
-                        serial_if.vaddr = next_addr;
+                        serial_if.vaddr_lsc = next_addr;
                     end
 
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[3]) begin

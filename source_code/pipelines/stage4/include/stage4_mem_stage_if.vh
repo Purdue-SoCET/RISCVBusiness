@@ -25,8 +25,6 @@
 `ifndef STAGE4_MEM_STAGE_IF
 `define STAGE4_MEM_STAGE_IF
 
-// `include "rv32v_types_pkg.vh"
-
 interface stage4_mem_stage_if;
 
     import rv32i_types_pkg::*;

@@ -58,6 +58,8 @@ UARCH_PARAMS = \
     'sparce_enabled' : [ 'enabled', 'disabled' ],
     # RV32C
     'rv32c_enabled' : [ 'enabled', 'disabled' ],
+    # RV32V
+    'rv32v_supported' : [ 'true', 'false' ],
     # base ISA Configurations
     'base_isa': ['RV32I', 'RV32E'], 
     
@@ -180,7 +182,8 @@ def create_include(config):
   include_file.write(bus_define)
 
   # Handle RV32V_SUPPORTED define
-  include_file.write('`define RV32V_SUPPORTED\n')
+  if uarch_params['rv32v_supported'] == 'true':
+    include_file.write('`define RV32V_SUPPORTED\n')
 
   # Handling of RISC-MGMT Extensions
   rmgmt_extensions = []

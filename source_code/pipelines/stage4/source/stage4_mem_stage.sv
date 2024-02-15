@@ -22,8 +22,6 @@
 *   Description:  Memory stage for rv32v pipeline
 */
 
-// `include "rv32i_types_pkg.vh"
-// `include "rv32v_types_pkg.vh"
 `include "stage4_mem_stage_if.vh"
 `include "rv32v_mem_serializer_if.vh"
 `include "rv32v_lsc_if.vh"
@@ -61,12 +59,12 @@ module stage4_mem_stage (
     assign vmemop = ex_mem_if.vexmem.vmemdren | ex_mem_if.vexmem.vmemdwen;
     assign lsc_if.wen = ((vmemop) ? serial_if.vmemdwen_lsc : ex_mem_if.ex_mem_reg.dwen) && !hazard_if.suppress_data;
     assign lsc_if.ren = ((vmemop) ? serial_if.vmemdren_lsc : ex_mem_if.ex_mem_reg.dren) && !hazard_if.suppress_data;
-    assign lsc_if.addr = (vmemop) ? serial_if.vaddr : ex_mem_if.ex_mem_reg.port_out;
+    assign lsc_if.addr = (vmemop) ? serial_if.vaddr_lsc : ex_mem_if.ex_mem_reg.port_out;
     assign lsc_if.store_data = (vmemop) ? serial_if.vdata_store_lsc : ex_mem_if.ex_mem_reg.rs2_data;
     // assign lsc_if.byte_en = 0;
     assign lsc_if.load_type = (vmemop) ? serial_if.vload_type : ex_mem_if.ex_mem_reg.load_type;
     assign lsc_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-
+    assign serial_if.lsc_ready = lsc_if.lsc_ready;
 
     // Memory serializer
     rv32v_mem_serializer SLZR (
@@ -92,7 +90,6 @@ module stage4_mem_stage (
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
 
-    // EDIT:
     /************************
     * Hazard/Forwarding Unit
     *************************/
@@ -142,9 +139,9 @@ module stage4_mem_stage (
     assign hazard_if.mal_insn = ex_mem_if.ex_mem_reg.mal_insn;
     assign hazard_if.illegal_insn = ex_mem_if.ex_mem_reg.illegal_insn || prv_pipe_if.invalid_priv_isn;
     assign hazard_if.fault_l = ex_mem_if.ex_mem_reg.dren && dgen_bus_if.error;
-    assign hazard_if.mal_l = ex_mem_if.ex_mem_reg.dren;// & mal_addr;
+    assign hazard_if.mal_l = ex_mem_if.ex_mem_reg.dren & lsc_if.mal_addr;
     assign hazard_if.fault_s = ex_mem_if.ex_mem_reg.dwen && dgen_bus_if.error;
-    assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen;// & mal_addr;
+    assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & lsc_if.mal_addr;
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
     assign hazard_if.ret = ex_mem_if.ex_mem_reg.ret_insn;
@@ -162,7 +159,6 @@ module stage4_mem_stage (
     assign prv_pipe_if.daddr = ex_mem_if.ex_mem_reg.port_out;
     assign prv_pipe_if.d_acc_width = WordAcc;
 
-    // EDIT:
     /*******************
     * Writeback Muxing *
     *******************/
@@ -212,7 +208,7 @@ module stage4_mem_stage (
         for (i = 0; i < NUM_LANES; i++) begin : gen_wb_xbar
             rv32v_write_xbar #(.BANK_NUM(i)) WBXBAR (
                 .lane_dat(vlane_data),
-                .lane_wen(vlane_wen[i]),
+                .lane_wen(vlane_wen),
                 .eew(ex_mem_if.vexmem.veew),
                 .bank_offset(ex_mem_if.vexmem.vbank_offset),
                 .vwdat(ex_mem_if.vwb.vwdata[i]),

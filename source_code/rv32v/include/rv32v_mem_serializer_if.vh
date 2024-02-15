@@ -45,7 +45,7 @@ interface rv32v_mem_serializer_if;
 
     // LSC control signals
     logic vmemdwen_lsc, vmemdren_lsc;
-    word_t vaddr, vdata_store_lsc;
+    word_t vaddr_lsc, vdata_store_lsc;
     logic [$clog2(NUM_LANES)-1:0] vcurr_lane;
     load_t vload_type;
     logic lsc_ready;
@@ -53,7 +53,7 @@ interface rv32v_mem_serializer_if;
 
     modport serial (
         input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, vlane_store_data, lsc_ready,
-        output vmemdwen_lsc, vmemdren_lsc, vaddr, vdata_store_lsc, vcurr_lane, vload_type
+        output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vdata_store_lsc, vcurr_lane, vload_type
     );
 
 endinterface
