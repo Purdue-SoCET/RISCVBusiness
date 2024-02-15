@@ -10,6 +10,9 @@
 #include "riscv_test.h"
 #include "test_macros_vector.h"
 
+
+
+
 RVTEST_RV64UV
 RVTEST_CODE_BEGIN
 RVTEST_VSET
@@ -82,3 +85,4 @@ tdat7:  .word 0x0ff00ff0
 tdat8:  .word 0xf00ff00f
 
 RVTEST_DATA_END
+

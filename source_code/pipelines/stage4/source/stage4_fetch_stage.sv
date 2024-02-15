@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     stage3_fetch_stage.sv
+*   Filename:     stage4_fetch_stage.sv
 *
 *   Created by:   John Skubic
 *   Email:        jskubic@purdue.edu
@@ -22,8 +22,8 @@
 *   Description:  Fetch stage for the two stage pipeline
 */
 
-`include "pipeline_stages.vh"
-`include "hazard_unit_if.vh"
+//`include "pipeline_stages.vh"
+`include "stage4_hazard_unit_if.vh"
 `include "predictor_pipeline_if.vh"
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
@@ -31,12 +31,13 @@
 `include "rv32c_if.vh"
 `include "prv_pipeline_if.vh"
 
-module fetch_stage (
-    input logic CLK,
-    nRST,
-    pipeline_stages.fetch stages_if,
-    stage3_mem_pipe_if.fetch mem_fetch_if,
-    stage3_hazard_unit_if.fetch hazard_if,
+import stage4_types_pkg::*; 
+
+module stage4_fetch_stage (
+    input logic CLK,nRST,
+    output fetch_out_t fetch_out,
+    stage4_mem_pipe_if.fetch mem_fetch_if,
+    stage4_hazard_unit_if.fetch hazard_if,
     predictor_pipeline_if.access predict_if,
     generic_bus_if.cpu igen_bus_if,
     sparce_pipeline_if.pipe_fetch sparce_if,
@@ -111,24 +112,24 @@ module fetch_stage (
     word_t instr_to_ex;
     assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
     always_ff @(posedge CLK, negedge nRST) begin
-        if (!nRST) fetch_ex_if.fetch_ex_reg <= '0;
-        else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_ex_if.fetch_ex_reg <= '0;
+        if (!nRST) fetch_out <= '0;
+        else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_out <= '0;
         else if (!hazard_if.if_ex_stall) begin
             if(mal_insn || fault_insn) begin
                 // Squash to NOP if exception
                 // Still valid for exception handling
-                fetch_ex_if.fetch_ex_reg.instr <= '0;
+                fetch_out.instr <= '0;
             end else begin
-                fetch_ex_if.fetch_ex_reg.instr      <= instr_to_ex;
+                fetch_out.instr      <= instr_to_ex;
             end
-            fetch_ex_if.fetch_ex_reg.valid      <= 1'b1;
-            fetch_ex_if.fetch_ex_reg.token      <= 1'b1;
-            fetch_ex_if.fetch_ex_reg.mal_insn   <= mal_insn;
-            fetch_ex_if.fetch_ex_reg.fault_insn <= fault_insn;
-            fetch_ex_if.fetch_ex_reg.badaddr    <= badaddr;
-            fetch_ex_if.fetch_ex_reg.pc         <= pc;
-            fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
-            fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
+            fetch_out.valid      <= 1'b1;
+            fetch_out.token      <= 1'b1;
+            fetch_out.mal_insn   <= mal_insn;
+            fetch_out.fault_insn <= fault_insn;
+            fetch_out.badaddr    <= badaddr;
+            fetch_out.pc         <= pc;
+            fetch_out.pc4        <= pc4or2;
+            fetch_out.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
         end
     end
 

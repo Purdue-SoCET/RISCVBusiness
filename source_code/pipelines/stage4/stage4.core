@@ -5,21 +5,19 @@ description: Two-stage pipeline
 filesets:
     rtl:
         files:
-            - source/stage3_types_pkg.sv
-            - include/stage3_fetch_execute_if.vh : {is_include_file: true}
-            - include/stage3_mem_pipe_if.vh : {is_include_file: true}
-            - include/stage3_hazard_unit_if.vh : {is_include_file: true}
-            - include/stage3_forwarding_unit_if.vh : {is_include_file: true}
-            - source/stage3_fetch_stage.sv
-            - source/stage3_execute_stage.sv
-            - source/stage3_mem_stage.sv
-            - source/stage3_hazard_unit.sv
-            - source/stage3_forwarding_unit.sv
+            - source/stage4_types_pkg.sv
+            - include/stage4_mem_pipe_if.vh : {is_include_file: true}
+            - include/stage4_hazard_unit_if.vh : {is_include_file: true}
+            - include/stage4_forwarding_unit_if.vh : {is_include_file: true}
+            - source/stage4_fetch_stage.sv
+            - source/stage4_execute_stage.sv
+            - source/stage4_mem_stage.sv
+            - source/stage4_hazard_unit.sv
+            - source/stage4_forwarding_unit.sv
             - source/stage4.sv
-            - source/scalar_decode.sv
-            - source/uop_queue.sv
-            - source/decode_resolution.sv
-            - source/decode_queue.sv
+            - source/stage4_scalar_decode.sv
+            - source/stage4_queue.sv
+            - source/stage4_decode_stage.sv
         file_type: systemVerilogSource
 
 

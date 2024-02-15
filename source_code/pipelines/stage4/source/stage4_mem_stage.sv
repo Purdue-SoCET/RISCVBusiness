@@ -1,17 +1,17 @@
 
-`include "stage3_hazard_unit_if.vh"
-`include "stage3_mem_pipe_if.vh"
+`include "stage4_hazard_unit_if.vh"
+`include "stage4_mem_pipe_if.vh"
 `include "generic_bus_if.vh"
 `include "predictor_pipeline_if.vh"
 `include "cache_control_if.vh"
 `include "prv_pipeline_if.vh"
 
-module stage3_mem_stage(
+module stage4_mem_stage(
     input CLK,
     input nRST,
-    stage3_mem_pipe_if.mem ex_mem_if,
-    stage3_hazard_unit_if.mem hazard_if,
-    stage3_forwarding_unit_if.mem fw_if,
+    stage4_mem_pipe_if.mem ex_mem_if,
+    stage4_hazard_unit_if.mem hazard_if,
+    stage4_forwarding_unit_if.mem fw_if,
     generic_bus_if.cpu dgen_bus_if,
     prv_pipeline_if.pipe prv_pipe_if,
     cache_control_if.pipeline cc_if,

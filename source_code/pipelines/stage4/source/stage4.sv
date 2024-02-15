@@ -22,8 +22,8 @@
 *   Description:  Two Stage In-Order Pipeline
 */
 
-`include "stage3_fetch_execute_if.vh"
-`include "stage3_hazard_unit_if.vh"
+// `include "stage3_fetch_execute_if.vh"
+`include "stage4_hazard_unit_if.vh"
 `include "predictor_pipeline_if.vh"
 `include "generic_bus_if.vh"
 `include "prv_pipeline_if.vh"
@@ -34,7 +34,7 @@
 
 //`include "stage3_types_pkg.sv"
 
-import stage3_types_pkg::*;
+import stage4_types_pkg::*;
 
 module stage4 #(
     RESET_PC = 32'h80000000
@@ -53,51 +53,57 @@ module stage4 #(
     rv32c_if rv32cif
 );
 
+    fetch_out_t fetch_out; 
+    uop_t ex_in; 
 
     //interface instantiations
-    pipeline_stages_if stages_if();
+    //pipeline_stages_if stages_if();
 
-    stage3_mem_pipe_if mem_pipe_if();
-    hazard_unit_if hazard_if();
-    stage3_forwarding_unit_if fw_if();
+    stage4_mem_pipe_if mem_pipe_if();
+    stage4_hazard_unit_if hazard_if();
+    stage4_forwarding_unit_if fw_if();
 
     // decode & queue signals
     logic queue_wen; 
     uop_t uop_out;
-    uop_t[0:0] ctrls; 
-    uop_t ex_in; 
+    uop_t [0:0] ctrls; 
     logic[4:0] num_uops; 
 
     assign ctrls[0] = uop_out; 
-    assign num_uops = queue_wen ? 1 : 0; 
+    assign num_uops = 1; 
 
 
 
     //module instantiations
-    fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .fetch_ex_if(stages_if));
+    stage4_fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .fetch_out(fetch_out), .*);
 
     //scalar_decode S_DECODE(.*, .stall_queue(hazard_if.stall_queue)); 
-    decode_stage decode(
+    stage4_decode_stage decode(
         .CLK(CLK), .nRST(nRST), 
-        .stall_decode(stall_decode), 
-        .fetch_in(stages_if.fetch_in), 
+        .hazard_if(hazard_if), 
+        .fetch_out(fetch_out), 
         .uop_out(uop_out), 
-        .queue_wen(queue_wen)
+        .queue_wen(queue_wen), 
+        .rv32cif(rv32cif)
+
     ); 
 
-    decode_queue queue(
+    stage4_queue queue(
         .CLK(CLK), 
         .nRST(nRST), 
         .ctrls(ctrls),
         .num_uops(num_uops), 
         .hazard_if(hazard_if), 
-        .ex_in(ex_in)
+        .ex_in(ex_in), 
+        .queue_wen(queue_wen)
     );
-    // uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*); 
-    execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
-    mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
-    hazard_unit hazard_unit_i(.*);
-    forwarding_unit forward_unit_i(.*);
+
+    // uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*);
+     
+    stage4_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if),.ex_in(ex_in), .*);
+    stage4_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
+    stage4_hazard_unit hazard_unit_i(.*);
+    stage4_forwarding_unit forward_unit_i(.*);
 
 
 endmodule

@@ -23,21 +23,21 @@
 */
 //'include "stage3_types_pkg.sv"
 
-`include "stage3_fetch_execute_if.vh"
-`include "stage3_hazard_unit_if.vh"
-`include "stage3_forwarding_unit_if.vh"
-`include "control_unit_if.vh"
-`include "component_selection_defines.vh"
-`include "rv32i_reg_file_if.vh"
-`include "alu_if.vh"
+// `include "stage4_fetch_execute_if.vh"
+// `include "stage4_hazard_unit_if.vh"
+// `include "stage4_forwarding_unit_if.vh"
+// `include "control_unit_if.vh"
+// `include "component_selection_defines.vh"
+// `include "rv32i_reg_file_if.vh"
+// `include "alu_if.vh"
 //`include "prv_pipeline_if.vh"
 //`include "risc_mgmt_if.vh"
-`include "rv32c_if.vh"
+// `include "rv32c_if.vh"
 
-import stage3_types_pkg::*;
+import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
 
-module scalar_decode
+module stage4_scalar_decode
 ( 
     input word_t instr,
     output control_t control_out

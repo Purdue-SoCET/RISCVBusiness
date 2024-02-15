@@ -1,10 +1,10 @@
-`ifndef __STAGE3_MEM_PIPE_IF__
-`define __STAGE3_MEM_PIPE_IF__
+`ifndef __STAGE4_MEM_PIPE_IF__
+`define __STAGE4_MEM_PIPE_IF__
 
-interface stage3_mem_pipe_if();
+interface stage4_mem_pipe_if();
 
     import rv32i_types_pkg::*;
-    import stage3_types_pkg::*;
+    import stage4_types_pkg::*;
 
     logic reg_write;
     regsel_t rd_m;

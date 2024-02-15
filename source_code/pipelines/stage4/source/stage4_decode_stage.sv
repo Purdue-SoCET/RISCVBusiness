@@ -30,18 +30,18 @@ import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
 import rv32v_types_pkg::*; 
 
-module decode_stage
+module stage4_decode_stage
 (
     input logic CLK,
     input logic nRST,
     // input logic stall_decode,
 
-    input fetch_ex_t fetch_in,
+    input fetch_out_t fetch_out,
     
     output uop_t uop_out, 
     output logic queue_wen,
 
-    stage4_hazard_unit_if.decode hazard_if 
+    stage4_hazard_unit_if.decode hazard_if, 
 
 
     // output word_t pc_decode,
@@ -54,17 +54,16 @@ module decode_stage
 word_t scalar_instr;
 control_t control;
 logic svalid;
-word_t scalar_instr; 
 
 // RV32C inputs
-assign rv32cif.inst16 = fetch_in.instr[15:0];
+assign rv32cif.inst16 = fetch_out.instr[15:0];
 assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
-assign rv32cif.ex_busy = stall_decode;
-assign scalar_instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_in.instr;  //if_stage_in.instr;
+assign rv32cif.ex_busy = hazard_if.stall_decode;
+assign scalar_instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_out.instr;  //if_stage_in.instr;
 
 // Instantiate scalar decode
 
-scalar_decode U_SCALAR_DECODE(
+stage4_scalar_decode U_SCALAR_DECODE(
     .instr(scalar_instr),
     .control_out(control)
 );
@@ -80,7 +79,7 @@ logic vbusy;
 //rv32v_control_unit_if vcu_if();
 //rv32v_control_unit U_VECTOR_DECODE(vcu_if)
 
-//assign vcu_if.instr = fetch_in.instr;
+//assign vcu_if.instr = fetch_out.instr;
 //assign vcu_if.stall = stall_decode;
 
 // assign vcu_if.vsew = vsew;
@@ -95,18 +94,18 @@ logic vbusy;
 // TODO
 
 // EPC signals for interrupts 
-assign hazard_if.valid_decode = fetch_in.valid; 
-assign hazard_if.pc_decode = fetch_in.pc; 
+assign hazard_if.valid_decode = fetch_out.valid; 
+assign hazard_if.pc_decode = fetch_out.pc; 
 
 
 // Decode resolution
-//assign num_uops = fetch_in.valid ? DISPATCH_SIZE : 0; 
-assign queue_wen = ~hazard_if.stall_decode & fetch_in.valid;
+//assign num_uops = fetch_out.valid ? DISPATCH_SIZE : 0; 
+assign queue_wen = (~hazard_if.stall_decode && fetch_out.valid) && ~(hazard_if.is_queue_full) ;
 
 always_comb begin
-    uop_out.if_out = fetch_in;
+    uop_out.if_out = fetch_out;
     uop_out.ctrl_out = control;
-    uop_out.vctrl_out = '{'0};
+    //uop_out.vctrl_out = '{'0};
 
     // Mux in the register write enable from the vector decode
     // if required

@@ -276,3 +276,5 @@ reset_vector:                                                           \
 #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
 
 #endif
+
+

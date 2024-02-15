@@ -1,7 +1,7 @@
-`ifndef __STAGE3_FORWARD_UNIT_VH__
-`define __STAGE3_FORWARD_UNIT_VH__
+`ifndef __STAGE4_FORWARD_UNIT_VH__
+`define __STAGE4_FORWARD_UNIT_VH__
 
-interface stage3_forwarding_unit_if();
+interface stage4_forwarding_unit_if();
    
     rv32i_types_pkg::regsel_t rd_m;
     rv32i_types_pkg::regsel_t rs1_e;

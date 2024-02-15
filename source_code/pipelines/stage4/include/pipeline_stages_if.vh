@@ -6,16 +6,16 @@ interface pipeline_stages__if;
   import rv32i_types_pkg::*;
   import stage4_types_pkg::*;
  
-  fetch_in_t fetch_in;
+  fetch_out_t fetch_out;
 
   uop_t uop;  
 
   modport fetch(
-    output fetch_ex_reg
+    output fetch_out
   );
 
   modport decode(
-    input fetch_ex_reg
+    input fetch_out
     output uop_out
   );
 

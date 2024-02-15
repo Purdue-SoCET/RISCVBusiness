@@ -24,13 +24,13 @@
 
 //`include "stage3_types_pkg.sv"
 `include "stage4_hazard_unit_if.vh"
-import stage3_types_pkg::*;
+import stage4_types_pkg::*;
 // import alu_types_pkg::*;
 // import rv32i_types_pkg::*;
 // import machine_mode_types_1_12_pkg::*;
 // import rv32m_pkg::*;
 
-module decode_queue
+module stage4_queue
 #(
     parameter type D_TYPE = uop_t, 
     parameter QUEUE_LEN = 8,
@@ -44,14 +44,14 @@ module decode_queue
 
     //output logic[$clog2(QUEUE_LEN)+1:0] num_free_slots,
     /// output logic is_queue_full, 
-
-    hazard_unit_if.queue hazard_if,  
+    input logic queue_wen, 
+    stage4_hazard_unit_if.queue hazard_if,  
     output D_TYPE ex_in
 );
 
 logic[$clog2(QUEUE_LEN)+1:0] tail_idx, nxt_tail_idx; 
 D_TYPE[QUEUE_LEN:1] queue_data, nxt_queue_data; // start counting from 1 instead of 0 so I don't have to deal with negative numbers (if tail_idx == 0, then tail_idx - 1= -1) 
-logic[$clog2(QUEUE_LEN)+1:0] num_free_slots
+logic[$clog2(QUEUE_LEN)+1:0] num_free_slots; 
 
 
 assign ex_in = queue_data[1]; // assign up0 to the head to of the queue 
@@ -83,13 +83,13 @@ always_comb begin: NXT_QUEUE_DATA_LOGIC
         for(int i = 1; i <= QUEUE_LEN; i+=1)
             nxt_queue_data[i] = '0; 
     end
-    else if(~store && ~hazard_if.stall_queue) begin // behaves like a shift register
+    else if(~queue_wen && ~hazard_if.stall_queue) begin // behaves like a shift register
         for(int i = 1; i <= QUEUE_LEN-1; i+=1 ) begin
             nxt_queue_data[i] = queue_data[i+1];
         end
         nxt_queue_data[QUEUE_LEN] = '0; // shift in a NOP
     end
-    else if(store) begin
+    else if(queue_wen) begin
         if(hazard_if.stall_queue) begin
             for(int i = 1; i <= tail_idx; i+=1)
                 nxt_queue_data[i] = queue_data[i]; // retain elements already in the queue
@@ -108,7 +108,7 @@ always_comb begin: NXT_QUEUE_DATA_LOGIC
                 for(int i = 1; i <= tail_idx - 1; i+=1) // shift in uops already inside queue
                     nxt_queue_data[i] = queue_data[i+1];
                 
-                for(int i = tail_idx; i <= tail_idx + num_uops - 1 ; i+=1) // store additional uops 
+                for(int i = tail_idx; i <= tail_idx + num_uops - 1 ; i+=1) // queue_wen additional uops 
                     nxt_queue_data[i] = ctrls[i - tail_idx];
             end
         end 
@@ -120,7 +120,7 @@ end
 always_comb begin:NXT_TAIL_IDX_LOGIC
     if(hazard_if.flush_queue)
         nxt_tail_idx = 0; 
-    else if(~store) begin
+    else if(~queue_wen) begin
         if(hazard_if.stall_queue)
             nxt_tail_idx = tail_idx;
         else 

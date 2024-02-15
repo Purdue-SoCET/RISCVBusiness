@@ -22,10 +22,10 @@
 *   Description:  Interface for the hazard unit of the two stage pipeline
 */
 
-`ifndef HAZARD_UNIT_IF_VH
-`define HAZARD_UNIT_IF_VH
+`ifndef STAGE4_HAZARD_UNIT_IF_VH
+`define STAGE4_HAZARD_UNIT_IF_VH
 
-interface hazard_unit_if();
+interface stage4_hazard_unit_if();
 
   import rv32i_types_pkg::word_t;
   import rv32i_types_pkg::regsel_t;
@@ -67,7 +67,7 @@ interface hazard_unit_if();
   logic rv32c_ready;
 
   // decode stage 
-  logic stall_decode; 
+  logic stall_decode, flush_decode; 
   word_t pc_decode; 
   logic valid_decode; 
 
@@ -77,15 +77,6 @@ interface hazard_unit_if();
   logic is_queue_full; 
 
 
- modport decode  (
-    input stall_decode,
-    output pc_decode, valid_decode 
-  ); 
-
-  modport queue (
-    input flush_queue, stall_queue
-    output is_queue_full
-  ); 
 
 
   modport hazard_unit (
@@ -106,7 +97,8 @@ interface hazard_unit_if();
             if_ex_stall, ex_mem_stall,
             priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback, 
 
-            stall_queue, flush_queue
+            stall_queue, flush_queue, 
+            stall_decode, flush_decode
 
   );
 
@@ -116,12 +108,12 @@ interface hazard_unit_if();
   );
 
   modport decode  (
-    input stall_decode,
+    input stall_decode, flush_decode, is_queue_full, 
     output pc_decode, valid_decode 
   ); 
 
   modport queue (
-    input flush_queue, stall_queue
+    input flush_queue, stall_queue, 
     output is_queue_full
   ); 
 

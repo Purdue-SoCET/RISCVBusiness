@@ -25,7 +25,8 @@
 `ifndef RV32V_TYPES_PKG_SV
 `define RV32V_TYPES_PKG_SV
 
-`include "rv32i_types_pkg.sv";
+// `include "rv32i_types_pkg.sv";
+import rv32i_types_pkg::*; 
 
 package rv32v_types_pkg;
   parameter VLEN_WIDTH = 7; // 128 bit registers
@@ -517,9 +518,9 @@ package rv32v_types_pkg;
 
   typedef struct packed {
     // Register file signals
-    rv32i_types_pkg::regsel_t vs1_sel;
-    rv32i_types_pkg::regsel_t vs2_sel;
-    rv32i_types_pkg::regsel_t vd_sel;
+    regsel_t vs1_sel;
+    regsel_t vs2_sel;
+    regsel_t vd_sel;
     logic vregwen;
     logic sregwen;
     // Alignment/crossbar signals
@@ -546,7 +547,7 @@ package rv32v_types_pkg;
     logic vindexed;
 
     // CSR signals
-    cfgsel_t vsetvl_type, 
+    cfgsel_t vsetvl_type;
     logic vkeep_vl; // if rs1 & rd == 0 
   } vcontrol_t;
 
@@ -565,7 +566,7 @@ package rv32v_types_pkg;
     logic vmemdwen;  
     logic vregwen; 
     vsew_t veew; 
-    rv32i_types_pkg::regsel_t vd_sel;
+    regsel_t vd_sel;
     logic [1:0] vbank_offset;
 
     // CSR 

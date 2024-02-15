@@ -23,16 +23,16 @@
 *                 the stages of the Two Stage Pipeline
 */
 
-`include "stage3_hazard_unit_if.vh"
+`include "stage4_hazard_unit_if.vh"
 `include "prv_pipeline_if.vh"
 //`include "risc_mgmt_if.vh"
 
 import alu_types_pkg::*;
 import rv32i_types_pkg::*;
-import stage3_types_pkg::*;
+import stage4_types_pkg::*;
 
-module hazard_unit (
-    stage3_hazard_unit_if.hazard_unit hazard_if,
+module stage4_hazard_unit (
+    stage4_hazard_unit_if.hazard_unit hazard_if,
     prv_pipeline_if.hazard prv_pipe_if
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
@@ -174,12 +174,14 @@ module hazard_unit (
                                   || branch_jump;    // control hazard
                                   //|| (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
 
+    assign hazard_if.stall_decode = (hazard_if.is_queue_full && ~hazard_if.flush_queue) ; 
+    assign hazard_if.flush_decode = hazard_if.flush_queue; 
+
     assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
                                   || branch_jump     // Control hazard
                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
                                   || (hazard_if.stall_queue && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
-
-
+ 
     // assign hazard_if.if_ex_stall  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
     //                               // || (wait_for_imem && !dmem_access) // ???
     //                               //& (~ex_flush_hazard | e_ex_stage) // ???

@@ -1,6 +1,6 @@
 
-module forwarding_unit(
-    stage3_forwarding_unit_if.fw_unit fw_if
+module stage4_forwarding_unit(
+    stage4_forwarding_unit_if.fw_unit fw_if
 );
 
     logic rs1_match, rs2_match;

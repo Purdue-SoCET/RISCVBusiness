@@ -21,7 +21,6 @@
 
 #include "riscv_test.h"
 
-RVTEST_DATA_DUMP_BEGIN
 
 RVTEST_CODE_BEGIN
 
@@ -37,4 +36,3 @@ RVTEST_CODE_END
 #test data goes here
 tdat0:  .word 0x00000000
 
-RVTEST_DATA_DUMP_END

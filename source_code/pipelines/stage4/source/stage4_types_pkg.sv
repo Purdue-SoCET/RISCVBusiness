@@ -1,3 +1,5 @@
+`ifndef STAGE4_PKG_SV
+`define STAGE4_PKG_SV
 
 package stage4_types_pkg;
 
@@ -5,6 +7,7 @@ package stage4_types_pkg;
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
     import rv32m_pkg::*;
+    import rv32v_types_pkg::*; 
 
     typedef struct packed {
         logic valid;
@@ -16,7 +19,7 @@ package stage4_types_pkg;
         word_t instr;
         word_t prediction;
         word_t badaddr;
-    } fetch_in_t;
+    } fetch_out_t;
 
     typedef struct packed {
         opcode_t opcode;
@@ -124,8 +127,12 @@ package stage4_types_pkg;
 
 
     typedef struct packed {
-        fetch_ex_t if_out; 
+        fetch_out_t if_out; 
         control_t ctrl_out;
         // vcontrol_t vctrl_out; 
     } uop_t; 
+
+
 endpackage
+
+`endif
