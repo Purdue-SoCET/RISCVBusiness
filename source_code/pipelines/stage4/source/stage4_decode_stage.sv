@@ -77,9 +77,9 @@ assign svalid = !control.fault_insn && !control.illegal_insn;
 
 
 // Instantiate vector decode
-// vcontrol_t vcontrol;
-// logic vvalid;
-// logic vbusy;
+vcontrol_t vcontrol;
+logic vvalid;
+logic vbusy;
 
 assign vcu_if.vsew = vsew_t'(0) ; 
 assign vcu_if.vlmul = vlmul_t'(0); 
