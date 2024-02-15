@@ -22,7 +22,8 @@
 *   Description:  Logic for mapping OPI* vfunct6 fields to execution unit control signals
 */
 
-`include "rv32v_types_pkg.vh"
+
+import rv32v_types_pkg::*;
 
 module rv32v_opi_decode(
     input vopi_t vopi,
@@ -45,45 +46,45 @@ always_comb begin
     case (vopi)
         VADD: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_ADD;
+            vexec.valuop = VALU_ADD;
         end
         VSUB: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SUB;
+            vexec.valuop = VALU_SUB;
         end
         VRSUB: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_RSB;
+            vexec.valuop = VALU_RSB;
         end
         VMINU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_MIN;
+            vexec.valuop = VALU_MIN;
             vexec.vopunsigned = 1'b1;
         end
         VMIN: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_MIN;
+            vexec.valuop = VALU_MIN;
         end
         VMAXU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_MAX;
+            vexec.valuop = VALU_MAX;
             vexec.vopunsigned = 1'b1;
         end
         VMAX: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_MAX;
+            vexec.valuop = VALU_MAX;
         end
         VAND: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_AND;
+            vexec.valuop = VALU_AND;
         end
         VOR: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_OR;
+            vexec.valuop = VALU_OR;
         end
         VXOR: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_XOR;
+            vexec.valuop = VALU_XOR;
         end
         VRGATHER: begin
             vexec.vfu = VFU_PRM;
@@ -99,19 +100,19 @@ always_comb begin
         end
         VADC: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_ADC;
+            vexec.valuop = VALU_ADC;
         end
         VMADC: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_ADC; // Assuming VMADC uses the same operation as ADC
+            vexec.valuop = VALU_ADC; // Assuming VMADC uses the same operation as ADC
         end
         VSBC: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SBC;
+            vexec.valuop = VALU_SBC;
         end
         VMSBC: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SBC; // Assuming VMSBC uses the same operation as SBC
+            vexec.valuop = VALU_SBC; // Assuming VMSBC uses the same operation as SBC
         end
         VMERGE: begin
             /* UNIMPLEMENTED */
@@ -119,87 +120,87 @@ always_comb begin
         end
         VMSEQ: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SEQ;
+            vexec.valuop = VALU_SEQ;
         end
         VMSNE: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SNE;
+            vexec.valuop = VALU_SNE;
         end
         VMSLTU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SLT;
+            vexec.valuop = VALU_SLT;
             vexec.vopunsigned = 1'b1;
         end
         VMSLT: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SLT;
+            vexec.valuop = VALU_SLT;
         end
         VMSLEU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SLE;
+            vexec.valuop = VALU_SLE;
             vexec.vopunsigned = 1'b1;
         end
         VMSLE: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SLE;
+            vexec.valuop = VALU_SLE;
         end
         VMSGTU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SGT;
+            vexec.valuop = VALU_SGT;
             vexec.vopunsigned = 1'b1;
         end
         VMSGT: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SGT;
+            vexec.valuop = VALU_SGT;
         end
         VSADDU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_ADD; // Assuming VSADDU uses the same operation as ADD
+            vexec.valuop = VALU_ADD; // Assuming VSADDU uses the same operation as ADD
             vexec.vopunsigned = 1'b1;
         end
         VSADD: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_ADD; // Assuming VSADD uses the same operation as ADD
+            vexec.valuop = VALU_ADD; // Assuming VSADD uses the same operation as ADD
         end
         VSSUBU: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SUB; // Assuming VSSUBU uses the same operation as SUB
+            vexec.valuop = VALU_SUB; // Assuming VSSUBU uses the same operation as SUB
             vexec.vopunsigned = 1'b1;
         end
         VSSUB: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SUB; // Assuming VSSUB uses the same operation as SUB
+            vexec.valuop = VALU_SUB; // Assuming VSSUB uses the same operation as SUB
         end
         VSLL: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SLL;
+            vexec.valuop = VALU_SLL;
         end
         VSMUL: begin
             vexec.vfu = VFU_MUL;
         end
         VSRL: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SRL;
+            vexec.valuop = VALU_SRL;
         end
         VSRA: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SRA;
+            vexec.valuop = VALU_SRA;
         end
         VSSRL: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SRL; // Assuming VSSRL uses the same operation as SRL
+            vexec.valuop = VALU_SRL; // Assuming VSSRL uses the same operation as SRL
         end
         VSSRA: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SRA; // Assuming VSSRA uses the same operation as SRA
+            vexec.valuop = VALU_SRA; // Assuming VSSRA uses the same operation as SRA
         end
         VNSRL: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SRL; // Assuming VNSRL uses the same operation as SRL
+            vexec.valuop = VALU_SRL; // Assuming VNSRL uses the same operation as SRL
         end
         VNSRA: begin
             vexec.vfu = VFU_ALU;
-            vexec.aluop = VALU_SRA; // Assuming VNSRA uses the same operation as SRA
+            vexec.valuop = VALU_SRA; // Assuming VNSRA uses the same operation as SRA
         end
         VNCLIPU: begin
             /* UNIMPLEMENTED */
@@ -210,11 +211,11 @@ always_comb begin
             valid = 1'b0;
         end
         VWREDSUMU: begin
-            vexec.vvfu = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_SUM;
         end
         VWREDSUM: begin
-            vexec.vvfu = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_SUM;
         end
         default: begin

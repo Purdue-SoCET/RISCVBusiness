@@ -25,6 +25,7 @@
 // `include "stage4_types_pkg.sv"
 //`include "stage4_fet_dec_ex_if.vh"
 `include "stage4_hazard_unit_if.vh" 
+`include "rv32v_control_unit_if.vh"
 
 import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
@@ -55,6 +56,10 @@ word_t scalar_instr;
 control_t control;
 logic svalid;
 
+
+rv32v_control_unit_if vcu_if; 
+
+
 // RV32C inputs
 assign rv32cif.inst16 = fetch_out.instr[15:0];
 assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
@@ -63,7 +68,7 @@ assign scalar_instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_out.instr;  //if_st
 
 // Instantiate scalar decode
 
-stage4_scalar_decode U_SCALAR_DECODE(
+scalar_decode U_SCALAR_DECODE(
     .instr(scalar_instr),
     .control_out(control)
 );
@@ -72,9 +77,19 @@ assign svalid = !control.fault_insn && !control.illegal_insn;
 
 
 // Instantiate vector decode
-vcontrol_t vcontrol;
-logic vvalid;
-logic vbusy;
+// vcontrol_t vcontrol;
+// logic vvalid;
+// logic vbusy;
+
+// assign vcu_if.vsew = vsew_t'(0) ; 
+// assign vcu_if.vlmul = vlmul_t'(0); 
+// assign vcu_if.vl = '0; 
+// assign vcu_if.stall = hazard_if.stall_decode; 
+// assign vcu_if.instr = fetch_out.instr; 
+
+// assign uop_out.vctrl_out = '{default:'0}; 
+
+// rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if); 
 
 //rv32v_control_unit_if vcu_if();
 //rv32v_control_unit U_VECTOR_DECODE(vcu_if)

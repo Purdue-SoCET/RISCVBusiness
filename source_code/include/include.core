@@ -5,6 +5,7 @@ description: include files
 filesets:
     rtl:
         files:
+            - rv32v_control_unit_if.vh : {is_include_file: true}
             - cache_control_if.vh : {is_include_file: true}
             - component_selection_defines.vh : {is_include_file: true}
             - risc_mgmt_if.vh : {is_include_file: true}

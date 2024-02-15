@@ -5,7 +5,6 @@ description: Two-stage pipeline
 filesets:
     rtl:
         files:
-            - source/stage4_types_pkg.sv
             - include/stage4_mem_pipe_if.vh : {is_include_file: true}
             - include/stage4_hazard_unit_if.vh : {is_include_file: true}
             - include/stage4_forwarding_unit_if.vh : {is_include_file: true}
@@ -15,7 +14,6 @@ filesets:
             - source/stage4_hazard_unit.sv
             - source/stage4_forwarding_unit.sv
             - source/stage4.sv
-            - source/stage4_scalar_decode.sv
             - source/stage4_queue.sv
             - source/stage4_decode_stage.sv
         file_type: systemVerilogSource

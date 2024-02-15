@@ -37,7 +37,7 @@
 import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
 
-module stage4_scalar_decode
+module scalar_decode
 ( 
     input word_t instr,
     output control_t control_out

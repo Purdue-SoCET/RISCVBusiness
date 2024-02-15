@@ -36,8 +36,7 @@ START_GREEN = "\033[92m"
 START_RED = "\033[31m"
 
 FILE_NAME = None
-#ARCH = "RV32I"
-ARCH = "rv64uv"
+ARCH = "RV32I"
 SUPPORTED_ARCHS = []
 SUPPORTED_TEST_TYPES = ['asm', 'c', 'selfasm', "sparce", ""]
 SPARCE_MODULES = ['sparce_svc', 'sparce_sprf', 'sparce_sasa_table', 'sparce_psru', 'sparce_cfid']
@@ -52,7 +51,7 @@ def parse_arguments():
     global ARCH, FILE_NAME, SUPPORTED_ARCHS, TEST_TYPE
     parser = argparse.ArgumentParser(description="Run various processor tests. This script expects to be run at the top level of the RISCV Business directory")
     parser.add_argument('--arch', '-a', dest='arch', type=str,
-                        default="RV32IMV",
+                        default="RV32I",
                         help="Specify the architecture targeted. Option(s): RV32I Default: RV32I")
     parser.add_argument('--test', '-t', dest='test_type', type=str, default="",
                         help="Specify what type of tests to run. Option(s): asm,selfasm,c Default: asm")
@@ -109,7 +108,7 @@ def compile_asm(file_name):
     if not os.path.exists(os.path.dirname(output_name)):
         os.makedirs(os.path.dirname(output_name))
 
-    cmd_arr = ['riscv64-unknown-elf-gcc', '-march=' + xlen + 'v', '-mabi=' + abi, '-static',
+    cmd_arr = ['riscv64-unknown-elf-gcc', '-march=' + xlen, '-mabi=' + abi, '-static',
                 '-mcmodel=medany', '-fvisibility=hidden', '-nostdlib',
                 '-nostartfiles', '-T./verification/asm-env/link.ld',
                 '-I./verification/asm-env/asm', file_name, '-o', output_name]
@@ -131,8 +130,6 @@ def compile_asm(file_name):
 # settings specifically for compiling self tests
 def compile_asm_for_self(file_name):
     # compile all of the files
-    print(f"{ARCH}/")
-    print(file_name)
     short_name = file_name.split(ARCH+'/')[1][:-2]
     output_dir = './sim_out/' + ARCH + '/' + short_name + '/'
     output_name = output_dir + short_name + '.elf'
@@ -144,7 +141,7 @@ def compile_asm_for_self(file_name):
     abi = 'lp64' if '64' in ARCH else 'ilp32'
 
 
-    cmd_arr = ['riscv64-unknown-elf-gcc', '-march=' + xlen + 'v', '-mabi=' + abi,
+    cmd_arr = ['riscv64-unknown-elf-gcc', '-march=' + xlen, '-mabi=' + abi,
                 '-static', '-mcmodel=medany', '-fvisibility=hidden',
                 '-nostdlib', '-nostartfiles', 
                 '-T./verification/asm-env/link.ld',
@@ -176,7 +173,7 @@ def compile_c(file_name):
     xlen = 'rv64g' if '64' in ARCH else 'rv32g'
     abi = 'lp64' if '64' in ARCH else 'ilp32'
 
-    cmd_arr = ['riscv64-unknown-elf-gcc', '-O0', '-march='+xlen+'v', '-mabi='+abi]
+    cmd_arr = ['riscv64-unknown-elf-gcc', '-O0', '-march='+xlen, '-mabi='+abi]
     cmd_arr += ['-ffunction-sections', '-Wno-comments']
     cmd_arr += ['-ffreestanding', '-nostdlib', '-o', output_name, 
               '-Wl,-Bstatic,-T,verification/c-firmware/link.ld,--strip-debug']
@@ -443,7 +440,7 @@ def run_spike_asm(file_name):
 
     elf_name = output_dir + short_name + '.elf'
     log_name = output_dir + short_name + '_spike.hex'
-    cmd_arr = ['spike', '-l', '--isa=RV32IMV', '+signature=' + log_name, elf_name]
+    cmd_arr = ['spike', '-l', '--isa=RV32IM', '+signature=' + log_name, elf_name]
     print(cmd_arr)
     spike_log = open(output_dir + short_name + '_spike.trace', 'w')
     failure = subprocess.call(cmd_arr, stdout = spike_log, stderr = spike_log)
@@ -507,7 +504,7 @@ def run_asm():
             ee256_cmd = '#!/bin/sh\nexport RISCV=~/riscv-toolchain\nexport PATH='
             ee256_cmd += '~/riscv-toolchain/bin:$PATH\ncd '
             ee256_cmd += 'RISCVBusiness \npython compile_asm.py ' + f + '\n'
-            ee256_cmd += 'spike -l --isa=RV32IMV +signature=' + log_name + ' '
+            ee256_cmd += 'spike -l --isa=RV32IM +signature=' + log_name + ' '
             ee256_cmd += elf_name + ' &>> ' + output_dir + test_name + '_spike.trace'
 
             with open('compile256.cmd', 'w') as cmd_f:

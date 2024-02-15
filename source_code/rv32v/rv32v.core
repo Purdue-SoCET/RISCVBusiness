@@ -1,0 +1,30 @@
+CAPI=2:
+name: socet:riscv:rv32v:0.1.0
+description: Two-stage pipeline
+
+filesets:
+    rtl:
+        files:
+            - include/rv32v_uop_gen_if.vh : {is_include_file: true}
+            - source/rv32v_control_unit.sv
+            - source/rv32v_opi_decode.sv
+            - source/rv32v_opm_decode.sv
+            - source/rv32v_uop_gen.sv
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: 
+
+    lint:
+        <<: *default
+        description: Linting
+        default_tool: veriblelint
+        toplevel: 
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search', '--waiver_files=stage4.waiver']
+

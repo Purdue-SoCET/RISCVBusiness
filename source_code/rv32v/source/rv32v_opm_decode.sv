@@ -22,7 +22,8 @@
 *   Description:  Logic for mapping OPM* vfunct6 fields to execution unit control signals
 */
 
-`include "rv32v_types_pkg.vh"
+
+import rv32v_types_pkg::*;
 
 module rv32v_opm_decode(
     input vopm_t vopm,
@@ -35,7 +36,7 @@ always_comb begin
     valid = 1'b1;
 
     // Arbitrary defaults just to prevent latches
-    vexec.vopm = VFU_ALU;
+    vexec.vfu = VFU_ALU;
     vexec.valuop = VALU_ADD;
     vexec.vredop = VRED_AND;
     vexec.vmaskop = VMSK_AND;
@@ -44,63 +45,63 @@ always_comb begin
 
     case (vopm)
         VREDSUM: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_SUM;
         end
         VREDAND: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_AND;
         end
         VREDOR: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_OR;
         end
         VREDXOR: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_XOR;
         end
         VREDMINU: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_MIN;
             vexec.vopunsigned = 1'b1;
         end
         VREDMIN: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_MIN;
         end
         VREDMAXU: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_MAX;
             vexec.vopunsigned = 1'b1;
         end
         VREDMAX: begin
-            vexec.vopm = VFU_RED;
+            vexec.vfu = VFU_RED;
             vexec.vredop = VRED_MAX;
         end
         VAADDU: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
             vexec.vopunsigned = 1'b1;
         end
         VAADD: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
         end
         VASUBU: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
             vexec.vopunsigned = 1'b1;
         end
         VASUB: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
         end
         VSLIDE1UP: begin
-            vexec.vopm = VFU_PRM;
+            vexec.vfu = VFU_PRM;
             vexec.vpermop = VPRM_S1U;
         end
         VSLIDE1DOWN: begin
-            vexec.vopm = VFU_PRM;
+            vexec.vfu = VFU_PRM;
             vexec.vpermop = VPRM_S1D;
         end
         VWXUNARY0: begin
@@ -116,68 +117,68 @@ always_comb begin
             valid = 1'b0;
         end
         VCOMPRESS: begin
-            vexec.vopm = VFU_PRM;
+            vexec.vfu = VFU_PRM;
             vexec.vpermop = VPRM_CPS;
         end
         VMANDN: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_NDN;
         end
         VMAND: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_AND;
         end
         VMOR: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_OR;
         end
         VMXOR: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_XOR;
         end
         VMORN: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_NOR;
         end
         VMNAND: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_NND;
         end
         VMNOR: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_NOR;
         end
         VMXNOR: begin
-            vexec.vopm = VFU_MSK;
+            vexec.vfu = VFU_MSK;
             vexec.vmaskop = VMSK_XNR;
         end
         VDIVU: begin
-            vexec.vopm = VFU_DIV;
+            vexec.vfu = VFU_DIV;
             vexec.vopunsigned = 1'b1;
         end
         VDIV: begin
-            vexec.vopm = VFU_DIV;
+            vexec.vfu = VFU_DIV;
         end
         VREMU: begin
-            vexec.vopm = VFU_DIV;
+            vexec.vfu = VFU_DIV;
             vexec.vopunsigned = 1'b1;
         end
         VREM: begin
-            vexec.vopm = VFU_DIV;
+            vexec.vfu = VFU_DIV;
         end
         VMULHU: begin
-            vexec.vopm = VFU_MUL;
+            vexec.vfu = VFU_MUL;
             vexec.vopunsigned = 1'b1;
         end
         VMUL: begin
-            vexec.vopm = VFU_MUL;
+            vexec.vfu = VFU_MUL;
         end
         VMULHSU: begin
-            vexec.vopm = VFU_MUL;
+            vexec.vfu = VFU_MUL;
             vexec.vopunsigned = 1'b1;
         end
         VMULH: begin
-            vexec.vopm = VFU_MUL;
+            vexec.vfu = VFU_MUL;
         end
         VMADD: begin
             /* UNIMPLEMENTED */
@@ -196,48 +197,47 @@ always_comb begin
             valid = 1'b0;
         end
         VWADDU: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
         end
         VWADD: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
         end
         VWSUBU: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
         end
         VWSUB: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
         end
         VWADDU_W: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
         end
         VWADD_W: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
         end
         VWSUBU_W: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
         end
         VWSUB_W: begin
-            vexec.vopm = VFU_ALU;
+            vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
         end
         VWMULU: begin
-            vexec.vopm = VFU_MUL;
+            vexec.vfu = VFU_MUL;
             vexec.vopunsigned = 1'b1;
         end
         VWMULSU: begin
-            vexec.vopm = VFU_MUL;
+            vexec.vfu = VFU_MUL;
             vexec.vopunsigned = 1'b1;
         end
         VWMUL: begin
-            vexec.vopm = VFU_MUL;
-            valuop_mul = VWMUL;
+            vexec.vfu = VFU_MUL;
         end
         VWMACCU: begin
             /* UNIMPLEMENTED */
@@ -258,7 +258,7 @@ always_comb begin
 
         default: begin
             // If no op matched, this must not be a supported vopm
-            vopi_valid = 1'b0;
+            valid = 1'b0;
         end
     endcase
 end

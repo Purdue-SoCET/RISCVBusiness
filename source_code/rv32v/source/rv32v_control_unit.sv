@@ -22,13 +22,17 @@
 *   Description:  Vector instruction decode unit
 */
 
-`include "rv32v_types_pkg.vh"
+`include "rv32v_control_unit_if.vh"
+import rv32v_types_pkg::*; 
 
 module rv32v_control_unit(
     input logic CLK,
     input logic nRST,
     rv32v_control_unit_if.vcu vcu_if
 );
+
+import rv32i_types_pkg::*;
+import rv32v_types_pkg::*;
 
 // Register select extraction
 logic [4:0] vd, vs1, vs2, vs3;
@@ -81,14 +85,18 @@ assign vopi = vopi_t'(vfunct6);
 assign vopm = vopm_t'(vfunct6);
 
 // Register select
-assign vcu_if.vcontrol.vd_sel.regidx = '{regclass: RC_VECTOR, regidx: vd};
-assign vcu_if.vcontrol.vs2_sel.regidx = '{regclass: RC_VECTOR, regidx: vs2};
-assign vcu_if.vcontrol.vs1_sel.regidx = '{regclass: RC_VECTOR, regidx: (vmajoropcode == VMOC_STORE) ? vs3 : vs1};
+assign vcu_if.vcontrol.vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
+assign vcu_if.vcontrol.vs2_sel = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
+assign vcu_if.vcontrol.vs1_sel = '{
+    regclass: RC_VECTOR,
+    regidx: ((vmajoropcode == VMOC_STORE) ? vs3 : vs1) + {2'b00, vreg_offset}
+};
 
+// Register write enables
 assign vcu_if.vcontrol.sregwen = (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) ||                        // vset* instructions
                                  (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPMVV && vfunct6 == VWXUNARY0);  // VWXUNARY instructions
 
-assign vcu_if.vcontrol.vregwen = (!sregwen) &&                  // Scalar write instructions
+assign vcu_if.vcontrol.vregwen = (!vcu_if.vcontrol.sregwen) &&                  // Scalar write instructions
                                  (vmajoropcode != VMOC_STORE);  // Store instructions
 
 
@@ -102,12 +110,19 @@ assign vcu_if.vcontrol.vxin1_use_rs1 = (vmajoropcode == VMOC_LOAD) ||
                                        (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPFVF) ||
                                        (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPMVX);
 
-assign vcu_if.vcontrol.vxin2_use_rs2 = (vmajoropcode == VMOC_LOAD || vmajoropcode_t == VMOC_STORE) && 
+assign vcu_if.vcontrol.vxin2_use_rs2 = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE) && 
                                        (mop == MOP_UINDEXED || mop == MOP_OINDEXED);
 
 // Alignment unit signals
 logic vwidening, vnarrowing;
+width_t vmem_width;
+vsew_t vmem_eew;
 vsew_t twice_vsew;
+
+assign vmem_width = width_t'(vcu_if.instr[14:12]);
+assign vmem_eew = (vmem_width == WIDTH8 ) ? SEW8 :
+                  (vmem_width == WIDTH16) ? SEW16 :
+                                            SEW32;
 
 assign vwidening = (vfunct6[5:4] == 2'b11);
 assign vnarrowing = (vopi == VNSRL) ||
@@ -117,11 +132,23 @@ assign vnarrowing = (vopi == VNSRL) ||
                     (vopm == VNMSUB) ||
                     (vopm == VNMSAC);
 
-assign twice_vsew = (vcu_if.vsew << 1);
+assign twice_vsew = vsew_t'(vcu_if.vsew << 1);
 
+// For indexed store instructions, vs3 is data which uses vtype.vsew
 assign vcu_if.vcontrol.veew_src1 = vcu_if.vsew;
-assign vcu_if.vcontrol.veew_src2 = vnarrowing ? twice_vsew : vcu_if.vsew;
-assign vcu_if.vcontrol.veew_dest = vwidening ? twice_vsew : vcu_if.vsew;
+
+// For indexed load/store instructions, addr is vs2 which uses instr.width
+assign vcu_if.vcontrol.veew_src2 = vcu_if.vcontrol.vindexed ? vmem_eew :
+                                   vnarrowing               ? twice_vsew :
+                                                              vcu_if.vsew;
+
+// For strided (including unit stride) load/store instructions, data uses instr.width
+// For indexed load instructions, vd is data which uses vtype.vsew
+assign vcu_if.vcontrol.veew_dest = vcu_if.vcontrol.vunitstride ? vmem_eew :
+                                   vcu_if.vcontrol.vstrided    ? vmem_eew :
+                                   vcu_if.vcontrol.vindexed    ? vcu_if.vsew :
+                                   vwidening                   ? twice_vsew :
+                                                                 vcu_if.vsew;
 
 // OPI* execution unit control signals
 vexec_t vexec_opi;
@@ -156,7 +183,7 @@ always_comb begin
     vcu_if.vcontrol.vexec.vpermop = VPRM_CPS;
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
 
-    unique case ({vopi_valid, vopm_valid, vcu_if.vcontrol.vmeminsn})
+    unique case ({vopi_valid, vopm_valid, vmeminstr})
         3'b100: begin
             vcu_if.vcontrol.vexec = vexec_opi;
         end
@@ -167,7 +194,7 @@ always_comb begin
 
         3'b001: begin
             vcu_if.vcontrol.vexec.vfu = VFU_ALU;
-            vcu_if.vcontrol.vexec.valuop = ALU_ADD;
+            vcu_if.vcontrol.vexec.valuop = VALU_ADD;
             vcu_if.vcontrol.vexec.vopunsigned = 1'b1;
         end
         
@@ -179,15 +206,38 @@ always_comb begin
 end
 
 // Memory signals
+logic vmeminstr;
+
 assign vcu_if.vcontrol.vmemrden = (vmajoropcode == VMOC_LOAD);
 assign vcu_if.vcontrol.vmemwren = (vmajoropcode == VMOC_STORE);
 
-assign vcu_if.vcontrol.vmeminsn = vcu_if.vcontrol.vmemrden || vcu_if.vcontrol.vmemwren;
+assign vcu_if.vcontrol.vunitstride = (mop == MOP_UNIT);
+assign vcu_if.vcontrol.vstrided = (mop == MOP_STRIDED);
+assign vcu_if.vcontrol.vindexed = (mop == MOP_OINDEXED) ||
+                                  (mop == MOP_UINDEXED);
 
+assign vmeminstr = (vcu_if.vcontrol.vmemrden || vcu_if.vcontrol.vmemwren);
 
+// uop generation unit
+logic [2:0] vreg_offset;
 
+rv32v_uop_gen_if vug_if();
 
+assign vug_if.gen = vcu_if.vvalid;
+assign vug_if.stall = vcu_if.stall;
+assign vug_if.veew = vcu_if.vcontrol.veew_dest;
+assign vug_if.vl = vcu_if.vl;
 
+assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
+assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
+assign vreg_offset = vug_if.vreg_offset;
+assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
+assign vcu_if.vbusy = vug_if.busy;
 
+rv32v_uop_gen U_UOPGEN(
+    .CLK(CLK),
+    .nRST(nRST),
+    .vug_if(vug_if)
+);
 
 endmodule
