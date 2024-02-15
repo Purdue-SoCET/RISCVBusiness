@@ -77,19 +77,19 @@ assign svalid = !control.fault_insn && !control.illegal_insn;
 
 
 // Instantiate vector decode
-// vcontrol_t vcontrol;
-// logic vvalid;
-// logic vbusy;
+vcontrol_t vcontrol;
+logic vvalid;
+logic vbusy;
 
-// assign vcu_if.vsew = vsew_t'(0) ; 
-// assign vcu_if.vlmul = vlmul_t'(0); 
-// assign vcu_if.vl = '0; 
-// assign vcu_if.stall = hazard_if.stall_decode; 
-// assign vcu_if.instr = fetch_out.instr; 
+assign vcu_if.vsew = vsew_t'(0) ; 
+assign vcu_if.vlmul = vlmul_t'(0); 
+assign vcu_if.vl = '0; 
+assign vcu_if.stall = hazard_if.stall_decode; 
+assign vcu_if.instr = fetch_out.instr; 
 
 // assign uop_out.vctrl_out = '{default:'0}; 
 
-// rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if); 
+rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if); 
 
 //rv32v_control_unit_if vcu_if();
 //rv32v_control_unit U_VECTOR_DECODE(vcu_if)
