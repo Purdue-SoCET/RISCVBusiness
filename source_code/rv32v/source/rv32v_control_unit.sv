@@ -84,6 +84,21 @@ vopm_t vopm;
 assign vopi = vopi_t'(vfunct6);
 assign vopm = vopm_t'(vfunct6);
 
+// CFG instructions
+always_comb begin
+    // Set the vset* type based on the top two bits
+    casez (vcu_if.instr[31:30])
+        2'b0?: vcu_if.vcontrol.vsetvl_type = VSETVLI;
+        2'b11: vcu_if.vcontrol.vsetvl_type = VSETIVLI;
+        2'b10: vcu_if.vcontrol.vsetvl_type = VSETVL;
+    endcase
+
+    // If it wasn't actually a vset* instruction, set the null type
+    if (!(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG)) begin
+        vcu_if.vcontrol.vsetvl_type = NOT_CFG;
+    end
+end
+
 // Register select
 assign vcu_if.vcontrol.vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
 assign vcu_if.vcontrol.vs2_sel = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
@@ -97,7 +112,7 @@ logic sregwen;
 assign vcu_if.vcontrol.sregwen = sregwen;
 
 assign sregwen = (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) ||                        // vset* instructions
-                                 (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPMVV && vfunct6 == VWXUNARY0);  // VWXUNARY instructions
+                 (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPMVV && vfunct6 == VWXUNARY0);  // VWXUNARY instructions
 
 assign vcu_if.vcontrol.vregwen = (!sregwen) &&                  // Scalar write instructions
                                  (vmajoropcode != VMOC_STORE);  // Store instructions
