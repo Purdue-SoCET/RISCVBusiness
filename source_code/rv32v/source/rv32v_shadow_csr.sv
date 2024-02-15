@@ -22,7 +22,7 @@
 *   Description:  Shadow copy of vector CSR data in decode
 */
 
-`include "rv32v_types_pkg.vh"
+// `include "rv32v_types_pkg.vh"
 `include "rv32v_shadow_csr_if.vh"
 
 module rv32v_shadow_csr (

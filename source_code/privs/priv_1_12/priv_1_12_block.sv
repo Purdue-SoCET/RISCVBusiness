@@ -39,13 +39,23 @@ module priv_1_12_block (
     priv_1_12_internal_if prv_intern_if();
     priv_ext_if priv_ext_pma_if();
     priv_ext_if priv_ext_pmp_if();
+    `ifdef RV32V_SUPPORTED
+        priv_ext_if priv_ext_v_if();
+    `endif // RV32V_SUPPORTED
 
-    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
+    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if)
+                        `ifdef RV32V_SUPPORTED
+                        , .priv_ext_v_if(priv_ext_v_if)
+                        `endif // RV32V_SUPPORTED
+                      );
     priv_1_12_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
     priv_1_12_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
     priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
     priv_1_12_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
     priv_1_12_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
+    `ifdef RV32V_SUPPORTED
+      priv_1_12_vector vector (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_v_if));
+    `endif // RV32V_SUPPORTED
 
     // Assign CSR values
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
@@ -102,6 +112,12 @@ module priv_1_12_block (
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
     assign prv_intern_if.mret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == M_MODE);
     assign prv_intern_if.sret              = 1'b0;
+    `ifdef RV32V_SUPPORTED
+        assign prv_intern_if.vsetvl = prv_pipe_if.vsetvl;
+        assign prv_pipe_if.vl = prv_intern_if.vl;
+        assign prv_pipe_if.vtype = prv_intern_if.vtype;
+        assign prv_pipe_if.vstart = prv_intern_if.vstart;
+    `endif // RV32V_SUPPORTED
 
     // RISC-MGMT?
     //  not sure what these are for, part of priv 1.11

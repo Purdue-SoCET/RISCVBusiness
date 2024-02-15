@@ -6,6 +6,7 @@ filesets:
     rtl:
         files:
             - include/stage4_mem_pipe_if.vh : {is_include_file: true}
+            - include/stage4_mem_stage_if.vh : {is_include_file: true}
             - include/stage4_hazard_unit_if.vh : {is_include_file: true}
             - include/stage4_forwarding_unit_if.vh : {is_include_file: true}
             - source/stage4_fetch_stage.sv

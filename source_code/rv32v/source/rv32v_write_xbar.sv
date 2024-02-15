@@ -39,30 +39,30 @@ module rv32v_write_xbar
     output logic[3:0] byte_wen
 );
 
-typdef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; // put this in a package
+typedef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; // put this in a package
 
 always_comb begin
     //default
-    vwdata = '0; 
+    vwdat = '0; 
     byte_wen = '0; 
 
     if(EEW_TYPE'(eew) == BYTE_4) begin
-        vwdata = lane_dat[BANK_NUM];
+        vwdat = lane_dat[BANK_NUM];
         byte_wen = lane_wen[BANK_NUM] ? 4'b1111 : 4'b0000;  
     end
     else if(EEW_TYPE'(eew) == BYTE_2) begin
         if(BANK_NUM == bank_offset) begin
-            vwdata = {lane_dat[1][31:16], lane_dat[0][15:0]}; 
+            vwdat = {lane_dat[1][31:16], lane_dat[0][15:0]}; 
             byte_wen = { { 2{lane_wen[1]} }, { 2{lane_wen[0]} } }; 
         end 
         else if(BANK_NUM == (bank_offset + 1)) begin
-            vwdata = {lane_dat[3][31:16], lane_dat[2][15:0]}; 
+            vwdat = {lane_dat[3][31:16], lane_dat[2][15:0]}; 
             byte_wen = { { 2{lane_wen[3]} }, { 2{lane_wen[2]} } }; 
         end
     end 
     else begin
         if(BANK_NUM == bank_offset) begin
-            vwdata = {lane_dat[3][31:24], lane_dat[2][23:16], lane_dat[1][15:8], lane_dat[0][7:0]}; 
+            vwdat = {lane_dat[3][31:24], lane_dat[2][23:16], lane_dat[1][15:8], lane_dat[0][7:0]}; 
             byte_wen = lane_wen; 
         end 
     end

@@ -24,6 +24,7 @@
 
 // `include "stage4_fetch_execute_if.vh"
 `include "stage4_hazard_unit_if.vh"
+`include "stage4_mem_stage_if.vh"
 `include "stage4_forwarding_unit_if.vh"
 `include "control_unit_if.vh"
 `include "component_selection_defines.vh"
@@ -42,7 +43,7 @@ module stage4_execute_stage (
     // pipeline_stages_if.execute ex,
     input uop_t ex_in, 
     //input uop_t uop_out, 
-    stage4_mem_pipe_if.execute ex_mem_if,
+    stage4_mem_stage_if.ex ex_mem_if,
     stage4_hazard_unit_if.execute hazard_if,
     stage4_forwarding_unit_if.execute fw_if,
     //risc_mgmt_if.ts_execute rm_if,
@@ -64,6 +65,10 @@ module stage4_execute_stage (
     assign rf_if.rs1 = ex_in.ctrl_out.rs1; 
     assign rf_if.rs2 = ex_in.ctrl_out.rs2; 
 
+
+
+    // TODO: DELETE
+    assign ex_mem_if.vexmem = '{default:'0, veew: SEW32};
 
     /**********************
     * Decode/Register Read 

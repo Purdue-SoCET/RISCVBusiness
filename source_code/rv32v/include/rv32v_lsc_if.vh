@@ -36,10 +36,11 @@ interface rv32v_lsc_if;
     // logic [3:0] byte_en;
     load_t load_type;
     logic ifence, fence_stall;
+    logic lsc_ready;
 
     modport lsc (
         input wen, ren, addr, store_data, load_type, ifence,
-        output dload_ext, fence_stall
+        output dload_ext, fence_stall, lsc_ready
     );
 
 endinterface

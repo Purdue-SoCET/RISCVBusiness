@@ -22,7 +22,7 @@
 *   Description:  Vector memory access serializer
 */
 
-`include "rv32v_types_pkg.vh"
+// `include "rv32v_types_pkg.vh"
 `include "rv32v_mem_serializer_if.vh"
 
 module rv32v_mem_serializer (
@@ -127,17 +127,17 @@ module rv32v_mem_serializer (
     end
 
     always_comb begin
-        lsc_if.vload_type = LW;
+        serial_if.vload_type = LW;
 
-        casez (lsc_if.dest_eew)
-            SEW8:  lsc_if.vload_type = LB;
-            SEW16: lsc_if.vload_type = LH;
-            SEW32: lsc_if.vload_type = LW;
+        casez (serial_if.veew)
+            SEW8:  serial_if.vload_type = LB;
+            SEW16: serial_if.vload_type = LH;
+            SEW32: serial_if.vload_type = LW;
         endcase
     end
 
     assign serial_if.vmemdwen_lsc = serial_if.vmemdwen & serial_if.vlane_mask[serial_if.vcurr_lane];
     assign serial_if.vmemdren_lsc = serial_if.vmemdren & serial_if.vlane_mask[serial_if.vcurr_lane];
-    assign serial_if.vdata_store_lsc = vlane_store_data[serial_if.vcurr_lane];
+    assign serial_if.vdata_store_lsc = serial_if.vlane_store_data[serial_if.vcurr_lane];
 
 endmodule // rv32v_mem_serializer

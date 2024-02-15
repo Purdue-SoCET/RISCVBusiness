@@ -59,7 +59,7 @@ module stage4 #(
     //interface instantiations
     //pipeline_stages_if stages_if();
 
-    stage4_mem_pipe_if mem_pipe_if();
+    stage4_mem_stage_if mem_pipe_if();
     stage4_hazard_unit_if hazard_if();
     stage4_forwarding_unit_if fw_if();
 

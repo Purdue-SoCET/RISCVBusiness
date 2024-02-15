@@ -93,10 +93,13 @@ assign vcu_if.vcontrol.vs1_sel = '{
 };
 
 // Register write enables
-assign vcu_if.vcontrol.sregwen = (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) ||                        // vset* instructions
+logic sregwen;
+assign vcu_if.vcontrol.sregwen = sregwen;
+
+assign sregwen = (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) ||                        // vset* instructions
                                  (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPMVV && vfunct6 == VWXUNARY0);  // VWXUNARY instructions
 
-assign vcu_if.vcontrol.vregwen = (!vcu_if.vcontrol.sregwen) &&                  // Scalar write instructions
+assign vcu_if.vcontrol.vregwen = (!sregwen) &&                  // Scalar write instructions
                                  (vmajoropcode != VMOC_STORE);  // Store instructions
 
 
@@ -119,6 +122,8 @@ width_t vmem_width;
 vsew_t vmem_eew;
 vsew_t twice_vsew;
 
+vsew_t veew_src1, veew_src2, veew_dest;
+
 assign vmem_width = width_t'(vcu_if.instr[14:12]);
 assign vmem_eew = (vmem_width == WIDTH8 ) ? SEW8 :
                   (vmem_width == WIDTH16) ? SEW16 :
@@ -135,20 +140,25 @@ assign vnarrowing = (vopi == VNSRL) ||
 assign twice_vsew = vsew_t'(vcu_if.vsew << 1);
 
 // For indexed store instructions, vs3 is data which uses vtype.vsew
-assign vcu_if.vcontrol.veew_src1 = vcu_if.vsew;
+assign veew_src1 = vcu_if.vsew;
 
 // For indexed load/store instructions, addr is vs2 which uses instr.width
-assign vcu_if.vcontrol.veew_src2 = vcu_if.vcontrol.vindexed ? vmem_eew :
-                                   vnarrowing               ? twice_vsew :
-                                                              vcu_if.vsew;
+assign veew_src2 = vindexed   ? vmem_eew :
+                   vnarrowing ? twice_vsew :
+                                vcu_if.vsew;
 
 // For strided (including unit stride) load/store instructions, data uses instr.width
 // For indexed load instructions, vd is data which uses vtype.vsew
-assign vcu_if.vcontrol.veew_dest = vcu_if.vcontrol.vunitstride ? vmem_eew :
-                                   vcu_if.vcontrol.vstrided    ? vmem_eew :
-                                   vcu_if.vcontrol.vindexed    ? vcu_if.vsew :
-                                   vwidening                   ? twice_vsew :
-                                                                 vcu_if.vsew;
+assign veew_dest = vunitstride ? vmem_eew :
+                   vstrided    ? vmem_eew :
+                   vindexed    ? vcu_if.vsew :
+                   vwidening   ? twice_vsew :
+                                 vcu_if.vsew;
+
+assign vcu_if.vcontrol.veew_src1 = veew_src1;
+assign vcu_if.vcontrol.veew_src2 = veew_src2;
+assign vcu_if.vcontrol.veew_dest = veew_dest;
+
 
 // OPI* execution unit control signals
 vexec_t vexec_opi;
@@ -206,17 +216,22 @@ always_comb begin
 end
 
 // Memory signals
-logic vmeminstr;
+logic vmeminstr, vmemrden, vmemwren, vunitstride, vstrided, vindexed;
 
-assign vcu_if.vcontrol.vmemrden = (vmajoropcode == VMOC_LOAD);
-assign vcu_if.vcontrol.vmemwren = (vmajoropcode == VMOC_STORE);
+assign vmemrden = (vmajoropcode == VMOC_LOAD);
+assign vmemwren = (vmajoropcode == VMOC_STORE);
 
-assign vcu_if.vcontrol.vunitstride = (mop == MOP_UNIT);
-assign vcu_if.vcontrol.vstrided = (mop == MOP_STRIDED);
-assign vcu_if.vcontrol.vindexed = (mop == MOP_OINDEXED) ||
-                                  (mop == MOP_UINDEXED);
+assign vunitstride = (mop == MOP_UNIT);
+assign vstrided = (mop == MOP_STRIDED);
+assign vindexed = (mop == MOP_OINDEXED) || (mop == MOP_UINDEXED);
 
-assign vmeminstr = (vcu_if.vcontrol.vmemrden || vcu_if.vcontrol.vmemwren);
+assign vmeminstr = (vmemrden || vmemwren);
+
+assign vcu_if.vcontrol.vmemrden = vmemrden;
+assign vcu_if.vcontrol.vmemwren = vmemwren;
+assign vcu_if.vcontrol.vunitstride = vunitstride;
+assign vcu_if.vcontrol.vstrided = vstrided;
+assign vcu_if.vcontrol.vindexed = vindexed;
 
 // uop generation unit
 logic [2:0] vreg_offset;
@@ -225,7 +240,7 @@ rv32v_uop_gen_if vug_if();
 
 assign vug_if.gen = vcu_if.vvalid;
 assign vug_if.stall = vcu_if.stall;
-assign vug_if.veew = vcu_if.vcontrol.veew_dest;
+assign vug_if.veew = veew_dest;
 assign vug_if.vl = vcu_if.vl;
 
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;

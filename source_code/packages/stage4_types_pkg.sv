@@ -129,7 +129,7 @@ package stage4_types_pkg;
     typedef struct packed {
         fetch_out_t if_out; 
         control_t ctrl_out;
-        //vcontrol_t vctrl_out; 
+        vcontrol_t vctrl_out; 
     } uop_t; 
 
 

@@ -179,6 +179,9 @@ def create_include(config):
   bus_define = '`define BUS_INTERFACE_' + bus_type.upper() + '\n'
   include_file.write(bus_define)
 
+  # Handle RV32V_SUPPORTED define
+  include_file.write('`define RV32V_SUPPORTED\n')
+
   # Handling of RISC-MGMT Extensions
   rmgmt_extensions = []
   try:
