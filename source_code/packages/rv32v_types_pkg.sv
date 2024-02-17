@@ -554,7 +554,7 @@ package rv32v_types_pkg;
     logic vunitstride;
     logic vstrided;
     logic vindexed;
-
+    
     // CSR signals
     cfgsel_t vsetvl_type;
     logic vkeep_vl; // if rs1 & rd == 0 
@@ -564,7 +564,7 @@ package rv32v_types_pkg;
   typedef struct packed {
     // lane specific
     rv32i_types_pkg::word_t [3:0] valu_res;
-    rv32i_types_pkg::word_t [3:0] vs2;
+    rv32i_types_pkg::word_t [3:0] vs2; // rename to vs1 (that's how the decode specifies it) 
     logic [3:0] vlane_mask;
 
     // general 
