@@ -22,28 +22,29 @@
 *   Description:  Mappings from vector bank data to appropriate lane  
 */
 
+import rv32v_types_pkg::*;
 import rv32i_types_pkg::*;
 
 module rv32v_read_xbar
 (
     input word_t [3:0] bank_dat, 
-    input logic[1:0] eew,
+    input vsew_t veew,
     input logic[1:0] bank_offset, 
     input logic sign_ext, 
 
     output word_t [3:0] out_dat
 );
 
-typedef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; 
+// typedef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; 
 
 always_comb begin
-    if(EEW_TYPE'(eew) == BYTE_4) begin
+    if(veew == SEW32) begin
         out_dat[0] = bank_dat[0];
         out_dat[1] = bank_dat[1]; 
         out_dat[2] = bank_dat[2]; 
         out_dat[3] = bank_dat[3];  
     end
-    else if(EEW_TYPE'(eew) == BYTE_2) begin
+    else if(veew == SEW16) begin
         out_dat[0] = sign_ext ? { {16{bank_dat[bank_offset][15]}}, bank_dat[bank_offset][15:0] } 
                               : {16'b0, bank_dat[bank_offset][15:0]};
         out_dat[1] = sign_ext ? { {16{bank_dat[bank_offset][31]}}, bank_dat[bank_offset][31:16] } 

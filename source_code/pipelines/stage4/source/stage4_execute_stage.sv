@@ -293,7 +293,7 @@ module stage4_execute_stage (
                 ex_mem_if.ex_mem_reg.zimm       <= ex_in.ctrl_out.zimm;
                 ex_mem_if.ex_mem_reg.rd_m       <= ex_in.ctrl_out.rd;
                 ex_mem_if.ex_mem_reg.load_type  <= ex_in.ctrl_out.load_type;
-                ex_mem_if.ex_mem_reg.csr_addr   <= ex_in.ctrl_out.csr_addr;
+                ex_mem_if.ex_mem_reg.csr_addr   <= ex_in.ctrl_out.csr_addr; // NOTE: Change this for vsetvl insturctions
 
                 // Word sized members
                 ex_mem_if.ex_mem_reg.brj_addr   <= brj_addr;
