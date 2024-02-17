@@ -68,7 +68,6 @@ module priv_1_12_vector (
         vtype_next = vtype;
         priv_ext_if.value_out = '0;
         priv_ext_if.ack = 1'b0;
-        priv_ext_if.invalid_csr = 1'b0;
 
         casez (priv_ext_if.csr_addr)
             VSTART_ADDR: begin
@@ -111,28 +110,22 @@ module priv_1_12_vector (
                         vtype_next.vlmul = prv_intern_if.new_vtype.vlmul;
                         vtype_next.vsew = prv_intern_if.new_vtype.vsew;
                     end
-                end else if (priv_ext_if.csr_active) begin  // can only update via vset{i}vl{i}
-                    priv_ext_if.invalid_csr = 1'b1;
                 end
                 // if vl was updated, return new vl value
                 priv_ext_if.value_out = vl_next;
                 priv_ext_if.ack = 1'b1;
             end
             VTYPE_ADDR: begin
-                if (priv_ext_if.csr_active) begin
-                    priv_ext_if.invalid_csr = 1'b1;
-                end
                 priv_ext_if.value_out = vtype;
                 priv_ext_if.ack = 1'b1;
             end
             VLENB_ADDR: begin
-                if (priv_ext_if.csr_active) begin
-                    priv_ext_if.invalid_csr = 1'b1;
-                end
                 priv_ext_if.value_out = VLENB;
                 priv_ext_if.ack = 1'b1;
             end
         endcase
     end
+
+    assign priv_ext_if.invalid_csr = 1'b0;
 
 endmodule // priv_1_12_vector
