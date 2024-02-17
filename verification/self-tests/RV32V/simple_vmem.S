@@ -4,5 +4,4 @@
 # unit strided, strided, indexed 
 
 
-# exchanges values through memory and load into scalar registers
-
+# exchanges values through memory and load into scalar registers and check
