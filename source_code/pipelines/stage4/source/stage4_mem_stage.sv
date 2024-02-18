@@ -108,8 +108,7 @@ module stage4_mem_stage (
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
     assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
-
-    // TODO: stall on (serial_if.vcurr_lane == 0) & vmemop
+    assign hazard_if.serializer_stall = (serial_if.vcurr_lane != (NUM_LANES-1)) & vmemop;
 
     assign halt = ex_mem_if.ex_mem_reg.halt;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
@@ -163,43 +162,52 @@ module stage4_mem_stage (
     * Writeback Muxing *
     *******************/
     assign ex_mem_if.brj_addr = ex_mem_if.ex_mem_reg.brj_addr;
-    assign ex_mem_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
+    assign ex_mem_if.reg_write = (ex_mem_if.ex_mem_reg.reg_write & (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_SCALAR))
+                                 | ex_mem_if.vexmem.sregwen;
     assign ex_mem_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
-    assign ex_mem_if.vwb.vd = ex_mem_if.vexmem.vd_sel.regidx;
+    assign ex_mem_if.vwb.vd = (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? ex_mem_if.ex_mem_reg.rd_m.regidx
+                                                                                : ex_mem_if.vexmem.vd_sel.regidx;
 
     always_comb begin
         // TODO: RISC-MGMT
-        case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd0:    ex_mem_if.reg_wdata = lsc_if.dload_ext;
-            3'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
-            3'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
+        case ({ex_mem_if.vexmem.sregwen, ex_mem_if.ex_mem_reg.w_sel})
+            4'd0:    ex_mem_if.reg_wdata = lsc_if.dload_ext;
+            4'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
+            4'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
+            4'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
+            4'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
+            4'd8:    ex_mem_if.reg_wdata = ex_mem_if.vexmem.valu_res[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
         // Forwarding unit
-        case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
-            3'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
+        case ({ex_mem_if.vexmem.sregwen, ex_mem_if.ex_mem_reg.w_sel})
+            4'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
+            4'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
+            4'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
+            4'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
+            4'd8:    fw_if.rd_mem_data = ex_mem_if.vexmem.valu_res[0];
             default: fw_if.rd_mem_data = '0;
         endcase
     end
 
-    assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} : ex_mem_if.vexmem.valu_res;
+    assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :
+                        (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? {4{ex_mem_if.ex_mem_reg.port_out}} : ex_mem_if.vexmem.valu_res;
 
     always_comb begin
         if (ex_mem_if.vexmem.vmemdren) begin
             casez (serial_if.vcurr_lane)
-                2'd0: vlane_wen = 4'b0001;
-                2'd1: vlane_wen = 4'b0010;
-                2'd2: vlane_wen = 4'b0100;
-                2'd3: vlane_wen = 4'b1000;
-            endcase 
-        end else begin
+                2'd0: vlane_wen = {3'b0, ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[0]      };
+                2'd1: vlane_wen = {2'b0, ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[1], 1'b0};
+                2'd2: vlane_wen = {1'b0, ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[2], 2'b0};
+                2'd3: vlane_wen = {      ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[3], 3'b0};
+            endcase
+        end else if (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) begin
+            vlane_wen = {3'b0, ex_mem_if.ex_mem_reg.reg_write};  // vmv.s.x always to element 0 of vd
+        end else if (ex_mem_if.vexmem.vregwen) begin
             vlane_wen = ex_mem_if.vexmem.vlane_mask;
+        end else begin
+            vlane_wen = '0;
         end
     end
 
@@ -220,7 +228,6 @@ module stage4_mem_stage (
     /**************
     * CPU Tracking
     ***************/
-    /*
     logic wb_stall;
     logic [2:0] funct3;
     logic [11:0] funct12;
@@ -231,6 +238,5 @@ module stage4_mem_stage (
     assign funct12 = ex_mem_if.ex_mem_reg.instr[31:20];
     assign instr_30 = ex_mem_if.ex_mem_reg.instr[30];
     assign wb_stall = hazard_if.ex_mem_stall & ~hazard_if.jump & ~hazard_if.branch; // TODO: Is this right?
-    */
 
 endmodule // stage4_mem_stage

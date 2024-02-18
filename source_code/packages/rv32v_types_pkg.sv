@@ -562,7 +562,7 @@ package rv32v_types_pkg;
 
 
   typedef struct packed {
-    // lane specific 
+    // lane specific
     rv32i_types_pkg::word_t [3:0] valu_res;
     rv32i_types_pkg::word_t [3:0] vs2;
     logic [3:0] vlane_mask;
@@ -570,17 +570,17 @@ package rv32v_types_pkg;
     // general 
     logic vindexed;
     logic [4:0] vuop_num;
-  
     logic vmemdren;
-    logic vmemdwen;  
-    logic vregwen; 
-    vsew_t veew; 
+    logic vmemdwen;
+    logic vregwen;
+    logic sregwen;
+    vsew_t veew;
     rv32i_types_pkg::regsel_t vd_sel;
     logic [1:0] vbank_offset;
 
-    // CSR 
-    logic vsetvl; 
-    logic vkeepvl; 
+    // CSR
+    logic vsetvl;
+    logic vkeepvl;
   } vexmem_t;
 
   typedef struct packed {
