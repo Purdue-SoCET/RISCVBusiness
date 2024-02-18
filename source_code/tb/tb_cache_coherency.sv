@@ -45,11 +45,25 @@ program test
 task init_cache;
     input logic [31:0] addr;
 begin
+    gbif.ren = 1'b0;
+    gbif.wen = 1'b0;
+    gbif.wdata = 32'b0;
+    gbif.addr = 32'b0;
+    gbif.byte_en = 4'b0;
+    bcif.ccIsPresent[1] = 1'b0;
+    bcif.ccdirty[1] = 1'b0;
+    bcif.ccsnoopdone[1] = 1'b1;
+    bcif.ccsnoophit[1] = 1'b0;
+    bcif.ccwrite[1] = 1'b0;
+    bcif.dstore[1] = 32'b0;
+    bcif.daddr[1] = 32'b0;
+    bcif.dWEN[1] = 1'b0;
+    bcif.dREN[1] = 1'b0;
+
     nRST = 1'b0;
     @(negedge CLK);
     nRST = 1'b1;
     @(negedge CLK);
-    wait(!gbif.busy);
 
     gbif.ren = 1'b1;
     gbif.addr = addr;

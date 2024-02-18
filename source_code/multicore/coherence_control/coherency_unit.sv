@@ -115,6 +115,18 @@ module coherency_unit #(
     end
 
     always_comb begin: OUTPUTLOGIC
+        gbif.rdata = 32'hBAD1BAD1;
+        gbif.busy = 1'b1;
+        bcif.ccIsPresent[CPUID] = 1'b0;
+        bcif.ccdirty[CPUID] = 1'b0;
+        bcif.ccsnoopdone[CPUID] = 1'b0;
+        bcif.ccsnoophit[CPUID] = 1'b0;
+        bcif.ccwrite[CPUID] = 1'b0;
+        bcif.dstore[CPUID] = 32'b0;
+        bcif.daddr[CPUID] = 32'b0;
+        bcif.dWEN[CPUID] = 1'b0;
+        bcif.dREN[CPUID] = 1'b0;
+
         case(state)
             IDLE: begin
             end
