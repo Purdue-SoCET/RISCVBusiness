@@ -11,10 +11,12 @@
     #define EXT_ADDR_SET    0xFFFFFFF4
     #define EXT_ADDR_CLEAR  0xFFFFFFF8
     #define MAGIC_ADDR      0xFFFFFFFC
-    
 
+    #define MULTIPLE_ASM_STATEMENTS \
+      asm volatile ("nop"); \
+      asm volatile ("nop"); 
+    
     void print(char *string);
     void put_uint32_hex(uint32_t hex);
-    //void thread_one();
 
 #endif

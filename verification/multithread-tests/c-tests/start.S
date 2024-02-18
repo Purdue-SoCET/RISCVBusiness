@@ -19,3 +19,5 @@ __inf_loop:
 .global flag
 .data
 flag: .word 0xFF
+.global t_count
+t_count: .word 0x00
