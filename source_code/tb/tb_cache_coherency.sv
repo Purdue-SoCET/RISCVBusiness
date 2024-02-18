@@ -55,10 +55,12 @@ begin
     bcif.ccsnoopdone[1] = 1'b1;
     bcif.ccsnoophit[1] = 1'b0;
     bcif.ccwrite[1] = 1'b0;
-    bcif.dstore[1] = 32'b0;
+    bcif.dstore[1] = 64'b0;
     bcif.daddr[1] = 32'b0;
     bcif.dWEN[1] = 1'b0;
     bcif.dREN[1] = 1'b0;
+    bcif.l2load = 32'hBAD1BAD1;
+    bcif.l2state = L2_FREE;
 
     nRST = 1'b0;
     @(negedge CLK);

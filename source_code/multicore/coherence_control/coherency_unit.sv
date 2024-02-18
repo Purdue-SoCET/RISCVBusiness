@@ -29,6 +29,7 @@
 module coherency_unit #(
     parameter ADDR_WIDTH = 32, // Address width for cache lines
     parameter CPUS = 2,        // Number of CPUs
+    parameter BLOCK_SIZE = 2,
     parameter CPUID = 0
 ) (
     input logic CLK, nRST,
@@ -122,7 +123,7 @@ module coherency_unit #(
         bcif.ccsnoopdone[CPUID] = 1'b0;
         bcif.ccsnoophit[CPUID] = 1'b0;
         bcif.ccwrite[CPUID] = 1'b0;
-        bcif.dstore[CPUID] = 32'b0;
+        bcif.dstore[CPUID] = {(BLOCK_SIZE*32){1'b0}};
         bcif.daddr[CPUID] = 32'b0;
         bcif.dWEN[CPUID] = 1'b0;
         bcif.dREN[CPUID] = 1'b0;
