@@ -91,12 +91,14 @@ interface bus_ctrl_if;
     // HACK: dstore becomes multidriven here. memory_controller expects to drive dstore but
     // this is also used when testbenching
     `ifndef VERILATOR
+    `ifndef XCELIUM
     always_comb begin
         for(int i = 0; i < CPUS; i++) begin
             if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
             else dstore[i] = driver_dstore[i];
         end
     end
+    `endif
     `endif
 
     // modports

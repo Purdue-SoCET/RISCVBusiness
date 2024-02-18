@@ -12,15 +12,16 @@
 
 `timescale 1ns/100ps
 
+parameter PERIOD = 10;
+
 module tb_cache_coherency();
-    parameter PERIOD = 10;
     logic CLK = 0, nRST;
     // clock
     always #(PERIOD/2) CLK++; 
 
     generic_bus_if proc_gen_bus_if(); //Processor to cache
     cache_control_if cc_if(); //Processor to cache
-    generic_bus_if mem_gen_bus_if(); //Cache to coherency unit
+    generic_bus_if #(.BLOCK_SIZE(2)) mem_gen_bus_if(); //Cache to coherency unit
     cache_coherence_if d_cache_coherency_if (); //Cache to coherency unit
     bus_ctrl_if bus_ctrl_if(); //Coherency unit to bus
 
@@ -44,6 +45,7 @@ program test
 
 task init_cache;
     input logic [31:0] addr;
+    input logic [63:0] data;
 begin
     gbif.ren = 1'b0;
     gbif.wen = 1'b0;
@@ -59,7 +61,7 @@ begin
     bcif.daddr[1] = 32'b0;
     bcif.dWEN[1] = 1'b0;
     bcif.dREN[1] = 1'b0;
-    bcif.l2load = 32'hBAD1BAD1;
+    bcif.l2load = data;
     bcif.l2state = L2_FREE;
 
     nRST = 1'b0;
@@ -69,6 +71,19 @@ begin
 
     gbif.ren = 1'b1;
     gbif.addr = addr;
+
+    bcif.l2state = L2_BUSY;
+    wait(bcif.l2REN);
+    #(PERIOD);
+    bcif.l2load = data[31:0];
+    bcif.l2state = L2_ACCESS;
+    #(PERIOD);
+    bcif.l2state = L2_BUSY;
+    wait(bcif.l2REN);
+    bcif.l2load = data[63:32];
+    bcif.l2state = L2_ACCESS;
+    #(PERIOD);
+    bcif.l2state = L2_FREE;
 
     wait(!gbif.busy);
 
@@ -85,13 +100,13 @@ initial begin
     tb_test_case = "Transition I -> E";
 
     //Reset to isolate each test case
-    init_cache(32'h80000000);
+    init_cache(32'h80000000, 64'hCAFECAFECAFECAFE);
 
     // Cache sets dREN[I] high
     wait(ccif.dREN == 1'b1);
 
     // Bus transitions IDLE -> GRANT_R
-    #(10); //Some time to pass for snooping
+    #(10 * PERIOD); //Some time to pass for snooping
 
     wait(bcif.ccsnoopdone[1] == 1'b1); // All non-requester CPUs raise ccsnoopdone
     wait(bcif.ccsnoophit[1] == 1'b0); // None raise ccsnoophit
