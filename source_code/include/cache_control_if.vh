@@ -86,15 +86,6 @@ interface cache_control_if;
   modport dcache ( 
     input dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
     output dclear_done, dflush_done,
-
-    //Inserted from bus_ctrl_if.tb modport
-    input   dwait, dload, 
-            ccwait, ccinv, ccsnoopaddr, ccexclusive, 
-            l2addr, l2store, l2REN, l2WEN,
-
-    output  dREN, dWEN, daddr, dstore, 
-            cctrans, ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-            l2load, l2state
   );
 
 endinterface
