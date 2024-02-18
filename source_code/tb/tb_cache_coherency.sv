@@ -7,7 +7,7 @@
 
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
-`include "cache_coherency_if.vh"
+`include "cache_coherence_if.vh"
 `include "bus_ctrl_if.vh"
 
 `timescale 1ns/100ps
@@ -18,9 +18,9 @@ module tb_cache_coherency();
     // clock
     always #(PERIOD/2) CLK++; 
 
-    generic_bus_if.generic_bus proc_gen_bus_if(); //Processor to cache
-    cache_control_if.dcache cc_if(); //Processor to cache
-    generic_bus_if.cpu mem_gen_bus_if(); //Cache to coherency unit
+    generic_bus_if proc_gen_bus_if(); //Processor to cache
+    cache_control_if cc_if(); //Processor to cache
+    generic_bus_if mem_gen_bus_if(); //Cache to coherency unit
     cache_coherence_if d_cache_coherency_if (); //Cache to coherency unit
     bus_ctrl_if bus_ctrl_if(); //Coherency unit to bus
 
@@ -35,9 +35,9 @@ endmodule
 
 program test
 (
-    input CLK, nRST,
+    input CLK, output logic nRST,
     generic_bus_if.generic_bus gbif, //Processor to cache
-    cache_control_if.dcache ccif, //Processor to cache
+    cache_control_if.dcache ccif, //Processor to cache, L1 doesn't contain cache_control_if currently
     generic_bus_if.cpu mbif, //Cache to coherency unit
     cache_coherence_if dcif, //Cache to coherency unit
     bus_ctrl_if bcif  //Coherency unit to bus
@@ -58,34 +58,34 @@ initial begin
 
     gbif.addr = 32'h33311133; 
     gbif.ren = 1'b1; //Coherency unit should go to READ_REQ state
-    wait (dcif.dwait == 1'b0); // Wait for dwait to go low
+    wait (gbif.busy == 1'b0); // Wait for dwait to go low
 
     // Cache sets dREN[I] high
-    wait(ccif.dREN = 1'b1);
+    wait(ccif.dREN == 1'b1);
 
     // Bus transitions IDLE -> GRANT_R
-    bcif.ccsnoopaddr = gbif.daddr;
+    bcif.ccsnoopaddr = gbif.addr;
     bcif.ccwait[1] = 1'b1; // Assert ccwait for all non-requester CPUs
     #(10); //Some time to pass for snooping
 
-    wait(dcif.ccsnoopdone[1] = 1'b1); // All non-requester CPUs raise ccsnoopdone
-    wait(dcif.ccsnoophit[1] = 1'b0); // None raise ccsnoophit
+    wait(bcif.ccsnoopdone[1] == 1'b1); // All non-requester CPUs raise ccsnoopdone
+    wait(bcif.ccsnoophit[1] == 1'b0); // None raise ccsnoophit
 
     // Transition SNOOP_R -> READ_L2
     bcif.l2REN = 1; // Bus sets l2REN high
-    wait(ccif.dload = bcif.l2load); // Cache loads data from L2
+    wait(ccif.dload == bcif.l2load); // Cache loads data from L2
 
     // Transition BUS_TO_CACHE
-    wait(dcif.dwait = 0); // Bus sets dwait low
-    wait(dcif.ccexclusive = 1); // Bus sets ccexclusive high
+    wait(bcif.dwait == 0); // Bus sets dwait low
+    wait(bcif.ccexclusive == 1); // Bus sets ccexclusive high
 
     // Transition back to IDLE, de-assert signals
     bcif.ccwait = 0; // De-assert ccwait signals
     @(posedge CLK); // Wait for the changes to propagate
 
     //Look at the coherency unit outputs
-    assert(dcif.cache_transfer == EXCLUSIVE) $display("Cache transfer state correct");
-    else $error("Cache transfer state incorrect")
+    assert(dcif.state_transfer == EXCLUSIVE) $display("Cache transfer state correct");
+    else $error("Cache transfer state incorrect");
 
 end
 

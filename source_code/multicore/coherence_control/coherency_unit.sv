@@ -29,7 +29,7 @@
 module coherency_unit #(
     parameter ADDR_WIDTH = 32, // Address width for cache lines
     parameter CPUS = 2,        // Number of CPUs
-    parameter CPUID
+    parameter CPUID = 0
 ) (
     input logic CLK, nRST,
     bus_ctrl_if.tb bcif,            // Bus Controller Interface
