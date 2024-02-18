@@ -18,5 +18,7 @@
     
     void print(char *string);
     void put_uint32_hex(uint32_t hex);
+    void bubble_sort(volatile int* arr, volatile int size);
+    int check_sort(volatile int* arr, volatile int size);
 
 #endif

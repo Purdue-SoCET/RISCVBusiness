@@ -2,11 +2,11 @@
 .global _start
 _start:
     li sp, 0x8000F000
-    j thread_one
+    j thread1
     li sp, 0x800F0000
-    j thread_two
+    j thread2
     li sp, 0x80F00000
-    j thread_three
+    j thread3
 
 .global done
 done:

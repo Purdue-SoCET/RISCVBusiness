@@ -2,18 +2,24 @@
 #include "utility.h"
 
 extern volatile int flag;
+extern volatile int t_count;
 
-void thread_one() {
+void thread1() {
   volatile int x = 0;
+
+  t_count += 1;
   asm volatile("j done");
 }
 
-void thread_two() {
+void thread2() {
   volatile int x = 0;
+
+
+  t_count += 1;
   asm volatile("j done");
 }
 
-void thread_three() {
+void thread3() {
   volatile int x = 0;
   asm volatile("j done");
 }

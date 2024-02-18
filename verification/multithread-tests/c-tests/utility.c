@@ -23,3 +23,26 @@ void put_uint32_hex(uint32_t x) {
     }
     print(buf);
 }
+
+void bubble_sort(volatile int* arr, volatile int size){ 
+    volatile int i, j;
+    for (i = 0; i < size-1; i++) {
+        for (j = 0; j < size-i-1; j++) {
+            if (*(arr + j) > *(arr + j + 1)) {
+                // Swap
+                volatile int temp = *(arr + j);
+                *(arr + j) = *(arr + j + 1);
+                *(arr + j + 1) = temp;
+            }
+        }
+    }
+}
+
+int check_sort(volatile int* arr, volatile int size) {
+    for (volatile int i = 0; i < size - 1; i++) {
+        if (arr[i] > arr[i + 1]) {
+            return 0;
+        }
+    }
+    return 1;
+}
