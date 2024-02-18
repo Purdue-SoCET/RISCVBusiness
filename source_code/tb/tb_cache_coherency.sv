@@ -32,7 +32,6 @@ module tb_cache_coherency();
 
 endmodule
 
-
 program test
 (
     input CLK, output logic nRST,
@@ -42,6 +41,25 @@ program test
     cache_coherence_if dcif, //Cache to coherency unit
     bus_ctrl_if bcif  //Coherency unit to bus
 );
+
+task init_cache;
+    input logic [31:0] addr;
+begin
+    nRST = 1'b0;
+    @(negedge CLK);
+    nRST = 1'b1;
+    @(negedge CLK);
+    wait(!gbif.busy);
+
+    gbif.ren = 1'b1;
+    gbif.addr = addr;
+
+    wait(!gbif.busy);
+
+    gbif.ren = 1'b0;
+end
+endtask
+
 integer tb_test_num;
 string tb_test_case;
 
@@ -51,28 +69,18 @@ initial begin
     tb_test_case = "Transition I -> E";
 
     //Reset to isolate each test case
-    nRST = 1'b0;
-    @(posedge CLK);
-    nRST = 1'b1;
-    @(posedge CLK);
-
-    gbif.addr = 32'h33311133; 
-    gbif.ren = 1'b1; //Coherency unit should go to READ_REQ state
-    wait (gbif.busy == 1'b0); // Wait for dwait to go low
+    init_cache(32'h80000000);
 
     // Cache sets dREN[I] high
     wait(ccif.dREN == 1'b1);
 
     // Bus transitions IDLE -> GRANT_R
-    bcif.ccsnoopaddr = gbif.addr;
-    bcif.ccwait[1] = 1'b1; // Assert ccwait for all non-requester CPUs
     #(10); //Some time to pass for snooping
 
     wait(bcif.ccsnoopdone[1] == 1'b1); // All non-requester CPUs raise ccsnoopdone
     wait(bcif.ccsnoophit[1] == 1'b0); // None raise ccsnoophit
 
     // Transition SNOOP_R -> READ_L2
-    bcif.l2REN = 1; // Bus sets l2REN high
     wait(ccif.dload == bcif.l2load); // Cache loads data from L2
 
     // Transition BUS_TO_CACHE
@@ -80,7 +88,6 @@ initial begin
     wait(bcif.ccexclusive == 1); // Bus sets ccexclusive high
 
     // Transition back to IDLE, de-assert signals
-    bcif.ccwait = 0; // De-assert ccwait signals
     @(posedge CLK); // Wait for the changes to propagate
 
     //Look at the coherency unit outputs
@@ -113,7 +120,6 @@ initial begin
 
     // Bus transitions IDLE -> GRANT_R
     bcif.ccsnoopaddr = gbif.addr;
-    bcif.ccwait[1] = 1'b1; 
     #(10); // Allow time for state change and snooping
 
     bcif.ccsnoopdone[1] = 1'b1; // Snooping complete in the other CPU
@@ -131,7 +137,6 @@ initial begin
     wait(bcif.ccexclusive[1] == 0); // Check that it is not exclusive 
 
     // De-assert signals to return to IDLE state
-    bcif.ccwait[1] = 0; // Clear wait signals for non-requester CPUs
     @(posedge CLK);
 
     if (dcif.state_transfer == SHARED) begin // Assuming 'state' correctly reflects the cache state
@@ -162,9 +167,11 @@ initial begin
     wait(ccif.dREN == 1'b1 && ccif.ccwrite == 1'b1); // Ensure dREN and ccwrite are asserted
 
     // Bus transitions IDLE -> GRANT_RX
-    bcif.ccsnoopaddr = gbif.addr;
-    bcif.ccwait[1] = 1'b1;
-    bcif.ccinv[1] = 1'b1; 
+    if (bcif.ccinv[1] == 1'b1) begin
+        $display("%s received correct ccinv", tb_test_case);
+    end else begin
+        $error("%s failed: did not receive correct ccinv", tb_test_case);
+    end
     #(10); // Allow time for snooping and invalidation
 
     bcif.ccsnoopdone[1] = 1'b1; // Indicate that snooping has completed
@@ -177,14 +184,17 @@ initial begin
     wait(ccif.dload == bcif.dstore[1]); 
 
     #(10); // Wait to simulate time for other caches to invalidate their blocks
-    bcif.ccinv[1] = 1'b0; // De-assert invalidate signal
+    if (bcif.ccinv[1] == 1'b0) begin
+        $display("%s received correct ccinv", tb_test_case);
+    end else begin
+        $error("%s failed: did not receive correct ccinv", tb_test_case);
+    end
 
     // Transition to IDLE after data transfer
     wait(bcif.dwait == 0); // Check if the bus transaction is completed
     wait(bcif.ccexclusive[1] == 0); // Check that it's not exclusive access
 
     // De-assert signals to return to IDLE state
-    bcif.ccwait[1] = 0;
     @(posedge CLK);
 
     // Validate final state
@@ -208,25 +218,35 @@ initial begin
     @(posedge CLK);
 
     bcif.ccsnoopaddr = 32'hDDEE11FF;
-    bcif.ccwait[0] = 1'b1;
 
     #(10);
 
-    bcif.ccsnoopdone[0] = {CPUS{1'b1}}; // All non-requester CPUs have finished snooping
-    bcif.ccsnoophit[0] = 1'b1; // This CPU has the data (others would be 0)
-    wait(bcif.dstore[1] == ccif.requested_data);
+    wait(bcif.ccsnoopdone[0] == {CPUS{1'b1}}); // All non-requester CPUs have finished snooping
+    wait(bcif.ccsnoophit[0] == 1'b1); // This CPU has the data (others would be 0)
+    wait(bcif.dstore[1] == dcif.requested_data);
     wait(bcif.ccdirty[0] == 1'b1);
 
-    bcif.l2WEN = 1'b1;
-    bcif.l2addr = bcif.ccsnoopaddr; 
+    // bcif.l2WEN = 1'b1;
+    // bcif.l2addr = bcif.ccsnoopaddr; 
     bcif.l2load = ccif.dstore;
     #(20);
+    if (bcif.l2WEN == 1'b1) begin
+        $display("%s received correct l2WEN", tb_test_case);
+    end else begin
+        $error("%s failed: Did not receive correct l2WEN", tb_test_case);
+    end
+    if (bcif.l2store == /* TODO */ 1'b1) begin
+        $display("%s received correct l2store", tb_test_case);
+    end else begin
+        $error("%s failed: Did not receive correct l2store", tb_test_case);
+    end
+
 
     ccif.ccdirty[0] = 1'b0; // Clear the dirty flag 
 
     // The bus updates after the writeback and sharing process
-    bcif.ccexclusive = 1'b0; // Exclusive flag is cleared as the data is now shared
-    bcif.dwait[0] = 1'b0; // Clear the wait signal for the requester to proceed
+    // bcif.ccexclusive = 1'b0; // Exclusive flag is cleared as the data is now shared
+    // bcif.dwait[0] = 1'b0; // Clear the wait signal for the requester to proceed
 
     if (dcif.state_transfer != SHARED) begin
         $error("%s failed: Cache did not transition to SHARED state after snooping", tb_test_case);
