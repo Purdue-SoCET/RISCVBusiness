@@ -46,7 +46,7 @@ integer tb_test_num;
 string tb_test_case;
 
 initial begin
-    //Test case 1: Transition I -> E
+//Test case 1: Transition I -> E
     tb_test_num = 1;
     tb_test_case = "Transition I -> E";
 
@@ -84,9 +84,157 @@ initial begin
     @(posedge CLK); // Wait for the changes to propagate
 
     //Look at the coherency unit outputs
-    assert(dcif.state_transfer == EXCLUSIVE) $display("Cache transfer state correct");
-    else $error("Cache transfer state incorrect");
+    if (dcif.state_transfer == EXCLUSIVE) begin // Assuming 'state' correctly reflects the cache state
+        $display("%s passed", tb_test_case);
+    end else begin
+         $error("Cache transfer state incorrect");
+    end
 
+    gbif.ren = 1'b0; //Turn off read request from processor
+
+// Test case 2: Transition I -> S
+    #(50);
+    tb_test_num = tb_test_num + 1;
+    tb_test_case = "Transition I -> S";
+
+    // Reset to isolate each test case
+    nRST = 1'b0;
+    @(posedge CLK);
+    nRST = 1'b1;
+    @(posedge CLK);
+
+    // Processor i read, cache miss.
+    gbif.addr = 32'h44422244;
+    gbif.ren = 1'b1; // Coherency unit should go to READ_REQ
+    wait (gbif.busy == 1'b0); 
+
+    // Wait for the cache to recognize the read request
+    wait(ccif.dREN == 1'b1); // Assuming dREN goes high indicating a read request to the cache
+
+    // Bus transitions IDLE -> GRANT_R
+    bcif.ccsnoopaddr = gbif.addr;
+    bcif.ccwait[1] = 1'b1; 
+    #(10); // Allow time for state change and snooping
+
+    bcif.ccsnoopdone[1] = 1'b1; // Snooping complete in the other CPU
+    bcif.ccsnoophit[1] = 1'b1; // Clean copy exists in the other Cache
+
+    // Transition SNOOP_R -> TRANSFER_R
+    bcif.dstore[1] = {8{32'hA5A5A5A5}}; 
+
+    // BUS_TO_CACHE transfer
+    wait(bcif.dload == bcif.dstore[1]); 
+    wait(bcif.l2store == bcif.dstore[1]); 
+
+    // Transition to IDLE after data transfer
+    wait(bcif.dwait == 0); // Check if the bus transaction is completed
+    wait(bcif.ccexclusive[1] == 0); // Check that it is not exclusive 
+
+    // De-assert signals to return to IDLE state
+    bcif.ccwait[1] = 0; // Clear wait signals for non-requester CPUs
+    @(posedge CLK);
+
+    if (dcif.state_transfer == SHARED) begin // Assuming 'state' correctly reflects the cache state
+        $display("%s passed", tb_test_case);
+    end else begin
+        $error("%s failed: Cache did not transition to SHARED state", tb_test_case);
+    end
+
+    gbif.ren = 1'b0; // Reset read request from the processor
+
+// Test case 3: Transition I -> M
+    #(50);
+    tb_test_num = tb_test_num + 1;
+    tb_test_case = "Transition I -> M";
+
+    // Reset to isolate each test case
+    nRST = 1'b0;
+    @(posedge CLK);
+    nRST = 1'b1;
+    @(posedge CLK);
+
+    // Processor i read, cache miss. Set up the read request
+    gbif.addr = 32'hAA551343;
+    gbif.wen = 1'b1; // Coherency unit should go to WRITE_REQ
+    wait (gbif.busy == 1'b0); 
+
+    // Wait for the cache to acknowledge the write request
+    wait(ccif.dREN == 1'b1 && ccif.ccwrite == 1'b1); // Ensure dREN and ccwrite are asserted
+
+    // Bus transitions IDLE -> GRANT_RX
+    bcif.ccsnoopaddr = gbif.addr;
+    bcif.ccwait[1] = 1'b1;
+    bcif.ccinv[1] = 1'b1; 
+    #(10); // Allow time for snooping and invalidation
+
+    bcif.ccsnoopdone[1] = 1'b1; // Indicate that snooping has completed
+    bcif.ccsnoophit[1] = 1'b1; // Indicate that a clean copy was found in another cache
+
+    // Transition SNOOP_RX -> TRANSFER_RX
+    bcif.dstore[1] = 32'hB5B5B5B5;
+
+    // Simulate BUS_TO_CACHE transfer
+    wait(ccif.dload == bcif.dstore[1]); 
+
+    #(10); // Wait to simulate time for other caches to invalidate their blocks
+    bcif.ccinv[1] = 1'b0; // De-assert invalidate signal
+
+    // Transition to IDLE after data transfer
+    wait(bcif.dwait == 0); // Check if the bus transaction is completed
+    wait(bcif.ccexclusive[1] == 0); // Check that it's not exclusive access
+
+    // De-assert signals to return to IDLE state
+    bcif.ccwait[1] = 0;
+    @(posedge CLK);
+
+    // Validate final state
+    if (dcif.state_transfer == MODIFIED) begin // Assuming 'state' correctly reflects the cache state
+        $display("%s passed", tb_test_case);
+    end else begin
+        $error("%s failed: Cache did not transition to MODIFIED state", tb_test_case);
+    end
+
+    gbif.wen = 1'b0; // Reset write request from the processor
+
+//Test case 4: M -> S
+    #(50);
+    tb_test_num = tb_test_num + 1;
+    tb_test_case = "Transition M -> S";
+
+    // Reset to isolate each test case
+    nRST = 1'b0;
+    @(posedge CLK);
+    nRST = 1'b1;
+    @(posedge CLK);
+
+    bcif.ccsnoopaddr = 32'hDDEE11FF;
+    bcif.ccwait[0] = 1'b1;
+
+    #(10);
+
+    bcif.ccsnoopdone[0] = {CPUS{1'b1}}; // All non-requester CPUs have finished snooping
+    bcif.ccsnoophit[0] = 1'b1; // This CPU has the data (others would be 0)
+    wait(bcif.dstore[1] == ccif.requested_data);
+    wait(bcif.ccdirty[0] == 1'b1);
+
+    bcif.l2WEN = 1'b1;
+    bcif.l2addr = bcif.ccsnoopaddr; 
+    bcif.l2load = ccif.dstore;
+    #(20);
+
+    ccif.ccdirty[0] = 1'b0; // Clear the dirty flag 
+
+    // The bus updates after the writeback and sharing process
+    bcif.ccexclusive = 1'b0; // Exclusive flag is cleared as the data is now shared
+    bcif.dwait[0] = 1'b0; // Clear the wait signal for the requester to proceed
+
+    if (dcif.state_transfer != SHARED) begin
+        $error("%s failed: Cache did not transition to SHARED state after snooping", tb_test_case);
+    end else begin
+        $display("%s passed", tb_test_case);
+    end
+
+    
 end
 
 endprogram
