@@ -43,6 +43,10 @@ module cpu_tracker (
     import rv32m_pkg::*;
 
     parameter int CPUID = 0;
+    parameter logic [31:0] NUM_HARTS = 32'h3;
+
+    // multithreading statistics
+    integer inst_count[NUM_HARTS-1:0];
 
     integer fptr;
     string instr_mnemonic, output_str, src1, src2, dest, operands;
@@ -51,6 +55,9 @@ module cpu_tracker (
     assign pc64 = {{32{1'b0}}, pc};
     initial begin : INIT_FILE
         fptr = $fopen(`TRACE_FILE_NAME, "w");
+        for(integer i = 0; i < NUM_HARTS; i = i + 1) begin
+            inst_count[i] = 0;
+        end
     end
 
     always_comb begin
@@ -265,10 +272,14 @@ module cpu_tracker (
             $sformat(temp_str, "core%d: 0x%h (0x%h)", hart_id, pc64, instr);
             $sformat(output_str, "%s %s %s\n", temp_str, instr_mnemonic, operands);
             $fwrite(fptr, output_str);
+            if(instr !=  32'h00000013 && instr != 32'hffdff06f) inst_count[hart_id] = inst_count[hart_id] + 1; // don't include insts in thread loop
         end
     end
 
     final begin : CLOSE_FILE
+        for(integer i = 0; i < NUM_HARTS; i = i + 1) begin
+            $fwrite(fptr, "core%d: %d instructions executed\n", i, inst_count[i]);
+        end
         $fclose(fptr);
     end
 

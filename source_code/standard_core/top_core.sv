@@ -41,7 +41,7 @@ module top_core #(
         // verilator public
         get_x28 = 1;
         for(int i = 0; i < NUM_HARTS; i = i + 1) begin
-            if(get_x28 & CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[i][28] != 1) begin
+            if((get_x28 & CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[i][28]) != 1) begin
               get_x28 = 0;
             end
         end

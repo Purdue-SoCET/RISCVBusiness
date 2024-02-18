@@ -153,9 +153,12 @@
   add t2, t2, t4; \
   addi t5, t5, 1; \
   bne  t5, t1, thread_add_loop; \
-  bne t2, t1, thread_wait; \
+  bne t2, t1, thread_loop; \
   threads_done: \
-  j done; 
+  j done; \
+  thread_loop:  \
+  nop; \
+  j thread_loop;
 
 //-----------------------------------------------------------------------
 // End Macro

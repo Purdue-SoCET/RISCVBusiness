@@ -90,16 +90,6 @@ module stage3_fetch_stage (
             : pc4or2[i]))));
     end endgenerate
 
-    // always_ff @(posedge CLK, negedge nRST) begin
-    //     if (~nRST) begin
-    //         pc_if.npc[0] <= RESET_PC + 32'h4;
-    //         pc_if.npc[1] <= RESET_PC + 32'h8;
-    //         pc_if.npc[2] <= RESET_PC + 32'hC;
-    //     end else begin // if (hazard_if.pc_en /*| rv32cif.done_earlier*/)
-    //         pc_if.npc[mem_fetch_if.ex_mem_reg.hart_id] <= next_npc;
-    //     end
-    // end
-
     //Instruction Access logic
     assign hazard_if.i_mem_busy = igen_bus_if.busy && !fault_insn;
     assign igen_bus_if.addr = rv32cif.rv32c_ena ? rv32cif.imem_pc : pc_if.pc[hart_selector_if.hart_id];
