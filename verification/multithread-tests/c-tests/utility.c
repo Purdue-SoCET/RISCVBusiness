@@ -38,21 +38,11 @@ void bubble_sort(volatile int* arr, volatile int size){
     }
 }
 
-void thread1() {
-    int arr[] = {64, 34, 25, 12, 22, 11, 90, 2};
-    bubble_sort(arr, 8);
-    return;
-}
-
-void thread2() {
-    int arr[] = {45, 12, 78, 34, 91, 27, 63, 50};
-    bubble_sort(arr, 8);
-    return;
-};
-
-
-void thread3() {
-    int arr[] = {88, 17, 42, 56, 29, 71, 95, 10};
-    bubble_sort(arr, 8);
-    return;
+int check_sort(volatile int* arr, volatile int size) {
+    for (volatile int i = 0; i < size - 1; i++) {
+        if (arr[i] > arr[i + 1]) {
+            return 0;
+        }
+    }
+    return 1;
 }

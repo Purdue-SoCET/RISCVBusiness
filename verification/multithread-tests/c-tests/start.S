@@ -2,7 +2,11 @@
 .global _start
 _start:
     li sp, 0x8000F000
-    jal main
+    j thread1
+    li sp, 0x800F0000
+    j thread2
+    li sp, 0x80F00000
+    j thread3
 
 .global done
 done:
