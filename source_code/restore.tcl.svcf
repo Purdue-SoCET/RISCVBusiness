@@ -1,0 +1,218 @@
+# SimVision Command Script (Sun Feb 18 02:49:16 PM EST 2024)
+#
+# Version 21.09.s008
+#
+# You can restore this configuration with:
+#
+#      xrun packages/alu_types_pkg.sv packages/machine_mode_types_1_11_pkg.sv packages/machine_mode_types_1_12_pkg.sv packages/machine_mode_types_1_7_pkg.sv packages/machine_mode_types_pkg.sv packages/pma_types_1_12_pkg.sv packages/pmp_types_1_12_pkg.sv packages/rv32a_pkg.sv packages/rv32i_types_pkg.sv packages/rv32m_pkg.sv caches/l1/l1_cache.sv multicore/coherence_control/coherency_unit.sv standard_core/bus_ctrl.sv tb/tb_cache_coherency.sv standard_core/cache_coh_wrapper.sv caches/sram/sram.sv -incdir include/ -access +rwc -input restore.tcl
+#
+
+
+#
+# Preferences
+#
+preferences set toolbar-Standard-WatchWindow {
+  usual
+  shown 0
+}
+preferences set plugin-enable-svdatabrowser-new 1
+preferences set toolbar-Windows-WatchWindow {
+  usual
+  shown 0
+}
+preferences set toolbar-Standard-Console {
+  usual
+  position -pos 1
+}
+preferences set toolbar-Search-Console {
+  usual
+  position -pos 2
+}
+preferences set plugin-enable-groupscope 0
+preferences set plugin-enable-interleaveandcompare 0
+preferences set plugin-enable-waveformfrequencyplot 0
+preferences set toolbar-SimControl-WatchWindow {
+  usual
+  shown 0
+}
+preferences set toolbar-TimeSearch-WatchWindow {
+  usual
+  shown 0
+}
+
+#
+# Simulator
+#
+database require simulator -hints {
+	simulator "xrun packages/alu_types_pkg.sv packages/machine_mode_types_1_11_pkg.sv packages/machine_mode_types_1_12_pkg.sv packages/machine_mode_types_1_7_pkg.sv packages/machine_mode_types_pkg.sv packages/pma_types_1_12_pkg.sv packages/pmp_types_1_12_pkg.sv packages/rv32a_pkg.sv packages/rv32i_types_pkg.sv packages/rv32m_pkg.sv caches/l1/l1_cache.sv multicore/coherence_control/coherency_unit.sv standard_core/bus_ctrl.sv tb/tb_cache_coherency.sv standard_core/cache_coh_wrapper.sv caches/sram/sram.sv -incdir include/ -gui -access +rwc -input restore.tcl"
+}
+#
+# Groups
+#
+catch {group new -name {Proc gbif} -overlay 0}
+catch {group new -name {Cache State} -overlay 0}
+catch {group new -name {Cache to CU gbif} -overlay 0}
+catch {group new -name {Group 4} -overlay 0}
+catch {group new -name {Coherence unit} -overlay 0}
+catch {group new -name Bus -overlay 0}
+catch {group new -name bcif -overlay 0}
+group using {Proc gbif}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_cache_coherency.proc_gen_bus_if.addr[31:0]}  \
+     simulator::tb_cache_coherency.proc_gen_bus_if.busy  \
+     {simulator::tb_cache_coherency.proc_gen_bus_if.byte_en[3:0]}  \
+     {simulator::tb_cache_coherency.proc_gen_bus_if.rdata[31:0]}  \
+     simulator::tb_cache_coherency.proc_gen_bus_if.ren  \
+     {simulator::tb_cache_coherency.proc_gen_bus_if.wdata[31:0]}  \
+     simulator::tb_cache_coherency.proc_gen_bus_if.wen 
+group using {Cache State}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     simulator::tb_cache_coherency.DUT.dcache.state  \
+     simulator::tb_cache_coherency.DUT.dcache.hit  \
+     simulator::tb_cache_coherency.DUT.dcache.pass_through  \
+     simulator::tb_cache_coherency.DUT.dcache.sramRead 
+group using {Cache to CU gbif}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.addr[31:0]}  \
+     simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.busy  \
+     {simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.byte_en[3:0]}  \
+     {simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.rdata[31:0]}  \
+     simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.ren  \
+     {simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.wdata[31:0]}  \
+     simulator::tb_cache_coherency.mem_gen_bus_if.generic_bus.wen 
+group using {Group 4}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group using {Coherence unit}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_cache_coherency.DUT.d_coherence_unit.state[2:0]} 
+group using Bus
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     simulator::tb_cache_coherency.DUT.bus.state 
+group using bcif
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccIsPresent[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccdirty[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccexclusive[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccinv[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccsnoopaddr[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccsnoopdone[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccsnoophit[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccwait[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.ccwrite[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.dREN[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.dWEN[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.daddr[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.dload[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.dstore[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.dwait[1:0]}  \
+     simulator::tb_cache_coherency.bus_ctrl_if.cc.l2REN  \
+     simulator::tb_cache_coherency.bus_ctrl_if.cc.l2WEN  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.l2addr[31:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.l2load[63:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.l2state[1:0]}  \
+     {simulator::tb_cache_coherency.bus_ctrl_if.cc.l2store[63:0]} 
+
+#
+# Mnemonic Maps
+#
+mmap new  -reuse -name {Boolean as Logic} -radix %b -contents {{%c=FALSE -edgepriority 1 -shape low}
+{%c=TRUE -edgepriority 1 -shape high}}
+mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor orange -label REG:%x -linecolor yellow -shape bus}
+{%x=1F -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=* -label %x -linecolor gray -shape bus}}
+
+#
+# Design Browser windows
+#
+if {[catch {window new WatchList -name "Design Browser 1" -geometry 1479x837+6+2}] != ""} {
+    window geometry "Design Browser 1" 1479x837+6+2
+}
+window target "Design Browser 1" on
+browser using {Design Browser 1}
+browser set -scope  simulator::tb_cache_coherency.DUT.bus 
+browser set \
+    -signalsort name
+browser yview see  simulator::tb_cache_coherency.DUT.bus 
+browser timecontrol set -lock 0
+
+#
+# Waveform windows
+#
+if {[catch {window new WaveWindow -name "Waveform 1" -geometry 1431x804+20+21}] != ""} {
+    window geometry "Waveform 1" 1431x804+20+21
+}
+window target "Waveform 1" on
+waveform using {Waveform 1}
+waveform sidebar visibility partial
+waveform set \
+    -primarycursor TimeA \
+    -signalnames name \
+    -signalwidth 175 \
+    -units ps \
+    -valuewidth 101
+waveform baseline set -time 0
+
+
+set groupId0 [waveform add -groups {{Proc gbif}}]
+
+
+set groupId0 [waveform add -groups {{Cache State}}]
+
+
+set groupId0 [waveform add -groups {{Cache to CU gbif}}]
+waveform hierarchy collapse $groupId0
+
+
+set groupId0 [waveform add -groups {{Coherence unit}}]
+
+
+set groupId0 [waveform add -groups Bus]
+
+
+set groupId0 [waveform add -groups bcif]
+
+
+waveform xview limits 38600ps 2000000ps
+
+#
+# Waveform Window Links
+#
+
+#
+# Console windows
+#
+console set -windowname Console
+window geometry Console 730x250+261+564
+
+#
+# Layout selection
+#
+
