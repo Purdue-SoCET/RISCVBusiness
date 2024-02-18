@@ -15,6 +15,6 @@
 
     void print(char *string);
     void put_uint32_hex(uint32_t hex);
-    void thread_one();
+    //void thread_one();
 
 #endif

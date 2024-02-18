@@ -23,18 +23,3 @@ void put_uint32_hex(uint32_t x) {
     }
     print(buf);
 }
-
-void thread_one() {
-  volatile int x = 0;
-  asm volatile("j done");
-}
-
-void thread_two() {
-  volatile int x = 0;
-  asm volatile("j done");
-}
-
-void thread_three() {
-  volatile int x = 0;
-  asm volatile("j done");
-}

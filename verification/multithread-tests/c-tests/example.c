@@ -3,9 +3,17 @@
 
 extern volatile int flag;
 
-int main() {
-  volatile int x = 1;
-  thread_one();
+void thread_one() {
+  volatile int x = 0;
+  asm volatile("j done");
+}
 
-  return x;
+void thread_two() {
+  volatile int x = 0;
+  asm volatile("j done");
+}
+
+void thread_three() {
+  volatile int x = 0;
+  asm volatile("j done");
 }
