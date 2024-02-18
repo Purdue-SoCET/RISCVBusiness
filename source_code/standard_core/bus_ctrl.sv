@@ -181,11 +181,9 @@ module bus_ctrl #(
                 nblock_count = block_count;
                 ccif.l2REN = 1;
 
-                if (block_count < BLOCK_SIZE - 1) begin
-                    if (ccif.l2state == L2_ACCESS) begin
-                        nblock_count = block_count + 1;
-                        ndload[block_count * 32+:32] = ccif.l2load;
-                    end
+                if ((block_count < BLOCK_SIZE - 1) && (ccif.l2state == L2_ACCESS)) begin
+                    nblock_count = block_count + 1;
+                    ndload[block_count * 32+:32] = ccif.l2load;
                     nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
                 end else begin
                     block_count_done = ccif.l2state == L2_ACCESS;
@@ -213,7 +211,7 @@ module bus_ctrl #(
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
 
                 ccif.l2WEN = 1;
-                if (block_count < BLOCK_SIZE - 1) begin
+                if ((block_count < BLOCK_SIZE - 1) && (ccif.l2state == L2_ACCESS)) begin
                     nblock_count = block_count + 1;
                     ndload = ccif.dload[requester_cpu];
                     nl2_addr = ccif.l2addr + ((block_count + 1) * 4);

@@ -166,6 +166,10 @@ module coherency_unit #(
                 end else begin //I -> S
                     ccif.state_transfer = cc_end_state'(SHARED);
                 end
+                if (!bcif.dwait[CPUID]) begin
+                    gbif.rdata = bcif.dload[CPUID];
+                    gbif.busy = 1'b0;
+                end
             end
             WRITEBACK: begin
                 bcif.dWEN[CPUID] = 1'b1;
