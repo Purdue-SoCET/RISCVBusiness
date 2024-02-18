@@ -29,6 +29,8 @@
 `include "generic_bus_if.vh"
 `include "cache_coherence_if.vh"
 
+`timescale 1ns/100ps
+
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8

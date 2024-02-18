@@ -10,19 +10,19 @@
 
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
-`include "cache_coherency_if.vh"
+`include "cache_coherence_if.vh"
 `include "bus_ctrl_if.vh"
 
 `timescale 1ns/100ps
 
-module cache_coh_wrapper();
-    
-    logic CLK, nRST;
-    generic_bus_if.generic_bus proc_gen_bus_if(); //Processor to cache
-    cache_control_if.dcache cc_if(); //Processor to cache
-    generic_bus_if.cpu mem_gen_bus_if(); //Cache to coherency unit
-    cache_coherence_if d_cache_coherency_if (); //Cache to coherency unit
-    bus_ctrl_if bus_ctrl_if(); //Coherency unit to bus
+module cache_coh_wrapper(
+    input logic CLK, nRST,
+    generic_bus_if proc_gen_bus_if, //Processor to cache
+    cache_control_if cc_if, //Processor to cache
+    generic_bus_if mem_gen_bus_if, //Cache to coherency unit
+    cache_coherence_if d_cache_coherency_if, //Cache to coherency unit
+    bus_ctrl_if bus_ctrl_if //Coherency unit to bus
+);
 
     l1_cache #(
         .CACHE_SIZE(1024),

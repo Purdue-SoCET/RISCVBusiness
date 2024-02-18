@@ -1,6 +1,8 @@
 `ifndef CACHE_COHERENCE_IF_VH
 `define CACHE_COHERENCE_IF_VH
 
+`timescale 1ns/100ps //Necessary for xcelium, delete if causing errors
+
 typedef enum logic[1:0] {  
     MODIFIED,
     EXCLUSIVE,
@@ -9,6 +11,8 @@ typedef enum logic[1:0] {
 } cc_end_state;
 
 
+
+localparam BLOCK_SIZE = 2; //Need a way to overwrite this when instansiating module
 localparam CACHE_SIZE         = 1024;
 localparam ASSOC              = 1;
 localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
@@ -18,7 +22,7 @@ localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
 //localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2; //Will add later for tag IO
 typedef logic [31:0] word_t;
 
-interface cache_coherence_if;
+interface cache_coherence_if();
     cc_end_state state_transfer;
     logic [$clog2(N_SETS)-1:0] set_sel;
     word_t requested_data, responder_data;
