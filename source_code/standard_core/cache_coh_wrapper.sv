@@ -47,7 +47,7 @@ module cache_coh_wrapper(
 
 
     coherency_unit #(
-        .CPUID(1)
+        .CPUID(0)
     ) d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
@@ -56,6 +56,13 @@ module cache_coh_wrapper(
         .gbif(mem_gen_bus_if)
     );
 
-
+    bus_ctrl #(
+        .CPUS(2)
+    ) bus (
+        .CLK(CLK),
+        .nRST(nRST),
+        .ccif(bus_ctrl_if),
+        .abort_bus(1'b0)
+    );
 endmodule
 
