@@ -60,9 +60,9 @@ class Error(Exception):
         return self.error_string
 
 class run_config():
-    def __init__(self, config_json:dict):
+    def __init__(self, config_json:dict, arch:str=None):
         # top level info
-        self.arch = str(config_json["arch"])
+        self.arch = arch
         self.abi = str(config_json["abi"])
         self.xlen = str(config_json["xlen"])
         self.test_type = str(config_json["test_type"])
@@ -411,7 +411,7 @@ def parse_args()-> Type[run_config]:
     with open(args.config_file, "r") as conf_fp:
         conf_dict = json.load(conf_fp)
 
-    config = run_config(conf_dict)
+    config = run_config(conf_dict, args.arch)
     if(args.arch):
         config.arch = args.arch
     if(args.test_type):
