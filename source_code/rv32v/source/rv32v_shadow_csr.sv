@@ -71,26 +71,30 @@ module rv32v_shadow_csr (
         end else if (shadow_if.vsetvl) begin
             // Update vl if applicable
             if (~shadow_if.vkeepvl) begin
-                if (shadow_if.avl_spec <= VLMAX) begin
-                    vl_next = shadow_if.avl_spec;
-                end else begin
-                    vl_next = VLMAX;
-                end
+                vl_next = shadow_if.avl_spec; 
+                // if (shadow_if.avl_spec <= VLMAX) begin
+                //     vl_next = shadow_if.avl_spec;
+                // end else begin
+                //     vl_next = VLMAX;
+                // end
             end
             // Update vtype, first check for supported values
             // If illegal, set vill, all else 0
-            if (shadow_if.vtype_spec.vsew > SEW32) begin
-                vill_next = 1;
-                vlmul_next = '0;
-                vsew_next = '0;
-            end else if (shadow_if.vtype_spec.vta | shadow_if.vtype_spec.vma) begin  // only vma=0, vta=0 supported right now
-                vill_next = 1;
-                vlmul_next = '0;
-                vsew_next = '0;
-            end else begin
-                vlmul_next = shadow_if.vtype_spec.vlmul;
-                vsew_next = shadow_if.vtype_spec.vsew;
-            end
+            vill_next = shadow_if.vtype_spec.vill; 
+            vlmul_next = shadow_if.vtype_spec.vlmul; 
+            vsew_next = shadow_if.vtype_spec.vsew; 
+            // if (shadow_if.vtype_spec.vsew > SEW32) begin
+            //     vill_next = 1;
+            //     vlmul_next = '0;
+            //     vsew_next = '0;
+            // end else if (shadow_if.vtype_spec.vta | shadow_if.vtype_spec.vma) begin  // only vma=0, vta=0 supported right now
+            //     vill_next = 1;
+            //     vlmul_next = '0;
+            //     vsew_next = '0;
+            // end else begin
+            //     vlmul_next = shadow_if.vtype_spec.vlmul;
+            //     vsew_next = shadow_if.vtype_spec.vsew;
+            // end
         end
     end
 

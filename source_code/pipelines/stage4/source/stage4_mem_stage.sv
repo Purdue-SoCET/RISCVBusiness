@@ -37,7 +37,7 @@ module stage4_mem_stage (
     prv_pipeline_if.pipe prv_pipe_if,
     cache_control_if.pipeline cc_if,
     predictor_pipeline_if.update predict_if,
-    // rv32v_shadow_csr_if.mem shadow_if,
+    rv32v_shadow_csr_if.mem shadow_if,
     output logic halt,
     output logic wfi
 );
@@ -132,8 +132,8 @@ module stage4_mem_stage (
     assign prv_pipe_if.vsetvl = ex_mem_if.vexmem.vsetvl;
     assign prv_pipe_if.vkeepvl = ex_mem_if.vexmem.vkeepvl;
     assign prv_pipe_if.new_vtype = vtype_t'(ex_mem_if.ex_mem_reg.rs2_data);  // if immediates are used, they are muxed in in EX
-    // assign shadow_if.vtype_arch = prv_pipe_if.vtype;
-    // assign shadow_if.vl_arch = prv_pipe_if.vl;
+    assign shadow_if.vtype_arch = prv_pipe_if.vtype;
+    assign shadow_if.vl_arch = prv_pipe_if.vl;
 
     assign hazard_if.fault_insn = ex_mem_if.ex_mem_reg.fault_insn;
     assign hazard_if.mal_insn = ex_mem_if.ex_mem_reg.mal_insn;
@@ -186,6 +186,10 @@ module stage4_mem_stage (
             3'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
             default: fw_if.rd_mem_data = '0;
         endcase
+
+        // for vset{i}vl{i} instructions write the vl value into rd
+        if(ex_mem_in.vexmem.vsetvl)
+            ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data; // vl is in rs1
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} : ex_mem_if.vexmem.valu_res;

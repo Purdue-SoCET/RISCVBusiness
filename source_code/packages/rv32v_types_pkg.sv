@@ -558,6 +558,7 @@ package rv32v_types_pkg;
     // CSR signals
     cfgsel_t vsetvl_type;
     logic vkeep_vl; // if rs1 & rd == 0 
+    vtype_t vtype_imm;
   } vcontrol_t;
 
 
@@ -583,9 +584,10 @@ package rv32v_types_pkg;
     logic vkeepvl; 
   } vexmem_t;
 
+  typedef logic[3:0] half_byte; 
   typedef struct packed {
     logic [4:0] vd;
-    logic [3:0][3:0] vbyte_wen;
+    half_byte[3:0] vbyte_wen;
     rv32i_types_pkg::word_t [3:0] vwdata;
   } vwb_t;
 
