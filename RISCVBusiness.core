@@ -7,7 +7,7 @@ filesets:
         depend:
             - "socet:bus-components:bus_protocol_if"
             - "socet:bus-components:ahb_if"
-            - "socet:bus-components:apb_if"
+           - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:stage3"
             - "socet:riscv:priv"
