@@ -37,6 +37,7 @@ module rv32v_shadow_csr (
     vsew_t vsew, vsew_next;
     logic vill, vill_next;
     word_t vl, vl_next;
+    logic [$clog2(VLMAX)-1:0] vlmax;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
@@ -58,6 +59,19 @@ module rv32v_shadow_csr (
     assign shadow_if.vl_shadow = vl;
 
     always_comb begin
+        // Compute new vlmax
+        casez (shadow_if.vtype_spec.vlmul)
+            LMUL1:      vlmax = (VLEN << shadow_if.vtype_spec.vsew);
+            LMUL2:      vlmax = (VLEN << shadow_if.vtype_spec.vsew) << 1;
+            LMUL4:      vlmax = (VLEN << shadow_if.vtype_spec.vsew) << 2;
+            LMUL8:      vlmax = (VLEN << shadow_if.vtype_spec.vsew) << 3;
+            LMULHALF:   vlmax = (VLEN << shadow_if.vtype_spec.vsew) >> 1;
+            LMULFOURTH: vlmax = (VLEN << shadow_if.vtype_spec.vsew) >> 2;
+            LMULEIGHTH: vlmax = (VLEN << shadow_if.vtype_spec.vsew) >> 3;
+        endcase
+    end
+
+    always_comb begin
         vlmul_next = vlmul;
         vsew_next = vsew;
         vill_next = vill;
@@ -69,14 +83,6 @@ module rv32v_shadow_csr (
             vill_next = shadow_if.vtype_arch.vill;
             vl_next = shadow_if.vl_arch;
         end else if (shadow_if.vsetvl) begin
-            // Update vl if applicable
-            if (~shadow_if.vkeepvl) begin
-                if (shadow_if.avl_spec <= VLMAX) begin
-                    vl_next = shadow_if.avl_spec;
-                end else begin
-                    vl_next = VLMAX;
-                end
-            end
             // Update vtype, first check for supported values
             // If illegal, set vill, all else 0
             if (shadow_if.vtype_spec.vsew > SEW32) begin
@@ -90,6 +96,14 @@ module rv32v_shadow_csr (
             end else begin
                 vlmul_next = shadow_if.vtype_spec.vlmul;
                 vsew_next = shadow_if.vtype_spec.vsew;
+                // Update vl if applicable
+                if (~shadow_if.vkeepvl) begin
+                    if (shadow_if.avl_spec <= vlmax) begin
+                        vl_next = shadow_if.avl_spec;
+                    end else begin
+                        vl_next = vlmax;
+                    end
+                end
             end
         end
     end
