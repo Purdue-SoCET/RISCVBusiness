@@ -40,6 +40,7 @@ interface rv32v_control_unit_if();
   vsew_t vsew;
   vlmul_t vlmul;
   word_t vl;
+  logic vill; 
 
   // Control signals
   vcontrol_t vcontrol;
@@ -51,7 +52,7 @@ interface rv32v_control_unit_if();
   logic vbusy;
 
   modport vcu(
-    input instr, vsew, vlmul, vl, stall,
+    input instr, vsew, vlmul, vl, stall, vill, 
     output vcontrol, vvalid, vbusy
   );
 

@@ -110,7 +110,7 @@ targets:
             - "tool_verilator? (top_core)"
         tools:
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs", "-Wno-UNOPTFLAT"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
     fpga:
         <<: *default

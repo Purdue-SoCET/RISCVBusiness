@@ -87,15 +87,23 @@ assign vopm = vopm_t'(vfunct6);
 // CFG instructions
 always_comb begin
     // Set the vset* type based on the top two bits
+    vcu_if.vcontrl.vtype_imm = '0; 
     casez (vcu_if.instr[31:30])
-        2'b0?: vcu_if.vcontrol.vsetvl_type = VSETVLI;
-        2'b11: vcu_if.vcontrol.vsetvl_type = VSETIVLI;
+        2'b0?: begin 
+            vcu_if.vcontrol.vsetvl_type = VSETVLI;
+            vcu_if.vcontrol.vtype_imm = {'0, vcu_if.instr[30:20]}; 
+        end 
+        2'b11: begin 
+            vcu_if.vcontrol.vsetvl_type = VSETIVLI;
+            vcu_if.vcontrol.vtype_imm = {'0, vcu_if.instr[29:20]}; 
+        end
         2'b10: vcu_if.vcontrol.vsetvl_type = VSETVL;
     endcase
 
     // If it wasn't actually a vset* instruction, set the null type
     if (!(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG)) begin
         vcu_if.vcontrol.vsetvl_type = NOT_CFG;
+        vcu_if.vcontrol.vtype_imm = '0; 
     end
 end
 

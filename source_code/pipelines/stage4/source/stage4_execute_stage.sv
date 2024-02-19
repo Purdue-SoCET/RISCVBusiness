@@ -48,12 +48,19 @@ module stage4_execute_stage (
     stage4_forwarding_unit_if.execute fw_if,
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
-    rv32c_if.execute rv32cif
+    rv32c_if.execute rv32cif, 
+    rv32v_shadow_csr_if.execute shadow_if,
 );
 
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
     //import stage3_types_pkg::*;
+
+    vexmem_t vex_out; 
+    word_t vstride; 
+    // word_t vl; 
+    // vtype_t vtype; 
+    word_t vlmax; // determined from lmul and sew settings 
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -67,8 +74,95 @@ module stage4_execute_stage (
 
 
 
-    // TODO: DELETE
-    assign ex_mem_if.vexmem = '{default:'0, veew: SEW32};
+    /*******************
+    * Vector Datapath
+    ********************/
+    //assign ex_mem_if.vexmem = '{default:0, veew: SEW32}; 
+    rv32v_ex_datapath RVV_DATAPATH(
+        .CLK(CLK), .nRST(nRST),
+        .rdat1(rf_if.rs1_data), .rdat2(rf_if.rs2_data), 
+        .imm(imm_I_ext),
+        .vctrls(ex_in.vctrl_out), 
+        .vwb_ctrls(ex_mem_if.vwb), 
+        .vex(vex_out)
+    );
+
+    // stride calculation for mem operations
+    always_comb begin
+        if(ex_in.vctrl_out.vunitstride) begin
+            case(ex_in.vctrl_out.veew_dest)
+                SEW32: vstride = 4; 
+                SEW16: vstride = 2; 
+                default:  vstride = 1; 
+            endcase 
+        end
+        else begin
+            vstride = rs2_post_fwd; 
+        end
+    end
+
+
+    // Vector CSR values (vl and vtype) logic
+    assign hazard_if.vsetvl_ex = ex_in.vctrl_out.vsetvl; 
+    assign shadow_if.vsetvl = ex_in.vctrl_out.vsetlvl; 
+    assign shadow_if.vkeepvl = ex_in.vctrl_out.vkeepvl; 
+    always_comb begin
+        case(ex_in.vctrl_out.vsetvl_type)
+            VSETIVLI: begin
+                shadow_if.avl_spec = {'0, ex_in.ctrl_out.zimm};
+                shadow_if.vtype_spec = ex_in.vctrl_out.vtype_imm; 
+            end
+            VSETVLI: begin
+                shadow_if.avl_spec = rs1_post_fwd;
+                shadow_if.vtype_spec = ex_in.vctrl_out.vtype_imm; 
+            end
+            default: begin
+                shadow_if.avl_spec = rs1_post_fwd;
+                shadow_if.vtype_spec = word_t'(rs2_post_fwd); 
+            end
+        endcase
+
+        // set the logic for vlmax 
+        vlmax = 128; // set to VLEN and then perform shifts to get right value
+        case(shadow_if.vtype_spec.vsew)
+            SEW32: vlmax = vlmax >> 2; 
+            SEW16: vlmax = vlmax >> 1;
+            SEW8: vlmax = vlmax; 
+            default: begin
+                shadow_if.vtype_spec = vtype_t'(0); 
+                shadow_if.vtype_spec.vill = 1'b1; 
+            end
+        endcase 
+
+        case(shadow_if.vtype_spec.lmul)
+            LMUL1: vlmax = vlmax; 
+            LMUL2: vlmax = vlmax << 1; 
+            LMUL4: vlmax = vlmax << 2; 
+            LMUL8: vlmax = vlmax << 3; 
+            LMULHALF: vlmax = vlmax >> 1; 
+            LMULFOURTH: vlmax = vlmax >> 2; 
+            LMULEIGHTH: vlmax = vlmax >> 3; 
+            default: begin
+                shadow_if.vtype_spec = vtype_t'(0); 
+                shadow_if.vtype_spec.vill = 1'b1; 
+            end 
+        endcase 
+
+        // if vsetvl or vsetvli instr and rs1 == 0, set shadow_if.avl_spec to vlmax 
+        if((ex_in.vctrl_out.vsetvl_type == VSETLVL || ex_in.vctrl_out.vsetvl_type == VSETLVLI) && ex_in.ctrl_out.rs1 == 0) 
+            shadow_if.avl_spec = vlmax;
+        else if(shadow_if.avl_spec > vlmax) // handle stripmining if AVL > VLMAX 
+            shadow_if.avl_spec = vlmax
+
+
+
+        // logic for setting the illegal bit in shadow_if.vtype_spec
+        if(shadow_if.vtype_spec[30:7] != 0) begin
+            shadow_if.vtype_spec = vtype_t'(0); 
+            shadow_if.vtype_spec.vill = 1'b1;
+        end
+
+    end
 
     /**********************
     * Decode/Register Read 
@@ -253,6 +347,7 @@ module stage4_execute_stage (
         if(!nRST) begin
             /*verilator lint_off ENUMVALUE*/
             ex_mem_if.ex_mem_reg <= '{default: '0};
+            ex_mem_if.vexmem <= '{default: '0, veew: SEW32}; 
             /*verilator lint_on ENUMVALUE*/
         end else begin
             // TODO: This register is ~180b. Not awful, but can it be smaller?
@@ -293,13 +388,14 @@ module stage4_execute_stage (
                 ex_mem_if.ex_mem_reg.zimm       <= ex_in.ctrl_out.zimm;
                 ex_mem_if.ex_mem_reg.rd_m       <= ex_in.ctrl_out.rd;
                 ex_mem_if.ex_mem_reg.load_type  <= ex_in.ctrl_out.load_type;
-                ex_mem_if.ex_mem_reg.csr_addr   <= ex_in.ctrl_out.csr_addr; // NOTE: Change this for vsetvl insturctions
+                ex_mem_if.ex_mem_reg.csr_addr   <= (ex_in.vctrl_out.vsetvl) ? VL_ADDR : ex_in.ctrl_out.csr_addr; // NOTE: Change this for vsetvl insturctions
 
                 // Word sized members
                 ex_mem_if.ex_mem_reg.brj_addr   <= brj_addr;
                 ex_mem_if.ex_mem_reg.port_out   <= ex_out;
-                ex_mem_if.ex_mem_reg.rs1_data   <= rs1_post_fwd;
-                ex_mem_if.ex_mem_reg.rs2_data   <= rs2_post_fwd;
+                ex_mem_if.ex_mem_reg.rs1_data   <= (ex_in.vctrl_out.vsetvl) ? shadow_if.avl_spec : rs1_post_fwd;
+                ex_mem_if.ex_mem_reg.rs2_data   <= (ex_in.vctrl_out.vmemdren | ex_in.vctrl_out.vmemwren) ? vstride : 
+                                                   (ex_in.vctrl_out.vsetlvl ? word_t'(shadow_if.vtype_spec) :rs2_post_fwd);
                 ex_mem_if.ex_mem_reg.instr      <= ex_in.if_out.instr;
                 ex_mem_if.ex_mem_reg.pc         <= ex_in.if_out.pc;
                 ex_mem_if.ex_mem_reg.pc4        <= ex_in.if_out.pc4;
@@ -313,9 +409,12 @@ module stage4_execute_stage (
                 ex_mem_if.ex_mem_reg.tracker_signals.imm_UJ <= ex_in.ctrl_out.imm_UJ;
                 ex_mem_if.ex_mem_reg.tracker_signals.imm_U  <= ex_in.ctrl_out.imm_U;
 
+                ex_mem_if.vexmem <= vex_out; 
+
             end else if(hazard_if.ex_mem_flush && !hazard_if.ex_mem_stall) begin
                 /*verilator lint_off ENUMVALUE*/
                 ex_mem_if.ex_mem_reg <= '{default: '0};
+                ex_mem_if.vexmem <= '{default: '0, veew: SEW32}; 
                 /*verilator lint_on ENUMVALUE*/
             end
             // else: retain state

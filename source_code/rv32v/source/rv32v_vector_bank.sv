@@ -43,20 +43,20 @@ assign v0 = bank_reg_file[0];
 
 always_ff @(posedge CLK, negedge nRST) begin
     if(~nRST) begin
-        bank_reg_file = '{{32{32'b0}}}; 
+        bank_reg_file <= '{32{32'b0}}; 
     end
     else begin
         if(byte_wen[3])
-            bank_reg_file[vw][31:24] = vwdat[31:24];
+            bank_reg_file[vw][31:24] <= vwdata[31:24];
 
         if(byte_wen[2])
-            bank_reg_file[vw][23:16] = vwdat[23:16];
+            bank_reg_file[vw][23:16] <= vwdata[23:16];
 
         if(byte_wen[1])
-            bank_reg_file[vw][15:8] = vwdat[15:8];
+            bank_reg_file[vw][15:8] <= vwdata[15:8];
 
         if(byte_wen[0])
-            bank_reg_file[vw][7:0] = vwdat[7:0]; 
+            bank_reg_file[vw][7:0] <= vwdata[7:0]; 
     end
 end
 

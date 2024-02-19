@@ -70,11 +70,17 @@ interface stage4_hazard_unit_if();
   logic stall_decode, flush_decode; 
   word_t pc_decode; 
   logic valid_decode; 
+  logic vsetvl_dec; 
 
   // queue 
   logic flush_queue; 
   logic stall_queue; 
   logic is_queue_full; 
+
+  
+  // RVV execute signals
+  logic vselvl_ex; 
+
 
 
 
@@ -90,6 +96,7 @@ interface stage4_hazard_unit_if();
             valid_e, valid_m, ex_busy, serializer_stall,
 
             is_queue_full, pc_decode, valid_decode,
+            vsetvl_dec, vsetvl_ex, queue_wen 
 
 
     output  pc_en, npc_sel,
@@ -109,7 +116,7 @@ interface stage4_hazard_unit_if();
 
   modport decode  (
     input stall_decode, flush_decode, is_queue_full, 
-    output pc_decode, valid_decode 
+    output pc_decode, valid_decode, vsetvl_dec, queue_wen
   ); 
 
   modport queue (
@@ -119,7 +126,7 @@ interface stage4_hazard_unit_if();
 
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,
-    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy
+    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex
   );
 
   modport mem (

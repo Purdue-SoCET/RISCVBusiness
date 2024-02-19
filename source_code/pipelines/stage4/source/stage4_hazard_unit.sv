@@ -32,6 +32,7 @@ import rv32i_types_pkg::*;
 import stage4_types_pkg::*;
 
 module stage4_hazard_unit (
+    input logic CLK, nRST, 
     stage4_hazard_unit_if.hazard_unit hazard_if,
     prv_pipeline_if.hazard prv_pipe_if
     //risc_mgmt_if.ts_hazard rm_if,
@@ -64,6 +65,7 @@ module stage4_hazard_unit (
     logic intr;
     word_t epc;
 
+    logic stall_vsetvl;  
     // TODO: RISC-MGMT
     //logic rmgmt_stall;
 
@@ -174,8 +176,21 @@ module stage4_hazard_unit (
                                   || branch_jump;    // control hazard
                                   //|| (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
 
-    assign hazard_if.stall_decode = (hazard_if.is_queue_full && ~hazard_if.flush_queue) ; 
+    assign hazard_if.stall_decode = (hazard_if.is_queue_full && ~hazard_if.flush_queue) || stall_vsetvl ; 
     assign hazard_if.flush_decode = hazard_if.flush_queue; 
+
+    always_ff @(posedge CLK, negedge nRST) begin
+      if(~nRST)
+        stall_vsetvl <= 1'b0; 
+      else begin
+        if(hazard_if.flush_decode)
+          stall_vsetvl <= 1'b0; 
+        else if(hazard_if.vsetvl_ex)
+          stall_vsetvl <= 1'b0; 
+        else if(hazard_if.queue_wen && hazard_if.vsetvl_dec)
+          stall_vsetvl <= 1'b1; 
+      end
+    end
 
     assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
                                   || branch_jump     // Control hazard

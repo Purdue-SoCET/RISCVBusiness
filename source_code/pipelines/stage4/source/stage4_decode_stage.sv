@@ -26,6 +26,7 @@
 //`include "stage4_fet_dec_ex_if.vh"
 `include "stage4_hazard_unit_if.vh" 
 `include "rv32v_control_unit_if.vh"
+`include "rv32v_shadow_csr_if.vh"
 
 import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
@@ -43,6 +44,7 @@ module stage4_decode_stage
     output logic queue_wen,
 
     stage4_hazard_unit_if.decode hazard_if, 
+    rv32v_shadow_csr_if.shadow shadow_if,
 
 
     // output word_t pc_decode,
@@ -58,6 +60,7 @@ logic svalid;
 
 
 rv32v_control_unit_if vcu_if(); 
+// rv32v_shadow_csr_if vshadow_csr_if(); 
 
 
 // RV32C inputs
@@ -81,15 +84,21 @@ vcontrol_t vcontrol;
 logic vvalid;
 logic vbusy;
 
-assign vcu_if.vsew = vsew_t'(0) ; 
-assign vcu_if.vlmul = vlmul_t'(0); 
-assign vcu_if.vl = '0; 
+assign vcu_if.vsew = shadow_if.vsew_shadow; 
+assign vcu_if.vlmul = shadow_if.vlmul_shadow; 
+assign vcu_if.vl = shadow_if.vl_shadow; 
+assign vcu_if.vill = shadow_if.vill_shadow; 
 assign vcu_if.stall = hazard_if.stall_decode; 
 assign vcu_if.instr = fetch_out.instr; 
 
 // assign uop_out.vctrl_out = '{default:'0}; 
 
 rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if); 
+rv32v_shadow_csr RVV_SHADOW_CSRS(
+    .CLK(CLK), .nRST(nRST), 
+    .shadow_if(shadow_if)
+); 
+
 
 //rv32v_control_unit_if vcu_if();
 //rv32v_control_unit U_VECTOR_DECODE(vcu_if)
@@ -111,11 +120,13 @@ rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if);
 // EPC signals for interrupts 
 assign hazard_if.valid_decode = fetch_out.valid; 
 assign hazard_if.pc_decode = fetch_out.pc; 
+assign hazard_if.vsetvl_dec = uop_out.vctrl_out.vsetvl; 
 
 
 // Decode resolution
 //assign num_uops = fetch_out.valid ? DISPATCH_SIZE : 0; 
-assign queue_wen = (~hazard_if.stall_decode && fetch_out.valid) && ~(hazard_if.is_queue_full) ;
+assign queue_wen = (~hazard_if.stall_decode && fetch_out.valid);
+assign hazard_if.queue_wen = queue_wen; 
 
 always_comb begin
     uop_out.if_out = fetch_out;

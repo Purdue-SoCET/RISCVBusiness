@@ -53,7 +53,7 @@ interface rv32v_shadow_csr_if;
         output vlmul_shadow, vsew_shadow, vill_shadow, vl_shadow
     );
 
-    modport decode (
+    modport hazard (
         output flush_decode
     );
 
