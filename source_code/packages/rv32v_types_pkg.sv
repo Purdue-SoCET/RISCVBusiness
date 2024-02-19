@@ -547,8 +547,8 @@ package rv32v_types_pkg;
     vexec_t vexec;
     // Memory signals
     logic [3:0] vlaneactive;
-    logic vmemrden;
-    logic vmemwren;
+    logic vmemdren;
+    logic vmemdwen;
     logic vmemtoreg;
     logic [4:0] vuop_num;
     logic vunitstride;
@@ -557,7 +557,7 @@ package rv32v_types_pkg;
     
     // CSR signals
     cfgsel_t vsetvl_type;
-    logic vkeep_vl; // if rs1 & rd == 0 
+    logic vkeepvl; // if rs1 & rd == 0 
     vtype_t vtype_imm;
   } vcontrol_t;
 

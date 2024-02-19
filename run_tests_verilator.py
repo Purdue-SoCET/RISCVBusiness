@@ -395,7 +395,7 @@ def parse_args()-> Type[run_config]:
         type=str, default=DEFAULT_CONFIG_FILE, 
         help="Specify the config file path")
     parser.add_argument("--arch", "-a", dest="arch",
-        type=str, default=None, 
+        type=str, default="RV32I", 
         help="Specify the architecture targeted. Option(s): RV32I Default: RV32I")
     parser.add_argument("--test_type", "-t", dest="test_type",
         type=str, default=None, 
