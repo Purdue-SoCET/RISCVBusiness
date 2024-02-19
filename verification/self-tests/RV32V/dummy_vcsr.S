@@ -12,8 +12,9 @@
 
 
 RVTEST_RV32U
-
+addi x1, x0, 1
 vsetivli x10, 3, e32, m1
+addi x2, x0, 2
 NOP
 NOP
 NOP
