@@ -87,17 +87,23 @@ assign vopm = vopm_t'(vfunct6);
 // CFG instructions
 always_comb begin
     // Set the vset* type based on the top two bits
-    vcu_if.vcontrl.vtype_imm = '0; 
+    vcu_if.vcontrol.vtype_imm = '0; 
     casez (vcu_if.instr[31:30])
         2'b0?: begin 
             vcu_if.vcontrol.vsetvl_type = VSETVLI;
             vcu_if.vcontrol.vtype_imm = {'0, vcu_if.instr[30:20]}; 
+            if(vcu_if.rs1 == 0 && vcu_if.rd == 0)
+                vcu_if.vcontrol.vkeepvl = 0; 
         end 
         2'b11: begin 
             vcu_if.vcontrol.vsetvl_type = VSETIVLI;
             vcu_if.vcontrol.vtype_imm = {'0, vcu_if.instr[29:20]}; 
         end
-        2'b10: vcu_if.vcontrol.vsetvl_type = VSETVL;
+        2'b10: begin
+            vcu_if.vcontrol.vsetvl_type = VSETVL;
+            if(vcu_if.rs1 == 0 && vcu_if.rd == 0)
+                vcu_if.vcontrol.vkeepvl = 0; 
+        end
     endcase
 
     // If it wasn't actually a vset* instruction, set the null type
@@ -105,6 +111,8 @@ always_comb begin
         vcu_if.vcontrol.vsetvl_type = NOT_CFG;
         vcu_if.vcontrol.vtype_imm = '0; 
     end
+
+
 end
 
 // Register select
@@ -239,19 +247,19 @@ always_comb begin
 end
 
 // Memory signals
-logic vmeminstr, vmemrden, vmemwren, vunitstride, vstrided, vindexed;
+logic vmeminstr, vmemdren, vmemdwen, vunitstride, vstrided, vindexed;
 
-assign vmemrden = (vmajoropcode == VMOC_LOAD);
-assign vmemwren = (vmajoropcode == VMOC_STORE);
+assign vmemdren = (vmajoropcode == VMOC_LOAD);
+assign vmemdwen = (vmajoropcode == VMOC_STORE);
 
 assign vunitstride = (mop == MOP_UNIT);
 assign vstrided = (mop == MOP_STRIDED);
 assign vindexed = (mop == MOP_OINDEXED) || (mop == MOP_UINDEXED);
 
-assign vmeminstr = (vmemrden || vmemwren);
+assign vmeminstr = (vmemdren || vmemdwen);
 
-assign vcu_if.vcontrol.vmemrden = vmemrden;
-assign vcu_if.vcontrol.vmemwren = vmemwren;
+assign vcu_if.vcontrol.vmemdren = vmemdren;
+assign vcu_if.vcontrol.vmemdwen = vmemdwen;
 assign vcu_if.vcontrol.vunitstride = vunitstride;
 assign vcu_if.vcontrol.vstrided = vstrided;
 assign vcu_if.vcontrol.vindexed = vindexed;

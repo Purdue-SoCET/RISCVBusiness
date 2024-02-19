@@ -80,9 +80,9 @@ assign svalid = !control.fault_insn && !control.illegal_insn;
 
 
 // Instantiate vector decode
-vcontrol_t vcontrol;
-logic vvalid;
-logic vbusy;
+// vcontrol_t vcontrol;
+// logic vvalid;
+// logic vbusy;
 
 assign vcu_if.vsew = shadow_if.vsew_shadow; 
 assign vcu_if.vlmul = shadow_if.vlmul_shadow; 
@@ -90,11 +90,13 @@ assign vcu_if.vl = shadow_if.vl_shadow;
 assign vcu_if.vill = shadow_if.vill_shadow; 
 assign vcu_if.stall = hazard_if.stall_decode; 
 assign vcu_if.instr = fetch_out.instr; 
+assign vcu_if.rs1 = control.rs1; 
+assign vcu_if.rd = control.rd; 
 
 // assign uop_out.vctrl_out = '{default:'0}; 
 
 rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if); 
-rv32v_shadow_csr RVV_SHADOW_CSRS(
+rv32v_shadow_csr RVV_SHADOW_CSR(
     .CLK(CLK), .nRST(nRST), 
     .shadow_if(shadow_if)
 ); 
@@ -120,7 +122,7 @@ rv32v_shadow_csr RVV_SHADOW_CSRS(
 // EPC signals for interrupts 
 assign hazard_if.valid_decode = fetch_out.valid; 
 assign hazard_if.pc_decode = fetch_out.pc; 
-assign hazard_if.vsetvl_dec = uop_out.vctrl_out.vsetvl; 
+assign hazard_if.vsetvl_dec = uop_out.vctrl_out.vsetvl_type != NOT_CFG; 
 
 
 // Decode resolution
@@ -131,13 +133,17 @@ assign hazard_if.queue_wen = queue_wen;
 always_comb begin
     uop_out.if_out = fetch_out;
     uop_out.ctrl_out = control;
+    uop_out.vctrl_out = vcu_if.vcontrol; 
     //uop_out.vctrl_out = '{'0};
 
     // Mux in the register write enable from the vector decode
     // if required
-    // if (vvalid) begin
-    //     uop_out.ctrl_out.wen = vcontrol.sregwen;
-    // end
+    if (vcu_if.vvalid) begin
+        uop_out.ctrl_out.wen = vcu_if.vcontrol.sregwen;
+    end
+    if(vcu_if.vcontrol.vsetvl_type != NOT_CFG) begin
+        uop_out.ctrl_out.w_sel = 3'd4; 
+    end
 end
 
 endmodule 

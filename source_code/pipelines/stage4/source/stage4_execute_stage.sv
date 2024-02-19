@@ -35,6 +35,7 @@
 `include "rv32c_if.vh"
 import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
+import rv32v_types_pkg::*;
 
 module stage4_execute_stage (
     input CLK,
@@ -49,11 +50,13 @@ module stage4_execute_stage (
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif, 
-    rv32v_shadow_csr_if.execute shadow_if,
+    rv32v_shadow_csr_if.execute shadow_if
 );
 
-    import rv32i_types_pkg::*;
+    // import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
+
+
     //import stage3_types_pkg::*;
 
     vexmem_t vex_out; 
@@ -61,6 +64,7 @@ module stage4_execute_stage (
     // word_t vl; 
     // vtype_t vtype; 
     word_t vlmax; // determined from lmul and sew settings 
+    // logic vsetvl; 
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -84,7 +88,7 @@ module stage4_execute_stage (
         .imm(imm_I_ext),
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
-        .vex(vex_out)
+        .vmem_in(vex_out)
     );
 
     // stride calculation for mem operations
@@ -103,8 +107,8 @@ module stage4_execute_stage (
 
 
     // Vector CSR values (vl and vtype) logic
-    assign hazard_if.vsetvl_ex = ex_in.vctrl_out.vsetvl; 
-    assign shadow_if.vsetvl = ex_in.vctrl_out.vsetlvl; 
+    assign hazard_if.vsetvl_ex = (ex_in.vctrl_out.vsetvl_type != NOT_CFG);
+    assign shadow_if.vsetvl = (ex_in.vctrl_out.vsetvl_type != NOT_CFG); 
     assign shadow_if.vkeepvl = ex_in.vctrl_out.vkeepvl; 
     always_comb begin
         case(ex_in.vctrl_out.vsetvl_type)
@@ -134,7 +138,7 @@ module stage4_execute_stage (
             end
         endcase 
 
-        case(shadow_if.vtype_spec.lmul)
+        case(shadow_if.vtype_spec.vlmul)
             LMUL1: vlmax = vlmax; 
             LMUL2: vlmax = vlmax << 1; 
             LMUL4: vlmax = vlmax << 2; 
@@ -149,15 +153,13 @@ module stage4_execute_stage (
         endcase 
 
         // if vsetvl or vsetvli instr and rs1 == 0, set shadow_if.avl_spec to vlmax 
-        if((ex_in.vctrl_out.vsetvl_type == VSETLVL || ex_in.vctrl_out.vsetvl_type == VSETLVLI) && ex_in.ctrl_out.rs1 == 0) 
+        if((ex_in.vctrl_out.vsetvl_type == VSETVL || ex_in.vctrl_out.vsetvl_type == VSETIVLI) && ex_in.ctrl_out.rs1 == 0) 
             shadow_if.avl_spec = vlmax;
         else if(shadow_if.avl_spec > vlmax) // handle stripmining if AVL > VLMAX 
-            shadow_if.avl_spec = vlmax
-
-
+            shadow_if.avl_spec = vlmax; 
 
         // logic for setting the illegal bit in shadow_if.vtype_spec
-        if(shadow_if.vtype_spec[30:7] != 0) begin
+        if(shadow_if.vtype_spec[31:7] != 0) begin
             shadow_if.vtype_spec = vtype_t'(0); 
             shadow_if.vtype_spec.vill = 1'b1;
         end
@@ -388,14 +390,14 @@ module stage4_execute_stage (
                 ex_mem_if.ex_mem_reg.zimm       <= ex_in.ctrl_out.zimm;
                 ex_mem_if.ex_mem_reg.rd_m       <= ex_in.ctrl_out.rd;
                 ex_mem_if.ex_mem_reg.load_type  <= ex_in.ctrl_out.load_type;
-                ex_mem_if.ex_mem_reg.csr_addr   <= (ex_in.vctrl_out.vsetvl) ? VL_ADDR : ex_in.ctrl_out.csr_addr; // NOTE: Change this for vsetvl insturctions
+                ex_mem_if.ex_mem_reg.csr_addr   <= (ex_in.vctrl_out.vsetvl_type != NOT_CFG) ? VL_ADDR : ex_in.ctrl_out.csr_addr; // NOTE: Change this for vsetvl insturctions
 
                 // Word sized members
                 ex_mem_if.ex_mem_reg.brj_addr   <= brj_addr;
                 ex_mem_if.ex_mem_reg.port_out   <= ex_out;
-                ex_mem_if.ex_mem_reg.rs1_data   <= (ex_in.vctrl_out.vsetvl) ? shadow_if.avl_spec : rs1_post_fwd;
-                ex_mem_if.ex_mem_reg.rs2_data   <= (ex_in.vctrl_out.vmemdren | ex_in.vctrl_out.vmemwren) ? vstride : 
-                                                   (ex_in.vctrl_out.vsetlvl ? word_t'(shadow_if.vtype_spec) :rs2_post_fwd);
+                ex_mem_if.ex_mem_reg.rs1_data   <= (ex_in.vctrl_out.vsetvl_type != NOT_CFG) ? shadow_if.avl_spec : rs1_post_fwd;
+                ex_mem_if.ex_mem_reg.rs2_data   <= (ex_in.vctrl_out.vmemdren | ex_in.vctrl_out.vmemdwen) ? vstride : 
+                                                   ( (ex_in.vctrl_out.vsetvl_type != NOT_CFG) ? word_t'(shadow_if.vtype_spec) :rs2_post_fwd);
                 ex_mem_if.ex_mem_reg.instr      <= ex_in.if_out.instr;
                 ex_mem_if.ex_mem_reg.pc         <= ex_in.if_out.pc;
                 ex_mem_if.ex_mem_reg.pc4        <= ex_in.if_out.pc4;

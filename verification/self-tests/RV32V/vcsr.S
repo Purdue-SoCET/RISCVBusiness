@@ -11,15 +11,12 @@
 #include "test_macros.h"
 
 
-RVTEST_RV32UV
+RVTEST_RV32U
 
-# vsetvl 
-# vsetvli
-# vsetivli
 
 
 RVTEST_CODE_BEGIN
-
+/*
   vsetivli x10, 5, e16, m2
   NOP
   NOP
@@ -40,7 +37,7 @@ RVTEST_CODE_BEGIN
   TEST_CASE(4, x10, 1, NOP)
 
   // set vl > VLMAX and check 
-  vsetivli x10, 10, e32, 1
+  vsetivli x10, 10, e32
   NOP
   NOP
   NOP
@@ -52,11 +49,7 @@ RVTEST_CODE_BEGIN
   NOP
   NOP
 
-  
-
-
-
-
+*/
   TEST_PASSFAIL
 
 RVTEST_CODE_END

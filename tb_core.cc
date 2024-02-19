@@ -7,7 +7,7 @@
 #include <csignal>
 
 #include "verilated.h"
-#include "verilated_fst_c.h"
+#include "verilated_vcd_c.h"
 #include "Vtop_core.h"
 #include "Vtop_core_top_core.h"
 
@@ -28,7 +28,7 @@
 // doubles as mtime counter
 vluint64_t sim_time = 0;
 Vtop_core *dut_ptr;
-VerilatedFstC *trace_ptr;
+VerilatedVcdC *trace_ptr;
 
 /*
  *  Emulate memory-mapped CSRs
@@ -218,7 +218,7 @@ void update_interrupt_signals(Vtop_core& dut) {
     }
 }
 
-void tick(Vtop_core& dut, VerilatedFstC& trace) {
+void tick(Vtop_core& dut, VerilatedVcdC& trace) {
     dut.CLK = 0;
     dut.eval();
     trace.dump(sim_time);
@@ -229,7 +229,7 @@ void tick(Vtop_core& dut, VerilatedFstC& trace) {
     sim_time++;
 }
 
-void reset(Vtop_core& dut, VerilatedFstC& trace) {
+void reset(Vtop_core& dut, VerilatedVcdC& trace) {
     // Initialize signals
     dut.CLK = 0;
     dut.nRST = 0;
@@ -267,9 +267,9 @@ int main(int argc, char **argv) {
     Vtop_core dut;
 
     Verilated::traceEverOn(true);
-    VerilatedFstC m_trace;
+    VerilatedVcdC m_trace;
     dut.trace(&m_trace, 5);
-    m_trace.open("waveform.fst");
+    m_trace.open("waveform.vcd");
 
     mtimecmp = 0xFFFFFFFFFFFFFFFF; // Default to a massive value
 

@@ -40,8 +40,8 @@ module rv32v_shadow_csr (
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
-            vlmul <= '0;
-            vsew <= '0;
+            vlmul <= vlmul_t'(0);
+            vsew <= vsew_t'(0);
             vill <= 0;
             vl <= '0;
         end else begin

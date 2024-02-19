@@ -112,7 +112,7 @@ assign vmem_in.veew = vctrls.veew_dest;
 assign vmem_in.vd_sel = vctrls.vd_sel; 
 assign vmem_in.vbank_offset = vctrls.vbank_offset; 
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1; 
-assign vmem_in.vkeepvl = vctrls.vkeep_vl; 
+assign vmem_in.vkeepvl = vctrls.vkeepvl; 
 
 
 

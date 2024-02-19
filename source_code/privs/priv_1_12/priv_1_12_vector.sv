@@ -48,7 +48,7 @@ module priv_1_12_vector (
         if (~nRST) begin
             vstart <= '0;
             vl <= '0;
-            vtype <= '0;
+            vtype <= vtype_t'(0);
         end else begin
             vstart <= vstart_next;
             vl <= vl_next;
@@ -92,27 +92,29 @@ module priv_1_12_vector (
                 if (priv_ext_if.csr_active & prv_intern_if.vsetvl) begin
                     // Update vl if applicable (avl on priv_ext_if.value_in)
                     if (~prv_intern_if.vkeepvl) begin
-                        if (priv_ext_if.value_in <= VLMAX) begin
-                            vl_next = priv_ext_if.value_in;
-                        end else begin
-                            vl_next = VLMAX;
-                        end
+                        vl_next = priv_ext_if.value_in; 
+                        // if (priv_ext_if.value_in <= VLMAX) begin
+                        //     vl_next = priv_ext_if.value_in;
+                        // end else begin
+                        //     vl_next = VLMAX;
+                        // end
                     end
                     // Update vtype, first check for supported values
                     // If illegal, set vill, all else 0
-                    if (prv_intern_if.new_vtype.vsew > SEW32) begin
-                        vtype_next.vill = 1;
-                        vtype_next[30:0] = '0;
-                    end else if (prv_intern_if.new_vtype.vta | prv_intern_if.new_vtype.vma) begin  // only vma=0, vta=0 supported right now
-                        vtype_next.vill = 1;
-                        vtype_next[30:0] = '0;
-                    end else begin
-                        vtype_next.vlmul = prv_intern_if.new_vtype.vlmul;
-                        vtype_next.vsew = prv_intern_if.new_vtype.vsew;
-                    end
+                    // if (prv_intern_if.new_vtype.vsew > SEW32) begin
+                    //     vtype_next.vill = 1;
+                    //     vtype_next[30:0] = '0;
+                    // end else if (prv_intern_if.new_vtype.vta | prv_intern_if.new_vtype.vma) begin  // only vma=0, vta=0 supported right now
+                    //     vtype_next.vill = 1;
+                    //     vtype_next[30:0] = '0;
+                    // end else begin
+                    //     vtype_next.vlmul = prv_intern_if.new_vtype.vlmul;
+                    //     vtype_next.vsew = prv_intern_if.new_vtype.vsew;
+                    // end
+                    vtype_next = prv_intern_if.new_vtype; 
                 end
                 // if vl was updated, return new vl value
-                priv_ext_if.value_out = vl_next;
+                priv_ext_if.value_out = vl;
                 priv_ext_if.ack = 1'b1;
             end
             VTYPE_ADDR: begin

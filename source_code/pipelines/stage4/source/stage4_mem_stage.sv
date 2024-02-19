@@ -188,8 +188,8 @@ module stage4_mem_stage (
         endcase
 
         // for vset{i}vl{i} instructions write the vl value into rd
-        if(ex_mem_in.vexmem.vsetvl)
-            ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data; // vl is in rs1
+        // if(ex_mem_if.vexmem.vsetvl)
+        //     ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data; // vl is in rs1
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} : ex_mem_if.vexmem.valu_res;

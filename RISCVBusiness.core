@@ -96,7 +96,7 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-structs"]
                 #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
     no_mc:
@@ -110,7 +110,7 @@ targets:
             - "tool_verilator? (top_core)"
         tools:
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-structs"]
 
     fpga:
         <<: *default

@@ -6,7 +6,6 @@ filesets:
     rtl:
         files:
             - include/rv32v_uop_gen_if.vh : {is_include_file: true}
-            - include/rv32v_shadow_csr_if.vh: {is_include_file: true}
             - include/rv32v_mem_serializer_if.vh: {is_include_file: true}
             - include/rv32v_lsc_if.vh: {is_include_file: true}
             - source/rv32v_load_store_controller.sv
@@ -21,7 +20,6 @@ filesets:
             - source/rv32v_read_xbar.sv
             - source/rv32v_vector_bank.sv
             - source/rv32v_mask_unit.sv
-            - source/rv32v_shadow_csr.sv
         file_type: systemVerilogSource
 
 

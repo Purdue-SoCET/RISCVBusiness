@@ -71,6 +71,7 @@ interface stage4_hazard_unit_if();
   word_t pc_decode; 
   logic valid_decode; 
   logic vsetvl_dec; 
+  logic queue_wen; 
 
   // queue 
   logic flush_queue; 
@@ -79,7 +80,7 @@ interface stage4_hazard_unit_if();
 
   
   // RVV execute signals
-  logic vselvl_ex; 
+  logic vsetvl_ex; 
 
 
 
@@ -96,7 +97,7 @@ interface stage4_hazard_unit_if();
             valid_e, valid_m, ex_busy,
 
             is_queue_full, pc_decode, valid_decode,
-            vsetvl_dec, vsetvl_ex, queue_wen 
+            vsetvl_dec, vsetvl_ex, queue_wen, 
 
 
     output  pc_en, npc_sel,
