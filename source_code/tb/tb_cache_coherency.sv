@@ -261,11 +261,11 @@ initial begin
     nRST = 1'b1;
     @(negedge CLK);
 
-    bcif.ccsnoopaddr = 32'hDDEE11FF;
+    bcif.ccsnoopaddr[0] = 32'hDDEE11FF;
 
     #(10);
 
-    wait(bcif.ccsnoopdone[0] == {CPUS{1'b1}}); // All non-requester CPUs have finished snooping
+    wait(bcif.ccsnoopdone[0] == 1'b1); // All non-requester CPUs have finished snooping
     wait(bcif.ccsnoophit[0] == 1'b1); // This CPU has the data (others would be 0)
     wait(bcif.dstore[1] == dcif.requested_data);
     wait(bcif.ccdirty[0] == 1'b1);
@@ -305,21 +305,26 @@ initial begin
 
     // Reset to isolate each test case
     init_cache();
+    read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
+    read_request(32'h80000000, 64'hDEADBEEFDEADBEEF);
+    read_request(32'h80000000, 64'h11FF11FF11FF1FFF);
+    read_request(32'h80000000, 64'hABDCDEF123456789);
+    read_request(32'h80000000, 64'hFEEFDEADFEEFDEAD);
 
     // Processor initiates a read/write, causing a cache miss
-    gbif.addr = 32'h77788899;
+    gbif.addr = 32'h81000000;
     gbif.ren = 1'b1;
     wait (bcif.dwait[0] == 1'b0); // Wait for dwait to go low
 
     // Cache initiates eviction due to the miss
-    ccif.dWEN = 1'b1; // Indicate data eviction
-    ccif.ccwrite = 1'b0; // this is an eviction, not a processor WB
+    //ccif.dWEN = 1'b1; // Indicate data eviction
+    //ccif.ccwrite = 1'b0; // this is an eviction, not a processor WB
 
     // Bus reacts to eviction request
-    bcif.l2addr[0] = gbif.addr; // Set L2 address for writeback to match the evicted cache line address
-    wait(ccif.dload); 
-    bcif.l2load[0] = ccif.dload; 
-    bcif.l2WEN[0] = 1'b1;
+    //bcif.l2addr = gbif.addr; // Set L2 address for writeback to match the evicted cache line address
+    //wait(ccif.dload); 
+    //bcif.l2load = ccif.dload; 
+    //bcif.l2WEN = 1'b1;
 
     // After writeback, ensure the cache line is invalidated
     #(10);
