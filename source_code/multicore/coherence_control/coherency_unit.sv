@@ -132,7 +132,7 @@ module coherency_unit #(
             IDLE: begin
             end
             RESP_CHKTAG: begin
-                ccif.set_sel = calculate_set_index(bcif.ccsnoopaddr);
+                ccif.set_sel = bcif.ccsnoopaddr[($clog2(N_SETS) - 1): 0];
                 ccif.snoop_req = 1'b1;
                 bcif.ccsnoopdone[CPUID] = 1'b1;
                 bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
