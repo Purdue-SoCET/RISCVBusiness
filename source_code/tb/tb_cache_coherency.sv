@@ -349,24 +349,27 @@ initial begin
     // Reset to isolate each test case
     init_cache();
 
-    // Setting up the bus to simulate a read-exclusive action
-    bcif.ccsnoopaddr = 32'h888999AA;
-    bcif.ccwait[0] = 1'b1;
-    bcif.ccinv[0] = 1'b1;
+    //Do a initial processor request from CPU0
+    gbif.addr = 32'h888999AA;
+    gbif.ren = 1'b1;
+    #(10 * PERIOD);
+    // Do a write request from Dcache1, which should send a INV request.
+    bcif.ccsnoopaddr[1] = 32'h888999AA;
+    bcif.ccwrite[1] = 1'b1;
 
     // Simulate the snoop responses from non-requester CPUs
     #(10 * PERIOD);
     // Assume CPU 1 is the supplier which has the data
-    bcif.ccsnoopdone[1] = 1'b1;
-    bcif.ccsnoophit[1] = 1'b1;
-    ccif.dstore = 64'hDEADBEEFDEADBEEF; // Set needed data from the supplier
+    //bcif.ccsnoopdone[0] = 1'b1; this should happen in Coh unit anyway
+    //bcif.ccsnoophit[0] = 1'b1;
+    // ccif.dstore = 64'hDEADBEEFDEADBEEF; // Set needed data from the supplier
 
     // Transition from SNOOP_RX to TRANSFER_RX
-    bcif.dstore[1] = ccif.dstore; // Transfer data from supplier cache to the bus
+    //bcif.dstore[1] = ccif.dstore; // Transfer data from supplier cache to the bus
 
     // All caches with snoophit invalidate their block once ccinv goes low
     #(10 * PERIOD);
-    bcif.ccinv[0] = 1'b0; // End of invalidation 
+    //bcif.ccinv[0] = 1'b0; // End of invalidation 
 
     if (dcif.state_transfer != INVALID) begin
         $error("%s failed: Cache did not transition to INVALID state after bus invalidation", tb_test_case);
@@ -374,7 +377,7 @@ initial begin
         $display("%s passed", tb_test_case);
     end
 
-    bcif.ccwait = 'b0;
+    //bcif.ccwait = 'b0;
     bcif.ccsnoopdone = 'b0;
     bcif.ccsnoophit = 'b0;
 
