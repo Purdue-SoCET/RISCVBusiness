@@ -105,12 +105,15 @@ string tb_test_case;
 
 initial begin
 //Test case 1: Transition I -> E
-    tb_test_num = 1;
-    tb_test_case = "Transition I -> E";
+    tb_test_num = 0;
+    tb_test_case = "Cache init";
 
     //Reset to isolate each test case
     init_cache();
     read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
+
+    tb_test_num = 1;
+    tb_test_case = "Transition I -> E";
 
     // Cache sets dREN[I] high
     wait(bcif.dREN == 1'b1);
