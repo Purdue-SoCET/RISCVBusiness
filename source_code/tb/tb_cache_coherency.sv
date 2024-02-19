@@ -295,7 +295,82 @@ initial begin
         $display("%s passed", tb_test_case);
     end
 
+//Test case 5: S -> I (Data Eviction)
+    #(50);
+    tb_test_num = tb_test_num + 1;
+    tb_test_case = "Transition S -> I (Data Eviction)";
+
+    // Reset to isolate each test case
+    init_cache();
+
+    // Processor initiates a read/write, causing a cache miss
+    gbif.addr = 32'h77788899;
+    gbif.ren = 1'b1;
+    wait (bcif.dwait[0] == 1'b0); // Wait for dwait to go low
+
+    // Cache initiates eviction due to the miss
+    ccif.dWEN = 1'b1; // Indicate data eviction
+    ccif.ccwrite = 1'b0; // this is an eviction, not a processor WB
+
+    // Bus reacts to eviction request
+    bcif.l2addr[0] = gbif.addr; // Set L2 address for writeback to match the evicted cache line address
+    wait(ccif.dload); 
+    bcif.l2load[0] = ccif.dload; 
+    bcif.l2WEN[0] = 1'b1;
+
+    // After writeback, ensure the cache line is invalidated
+    #(10);
+    ccif.dWEN = 1'b0; 
+    bcif.dwait = 'b0; 
+    bcif.l2WEN = 'b0; 
+
+    if (dcif.state_transfer != INVALID) begin
+        $error("%s failed: Cache did not transition to INVALID state after eviction", tb_test_case);
+    end else begin
+        $display("%s passed", tb_test_case);
+    end
+
+    gbif.ren = 1'b0;
+    gbif.addr = 32'b0;
     
+//Test case 6: S -> I (Bus Invalidation)
+    #(50);
+    tb_test_num = tb_test_num + 1;
+    tb_test_case = "Transition S -> I (Bus Invalidation)";
+
+    // Reset to isolate each test case
+    init_cache();
+
+    // Setting up the bus to simulate a read-exclusive action
+    bcif.ccsnoopaddr = 32'h888999AA;
+    bcif.ccwait[0] = 1'b1;
+    bcif.ccinv[0] = 1'b1;
+
+    // Simulate the snoop responses from non-requester CPUs
+    #(10 * PERIOD);
+    // Assume CPU 1 is the supplier which has the data
+    bcif.ccsnoopdone[1] = 1'b1;
+    bcif.ccsnoophit[1] = 1'b1;
+    ccif.dstore = 64'hDEADBEEFDEADBEEF; // Set needed data from the supplier
+
+    // Transition from SNOOP_RX to TRANSFER_RX
+    bcif.dstore[1] = ccif.dstore; // Transfer data from supplier cache to the bus
+
+    // All caches with snoophit invalidate their block once ccinv goes low
+    #(10 * PERIOD);
+    bcif.ccinv[0] = 1'b0; // End of invalidation 
+
+    if (dcif.state_transfer != INVALID) begin
+        $error("%s failed: Cache did not transition to INVALID state after bus invalidation", tb_test_case);
+    end else begin
+        $display("%s passed", tb_test_case);
+    end
+
+    bcif.ccwait = 'b0;
+    bcif.ccsnoopdone = 'b0;
+    bcif.ccsnoophit = 'b0;
+
+
 end
 
 endprogram
