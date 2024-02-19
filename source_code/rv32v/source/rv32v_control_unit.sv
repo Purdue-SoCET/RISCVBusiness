@@ -279,6 +279,7 @@ assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
 assign vreg_offset = vug_if.vreg_offset;
 assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
 assign vcu_if.vbusy = vug_if.busy;
+assign vcu_if.vvalid = vmajoropcode_valid;
 
 rv32v_uop_gen U_UOPGEN(
     .CLK(CLK),
