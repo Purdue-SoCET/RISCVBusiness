@@ -50,11 +50,14 @@ module cpu_tracker (
     integer loads, next_loads;
     integer stores, next_stores;
     integer clock_cyles;
+    integer stalled_cycles;
 
     always_ff @(posedge CLK) begin
       if (!wb_stall && instr != 0) begin
         loads <= next_loads;
         stores <= next_stores;
+      end else begin
+        stalled_cycles <= stalled_cycles + 1;
       end
     end
 
@@ -75,6 +78,7 @@ module cpu_tracker (
         loads = 0;
         stores = 0;
         clock_cyles = 0;
+        stalled_cycles = 0;
     end
 
     always_comb begin
@@ -302,6 +306,7 @@ module cpu_tracker (
         $fwrite(fptr, "Loads: %d\n", loads);
         $fwrite(fptr, "Stores: %d\n", stores);
         $fwrite(fptr, "Clock Cycles: %d\n", clock_cyles);
+        $fwrite(fptr, "Stalled Cycles: %d\n", stalled_cycles);
         for(integer i = 0; i < NUM_HARTS; i = i + 1) begin
             $fwrite(fptr, "core%d: %d instructions executed\n", i, inst_count[i]);
         end

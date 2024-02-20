@@ -18,6 +18,7 @@
     void put_uint32_hex(uint32_t hex);
     void thread_terimate(int tid, volatile int* t_count);
     void bubble_sort(volatile int* arr, volatile int size);
-    int check_sort(volatile int* arr, volatile int size);
+    void merge_sort(int* arr, int left, int right);
+    int check_sort( int* arr, int size);
 
 #endif
