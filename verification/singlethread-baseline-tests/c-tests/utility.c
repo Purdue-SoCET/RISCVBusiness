@@ -46,3 +46,15 @@ int check_sort(volatile int* arr, volatile int size) {
     }
     return 1;
 }
+
+int fibonacci(int n) {
+    int a = 0, b = 1, next;
+    if (n == 0)
+        return a;
+    for (int i = 2; i <= n; i++) {
+        next = a + b;
+        a = b;
+        b = next;
+    }
+    return b;
+}

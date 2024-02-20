@@ -15,7 +15,11 @@
 
     void print(char *string);
     void put_uint32_hex(uint32_t hex);
+
+    // benchmarking functions
+    int fibonacci(int n);
     void bubble_sort(volatile int* arr, volatile int size);
+    void merge_sort(int* arr, int left, int right);
     int check_sort(volatile int* arr, volatile int size);
 
 #endif
