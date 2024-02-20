@@ -136,13 +136,12 @@ always_comb begin
     uop_out.vctrl_out = vcu_if.vcontrol; 
     //uop_out.vctrl_out = '{'0};
 
-    // Mux in the register write enable from the vector decode
-    // if required
+    // Resolve scalar signals if valid vector isn
     if (vcu_if.vvalid) begin
+        // Mux in the register write enable from the vector decode
         uop_out.ctrl_out.wen = vcu_if.vcontrol.sregwen;
-    end
-    if(vcu_if.vcontrol.vsetvl_type != NOT_CFG) begin
-        uop_out.ctrl_out.w_sel = 3'd4; 
+        // Clear scalar decode detecting illegal isn
+        uop_out.ctrl_out.illegal_insn = 0;
     end
 end
 

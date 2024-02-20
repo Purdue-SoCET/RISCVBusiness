@@ -170,23 +170,25 @@ module stage4_mem_stage (
 
     always_comb begin
         // TODO: RISC-MGMT
-        case ({ex_mem_if.vexmem.sregwen, ex_mem_if.ex_mem_reg.w_sel})
-            4'd0:    ex_mem_if.reg_wdata = lsc_if.dload_ext;
-            4'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
-            4'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
-            4'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
-            4'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
-            4'd8:    ex_mem_if.reg_wdata = ex_mem_if.vexmem.valu_res[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
+        casez ({ex_mem_if.vexmem.sregwen, ex_mem_if.vexmem.vsetvl, ex_mem_if.ex_mem_reg.w_sel})
+            5'd0:    ex_mem_if.reg_wdata = lsc_if.dload_ext;
+            5'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
+            5'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
+            5'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
+            5'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
+            5'd8:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data;  // vl on rs1_data
+            5'd16:   ex_mem_if.reg_wdata = ex_mem_if.vexmem.valu_res[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
         // Forwarding unit
-        case ({ex_mem_if.vexmem.sregwen, ex_mem_if.ex_mem_reg.w_sel})
-            4'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
-            4'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
-            4'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
-            4'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
-            4'd8:    fw_if.rd_mem_data = ex_mem_if.vexmem.valu_res[0];
+        casez ({ex_mem_if.vexmem.sregwen, ex_mem_if.vexmem.vsetvl, ex_mem_if.ex_mem_reg.w_sel})
+            5'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
+            5'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
+            5'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
+            5'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
+            5'd8:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.rs1_data;
+            5'd16:   fw_if.rd_mem_data = ex_mem_if.vexmem.valu_res[0];
             default: fw_if.rd_mem_data = '0;
         endcase
 

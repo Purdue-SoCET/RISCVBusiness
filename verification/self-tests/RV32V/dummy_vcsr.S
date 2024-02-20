@@ -12,18 +12,19 @@
 
 
 RVTEST_RV32U
-addi x1, x0, 1
-vsetivli x10, 3, e32, m1
-addi x2, x0, 2
-NOP
-NOP
-NOP
-NOP
-TEST_CASE(1, x10, 3, NOP)
-
-
 
 RVTEST_CODE_BEGIN
+
+  addi x1, x0, 1
+  vsetivli x10, 3, e32, m1
+  addi x2, x0, 2
+  NOP
+  NOP
+  NOP
+  NOP
+  TEST_CASE(1, x10, 3, NOP)
+  TEST_CASE(2, x1, 1, NOP)
+  TEST_CASE(3, x2, 2, NOP)
 
   TEST_PASSFAIL
 

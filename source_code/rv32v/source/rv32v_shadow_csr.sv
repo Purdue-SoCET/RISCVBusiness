@@ -22,7 +22,6 @@
 *   Description:  Shadow copy of vector CSR data in decode
 */
 
-// `include "rv32v_types_pkg.vh"
 `include "rv32v_shadow_csr_if.vh"
 
 module rv32v_shadow_csr (
@@ -37,7 +36,6 @@ module rv32v_shadow_csr (
     vsew_t vsew, vsew_next;
     logic vill, vill_next;
     word_t vl, vl_next;
-    logic [$clog2(VLMAX)-1:0] vlmax;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
@@ -55,21 +53,8 @@ module rv32v_shadow_csr (
 
     assign shadow_if.vlmul_shadow = vlmul;
     assign shadow_if.vsew_shadow = vsew;
-    // assign shadow_if.vill_shadow = vill;  // don't speculatively raise illegal isn, do so in mem with known vill value
+    assign shadow_if.vill_shadow = vill;  // if this reaches mem (on isn that depends on vtype), raise illegal isn exception
     assign shadow_if.vl_shadow = vl;
-
-    always_comb begin
-        // Compute new vlmax
-        casez (shadow_if.vtype_spec.vlmul)
-            LMUL1:      vlmax = (VLEN << shadow_if.vtype_spec.vsew);
-            LMUL2:      vlmax = (VLEN << shadow_if.vtype_spec.vsew) << 1;
-            LMUL4:      vlmax = (VLEN << shadow_if.vtype_spec.vsew) << 2;
-            LMUL8:      vlmax = (VLEN << shadow_if.vtype_spec.vsew) << 3;
-            LMULHALF:   vlmax = (VLEN << shadow_if.vtype_spec.vsew) >> 1;
-            LMULFOURTH: vlmax = (VLEN << shadow_if.vtype_spec.vsew) >> 2;
-            LMULEIGHTH: vlmax = (VLEN << shadow_if.vtype_spec.vsew) >> 3;
-        endcase
-    end
 
     always_comb begin
         vlmul_next = vlmul;
@@ -86,29 +71,11 @@ module rv32v_shadow_csr (
             // Update vl if applicable
             if (~shadow_if.vkeepvl) begin
                 vl_next = shadow_if.avl_spec; 
-                // if (shadow_if.avl_spec <= VLMAX) begin
-                //     vl_next = shadow_if.avl_spec;
-                // end else begin
-                //     vl_next = VLMAX;
-                // end
             end
-            // Update vtype, first check for supported values
-            // If illegal, set vill, all else 0
-            vill_next = shadow_if.vtype_spec.vill; 
-            vlmul_next = shadow_if.vtype_spec.vlmul; 
-            vsew_next = shadow_if.vtype_spec.vsew; 
-            // if (shadow_if.vtype_spec.vsew > SEW32) begin
-            //     vill_next = 1;
-            //     vlmul_next = '0;
-            //     vsew_next = '0;
-            // end else if (shadow_if.vtype_spec.vta | shadow_if.vtype_spec.vma) begin  // only vma=0, vta=0 supported right now
-            //     vill_next = 1;
-            //     vlmul_next = '0;
-            //     vsew_next = '0;
-            // end else begin
-            //     vlmul_next = shadow_if.vtype_spec.vlmul;
-            //     vsew_next = shadow_if.vtype_spec.vsew;
-            // end
+            // Update vtype
+            vill_next = shadow_if.vtype_spec.vill;
+            vlmul_next = shadow_if.vtype_spec.vlmul;
+            vsew_next = shadow_if.vtype_spec.vsew;
         end
     end
 
