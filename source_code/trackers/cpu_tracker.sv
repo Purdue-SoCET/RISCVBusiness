@@ -47,6 +47,20 @@ module cpu_tracker (
 
     // multithreading statistics
     integer inst_count[NUM_HARTS-1:0];
+    integer loads, next_loads;
+    integer stores, next_stores;
+    integer clock_cyles;
+
+    always_ff @(posedge CLK) begin
+      if (!wb_stall && instr != 0) begin
+        loads <= next_loads;
+        stores <= next_stores;
+      end
+    end
+
+    always_ff @(posedge CLK) begin
+        clock_cyles <= clock_cyles + 1;
+    end
 
     integer fptr;
     string instr_mnemonic, output_str, src1, src2, dest, operands;
@@ -58,6 +72,9 @@ module cpu_tracker (
         for(integer i = 0; i < NUM_HARTS; i = i + 1) begin
             inst_count[i] = 0;
         end
+        loads = 0;
+        stores = 0;
+        clock_cyles = 0;
     end
 
     always_comb begin
@@ -90,6 +107,8 @@ module cpu_tracker (
     end
 
     always_comb begin
+        next_loads = loads;
+        next_stores = stores;
         case (opcode)
             LUI:     instr_mnemonic = "lui";
             AUIPC:   instr_mnemonic = "auipc";
@@ -107,6 +126,7 @@ module cpu_tracker (
                 endcase
             end
             LOAD: begin
+                next_loads = loads + 1;
                 case (load_t'(funct3))
                     LB:      instr_mnemonic = "lb";
                     LH:      instr_mnemonic = "lh";
@@ -117,6 +137,7 @@ module cpu_tracker (
                 endcase
             end
             STORE: begin
+                next_stores = stores + 1;
                 case (store_t'(funct3))
                     SB:      instr_mnemonic = "sb";
                     SH:      instr_mnemonic = "sh";
@@ -277,6 +298,10 @@ module cpu_tracker (
     end
 
     final begin : CLOSE_FILE
+        $fwrite(fptr, "Program Statistics\n");
+        $fwrite(fptr, "Loads: %d\n", loads);
+        $fwrite(fptr, "Stores: %d\n", stores);
+        $fwrite(fptr, "Clock Cycles: %d\n", clock_cyles);
         for(integer i = 0; i < NUM_HARTS; i = i + 1) begin
             $fwrite(fptr, "core%d: %d instructions executed\n", i, inst_count[i]);
         end

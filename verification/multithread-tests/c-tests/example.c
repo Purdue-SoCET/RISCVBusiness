@@ -5,21 +5,14 @@ extern volatile int flag;
 extern volatile int t_count;
 
 void thread1() {
-  volatile int x = 0;
-
-  t_count += 1;
-  asm volatile("j done");
+  flag |= 0x1;
+  thread_terimate(0, &t_count);
 }
 
 void thread2() {
-  volatile int x = 0;
-
-
-  t_count += 1;
-  asm volatile("j done");
+  thread_terimate(1, &t_count);
 }
 
 void thread3() {
-  volatile int x = 0;
-  asm volatile("j done");
+  thread_terimate(2, &t_count);
 }

@@ -15,9 +15,13 @@ done:
 __inf_loop:
     j __inf_loop
 
+.global thread_wait_loop
+thread_wait_loop:
+    nop
+    j thread_wait_loop
 
 .global flag
 .data
-flag: .word 0xFF
+flag: .word 0x00
 .global t_count
 t_count: .word 0x00

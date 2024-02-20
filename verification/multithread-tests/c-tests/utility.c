@@ -46,3 +46,19 @@ int check_sort(volatile int* arr, volatile int size) {
     }
     return 1;
 }
+
+void thread_terimate(int tid, volatile int* t_count) {
+    // set thread to done (1)
+    t_count[tid] = 1;
+    
+    // check if all threads are done
+    int total = 0;
+    for (int i = 0; i < NUM_THREADS; i++) {
+      total += t_count[i];
+    }
+    if (total == NUM_THREADS) {
+      asm volatile("j done");
+    } else {
+      asm volatile("j thread_wait_loop");
+    }
+}

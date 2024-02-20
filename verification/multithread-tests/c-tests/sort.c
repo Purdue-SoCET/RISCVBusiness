@@ -2,13 +2,13 @@
 #include "utility.h"
 
 extern volatile int flag;
-
+extern volatile int t_count;
 
 void thread1() {
     int arr[] = {64, 34, 25, 12, 22, 11, 90, 2};
     int size = 8;
     bubble_sort(arr, size);
-    asm volatile("j done");
+    thread_terimate(0, &t_count);
 }
 
 void thread2() {
@@ -16,7 +16,7 @@ void thread2() {
     int size = 8;
     bubble_sort(arr, size);
     flag &= check_sort(arr, size);
-    asm volatile("j done");
+    thread_terimate(1, &t_count);
 };
 
 
@@ -25,5 +25,5 @@ void thread3() {
     int size = 8;
     bubble_sort(arr, size);
     flag &= check_sort(arr, size);
-    asm volatile("j done");
+    thread_terimate(2, &t_count);
 }
