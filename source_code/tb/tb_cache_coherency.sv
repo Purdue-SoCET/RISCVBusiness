@@ -329,8 +329,8 @@ initial begin
     // After writeback, ensure the cache line is invalidated
     #(10);
     ccif.dWEN = 1'b0; 
-    bcif.dwait = 'b0; 
-    bcif.l2WEN = 'b0; 
+    //bcif.dwait = 'b0; 
+    //bcif.l2WEN = 'b0; 
 
     if (dcif.state_transfer != INVALID) begin
         $error("%s failed: Cache did not transition to INVALID state after eviction", tb_test_case);
