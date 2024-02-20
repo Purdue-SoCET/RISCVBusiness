@@ -44,6 +44,7 @@ module cpu_tracker (
     parameter int CPUID = 0;
 
     integer clock_cyles;
+    integer stalled_cycles;
     integer loads, next_loads;
     integer stores, next_stores;
 
@@ -55,12 +56,15 @@ module cpu_tracker (
     initial begin : INIT_FILE
         fptr = $fopen(`TRACE_FILE_NAME, "w");
         clock_cyles = 0;
+        stalled_cycles = 0;
     end
 
     always_ff @(posedge CLK) begin
       if (!wb_stall && instr != 0) begin
         loads <= next_loads;
         stores <= next_stores;
+      end else begin
+        stalled_cycles <= stalled_cycles + 1;
       end
     end
 
@@ -290,6 +294,7 @@ module cpu_tracker (
         $fwrite(fptr, "Loads: %d\n", loads);
         $fwrite(fptr, "Stores: %d\n", stores);
         $fwrite(fptr, "Clock Cycles: %d\n", clock_cyles);
+        $fwrite(fptr, "Stalled Cycles: %d\n", stalled_cycles);
         $fclose(fptr);
     end
 
