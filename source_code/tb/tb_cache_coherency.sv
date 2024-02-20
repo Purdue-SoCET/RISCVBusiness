@@ -70,6 +70,9 @@ begin
     @(negedge CLK);
     nRST = 1'b1;
     @(negedge CLK);
+    //#(PERIOD * 335); //Must look at idle_done within cache to know when flushing is complete
+    wait(ccif.dflush_done);
+    
 end
 endtask
 
@@ -110,10 +113,10 @@ initial begin
 
     //Reset to isolate each test case
     init_cache();
-    read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
 
     tb_test_num = 1;
     tb_test_case = "Transition I -> E";
+    read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
 
     // Cache sets dREN[I] high
     wait(bcif.dREN == 1'b1);
