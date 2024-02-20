@@ -43,6 +43,10 @@ module cpu_tracker (
 
     parameter int CPUID = 0;
 
+    integer clock_cyles;
+    integer loads, next_loads;
+    integer stores, next_stores;
+
     integer fptr;
     string instr_mnemonic, output_str, src1, src2, dest, operands;
     string csr, temp_str;
@@ -50,6 +54,18 @@ module cpu_tracker (
     assign pc64 = {{32{1'b0}}, pc};
     initial begin : INIT_FILE
         fptr = $fopen(`TRACE_FILE_NAME, "w");
+        clock_cyles = 0;
+    end
+
+    always_ff @(posedge CLK) begin
+      if (!wb_stall && instr != 0) begin
+        loads <= next_loads;
+        stores <= next_stores;
+      end
+    end
+
+    always_ff @(posedge CLK) begin
+        clock_cyles <= clock_cyles + 1;
     end
 
     always_comb begin
@@ -99,6 +115,7 @@ module cpu_tracker (
                 endcase
             end
             LOAD: begin
+                next_loads = loads + 1;
                 case (load_t'(funct3))
                     LB:      instr_mnemonic = "lb";
                     LH:      instr_mnemonic = "lh";
@@ -109,6 +126,7 @@ module cpu_tracker (
                 endcase
             end
             STORE: begin
+                next_stores = stores + 1;
                 case (store_t'(funct3))
                     SB:      instr_mnemonic = "sb";
                     SH:      instr_mnemonic = "sh";
@@ -268,6 +286,10 @@ module cpu_tracker (
     end
 
     final begin : CLOSE_FILE
+        $fwrite(fptr, "Program Statistics\n");
+        $fwrite(fptr, "Loads: %d\n", loads);
+        $fwrite(fptr, "Stores: %d\n", stores);
+        $fwrite(fptr, "Clock Cycles: %d\n", clock_cyles);
         $fclose(fptr);
     end
 
