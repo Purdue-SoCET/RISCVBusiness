@@ -119,7 +119,8 @@ module l1_cache #(
     // address
     word_t read_addr, next_read_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
-    decoded_cache_addr_t decoded_addr, decoded_snoop_addr;
+    decoded_cache_addr_t decoded_addr;
+    //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
     logic hit, pass_through;
     word_t [BLOCK_SIZE-1:0] hit_data;
@@ -139,9 +140,9 @@ module l1_cache #(
 
     // sram instance
     assign sramSEL = (state == SNOOP) ? sramSNOOPSEL : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits);
+    //assign sramSNOOPSEL =  4'b0111;
     //assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
     assign sramSNOOPSEL = (ccif.snoop_req)  ? ccif.set_sel : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits); //Same is sramSEL on IDLE
-    //assign sramSEL = 0;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
@@ -231,6 +232,7 @@ module l1_cache #(
     end
 
     // cache output logic
+    //assign cc_if.dflush_done = idle_done;
     // Outputs: counter control signals, cache, signals to memory, signals to processor
     always_comb begin
         sramWEN                 = 0;
@@ -272,6 +274,7 @@ module l1_cache #(
                     clear_flush_count  = 1;
                     idle_done 	       = 1;
                     ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
+                    flush_done = 1; //HACK: Remove if this causes bugs, used for testbench
                 end
             end
             HIT: begin
