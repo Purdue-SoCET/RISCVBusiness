@@ -41,7 +41,7 @@ interface stage4_hazard_unit_if();
   logic valid_e, valid_m; // f always valid since it's the PC
   logic ifence;
   logic ex_busy;
-  logic lsc_queue_full;
+  logic serializer_stall;
 
   // Control (outputs)
   logic pc_en, npc_sel;
@@ -94,7 +94,7 @@ interface stage4_hazard_unit_if();
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
             badaddr, ifence,
             token_ex, token_mem, rv32c_ready,
-            valid_e, valid_m, ex_busy,
+            valid_e, valid_m, ex_busy, serializer_stall,
 
             is_queue_full, pc_decode, valid_decode,
             vsetvl_dec, vsetvl_ex, queue_wen, 
@@ -137,7 +137,7 @@ interface stage4_hazard_unit_if();
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,
-            token_mem
+            token_mem, serializer_stall
   );
 
  endinterface

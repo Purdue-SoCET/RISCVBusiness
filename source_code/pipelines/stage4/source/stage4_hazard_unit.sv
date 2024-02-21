@@ -222,6 +222,7 @@ module stage4_hazard_unit (
      // TODO: Exceptions
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
                                   || hazard_if.fence_stall
+                                  || hazard_if.serializer_stall
                                   || hazard_if.halt;
                                   //|| branch_jump && wait_for_imem; // This can be removed once there is I$. Solves problem where
                                                                    // stale I-request returns after PC is redirected

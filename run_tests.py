@@ -41,7 +41,7 @@ SUPPORTED_ARCHS = []
 SUPPORTED_TEST_TYPES = ['asm', 'c', 'selfasm', "sparce", ""]
 SPARCE_MODULES = ['sparce_svc', 'sparce_sprf', 'sparce_sasa_table', 'sparce_psru', 'sparce_cfid']
 TEST_TYPE = ""
-ELF2HEX_COMMAND = "/home/ecegrid/a/socpub/Public/riscv_dev/riscv_installs/RV_current/bin/elf2hex"
+ELF2HEX_COMMAND = "elf2hex"
 # Change this variable to the filename (minus extension)
 # of the top level file for your project. This should
 # match the file name given in the top level wscript
@@ -158,6 +158,13 @@ def compile_asm_for_self(file_name):
         failure = subprocess.call(cmd_arr, stdout=hex_file)
     if failure:
         return -2
+    
+    # create a meminit.bin file from the elf file produced above (needed for Verilator sim)
+    bin_file_loc = output_dir + 'meminit.bin'
+    with open(bin_file_loc, 'w') as bin_file:
+        failure = subprocess.call(['riscv64-unknown-elf-objcopy', '-O', 'binary', output_name, bin_file_loc])
+    if failure:
+        return -3
     else:
         return 0
 
