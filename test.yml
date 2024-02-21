@@ -21,7 +21,7 @@ microarch_params:
   
   # Bus configurations
   bus_endianness      : "big"
-  bus_interface_type  : "ahb_if"
+  bus_interface_type  : "generic_bus_if"
 
   # Sparisty Optimizations
   sparce_enabled : "disabled"
@@ -30,7 +30,7 @@ microarch_params:
   rv32c_enabled : "disabled"
   
   # Halt
-  infinite_loop_halts : "false"
+  infinite_loop_halts : "true"
 
   # base ISA 
   base_isa: "RV32I"
