@@ -1,5 +1,4 @@
 `include "predictor_pipeline_if.vh"
-`include "rv32e_reg_file.sv"
 
 module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if);
 
@@ -68,9 +67,9 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 	always_comb begin
 		link1 = 0;
 		link2 = 0;
-		if (pc[11:7] == 1 || pc[11:7] == 5) //defined constant
+		if (pc[11:7] == 5'h1 || pc[11:7] == 5'h5) //defined constant
 			link1 = 1;
-		if (pc[19:15] == 1 || pc[19:15] == 5)
+		if (pc[19:15] == 5'h1 || pc[19:15] == 5'h5)
 			link2 = 1;
 	end
 endmodule
