@@ -123,11 +123,11 @@ rv32v_shadow_csr RVV_SHADOW_CSR(
 assign hazard_if.valid_decode = fetch_out.valid; 
 assign hazard_if.pc_decode = fetch_out.pc; 
 assign hazard_if.vsetvl_dec = uop_out.vctrl_out.vsetvl_type != NOT_CFG; 
-
+assign hazard_if.vbusy = vcu_if.vbusy; 
 
 // Decode resolution
 //assign num_uops = fetch_out.valid ? DISPATCH_SIZE : 0; 
-assign queue_wen = (~hazard_if.stall_decode && fetch_out.valid);
+assign queue_wen = (~hazard_if.stall_decode && (fetch_out.valid || vcu_if.vvalid));
 assign hazard_if.queue_wen = queue_wen; 
 
 always_comb begin
@@ -143,8 +143,9 @@ always_comb begin
         // Clear scalar decode detecting illegal isn
         uop_out.ctrl_out.illegal_insn = 0;
     end else begin
-        uop_out.vctrl_out.vmemdren = 0;
-        uop_out.vctrl_out.vmemdwen = 0;
+        uop_out.vctrl_out = '{default: '0, vsetvl_type:NOT_CFG, veew_src1: SEW32, veew_src2: SEW32, veew_dest: SEW32}; 
+        // uop_out.vctrl_out.vmemdren = 0;
+        // uop_out.vctrl_out.vmemdwen = 0;
     end
 end
 
