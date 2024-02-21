@@ -26,7 +26,6 @@ RVTEST_CODE_BEGIN
 
   // set illegal vtype setting 
   vsetivli x10, 5, e64, m1
-  NOP
   csrr x10, vtype
   srli x10, x10, 31
   TEST_CASE(4, x10, 1, NOP)
@@ -40,6 +39,26 @@ RVTEST_CODE_BEGIN
   vsetvl x0, x0, x10
   csrr x11, vl
   TEST_CASE(6, x11, 4, NOP)
+
+  // test w/ vsetvl{i} with rs1=0, rd!= 0. vl should be vlmax
+  vsetvli x1, x0, e16, m4
+  TEST_CASE(7, x1, 32, NOP)
+  csrr x11, vl
+  TEST_CASE(8, x11, 32, NOP)
+  csrr x12, vtype
+  TEST_CASE(9, x12, 10, NOP) 
+
+  // speculative execution of vset{i}vl{i}
+  beq x0, x0, branch_here
+  vsetivli x2, 5, e16
+  add x2, x0, x1
+  add x2, x0, x1
+
+
+  branch_here: 
+    NOP
+    NOP
+    NOP
 
 
 

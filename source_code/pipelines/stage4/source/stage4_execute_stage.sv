@@ -111,6 +111,8 @@ module stage4_execute_stage (
     assign shadow_if.vsetvl = (ex_in.vctrl_out.vsetvl_type != NOT_CFG); 
     assign shadow_if.vkeepvl = ex_in.vctrl_out.vkeepvl; 
     always_comb begin
+        shadow_if.avl_spec = '0; 
+        shadow_if.vtype_spec = vtype_t'(0); 
         case(ex_in.vctrl_out.vsetvl_type)
             VSETIVLI: begin
                 shadow_if.avl_spec = {'0, ex_in.ctrl_out.zimm};
@@ -153,7 +155,7 @@ module stage4_execute_stage (
         endcase 
 
         // if vsetvl or vsetvli instr and rs1 == 0, set shadow_if.avl_spec to vlmax 
-        if((ex_in.vctrl_out.vsetvl_type == VSETVL || ex_in.vctrl_out.vsetvl_type == VSETIVLI) && ex_in.ctrl_out.rs1.regidx == 0) 
+        if((ex_in.vctrl_out.vsetvl_type == VSETVL || ex_in.vctrl_out.vsetvl_type == VSETVLI) && ex_in.ctrl_out.rs1.regidx == 0) 
             shadow_if.avl_spec = vlmax;
         else if(shadow_if.avl_spec > vlmax) // handle stripmining if AVL > VLMAX 
             shadow_if.avl_spec = vlmax; 
