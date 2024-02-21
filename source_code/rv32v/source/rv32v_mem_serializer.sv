@@ -80,6 +80,8 @@ module rv32v_mem_serializer (
                             next_next_addr = next_addr + serial_if.stride;
                         end
                         next_serial_state = VL1;
+                    end else begin
+                        next_serial_state = serial_state;
                     end
                 end
                 VL1: begin
@@ -93,6 +95,8 @@ module rv32v_mem_serializer (
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[1]) begin
                         next_next_addr = next_addr + serial_if.stride;
                         next_serial_state = VL2;
+                    end else begin
+                        next_serial_state = serial_state;
                     end
                 end
                 VL2: begin
@@ -106,6 +110,8 @@ module rv32v_mem_serializer (
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[2]) begin
                         next_next_addr = next_addr + serial_if.stride;
                         next_serial_state = VL3;
+                    end else begin
+                        next_serial_state = serial_state;
                     end
                 end
                 VL3: begin
@@ -119,6 +125,8 @@ module rv32v_mem_serializer (
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[3]) begin
                         next_next_addr = next_addr + serial_if.stride;
                         next_serial_state = VL0;
+                    end else begin
+                        next_serial_state = serial_state;
                     end
                 end
             endcase

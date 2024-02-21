@@ -64,6 +64,18 @@ module stage4_mem_stage (
     // assign lsc_if.byte_en = 0;
     assign lsc_if.load_type = (vmemop) ? serial_if.vload_type : ex_mem_if.ex_mem_reg.load_type;
     assign lsc_if.ifence = ex_mem_if.ex_mem_reg.ifence;
+
+    // Serializer interface signals
+    assign serial_if.vmemdwen = ex_mem_if.vexmem.vmemdwen; 
+    assign serial_if.vmemdren = ex_mem_if.vexmem.vmemdren;
+    assign serial_if.vuop_num = ex_mem_if.vexmem.vuop_num;
+    assign serial_if.vindexed = ex_mem_if.vexmem.vindexed;
+    assign serial_if.base = ex_mem_if.ex_mem_reg.rs1_data;
+    assign serial_if.stride = ex_mem_if.ex_mem_reg.rs2_data;
+    assign serial_if.veew = ex_mem_if.vexmem.veew;
+    assign serial_if.vlane_mask = ex_mem_if.vexmem.vlane_mask;
+    assign serial_if.vlane_addr = ex_mem_if.vexmem.valu_res;
+    assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs2;
     assign serial_if.lsc_ready = lsc_if.lsc_ready;
 
     // Memory serializer
@@ -170,31 +182,27 @@ module stage4_mem_stage (
 
     always_comb begin
         // TODO: RISC-MGMT
-        casez ({ex_mem_if.vexmem.sregwen, ex_mem_if.vexmem.vsetvl, ex_mem_if.ex_mem_reg.w_sel})
+        casez ({ex_mem_if.vexmem.vsetvl, ex_mem_if.vexmem.sregwen, ex_mem_if.ex_mem_reg.w_sel})
             5'd0:    ex_mem_if.reg_wdata = lsc_if.dload_ext;
             5'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
             5'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
             5'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
             5'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
-            5'd8:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data;  // vl on rs1_data
-            5'd16:   ex_mem_if.reg_wdata = ex_mem_if.vexmem.valu_res[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
+            5'd8:    ex_mem_if.reg_wdata = ex_mem_if.vexmem.valu_res[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
+            5'd24:   ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data;  // vl on rs1_data (for vset{i}vl{i})
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
         // Forwarding unit
-        casez ({ex_mem_if.vexmem.sregwen, ex_mem_if.vexmem.vsetvl, ex_mem_if.ex_mem_reg.w_sel})
+        casez ({ex_mem_if.vexmem.vsetvl, ex_mem_if.vexmem.sregwen, ex_mem_if.ex_mem_reg.w_sel})
             5'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
             5'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
             5'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
             5'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
-            5'd8:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.rs1_data;
-            5'd16:   fw_if.rd_mem_data = ex_mem_if.vexmem.valu_res[0];
+            5'd8:    fw_if.rd_mem_data = ex_mem_if.vexmem.valu_res[0];
+            5'd24:   fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.rs1_data;
             default: fw_if.rd_mem_data = '0;
         endcase
-
-        // for vset{i}vl{i} instructions write the vl value into rd
-        // if(ex_mem_if.vexmem.vsetvl)
-        //     ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data; // vl is in rs1
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :

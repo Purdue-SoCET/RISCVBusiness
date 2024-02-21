@@ -205,7 +205,8 @@ module stage4_hazard_unit (
     //                               || mem_use_stall 
     //                               || hazard_if.fence_stall // Data hazard -- stall until dependency clears (from E/M flush after writeback)
     //                               || is_queue_full;
-    assign hazard_if.if_ex_stall  = (hazard_if.is_queue_full && ~hazard_if.flush_queue) || hazard_if.fence_stall; // || hazard_if.fence_stall; 
+    assign hazard_if.if_ex_stall  = hazard_if.stall_decode || hazard_if.fence_stall; 
+    // (hazard_if.is_queue_full && ~hazard_if.flush_queue) || hazard_if.fence_stall; // || hazard_if.fence_stall; 
 
     assign hazard_if.stall_queue  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
                                   // || (wait_for_imem && !dmem_access) // ???
