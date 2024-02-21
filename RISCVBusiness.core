@@ -7,7 +7,7 @@ filesets:
         depend:
             - "socet:bus-components:bus_protocol_if"
             - "socet:bus-components:ahb_if"
-           - "socet:bus-components:apb_if"
+            - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:stage3"
             - "socet:riscv:priv"
@@ -22,6 +22,7 @@ filesets:
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
             - source_code/branch_predictors/btfnt_predictor/btfnt_predictor.sv
             - source_code/branch_predictors/btb/btb.sv
+            - source_code/branch_predictors/return_predictor/return_predictor.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
             #- source_code/pipelines/tspp/tspp_hazard_unit.sv
             #- source_code/pipelines/tspp/tspp_fetch_stage.sv
@@ -100,7 +101,7 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-ENUMVALUE", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
                 #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
     no_mc:
