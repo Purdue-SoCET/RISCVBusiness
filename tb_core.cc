@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
     } else if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else {
-        std::cout << "Test FAILED: Test " << dut.top_core->get_x28() << std::endl;
+        std::cout << "Test FAILED: Test " << ((dut.top_core->get_x28() - 1) / 2) << std::endl;
     }
     m_trace.close();
     memory.dump();

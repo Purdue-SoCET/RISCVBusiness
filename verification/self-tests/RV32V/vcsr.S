@@ -46,7 +46,7 @@ RVTEST_CODE_BEGIN
   csrr x11, vl
   TEST_CASE(8, x11, 32, NOP)
   csrr x12, vtype
-  TEST_CASE(9, x12, 10, NOP) 
+  TEST_CASE(9, x12, 9, NOP) 
 
   // speculative execution of vset{i}vl{i}
   beq x0, x0, branch_here

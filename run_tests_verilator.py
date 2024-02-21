@@ -155,6 +155,7 @@ def run_tests(config: Type[run_config]) -> List[str]:
                 result = PASSED
             else:
                 print(RED + '[FAILED]' + END_COLOR)
+                print(res)
                 result = FAILED
             # check results - 
             #result = check_self_results(waf_log_filepath, build_logger)
