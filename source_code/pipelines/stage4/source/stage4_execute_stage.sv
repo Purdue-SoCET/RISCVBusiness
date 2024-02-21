@@ -73,8 +73,8 @@ module stage4_execute_stage (
     jump_calc_if jump_if ();
     branch_res_if branch_if ();
 
-    assign rf_if.rs1 = ex_in.ctrl_out.rs1; 
-    assign rf_if.rs2 = ex_in.ctrl_out.rs2; 
+    assign rf_if.rs1 = ex_in.ctrl_out.rs1.regidx; 
+    assign rf_if.rs2 = ex_in.ctrl_out.rs2.regidx; 
 
 
 
@@ -127,7 +127,7 @@ module stage4_execute_stage (
         endcase
 
         // set the logic for vlmax 
-        vlmax = 128; // set to VLEN and then perform shifts to get right value
+        vlmax = 16; // set to VLEN and then perform shifts to get right value
         case(shadow_if.vtype_spec.vsew)
             SEW32: vlmax = vlmax >> 2; 
             SEW16: vlmax = vlmax >> 1;
@@ -153,7 +153,7 @@ module stage4_execute_stage (
         endcase 
 
         // if vsetvl or vsetvli instr and rs1 == 0, set shadow_if.avl_spec to vlmax 
-        if((ex_in.vctrl_out.vsetvl_type == VSETVL || ex_in.vctrl_out.vsetvl_type == VSETIVLI) && ex_in.ctrl_out.rs1 == 0) 
+        if((ex_in.vctrl_out.vsetvl_type == VSETVL || ex_in.vctrl_out.vsetvl_type == VSETIVLI) && ex_in.ctrl_out.rs1.regidx == 0) 
             shadow_if.avl_spec = vlmax;
         else if(shadow_if.avl_spec > vlmax) // handle stripmining if AVL > VLMAX 
             shadow_if.avl_spec = vlmax; 

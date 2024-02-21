@@ -106,9 +106,15 @@ lint: config
 clean:
 	rm -rf build
 	rm -rf rvb_out
+	rm *.vcd
+	rm *.wlf
+
+clean_waveforms:
+	rm *.wlf
+	rm *.vcd
 
 veryclean:
 	rm -rf fusesoc_libraries
 	rm fusesoc.conf
 
-.PHONY: test_verilog_file
+.PHONY: test_verilog_file clean_waveforms

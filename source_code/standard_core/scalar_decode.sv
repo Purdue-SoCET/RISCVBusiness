@@ -113,8 +113,8 @@ assign control_out.rv32m_control = cu_if.rv32m_control;
 
 
 // RF interface signasl
-assign control_out.rs1 = rf_if.rs1; 
-assign control_out.rs2 = rf_if.rs2; 
+assign control_out.rs1 = '{regclass: RC_SCALAR, regidx: rf_if.rs1}; 
+assign control_out.rs2 = '{regclass: RC_SCALAR, regidx: rf_if.rs2}; 
 
 
 
