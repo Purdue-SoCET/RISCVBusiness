@@ -142,6 +142,9 @@ always_comb begin
         uop_out.ctrl_out.wen = vcu_if.vcontrol.sregwen;
         // Clear scalar decode detecting illegal isn
         uop_out.ctrl_out.illegal_insn = 0;
+    end else begin
+        uop_out.vctrl_out.vmemdren = 0;
+        uop_out.vctrl_out.vmemdwen = 0;
     end
 end
 

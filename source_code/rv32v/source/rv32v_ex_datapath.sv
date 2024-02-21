@@ -105,15 +105,16 @@ rv32v_mask_unit RVV_MASKS(
 
 
 // connect remaining signals from vctrls to vmem_in 
-assign vmem_in.vindexed = vctrls.vindexed; 
+assign vmem_in.vindexed = vctrls.vindexed;
 assign vmem_in.vuop_num = vctrls.vuop_num; 
+assign vmem_in.vmemdren = vctrls.vmemdren;
+assign vmem_in.vmemdwen = vctrls.vmemdwen;
 assign vmem_in.vregwen = vctrls.vregwen; 
+assign vmem_in.sregwen = vctrls.sregwen;
 assign vmem_in.veew = vctrls.veew_dest; 
 assign vmem_in.vd_sel = vctrls.vd_sel; 
 assign vmem_in.vbank_offset = vctrls.vbank_offset; 
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1; 
-assign vmem_in.vkeepvl = vctrls.vkeepvl; 
-
-
+assign vmem_in.vkeepvl = vctrls.vkeepvl;
 
 endmodule 
