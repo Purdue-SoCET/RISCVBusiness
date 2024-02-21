@@ -7,7 +7,7 @@ filesets:
         depend:
             - "socet:bus-components:bus_protocol_if"
             - "socet:bus-components:ahb_if"
-           - "socet:bus-components:apb_if"
+            - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:stage3"
             - "socet:riscv:priv"
@@ -106,7 +106,7 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-ENUMVALUE", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
                 #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
     no_mc:
