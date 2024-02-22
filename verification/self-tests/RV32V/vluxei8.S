@@ -16,26 +16,25 @@ RVTEST_RV32U
 RVTEST_CODE_BEGIN
 
   vsetivli x10, 4, e8, m1
-  la x1, load_idx_dat
+	la x1, load_idx_dat
   vle8.v v1, (x1)
   la x2, ldat
   la x3, sdat
-  vluxei8.v   v2, (x3), v1
+  vluxei8.v v2, (x2), v1
+	NOP
   vse8.v v2, (x3)
 	NOP
 	NOP
-	NOP
-	NOP
-	lb x3, 0(x3)
-	lb x4, 1(x3)
-	lb x5, 2(x3)
-	lb x6, 3(x3)
+	lb x4, 0(x3)
+	lb x5, 1(x3)
+	lb x6, 2(x3)
+	lb x7, 3(x3)
 
 	TEST_CASE(1, x10, 4, NOP)
-	TEST_CASE(2, x3, 0x11, NOP)
-	TEST_CASE(3, x4, 0x22, NOP)
-	TEST_CASE(4, x5, 0x33, NOP)
-	TEST_CASE(5, x6, 0x44, NOP)
+	TEST_CASE(2, x4, 0x11, NOP)
+	TEST_CASE(3, x5, 0x22, NOP)
+	TEST_CASE(4, x6, 0x33, NOP)
+	TEST_CASE(5, x7, 0x44, NOP)
 
 
   TEST_PASSFAIL
