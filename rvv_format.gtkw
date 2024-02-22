@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
-[*] Wed Feb 21 18:52:38 2024
+[*] Thu Feb 22 17:52:14 2024
 [*]
 [dumpfile] "waveform.vcd"
-[dumpfile_mtime] "Wed Feb 21 18:40:30 2024"
-[dumpfile_size] 42390759
-[savefile] "vsetvl.gtkw"
-[timestart] 93
+[dumpfile_mtime] "Thu Feb 22 17:46:31 2024"
+[dumpfile_size] 873064
+[savefile] "rvv_format.gtkw"
+[timestart] 129
 [size] 1512 945
-[pos] -1 -1
-*-4.730774 153 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[pos] -1 -2
+*-4.730774 183 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -62,7 +62,7 @@
 [sst_width] 253
 [signals_width] 285
 [sst_expanded] 1
-[sst_vpaned_height] 320
+[sst_vpaned_height] 365
 @28
 TOP.CLK
 TOP.nRST
@@ -86,7 +86,6 @@ TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vstrided
 TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vunitstride
 TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_dest[2:0]
 TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src1[2:0]
-@29
 TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src2[2:0]
 @1000200
 -uOP out
@@ -116,7 +115,19 @@ TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
+@800200
+-dgen_bus_if
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.addr[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
+@23
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata[31:0]
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata[31:0]
+@28
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.busy
 @1000200
+-dgen_bus_if
 -LSC
 @800200
 -vexmem

@@ -62,8 +62,8 @@ always_comb begin
                               : { 24'b0, bank_dat[bank_offset][15:8] };
         out_dat[2] = sign_ext ? { {24{bank_dat[bank_offset][23]}}, bank_dat[bank_offset][23:16] }
                               : { 24'b0, bank_dat[bank_offset][23:16] };
-        out_dat[3] = sign_ext ? { {24{bank_dat[bank_offset][31]}}, bank_dat[bank_offset][31:16] }
-                              : { 24'b0, bank_dat[bank_offset][31:16] };
+        out_dat[3] = sign_ext ? { {24{bank_dat[bank_offset][31]}}, bank_dat[bank_offset][31:24] }
+                              : { 24'b0, bank_dat[bank_offset][31:24] };
     end
 end
 

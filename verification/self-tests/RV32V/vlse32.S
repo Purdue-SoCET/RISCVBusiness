@@ -1,7 +1,7 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# vle32.S
+# vlse32.S
 #-----------------------------------------------------------------------------
 #
 # Test vle32 and vse32 instructions
@@ -15,28 +15,26 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
 
-  vsetivli x10, 4, e32, m1
+  vsetivli x10, 6, e32, m2
 	la x1, ldat
 	la x2, sdat
   vle32.v v1, (x1)
 	NOP
-	NOP
 	vse32.v v1, (x2)
-	NOP
 	NOP
 	lw x3, 0(x2)
 	lw x4, 4(x2)
 	lw x5, 8(x2)
 	lw x6, 12(x2)
-	# lw x7, 16(x2)
-	# lw x8, 20(x2)
-  TEST_CASE(1, x10, 4, NOP)
+	lw x7, 16(x2)
+	lw x8, 20(x2)
+  TEST_CASE(1, x10, 6, NOP)
 	TEST_CASE(2, x3, 0xff, NOP)
 	TEST_CASE(3, x4, 0xfe, NOP)
 	TEST_CASE(4, x5, 0xfd, NOP)
 	TEST_CASE(5, x6, 0xfc, NOP)
-	# TEST_CASE(6, x7, 0xfb, NOP)
-	# TEST_CASE(7, x8, 0xfa, NOP)
+	TEST_CASE(6, x7, 0xfb, NOP)
+	TEST_CASE(7, x8, 0xfa, NOP)
 
   TEST_PASSFAIL
 
