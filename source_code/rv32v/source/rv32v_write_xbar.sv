@@ -53,17 +53,17 @@ always_comb begin
     end
     else if(eew == SEW16) begin
         if(BANK_NUM == bank_offset) begin
-            vwdat = {lane_dat[1][31:16], lane_dat[0][15:0]}; 
+            vwdat = {lane_dat[1][15:0], lane_dat[0][15:0]}; 
             byte_wen = { { 2{lane_wen[1]} }, { 2{lane_wen[0]} } }; 
         end 
         else if(BANK_NUM == (bank_offset + 1)) begin
-            vwdat = {lane_dat[3][31:16], lane_dat[2][15:0]}; 
+            vwdat = {lane_dat[3][15:0], lane_dat[2][15:0]}; 
             byte_wen = { { 2{lane_wen[3]} }, { 2{lane_wen[2]} } }; 
         end
     end 
     else begin  // eew == SEW8
         if(BANK_NUM == bank_offset) begin
-            vwdat = {lane_dat[3][31:24], lane_dat[2][23:16], lane_dat[1][15:8], lane_dat[0][7:0]}; 
+            vwdat = {lane_dat[3][7:0], lane_dat[2][7:0], lane_dat[1][7:0], lane_dat[0][7:0]}; 
             byte_wen = lane_wen; 
         end 
     end
