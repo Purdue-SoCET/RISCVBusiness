@@ -178,13 +178,13 @@ def gen_strided_check(vl: int, data_width: int, stride: int, base_offset: int) -
         total_offset += stride
     
     for offset in bytes_to_check:
-        code += gen_scalar_ld_and_check(offset)
+        code += gen_scalar_ld_and_check(offset - base_offset)
     
     all_bytes = set(range(4*TEST_DATA_WORDS))
     unchecked_bytes = all_bytes.difference(bytes_to_check)
 
     for offset in unchecked_bytes:
-        code += gen_scalar_check_safe(offset)
+        code += gen_scalar_check_safe(offset - base_offset)
     
     return code
 
