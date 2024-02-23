@@ -27,7 +27,8 @@
 module rv32v_mem_serializer (
     input logic CLK,
     input logic nRST,
-    rv32v_mem_serializer_if.serial serial_if
+    rv32v_mem_serializer_if.serial serial_if,
+    output logic serializer_stall
 );
 
     import rv32v_types_pkg::*;
@@ -60,10 +61,11 @@ module rv32v_mem_serializer (
         next_next_addr = next_addr;
         serial_if.vcurr_lane = '0;
         serial_if.vaddr_lsc = '0;
-
+        serializer_stall = 0; 
         if (serial_if.vmemdwen | serial_if.vmemdren) begin
             casez (serial_state)
                 VL0: begin
+                    serializer_stall = 1; 
                     serial_if.vcurr_lane = 2'd0;
                     if (serial_if.vindexed) begin
                         serial_if.vaddr_lsc = serial_if.vlane_addr[0];
@@ -85,6 +87,7 @@ module rv32v_mem_serializer (
                     end
                 end
                 VL1: begin
+                    serializer_stall = 1; 
                     serial_if.vcurr_lane = 2'd1;
                     if (serial_if.vindexed) begin
                         serial_if.vaddr_lsc = serial_if.vlane_addr[1];
@@ -100,6 +103,7 @@ module rv32v_mem_serializer (
                     end
                 end
                 VL2: begin
+                    serializer_stall = 1; 
                     serial_if.vcurr_lane = 2'd2;
                     if (serial_if.vindexed) begin
                         serial_if.vaddr_lsc = serial_if.vlane_addr[2];
@@ -115,6 +119,7 @@ module rv32v_mem_serializer (
                     end
                 end
                 VL3: begin
+                    serializer_stall = 1; 
                     serial_if.vcurr_lane = 2'd3;
                     if (serial_if.vindexed) begin
                         serial_if.vaddr_lsc = serial_if.vlane_addr[3];
@@ -125,6 +130,7 @@ module rv32v_mem_serializer (
                     if (serial_if.lsc_ready | ~serial_if.vlane_mask[3]) begin
                         next_next_addr = next_addr + serial_if.stride;
                         next_serial_state = VL0;
+                        serializer_stall = 0; 
                     end else begin
                         next_serial_state = serial_state;
                     end

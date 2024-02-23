@@ -82,7 +82,8 @@ module stage4_mem_stage (
     rv32v_mem_serializer SLZR (
         .CLK,
         .nRST,
-        .serial_if
+        .serial_if,
+        .serializer_stall(hazard_if.serializer_stall)
     );
 
     // Load-store controller
@@ -120,7 +121,7 @@ module stage4_mem_stage (
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
     assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
-    assign hazard_if.serializer_stall = (serial_if.vcurr_lane != (NUM_LANES-1)) & vmemop;
+    //assign hazard_if.serializer_stall = (serial_if.vcurr_lane != (NUM_LANES-1)) & vmemop;
 
     assign halt = ex_mem_if.ex_mem_reg.halt;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;

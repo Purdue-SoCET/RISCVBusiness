@@ -18,8 +18,6 @@ RVTEST_CODE_BEGIN
 
     la x1, in_data
     la x2, out_data
-    addi x1, x1, 12
-    addi x2, x2, 12
 # Vector load/store instructions
     vle32.v v8, (x1)
     nop
@@ -170,66 +168,6 @@ RVTEST_CODE_BEGIN
     lb x11, 27(x1)
     lb x12, 27(x2)
     li TESTNUM, 27
-    bne x11, x12, fail
-# Check clean at byte offset -12
-    li x11, 0x55
-    lb x12, -12(x2)
-    li TESTNUM, -12
-    bne x11, x12, fail
-# Check clean at byte offset -11
-    li x11, 0x55
-    lb x12, -11(x2)
-    li TESTNUM, -11
-    bne x11, x12, fail
-# Check clean at byte offset -10
-    li x11, 0x55
-    lb x12, -10(x2)
-    li TESTNUM, -10
-    bne x11, x12, fail
-# Check clean at byte offset -9
-    li x11, 0x55
-    lb x12, -9(x2)
-    li TESTNUM, -9
-    bne x11, x12, fail
-# Check clean at byte offset -8
-    li x11, 0x55
-    lb x12, -8(x2)
-    li TESTNUM, -8
-    bne x11, x12, fail
-# Check clean at byte offset -7
-    li x11, 0x55
-    lb x12, -7(x2)
-    li TESTNUM, -7
-    bne x11, x12, fail
-# Check clean at byte offset -6
-    li x11, 0x55
-    lb x12, -6(x2)
-    li TESTNUM, -6
-    bne x11, x12, fail
-# Check clean at byte offset -5
-    li x11, 0x55
-    lb x12, -5(x2)
-    li TESTNUM, -5
-    bne x11, x12, fail
-# Check clean at byte offset -4
-    li x11, 0x55
-    lb x12, -4(x2)
-    li TESTNUM, -4
-    bne x11, x12, fail
-# Check clean at byte offset -3
-    li x11, 0x55
-    lb x12, -3(x2)
-    li TESTNUM, -3
-    bne x11, x12, fail
-# Check clean at byte offset -2
-    li x11, 0x55
-    lb x12, -2(x2)
-    li TESTNUM, -2
-    bne x11, x12, fail
-# Check clean at byte offset -1
-    li x11, 0x55
-    lb x12, -1(x2)
-    li TESTNUM, -1
     bne x11, x12, fail
 # Check clean at byte offset 28
     li x11, 0x55
@@ -1310,6 +1248,66 @@ RVTEST_CODE_BEGIN
     li x11, 0x55
     lb x12, 243(x2)
     li TESTNUM, 243
+    bne x11, x12, fail
+# Check clean at byte offset 244
+    li x11, 0x55
+    lb x12, 244(x2)
+    li TESTNUM, 244
+    bne x11, x12, fail
+# Check clean at byte offset 245
+    li x11, 0x55
+    lb x12, 245(x2)
+    li TESTNUM, 245
+    bne x11, x12, fail
+# Check clean at byte offset 246
+    li x11, 0x55
+    lb x12, 246(x2)
+    li TESTNUM, 246
+    bne x11, x12, fail
+# Check clean at byte offset 247
+    li x11, 0x55
+    lb x12, 247(x2)
+    li TESTNUM, 247
+    bne x11, x12, fail
+# Check clean at byte offset 248
+    li x11, 0x55
+    lb x12, 248(x2)
+    li TESTNUM, 248
+    bne x11, x12, fail
+# Check clean at byte offset 249
+    li x11, 0x55
+    lb x12, 249(x2)
+    li TESTNUM, 249
+    bne x11, x12, fail
+# Check clean at byte offset 250
+    li x11, 0x55
+    lb x12, 250(x2)
+    li TESTNUM, 250
+    bne x11, x12, fail
+# Check clean at byte offset 251
+    li x11, 0x55
+    lb x12, 251(x2)
+    li TESTNUM, 251
+    bne x11, x12, fail
+# Check clean at byte offset 252
+    li x11, 0x55
+    lb x12, 252(x2)
+    li TESTNUM, 252
+    bne x11, x12, fail
+# Check clean at byte offset 253
+    li x11, 0x55
+    lb x12, 253(x2)
+    li TESTNUM, 253
+    bne x11, x12, fail
+# Check clean at byte offset 254
+    li x11, 0x55
+    lb x12, 254(x2)
+    li TESTNUM, 254
+    bne x11, x12, fail
+# Check clean at byte offset 255
+    li x11, 0x55
+    lb x12, 255(x2)
+    li TESTNUM, 255
     bne x11, x12, fail
 
 TEST_PASSFAIL
