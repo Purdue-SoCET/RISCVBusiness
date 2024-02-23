@@ -3,7 +3,7 @@ import rv32i_types_pkg::*;
 
 module rv32v_ex_datapath(
     input logic CLK, nRST, 
-    input word_t rdat1, rdat2, imm, 
+    input word_t rdat1, rdat2,
     input vcontrol_t vctrls, 
     input vwb_t vwb_ctrls, 
     output vexmem_t vmem_in
@@ -13,6 +13,9 @@ logic[127:0] v0;
 word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2 ;  
 word_t[3:0] vopA, vopB; 
+word_t ext_imm; 
+
+assign ext_imm = {{27{vctrls.vimm[4]}}, vctrls.vimm};
 
 // store data  
 assign vmem_in.vs2 = xbardat_src1; 
@@ -70,26 +73,32 @@ rv32v_read_xbar VSRC2_XBAR(
 
 // vector functional units 
 always_comb begin
-    vopA = xbardat_src1; 
-    vopB = xbardat_src2; 
+    vopB = xbardat_src1; 
+    vopA = xbardat_src2; 
 
     if(vctrls.vxin1_use_imm) begin
-        vopA = {4{imm}};
+        vopB = {4{ext_imm}};
     end
     else if(vctrls.vxin1_use_rs1) begin
-        vopA = {4{rdat1}}; 
+        vopB = {4{rdat1}}; 
     end
     
     if(vctrls.vxin2_use_rs2) begin
-        vopB = {4{rdat2}}; 
+        vopA = {4{rdat2}}; 
     end
-    
-
-    vmem_in.valu_res[0] = vopA[0] + vopB[0]; 
-    vmem_in.valu_res[1] = vopA[1] + vopB[1]; 
-    vmem_in.valu_res[2] = vopA[2] + vopB[2]; 
-    vmem_in.valu_res[3] = vopA[3] + vopB[3]; 
 end
+
+genvar k; 
+generate 
+    for(k = 0; k < 4; k+=1) begin
+        rv32v_vfu VFU(
+            .vopA(vopA[k]), 
+            .vopB(vopB[k]),
+            .vop(vctrls.vexec), 
+            .vres(vmem_in.valu_res[k])
+        );
+    end
+endgenerate 
 
 
 // Maskings
@@ -97,7 +106,7 @@ end
 // NOTE: need to handle in decode whether masking is enable by looking at bit 25 (1 is no, 0 is yes)
 rv32v_mask_unit RVV_MASKS(
     .v0(v0), 
-    .mask_enable(1'b0), 
+    .mask_enable(vctrls.vmask_en), 
     .uop_num(vctrls.vuop_num), 
     .lane_active(vctrls.vlaneactive),
     .lane_mask(vmem_in.vlane_mask)

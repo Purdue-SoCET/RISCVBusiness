@@ -76,16 +76,24 @@ module stage4_execute_stage (
     assign rf_if.rs1 = ex_in.ctrl_out.rs1.regidx; 
     assign rf_if.rs2 = ex_in.ctrl_out.rs2.regidx; 
 
-
-
     /*******************
     * Vector Datapath
     ********************/
+    // feed signals to hazard unit in for RAW hazards
+    always_comb begin
+        hazard_if.vs1 = ex_in.vctrl_out.vs1_sel; 
+        hazard_if.vs2 = ex_in.vctrl_out.vs2_sel; 
+        hazard_if.vs1_used = 1'b0; 
+        hazard_if.vs2_used = 1'b0; 
+        if(ex_in.vctrl_out.vlaneactive && !ex_in.vctrl_out.vxin1_use_imm && !ex_in.vctrl_out.vxin1_use_rs1)
+            hazard_if.vs1_used = 1'b1; 
+        if(ex_in.vctrl_out.vlaneactive && !ex_in.vctrl_out.vxin2_use_rs2)
+            hazard_if.vs2_used = 1'b1; 
+    end
     //assign ex_mem_if.vexmem = '{default:0, veew: SEW32}; 
     rv32v_ex_datapath RVV_DATAPATH(
         .CLK(CLK), .nRST(nRST),
         .rdat1(rf_if.rs1_data), .rdat2(rf_if.rs2_data), 
-        .imm(imm_I_ext),
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
         .vmem_in(vex_out)

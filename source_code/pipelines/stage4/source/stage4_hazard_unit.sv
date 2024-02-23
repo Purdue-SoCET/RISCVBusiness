@@ -65,7 +65,8 @@ module stage4_hazard_unit (
     logic intr;
     word_t epc;
 
-    logic stall_vsetvl;  
+    logic stall_vsetvl; 
+    logic vmem_stall;  
     // TODO: RISC-MGMT
     //logic rmgmt_stall;
 
@@ -221,10 +222,20 @@ module stage4_hazard_unit (
                                   
      
      // TODO: Exceptions
+    always_comb begin: VMEM_STALL_LOGIC
+      vmem_stall = 0; 
+      if(hazard_if.vregwen) begin
+        if((hazard_if.vd == hazard_if.vs1) && hazard_if.vs1_used)
+          vmem_stall = 1; 
+        else if((hazard_if.vd == hazard_if.vs2) && hazard_if.vs2_used)
+          vmem_stall = 1; 
+      end
+    end
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
                                   || hazard_if.fence_stall
                                   || hazard_if.serializer_stall
-                                  || hazard_if.halt;
+                                  || hazard_if.halt
+                                  || vmem_stall;
                                   //|| branch_jump && wait_for_imem; // This can be removed once there is I$. Solves problem where
                                                                    // stale I-request returns after PC is redirected
     // TODO: Enforce mutual exclusivity of these signals with assertion

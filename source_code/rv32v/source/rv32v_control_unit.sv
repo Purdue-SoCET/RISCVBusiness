@@ -34,6 +34,9 @@ module rv32v_control_unit(
 import rv32i_types_pkg::*;
 import rv32v_types_pkg::*;
 
+//enable or disable masking by looking at bit 25
+assign vcu_if.vcontrol.vmask_en = vcu_if.instr[25] == 1'b0; 
+
 // Register select extraction
 logic [4:0] vd, vs1, vs2, vs3;
 logic [4:0] rd, rs1, rs2;

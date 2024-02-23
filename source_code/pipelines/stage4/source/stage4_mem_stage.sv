@@ -253,4 +253,7 @@ module stage4_mem_stage (
     assign instr_30 = ex_mem_if.ex_mem_reg.instr[30];
     assign wb_stall = hazard_if.ex_mem_stall & ~hazard_if.jump & ~hazard_if.branch; // TODO: Is this right?
 
+    // extra signals to hazard unit for RAW hazards 
+    assign hazard_if.vd = ex_mem_if.vexmem.vd_sel; 
+    assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen; 
 endmodule // stage4_mem_stage

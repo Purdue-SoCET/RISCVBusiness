@@ -83,6 +83,12 @@ interface stage4_hazard_unit_if();
   logic vsetvl_ex; 
   logic vbusy; 
 
+  // vector unit hazard tracking signals
+  regsel_t vs1, vs2, vd; 
+  logic vs1_used, vs2_used; 
+  logic vregwen; 
+
+
 
 
 
@@ -98,7 +104,9 @@ interface stage4_hazard_unit_if();
             valid_e, valid_m, ex_busy, serializer_stall,
 
             is_queue_full, pc_decode, valid_decode,
-            vsetvl_dec, vsetvl_ex, queue_wen, vbusy, 
+            vsetvl_dec, vsetvl_ex, queue_wen, vbusy,
+
+            vregwen, vs1, vs2, vd, vs1_used, vs2_used,  
 
 
     output  pc_en, npc_sel,
@@ -128,7 +136,8 @@ interface stage4_hazard_unit_if();
 
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,
-    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex
+    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex,
+           vs1, vs2, vs1_used, vs2_used
   );
 
   modport mem (
@@ -138,7 +147,8 @@ interface stage4_hazard_unit_if();
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,
-            token_mem, serializer_stall
+            token_mem, serializer_stall,
+            vd, vregwen
   );
 
  endinterface

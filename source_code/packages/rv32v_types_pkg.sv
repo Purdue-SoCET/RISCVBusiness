@@ -545,6 +545,7 @@ package rv32v_types_pkg;
     logic [4:0] vimm;
     // Execution lane signals
     vexec_t vexec;
+    logic vmask_en; 
     // Memory signals
     logic [3:0] vlaneactive;
     logic vmemdren;
