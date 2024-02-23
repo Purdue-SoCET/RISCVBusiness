@@ -91,6 +91,60 @@ add wave -noupdate -group {Vector decode out} /TOP/top_core/CORE/pipeline/uop_ou
 add wave -noupdate -group {Vector decode out} /TOP/top_core/CORE/pipeline/uop_out/vctrl_out/vxin1_use_imm
 add wave -noupdate -group {Vector decode out} /TOP/top_core/CORE/pipeline/uop_out/vctrl_out/vxin1_use_rs1
 add wave -noupdate -group {Vector decode out} /TOP/top_core/CORE/pipeline/uop_out/vctrl_out/vxin2_use_rs2
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/instr
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/stall
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/vbusy
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/vill
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/vl
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/vlmul
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/vsew
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/vcu_if/vvalid
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/mop
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/rd
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/rs1
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/rs2
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/sregwen
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/twice_vsew
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vd
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/veew_dest
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/veew_src1
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/veew_src2
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vexecute_valid
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vfunct3
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vfunct6
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vindexed
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmajoropcode
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmajoropcode_valid
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmem_eew
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmem_width
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmemdren
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmemdwen
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vmeminstr
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vnarrowing
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vopi
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vopi_valid
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vopm
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vopm_valid
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vreg_offset
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vs1
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vs2
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vs3
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vstrided
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vunitstride
+add wave -noupdate -expand -group {Vector decode unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vwidening
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/busy
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/gen
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/stall
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/vbank_offset
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/veew
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/vl
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/vlane_active
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/vreg_offset
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/vug_if/vuop_num
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/U_UOPGEN/advance
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/U_UOPGEN/eew_bytes
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/U_UOPGEN/elements_left
+add wave -noupdate -expand -group {Uop gen unit} /TOP/top_core/CORE/pipeline/decode/U_VECTOR_DECODE/U_UOPGEN/refresh
 add wave -noupdate -divider {Queue out}
 add wave -noupdate /TOP/top_core/CORE/pipeline/hazard_if/stall_queue
 add wave -noupdate /TOP/top_core/CORE/pipeline/hazard_if/flush_queue
@@ -281,9 +335,9 @@ add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_b
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/wdata
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/wen
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {82 ps} 0}
+WaveRestoreCursors {{Cursor 1} {108 ps} 0}
 quietly wave cursor active 1
-configure wave -namecolwidth 531
+configure wave -namecolwidth 173
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
@@ -297,4 +351,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {78 ps} {94 ps}
+WaveRestoreZoom {86 ps} {128 ps}

@@ -51,9 +51,9 @@ package rv32v_types_pkg;
     LMUL2       = 3'd1,
     LMUL4       = 3'd2,
     LMUL8       = 3'd3,
-    LMULHALF    = 3'd5,
+    LMULHALF    = 3'd7,
     LMULFOURTH  = 3'd6,
-    LMULEIGHTH  = 3'd7
+    LMULEIGHTH  = 3'd5
   } vlmul_t;
 
   typedef struct packed {

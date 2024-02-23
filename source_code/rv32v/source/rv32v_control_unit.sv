@@ -149,7 +149,7 @@ assign vcu_if.vcontrol.vxin1_use_rs1 = (vmajoropcode == VMOC_LOAD) ||
                                        (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPMVX);
 
 assign vcu_if.vcontrol.vxin2_use_rs2 = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE) && 
-                                       (mop == MOP_UINDEXED || mop == MOP_OINDEXED);
+                                       ~(mop == MOP_UINDEXED || mop == MOP_OINDEXED);
 
 // Alignment unit signals
 logic vwidening, vnarrowing;

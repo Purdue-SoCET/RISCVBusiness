@@ -60,7 +60,7 @@ class Error(Exception):
         return self.error_string
 
 class run_config():
-    def __init__(self, config_json:dict, arch:str=None):
+    def __init__(self, config_json:dict, arch:str=None, sub_dir:str=None):
         # top level info
         self.arch = arch
         self.abi = str(config_json["abi"])
@@ -73,6 +73,8 @@ class run_config():
         self.asm_env = pathlib.Path(config_json["asm_env"])
         # directory of all where the test files are
         self.test_dir = self.verif_dir/self.test_type/self.arch
+        if sub_dir is not None:
+            self.test_dir /= sub_dir
 
         # output directories
         self.sim_dir = pathlib.Path(config_json["sim_dir"])
@@ -401,6 +403,9 @@ def parse_args()-> Type[run_config]:
     parser.add_argument("--test_type", "-t", dest="test_type",
         type=str, default=None, 
         help="Specify what type of tests to run. Option(s): asm, selfasm,c Default: selfasm")
+    parser.add_argument("--sub_dir", "-s", dest="sub_dir",
+        type=str, default=None, 
+        help="Specify subdirectory to look for tests in")
     parser.add_argument("file_names", metavar="file_names",
         type=str, nargs="*", 
         help="Run all tests that begin with this string. Optional")
@@ -412,7 +417,7 @@ def parse_args()-> Type[run_config]:
     with open(args.config_file, "r") as conf_fp:
         conf_dict = json.load(conf_fp)
 
-    config = run_config(conf_dict, args.arch)
+    config = run_config(conf_dict, args.arch, args.sub_dir)
     if(args.arch):
         config.arch = args.arch
     if(args.test_type):
