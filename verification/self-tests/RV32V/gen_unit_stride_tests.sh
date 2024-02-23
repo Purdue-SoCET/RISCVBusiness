@@ -1,3 +1,7 @@
+#!/usr/bin/bash
+
+rm unit_stride/*
+
 ./gen_ldst_test.py unit_stride/v_unit_stride_e8_single_reg.S --enc_width e8 --vl 16 --vsew e8 --vlmul m1
 ./gen_ldst_test.py unit_stride/v_unit_stride_e16_single_reg.S --enc_width e16 --vl 8 --vsew e16 --vlmul m1
 ./gen_ldst_test.py unit_stride/v_unit_stride_e32_single_reg.S --enc_width e32 --vl 4 --vsew e32 --vlmul m1
@@ -28,3 +32,21 @@
 ./gen_ldst_test.py unit_stride/v_unit_stride_e8_odd_len.S --enc_width e8 --vl 19 --vsew e8 --vlmul m8
 ./gen_ldst_test.py unit_stride/v_unit_stride_e16_odd_len.S --enc_width e16 --vl 11 --vsew e16 --vlmul m4
 ./gen_ldst_test.py unit_stride/v_unit_stride_e32_odd_len.S --enc_width e32 --vl 7 --vsew e32 --vlmul m2
+
+./gen_ldst_test.py unit_stride/v_unit_stride_e8_4B_align_single_reg.S --enc_width e8 --vl 16 --vsew e8 --vlmul m1 --base_offset 12
+./gen_ldst_test.py unit_stride/v_unit_stride_e16_4B_align_single_reg.S --enc_width e16 --vl 8 --vsew e16 --vlmul m1 --base_offset 12
+./gen_ldst_test.py unit_stride/v_unit_stride_e32_4B_align_single_reg.S --enc_width e32 --vl 4 --vsew e32 --vlmul m1 --base_offset 12
+
+./gen_ldst_test.py unit_stride/v_unit_stride_e8_2B_align_single_reg.S --enc_width e8 --vl 16 --vsew e8 --vlmul m1 --base_offset 14
+./gen_ldst_test.py unit_stride/v_unit_stride_e16_2B_align_single_reg.S --enc_width e16 --vl 8 --vsew e16 --vlmul m1 --base_offset 14
+
+./gen_ldst_test.py unit_stride/v_unit_stride_e8_1B_align_single_reg.S --enc_width e8 --vl 16 --vsew e8 --vlmul m1 --base_offset 13
+
+./gen_ldst_test.py unit_stride/v_unit_stride_e8_4B_align_odd_len.S --enc_width e8 --vl 19 --vsew e8 --vlmul m8 --base_offset 12
+./gen_ldst_test.py unit_stride/v_unit_stride_e16_4B_align_odd_len.S --enc_width e16 --vl 11 --vsew e16 --vlmul m4 --base_offset 12
+./gen_ldst_test.py unit_stride/v_unit_stride_e32_4B_align_odd_len.S --enc_width e32 --vl 7 --vsew e32 --vlmul m2 --base_offset 12
+
+./gen_ldst_test.py unit_stride/v_unit_stride_e8_2B_align_odd_len.S --enc_width e8 --vl 19 --vsew e8 --vlmul m8 --base_offset 14
+./gen_ldst_test.py unit_stride/v_unit_stride_e16_2B_align_odd_len.S --enc_width e16 --vl 11 --vsew e16 --vlmul m4 --base_offset 14
+
+./gen_ldst_test.py unit_stride/v_unit_stride_e8_1B_align_odd_len.S --enc_width e8 --vl 19 --vsew e8 --vlmul m8 --base_offset 13

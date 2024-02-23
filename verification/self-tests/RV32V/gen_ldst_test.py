@@ -167,10 +167,10 @@ def gen_scalar_check_safe(lb_offset: int) -> str:
 """
 
 
-def gen_strided_check(vl: int, data_width: int, stride: int) -> str:
+def gen_strided_check(vl: int, data_width: int, stride: int, base_offset: int) -> str:
     code = ""
 
-    total_offset = 0
+    total_offset = base_offset
     bytes_to_check = set()
     for elem_num in range(vl):
         for byte_num in range(data_width):
@@ -189,15 +189,19 @@ def gen_strided_check(vl: int, data_width: int, stride: int) -> str:
     return code
 
 
-def gen_test_code(vcsr: VCSR, enc_width: VSEW, indexing_mode: IndexingMode) -> str:
+def gen_test_code(vcsr: VCSR, enc_width: VSEW, indexing_mode: IndexingMode, base_offset: int) -> str:
     code = "RVTEST_CODE_BEGIN\n"
 
     code += gen_setup_code(vcsr)
 
+    if base_offset > 0:
+        code += f"    addi {INPUT_DATA_PTR_REG}, {INPUT_DATA_PTR_REG}, {base_offset}\n"
+        code += f"    addi {OUTPUT_DATA_PTR_REG}, {OUTPUT_DATA_PTR_REG}, {base_offset}\n"
+
     if indexing_mode == IndexingMode.UNIT_STRIDE:
         data_width = _vsew_to_bytes(enc_width)
         code += gen_unit_strided_ldst(enc_width)
-        code += gen_strided_check(vcsr.vl, data_width, data_width)
+        code += gen_strided_check(vcsr.vl, data_width, data_width, base_offset)
     else:
         raise NotImplementedError(f"{indexing_mode} indexing not implemented")
 
@@ -229,7 +233,7 @@ def parse_args():
     
     parser.add_argument('out_filename', type=str, help='Output filename')
 
-    parser.add_argument('--enc_width', type=str, choices=['e8', 'e16', 'e32'], required=True,
+    parser.add_argument('--enc_width', type=str, choices=['e8', 'e16', 'e32'], default='e32',
                         help='Encoded data width (one of "e8", "e16", or "e32")')
     parser.add_argument('--indexing_mode', type=str, choices=['unit_stride', 'strided'],
                         default='unit_stride', help='Indexing mode (one of "unit_stride" or "strided")')
@@ -239,6 +243,8 @@ def parse_args():
                         help='VSEW parameter')
     parser.add_argument('--vlmul', choices=['m1', 'm2', 'm4', 'm8', 'mf2', 'mf4', 'mf8'], default='m1',
                         help='VLMUL parameter')
+    parser.add_argument('--base_offset', type=int, default=0,
+                        help='Bytes to offset base data pointer by')
 
 
     return parser.parse_args()
@@ -260,7 +266,7 @@ def main():
 
     with open(args.out_filename, 'w') as f:
         f.write(gen_test_preamble(test_name, test_desc))
-        f.write(gen_test_code(vcsr, enc_width, indexing_mode))
+        f.write(gen_test_code(vcsr, enc_width, indexing_mode, args.base_offset))
         f.write(gen_test_data())
     
     print(f"Wrote output to {args.out_filename}")
