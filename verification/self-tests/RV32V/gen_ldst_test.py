@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 #
 #   Copyright 2024 Purdue University
@@ -71,9 +71,27 @@ def _vsew_to_bytes(vsew: VSEW) -> int:
     else:
         raise ValueError("Invalid SEW")
 
+def _vlmul_to_multiplier(vlmul: VLMUL):
+    if vlmul == VLMUL.LMUL_1:
+        return 1.
+    if vlmul == VLMUL.LMUL_2:
+        return 2.
+    if vlmul == VLMUL.LMUL_4:
+        return 4.
+    if vlmul == VLMUL.LMUL_8:
+        return 8.
+    if vlmul == VLMUL.LMUL_HALF:
+        return .5
+    if vlmul == VLMUL.LMUL_FOURTH:
+        return .25
+    if vlmul == VLMUL.LMUL_EIGHTH:
+        return .125
+
 ##############################################################################
 
+VSETVLI_VL_REG = "x7"
 VSETVLI_TGT_REG = "x8"
+
 VLDST_TGT_REG = "v8"
 
 INPUT_DATA_PTR_REG = "x1"
@@ -84,6 +102,8 @@ OUTPUT_DATA_PTR_LABEL = "out_data"
 
 INPUT_DATA_CMP_REG = "x11"
 OUTPUT_DATA_CMP_REG = "x12"
+
+OUTPUT_REGION_FILL_BYTE = 0x55
 
 TEST_FAIL_LABEL = "fail"
 
@@ -111,7 +131,8 @@ RVTEST_RV32U
 
 def gen_setup_code(vcsr: VCSR) -> str:
     return f"""# Setup tasks
-    vsetivli {VSETVLI_TGT_REG}, {vcsr.vl}, {vcsr.vsew.value}, {vcsr.vlmul.value}
+    li {VSETVLI_VL_REG}, {vcsr.vl}
+    vsetvli {VSETVLI_TGT_REG}, {VSETVLI_VL_REG}, {vcsr.vsew.value}, {vcsr.vlmul.value}
 
     la {INPUT_DATA_PTR_REG}, {INPUT_DATA_PTR_LABEL}
     la {OUTPUT_DATA_PTR_REG}, {OUTPUT_DATA_PTR_LABEL}
@@ -137,18 +158,33 @@ def gen_scalar_ld_and_check(lb_offset: int) -> str:
 """
 
 
+def gen_scalar_check_safe(lb_offset: int) -> str:
+        return f"""# Check clean at byte offset {lb_offset}
+    li {INPUT_DATA_CMP_REG}, 0x{OUTPUT_REGION_FILL_BYTE:02x}
+    lb {OUTPUT_DATA_CMP_REG}, {lb_offset}({OUTPUT_DATA_PTR_REG})
+    li TESTNUM, {lb_offset}
+    bne {INPUT_DATA_CMP_REG}, {OUTPUT_DATA_CMP_REG}, fail
+"""
+
+
 def gen_strided_check(vl: int, data_width: int, stride: int) -> str:
     code = ""
 
     total_offset = 0
-    bytes_to_check = []
+    bytes_to_check = set()
     for elem_num in range(vl):
         for byte_num in range(data_width):
-            bytes_to_check.append(total_offset + byte_num)
+            bytes_to_check.add(total_offset + byte_num)
         total_offset += stride
     
     for offset in bytes_to_check:
         code += gen_scalar_ld_and_check(offset)
+    
+    all_bytes = set(range(4*TEST_DATA_WORDS))
+    unchecked_bytes = all_bytes.difference(bytes_to_check)
+
+    for offset in unchecked_bytes:
+        code += gen_scalar_check_safe(offset)
     
     return code
 
@@ -172,7 +208,7 @@ def gen_test_data() -> str:
     code = "    .data\nRVTEST_DATA_BEGIN\nTEST_DATA\n"
 
     # Generate input data (each byte numbered by its position)
-    code += f"\n{INPUT_DATA_PTR_LABEL}:\n"
+    code += f"\n    .align 16\n{INPUT_DATA_PTR_LABEL}:\n"
     for word_num in range(TEST_DATA_WORDS):
         word_data = 0
         for byte_offset in range(4):
@@ -181,9 +217,9 @@ def gen_test_data() -> str:
         code += f"    .word 0x{word_data:08x}\n"
     
     # Generate space for output data
-    code += f"\n{OUTPUT_DATA_PTR_LABEL}:\n"
+    code += f"\n    .align 16\n{OUTPUT_DATA_PTR_LABEL}:\n"
     for word_num in range(TEST_DATA_WORDS):
-        code += f"    .word 0x5afe5afe\n"
+        code += f"    .word 0x55555555\n"
 
     return code + "\nRVTEST_DATA_END\n"
 
@@ -197,7 +233,7 @@ def parse_args():
                         help='Encoded data width (one of "e8", "e16", or "e32")')
     parser.add_argument('--indexing_mode', type=str, choices=['unit_stride', 'strided'],
                         default='unit_stride', help='Indexing mode (one of "unit_stride" or "strided")')
-    parser.add_argument('--vl', type=int, required=True,
+    parser.add_argument('--vl', type=int, default=16,
                         help='Vector length (integer)')
     parser.add_argument('--vsew', choices=['e8', 'e16', 'e32'], default='e32',
                         help='VSEW parameter')
