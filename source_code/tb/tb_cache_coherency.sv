@@ -56,7 +56,7 @@ begin
     gbif.byte_en = 4'b0;
     bcif.ccIsPresent[1] = 1'b0;
     bcif.ccdirty[1] = 1'b0;
-    bcif.ccsnoopdone[1] = 1'b1;
+    bcif.ccsnoopdone[1] = 1'b0;
     bcif.ccsnoophit[1] = 1'b0;
     bcif.ccwrite[1] = 1'b0;
     bcif.dstore[1] = 64'b0;
@@ -116,37 +116,50 @@ initial begin
 
     tb_test_num = 1;
     tb_test_case = "Transition I -> E";
-    read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
 
-/*    // Cache sets dREN[I] high
-    wait(bcif.dREN == 1'b1);
+    begin
+        gbif.ren = 1'b1;
+        gbif.addr = 32'h80000000;
 
-    // Bus transitions IDLE -> GRANT_R
-    #(10 * PERIOD); //Some time to pass for snooping
+        bcif.ccsnoopdone[1] = 1'b1;
+        bcif.ccsnoophit[1] = 1'b0;
 
-    wait(bcif.ccsnoopdone[1] == 1'b1); // All non-requester CPUs raise ccsnoopdone
-    wait(bcif.ccsnoophit[1] == 1'b0); // None raise ccsnoophit
+        bcif.l2state = L2_BUSY;
+        wait(bcif.l2REN);
+        #(PERIOD);
+        bcif.l2load = 32'hCAFECAFE;
+        bcif.l2state = L2_ACCESS;
+        #(PERIOD);
+        bcif.l2state = L2_BUSY;
+        wait(bcif.l2REN);
+        bcif.l2load = 32'hBEEFBEEF;
+        bcif.l2state = L2_ACCESS;
+        #(PERIOD);
+        bcif.l2state = L2_FREE;
 
-    // Transition SNOOP_R -> READ_L2
-    wait(bcif.dload == bcif.l2load); // Cache loads data from L2
+        wait(gbif.busy == 1'b0);
+        @(negedge CLK)
 
-    // Transition BUS_TO_CACHE
-    wait(bcif.dwait == 0); // Bus sets dwait low
-    wait(bcif.ccexclusive == 1); // Bus sets ccexclusive high
+        gbif.ren = 1'b0;
 
-    // Transition back to IDLE, de-assert signals
-    @(negedge CLK); // Wait for the changes to propagate*/
+        //Look at the coherency unit outputs
+        if (gbif.rdata == 32'hCAFECAFE) begin
+            $display("%s: Got correct data", tb_test_case);
+        end else begin
+             $error("%s: Got incorrect data: %h", tb_test_case, gbif.rdata);
+        end
 
-    //Look at the coherency unit outputs
-    if (dcif.state_transfer == EXCLUSIVE) begin // Assuming 'state' correctly reflects the cache state
-        $display("%s passed", tb_test_case);
-    end else begin
-         $error("Cache transfer state incorrect");
+        //Look at the coherency unit outputs
+        if (dcif.state_transfer == EXCLUSIVE) begin // Assuming 'state' correctly reflects the cache state
+            $display("%s passed", tb_test_case);
+        end else begin
+             $error("Cache transfer state incorrect");
+        end
     end
 
     //gbif.ren = 1'b0; //Turn off read request from processor
 
-// Test case 2: Transition I -> S
+    // Test case 2: Transition I -> S
     #(50);
     tb_test_num = tb_test_num + 1;
     tb_test_case = "Transition I -> S";
