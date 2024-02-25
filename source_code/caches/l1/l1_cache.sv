@@ -130,7 +130,7 @@ module l1_cache #(
     cache_tag_t [ASSOC-1:0] sramTags;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
-    logic [N_TAG_BITS-1:0] read_tag_bits; //Tag coming from bus
+    cache_tag_t [ASSOC-1:0] read_tag_bits; //Tag coming from bus
     // flush reg
     logic flush_req, nflush_req;
     logic idle_done;
@@ -229,15 +229,19 @@ module l1_cache #(
         hit_idx         = 0;
         hit_data        = 0;
         pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
+        ccif.snoop_hit  = 0;
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
                 if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
-			if(proc_gen_bus_if.ren || (proc_gen_bus_if.wen && (sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive))) //Read or write hit
+                    if(proc_gen_bus_if.ren || (proc_gen_bus_if.wen && (sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive))) begin //Read or write hit
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].data;
                 	    hit_idx   = i;
+                    end
                 end
+
+                ccif.snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid && ccif.snoop_req;
             end
         end
     end
@@ -266,9 +270,6 @@ module l1_cache #(
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
 
-        //Added for coherency
-        ccif.snoop_hit          = 0;
-
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx.idx_bits] == (ASSOC - 1)))
             ridx = 0;
@@ -287,7 +288,6 @@ module l1_cache #(
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
                     idle_done 	       = 1;
-                    ccif.snoop_hit = (read_tag_bits == bus_frame_tag  && ccif.snoop_req) ? 1 : 0;
                     flush_done = 1; //HACK: Remove if this causes bugs, used for testbench
                 end
             end
@@ -405,50 +405,51 @@ module l1_cache #(
                 end
             end
 	    SNOOP: begin
-		//mem_gen_bus_if.wdata = Need to get syntax for this, data that bus can read from SRAM
-		//Need to route this into SRAM as needed = mem_gen_bus_if.rdata
+                //mem_gen_bus_if.wdata = Need to get syntax for this, data that bus can read from SRAM
+                //Need to route this into SRAM as needed = mem_gen_bus_if.rdata
                 mem_gen_bus_if.addr = read_addr;
-		ccif.write_req = proc_gen_bus_if.wen;
-                ccif.snoop_hit = (read_tag_bits == bus_frame_tag  && ccif.snoop_req) ? 1 : 0;
+                ccif.write_req = proc_gen_bus_if.wen;
                 mem_gen_bus_if.wdata = sramRead.frames[ridx].data;
-		case(ccif.state_transfer) //Do we need to add a signal to specify when to change states?
-			INVALID: begin
-				sramWEN = 1;
-				sramWrite.frames[ridx].tag.dirty = 0;
-                    		sramMask.frames[ridx].tag.dirty = 0;
-		                sramWrite.frames[ridx].tag.valid = 0;
-                		sramMask.frames[ridx].tag.valid = 0;
-				sramWrite.frames[ridx].tag.exclusive = 0;
-                    		sramMask.frames[ridx].tag.exclusive = 0;
-			end 
-			SHARED: begin
-				sramWEN = 1;
-				sramWrite.frames[ridx].tag.dirty = 0;
-                    		sramMask.frames[ridx].tag.dirty = 0;
-		                sramWrite.frames[ridx].tag.valid = 1;
-                		sramMask.frames[ridx].tag.valid = 0;
-				sramWrite.frames[ridx].tag.exclusive = 0;
-                    		sramMask.frames[ridx].tag.exclusive = 0;
-			end 
-			EXCLUSIVE: begin
-				sramWEN = 1;
-				sramWrite.frames[ridx].tag.dirty = 0;
-                    		sramMask.frames[ridx].tag.dirty = 0;
-		                sramWrite.frames[ridx].tag.valid = 1;
-                		sramMask.frames[ridx].tag.valid = 0;
-				sramWrite.frames[ridx].tag.exclusive = 1;
-                    		sramMask.frames[ridx].tag.exclusive = 0;
-			end 
-			MODIFIED: begin
-				sramWEN = 1;
-				sramWrite.frames[ridx].tag.dirty = 1;
-                    		sramMask.frames[ridx].tag.dirty = 0;
-		                sramWrite.frames[ridx].tag.valid = 1;
-                		sramMask.frames[ridx].tag.valid = 0;
-				sramWrite.frames[ridx].tag.exclusive = 0;
-                    		sramMask.frames[ridx].tag.exclusive = 0;
-			end 
-		endcase
+                if (!mem_gen_bus_if.busy) begin
+                    case(ccif.state_transfer)
+                        INVALID: begin
+                            sramWEN = 1;
+                            sramWrite.frames[ridx].tag.dirty = 0;
+                                        sramMask.frames[ridx].tag.dirty = 0;
+                                    sramWrite.frames[ridx].tag.valid = 0;
+                                    sramMask.frames[ridx].tag.valid = 0;
+                            sramWrite.frames[ridx].tag.exclusive = 0;
+                                        sramMask.frames[ridx].tag.exclusive = 0;
+                        end 
+                        SHARED: begin
+                            sramWEN = 1;
+                            sramWrite.frames[ridx].tag.dirty = 0;
+                                        sramMask.frames[ridx].tag.dirty = 0;
+                                    sramWrite.frames[ridx].tag.valid = 1;
+                                    sramMask.frames[ridx].tag.valid = 0;
+                            sramWrite.frames[ridx].tag.exclusive = 0;
+                                        sramMask.frames[ridx].tag.exclusive = 0;
+                        end 
+                        EXCLUSIVE: begin
+                            sramWEN = 1;
+                            sramWrite.frames[ridx].tag.dirty = 0;
+                                        sramMask.frames[ridx].tag.dirty = 0;
+                                    sramWrite.frames[ridx].tag.valid = 1;
+                                    sramMask.frames[ridx].tag.valid = 0;
+                            sramWrite.frames[ridx].tag.exclusive = 1;
+                                        sramMask.frames[ridx].tag.exclusive = 0;
+                        end 
+                        MODIFIED: begin
+                            sramWEN = 1;
+                            sramWrite.frames[ridx].tag.dirty = 1;
+                                        sramMask.frames[ridx].tag.dirty = 0;
+                                    sramWrite.frames[ridx].tag.valid = 1;
+                                    sramMask.frames[ridx].tag.valid = 0;
+                            sramWrite.frames[ridx].tag.exclusive = 0;
+                                        sramMask.frames[ridx].tag.exclusive = 0;
+                        end 
+                    endcase
+                end
 	    end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
@@ -490,7 +491,7 @@ module l1_cache #(
 	    next_state = state;
 	    casez(state)
             IDLE: begin        
-		if (idle_done) //Used when flushing
+                if (idle_done) //Used when flushing
                     next_state = HIT;
                 else if(read_tag_bits == bus_frame_tag  && ccif.snoop_req) //Compare snoop tag
                    next_state = SNOOP;
