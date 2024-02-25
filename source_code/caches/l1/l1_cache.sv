@@ -151,6 +151,9 @@ module l1_cache #(
     // TODO: Update this with valid, dirty, exclusive bits
     // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
     //Compare cccif.frame_tag with selected_tag later
+    assign ccif.valid = sramRead.frames[0].tag.valid; //frames[0] related to associativity, this line only works for ASSOC = 1
+    assign ccif.dirty = sramRead.frames[0].tag.dirty; //frames[0] related to associativity, this line only works for ASSOC = 1
+    assign ccif.exclusive = sramRead.frames[0].tag.exclusive; //frames[0] related to associativity, this line only works for ASSOC = 1
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -254,7 +257,10 @@ module l1_cache #(
         next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
-        
+
+        //Added for coherency
+        ccif.snoop_hit          = 0;
+
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx.idx_bits] == (ASSOC - 1)))
             ridx = 0;
@@ -360,6 +366,11 @@ module l1_cache #(
                     sramWrite.frames[ridx].tag.tag_bits = decoded_req_addr.idx.tag_bits;
                     sramMask.frames[ridx].tag.valid     = 1'b0;
                     sramMask.frames[ridx].tag.tag_bits  = 1'b0;
+
+                    sramWrite.frames[ridx].tag.exclusive = (ccif.state_transfer == EXCLUSIVE);
+                    sramMask.frames[ridx].tag.exclusive = 0;
+                    sramWrite.frames[ridx].tag.dirty = (ccif.state_transfer == MODIFIED);
+                    sramMask.frames[ridx].tag.dirty = 0;
                 end
             end
             WB: begin

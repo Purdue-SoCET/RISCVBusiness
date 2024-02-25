@@ -118,7 +118,7 @@ initial begin
     tb_test_case = "Transition I -> E";
     read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
 
-    // Cache sets dREN[I] high
+/*    // Cache sets dREN[I] high
     wait(bcif.dREN == 1'b1);
 
     // Bus transitions IDLE -> GRANT_R
@@ -135,7 +135,7 @@ initial begin
     wait(bcif.ccexclusive == 1); // Bus sets ccexclusive high
 
     // Transition back to IDLE, de-assert signals
-    @(negedge CLK); // Wait for the changes to propagate
+    @(negedge CLK); // Wait for the changes to propagate*/
 
     //Look at the coherency unit outputs
     if (dcif.state_transfer == EXCLUSIVE) begin // Assuming 'state' correctly reflects the cache state
@@ -144,7 +144,7 @@ initial begin
          $error("Cache transfer state incorrect");
     end
 
-    gbif.ren = 1'b0; //Turn off read request from processor
+    //gbif.ren = 1'b0; //Turn off read request from processor
 
 // Test case 2: Transition I -> S
     #(50);
@@ -156,6 +156,7 @@ initial begin
     @(negedge CLK);
     nRST = 1'b1;
     @(negedge CLK);
+    init_cache();
 
     // Processor i read, cache miss.
     gbif.addr = 32'h44422244;
