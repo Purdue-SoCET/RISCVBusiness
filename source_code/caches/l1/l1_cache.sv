@@ -119,7 +119,7 @@ module l1_cache #(
     // address
     word_t read_addr, next_read_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
-    decoded_cache_addr_t decoded_addr;
+    decoded_cache_addr_t decoded_addr, snoop_decoded_addr;
     //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
     logic hit, pass_through;
@@ -138,11 +138,16 @@ module l1_cache #(
     reservation_set_t reservation_set, next_reservation_set;
     logic addr_is_reserved, addr_is_exclusive;
 
+    //Snooping signals
+    logic[N_FRAME_BITS-1:0] bus_frame_tag; //Tag from bus to compare
+
+    assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
+
     // sram instance
     assign sramSEL = (state == SNOOP) ? sramSNOOPSEL : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits);
     //assign sramSNOOPSEL =  4'b0111;
     //assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
-    assign sramSNOOPSEL = (ccif.snoop_req)  ? ccif.set_sel : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits); //Same is sramSEL on IDLE
+    assign sramSNOOPSEL = (ccif.snoop_req)  ? snoop_decoded_addr.idx.idx_bits : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits); //Same is sramSEL on IDLE
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
@@ -150,10 +155,13 @@ module l1_cache #(
 
     // TODO: Update this with valid, dirty, exclusive bits
     // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
-    //Compare cccif.frame_tag with selected_tag later
+    //Compare ccif.frame_tag with selected_tag later
+    
     assign ccif.valid = sramRead.frames[0].tag.valid; //frames[0] related to associativity, this line only works for ASSOC = 1
     assign ccif.dirty = sramRead.frames[0].tag.dirty; //frames[0] related to associativity, this line only works for ASSOC = 1
     assign ccif.exclusive = sramRead.frames[0].tag.exclusive; //frames[0] related to associativity, this line only works for ASSOC = 1
+
+    assign bus_frame_tag = snoop_decoded_addr.idx.tag_bits;
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -279,7 +287,7 @@ module l1_cache #(
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
                     idle_done 	       = 1;
-                    ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
+                    ccif.snoop_hit = (read_tag_bits == bus_frame_tag  && ccif.snoop_req) ? 1 : 0;
                     flush_done = 1; //HACK: Remove if this causes bugs, used for testbench
                 end
             end
@@ -395,7 +403,7 @@ module l1_cache #(
 		//Need to route this into SRAM as needed = mem_gen_bus_if.rdata
                 mem_gen_bus_if.addr = read_addr;
 		ccif.write_req = proc_gen_bus_if.wen;
-                ccif.snoop_hit = (read_tag_bits == ccif.frame_tag && ccif.snoop_req) ? 1 : 0;
+                ccif.snoop_hit = (read_tag_bits == bus_frame_tag  && ccif.snoop_req) ? 1 : 0;
                 mem_gen_bus_if.wdata = sramRead.frames[ridx].data;
 		case(ccif.state_transfer) //Do we need to add a signal to specify when to change states?
 			INVALID: begin
@@ -478,7 +486,7 @@ module l1_cache #(
             IDLE: begin        
 		if (idle_done) //Used when flushing
                     next_state = HIT;
-                else if(read_tag_bits == ccif.frame_tag && ccif.snoop_req) //Compare snoop tag
+                else if(read_tag_bits == bus_frame_tag  && ccif.snoop_req) //Compare snoop tag
                    next_state = SNOOP;
 	        end
 	        HIT: begin                    
