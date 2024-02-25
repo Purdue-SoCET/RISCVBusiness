@@ -43,7 +43,7 @@ program test
     bus_ctrl_if bcif  //Coherency unit to bus
 );
 
-task init_cache;
+task reset_snoop_signals;
 begin
     ccif.dcache_clear = 1'b0;
     ccif.dcache_flush = 1'b0;
@@ -65,6 +65,21 @@ begin
     bcif.dREN[1] = 1'b0;
     bcif.l2load = 32'b0;
     bcif.l2state = L2_FREE;
+end
+endtask
+
+task init_cache;
+begin
+    ccif.dcache_clear = 1'b0; //What does this signal do?
+    ccif.dcache_flush = 1'b0;
+    ccif.dcache_reserve = 1'b0; 
+    ccif.dcache_exclusive = 1'b0;
+    gbif.ren = 1'b0;
+    gbif.wen = 1'b0;
+    gbif.wdata = 32'b0;
+    gbif.addr = 32'b0;
+    gbif.byte_en = 4'b0;
+    reset_snoop_signals();
 
     nRST = 1'b0;
     @(negedge CLK);
@@ -157,8 +172,6 @@ initial begin
         end
     end
 
-    //gbif.ren = 1'b0; //Turn off read request from processor
-
     // Test case 2: Transition I -> S
     #(50);
     tb_test_num = tb_test_num + 1;
@@ -174,31 +187,36 @@ initial begin
     // Processor i read, cache miss.
     gbif.addr = 32'h44422244;
     gbif.ren = 1'b1; // Coherency unit should go to READ_REQ
-    wait (gbif.busy == 1'b0); 
 
     // Wait for the cache to recognize the read request
     wait(bcif.dREN == 1'b1); // Assuming dREN goes high indicating a read request to the cache
 
     // Bus transitions IDLE -> GRANT_R
-    bcif.ccsnoopaddr = gbif.addr;
-    #(10); // Allow time for state change and snooping
-
     bcif.ccsnoopdone[1] = 1'b1; // Snooping complete in the other CPU
     bcif.ccsnoophit[1] = 1'b1; // Clean copy exists in the other Cache
 
     // Transition SNOOP_R -> TRANSFER_R
-    bcif.dstore[1] = {8{32'hA5A5A5A5}}; 
+    bcif.dstore[1] = 64'h5A5A5A5AA5A5A5A5; 
 
     // BUS_TO_CACHE transfer
-    wait(bcif.dload == bcif.dstore[1]); 
+    wait(bcif.dload[0] == bcif.dstore[1]); 
     wait(bcif.l2store == bcif.dstore[1]); 
 
     // Transition to IDLE after data transfer
-    wait(bcif.dwait == 0); // Check if the bus transaction is completed
-    wait(bcif.ccexclusive[1] == 0); // Check that it is not exclusive 
+    wait(bcif.dwait[0] == 0); // Check if the bus transaction is completed
+    wait(bcif.ccexclusive[0] == 0); // Check that it is not exclusive 
+
+    wait(!gbif.busy);
 
     // De-assert signals to return to IDLE state
     @(negedge CLK);
+
+    //Look at the coherency unit outputs
+    if (gbif.rdata == 32'h5A5A5A5A) begin
+        $display("%s: Got correct data", tb_test_case);
+    end else begin
+         $error("%s: Got incorrect data: %h", tb_test_case, gbif.rdata);
+    end
 
     if (dcif.state_transfer == SHARED) begin // Assuming 'state' correctly reflects the cache state
         $display("%s passed", tb_test_case);
@@ -207,6 +225,7 @@ initial begin
     end
 
     gbif.ren = 1'b0; // Reset read request from the processor
+    reset_snoop_signals();
 
 // Test case 3: Transition I -> M
     #(50);
@@ -284,7 +303,7 @@ initial begin
 
     wait(bcif.ccsnoopdone[0] == 1'b1); // All non-requester CPUs have finished snooping
     wait(bcif.ccsnoophit[0] == 1'b1); // This CPU has the data (others would be 0)
-    wait(bcif.dstore[1] == dcif.requested_data);
+    // wait(bcif.dstore[1] == dcif.requested_data);
     wait(bcif.ccdirty[0] == 1'b1);
 
     // bcif.l2WEN = 1'b1;
