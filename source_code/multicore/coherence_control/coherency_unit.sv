@@ -118,7 +118,6 @@ module coherency_unit #(
     always_comb begin: OUTPUTLOGIC
         gbif.rdata = 32'hBAD1BAD1;
         gbif.busy = 1'b1;
-        bcif.ccIsPresent[CPUID] = 1'b0;
         bcif.ccdirty[CPUID] = 1'b0;
         bcif.ccsnoopdone[CPUID] = 1'b0;
         bcif.ccsnoophit[CPUID] = 1'b0;
@@ -127,12 +126,15 @@ module coherency_unit #(
         bcif.daddr[CPUID] = 32'b0;
         bcif.dWEN[CPUID] = 1'b0;
         bcif.dREN[CPUID] = 1'b0;
+        ccif.addr = 32'hBAD1BAD1;
+        ccif.state_transfer = INVALID;
+        ccif.snoop_req = 1'b0;
 
         case(state)
             IDLE: begin
             end
             RESP_CHKTAG: begin
-                ccif.set_sel = bcif.ccsnoopaddr[($clog2(N_SETS) - 1): 0];
+                ccif.addr = bcif.ccsnoopaddr;
                 ccif.snoop_req = 1'b1;
                 bcif.ccsnoopdone[CPUID] = 1'b1;
                 bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
@@ -155,7 +157,8 @@ module coherency_unit #(
                 bcif.ccwrite[CPUID] = 1'b1;
                 bcif.daddr[CPUID] = gbif.addr;
                 bcif.dstore[CPUID] = ccif.requested_data; //set dstore[supplier] to needed data
-                ccif.responder_data = bcif.dload[CPUID];
+                gbif.rdata = bcif.dload[CPUID];
+                gbif.busy = 1'b0;
                 ccif.state_transfer = cc_end_state'(MODIFIED); 
             end
             READ_REQ: begin //dren = 1, daddr = ..., final_state = ccexc ? E : S, handle I -> E and I -> S here
@@ -177,6 +180,8 @@ module coherency_unit #(
             end
         endcase
     end
+
+    assign bcif.ccIsPresent[CPUID] = bcif.ccsnoophit[CPUID];
 
     //Function to calculate the set index
     function logic [$clog2(N_SETS)-1:0] calculate_set_index(logic [31:0] address);
