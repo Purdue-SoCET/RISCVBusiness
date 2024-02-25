@@ -107,6 +107,21 @@ begin
 end
 endtask
 
+task write_request;
+    input logic [31:0] addr;
+    input logic [63:0] data;
+begin
+    gbif.wen = 1'b1;
+    gbif.addr = addr;
+    gbif.wdata = data;
+
+    wait(gbif.busy == 1'b0);
+    @(negedge CLK)
+
+    gbif.wen = 1'b0;
+end
+endtask
+
 task send_data_from_ram;
     input logic [63:0] data;
 begin
@@ -129,7 +144,7 @@ task check_state_transfer;
     input cc_end_state expected;
 begin
     if (dcif.state_transfer == expected) begin // Assuming 'state' correctly reflects the cache state
-        $display("%s passed at %0t", tb_test_case, $time);
+        $display("%s correct state transfer at %0t", tb_test_case, $time);
     end else begin
          $error("Cache transfer state incorrect at %0t, found %s", $time, dcif.state_transfer);
     end
@@ -248,6 +263,8 @@ initial begin
         bcif.ccsnoopdone[1] = 1'b1;
         bcif.ccsnoophit[1] = 1'b0;
 
+        wait(bcif.l2REN);
+
         send_data_from_ram(64'hBEEFBEEFCAFECAFE);
 
         wait(mbif.busy == 1'b0);
@@ -264,7 +281,7 @@ initial begin
 
     gbif.wen = 1'b0; // Reset write request from the processor
 
-//Test case 4: M -> S
+    //Test case 4: M -> S
     #(50);
     tb_test_num = tb_test_num + 1;
     tb_test_case = "Transition M -> S";
@@ -275,41 +292,63 @@ initial begin
     nRST = 1'b1;
     @(negedge CLK);
 
-    bcif.ccsnoopaddr[0] = 32'hDDEE11FF;
+    // Get to M state
+    begin
+        gbif.wen = 1'b1;
+        gbif.addr = 32'h80000000;
+        gbif.wdata = 32'hBEEFBEEF;
 
-    #(10);
+        bcif.ccsnoopdone[1] = 1'b1;
+        bcif.ccsnoophit[1] = 1'b0;
 
-    wait(bcif.ccsnoopdone[0] == 1'b1); // All non-requester CPUs have finished snooping
-    wait(bcif.ccsnoophit[0] == 1'b1); // This CPU has the data (others would be 0)
-    wait(bcif.ccdirty[0] == 1'b1);
+        wait(bcif.l2REN);
 
-    // bcif.l2WEN = 1'b1;
-    // bcif.l2addr = bcif.ccsnoopaddr; 
-    bcif.l2load = bcif.dstore;
-    #(20);
-    if (bcif.l2WEN == 1'b1) begin
-        $display("%s received correct l2WEN", tb_test_case);
-    end else begin
-        $error("%s failed: Did not receive correct l2WEN", tb_test_case);
+        send_data_from_ram(64'hBEEFBEEFCAFECAFE);
+
+        wait(mbif.busy == 1'b0);
+
+        //Look at the coherency unit outputs
+        check_state_transfer(MODIFIED);
+
+        wait(gbif.busy == 1'b0);
+
+        @(negedge CLK)
+
+        gbif.wen = 1'b0;
     end
-    if (bcif.l2store == /* TODO */ 1'b1) begin
-        $display("%s received correct l2store", tb_test_case);
+
+    bcif.ccsnoopaddr[1] = 32'h80000000;
+    bcif.dREN[1] = 1'h1;
+
+    bcif.l2state = L2_BUSY;
+    wait(bcif.l2WEN);
+
+    bcif.l2state = L2_ACCESS;
+    if (bcif.l2store == 32'hBEEFBEEF) begin
+        $display("%s received correct l2store at %0t", tb_test_case, $time);
     end else begin
-        $error("%s failed: Did not receive correct l2store", tb_test_case);
+        $error("%s failed: Did not receive correct l2store at %0t", tb_test_case, $time);
     end
 
+    #(PERIOD);
 
-    wait(bcif.ccdirty[0] == 1'b0); // Clear the dirty flag 
-
-    // The bus updates after the writeback and sharing process
-    // bcif.ccexclusive = 1'b0; // Exclusive flag is cleared as the data is now shared
-    // bcif.dwait[0] = 1'b0; // Clear the wait signal for the requester to proceed
-
-    if (dcif.state_transfer != SHARED) begin
-        $error("%s failed: Cache did not transition to SHARED state after snooping", tb_test_case);
+    if (bcif.l2store == 32'hBEEFBEEF) begin
+        $display("%s received correct l2store at %0t", tb_test_case, $time);
     end else begin
-        $display("%s passed", tb_test_case);
+        $error("%s failed: Did not receive correct l2store at %0t", tb_test_case, $time);
     end
+
+    #(PERIOD);
+
+    if (bcif.l2WEN == 1'b0) begin
+        $display("%s received correct l2WEN at %0t", tb_test_case, $time);
+    end else begin
+        $error("%s failed: Did not receive correct l2WEN at %0t", tb_test_case, $time);
+    end
+
+    wait(!bcif.dwait[1]);
+
+    check_state_transfer(SHARED);
 
 //Test case 5: S -> I (Data Eviction)
     #(50);
