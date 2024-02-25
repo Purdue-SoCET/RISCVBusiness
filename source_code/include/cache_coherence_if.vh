@@ -24,22 +24,21 @@ typedef logic [31:0] word_t;
 
 interface cache_coherence_if();
     cc_end_state state_transfer;
-    logic [$clog2(N_SETS)-1:0] set_sel;
-    word_t requested_data, responder_data;
+    word_t addr;
+    word_t responder_data;
     logic valid, exclusive, dirty;
     logic write_req; //Cache signifies a read or write miss
     logic snoop_req; //Signifies the bus is trying to snoop
     logic snoop_hit; //Bus signifies if tag from SRAM array matches a snoop
     logic dWEN; //For write-back
-    word_t frame_tag; //Tag from SRAM array in cache, compare it with the snoop tag
 
     modport cache(
-        input  set_sel, state_transfer, responder_data, snoop_req,
-        output valid, exclusive, dirty, requested_data, write_req, frame_tag, snoop_hit, dWEN
+        input  addr, state_transfer, responder_data, snoop_req,
+        output valid, exclusive, dirty, write_req, snoop_hit, dWEN
     );
     modport coherency_unit(
-        output  set_sel, state_transfer, responder_data, snoop_req,
-        input valid, exclusive, dirty, requested_data, write_req, frame_tag, snoop_hit, dWEN
+        output  addr, state_transfer, responder_data, snoop_req,
+        input valid, exclusive, dirty, write_req, snoop_hit, dWEN
     );
 endinterface
 `endif // CACHE_COHERENCE_IF_VH
