@@ -361,7 +361,13 @@ module l1_cache #(
             end 
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-                mem_gen_bus_if.ren = 1;
+               /* if(proc_gen_bus_if.wen)  //Doing a write request
+                    mem_gen_bus_if.wen = 1;
+                else
+                    mem_gen_bus_if.ren = 1;
+                */
+                mem_gen_bus_if.wen = proc_gen_bus_if.wen;
+                mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                 mem_gen_bus_if.addr = read_addr;
                 sramMask.frames[ridx].tag.valid = 0;
                 sramWrite.frames[ridx].tag.valid = 0;
