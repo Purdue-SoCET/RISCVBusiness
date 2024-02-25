@@ -25,7 +25,7 @@ typedef logic [31:0] word_t;
 interface cache_coherence_if();
     cc_end_state state_transfer;
     word_t addr;
-    word_t responder_data;
+    word_t requested_data;
     logic valid, exclusive, dirty;
     logic write_req; //Cache signifies a read or write miss
     logic snoop_req; //Signifies the bus is trying to snoop
@@ -33,12 +33,12 @@ interface cache_coherence_if();
     logic dWEN; //For write-back
 
     modport cache(
-        input  addr, state_transfer, responder_data, snoop_req,
-        output valid, exclusive, dirty, write_req, snoop_hit, dWEN
+        input  addr, state_transfer, snoop_req,
+        output valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN
     );
     modport coherency_unit(
-        output  addr, state_transfer, responder_data, snoop_req,
-        input valid, exclusive, dirty, write_req, snoop_hit, dWEN
+        output  addr, state_transfer, snoop_req,
+        input   valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN
     );
 endinterface
 `endif // CACHE_COHERENCE_IF_VH
