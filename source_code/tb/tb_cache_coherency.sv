@@ -317,7 +317,8 @@ initial begin
         gbif.wen = 1'b0;
     end
 
-    bcif.ccsnoopaddr[1] = 32'h80000000;
+    //bcif.ccsnoopaddr[1] = 32'h80000000;
+    bcif.daddr[1] = 32'h80000000;
     bcif.dREN[1] = 1'h1;
 
     bcif.l2state = L2_BUSY;
