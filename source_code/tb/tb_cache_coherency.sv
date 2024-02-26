@@ -256,30 +256,41 @@ initial begin
     nRST = 1'b1;
     @(negedge CLK);
 
-    begin
-        gbif.wen = 1'b1;
-        gbif.addr = 32'h80000000;
+    gbif.wen = 1'b1;
+    gbif.addr = 32'h80000000;
+    gbif.wdata = 32'hBEEFBEEF;
 
-        bcif.ccsnoopdone[1] = 1'b1;
-        bcif.ccsnoophit[1] = 1'b0;
+    bcif.ccsnoopdone[1] = 1'b1;
+    bcif.ccsnoophit[1] = 1'b0;
 
-        wait(bcif.l2REN);
+    wait(bcif.l2REN);
 
-        send_data_from_ram(64'hBEEFBEEFCAFECAFE);
+    send_data_from_ram(64'hBEEFBEEFCAFECAFE);
 
-        wait(mbif.busy == 1'b0);
+    wait(mbif.busy == 1'b0);
 
-        //Look at the coherency unit outputs
-        check_state_transfer(MODIFIED);
+    //Look at the coherency unit outputs
+    check_state_transfer(MODIFIED);
 
-        wait(gbif.busy == 1'b0);
+    wait(gbif.busy == 1'b0);
 
-        @(negedge CLK)
-
-        gbif.wen = 1'b0;
-    end
+    @(negedge CLK)
 
     gbif.wen = 1'b0; // Reset write request from the processor
+
+    wait(gbif.busy);
+
+    gbif.ren = 1'b1;
+
+    wait(!gbif.busy);
+
+    if (gbif.rdata == 32'hBEEFBEEF) begin
+        $display("%s: Got correct data %0t", tb_test_case, $time);
+    end else begin
+         $error("%s: Got incorrect data: %h at %0t", tb_test_case, gbif.rdata, $time);
+    end
+
+    gbif.ren = 1'b0;
 
     //Test case 4: M -> S
     #(50);

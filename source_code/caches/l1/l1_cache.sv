@@ -140,8 +140,6 @@ module l1_cache #(
 
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
-    //logic[24:0] bus_frame_tag; //Tag from bus to compare
-    logic temp_snoop_hit; //Used for debugging, delete
 
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
@@ -244,8 +242,7 @@ module l1_cache #(
                     end
                 end
 
-                ccif.snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid && ccif.snoop_req;
-                temp_snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid && ccif.snoop_req;
+                ccif.snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid;
             end
         end
     end
