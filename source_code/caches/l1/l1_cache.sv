@@ -139,7 +139,9 @@ module l1_cache #(
     logic addr_is_reserved, addr_is_exclusive;
 
     //Snooping signals
-    logic[N_FRAME_BITS-1:0] bus_frame_tag; //Tag from bus to compare
+    logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
+    //logic[24:0] bus_frame_tag; //Tag from bus to compare
+    logic temp_snoop_hit; //Used for debugging, delete
 
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
@@ -230,6 +232,7 @@ module l1_cache #(
         hit_data        = 0;
         pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
         ccif.snoop_hit  = 0;
+        temp_snoop_hit = 0;
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
@@ -242,6 +245,7 @@ module l1_cache #(
                 end
 
                 ccif.snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid && ccif.snoop_req;
+                temp_snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid && ccif.snoop_req;
             end
         end
     end
