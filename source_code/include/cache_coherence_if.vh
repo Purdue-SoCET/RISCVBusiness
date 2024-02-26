@@ -25,7 +25,7 @@ typedef logic [31:0] word_t;
 interface cache_coherence_if();
     cc_end_state state_transfer;
     word_t addr;
-    word_t requested_data;
+    logic [32*BLOCK_SIZE-1:0] requested_data;
     logic valid, exclusive, dirty;
     logic write_req; //Cache signifies a read or write miss
     logic snoop_req; //Signifies the bus is trying to snoop
