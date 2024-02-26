@@ -140,10 +140,12 @@ module coherency_unit #(
                 bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
             end
             RESP_SEND: begin
+                ccif.addr = bcif.ccsnoopaddr;
                 ccif.snoop_req = 1'b1;
                 bcif.dstore[CPUID] =  ccif.requested_data;
                 bcif.ccsnoophit[CPUID] = 1'b1;
                 bcif.ccsnoopdone[CPUID] = 1'b1; //debateable
+                gbif.busy = !bcif.ccwait[CPUID];
                 if (bcif.ccinv[CPUID]) begin  //Anything -> I
                     ccif.state_transfer = cc_end_state'(INVALID); 
                 end else begin //Anything -> S
@@ -154,11 +156,12 @@ module coherency_unit #(
                 end
              end
             WRITE_REQ: begin //handle S -> M, I -> M here
-                bcif.ccwrite[CPUID] = 1'b1;
                 bcif.daddr[CPUID] = gbif.addr;
+                bcif.dREN[CPUID] = 1'b1;
+                bcif.ccwrite[CPUID] = 1'b1;
                 bcif.dstore[CPUID] = ccif.requested_data; //set dstore[supplier] to needed data
                 gbif.rdata = bcif.dload[CPUID];
-                gbif.busy = 1'b0;
+                gbif.busy = bcif.dwait[CPUID];
                 ccif.state_transfer = cc_end_state'(MODIFIED); 
             end
             READ_REQ: begin //dren = 1, daddr = ..., final_state = ccexc ? E : S, handle I -> E and I -> S here

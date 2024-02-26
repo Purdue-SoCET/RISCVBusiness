@@ -332,9 +332,18 @@ initial begin
         #(PERIOD);
     end
 
-    //bcif.ccsnoopaddr[1] = 32'h80000000;
     bcif.daddr[1] = 32'h80000000;
     bcif.dREN[1] = 1'h1;
+
+    wait(!bcif.dwait[1])
+    if (bcif.dload[1] == 64'hBEEFBEEFBEEFBEEF) begin
+        $display("%s received correct dload at %0t", tb_test_case, $time);
+    end else begin
+        $error("%s failed: Did not receive correct dload at %0t, found %x", tb_test_case, $time, bcif.dload[1]);
+    end
+
+    wait(!bcif.ccwait[0]);
+    check_state_transfer(SHARED);
 
     bcif.l2state = L2_BUSY;
     wait(bcif.l2WEN);
@@ -343,7 +352,7 @@ initial begin
     if (bcif.l2store == 32'hBEEFBEEF) begin
         $display("%s received correct l2store at %0t", tb_test_case, $time);
     end else begin
-        $error("%s failed: Did not receive correct l2store at %0t", tb_test_case, $time);
+        $error("%s failed: Did not receive correct l2store at %0t, found %x", tb_test_case, $time, bcif.l2store);
     end
 
     #(PERIOD);
@@ -351,7 +360,7 @@ initial begin
     if (bcif.l2store == 32'hBEEFBEEF) begin
         $display("%s received correct l2store at %0t", tb_test_case, $time);
     end else begin
-        $error("%s failed: Did not receive correct l2store at %0t", tb_test_case, $time);
+        $error("%s failed: Did not receive correct l2store at %0t, found %x", tb_test_case, $time, bcif.l2store);
     end
 
     #(PERIOD);
@@ -363,8 +372,6 @@ initial begin
     end
 
     wait(!bcif.dwait[1]);
-
-    check_state_transfer(SHARED);
 
     //Test case 5: S -> I (Data Eviction)
     #(50);
