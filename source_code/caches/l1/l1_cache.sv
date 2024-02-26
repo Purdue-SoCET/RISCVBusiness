@@ -269,6 +269,7 @@ module l1_cache #(
         next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
+        ccif.dWEN               = 1'b0;
 
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx.idx_bits] == (ASSOC - 1)))
