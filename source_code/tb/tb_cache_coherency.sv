@@ -256,26 +256,28 @@ initial begin
     nRST = 1'b1;
     @(negedge CLK);
 
-    gbif.wen = 1'b1;
-    gbif.addr = 32'h80000000;
-    gbif.wdata = 32'hBEEFBEEF;
+    begin
+        gbif.wen = 1'b1;
+        gbif.addr = 32'h80000000;
+        gbif.wdata = 32'hBEEFBEEF;
 
-    bcif.ccsnoopdone[1] = 1'b1;
-    bcif.ccsnoophit[1] = 1'b0;
+        bcif.ccsnoopdone[1] = 1'b1;
+        bcif.ccsnoophit[1] = 1'b0;
 
-    wait(bcif.l2REN);
+        wait(bcif.l2REN);
 
-    send_data_from_ram(64'hBEEFBEEFCAFECAFE);
+        send_data_from_ram(64'hBEEFBEEFCAFECAFE);
 
-    wait(mbif.busy == 1'b0);
+        wait(mbif.busy == 1'b0);
 
-    //Look at the coherency unit outputs
-    check_state_transfer(MODIFIED);
+        //Look at the coherency unit outputs
+        check_state_transfer(MODIFIED);
 
-    wait(gbif.busy == 1'b0);
-    #(PERIOD)
-    gbif.wen = 1'b0;
-    #(PERIOD)
+        wait(gbif.busy == 1'b0);
+        #(PERIOD);
+        gbif.wen = 1'b0;
+        #(PERIOD);
+    end
 
     wait(gbif.busy == 1'b1);
 
@@ -325,10 +327,9 @@ initial begin
         check_state_transfer(MODIFIED);
 
         wait(gbif.busy == 1'b0);
-
-        @(negedge CLK)
-
+        #(PERIOD);
         gbif.wen = 1'b0;
+        #(PERIOD);
     end
 
     //bcif.ccsnoopaddr[1] = 32'h80000000;
@@ -365,7 +366,7 @@ initial begin
 
     check_state_transfer(SHARED);
 
-//Test case 5: S -> I (Data Eviction)
+    //Test case 5: S -> I (Data Eviction)
     #(50);
     tb_test_num = tb_test_num + 1;
     tb_test_case = "Transition S -> I (Data Eviction)";
