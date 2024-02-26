@@ -127,7 +127,7 @@ module l1_cache #(
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
     cache_set_t sramWrite, sramRead, sramMask, sramBus;
-    cache_tag_t [ASSOC-1:0] sramTags;
+    cache_tag_t [ASSOC-1:0] sramTags, sramTagsMask;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
     cache_tag_t [ASSOC-1:0] read_tag_bits; //Tag coming from bus
@@ -151,7 +151,7 @@ module l1_cache #(
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
-        BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(sramWEN), .SEL(sramSNOOPSEL), .wMask(sramMask));
+        BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(sramWEN), .SEL(sramSNOOPSEL), .wMask(sramTagsMask));
 
     // TODO: Update this with valid, dirty, exclusive bits
     // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
@@ -253,6 +253,7 @@ module l1_cache #(
         sramWEN                 = 0;
         sramWrite               = 0;
         sramMask                = '1;
+        sramTagsMask            = '1;
         proc_gen_bus_if.busy    = 1;
         proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         mem_gen_bus_if.ren      = 0;
@@ -284,6 +285,7 @@ module l1_cache #(
                 sramWEN = 1;
     	        sramWrite.frames[flush_idx.frame_num] = '0;
                 sramMask.frames[flush_idx.frame_num] = '0;
+                sramTagsMask[flush_idx.frame_num] = '0;
                 enable_flush_count_nowb = 1;
                 // flag the completion of flush
                 if (flush_idx.finish) begin
@@ -314,10 +316,12 @@ module l1_cache #(
                         default:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0;
                     endcase
                     sramMask.frames[hit_idx].tag.dirty = 0;
+                    sramTagsMask[hit_idx].dirty = 0;
                     sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
                     sramWrite.frames[hit_idx].tag.dirty = 1;
                     sramWrite.frames[ridx].tag.exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
                     sramMask.frames[ridx].tag.exclusive = 0;
+                    sramTagsMask[ridx].exclusive = 0;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                     if (reserve) begin
                         // 0 is success, 1 is failure
@@ -371,6 +375,7 @@ module l1_cache #(
                 mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                 mem_gen_bus_if.addr = read_addr;
                 sramMask.frames[ridx].tag.valid = 0;
+                sramTagsMask[ridx].valid = 0;
                 sramWrite.frames[ridx].tag.valid = 0;
                 // fill data
                 if(~mem_gen_bus_if.busy) begin
@@ -381,11 +386,15 @@ module l1_cache #(
                     sramWrite.frames[ridx].tag.tag_bits = decoded_req_addr.idx.tag_bits;
                     sramMask.frames[ridx].tag.valid     = 1'b0;
                     sramMask.frames[ridx].tag.tag_bits  = 1'b0;
+                    sramTagsMask[ridx].valid     = 1'b0;
+                    sramTagsMask[ridx].tag_bits  = 1'b0;
 
                     sramWrite.frames[ridx].tag.exclusive = (ccif.state_transfer == EXCLUSIVE);
                     sramMask.frames[ridx].tag.exclusive = 0;
+                    sramTagsMask[ridx].exclusive = 0;
                     sramWrite.frames[ridx].tag.dirty = (ccif.state_transfer == MODIFIED);
                     sramMask.frames[ridx].tag.dirty = 0;
+                    sramTagsMask[ridx].dirty = 0;
                 end
             end
             WB: begin
@@ -400,8 +409,10 @@ module l1_cache #(
                     sramWEN = 1;
                     sramWrite.frames[ridx].tag.dirty = 0;
                     sramMask.frames[ridx].tag.dirty = 0;
+                    sramTagsMask[ridx].dirty = 0;
                     sramWrite.frames[ridx].tag.valid = 0;
                     sramMask.frames[ridx].tag.valid = 0;
+                    sramTagsMask[ridx].valid = 0;
                     next_read_addr = {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, {N_BLOCK_BITS{1'b0}}, 2'b0};
                 end
             end
