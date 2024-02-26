@@ -273,14 +273,17 @@ initial begin
     check_state_transfer(MODIFIED);
 
     wait(gbif.busy == 1'b0);
+    #(PERIOD)
+    gbif.wen = 1'b0;
+    #(PERIOD)
 
-    @(negedge CLK)
+    wait(gbif.busy == 1'b1);
 
-    gbif.wen = 1'b0; // Reset write request from the processor
-
-    wait(gbif.busy);
+    #(PERIOD)
 
     gbif.ren = 1'b1;
+
+    #(PERIOD)
 
     wait(!gbif.busy);
 

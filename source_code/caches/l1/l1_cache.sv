@@ -315,7 +315,7 @@ module l1_cache #(
                     sramMask.frames[hit_idx].tag.dirty = 0;
                     sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
                     sramWrite.frames[hit_idx].tag.dirty = 1;
-		    sramWrite.frames[ridx].tag.exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
+                    sramWrite.frames[ridx].tag.exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
                     sramMask.frames[ridx].tag.exclusive = 0;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                     if (reserve) begin
@@ -361,7 +361,7 @@ module l1_cache #(
             end 
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-               /* if(proc_gen_bus_if.wen)  //Doing a write request
+                /* if(proc_gen_bus_if.wen)  //Doing a write request
                     mem_gen_bus_if.wen = 1;
                 else
                     mem_gen_bus_if.ren = 1;
@@ -404,7 +404,7 @@ module l1_cache #(
                     next_read_addr = {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, {N_BLOCK_BITS{1'b0}}, 2'b0};
                 end
             end
-	    SNOOP: begin
+            SNOOP: begin
                 //mem_gen_bus_if.wdata = Need to get syntax for this, data that bus can read from SRAM
                 //Need to route this into SRAM as needed = mem_gen_bus_if.rdata
                 mem_gen_bus_if.addr = read_addr;
@@ -450,7 +450,7 @@ module l1_cache #(
                         end 
                     endcase
                 end
-	    end
+            end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].tag.dirty) begin
