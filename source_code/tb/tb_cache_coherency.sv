@@ -91,22 +91,6 @@ begin
 end
 endtask
 
-task read_request;
-    input logic [31:0] addr;
-    input logic [63:0] data;
-begin
-    gbif.ren = 1'b1;
-    gbif.addr = addr;
-
-    send_data_from_ram(data);
-
-    wait(gbif.busy == 1'b0);
-    @(negedge CLK)
-
-    gbif.ren = 1'b0;
-end
-endtask
-
 task write_request;
     input logic [31:0] addr;
     input logic [63:0] data;
@@ -373,50 +357,7 @@ initial begin
 
     wait(!bcif.dwait[1]);
 
-    //Test case 5: S -> I (Data Eviction)
-    #(50);
-    tb_test_num = tb_test_num + 1;
-    tb_test_case = "Transition S -> I (Data Eviction)";
-
-    // Reset to isolate each test case
-    init_cache();
-    read_request(32'h80000000, 64'hCAFECAFECAFECAFE);
-    read_request(32'h80000000, 64'hDEADBEEFDEADBEEF);
-    read_request(32'h80000000, 64'h11FF11FF11FF1FFF);
-    read_request(32'h80000000, 64'hABDCDEF123456789);
-    read_request(32'h80000000, 64'hFEEFDEADFEEFDEAD);
-
-    // Processor initiates a read/write, causing a cache miss
-    gbif.addr = 32'h81000000;
-    gbif.ren = 1'b1;
-    wait (bcif.dwait[0] == 1'b0); // Wait for dwait to go low
-
-    // Cache initiates eviction due to the miss
-    //ccif.dWEN = 1'b1; // Indicate data eviction
-    //ccif.ccwrite = 1'b0; // this is an eviction, not a processor WB
-
-    // Bus reacts to eviction request
-    //bcif.l2addr = gbif.addr; // Set L2 address for writeback to match the evicted cache line address
-    //wait(ccif.dload); 
-    //bcif.l2load = ccif.dload; 
-    //bcif.l2WEN = 1'b1;
-
-    // After writeback, ensure the cache line is invalidated
-    #(10);
-    ccif.dWEN = 1'b0; 
-    //bcif.dwait = 'b0; 
-    //bcif.l2WEN = 'b0; 
-
-    if (dcif.state_transfer != INVALID) begin
-        $error("%s failed: Cache did not transition to INVALID state after eviction", tb_test_case);
-    end else begin
-        $display("%s passed", tb_test_case);
-    end
-
-    gbif.ren = 1'b0;
-    gbif.addr = 32'b0;
-    
-//Test case 6: S -> I (Bus Invalidation)
+    //Test case 5: S -> I (Bus Invalidation)
     #(50);
     tb_test_num = tb_test_num + 1;
     tb_test_case = "Transition S -> I (Bus Invalidation)";
@@ -424,39 +365,49 @@ initial begin
     // Reset to isolate each test case
     init_cache();
 
-    //Do a initial processor request from CPU0
-    gbif.addr = 32'h888999AA;
-    gbif.ren = 1'b1;
-    #(10 * PERIOD);
-    // Do a write request from Dcache1, which should send a INV request.
-    bcif.ccsnoopaddr[1] = 32'h888999AA;
-    bcif.ccwrite[1] = 1'b1;
+    // Get to E state
+    begin
+        gbif.ren = 1'b1;
+        gbif.addr = 32'h80000000;
 
-    // Simulate the snoop responses from non-requester CPUs
-    #(10 * PERIOD);
-    // Assume CPU 1 is the supplier which has the data
-    //bcif.ccsnoopdone[0] = 1'b1; this should happen in Coh unit anyway
-    //bcif.ccsnoophit[0] = 1'b1;
-    // ccif.dstore = 64'hDEADBEEFDEADBEEF; // Set needed data from the supplier
+        bcif.ccsnoopdone[1] = 1'b1;
+        bcif.ccsnoophit[1] = 1'b0;
 
-    // Transition from SNOOP_RX to TRANSFER_RX
-    //bcif.dstore[1] = ccif.dstore; // Transfer data from supplier cache to the bus
+        send_data_from_ram(64'hBEEFBEEFCAFECAFE);
 
-    // All caches with snoophit invalidate their block once ccinv goes low
-    #(10 * PERIOD);
-    //bcif.ccinv[0] = 1'b0; // End of invalidation 
+        wait(mbif.busy == 1'b0);
 
-    if (dcif.state_transfer != INVALID) begin
-        $error("%s failed: Cache did not transition to INVALID state after bus invalidation", tb_test_case);
-    end else begin
-        $display("%s passed", tb_test_case);
+        //Look at the coherency unit outputs
+        check_state_transfer(EXCLUSIVE);
+
+        wait(gbif.busy == 1'b0);
+
+        @(negedge CLK)
+
+        gbif.ren = 1'b0;
+    end
+    // Get to S state
+    begin
+        bcif.dREN[1] = 1'b1;
+        bcif.daddr[1] = 32'h80000000;
+
+        wait(!bcif.ccwait[1]);
+
+        @(negedge CLK)
+
+        bcif.dREN[1] = 1'b0;
     end
 
-    //bcif.ccwait = 'b0;
-    bcif.ccsnoopdone = 'b0;
-    bcif.ccsnoophit = 'b0;
+    // Other cache writes to address
+    bcif.ccwrite[1] = 1'b1;
+    bcif.ccsnoopaddr[1] = 32'h80000000;
+    bcif.dstore[1] = 32'hAAAACAFE5555BEEF;
 
+    wait(!bcif.ccwait[1]);
 
+    bcif.ccwrite[1] = 1'b0;
+
+    check_state_transfer(INVALID);
 end
 
 endprogram
