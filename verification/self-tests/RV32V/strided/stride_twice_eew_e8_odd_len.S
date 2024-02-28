@@ -35,7 +35,7 @@ RVTEST_CODE_BEGIN
     nop
 
 # Check data at byte offset 0
-    lb x11, 4(x1)
+    lb x11, 0(x1)
     lb x12, 0(x2)
     li TESTNUM, 0
     bne x11, x12, fail
