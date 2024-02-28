@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "utility.h"
 
-#define ARRAY_SIZE 25
+#define ARRAY_SIZE 100
 
 extern volatile int flag;
 extern volatile int t_count;
@@ -12,7 +12,7 @@ void thread1() {
         arr[i] = ARRAY_SIZE - i;
     }
     int size = ARRAY_SIZE;
-    bubble_sort(arr, ARRAY_SIZE);
+    bubble_sort(arr, size);
     flag &= check_sort(arr, size);
     thread_terimate(0, &t_count);
 }
