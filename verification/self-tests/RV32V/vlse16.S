@@ -21,9 +21,7 @@ RVTEST_CODE_BEGIN
 	la x2, sdat
   vlse16.v v1, (x1), x15
 	NOP
-	NOP
 	vsse16.v v1, (x2), x15
-	NOP
 	NOP
 	lw x3, 0(x2)
 	lw x4, 4(x2)
@@ -31,7 +29,7 @@ RVTEST_CODE_BEGIN
 	lw x6, 12(x2)
 	lw x7, 16(x2)
 	lw x8, 20(x2)
-  	TEST_CASE(1, x10, 6, NOP)
+  TEST_CASE(1, x10, 6, NOP)
 	TEST_CASE(2, x3, 0xff, NOP)
 	TEST_CASE(3, x4, 0xfe, NOP)
 	TEST_CASE(4, x5, 0xfd, NOP)

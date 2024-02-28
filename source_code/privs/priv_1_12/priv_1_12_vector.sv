@@ -113,6 +113,4 @@ module priv_1_12_vector (
 
     assign priv_ext_if.invalid_csr = 1'b0;
 
-    assign priv_ext_if.invalid_csr = 1'b0;
-
 endmodule // priv_1_12_vector
