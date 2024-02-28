@@ -10,9 +10,9 @@ microarch_params:
   # Cache configurations
   cache_config  : "separate"
   dcache_type   : "l1"
-  dcache_size : 1024
+  dcache_size : 2048
   dcache_block_size : 2
-  dcache_assoc : 1
+  dcache_assoc : 2
   icache_type   : "l1"
   icache_size : 2048
   icache_block_size : 4
