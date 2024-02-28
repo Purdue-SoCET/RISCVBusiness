@@ -75,7 +75,7 @@ module stage4_mem_stage (
     assign serial_if.veew = ex_mem_if.vexmem.veew;
     assign serial_if.vlane_mask = ex_mem_if.vexmem.vlane_mask;
     assign serial_if.vlane_addr = ex_mem_if.vexmem.valu_res;
-    assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs2;
+    assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs3;
     assign serial_if.lsc_ready = lsc_if.lsc_ready;
 
     // Memory serializer

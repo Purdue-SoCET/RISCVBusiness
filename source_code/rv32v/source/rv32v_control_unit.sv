@@ -175,7 +175,8 @@ assign vnarrowing = (vopi == VNSRL) ||
 assign twice_vsew = vsew_t'(vcu_if.vsew << 1);
 
 // For indexed store instructions, vs3 is data which uses vtype.vsew
-assign veew_src1 = vcu_if.vsew;
+// assign veew_src1 = vcu_if.vsew 
+assign veew_src1 = (vmeminstr && ~vindexed) ? vmem_eew : vcu_if.vsew;
 
 // For indexed load/store instructions, addr is vs2 which uses instr.width
 assign veew_src2 = vindexed   ? vmem_eew :

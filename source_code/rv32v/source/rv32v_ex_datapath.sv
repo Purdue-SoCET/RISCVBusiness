@@ -9,6 +9,8 @@ module rv32v_ex_datapath(
     output vexmem_t vmem_in
 );
 
+parameter NUM_LANES = 4; 
+
 logic[127:0] v0; 
 word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2 ;  
@@ -18,7 +20,7 @@ word_t ext_imm;
 assign ext_imm = {{27{vctrls.vimm[4]}}, vctrls.vimm};
 
 // store data  
-assign vmem_in.vs2 = xbardat_src1; 
+assign vmem_in.vs3 = xbardat_src1; 
 
 // Banks 
 rv32v_vector_bank VBANK0 (
@@ -90,7 +92,7 @@ end
 
 genvar k; 
 generate 
-    for(k = 0; k < 4; k+=1) begin
+    for(k = 0; k < NUM_LANES; k+=1) begin
         rv32v_vfu VFU(
             .vopA(vopA[k]), 
             .vopB(vopB[k]),
