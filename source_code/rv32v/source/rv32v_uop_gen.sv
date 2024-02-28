@@ -47,49 +47,56 @@ logic advance;
 // Register containing the number of elements left in this instruction
 // Note that this value includes the elements in the uop being issued
 // on this cycle, so it will never actually reach zero
+logic [7:0] elements_left_reg;
 logic [7:0] elements_left;
+
+// Register to store current uop number
+logic [7:0] vuop_num_reg;
 
 assign eew_bytes = (1 << vug_if.veew);
 
-assign refresh = (!vug_if.stall && !vug_if.busy);
 assign advance = (!vug_if.stall && vug_if.gen);
 
 // uop number counter
 always_ff @(posedge CLK, negedge nRST) begin
     if (!nRST) begin
-        vug_if.vuop_num <= '0;
+        vuop_num_reg <= 0;
     end else if (refresh) begin
-        vug_if.vuop_num <= '0;
+        vuop_num_reg <= 1;
     end else if (advance) begin
-        vug_if.vuop_num <= vug_if.vuop_num + 1;
-    end
-end
-
-// bank offset register
-always_ff @(posedge CLK, negedge nRST) begin
-    if (!nRST) begin
-        vug_if.vbank_offset <= '0;
-    end else if (refresh) begin
-        vug_if.vbank_offset <= '0;
-    end else if (advance) begin
-        // Intentional rollover of 2-bit value to maintain correct bank offset
-        vug_if.vbank_offset <= {vug_if.vbank_offset + eew_bytes}[1:0];
+        vuop_num_reg <= vuop_num_reg + 1;
     end
 end
 
 // elements left register
 always_ff @(posedge CLK, negedge nRST) begin
     if (!nRST) begin
-        elements_left <= '0;
+        elements_left_reg <= '0;
     end else if (refresh) begin
-        elements_left <= vug_if.vl[7:0];
+        elements_left_reg <= vug_if.vl[7:0] - VLANE_COUNT;
     end else if (advance) begin
-        elements_left <= elements_left - VLANE_COUNT;
+        elements_left_reg <= elements_left_reg - VLANE_COUNT;
     end
 end
 
+// refresh reg
+always_ff @(posedge CLK, negedge nRST) begin
+    if (!nRST) begin
+        refresh <= '0;
+    end else if (!vug_if.stall) begin
+        refresh <= !vug_if.busy;
+    end
+end
+
+// Override registered values with latest values if we're about to refresh
+assign elements_left = (refresh) ? vug_if.vl : elements_left_reg;
+assign vug_if.vuop_num = (refresh) ? 0 : vuop_num_reg;
+
 // Set busy flag until the last uop is being issued
 assign vug_if.busy = (vug_if.gen && elements_left > VLANE_COUNT);
+
+// Calculate bank offset
+assign vug_if.vbank_offset = {vug_if.vuop_num[1:0] << vug_if.veew}[1:0];
 
 // Calculate reg offset
 always_comb begin

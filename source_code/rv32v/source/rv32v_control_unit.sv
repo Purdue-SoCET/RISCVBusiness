@@ -251,7 +251,13 @@ always_comb begin
 end
 
 // Memory signals
-logic vmeminstr, vmemdren, vmemdwen, vunitstride, vstrided, vindexed;
+logic vmeminstr, vmemdren, vmemdwen, vunitstride, vstrided, vindexed, vmaskldst, vwholereg;;
+lumop_t lumop;
+logic [2:0] nf;
+word_t vlby8, mask_evl, wholereg_evl, mem_evl;
+
+assign lumop = lumop_t'(vcu_if.instr[24:20]);
+assign nf = vcu_if.instr[31:29];
 
 assign vmemdren = (vmajoropcode == VMOC_LOAD);
 assign vmemdwen = (vmajoropcode == VMOC_STORE);
@@ -268,6 +274,21 @@ assign vcu_if.vcontrol.vunitstride = vunitstride;
 assign vcu_if.vcontrol.vstrided = vstrided;
 assign vcu_if.vcontrol.vindexed = vindexed;
 
+assign vmaskldst = (lumop == LUMOP_UNIT_MASK);
+assign vwholereg = (lumop == LUMOP_UNIT_FULLREG);
+
+// For mask load/store, evl = ceil(vl/8)
+assign vlby8 = (vcu_if.vl >> 3);
+assign mask_evl = (vcu_if.vl[2:0] ? vlby8 + 1 : vlby8);
+
+// For whole register load/store, evl = NFIELDS*VLEN/EEW = (nf << 4) >> eew
+assign wholereg_evl = ({nf, 4'b0} >> veew_dest);
+
+// Resolve the final evl
+assign mem_evl = (vmaskldst) ? (mask_evl) :
+                 (vwholereg) ? (wholereg_evl) :
+                               (vcu_if.vl);
+
 // uop generation unit
 logic [2:0] vreg_offset;
 
@@ -276,7 +297,7 @@ rv32v_uop_gen_if vug_if();
 assign vug_if.gen = vcu_if.vvalid;
 assign vug_if.stall = vcu_if.stall;
 assign vug_if.veew = veew_dest;
-assign vug_if.vl = vcu_if.vl;
+assign vug_if.vl = mem_evl;
 
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;

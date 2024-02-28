@@ -25,9 +25,12 @@
 
 from argparse import ArgumentParser
 from enum import Enum
+from math import ceil
 
 class IndexingMode(Enum):
     UNIT_STRIDE = "unit_stride"
+    MASK_LDST = 'mask_ldst'
+    WHOLE_REG = 'whole_reg'
     STRIDED = "strided"
     INDEXED = "indexed"
 
@@ -149,6 +152,16 @@ def gen_unit_strided_ldst(enc_width: VSEW) -> str:
 """
 
 
+def gen_mask_ldst() -> str:
+    nops = '    nop\n'*NUM_NOPS
+    return f"""# Vector load/store instructions
+    vlm.v {VLDST_TGT_REG}, ({INPUT_DATA_PTR_REG})
+{nops}
+    vsm.v {VLDST_TGT_REG}, ({OUTPUT_DATA_PTR_REG})
+{nops}
+"""
+
+
 def gen_scalar_ld_and_check(lb_offset: int) -> str:
     return f"""# Check data at byte offset {lb_offset}
     lb {INPUT_DATA_CMP_REG}, {lb_offset}({INPUT_DATA_PTR_REG})
@@ -202,6 +215,9 @@ def gen_test_code(vcsr: VCSR, enc_width: VSEW, indexing_mode: IndexingMode, base
         data_width = _vsew_to_bytes(enc_width)
         code += gen_unit_strided_ldst(enc_width)
         code += gen_strided_check(vcsr.vl, data_width, data_width, base_offset)
+    elif indexing_mode == IndexingMode.MASK_LDST:
+        code += gen_mask_ldst()
+        code += gen_strided_check(ceil(vcsr.vl/8), 1, 1, base_offset)
     else:
         raise NotImplementedError(f"{indexing_mode} indexing not implemented")
 
@@ -235,7 +251,7 @@ def parse_args():
 
     parser.add_argument('--enc_width', type=str, choices=['e8', 'e16', 'e32'], default='e32',
                         help='Encoded data width (one of "e8", "e16", or "e32")')
-    parser.add_argument('--indexing_mode', type=str, choices=['unit_stride', 'strided'],
+    parser.add_argument('--indexing_mode', type=str, choices=[mode.value for mode in IndexingMode],
                         default='unit_stride', help='Indexing mode (one of "unit_stride" or "strided")')
     parser.add_argument('--vl', type=int, default=16,
                         help='Vector length (integer)')
