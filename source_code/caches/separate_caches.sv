@@ -25,6 +25,7 @@
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
 `include "component_selection_defines.vh"
+`include "cpu_tracker_if.vh"
 
 module separate_caches (
     input logic CLK,
@@ -33,7 +34,8 @@ module separate_caches (
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
-    cache_control_if.caches cc_if
+    cache_control_if.caches cc_if,
+    cpu_tracker_if.caches cpu_tracker_if
 );
     generate
         /* verilator lint_off width */
@@ -75,7 +77,9 @@ module separate_caches (
                 .flush(cc_if.dcache_flush),
                 .clear(cc_if.dcache_clear),
                 .flush_done(cc_if.dflush_done),
-                .clear_done(cc_if.dclear_done)
+                .clear_done(cc_if.dclear_done),
+                .hits(cpu_tracker_if.dcache_hits),
+                .misses(cpu_tracker_if.dcache_misses)
             );
         endcase
     endgenerate
@@ -120,7 +124,9 @@ module separate_caches (
                 .flush(cc_if.icache_flush),
                 .clear(cc_if.icache_clear),
                 .flush_done(cc_if.iflush_done),
-                .clear_done(cc_if.iclear_done)
+                .clear_done(cc_if.iclear_done),
+                .hits(cpu_tracker_if.icache_conflicts),
+                .misses(cpu_tracker_if.icache_misses)
             );
         endcase
     endgenerate

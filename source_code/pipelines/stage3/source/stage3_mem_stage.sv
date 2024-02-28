@@ -5,6 +5,7 @@
 `include "predictor_pipeline_if.vh"
 `include "cache_control_if.vh"
 `include "prv_pipeline_if.vh"
+`include "cpu_tracker_if.vh"
 
 module stage3_mem_stage(
     input CLK,
@@ -16,6 +17,7 @@ module stage3_mem_stage(
     prv_pipeline_if.pipe prv_pipe_if,
     cache_control_if.pipeline cc_if,
     predictor_pipeline_if.update predict_if,
+    cpu_tracker_if.cpu_tracker cpu_tracker_if,
     output logic halt,
     output logic wfi
 );

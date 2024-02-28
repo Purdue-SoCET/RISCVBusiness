@@ -31,6 +31,7 @@
 `include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
+`include "cpu_tracker_if.vh"
 
 module RISCVBusiness (
     input logic CLK, nRST,
@@ -64,6 +65,8 @@ module RISCVBusiness (
     cache_control_if cc_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
+    cpu_tracker_if cpu_tracker_if ();
+
 
     //interface instantiations
     tspp_fetch_execute_if fetch_ex_if ();
@@ -170,7 +173,8 @@ module RISCVBusiness (
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
-        .cc_if(cc_if)
+        .cc_if(cc_if),
+        .cpu_tracker_if(cpu_tracker_if)
     );
 
     memory_controller mc (
