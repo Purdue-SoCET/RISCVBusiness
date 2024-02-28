@@ -84,7 +84,8 @@ interface bus_ctrl_if;
     bus_word_t          [CPUS-1:0] ccsnoopaddr; 
     // L2 signals
     l2_state_t l2state; 
-    transfer_width_t l2load, l2store; 
+    transfer_width_t l2load;
+    bus_word_t l2store;
     logic l2WEN, l2REN; 
     bus_word_t l2addr; 
 
