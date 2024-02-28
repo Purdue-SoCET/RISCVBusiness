@@ -103,6 +103,8 @@ OUTPUT_DATA_PTR_REG = "x2"
 INPUT_DATA_PTR_LABEL = "in_data"
 OUTPUT_DATA_PTR_LABEL = "out_data"
 
+STRIDE_REG = "x3"
+
 INPUT_DATA_CMP_REG = "x11"
 OUTPUT_DATA_CMP_REG = "x12"
 
@@ -175,6 +177,18 @@ def gen_whole_reg_ldst(enc_width: VSEW, nfields: int) -> str:
 """
 
 
+def gen_strided_ldst(enc_width: VSEW, stride: int) -> str:
+    nops = '    nop\n'*NUM_NOPS
+    return f"""# Vector load/store instructions
+    li {STRIDE_REG}, {stride}
+{nops}
+    vls{enc_width.value}.v {VLDST_TGT_REG}, ({INPUT_DATA_PTR_REG}), {STRIDE_REG}
+{nops}
+    vss{enc_width.value}.v {VLDST_TGT_REG}, ({OUTPUT_DATA_PTR_REG}), {STRIDE_REG}
+{nops}
+""" 
+
+
 def gen_scalar_ld_and_check(lb_offset: int) -> str:
     return f"""# Check data at byte offset {lb_offset}
     lb {INPUT_DATA_CMP_REG}, {lb_offset}({INPUT_DATA_PTR_REG})
@@ -220,6 +234,7 @@ def gen_test_code(
         enc_width: VSEW,
         indexing_mode: IndexingMode,
         base_offset: int,
+        stride: int,
         nfields: int,
 ) -> str:
     code = "RVTEST_CODE_BEGIN\n"
@@ -241,6 +256,9 @@ def gen_test_code(
     elif indexing_mode == IndexingMode.WHOLE_REG:
         code += gen_whole_reg_ldst(enc_width, nfields)
         code += gen_strided_check((nfields*VLEN_BYTES)//data_width, data_width, data_width, base_offset)
+    elif indexing_mode == IndexingMode.STRIDED:
+        code += gen_strided_ldst(enc_width, stride)
+        code += gen_strided_check(vcsr.vl, data_width, stride, base_offset)
     else:
         raise NotImplementedError(f"{indexing_mode} indexing not implemented")
 
@@ -284,6 +302,8 @@ def parse_args():
                         help='VLMUL parameter')
     parser.add_argument('--base_offset', type=int, default=0,
                         help='Bytes to offset base data pointer by')
+    parser.add_argument('--stride', type=int, default=4,
+                        help='Byte stride for strided load/stores')
     parser.add_argument('--nfields', type=int, default=1,
                         help='Number of vector registers for whole reg load/stores')
 
@@ -307,7 +327,16 @@ def main():
 
     with open(args.out_filename, 'w') as f:
         f.write(gen_test_preamble(test_name, test_desc))
-        f.write(gen_test_code(vcsr, enc_width, indexing_mode, args.base_offset, args.nfields))
+
+        f.write(gen_test_code(
+            vcsr,
+            enc_width,
+            indexing_mode,
+            args.base_offset,
+            args.stride,
+            args.nfields,
+        ))
+
         f.write(gen_test_data())
     
     print(f"Wrote output to {args.out_filename}")
