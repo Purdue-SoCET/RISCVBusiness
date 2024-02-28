@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "utility.h"
-#define ARRAY_SIZE 25
+#define ARRAY_SIZE 10
 
 extern volatile int flag;
 

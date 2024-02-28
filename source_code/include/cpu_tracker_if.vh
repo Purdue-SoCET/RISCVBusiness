@@ -22,6 +22,7 @@
 *   Description:  Interface to collect cpu statistics
 */
 
+
 `ifndef CPU_TRACKER_IF_VH 
 `define CPU_TRACKER_IF_VH
 
@@ -29,15 +30,15 @@ interface cpu_tracker_if();
 
   import rv32i_types_pkg::word_t;
 
-  integer icache_misses, icache_hits;
-  integer dcache_misses, dcache_hits;
-  
+  integer icache_misses, icache_conflicts;
+  integer dcache_misses, dcache_conflicts;
+
   modport caches (
-    output icache_misses, icache_hits, dcache_misses, dcache_hits
+    output icache_misses, icache_conflicts, dcache_misses, dcache_conflicts
   );
 
   modport cpu_tracker(
-    input icache_misses, icache_hits, dcache_misses, dcache_hits
+    input icache_misses, icache_conflicts, dcache_misses, dcache_conflicts
   );
 
 endinterface

@@ -24,6 +24,7 @@ filesets:
             - rv32i_reg_file_if.vh : {is_include_file: true}
             - predictor_pipeline_if.vh : {is_include_file: true}
             - alu_if.vh : {is_include_file: true}
+            - cpu_tracker_if.vh : {is_include_file: true}
             - branch_res_if.vh : {is_include_file: true}
             - core_interrupt_if.vh : {is_include_file: true}
             - decompressor_if.vh : {is_include_file: true}
