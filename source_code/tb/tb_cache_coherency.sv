@@ -223,7 +223,7 @@ initial begin
 
     // BUS_TO_CACHE transfer
     wait(bcif.dload[0] == bcif.dstore[1]); 
-    wait(bcif.l2store == bcif.dstore[1]); 
+    wait(bcif.l2store == bcif.dstore[1][31:0]);
 
     // Transition to IDLE after data transfer
     wait(bcif.dwait[0] == 0); // Check if the bus transaction is completed
