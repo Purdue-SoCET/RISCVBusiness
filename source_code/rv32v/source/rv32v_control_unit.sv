@@ -174,15 +174,16 @@ assign vnarrowing = (vopi == VNSRL) ||
 
 assign twice_vsew = vsew_t'(vcu_if.vsew << 1);
 
+// For strided (including unit stride) store instructions, data uses instr.width
 // For indexed store instructions, vs3 is data which uses vtype.vsew
-assign veew_src1 = vcu_if.vsew;
+assign veew_src1 = vunitstride ? vmem_eew : vcu_if.vsew;
 
 // For indexed load/store instructions, addr is vs2 which uses instr.width
 assign veew_src2 = vindexed   ? vmem_eew :
                    vnarrowing ? twice_vsew :
                                 vcu_if.vsew;
 
-// For strided (including unit stride) load/store instructions, data uses instr.width
+// For strided (including unit stride) load instructions, data uses instr.width
 // For indexed load instructions, vd is data which uses vtype.vsew
 assign veew_dest = vunitstride ? vmem_eew :
                    vstrided    ? vmem_eew :
@@ -253,11 +254,11 @@ end
 // Memory signals
 logic vmeminstr, vmemdren, vmemdwen, vunitstride, vstrided, vindexed, vmaskldst, vwholereg;;
 lumop_t lumop;
-logic [2:0] nf;
+logic [3:0] nf;
 word_t vlby8, mask_evl, wholereg_evl, mem_evl;
 
 assign lumop = lumop_t'(vcu_if.instr[24:20]);
-assign nf = vcu_if.instr[31:29];
+assign nf = vcu_if.instr[31:29] + 1;
 
 assign vmemdren = (vmajoropcode == VMOC_LOAD);
 assign vmemdwen = (vmajoropcode == VMOC_STORE);
