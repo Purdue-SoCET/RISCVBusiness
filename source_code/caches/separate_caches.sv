@@ -78,7 +78,7 @@ module separate_caches (
                 .clear(cc_if.dcache_clear),
                 .flush_done(cc_if.dflush_done),
                 .clear_done(cc_if.dclear_done),
-                .hits(cpu_tracker_if.dcache_hits),
+                .conflicts(cpu_tracker_if.dcache_conflicts),
                 .misses(cpu_tracker_if.dcache_misses)
             );
         endcase
@@ -125,7 +125,7 @@ module separate_caches (
                 .clear(cc_if.icache_clear),
                 .flush_done(cc_if.iflush_done),
                 .clear_done(cc_if.iclear_done),
-                .hits(cpu_tracker_if.icache_conflicts),
+                .conflicts(cpu_tracker_if.icache_conflicts),
                 .misses(cpu_tracker_if.icache_misses)
             );
         endcase

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "utility.h"
 
-#define ARRAY_SIZE 10
+#define ARRAY_SIZE 25
 
 extern volatile int flag;
 extern volatile int t_count;

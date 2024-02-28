@@ -41,7 +41,7 @@ module l1_cache #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
-    output integer hits, misses
+    output integer conflicts, misses
 );
     import rv32i_types_pkg::*;
     
@@ -113,7 +113,7 @@ module l1_cache #(
     // flush reg
     logic flush_req, nflush_req;
     logic idle_done;
-    integer next_hits, next_misses;
+    integer next_conflicts, next_misses;
 
     // error handling
     assign proc_gen_bus_if.error = mem_gen_bus_if.error;
@@ -148,11 +148,11 @@ module l1_cache #(
     // cache tracker
     always_ff @ (posedge CLK, negedge nRST) begin
         if(~nRST) begin
-            hits <= 0;
+            conflicts <= 0;
             misses <= 0;
         end
         else begin
-            hits <= next_hits;
+            conflicts <= next_conflicts;
             misses <= next_misses;
         end
     end
@@ -230,7 +230,7 @@ module l1_cache #(
         next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
-        next_hits               = hits;
+        next_conflicts               = conflicts;
         next_misses             = misses;
         
         // associativity, using NRU
@@ -261,7 +261,6 @@ module l1_cache #(
                     proc_gen_bus_if.busy = 0; 
                     proc_gen_bus_if.rdata = hit_data[decoded_addr.block_bits];
 		            next_last_used[decoded_addr.idx_bits] = hit_idx;
-                //next_hits = hits + 1;
                 end
                 // cache hit on a processor write
                 else if(proc_gen_bus_if.wen && hit && !flush) begin
@@ -280,7 +279,6 @@ module l1_cache #(
                     sramWrite.frames[hit_idx].data[decoded_addr.block_bits] = proc_gen_bus_if.wdata;
 		            sramWrite.frames[hit_idx].dirty = 1;
 		            next_last_used[decoded_addr.idx_bits] = hit_idx;
-                //next_hits = hits + 1;
                 end
                 // passthrough
                 else if(pass_through && (proc_gen_bus_if.wen || proc_gen_bus_if.ren)) begin
@@ -306,15 +304,14 @@ module l1_cache #(
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
                 	next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-                  if(sramRead.frames[ridx].valid)
-                    next_hits = hits + 1;
+                  if(sramRead.frames[ridx].valid) next_conflicts = conflicts + 1;
                   next_misses = misses + 1;
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
 			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-              //next_hits = hits - 1;
+              next_conflicts = conflicts + 1;
               next_misses = misses + 1;
             	end
             end 

@@ -67,7 +67,9 @@ module top_core #(
         .imm_SB(ex_mem_if.ex_mem_reg.tracker_signals.imm_SB),
         .instr_30(instr_30),
         .icache_misses(cpu_tracker_if.icache_misses),
-        .icache_conflicts(cpu_tracker_if.icache_conflicts)
+        .icache_conflicts(cpu_tracker_if.icache_conflicts),
+        .dcache_misses(cpu_tracker_if.dcache_misses),
+        .dcache_conflicts(cpu_tracker_if.dcache_conflicts)
     );
 
 

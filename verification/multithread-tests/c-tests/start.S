@@ -1,11 +1,14 @@
 
 .global _start
 _start:
-    li sp, 0x8000F000
+    lui sp, 0x8000F
+    addi sp, sp, 0x000
     j thread1
-    li sp, 0x800F0000
+    lui sp, 0x800F0
+    addi sp, sp, 0x088
     j thread2
-    li sp, 0x80F00000
+    lui sp, 0x80F00
+    addi sp, sp, 0x044
     j thread3
 
 .global done
