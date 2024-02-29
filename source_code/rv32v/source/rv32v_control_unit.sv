@@ -215,7 +215,7 @@ rv32v_opm_decode U_OPMDECODE(
     .vopm(vopm),
     .vfunct3(vfunct3), 
     .vsew(vcu_if.vsew),
-    .vs1_sel(vs1.regidx), 
+    .vs1_sel(vs1), 
     .vexec(vexec_opm),
     .valid(vopm_valid),
     .veew_src2(vopm_veew_src2)

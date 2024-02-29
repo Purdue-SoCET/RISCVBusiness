@@ -3,7 +3,7 @@ import rv32i_types_pkg::*;
 
 module rv32v_vfu(
     input word_t vopA, vopB,
-    input logic[3:0] masks, 
+    input logic[3:0] mask_bits, 
     input vexec_t vop, 
     output word_t vres
 );

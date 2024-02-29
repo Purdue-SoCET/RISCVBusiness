@@ -35,6 +35,10 @@ module rv32v_opm_decode(
     output vsew_t veew_src2
 );
 
+logic[2:0] vsew_bits; 
+
+assign vsew_bits = vsew; 
+
 always_comb begin
     // Initially assume that this instruction correctly decodes for vopi
     valid = 1'b1;
@@ -116,36 +120,36 @@ always_comb begin
         VXUNARY0: begin
             case(vs1_sel)
                 5'd2: begin // vzext.vf8 instr 
-                    veew_src1 = vsew - 3; 
+                    veew_src2 = vsew_t'(vsew_bits - 3); 
                     vexec.vopunsigned = 1'b1; 
                     vexec.valuop = VALU_EXT; 
                     valid = 1'b1; 
                 end
                 5'd3: begin // vsext.vf8 instr 
-                    veew_src1 = vsew - 3; 
+                    veew_src2 = vsew_t'(vsew_bits - 3); 
                     vexec.valuop = VALU_EXT; 
                     valid = 1'b1; 
                 end
                 5'd4: begin // vzext.vf4 instr 
                     vexec.valuop = VALU_EXT; 
-                    veew_src1 = vsew - 2; 
+                    veew_src2 = vsew_t'(vsew_bits - 2); 
                     vexec.vopunsigned = 1'b1; 
                     valid = 1'b1; 
                 end
                 5'd5: begin // vsext.vf4
                     vexec.valuop = VALU_EXT; 
-                    veew_src1 = vsew - 2; 
+                    veew_src2 = vsew_t'(vsew_bits - 2); 
                     valid = 1'b1; 
                 end
                 5'd6: begin //vzext.vf2
                     vexec.valuop = VALU_EXT; 
-                    veew_src1 = vsew - 1; 
+                    veew_src2 = vsew_t'(vsew_bits - 1); 
                     valid = 1'b1; 
                     vexec.vopunsigned = 1'b1; 
                 end
                 5'd7: begin // vsext.vf2
                     vexec.valuop = VALU_EXT; 
-                    veew_src1 = vsew - 1; 
+                    veew_src2 = vsew_t'(vsew_bits - 1); 
                     valid = 1'b1; 
                 end
             endcase 
@@ -255,24 +259,24 @@ always_comb begin
         VWADDU_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
-            veew_src2 = vsew + 1; 
+            veew_src2 = vsew_t'(vsew_bits + 1); 
             vexec.vopunsigned = 1'b1;
         end
         VWADD_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
-            veew_src2 = vsew + 1; 
+            veew_src2 = vsew_t'(vsew_bits + 1); 
         end
         VWSUBU_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
-            veew_src2 = vsew + 1; 
+            veew_src2 = vsew_t'(vsew_bits + 1); 
             vexec.vopunsigned = 1'b1;
         end
         VWSUB_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
-            veew_src2 = vsew + 1; 
+            veew_src2 = vsew_t'(vsew_bits + 1); 
         end
         VWMULU: begin
             vexec.vfu = VFU_MUL;
