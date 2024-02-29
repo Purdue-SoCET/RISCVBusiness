@@ -31,7 +31,8 @@ module rv32v_mask_unit
     input logic[4:0] uop_num,
     input logic[3:0] lane_active, 
 
-    output logic[3:0] lane_mask
+    output logic[3:0] lane_mask,
+    output logic[3:0] mask_bits
 );
 
 logic[6:0] first_elem_no; 
@@ -47,6 +48,8 @@ always_comb begin
         lane_mask[2] = lane_active & v0[first_elem_no + 2]; 
         lane_mask[3] = lane_active & v0[first_elem_no + 3]; 
     end
+
+    mask_bits = {v0[first_elem_no + 3], lane_active & v0[first_elem_no + 2], lane_active & v0[first_elem_no + 1], lane_active & v0[first_elem_no]};
 end
 
 endmodule

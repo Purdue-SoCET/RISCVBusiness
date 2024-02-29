@@ -20,14 +20,8 @@ RVTEST_CODE_BEGIN
     la x2, out_data
 # Vector load/store instructions
     vlm.v v8, (x1)
-    nop
-    nop
-    nop
 
     vsm.v v8, (x2)
-    nop
-    nop
-    nop
 
 # Check data at byte offset 0
     lb x11, 0(x1)

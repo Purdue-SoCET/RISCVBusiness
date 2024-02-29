@@ -172,16 +172,15 @@ assign vnarrowing = (vopi == VNSRL) ||
                     (vopm == VNMSUB) ||
                     (vopm == VNMSAC);
 
-assign twice_vsew = vsew_t'(vcu_if.vsew << 1);
+assign twice_vsew = vsew_t'(vcu_if.vsew + 1);
 
 // For indexed store instructions, vs3 is data which uses vtype.vsew
-// assign veew_src1 = vcu_if.vsew 
 assign veew_src1 = (vmeminstr && ~vindexed) ? vmem_eew : vcu_if.vsew;
 
 // For indexed load/store instructions, addr is vs2 which uses instr.width
 assign veew_src2 = vindexed   ? vmem_eew :
                    vnarrowing ? twice_vsew :
-                                vcu_if.vsew;
+                   (vopm_valid && (vmajoropcode == VMOC_ALU_CFG)) ? vopm_veew_src2 : vcu_if.vsew;
 
 // For strided (including unit stride) load/store instructions, data uses instr.width
 // For indexed load instructions, vd is data which uses vtype.vsew
@@ -201,6 +200,7 @@ vexec_t vexec_opi;
 logic vopi_valid;
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
+    .vfunct3(vfunct3), 
     .vexec(vexec_opi),
     .valid(vopi_valid)
 );
@@ -208,10 +208,16 @@ rv32v_opi_decode U_OPIDECODE(
 // OPM* execution unit control signals
 vexec_t vexec_opm;
 logic vopm_valid;
+logic widen_vs2; 
+vsew_t vopm_veew_src2; 
 rv32v_opm_decode U_OPMDECODE(
     .vopm(vopm),
+    .vfunct3(vfunct3), 
+    .vsew(vcu_if.vsew),
+    .vs1_sel(vs1.regidx), 
     .vexec(vexec_opm),
-    .valid(vopm_valid)
+    .valid(vopm_valid),
+    .veew_src2(vopm_veew_src2)
 );
 
 // Final execution unit control signals
@@ -228,14 +234,17 @@ always_comb begin
     vcu_if.vcontrol.vexec.vmaskop = VMSK_AND;
     vcu_if.vcontrol.vexec.vpermop = VPRM_CPS;
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
+    vcu_if.vcontrol.vsignext = 1'b0; 
 
     unique case ({vopi_valid, vopm_valid, vmeminstr})
         3'b100: begin
             vcu_if.vcontrol.vexec = vexec_opi;
+            vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned; 
         end
 
         3'b010: begin
             vcu_if.vcontrol.vexec = vexec_opm;
+            vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned; 
         end
 
         3'b001: begin

@@ -87,6 +87,7 @@ interface stage4_hazard_unit_if();
   regsel_t vs1, vs2, vd; 
   logic vs1_used, vs2_used; 
   logic vregwen; 
+  logic ex_mask_en; 
 
 
 
@@ -106,7 +107,7 @@ interface stage4_hazard_unit_if();
             is_queue_full, pc_decode, valid_decode,
             vsetvl_dec, vsetvl_ex, queue_wen, vbusy,
 
-            vregwen, vs1, vs2, vd, vs1_used, vs2_used,  
+            vregwen, vs1, vs2, vd, vs1_used, vs2_used, ex_mask_en,   
 
 
     output  pc_en, npc_sel,
@@ -137,7 +138,7 @@ interface stage4_hazard_unit_if();
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,
     output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex,
-           vs1, vs2, vs1_used, vs2_used
+           vs1, vs2, vs1_used, vs2_used, ex_mask_en
   );
 
   modport mem (

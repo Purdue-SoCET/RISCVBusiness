@@ -41,6 +41,15 @@ module rv32v_write_xbar
 );
 
 // typedef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; // put this in a package
+logic[1:0] adj_bank_offset; 
+
+always_comb begin
+    case(eew)
+        SEW8: adj_bank_offset = bank_offset; 
+        SEW16: adj_bank_offset = bank_offset[0] ? 2 : 0; 
+        default: adj_bank_offset = 0; 
+    endcase 
+end
 
 always_comb begin
     //default
@@ -52,17 +61,17 @@ always_comb begin
         byte_wen = lane_wen[BANK_NUM] ? 4'b1111 : 4'b0000;  
     end
     else if(eew == SEW16) begin
-        if(BANK_NUM == bank_offset) begin
+        if(BANK_NUM == adj_bank_offset) begin
             vwdat = {lane_dat[1][15:0], lane_dat[0][15:0]}; 
             byte_wen = { { 2{lane_wen[1]} }, { 2{lane_wen[0]} } }; 
         end 
-        else if(BANK_NUM == (bank_offset + 1)) begin
+        else if(BANK_NUM == (adj_bank_offset + 1)) begin
             vwdat = {lane_dat[3][15:0], lane_dat[2][15:0]}; 
             byte_wen = { { 2{lane_wen[3]} }, { 2{lane_wen[2]} } }; 
         end
     end 
     else begin  // eew == SEW8
-        if(BANK_NUM == bank_offset) begin
+        if(BANK_NUM == adj_bank_offset) begin
             vwdat = {lane_dat[3][7:0], lane_dat[2][7:0], lane_dat[1][7:0], lane_dat[0][7:0]}; 
             byte_wen = lane_wen; 
         end 

@@ -382,6 +382,8 @@ package rv32v_types_pkg;
     VALU_RSB,  // reverse subtract
     VALU_ADC,  // add-with-carry
     VALU_SBC,  // sub-with-borrow
+    // integer sign_ext
+    VALU_EXT, 
     // Integer logical
     VALU_AND,
     VALU_OR ,

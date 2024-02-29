@@ -22,14 +22,8 @@ RVTEST_CODE_BEGIN
     addi x2, x2, 14
 # Vector load/store instructions
     vle8.v v8, (x1)
-    nop
-    nop
-    nop
 
     vse8.v v8, (x2)
-    nop
-    nop
-    nop
 
 # Check data at byte offset 0
     lb x11, 0(x1)

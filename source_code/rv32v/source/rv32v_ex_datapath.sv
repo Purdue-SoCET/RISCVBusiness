@@ -16,6 +16,7 @@ word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2 ;  
 word_t[3:0] vopA, vopB; 
 word_t ext_imm; 
+logic[3:0] mask_bits; 
 
 assign ext_imm = {{27{vctrls.vimm[4]}}, vctrls.vimm};
 
@@ -60,7 +61,7 @@ rv32v_vector_bank VBANK3 (
 rv32v_read_xbar VSRC1_XBAR(
     .bank_dat(bankdat_src1), 
     .veew(vctrls.veew_src1),
-    .bank_offset(vctrls.vbank_offset),
+    .bank_offset(vctrls.vuop_num[1:0]),
     .sign_ext(vctrls.vsignext),
     .out_dat(xbardat_src1)
 ); 
@@ -68,8 +69,8 @@ rv32v_read_xbar VSRC1_XBAR(
 rv32v_read_xbar VSRC2_XBAR(
     .bank_dat(bankdat_src2), 
     .veew(vctrls.veew_src2),
-    .bank_offset(vctrls.vbank_offset), // NOTE: need a diff bankoffset for the two sources 
-    .sign_ext(vctrls.vsignext), // NOTE: do we need different ones? 
+    .bank_offset(vctrls.vuop_num[1:0]),
+    .sign_ext(vctrls.vsignext),
     .out_dat(xbardat_src2)
 ); 
 
@@ -96,6 +97,7 @@ generate
         rv32v_vfu VFU(
             .vopA(vopA[k]), 
             .vopB(vopB[k]),
+            .mask_bits(mask_bits),
             .vop(vctrls.vexec), 
             .vres(vmem_in.valu_res[k])
         );
@@ -111,7 +113,8 @@ rv32v_mask_unit RVV_MASKS(
     .mask_enable(vctrls.vmask_en), 
     .uop_num(vctrls.vuop_num), 
     .lane_active(vctrls.vlaneactive),
-    .lane_mask(vmem_in.vlane_mask)
+    .lane_mask(vmem_in.vlane_mask),
+    .mask_bits(mask_bits)
 );
 
 

@@ -27,13 +27,18 @@ import rv32v_types_pkg::*;
 
 module rv32v_opm_decode(
     input vopm_t vopm,
+    input vfunct3_t vfunct3,
+    input logic[4:0] vs1_sel, 
+    input vsew_t vsew, 
     output vexec_t vexec,
-    output logic valid
+    output logic valid, 
+    output vsew_t veew_src2
 );
 
 always_comb begin
     // Initially assume that this instruction correctly decodes for vopi
     valid = 1'b1;
+    veew_src2 = vsew; 
 
     // Arbitrary defaults just to prevent latches
     vexec.vfu = VFU_ALU;
@@ -109,8 +114,43 @@ always_comb begin
             valid = 1'b0;
         end
         VXUNARY0: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            case(vs1_sel)
+                5'd2: begin // vzext.vf8 instr 
+                    veew_src1 = vsew - 3; 
+                    vexec.vopunsigned = 1'b1; 
+                    vexec.valuop = VALU_EXT; 
+                    valid = 1'b1; 
+                end
+                5'd3: begin // vsext.vf8 instr 
+                    veew_src1 = vsew - 3; 
+                    vexec.valuop = VALU_EXT; 
+                    valid = 1'b1; 
+                end
+                5'd4: begin // vzext.vf4 instr 
+                    vexec.valuop = VALU_EXT; 
+                    veew_src1 = vsew - 2; 
+                    vexec.vopunsigned = 1'b1; 
+                    valid = 1'b1; 
+                end
+                5'd5: begin // vsext.vf4
+                    vexec.valuop = VALU_EXT; 
+                    veew_src1 = vsew - 2; 
+                    valid = 1'b1; 
+                end
+                5'd6: begin //vzext.vf2
+                    vexec.valuop = VALU_EXT; 
+                    veew_src1 = vsew - 1; 
+                    valid = 1'b1; 
+                    vexec.vopunsigned = 1'b1; 
+                end
+                5'd7: begin // vsext.vf2
+                    vexec.valuop = VALU_EXT; 
+                    veew_src1 = vsew - 1; 
+                    valid = 1'b1; 
+                end
+            endcase 
+
+            valid = 1'b0;             
         end
         VMUNARY0: begin
             /* UNIMPLEMENTED */
@@ -215,18 +255,24 @@ always_comb begin
         VWADDU_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
+            veew_src2 = vsew + 1; 
+            vexec.vopunsigned = 1'b1;
         end
         VWADD_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
+            veew_src2 = vsew + 1; 
         end
         VWSUBU_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
+            veew_src2 = vsew + 1; 
+            vexec.vopunsigned = 1'b1;
         end
         VWSUB_W: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
+            veew_src2 = vsew + 1; 
         end
         VWMULU: begin
             vexec.vfu = VFU_MUL;
@@ -261,6 +307,10 @@ always_comb begin
             valid = 1'b0;
         end
     endcase
+
+    case(vfunct3)
+        3'd0, 3'd1, 3'd3, 3'd4, 3'd5: valid = 0; // prevent overlap with opm and opf encodings 
+    endcase 
 end
 
 endmodule

@@ -66,7 +66,7 @@ module stage4_hazard_unit (
     word_t epc;
 
     logic stall_vsetvl; 
-    logic vmem_stall;  
+    logic vex_stall;  
     // TODO: RISC-MGMT
     //logic rmgmt_stall;
 
@@ -193,11 +193,11 @@ module stage4_hazard_unit (
       end
     end
 
-    assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
+    assign hazard_if.ex_mem_flush = (ex_flush_hazard // Control hazard
                                   || branch_jump     // Control hazard
                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
-                                  || (hazard_if.stall_queue && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
- 
+                                  || (hazard_if.stall_queue && !hazard_if.ex_mem_stall) // if_ex_stall covers mem_use stall condition
+                                  || vex_stall) &&  ~hazard_if.ex_mem_stall; 
     // assign hazard_if.if_ex_stall  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
     //                               // || (wait_for_imem && !dmem_access) // ???
     //                               //& (~ex_flush_hazard | e_ex_stage) // ???
@@ -218,24 +218,27 @@ module stage4_hazard_unit (
                                   //|| ex_flush_hazard
                                   || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump) // Ugly case -- need to flush for control hazards when X busy, but other cases require stalling to take priority to prevent data loss (e.g. slow instruction fetch, valid insn in X, load in M --> giving flush priority would destroy insn in X)
                                   || mem_use_stall 
-                                  || hazard_if.fence_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
+                                  || hazard_if.fence_stall
+                                  || vex_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
                                   
      
      // TODO: Exceptions
-    always_comb begin: VMEM_STALL_LOGIC
-      vmem_stall = 0; 
+    always_comb begin: VEX_STALL_LOGIC
+      vex_stall = 0; 
       if(hazard_if.vregwen) begin
         if((hazard_if.vd == hazard_if.vs1) && hazard_if.vs1_used)
-          vmem_stall = 1; 
+          vex_stall = 1; 
         else if((hazard_if.vd == hazard_if.vs2) && hazard_if.vs2_used)
-          vmem_stall = 1; 
+          vex_stall = 1; 
+        else if(hazard_if.ex_mask_en && (hazard_if.vd.regidx == 0)) 
+          vex_stall = 1; 
       end
     end
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
                                   || hazard_if.fence_stall
                                   || hazard_if.serializer_stall
-                                  || hazard_if.halt
-                                  || vmem_stall;
+                                  || hazard_if.halt;
+                                  //|| vmem_stall;
                                   //|| branch_jump && wait_for_imem; // This can be removed once there is I$. Solves problem where
                                                                    // stale I-request returns after PC is redirected
     // TODO: Enforce mutual exclusivity of these signals with assertion

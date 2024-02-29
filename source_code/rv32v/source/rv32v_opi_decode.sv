@@ -27,6 +27,7 @@ import rv32v_types_pkg::*;
 
 module rv32v_opi_decode(
     input vopi_t vopi,
+    input vfunct3_t vfunct3, 
     output vexec_t vexec,
     output logic valid
 );
@@ -223,6 +224,11 @@ always_comb begin
             valid = 1'b0;
         end
     endcase
+
+
+    case(vfunct3)
+        3'd1, 3'd2, 3'd5, 3'd6: valid = 0; // prevent overlap with opm and opf encodings 
+    endcase 
 end
 
 endmodule

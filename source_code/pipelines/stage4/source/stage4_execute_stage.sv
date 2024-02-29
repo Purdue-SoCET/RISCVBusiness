@@ -85,11 +85,23 @@ module stage4_execute_stage (
         hazard_if.vs2 = ex_in.vctrl_out.vs2_sel; 
         hazard_if.vs1_used = 1'b0; 
         hazard_if.vs2_used = 1'b0; 
-        if(ex_in.vctrl_out.vlaneactive && !ex_in.vctrl_out.vxin1_use_imm && !ex_in.vctrl_out.vxin1_use_rs1)
+        if(ex_in.vctrl_out.vlaneactive && (ex_in.vctrl_out.vmemdwen || (!ex_in.vctrl_out.vxin1_use_imm && !ex_in.vctrl_out.vxin1_use_rs1)))
             hazard_if.vs1_used = 1'b1; 
         if(ex_in.vctrl_out.vlaneactive && !ex_in.vctrl_out.vxin2_use_rs2)
             hazard_if.vs2_used = 1'b1; 
+        
+        hazard_if.ex_mask_en = ex_in.vctrl_out.vlaneactive ? ex_in.vctrl_out.vmask_en : 0; 
+
+        if(ex_in.vctrl_out.vuop_num != 0) begin
+            // only do hazard tracking across different instructions
+            hazard_if.ex_mask_en = 0; 
+            hazard_if.vs2_used = 0; 
+            hazard_if.vs1_used = 0; 
+        end
+
     end
+
+
     //assign ex_mem_if.vexmem = '{default:0, veew: SEW32}; 
     rv32v_ex_datapath RVV_DATAPATH(
         .CLK(CLK), .nRST(nRST),
