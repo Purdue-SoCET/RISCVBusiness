@@ -49,7 +49,7 @@ module stage4_mem_stage (
     genvar i;
     logic vmemop;
     word_t [NUM_LANES-1:0] vlane_data;
-    logic [NUM_LANES-1:0] vlane_wen;
+    logic [NUM_LANES-1:0] vlane_wen, velem_mask;
 
     // Interfaces
     rv32v_mem_serializer_if serial_if();
@@ -73,7 +73,7 @@ module stage4_mem_stage (
     assign serial_if.base = ex_mem_if.ex_mem_reg.rs1_data;
     assign serial_if.stride = ex_mem_if.ex_mem_reg.rs2_data;
     assign serial_if.veew = ex_mem_if.vexmem.veew;
-    assign serial_if.vlane_mask = ex_mem_if.vexmem.vlane_mask;
+    assign serial_if.vlane_mask = velem_mask;
     assign serial_if.vlane_addr = ex_mem_if.vexmem.valu_res;
     assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs3;
     assign serial_if.lsc_ready = lsc_if.lsc_ready;
@@ -206,21 +206,37 @@ module stage4_mem_stage (
         endcase
     end
 
+    // Element mask considering vlane_mask and vstart
+    always_comb begin
+        if (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart[$clog2(VLMAX)-1:2]) begin
+            velem_mask = '0;
+        end else if (ex_mem_if.vexmem.vuop_num == prv_pipe_if.vstart[$clog2(VLMAX)-1:2]) begin
+            casez (prv_pipe_if.vstart[1:0])
+                2'b00: velem_mask = ex_mem_if.vexmem.vlane_mask;
+                2'b01: velem_mask = {ex_mem_if.vexmem.vlane_mask[3:1], 1'b0};
+                2'b10: velem_mask = {ex_mem_if.vexmem.vlane_mask[3:2], 2'b0};
+                2'b11: velem_mask = {ex_mem_if.vexmem.vlane_mask[3]  , 3'b0};
+            endcase
+        end else begin
+            velem_mask = ex_mem_if.vexmem.vlane_mask;
+        end
+    end
+
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :
                         (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? {4{ex_mem_if.ex_mem_reg.port_out}} : ex_mem_if.vexmem.valu_res;
 
     always_comb begin
         if (ex_mem_if.vexmem.vmemdren) begin
             casez (serial_if.vcurr_lane)
-                2'd0: vlane_wen = {3'b0, ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[0]      };
-                2'd1: vlane_wen = {2'b0, ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[1], 1'b0};
-                2'd2: vlane_wen = {1'b0, ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[2], 2'b0};
-                2'd3: vlane_wen = {      ~dgen_bus_if.busy & ex_mem_if.vexmem.vlane_mask[3], 3'b0};
+                2'd0: vlane_wen = {3'b0, ~dgen_bus_if.busy & velem_mask[0]      };
+                2'd1: vlane_wen = {2'b0, ~dgen_bus_if.busy & velem_mask[1], 1'b0};
+                2'd2: vlane_wen = {1'b0, ~dgen_bus_if.busy & velem_mask[2], 2'b0};
+                2'd3: vlane_wen = {      ~dgen_bus_if.busy & velem_mask[3], 3'b0};
             endcase
         end else if (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) begin
             vlane_wen = {3'b0, ex_mem_if.ex_mem_reg.reg_write};  // vmv.s.x always to element 0 of vd
         end else if (ex_mem_if.vexmem.vregwen) begin
-            vlane_wen = ex_mem_if.vexmem.vlane_mask;
+            vlane_wen = velem_mask;
         end else begin
             vlane_wen = '0;
         end

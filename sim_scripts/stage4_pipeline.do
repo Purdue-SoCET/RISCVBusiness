@@ -217,22 +217,22 @@ add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipelin
 add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipeline/shadow_if/vtype_spec/vsew
 add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipeline/shadow_if/vtype_spec/vta
 add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipeline/shadow_if/vtype_spec/vma
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/sregwen
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vbank_offset
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/veew
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vindexed
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vkeepvl
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vlane_mask
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vmemdren
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vmemdwen
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vregwen
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vs2
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vsetvl
-add wave -noupdate -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vuop_num
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/sregwen
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vbank_offset
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/veew
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vindexed
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vkeepvl
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vlane_mask
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vmemdren
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vmemdwen
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vregwen
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vs2
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vsetvl
+add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vuop_num
 add wave -noupdate -group scalar_rf /TOP/top_core/CORE/pipeline/execute_stage_i/rf_if/rs1_data
 add wave -noupdate -group scalar_rf /TOP/top_core/CORE/pipeline/execute_stage_i/rf_if/rs2_data
 add wave -noupdate -group scalar_rf /TOP/top_core/CORE/pipeline/execute_stage_i/rf_if/w_data
@@ -334,10 +334,33 @@ add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_b
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/ren
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/wdata
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/wen
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/base
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/lsc_ready
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/stride
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vaddr_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vcurr_lane
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vdata_store_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/veew
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vindexed
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_mask
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vload_type
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdren
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdren_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vuop_num
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {111 ps} 0}
+WaveRestoreCursors {{Cursor 1} {148 ps} 0}
 quietly wave cursor active 1
-configure wave -namecolwidth 173
+configure wave -namecolwidth 166
 configure wave -valuecolwidth 100
 configure wave -justifyvalue left
 configure wave -signalnamewidth 1
@@ -351,4 +374,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {23 ps} {191 ps}
+WaveRestoreZoom {105 ps} {189 ps}
