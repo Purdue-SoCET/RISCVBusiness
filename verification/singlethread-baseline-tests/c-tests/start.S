@@ -14,4 +14,4 @@ __inf_loop:
 
 .global flag
 .data
-flag: .word 0x01
+flag: .word 0x00
