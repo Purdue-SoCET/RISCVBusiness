@@ -84,7 +84,7 @@ always_comb begin
         vopB = {4{ext_imm}};
     end
     else if(vctrls.vxin1_use_rs1) begin
-        if(vctrls.veew_src1 < SEW32) begin
+        if(vctrls.veew_src1 < SEW32 && ~(vctrls.vmemdren || vctrls.vmemdwen)) begin
             case(vctrls.veew_src1)
                 SEW8: begin
                     temp_res = vctrls.vsignext ? {{24{rdat1[7]}}, rdat1[7:0]} : {24'b0, rdat1[7:0]}; 
