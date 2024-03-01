@@ -379,9 +379,16 @@ package rv32v_types_pkg;
     // Integer add/sub
     VALU_ADD,
     VALU_SUB,
+
+    // add w/ carry and sub w/ borrow 
     VALU_RSB,  // reverse subtract
     VALU_ADC,  // add-with-carry
     VALU_SBC,  // sub-with-borrow
+    VALU_VMADC_NO_C, // produce mask w/out carry_in 
+    VALU_VMADC, // produce mask w/ carry_in 
+    VALU_VMSBC_NO_B, // produce mask w/out borrow_in 
+    VALU_VMSBC, // produce mask w/ borrow_in 
+    
     // integer sign_ext
     VALU_EXT, 
     // Integer logical

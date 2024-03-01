@@ -30,6 +30,7 @@ module rv32v_opm_decode(
     input vfunct3_t vfunct3,
     input logic[4:0] vs1_sel, 
     input vsew_t vsew, 
+
     output vexec_t vexec,
     output logic valid, 
     output vsew_t veew_src2

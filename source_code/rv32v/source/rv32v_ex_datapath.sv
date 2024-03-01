@@ -18,7 +18,7 @@ word_t[3:0] vopA, vopB;
 word_t ext_imm; 
 logic[3:0] mask_bits; 
 
-assign ext_imm = {{27{vctrls.vimm[4]}}, vctrls.vimm};
+assign ext_imm = vctrls.vsignext ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
 
 // store data  
 assign vmem_in.vs3 = xbardat_src1; 
@@ -75,15 +75,34 @@ rv32v_read_xbar VSRC2_XBAR(
 ); 
 
 // vector functional units 
+word_t temp_res; 
 always_comb begin
     vopB = xbardat_src1; 
     vopA = xbardat_src2; 
-
+    temp_res = '0; 
     if(vctrls.vxin1_use_imm) begin
         vopB = {4{ext_imm}};
     end
     else if(vctrls.vxin1_use_rs1) begin
-        vopB = {4{rdat1}}; 
+        if(vctrls.veew_src1 < SEW32) begin
+            case(vctrls.veew_src1)
+                SEW8: begin
+                    temp_res = vctrls.vsignext ? {{24{rdat1[7]}}, rdat1[7:0]} : {24'b0, rdat1[7:0]}; 
+                    vopB = {4{temp_res}}; 
+                end
+                SEW16: begin
+                    temp_res = vctrls.vsignext ? {{16{rdat1[15]}}, rdat1[15:0]} : {16'b0, rdat1[15:0]}; 
+                    vopB = {4{temp_res}}; 
+                end 
+                default: begin
+                    vopB = {4{rdat1}}; 
+                end
+            endcase  
+        end 
+        else begin
+            vopB = {4{rdat1}}; 
+        end
+        
     end
     
     if(vctrls.vxin2_use_rs2) begin
@@ -97,7 +116,8 @@ generate
         rv32v_vfu VFU(
             .vopA(vopA[k]), 
             .vopB(vopB[k]),
-            .mask_bits(mask_bits),
+            .mask_bit(mask_bits[k]),
+            .vsew(vctrls.veew_src1),
             .vop(vctrls.vexec), 
             .vres(vmem_in.valu_res[k])
         );

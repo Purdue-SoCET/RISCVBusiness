@@ -35,7 +35,7 @@ import rv32i_types_pkg::*;
 import rv32v_types_pkg::*;
 
 //enable or disable masking by looking at bit 25
-assign vcu_if.vcontrol.vmask_en = vcu_if.instr[25] == 1'b0; 
+assign vcu_if.vcontrol.vmask_en = (vmajoropcode == VMOC_ALU_CFG && vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
 
 // Register select extraction
 logic [4:0] vd, vs1, vs2, vs3;
@@ -199,11 +199,14 @@ assign vcu_if.vcontrol.veew_dest = veew_dest;
 // OPI* execution unit control signals
 vexec_t vexec_opi;
 logic vopi_valid;
+logic vopi_disable_mask; 
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
-    .vfunct3(vfunct3), 
+    .vfunct3(vfunct3),
+    .vm_bit(vcu_if.instr[25]), 
     .vexec(vexec_opi),
-    .valid(vopi_valid)
+    .valid(vopi_valid),
+    .disable_mask(vopi_disable_mask)
 );
 
 // OPM* execution unit control signals
@@ -251,7 +254,6 @@ always_comb begin
         3'b001: begin
             vcu_if.vcontrol.vexec.vfu = VFU_ALU;
             vcu_if.vcontrol.vexec.valuop = VALU_ADD;
-            vcu_if.vcontrol.vexec.vopunsigned = 1'b1;
         end
         
         default: begin

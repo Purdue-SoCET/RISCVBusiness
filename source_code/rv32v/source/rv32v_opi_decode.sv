@@ -27,14 +27,18 @@ import rv32v_types_pkg::*;
 
 module rv32v_opi_decode(
     input vopi_t vopi,
-    input vfunct3_t vfunct3, 
+    input vfunct3_t vfunct3,
+    input logic vm_bit,  
+    
     output vexec_t vexec,
-    output logic valid
+    output logic valid,
+    output logic disable_mask
 );
 
 always_comb begin
     // Initially assume that this instruction correctly decodes for vopi
     valid = 1'b1;
+    disable_mask = 1'b0; 
 
     // Arbitrary defaults just to prevent latches
     vexec.vfu = VFU_ALU;
@@ -102,18 +106,25 @@ always_comb begin
         VADC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADC;
+            disable_mask = 1'b1; 
         end
         VMADC: begin
             vexec.vfu = VFU_ALU;
-            vexec.valuop = VALU_ADC; // Assuming VMADC uses the same operation as ADC
+            vexec.valuop = vm_bit ? VALU_VMADC : VALU_VMADC_NO_C; // Assuming VMADC uses the same operation as ADC
+            disable_mask = 1'b1; 
         end
         VSBC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SBC;
+            disable_mask = 1'b1;
+            // vexec.vopunsigned = 1'b1; // I think the operation is unsigned (double check) 
+ 
         end
         VMSBC: begin
             vexec.vfu = VFU_ALU;
-            vexec.valuop = VALU_SBC; // Assuming VMSBC uses the same operation as SBC
+            vexec.valuop = vm_bit ? VALU_VMSBC : VALU_VMSBC_NO_B; // Assuming VMSBC uses the same operation as SBC
+            disable_mask = 1'b1;
+            // vexec.vopunsigned = 1'b1; // I think the operation is unsigned (double check) 
         end
         VMERGE: begin
             /* UNIMPLEMENTED */
