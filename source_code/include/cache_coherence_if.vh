@@ -1,7 +1,9 @@
 `ifndef CACHE_COHERENCE_IF_VH
 `define CACHE_COHERENCE_IF_VH
 
-`timescale 1ns/100ps //Necessary for xcelium, delete if causing errors
+`ifdef XCELIUM
+`timescale 1ns/100ps
+`endif
 
 typedef enum logic[1:0] {  
     MODIFIED,
@@ -9,8 +11,6 @@ typedef enum logic[1:0] {
     SHARED,
     INVALID
 } cc_end_state;
-
-
 
 localparam BLOCK_SIZE = 2; //Need a way to overwrite this when instansiating module
 localparam CACHE_SIZE         = 1024;
