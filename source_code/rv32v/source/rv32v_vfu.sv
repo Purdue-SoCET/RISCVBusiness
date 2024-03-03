@@ -71,6 +71,42 @@ always_comb begin
                 endcase 
                 vres = vopA << temp_res; 
             end 
+            VALU_SEQ: vres = (vopA == vopB) ? 32'b1 : 32'b0; 
+            VALU_SNE: vres = (vopA == vopB) ? 32'b0 : 32'b1; 
+            VALU_SLT: begin
+                if(vop.vopunsigned)
+                    vres = (vopA < vopB) ? 32'b1 : 32'b0; 
+                else 
+                    vres = ($signed(vopA) <= $signed(vopB)) ? 32'b1 : 32'b0; 
+            end
+            VALU_SLE: begin
+                if(vop.vopunsigned)
+                    vres = (vopA < vopB) ? 32'b1 : 32'b0; 
+                else 
+                    vres = ($signed(vopA) <= $signed(vopB)) ? 32'b1 : 32'b0; 
+            end
+            VALU_SGT: begin
+                if(vop.vopunsigned)
+                    vres = (vopA < vopB) ? 32'b1 : 32'b0; 
+                else 
+                    vres = ($signed(vopA) < $signed(vopB)) ? 32'b1 : 32'b0; 
+            end
+            VALU_MIN: begin
+                if(vop.vopunsigned)
+                    vres = (vopA < vopB) ? vopA : vopB; 
+                else 
+                    vres = ($signed(vopA) < $signed(vopB)) ? vopA : vopB; 
+            end 
+            VALU_MAX: begin
+                if(vop.vopunsigned)
+                    vres = (vopA > vopB) ? vopA : vopB; 
+                else 
+                    vres = ($signed(vopA) > $signed(vopB)) ? vopA : vopB; 
+            end 
+            VALU_MERGE: vres = mask_bit ? vopB : vopA; 
+            VALU_INT_MOVE: vres = vopB; 
+
+
         endcase
     end
 end

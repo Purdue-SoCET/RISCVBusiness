@@ -165,12 +165,12 @@ assign vmem_eew = (vmem_width == WIDTH8 ) ? SEW8 :
                                             SEW32;
 
 assign vwidening = (vfunct6[5:4] == 2'b11);
-assign vnarrowing = (vopi == VNSRL) ||
+assign vnarrowing = (((vopi == VNSRL) ||
                     (vopi == VNSRA) ||
                     (vopi == VNCLIPU) ||
-                    (vopi == VNCLIP) ||
-                    (vopm == VNMSUB) ||
-                    (vopm == VNMSAC);
+                    (vopi == VNCLIP)) && (vmajoropcode == VMOC_ALU_CFG) && (vopi_valid) ) ||
+                    (((vopm == VNMSUB) ||
+                    (vopm == VNMSAC)) && (vmajoropcode == VMOC_ALU_CFG) && (vopm_valid) );
 
 assign twice_vsew = vsew_t'(vcu_if.vsew + 1);
 
@@ -275,9 +275,9 @@ assign nf = vcu_if.instr[31:29] + 1;
 assign vmemdren = (vmajoropcode == VMOC_LOAD);
 assign vmemdwen = (vmajoropcode == VMOC_STORE);
 
-assign vunitstride = (mop == MOP_UNIT);
-assign vstrided = (mop == MOP_STRIDED);
-assign vindexed = (mop == MOP_OINDEXED) || (mop == MOP_UINDEXED);
+assign vunitstride = vmeminstr && (mop == MOP_UNIT);
+assign vstrided = vmeminstr && (mop == MOP_STRIDED);
+assign vindexed = vmeminstr && ((mop == MOP_OINDEXED) || (mop == MOP_UINDEXED));
 
 assign vmeminstr = (vmemdren || vmemdwen);
 

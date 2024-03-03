@@ -116,19 +116,17 @@ always_comb begin
         VSBC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SBC;
-            disable_mask = 1'b1;
-            // vexec.vopunsigned = 1'b1; // I think the operation is unsigned (double check) 
- 
+            disable_mask = 1'b1; 
         end
         VMSBC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = vm_bit ? VALU_VMSBC : VALU_VMSBC_NO_B; // Assuming VMSBC uses the same operation as SBC
             disable_mask = 1'b1;
-            // vexec.vopunsigned = 1'b1; // I think the operation is unsigned (double check) 
         end
         VMERGE: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = vm_bit ? VALU_INT_MOVE : VALU_MERGE; 
+            disable_mask = 1'b1; 
         end
         VMSEQ: begin
             vexec.vfu = VFU_ALU;
@@ -193,6 +191,7 @@ always_comb begin
         VSRL: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SRL;
+            vexec.vopunsigned = 1'b1; 
         end
         VSRA: begin
             vexec.vfu = VFU_ALU;
@@ -209,6 +208,7 @@ always_comb begin
         VNSRL: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SRL; // Assuming VNSRL uses the same operation as SRL
+            vexec.vopunsigned = 1'b1; 
         end
         VNSRA: begin
             vexec.vfu = VFU_ALU;

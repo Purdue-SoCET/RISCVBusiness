@@ -407,7 +407,13 @@ package rv32v_types_pkg;
     VALU_SGT,
     // Integer min/max
     VALU_MIN,
-    VALU_MAX
+    VALU_MAX, 
+
+    // vmerge instr 
+    VALU_MERGE,
+
+    // vm instr
+    VALU_INT_MOVE
   } valuop_t;
 
   // Operation codes for integer reduction unit

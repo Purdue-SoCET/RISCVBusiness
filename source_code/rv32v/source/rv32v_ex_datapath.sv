@@ -18,7 +18,15 @@ word_t[3:0] vopA, vopB;
 word_t ext_imm; 
 logic[3:0] mask_bits; 
 
-assign ext_imm = vctrls.vsignext ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
+logic vint_cmp_instr; 
+
+assign vint_cmp_instr = vctrls.vexec.valuop == VALU_SEQ ||
+                        vctrls.vexec.valuop == VALU_SNE || 
+                        vctrls.vexec.valuop == VALU_SLT ||
+                        vctrls.vexec.valuop == VALU_SLE ||
+                        vctrls.vexec.valuop == VALU_SGT; 
+
+assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
 
 // store data  
 assign vmem_in.vs3 = xbardat_src1; 
@@ -117,7 +125,7 @@ generate
             .vopA(vopA[k]), 
             .vopB(vopB[k]),
             .mask_bit(mask_bits[k]),
-            .vsew(vctrls.veew_src1),
+            .vsew(vctrls.veew_src2),
             .vop(vctrls.vexec), 
             .vres(vmem_in.valu_res[k])
         );
