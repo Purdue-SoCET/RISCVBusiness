@@ -59,6 +59,7 @@ module RISCVBusiness (
     generic_bus_if pipeline_trans_if ();
     risc_mgmt_if rm_if ();
     predictor_pipeline_if predict_if ();
+    //predictor_pipeline_if 
     //fetch_buffer_if fb_if();
     prv_pipeline_if prv_pipe_if ();
     cache_control_if cc_if ();
@@ -133,8 +134,9 @@ module RISCVBusiness (
     branch_predictor_wrapper branch_predictor_i (
         .CLK(CLK),
         .nRST(nRST),
-        .predict_if(predict_if),
-        .fetch_ex_if(fetch_ex_if)
+        .predict_if(predict_if)
+
+        //.fetch_ex_if(fetch_ex_if)
         //.fb_if(fb_if)
     );
 

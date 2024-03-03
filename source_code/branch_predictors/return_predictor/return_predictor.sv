@@ -2,7 +2,7 @@
 //`include "fetch_buffer_if.vh"
 //`include "tspp_fetch_execute_if.vh"
 
-module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if, predictor_pipline_if.access access_if);
+module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if, predictor_pipeline_if.access access_if);
 //fetch_buffer_if...
 
 	import rv32i_types_pkg::*;
