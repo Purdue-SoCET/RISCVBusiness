@@ -25,20 +25,27 @@
 
 `include "predictor_pipeline_if.vh"
 `include "component_selection_defines.vh"
+`include "fetch_buffer_if.vh"
 
 module branch_predictor_wrapper (
     input logic CLK,
     nRST,
-    predictor_pipeline_if.predictor predict_if
+    predictor_pipeline_if.predictor predict_if,
+    tspp_fetch_execute_if.fetch fetch_ex_if
+    //fetch_buffer_if.fb fb_if
 );
     // Predictor used based on the BR_PREDICTOR_TYPE definition
+   
+    always_comb begin
+        $display(BR_PREDICTOR_TYPE);
+    end 
     generate
         case (BR_PREDICTOR_TYPE)
             "not_taken": nottaken_predictor predictor (.*);	// static not taken predictor
 			"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
 			"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
 			"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
-			"return" : return_predictor predictor (.*); //return address predictor
+			"return"   : return_predictor predictor (.*); //return address predictor
         endcase
     endgenerate
 endmodule
