@@ -443,6 +443,7 @@ if __name__ == "__main__":
     print("Running Main...")
     # setup the logfile
     #logging.basicConfig(filename=log_filepath, mode="w", level=logging.DEBUG)
+    print(parse_args)
     config = parse_args()
     run_tests(config)
     # shutdown any remaining loggers

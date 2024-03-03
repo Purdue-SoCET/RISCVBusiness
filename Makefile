@@ -18,7 +18,7 @@ RISC_EXT_FILES := $(RISC_MGMT)/extensions/template/template_decode.sv $(RISC_MGM
 CORE_PKG_FILES := $(RISCV_PKGS)/rv32i_types_pkg.sv $(RISCV_PKGS)/alu_types_pkg.sv $(RISCV_PKGS)/risc_mgmt/template_pkg.sv $(RISCV_PKGS)/risc_mgmt/crc32_pkg.sv $(RISCV_PKGS)/risc_mgmt/rv32m_pkg.sv $(RISCV_PKGS)/risc_mgmt/test_pkg.sv $(RISCV_PKGS)/machine_mode_types_pkg.sv $(RISCV_PKGS)/machine_mode_types_1_12_pkg.sv $(RISCV_PKGS)/pma_types_1_12_pkg.sv
 CORE_FILES := $(RISCV_CORE)/alu.sv  $(RISCV_CORE)/branch_res.sv  $(RISCV_CORE)/control_unit.sv  $(RISCV_CORE)/dmem_extender.sv  $(RISCV_CORE)/endian_swapper.sv  $(RISCV_CORE)/jump_calc.sv  $(RISCV_CORE)/memory_controller.sv  $(RISCV_CORE)/RISCVBusiness.sv  $(RISCV_CORE)/rv32i_reg_file.sv $(RISCV_CORE)/top_core.sv
 PIPELINE_FILES :=  $(PIPELINE)/tspp/tspp_execute_stage.sv  $(PIPELINE)/tspp/tspp_fetch_stage.sv  $(PIPELINE)/tspp/tspp_hazard_unit.sv  #$(PIPELINE)/tspp/tspp.sv
-PREDICTOR_FILES := $(BRANCH_PREDICT)/branch_predictor_wrapper.sv $(BRANCH_PREDICT)/nottaken_predictor/nottaken_predictor.sv
+PREDICTOR_FILES := $(BRANCH_PREDICT)/branch_predictor_wrapper.sv $(BRANCH_PREDICT)/nottaken_predictor/nottaken_predictor.sv $(BRANCH_PREDICT)/return_predictor/return_predictor.sv
 PRIV_FILES := $(PRIVS)/priv_wrapper.sv  $(PRIVS)/priv_1_12/priv_1_12_block.sv  $(PRIVS)/priv_1_12/priv_1_12_int_ex_handler.sv  $(PRIVS)/priv_1_12/priv_1_12_csr.sv  $(PRIVS)/priv_1_12/priv_1_12_pipe_control.sv $(PRIVS)/priv_1_12/priv_1_12_pma.sv
 CACHE_FILES := $(CACHES)/caches_wrapper.sv $(CACHES)/pass_through/pass_through_cache.sv $(CACHES)/direct_mapped_tpf/direct_mapped_tpf_cache.sv $(CACHES)/separate_caches.sv
 SPARCE_FILES := $(SPARCE)/sparce_wrapper.sv $(SPARCE)/sparce_disabled/sparce_disabled.sv $(SPARCE)/sparce_enabled/sparce_cfid.sv  $(SPARCE)/sparce_enabled/sparce_enabled.sv  $(SPARCE)/sparce_enabled/sparce_psru.sv  $(SPARCE)/sparce_enabled/sparce_sasa_table.sv  $(SPARCE)/sparce_enabled/sparce_sprf.sv  $(SPARCE)/sparce_enabled/sparce_svc.sv
@@ -54,7 +54,7 @@ config:
 	@echo "----------------------"
 	@echo " Running config_core"
 	@echo "----------------------"
-	@python3 scripts/config_core.py example.yml
+	@python3 scripts/config_core.py test.yml
 
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
