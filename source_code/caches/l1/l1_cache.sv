@@ -29,7 +29,9 @@
 `include "generic_bus_if.vh"
 `include "cache_coherence_if.vh"
 
+`ifdef XCELIUM
 `timescale 1ns/100ps
+`endif
 
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10

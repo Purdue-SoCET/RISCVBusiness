@@ -25,7 +25,9 @@
 `ifndef GENERIC_BUS_IF_VH
 `define GENERIC_BUS_IF_VH
 
-`timescale 1ns/100ps //Necessary for xcelium, delete if causing errors
+`ifdef XCELIUM
+`timescale 1ns/100ps
+`endif
 
 interface generic_bus_if #(
     parameter BLOCK_SIZE = 1

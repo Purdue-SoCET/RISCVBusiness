@@ -127,7 +127,7 @@ module coherency_unit #(
         bcif.dWEN[CPUID] = 1'b0;
         bcif.dREN[CPUID] = 1'b0;
         ccif.addr = 32'hBAD1BAD1;
-        ccif.state_transfer = INVALID;
+        ccif.state_transfer = cc_end_state'(INVALID);
         ccif.snoop_req = 1'b0;
 
         case(state)
