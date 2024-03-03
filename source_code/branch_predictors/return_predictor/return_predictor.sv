@@ -1,8 +1,8 @@
 `include "predictor_pipeline_if.vh"
 //`include "fetch_buffer_if.vh"
-`include "tspp_fetch_execute_if.vh"
+//`include "tspp_fetch_execute_if.vh"
 
-module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if, tspp_fetch_execute_if.fetch fetch_ex_if);
+module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if, predictor_pipline_if.access access_if);
 //fetch_buffer_if...
 
 	import rv32i_types_pkg::*;
@@ -13,7 +13,7 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 	//predict_if.predict_taken = (rs1==x1)||(rs1==x5);
 	//predict_if.target_addr = rs1;
 	logic [1:0] nxt_pointer, pointer;
-	logic [31:0] inst, nxt_inst; //this shouldn't be pc. It should be instruction. Where can we get this info???
+	logic [31:0] inst, nxt_inst;
 	logic [5:0] ras[3:0];
     logic [5:0] nxt_ras[3:0];
 	logic link1, link2;
@@ -43,6 +43,7 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 	always_comb begin
 		//nxt_pc = predict_if.current_pc;
         //nxt_inst = fb_if.result;
+	nxt_inst = access_if.instr;
         predict_if.predict_taken = 0;
 		nxt_pointer = pointer;
         nxt_ras = ras;
@@ -50,7 +51,7 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
         //if(fb_if.done) nxt_inst = fb_if.result;
         //else nxt_inst = inst;
 
-        nxt_inst = fetch_ex_if.fetch_ex_reg.instr;
+        //nxt_inst = fetch_ex_if.fetch_ex_reg.instr;
 
 		if(inst[6:0] == JAL && link1) begin
             //predict_if.predict_taken = 1;
