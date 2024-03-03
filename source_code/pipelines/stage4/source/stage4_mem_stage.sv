@@ -47,7 +47,7 @@ module stage4_mem_stage (
     import pma_types_1_12_pkg::*;
 
     genvar i;
-    logic vmemop;
+    logic vmemop, dmemwen, dmemren;
     word_t [NUM_LANES-1:0] vlane_data;
     logic [NUM_LANES-1:0] vlane_wen, velem_mask;
 
@@ -57,8 +57,10 @@ module stage4_mem_stage (
 
     // Arbitrate scalar and vector memory requests
     assign vmemop = ex_mem_if.vexmem.vmemdren | ex_mem_if.vexmem.vmemdwen;
-    assign lsc_if.wen = ((vmemop) ? serial_if.vmemdwen_lsc : ex_mem_if.ex_mem_reg.dwen) && !hazard_if.suppress_data;
-    assign lsc_if.ren = ((vmemop) ? serial_if.vmemdren_lsc : ex_mem_if.ex_mem_reg.dren) && !hazard_if.suppress_data;
+    assign dmemwen = ((vmemop) ? serial_if.vmemdwen_lsc : ex_mem_if.ex_mem_reg.dwen);
+    assign dmemren = ((vmemop) ? serial_if.vmemdren_lsc : ex_mem_if.ex_mem_reg.dren);
+    assign lsc_if.wen = dmemwen && !hazard_if.suppress_data;
+    assign lsc_if.ren = dmemren && !hazard_if.suppress_data;
     assign lsc_if.addr = (vmemop) ? serial_if.vaddr_lsc : ex_mem_if.ex_mem_reg.port_out;
     assign lsc_if.store_data = (vmemop) ? serial_if.vdata_store_lsc : ex_mem_if.ex_mem_reg.rs2_data;
     // assign lsc_if.byte_en = 0;
@@ -110,8 +112,8 @@ module stage4_mem_stage (
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
     assign hazard_if.fence_stall = lsc_if.fence_stall;
-    assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
-    assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
+    assign hazard_if.dren = dmemren;
+    assign hazard_if.dwen = dmemwen;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
     assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
@@ -122,6 +124,11 @@ module stage4_mem_stage (
     assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
     //assign hazard_if.serializer_stall = (serial_if.vcurr_lane != (NUM_LANES-1)) & vmemop;
+    // Vector-specific signals
+    assign hazard_if.vd = ex_mem_if.vexmem.vd_sel;
+    assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen;
+    assign hazard_if.is_visn = vmemop;
+    assign hazard_if.velem_num = (ex_mem_if.vexmem.vuop_num << 2) + serial_if.vcurr_lane;
 
     assign halt = ex_mem_if.ex_mem_reg.halt;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
@@ -150,10 +157,10 @@ module stage4_mem_stage (
     assign hazard_if.fault_insn = ex_mem_if.ex_mem_reg.fault_insn;
     assign hazard_if.mal_insn = ex_mem_if.ex_mem_reg.mal_insn;
     assign hazard_if.illegal_insn = ex_mem_if.ex_mem_reg.illegal_insn || prv_pipe_if.invalid_priv_isn;
-    assign hazard_if.fault_l = ex_mem_if.ex_mem_reg.dren && dgen_bus_if.error;
-    assign hazard_if.mal_l = ex_mem_if.ex_mem_reg.dren & lsc_if.mal_addr;
-    assign hazard_if.fault_s = ex_mem_if.ex_mem_reg.dwen && dgen_bus_if.error;
-    assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & lsc_if.mal_addr;
+    assign hazard_if.fault_l = dmemren && dgen_bus_if.error;
+    assign hazard_if.mal_l = dmemren & lsc_if.mal_addr;
+    assign hazard_if.fault_s = dmemwen && dgen_bus_if.error;
+    assign hazard_if.mal_s = dmemwen & lsc_if.mal_addr;
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
     assign hazard_if.ret = ex_mem_if.ex_mem_reg.ret_insn;
@@ -166,9 +173,9 @@ module stage4_mem_stage (
     assign ex_mem_if.pc4 = ex_mem_if.ex_mem_reg.pc4;
 
     // Memory protection (doesn't consider RISC-MGMT)
-    assign prv_pipe_if.dren  = ex_mem_if.ex_mem_reg.dren;
-    assign prv_pipe_if.dwen  = ex_mem_if.ex_mem_reg.dwen;
-    assign prv_pipe_if.daddr = ex_mem_if.ex_mem_reg.port_out;
+    assign prv_pipe_if.dren  = dmemren;
+    assign prv_pipe_if.dwen  = dmemwen;
+    assign prv_pipe_if.daddr = lsc_if.addr;
     assign prv_pipe_if.d_acc_width = WordAcc;
 
     /*******************
@@ -270,7 +277,4 @@ module stage4_mem_stage (
     assign instr_30 = ex_mem_if.ex_mem_reg.instr[30];
     assign wb_stall = hazard_if.ex_mem_stall & ~hazard_if.jump & ~hazard_if.branch; // TODO: Is this right?
 
-    // extra signals to hazard unit for RAW hazards 
-    assign hazard_if.vd = ex_mem_if.vexmem.vd_sel; 
-    assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen; 
 endmodule // stage4_mem_stage

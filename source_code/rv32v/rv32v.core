@@ -21,6 +21,7 @@ filesets:
             - source/rv32v_vector_bank.sv
             - source/rv32v_mask_unit.sv
             - source/rv32v_vfu.sv
+            - source/rv32v_multiplier.sv
         file_type: systemVerilogSource
 
 

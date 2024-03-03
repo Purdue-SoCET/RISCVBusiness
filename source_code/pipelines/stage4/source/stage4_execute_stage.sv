@@ -64,7 +64,8 @@ module stage4_execute_stage (
     // word_t vl; 
     // vtype_t vtype; 
     word_t vlmax; // determined from lmul and sew settings 
-    // logic vsetvl; 
+    // logic vsetvl;
+    logic vex_stall;
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -108,7 +109,8 @@ module stage4_execute_stage (
         .rdat1(rf_if.rs1_data), .rdat2(rf_if.rs2_data), 
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
-        .vmem_in(vex_out)
+        .vmem_in(vex_out),
+        .vex_stall(vex_stall)
     );
 
     // stride calculation for mem operations
@@ -362,7 +364,7 @@ module stage4_execute_stage (
     assign fw_if.rs2_e = rf_if.rs2;
 
     assign hazard_if.pc_e = ex_in.if_out.pc;
-    assign hazard_if.ex_busy = (rv32m_busy && ex_in.ctrl_out.rv32m_control.select); // Add & conditions here for other FUs that can stall
+    assign hazard_if.ex_busy = (rv32m_busy && ex_in.ctrl_out.rv32m_control.select) | vex_stall; // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = ex_in.if_out.valid;
 
 

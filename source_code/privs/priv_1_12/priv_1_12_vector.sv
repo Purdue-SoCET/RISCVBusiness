@@ -75,6 +75,12 @@ module priv_1_12_vector (
                 vl_next = priv_ext_if.value_in; 
             end
             vtype_next = prv_intern_if.new_vtype;
+        end else if (prv_intern_if.set_vstart) begin
+            // Only update vstart if excepting element is > current vstart
+            // Since we restart computation from element 0, need to cover case
+            // where exception occurs during re-startup
+            if (prv_intern_if.velem_num > vstart)
+                vstart_next = prv_intern_if.velem_num;
         end else begin
             casez (priv_ext_if.csr_addr)
                 VSTART_ADDR: begin

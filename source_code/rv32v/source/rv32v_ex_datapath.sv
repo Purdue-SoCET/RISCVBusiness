@@ -6,7 +6,8 @@ module rv32v_ex_datapath(
     input word_t rdat1, rdat2,
     input vcontrol_t vctrls, 
     input vwb_t vwb_ctrls, 
-    output vexmem_t vmem_in
+    output vexmem_t vmem_in,
+    output logic vex_stall
 );
 
 parameter NUM_LANES = 4; 
@@ -16,7 +17,8 @@ word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2 ;  
 word_t[3:0] vopA, vopB; 
 word_t ext_imm; 
-logic[3:0] mask_bits; 
+logic[3:0] mask_bits;
+logic[3:0] vfu_stall;
 
 logic vint_cmp_instr; 
 
@@ -122,15 +124,20 @@ genvar k;
 generate 
     for(k = 0; k < NUM_LANES; k+=1) begin
         rv32v_vfu VFU(
+            .CLK,
+            .nRST,
             .vopA(vopA[k]), 
             .vopB(vopB[k]),
             .mask_bit(mask_bits[k]),
             .vsew(vctrls.veew_src2),
             .vop(vctrls.vexec), 
-            .vres(vmem_in.valu_res[k])
+            .vres(vmem_in.valu_res[k]),
+            .vfu_stall(vfu_stall[k])
         );
     end
-endgenerate 
+endgenerate
+
+assign vex_stall = |vfu_stall;
 
 
 // Maskings

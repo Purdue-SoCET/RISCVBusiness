@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
-[*] Wed Feb 28 15:51:27 2024
+[*] Sun Mar  3 21:39:41 2024
 [*]
 [dumpfile] "waveform.vcd"
-[dumpfile_mtime] "Wed Feb 28 15:23:24 2024"
-[dumpfile_size] 827507
+[dumpfile_mtime] "Sun Mar  3 21:39:06 2024"
+[dumpfile_size] 15553133
 [savefile] "rvv_format.gtkw"
 [timestart] 0
 [size] 1512 945
 [pos] -1 -2
-*-5.730774 167 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+*-5.730774 193 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -62,7 +62,7 @@
 [sst_width] 253
 [signals_width] 285
 [sst_expanded] 1
-[sst_vpaned_height] 418
+[sst_vpaned_height] 478
 @28
 TOP.CLK
 TOP.nRST
@@ -115,7 +115,6 @@ TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
 @28
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
-@29
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
 @800200
 -dgen_bus_if
@@ -168,6 +167,8 @@ TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
 -Scalar RF
 @800200
 -Hazard unit
+@29
+TOP.top_core.CORE.pipeline.hazard_if.ex_busy
 @28
 TOP.top_core.CORE.pipeline.hazard_unit_i.exception
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall

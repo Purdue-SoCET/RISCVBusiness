@@ -527,6 +527,14 @@ package rv32v_types_pkg;
     UNSIGNED = 0
   } sign_type_t;
 
+  typedef enum logic [2:0] {
+    UNFUSED,
+    VMUL_MACC,
+    VMUL_NMSAC,
+    VMUL_MADD,
+    VMUL_NMSUB
+  } vmulop_t;
+
   /**********************************************************/
   /* VECTOR DECODE CONTROL STRUCT
   /**********************************************************/
@@ -534,9 +542,11 @@ package rv32v_types_pkg;
   typedef struct packed {
     vfu_t vfu;
     valuop_t valuop;
+    vmulop_t vmulop;
     vredop_t vredop;
     vmaskop_t vmaskop;
     vpermop_t vpermop;
+    sign_type_t vsigntype;
     logic vopunsigned;
   } vexec_t;
 
@@ -616,6 +626,29 @@ package rv32v_types_pkg;
     VTYPE_ADDR    = 12'hC21,
     VLENB_ADDR    = 12'hC22
   } vcsr_addr_t;
+
+  /**********************************************************/
+  /* VECTOR PIPELINED FUs STRUCTs
+  /**********************************************************/
+
+  typedef struct packed {
+    logic vmul_en;
+    rv32i_types_pkg::word_t vs1_data;
+    rv32i_types_pkg::word_t vs2_data;
+    rv32i_types_pkg::word_t vd_data;
+    vsew_t vsew;
+    vmulop_t vmulop;
+    sign_type_t sign;
+    logic vmul_widen;
+    logic vmul_ret_high;
+    logic stall;
+    logic flush;
+  } vmul_input_t;
+
+  typedef struct packed {
+    rv32i_types_pkg::word_t vd_res;
+    logic vmul_busy;
+  } vmul_output_t;
 
 endpackage
 `endif

@@ -87,12 +87,9 @@ interface stage4_hazard_unit_if();
   regsel_t vs1, vs2, vd; 
   logic vs1_used, vs2_used; 
   logic vregwen; 
-  logic ex_mask_en; 
-
-
-
-
-
+  logic ex_mask_en;
+  logic is_visn;
+  logic [6:0] velem_num;
 
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
@@ -107,7 +104,7 @@ interface stage4_hazard_unit_if();
             is_queue_full, pc_decode, valid_decode,
             vsetvl_dec, vsetvl_ex, queue_wen, vbusy,
 
-            vregwen, vs1, vs2, vd, vs1_used, vs2_used, ex_mask_en,   
+            vregwen, vs1, vs2, vd, vs1_used, vs2_used, ex_mask_en, is_visn, velem_num,
 
 
     output  pc_en, npc_sel,
@@ -149,7 +146,7 @@ interface stage4_hazard_unit_if();
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,
             token_mem, serializer_stall,
-            vd, vregwen
+            vd, vregwen, is_visn, velem_num
   );
 
  endinterface

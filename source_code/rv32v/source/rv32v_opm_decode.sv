@@ -48,9 +48,11 @@ always_comb begin
     // Arbitrary defaults just to prevent latches
     vexec.vfu = VFU_ALU;
     vexec.valuop = VALU_ADD;
+    vexec.vmulop = UNFUSED;
     vexec.vredop = VRED_AND;
     vexec.vmaskop = VMSK_AND;
     vexec.vpermop = VPRM_CPS;
+    vexec.vsigntype = SIGNED;
     vexec.vopunsigned = 1'b0;
 
     case (vopm)
@@ -213,6 +215,7 @@ always_comb begin
         end
         VMULHU: begin
             vexec.vfu = VFU_MUL;
+            vexec.vsigntype = UNSIGNED;
             vexec.vopunsigned = 1'b1;
         end
         VMUL: begin
@@ -220,26 +223,27 @@ always_comb begin
         end
         VMULHSU: begin
             vexec.vfu = VFU_MUL;
+            vexec.vsigntype = SIGNED_UNSIGNED;
             vexec.vopunsigned = 1'b1;
         end
         VMULH: begin
             vexec.vfu = VFU_MUL;
         end
         VMADD: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_MADD;
         end
         VNMSUB: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_NMSUB;
         end
         VMACC: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_MACC;
         end
         VNMSAC: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_NMSAC;
         end
         VWADDU: begin
             vexec.vfu = VFU_ALU;
@@ -281,30 +285,38 @@ always_comb begin
         end
         VWMULU: begin
             vexec.vfu = VFU_MUL;
+            vexec.vsigntype = UNSIGNED;
             vexec.vopunsigned = 1'b1;
         end
         VWMULSU: begin
             vexec.vfu = VFU_MUL;
+            vexec.vsigntype = SIGNED_UNSIGNED;
             vexec.vopunsigned = 1'b1;
         end
         VWMUL: begin
             vexec.vfu = VFU_MUL;
         end
         VWMACCU: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_MACC;
+            vexec.vsigntype = UNSIGNED;
+            vexec.vopunsigned = 1'b1;
         end
         VWMACC: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_MACC;
         end
         VWMACCUS: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_MACC;
+            vexec.vsigntype = UNSIGNED_SIGNED;
+            vexec.vopunsigned = 1'b1;
         end
         VWMACCSU: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MUL;
+            vexec.vmulop = VMUL_MACC;
+            vexec.vsigntype = SIGNED_UNSIGNED;
+            vexec.vopunsigned = 1'b1;
         end
 
         default: begin
