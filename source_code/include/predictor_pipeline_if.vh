@@ -47,7 +47,7 @@ interface predictor_pipeline_if;
 
   modport access(
     input predict_taken, target_addr,
-    output current_pc, is_rv32c, imm_sb, is_branch
+    output current_pc, is_rv32c, imm_sb, is_branch, instr
   );
 
 endinterface
