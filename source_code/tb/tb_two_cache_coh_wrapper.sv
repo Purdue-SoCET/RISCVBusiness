@@ -81,6 +81,22 @@ module two_cache_coh_wrapper(
         .ccif(bus_ctrl_if),
         .abort_bus(1'b0)
     );
+
+    generic_bus_if out_gen_bus_if();
+
+    assign out_gen_bus_if.addr = bus_ctrl_if.l2addr;
+    assign out_gen_bus_if.ren = bus_ctrl_if.l2REN;
+    assign out_gen_bus_if.wen = bus_ctrl_if.l2WEN;
+    assign out_gen_bus_if.wdata = bus_ctrl_if.l2store;
+    assign out_gen_bus_if.byte_en = '1;
+    assign bus_ctrl_if.l2load = out_gen_bus_if.rdata;
+    assign bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+
+    ram_wrapper ram(
+        .CLK(CLK),
+        .nRST(nRST),
+        .gen_bus_if(out_gen_bus_if)
+    );
 endmodule
 
 
