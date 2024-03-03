@@ -5,7 +5,7 @@ isa_params:
 # Microarchitectural Configurations
 microarch_params:
   # Branch/Jump Configurations
-  br_predictor_type : "btb_2"
+  br_predictor_type : "return"
   
   # Cache configurations
   cache_config  : "separate"
