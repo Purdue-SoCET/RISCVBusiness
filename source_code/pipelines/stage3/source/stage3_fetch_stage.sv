@@ -89,6 +89,7 @@ module stage3_fetch_stage (
 	// TODO: duplicating control unit. Not right for compressed instruction, decompression happens in EX stage
 	//assign instr_sb = rv32cif.c_ena? sbtype_t'(rv32cif.inst32) : sbtype_t'(instr_to_ex);
 	assign instr_sb = sbtype_t'(instr_to_ex);
+	assign predict_if.instr = instr_to_ex;
 	assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
 	assign predict_if.is_branch = (instr_sb.opcode == BRANCH) ? 1 : 0;
 
