@@ -17,19 +17,20 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 	logic [5:0] ras[3:0];
     logic [5:0] nxt_ras[3:0];
 	logic link1, link2;
+    integer i;
 
     //Or use tssp fetch stage, instr
 
 	//question. If it is push, do I need to add the address as target_address and predict_taken?? I would assume no.
     //does that mean you only push with JAL, and pop needs to be JALR???
 	//How should I get value of x1 and x5.
-
+    
 	always_ff@(posedge CLK, negedge nRST) begin
 		if (nRST) begin
 			pointer <= 0;
             //pc <= 0;
             inst <= 0;
-            ras <= 0;
+            for (i=0; i<entries; i++) ras[i] <= 6'b0;
         end
 		else begin
 			pointer <= nxt_pointer;
@@ -59,17 +60,17 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
         end
 		else if(inst[6:0] == JALR) begin
 			case({link1, link2, inst[19:15]==inst[11:7]})
-				({!link1, link2, 0}), ({!link1, link2, 1}): begin //pop
+				({!link1, link2, 1'b0}), ({!link1, link2, 1'b1}): begin //pop
                     predict_if.predict_taken = 1;
                     predict_if.target_addr = nxt_ras[pointer-1];
                     nxt_pointer -= 1;
                 end
-                ({link1, !link2, 0}), ({link1, !link2, 1}), ({link1, link2, 1}): begin //push
+                ({link1, !link2, 1'b0}), ({link1, !link2, 1'b1}), ({link1, link2, 1'b1}): begin //push
                     nxt_ras[pointer] = inst[11:7];// + 4;
 			        if(pointer == entries-1) nxt_pointer = 0;
 			        else nxt_pointer = pointer+1;
                 end
-                {link1, link2, 0}: begin //push and pop
+                {link1, link2, 1'b0}: begin //push and pop
                     predict_if.predict_taken = 1;
                     predict_if.target_addr = nxt_ras[pointer-1];
                     nxt_ras[pointer-1] = inst[11:7];
