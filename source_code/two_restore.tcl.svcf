@@ -1,0 +1,176 @@
+# SimVision Command Script (Sun Mar 03 03:27:10 PM EST 2024)
+#
+# Version 21.09.s008
+#
+# You can restore this configuration with:
+#
+#      xrun packages/alu_types_pkg.sv packages/machine_mode_types_1_11_pkg.sv packages/machine_mode_types_1_12_pkg.sv packages/machine_mode_types_1_7_pkg.sv packages/machine_mode_types_pkg.sv packages/pma_types_1_12_pkg.sv packages/pmp_types_1_12_pkg.sv packages/rv32a_pkg.sv packages/rv32i_types_pkg.sv packages/rv32m_pkg.sv caches/l1/l1_cache.sv multicore/coherence_control/coherency_unit.sv tb/tb_two_cache_coherency.sv tb/tb_two_cache_coh_wrapper.sv caches/sram/sram.sv standard_core/bus_ctrl.sv ram/ram_wrapper.sv ram/ram_sim_model.sv standard_core/endian_swapper.sv -incdir include/ -access +rwc -parseinfo macro -input two_restore.tcl
+#
+
+
+#
+# Preferences
+#
+preferences set toolbar-Standard-WatchWindow {
+  usual
+  shown 0
+}
+preferences set plugin-enable-svdatabrowser-new 1
+preferences set toolbar-Windows-WatchWindow {
+  usual
+  shown 0
+}
+preferences set toolbar-Standard-Console {
+  usual
+  position -pos 1
+}
+preferences set toolbar-Search-Console {
+  usual
+  position -pos 2
+}
+preferences set plugin-enable-groupscope 0
+preferences set plugin-enable-interleaveandcompare 0
+preferences set plugin-enable-waveformfrequencyplot 0
+preferences set toolbar-SimControl-WatchWindow {
+  usual
+  shown 0
+}
+preferences set toolbar-TimeSearch-WatchWindow {
+  usual
+  shown 0
+}
+
+#
+# Simulator
+#
+database require simulator -hints {
+	simulator "xrun packages/alu_types_pkg.sv packages/machine_mode_types_1_11_pkg.sv packages/machine_mode_types_1_12_pkg.sv packages/machine_mode_types_1_7_pkg.sv packages/machine_mode_types_pkg.sv packages/pma_types_1_12_pkg.sv packages/pmp_types_1_12_pkg.sv packages/rv32a_pkg.sv packages/rv32i_types_pkg.sv packages/rv32m_pkg.sv caches/l1/l1_cache.sv multicore/coherence_control/coherency_unit.sv tb/tb_two_cache_coherency.sv tb/tb_two_cache_coh_wrapper.sv caches/sram/sram.sv standard_core/bus_ctrl.sv ram/ram_wrapper.sv ram/ram_sim_model.sv standard_core/endian_swapper.sv -incdir include/ -gui -access +rwc -parseinfo macro -input two_restore.tcl"
+}
+
+#
+# Databases
+#
+database require waves -search {
+	./waves.shm/waves-3.trn
+	/home/asicfab/a/socet21/Repos/multicore/source_code/waves.shm/waves-3.trn
+}
+
+#
+# Conditions
+#
+set expression simulator::tb_two_cache_coherency.DUT.bus.state
+if {[catch {condition new -name  Bus_state -expr $expression}] != ""} {
+    condition set -using Bus_state -expr $expression
+}
+#
+# Groups
+#
+catch {group new -name {Proc 0} -overlay 0}
+catch {group new -name {Proc 1} -overlay 0}
+catch {group new -name {Bus Signals} -overlay 0}
+group using {Proc 0}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.addr[31:0]}  \
+     simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.busy  \
+     {simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.byte_en[3:0]}  \
+     {simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.rdata[31:0]}  \
+     simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.ren  \
+     {simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.wdata[31:0]}  \
+     simulator::tb_two_cache_coherency.cache0_proc_gen_bus_if.wen 
+group using {Proc 1}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.addr[31:0]}  \
+     simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.busy  \
+     {simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.byte_en[3:0]}  \
+     {simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.rdata[31:0]}  \
+     simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.ren  \
+     {simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.wdata[31:0]}  \
+     simulator::tb_two_cache_coherency.cache1_proc_gen_bus_if.wen 
+group using {Bus Signals}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccIsPresent[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccdirty[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccexclusive[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccinv[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccsnoopaddr[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccsnoopdone[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccsnoophit[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccwait[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.ccwrite[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.dREN[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.dWEN[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.daddr[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.dload[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.driver_dstore[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.dstore[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.dwait[1:0]}  \
+     simulator::tb_two_cache_coherency.bus_ctrl_if.l2REN  \
+     simulator::tb_two_cache_coherency.bus_ctrl_if.l2WEN  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.l2addr[31:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.l2load[63:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.l2state[1:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.l2store[31:0]}  \
+     {simulator::tb_two_cache_coherency.bus_ctrl_if.snoop_dstore[1:0]} 
+
+#
+# Mnemonic Maps
+#
+mmap new  -reuse -name {Boolean as Logic} -radix %b -contents {{%c=FALSE -edgepriority 1 -shape low}
+{%c=TRUE -edgepriority 1 -shape high}}
+mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor orange -label REG:%x -linecolor yellow -shape bus}
+{%x=1F -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=* -label %x -linecolor gray -shape bus}}
+
+#
+# Waveform windows
+#
+if {[catch {window new WaveWindow -name "Waveform 1" -geometry 1503x837+0+1}] != ""} {
+    window geometry "Waveform 1" 1503x837+0+1
+}
+window target "Waveform 1" on
+waveform using {Waveform 1}
+waveform sidebar visibility partial
+waveform set \
+    -primarycursor TimeA \
+    -signalnames name \
+    -signalwidth 175 \
+    -units ps \
+    -valuewidth 249
+waveform baseline set -time 206,200ps
+
+
+set groupId0 [waveform add -groups {{Proc 0}}]
+
+
+set groupId0 [waveform add -groups {{Proc 1}}]
+
+
+set groupId0 [waveform add -groups {{Bus Signals}}]
+
+set id [waveform add -signals  {
+	Bus_state
+	} ]
+
+waveform xview limits 0 5000000ps
+
+#
+# Waveform Window Links
+#
+
+#
+# Layout selection
+#
+
