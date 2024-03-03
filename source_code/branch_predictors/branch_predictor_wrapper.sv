@@ -31,8 +31,7 @@ module branch_predictor_wrapper (
     input logic CLK,
     nRST,
     predictor_pipeline_if.predictor predict_if,
-    tspp_fetch_execute_if.fetch fetch_ex_if
-    //fetch_buffer_if.fb fb_if
+    predictor_pipeline_if.access access_if
 );
     // Predictor used based on the BR_PREDICTOR_TYPE definition
    
