@@ -32,6 +32,7 @@ interface predictor_pipeline_if;
   logic update_predictor;
   logic predict_taken, prediction, branch_result;
   logic is_rv32c, is_branch, direction;
+  logic [31:0] instr;
   logic[12:0] imm_sb;
 
   modport predictor(
