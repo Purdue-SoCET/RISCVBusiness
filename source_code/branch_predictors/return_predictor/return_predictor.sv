@@ -2,7 +2,7 @@
 //`include "fetch_buffer_if.vh"
 //`include "tspp_fetch_execute_if.vh"
 
-module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if, predictor_pipeline_if.access access_if);
+module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_pipeline_if.predictor predict_if);
 //fetch_buffer_if...
 
 	import rv32i_types_pkg::*;
@@ -43,7 +43,7 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 	always_comb begin
 		//nxt_pc = predict_if.current_pc;
         //nxt_inst = fb_if.result;
-	nxt_inst = access_if.instr;
+	nxt_inst = predict_if.instr;
         predict_if.predict_taken = 0;
 		nxt_pointer = pointer;
         nxt_ras = ras;

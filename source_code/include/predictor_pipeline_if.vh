@@ -37,7 +37,7 @@ interface predictor_pipeline_if;
 
   modport predictor(
     input current_pc, update_predictor, prediction, branch_result, update_addr,
-		  is_rv32c, imm_sb, pc_to_update, is_branch, direction,
+		  is_rv32c, imm_sb, pc_to_update, is_branch, direction, instr,
     output predict_taken, target_addr
   );
 

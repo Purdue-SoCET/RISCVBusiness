@@ -30,8 +30,8 @@
 module branch_predictor_wrapper (
     input logic CLK,
     nRST,
-    predictor_pipeline_if.predictor predict_if,
-    predictor_pipeline_if.access access_if
+    predictor_pipeline_if.predictor predict_if
+    //predictor_pipeline_if.access access_if
 );
     // Predictor used based on the BR_PREDICTOR_TYPE definition
    
