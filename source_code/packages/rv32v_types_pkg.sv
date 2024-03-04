@@ -543,6 +543,7 @@ package rv32v_types_pkg;
     vfu_t vfu;
     valuop_t valuop;
     vmulop_t vmulop;
+    logic vdivremainder;
     vredop_t vredop;
     vmaskop_t vmaskop;
     vpermop_t vpermop;
@@ -649,6 +650,22 @@ package rv32v_types_pkg;
     rv32i_types_pkg::word_t vd_res;
     logic vmul_busy;
   } vmul_output_t;
+
+  typedef struct packed {
+    logic vdiv_en;
+    rv32i_types_pkg::word_t vs1_data;
+    rv32i_types_pkg::word_t vs2_data;
+    vsew_t vsew;
+    logic vdivremainder;
+    logic vopunsigned;
+    logic stall;
+    logic flush;
+  } vdiv_input_t;
+
+  typedef struct packed {
+    rv32i_types_pkg::word_t vd_res;
+    logic vdiv_busy;
+  } vdiv_output_t;
 
 endpackage
 `endif

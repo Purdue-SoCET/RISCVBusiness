@@ -16,12 +16,21 @@ module rv32v_vfu(
 logic[32:0] temp_res;
 vmul_input_t vmul_in;
 vmul_output_t vmul_out;
+vdiv_input_t vdiv_in;
+vdiv_output_t vdiv_out;
 
 rv32v_multiplier RV32V_MULT (
     .CLK,
     .nRST,
     .vmul_in,
     .vmul_out
+);
+
+rv32v_divider RV32V_DIV (
+    .CLK,
+    .nRST,
+    .vdiv_in,
+    .vdiv_out
 );
 
 // RV32V multiplier signals
@@ -38,7 +47,20 @@ assign vmul_in = '{
     stall: 0,  // TODO
     flush: 0 // TODO
 };
-assign vfu_stall = (vop.vfu == VFU_MUL) & vmul_out.vmul_busy;
+
+// RV32V divider signals
+assign vdiv_in = '{
+    vdiv_en: (vop.vfu == VFU_DIV) & ~mask_bit,
+    vs1_data: vopA,
+    vs2_data: vopB,
+    vsew: vsew,
+    vdivremainder: 0, // TODO
+    vopunsigned: vop.vopunsigned,
+    stall: 0,  // TODO
+    flush: 0 // TODO
+};
+
+assign vfu_stall = ((vop.vfu == VFU_MUL) & vmul_out.vmul_busy) | ((vop.vfu == VFU_DIV) & vdiv_out.vdiv_busy);
 
 always_comb begin
     vres = '0; 
@@ -138,7 +160,8 @@ always_comb begin
             endcase
         VFU_MUL:
             vres = vmul_out.vd_res;
-        // VFU_DIV:
+        VFU_DIV:
+            vres = vdiv_out.vd_res;
     endcase
 end
 endmodule 
