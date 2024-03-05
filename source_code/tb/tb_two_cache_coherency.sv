@@ -10,7 +10,7 @@ parameter PERIOD = 10;
 module tb_two_cache_coherency();
     logic CLK = 0, nRST;
     // clock
-    always #(PERIOD/2) CLK++; 
+    always #(PERIOD/2) CLK++;
 
     generic_bus_if cache0_proc_gen_bus_if();
     generic_bus_if cache1_proc_gen_bus_if();
@@ -88,8 +88,20 @@ program test (
     bus.wen = 1'b1;
 
 `define END_WRITE_REQUEST(bus) \
-    wait(!bus.busy)            \
+    wait(bus.busy == 1'b0)     \
+    #(PERIOD)                  \
     bus.wen = 1'b0;
+
+    task reset_caches();
+    begin
+        reset_buses();
+        nRST = 1'b0;
+        #(PERIOD * 10)
+        nRST = 1'b1;
+        wait(c0c_if.dflush_done);
+        wait(c1c_if.dflush_done);
+    end
+    endtask
 
     initial begin
         $timeformat(-9, 2, " ns");
@@ -97,15 +109,9 @@ program test (
         tb_test_num = 0;
         tb_test_case = "Cache init";
 
-        reset_buses();
-    
-        nRST = 1'b0;
-        #(PERIOD * 10)
-        nRST = 1'b1;
-        wait(c0c_if.dflush_done);
-        wait(c1c_if.dflush_done);
-    
-        tb_test_num = 1;
+        // Test 1: Cache 0 writes, cache 1 reads after
+        reset_caches();
+        tb_test_num = tb_test_num + 1;
         tb_test_case = "0 writes, 1 reads after";
         `START_WRITE_REQUEST(proc0_gbif, 32'h80000000, 32'h11111111);
         #(PERIOD);
@@ -113,6 +119,37 @@ program test (
         `END_WRITE_REQUEST(proc0_gbif);
         `END_READ_REQUEST(proc1_gbif);
         if (proc1_gbif.rdata == 32'h11111111) begin
+            $display("%s received correct data at %0t", tb_test_case, $time);
+        end else begin
+            $error("%s failed: Did not receive correct data at %0t, found %x", tb_test_case, $time, proc1_gbif.rdata);
+        end
+
+        // Test 1: Cache 0 writes, cache 1 reads after
+        reset_caches();
+        tb_test_num = tb_test_num + 1;
+        tb_test_case = "0 reads then writes to both words, 1 reads after";
+        `START_READ_REQUEST(proc0_gbif, 32'h80000000);
+        `END_READ_REQUEST(proc0_gbif);
+        if (proc1_gbif.rdata == 32'h00000000) begin
+            $display("%s received correct data at %0t", tb_test_case, $time);
+        end else begin
+            $error("%s failed: Did not receive correct data at %0t, found %x", tb_test_case, $time, proc1_gbif.rdata);
+        end
+        `START_WRITE_REQUEST(proc0_gbif, 32'h80000000, 32'h11111111);
+        `END_WRITE_REQUEST(proc0_gbif);
+        `START_WRITE_REQUEST(proc0_gbif, 32'h80000004, 32'h22222222);
+        `END_WRITE_REQUEST(proc0_gbif);
+        `START_READ_REQUEST(proc1_gbif, 32'h80000000);
+        `END_READ_REQUEST(proc1_gbif);
+        if (proc1_gbif.rdata == 32'h11111111) begin
+            $display("%s received correct data at %0t", tb_test_case, $time);
+        end else begin
+            $error("%s failed: Did not receive correct data at %0t, found %x", tb_test_case, $time, proc1_gbif.rdata);
+        end
+        #(PERIOD)
+        `START_READ_REQUEST(proc1_gbif, 32'h80000004);
+        `END_READ_REQUEST(proc1_gbif);
+        if (proc1_gbif.rdata == 32'h22222222) begin
             $display("%s received correct data at %0t", tb_test_case, $time);
         end else begin
             $error("%s failed: Did not receive correct data at %0t, found %x", tb_test_case, $time, proc1_gbif.rdata);
