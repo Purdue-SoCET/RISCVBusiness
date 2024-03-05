@@ -91,8 +91,7 @@ module coherency_unit #(
             WRITE_REQ: begin //handle S -> M, I -> M here
                 if (bcif.ccwait[CPUID]) begin
                     next_state = RESP_CHKTAG;
-                end
-                else if (!bcif.dwait[CPUID]) begin
+                end else if (!bcif.dwait[CPUID]) begin
                     next_state = IDLE;
                 end
             end
@@ -112,6 +111,7 @@ module coherency_unit #(
                     next_state = IDLE;
                 end
             end
+            default : next_state = IDLE; 
         endcase
     end
 
@@ -134,13 +134,13 @@ module coherency_unit #(
             IDLE: begin
             end
             RESP_CHKTAG: begin
-                ccif.addr = bcif.ccsnoopaddr;
+                ccif.addr = bcif.ccsnoopaddr[CPUID];
                 ccif.snoop_req = 1'b1;
                 bcif.ccsnoopdone[CPUID] = 1'b1;
                 bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
             end
             RESP_SEND: begin
-                ccif.addr = bcif.ccsnoopaddr;
+                ccif.addr = bcif.ccsnoopaddr[CPUID];
                 ccif.snoop_req = 1'b1;
                 bcif.dstore[CPUID] =  ccif.requested_data;
                 bcif.ccsnoophit[CPUID] = 1'b1;
@@ -181,6 +181,7 @@ module coherency_unit #(
                 bcif.dWEN[CPUID] = 1'b1;
                 bcif.dstore[CPUID] = gbif.wdata;
             end
+            default : begin end
         endcase
     end
 
