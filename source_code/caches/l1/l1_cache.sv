@@ -54,7 +54,7 @@ module l1_cache #(
     localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
     localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
-    localparam N_FRAME_BITS       = $clog2(ASSOC);// + (ASSOC == 1);
+    localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
     localparam N_SET_BITS         = $clog2(N_SETS);// + (N_SETS == 1);
     localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE);// + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;

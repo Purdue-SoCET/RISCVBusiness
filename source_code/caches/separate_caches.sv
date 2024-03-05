@@ -81,7 +81,8 @@ module separate_caches (
                 .exclusive(cc_if.dcache_exclusive),
                 .flush_done(cc_if.dflush_done),
                 .clear_done(cc_if.dclear_done),
-                .ccif(d_cache_coherency_if)
+                .ccif(d_cache_coherency_if),
+                .abort_bus()
             );
         endcase
     endgenerate
