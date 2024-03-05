@@ -106,7 +106,7 @@ module bus_ctrl #(
             // WRITEBACK:          nstate = (ccif.l2state == L2_ACCESS) ? IDLE : state;
             // BUS_TO_CACHE:       nstate = IDLE;
             TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
-            TRANSFER_RX:        nstate = IDLE;
+            TRANSFER_RX:        nstate = BUS_TO_CACHE;
             READ_L2:            nstate = block_count_done ? BUS_TO_CACHE : state;
             WRITEBACK_MS:       nstate = block_count_done ? IDLE : state;
             WRITEBACK:          nstate = block_count_done ? IDLE : state;
