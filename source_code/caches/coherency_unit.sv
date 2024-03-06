@@ -68,12 +68,12 @@ module coherency_unit #(
             IDLE: begin
                 if (bcif.ccwait[CPUID]) begin
                     next_state = RESP_CHKTAG;
+                end else if (ccif.dWEN && gbif.wen) begin
+                    next_state = state_type'(WRITEBACK);
                 end else if (gbif.wen) begin
                     next_state = WRITE_REQ;
                 end else if (gbif.ren) begin
                     next_state = READ_REQ;
-                end else if (ccif.dWEN) begin 
-                    next_state = state_type'(WRITEBACK);
                 end
             end
             RESP_CHKTAG: begin
@@ -179,7 +179,9 @@ module coherency_unit #(
             end
             WRITEBACK: begin
                 bcif.dWEN[CPUID] = 1'b1;
+                bcif.daddr[CPUID] = gbif.addr;
                 bcif.dstore[CPUID] = gbif.wdata;
+                gbif.busy = bcif.dwait[CPUID];
             end
             default : begin end
         endcase

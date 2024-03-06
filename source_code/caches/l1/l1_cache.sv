@@ -402,13 +402,13 @@ module l1_cache #(
             end
             WB: begin
                 // set stim for eviction
+                ccif.dWEN = 1'b1;
                 mem_gen_bus_if.wen = 1'b1;
                 mem_gen_bus_if.addr = read_addr; 
                 mem_gen_bus_if.wdata = sramRead.frames[ridx].data;
                 // increment eviction word counter
                 if(!mem_gen_bus_if.busy) begin
                     // invalidate when eviction is complete
-                    ccif.dWEN = 1;
                     sramWEN = 1;
                     sramWrite.frames[ridx].tag.dirty = 0;
                     sramMask.frames[ridx].tag.dirty = 0;
@@ -464,6 +464,7 @@ module l1_cache #(
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].tag.dirty) begin
+                    ccif.dWEN             = 1'b1;
                     mem_gen_bus_if.wen    = 1'b1;
                     mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
                     mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].data;
@@ -500,11 +501,11 @@ module l1_cache #(
     always_comb begin
 	    next_state = state;
 	    casez(state)
-            IDLE: begin        
+            IDLE: begin
                 if (idle_done) //Used when flushing
                     next_state = HIT;
 	        end
-	        HIT: begin                    
+	        HIT: begin
                 if (ccif.snoop_hit)
                     next_state = SNOOP;
                 else if (proc_gen_bus_if.wen && reserve && ~hit) // Don't transition on a failed sc
@@ -531,7 +532,7 @@ module l1_cache #(
             SNOOP: begin
                 next_state = ccif.snoop_req ? SNOOP : HIT;
             end
-	        FLUSH_CACHE: begin        
+	        FLUSH_CACHE: begin
                 if (flush_done)
                     next_state = HIT;
 	        end
