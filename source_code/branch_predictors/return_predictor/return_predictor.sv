@@ -9,7 +9,7 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
     logic [5:0] nxt_ras[3:0];
 	logic link1, link2;
     integer i;
-    integer num;
+    //integer num;
 
 	//question. If it is push, do I need to add the address as target_address and predict_taken?? I would assume no.
     //does that mean you only push with JAL, and pop needs to be JALR???
@@ -33,7 +33,7 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
         predict_if.predict_taken = 0;
 		nxt_pointer = pointer;
         nxt_ras = ras;
-        num = 0;
+        //num = 0;
 
 		link1 = 0;
 		link2 = 0;
@@ -49,25 +49,30 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 			else nxt_pointer = pointer+1;
         end
 		else if(inst[6:0] == JALR) begin
-            num = 1;
+            //num = 1;
 			case({link1, link2, inst[19:15]==inst[11:7]})
 				3'b010, 3'b011: begin //pop
-                    predict_if.predict_taken = 1;
-                    predict_if.target_addr = nxt_ras[pointer-1];
-                    nxt_pointer -= 1;
-                    num = 2;
+                    if(pointer == 0) nxt_pointer = 0;
+                    else begin
+                        nxt_pointer -= 1;
+                        predict_if.predict_taken = 1;
+                        predict_if.target_addr = nxt_ras[pointer-1];
+                    end
+                    //num = 2;
                 end
                 3'b100, 3'b101, 3'b111: begin //push
                     nxt_ras[pointer] = inst[11:7];// + 4;
 			        if(pointer == entries-1) nxt_pointer = 0;
 			        else nxt_pointer = pointer+1;
-                    num = 3;
+                    //num = 3;
                 end
                 3'b110: begin //push and pop
-                    predict_if.predict_taken = 1;
-                    predict_if.target_addr = nxt_ras[pointer-1];
-                    nxt_ras[pointer-1] = inst[11:7];
-                    num = 4;
+                    if(pointer != 0) begin
+                        predict_if.predict_taken = 1;
+                        predict_if.target_addr = nxt_ras[pointer-1];
+                        nxt_ras[pointer-1] = inst[11:7];
+                    end
+                    //num = 4;
                 end
 			endcase	
 		end
