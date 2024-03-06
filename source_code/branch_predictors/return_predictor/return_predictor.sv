@@ -5,8 +5,8 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
 	import rv32i_types_pkg::*;
 	logic [1:0] nxt_pointer, pointer;
 	logic [31:0] inst, nxt_inst;
-	logic [5:0] ras[3:0];
-    logic [5:0] nxt_ras[3:0];
+	logic [5:0] ras[entries-1:0];
+    logic [5:0] nxt_ras[entries-1:0];
 	logic link1, link2;
     integer i;
     //integer num;
