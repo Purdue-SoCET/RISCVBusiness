@@ -43,7 +43,6 @@ always_comb begin
     // Arbitrary defaults just to prevent latches
     vexec.vfu = VFU_ALU;
     vexec.valuop = VALU_ADD;
-    vexec.vredop = VRED_AND;
     vexec.vmaskop = VMSK_AND;
     vexec.vpermop = VPRM_CPS;
     vexec.vopunsigned = 1'b0;
@@ -224,11 +223,11 @@ always_comb begin
         end
         VWREDSUMU: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_SUM;
+            vexec.valuop = VALU_ADD;
         end
         VWREDSUM: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_SUM;
+            vexec.valuop = VALU_ADD;
         end
         default: begin
             // If no op matched, this must not be a supported vopi

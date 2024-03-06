@@ -366,6 +366,8 @@ package rv32v_types_pkg;
   /**********************************************************/
   // Functional unit to utilize
   typedef enum logic [3:0] {
+    VFU_PASS_VS1,
+    VFU_PASS_VS2,
     VFU_ALU,
     VFU_MUL,
     VFU_DIV,
@@ -415,16 +417,6 @@ package rv32v_types_pkg;
     // vm instr
     VALU_INT_MOVE
   } valuop_t;
-
-  // Operation codes for integer reduction unit
-  typedef enum logic [7:0] {
-    VRED_SUM,
-    VRED_MAX,
-    VRED_MIN,
-    VRED_AND,
-    VRED_OR ,
-    VRED_XOR
-  } vredop_t;
 
   // Operation codes for mask unit
   typedef enum logic [7:0] {
@@ -544,7 +536,6 @@ package rv32v_types_pkg;
     valuop_t valuop;
     vmulop_t vmulop;
     logic vdivremainder;
-    vredop_t vredop;
     vmaskop_t vmaskop;
     vpermop_t vpermop;
     sign_type_t vsigntype;

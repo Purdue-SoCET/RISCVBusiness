@@ -66,6 +66,8 @@ always_comb begin
     vres = '0; 
     temp_res = '0; 
     casez (vop.vfu)
+        VFU_PASS_VS1: vres = vopA;
+        VFU_PASS_VS2: vres = vopB;
         VFU_ALU:
             case(vop.valuop)
                 VALU_ADD: vres = vopA + vopB; 

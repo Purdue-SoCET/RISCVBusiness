@@ -34,6 +34,10 @@ module rv32v_control_unit(
 import rv32i_types_pkg::*;
 import rv32v_types_pkg::*;
 
+/**********************************************************/
+/* FIELD EXTRACTION
+/**********************************************************/
+
 //enable or disable masking by looking at bit 25
 assign vcu_if.vcontrol.vmask_en = (vmajoropcode == VMOC_ALU_CFG && vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
 
@@ -87,7 +91,9 @@ vopm_t vopm;
 assign vopi = vopi_t'(vfunct6);
 assign vopm = vopm_t'(vfunct6);
 
-// CFG instructions
+/**********************************************************/
+/* CFG (VSET*) INSTRUCTIONS
+/**********************************************************/
 always_comb begin
     // Set the vset* type based on the top two bits
     vcu_if.vcontrol.vtype_imm = '0; 
@@ -119,13 +125,36 @@ always_comb begin
 
 end
 
+/**********************************************************/
+/* REGISTER FILE CONTROL SIGNALS
+/**********************************************************/
+
 // Register select
-assign vcu_if.vcontrol.vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
-assign vcu_if.vcontrol.vs2_sel = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
-assign vcu_if.vcontrol.vs1_sel = '{
-    regclass: RC_VECTOR,
-    regidx: ((vmajoropcode == VMOC_STORE) ? vs3 : vs1) + {2'b00, vreg_offset}
-};
+regsel_t vd_sel, vs1_sel, vs2_sel;
+regsel_t vd_sel_red, vs1_sel_red, vs2_sel_red;
+
+always_comb begin
+    // Default values based on register select fields
+    vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
+    vs1_sel = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vreg_offset}};
+    vs2_sel = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
+
+    // Override vs1 to vs3 in case of a store
+    if (vmemdwen) begin
+        vs1_sel = '{regclass: RC_VECTOR, regidx: vs3 + {2'b00, vreg_offset}};
+    end
+
+    // Override selects completely in case of a reduction
+    if (vredinstr) begin
+        vd_sel = vd_sel_red;
+        vs1_sel = vs1_sel_red;
+        vs2_sel = vs2_sel_red;
+    end
+end
+
+assign vcu_if.vcontrol.vd_sel = vd_sel;
+assign vcu_if.vcontrol.vs2_sel = vs1_sel;
+assign vcu_if.vcontrol.vs1_sel = vs2_sel;
 
 // Register write enables
 logic sregwen;
@@ -151,7 +180,9 @@ assign vcu_if.vcontrol.vxin1_use_rs1 = (vmajoropcode == VMOC_LOAD) ||
 assign vcu_if.vcontrol.vxin2_use_rs2 = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE) && 
                                        ~(mop == MOP_UINDEXED || mop == MOP_OINDEXED);
 
-// Alignment unit signals
+/**********************************************************/
+/* WIDTH CONTROL LOGIC
+/**********************************************************/
 logic vwidening, vnarrowing;
 width_t vmem_width;
 vsew_t vmem_eew;
@@ -174,27 +205,46 @@ assign vnarrowing = (((vopi == VNSRL) ||
 
 assign twice_vsew = vsew_t'(vcu_if.vsew + 1);
 
-// For strided (including unit stride) store instructions, data uses instr.width
-// For indexed store instructions, vs3 is data which uses vtype.vsew
-assign veew_src1 = (vmeminstr && ~vindexed) ? vmem_eew : vcu_if.vsew;
+always_comb begin
+    // Use VSEW for everything by default
+    veew_src1 = vcu_if.vsew;
+    veew_src2 = vcu_if.vsew;
+    veew_dest = vcu_if.vsew;
 
-// For indexed load/store instructions, addr is vs2 which uses instr.width
-assign veew_src2 = vindexed   ? vmem_eew :
-                   vnarrowing ? twice_vsew :
-                   (vopm_valid && (vmajoropcode == VMOC_ALU_CFG)) ? vopm_veew_src2 : vcu_if.vsew;
+    // For a narrowing instruction, src2 uses 2*SEW
+    if (vnarrowing) begin
+        veew_src2 = twice_vsew;
+    end
 
-// For strided (including unit stride) load instructions, data uses instr.width
-// For indexed load instructions, vd is data which uses vtype.vsew
-assign veew_dest = vunitstride ? vmem_eew :
-                   vstrided    ? vmem_eew :
-                   vindexed    ? vcu_if.vsew :
-                   vwidening   ? twice_vsew :
-                                 vcu_if.vsew;
+    // For a widening instruction, dest uses 2*SEW
+    if (vwidening) begin
+        veew_dest = twice_vsew;
+    end
+
+    // Non-indexed store instructions use instr.width for data src and dest
+    if (vmeminstr && !vindexed) begin
+        veew_src1 = vmem_eew;
+        veew_dest = vmem_eew;
+    end
+
+    // Indexed load/store instructions use instr.width for the addr
+    if (vmeminstr && vindexed) begin
+        veew_src2 = vmem_eew;
+    end
+
+    // Override special src2 widths for OPM instructions
+    if (vopm_valid) begin
+        veew_src2 = vopm_veew_src2;
+    end
+end
 
 assign vcu_if.vcontrol.veew_src1 = veew_src1;
 assign vcu_if.vcontrol.veew_src2 = veew_src2;
 assign vcu_if.vcontrol.veew_dest = veew_dest;
 
+/**********************************************************/
+/* EXECUTION UNIT DECODE LOGIC
+/**********************************************************/
 
 // OPI* execution unit control signals
 vexec_t vexec_opi;
@@ -228,42 +278,45 @@ rv32v_opm_decode U_OPMDECODE(
 logic vexecute_valid;
 
 always_comb begin
-    // Assume that execute signals are valid by default
-    vexecute_valid = 1'b1;
-
     // Arbitrary defaults just to prevent latches
-    vcu_if.vcontrol.vexec.vfu = VFU_ALU;
+    vcu_if.vcontrol.vexec.vfu = VFU_PASS_VS1;
     vcu_if.vcontrol.vexec.valuop = VALU_ADD;
-    vcu_if.vcontrol.vexec.vredop = VRED_AND;
     vcu_if.vcontrol.vexec.vmaskop = VMSK_AND;
     vcu_if.vcontrol.vexec.vpermop = VPRM_CPS;
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
     vcu_if.vcontrol.vsignext = 1'b0; 
+    vexecute_valid = 1'b0;
 
-    unique case ({vopi_valid, vopm_valid, vmeminstr})
-        3'b100: begin
+    unique casez ({vopi_valid, vopm_valid, vmeminstr, vredinstr})
+        4'b1000: begin
             vcu_if.vcontrol.vexec = vexec_opi;
-            vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned; 
+            vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned;
+            vexecute_valid = (vmajoropcode == VMOC_ALU_CFG);
         end
 
-        3'b010: begin
+        4'b0100: begin
             vcu_if.vcontrol.vexec = vexec_opm;
-            vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned; 
+            vcu_if.vcontrol.vsignext = ~vexec_opm.vopunsigned; 
+            vexecute_valid = (vmajoropcode == VMOC_ALU_CFG);
         end
 
-        3'b001: begin
+        4'b0010: begin
             vcu_if.vcontrol.vexec.vfu = VFU_ALU;
             vcu_if.vcontrol.vexec.valuop = VALU_ADD;
+            vexecute_valid = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE);
         end
-        
-        default: begin
-            // None of opi, opm, and memory instructions decoded correctly
-            vexecute_valid = 1'b0;
+
+        4'b1001, 4'b0101: begin
+            vcu_if.vcontrol.vexec = vexec_red;
+            vcu_if.vcontrol.vsignext = ~vexec_red.vopunsigned;
+            vexecute_valid = (vmajoropcode == VMOC_ALU_CFG);
         end
     endcase
 end
 
-// Memory signals
+/**********************************************************/
+/* MEMORY CONTROL SIGNALS
+/**********************************************************/
 logic vmeminstr, vmemdren, vmemdwen, vunitstride, vstrided, vindexed, vmaskldst, vwholereg;;
 lumop_t lumop;
 logic [3:0] nf;
@@ -302,7 +355,9 @@ assign mem_evl = (vmaskldst) ? (mask_evl) :
                  (vwholereg) ? (wholereg_evl) :
                                (vcu_if.vl);
 
-// uop generation unit
+/**********************************************************/
+/* UOP GENERATION UNIT
+/**********************************************************/
 logic [2:0] vreg_offset;
 
 rv32v_uop_gen_if vug_if();
@@ -310,13 +365,13 @@ rv32v_uop_gen_if vug_if();
 assign vug_if.gen = vcu_if.vvalid;
 assign vug_if.stall = vcu_if.stall;
 assign vug_if.veew = veew_dest;
-assign vug_if.vl = mem_evl;
+assign vug_if.vl = (vredinstr) ? vl_red : mem_evl;
 
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
 assign vreg_offset = vug_if.vreg_offset;
 assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
-assign vcu_if.vbusy = vug_if.busy;
+assign vcu_if.vbusy = (vredinstr) ? busy_red : vug_if.busy;
 assign vcu_if.vvalid = vmajoropcode_valid;
 
 rv32v_uop_gen U_UOPGEN(
@@ -324,5 +379,138 @@ rv32v_uop_gen U_UOPGEN(
     .nRST(nRST),
     .vug_if(vug_if)
 );
+
+/**********************************************************/
+/* REDUCTION CONTROL LOGIC
+/**********************************************************/
+logic vopi_red, vopm_red, vredinstr;
+vexec_t vexec_red;
+logic busy_red;
+word_t vl_red;
+
+assign vopi_red = (vopi_valid && vexec_opi.vfu == VFU_RED);
+assign vopm_red = (vopm_valid && vexec_opm.vfu == VFU_RED);
+assign vredinstr = (vopi_red || vopm_red);
+
+typedef enum logic [3:0] {
+    REDC_IDLE,
+    REDC_UNTIL_4,
+    REDC_LAST_4,
+    REDC_LAST_2,
+    REDC_FINAL
+} red_state_t;
+
+red_state_t redstate, next_redstate;
+
+always_ff @(posedge CLK, negedge nRST) begin
+    if (!nRST) begin
+        redstate <= REDC_IDLE;
+    end else if (!vcu_if.stall) begin
+        redstate <= next_redstate;
+    end
+end
+
+always_comb begin
+    vexec_red = (vopi_red) ? vexec_opi : vexec_opm;
+    vd_sel_red = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
+    vs1_sel_red = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vreg_offset}};
+    vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
+    vl_red = vcu_if.vl;
+    busy_red = 0;
+
+    case (redstate)
+        REDC_IDLE: begin
+            if (vredinstr) begin
+                // If we get a new reduction, copy vs2 to the scratch register
+                vexec_red.vfu = VFU_PASS_VS2;
+                vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+                vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2};
+                busy_red = 1;
+
+                if (vcu_if.vl > 4) begin
+                    // If we have more than 4 elements, we'll need to reduce to 4
+                    next_redstate = REDC_UNTIL_4;
+                end else if (vcu_if.vl == 4 || vcu_if.vl == 3) begin
+                    // If we have 3 or 4 elements, go straight to the reduce 4 step
+                    next_redstate = REDC_LAST_4;
+                end else if (vcu_if.vl == 2) begin
+                    // If we have 2 elements, go straight to the reduce 2 step
+                    next_redstate = REDC_LAST_2;
+                end else if (vcu_if.vl == 1) begin
+                    // If we have just 1 element, the operation is a simple op
+                    // between the lowest two elements of vs1 and vs2
+                    vexec_red.vfu = VFU_ALU;
+                    vd_sel_red = '{regclass: RC_VECTOR, regidx: vd};
+                    vs1_sel_red = '{regclass: RC_VECTOR, regidx: vs1};
+                    vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2};
+                    busy_red = 0;
+
+                    next_redstate = REDC_IDLE;  // and we're done
+                end
+            end else begin
+                next_redstate = REDC_IDLE;
+            end
+        end
+
+        REDC_UNTIL_4: begin
+            // If we fix the src1 and dest register to the scratch register
+            // and fix the src1 and dest bank offset to bank 0, then the uop
+            // generator will correctly generate uops to reduce down to 4 elements
+            vexec_red.vfu = VFU_ALU;
+            vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            // TODO: pin src1 and dest to the lowest bank
+            busy_red = 1;
+
+            if (!vug_if.busy) begin
+                // This is the last uop for reducing down to 4
+                next_redstate = REDC_LAST_4;
+            end else begin
+                next_redstate = REDC_UNTIL_4;
+            end
+        end
+
+        REDC_LAST_4: begin
+            // Op the bottom two elements in the scratch register with the top two elements
+            // This requires a weird xbar config where the upper two elements of src2 are
+            // being pushed into the bottom two lanes, so need to override standard logic
+            vexec_red.vfu = VFU_ALU;
+            vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            // TODO: implement the weird xbar mapping
+            vl_red = 2;
+            busy_red = 1;
+
+            next_redstate = REDC_LAST_2;
+        end
+
+        REDC_LAST_2: begin
+            // Op the bottom element in the scratch register with the top element
+            // Same considerations as before apply here
+            vexec_red.vfu = VFU_ALU;
+            vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            // TODO: implement the weird xbar mapping
+            vl_red = 1;
+            busy_red = 1;
+
+            next_redstate = REDC_FINAL;
+        end
+
+        REDC_FINAL: begin
+            // Op the bottom element of the scratch register with the bottom element of vs1
+            // and put the result into the destination register
+            vexec_red.vfu = VFU_ALU;
+            vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vl_red = 1;
+            busy_red = 0;
+
+            next_redstate = REDC_IDLE;
+        end
+    endcase
+end
+
 
 endmodule
