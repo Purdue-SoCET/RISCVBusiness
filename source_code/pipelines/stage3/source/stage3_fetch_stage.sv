@@ -92,6 +92,7 @@ module stage3_fetch_stage (
 	assign predict_if.instr = instr_to_ex;
 	assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
 	assign predict_if.is_branch = (instr_sb.opcode == BRANCH) ? 1 : 0;
+    assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR)) ? 1:0;
 
     assign npc = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
                  : (hazard_if.rollback        ? mem_fetch_if.pc4
