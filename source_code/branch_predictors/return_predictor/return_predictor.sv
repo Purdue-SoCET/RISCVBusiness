@@ -52,10 +52,13 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
             //num = 1;
 			case({link1, link2, inst[19:15]==inst[11:7]})
 				3'b010, 3'b011: begin //pop
-                    if(pointer == 0) nxt_pointer = 0;
+                    predict_if.predict_taken = 1;                    
+                    if(pointer == 0) begin
+                        nxt_pointer = 0;
+                        predict_if.target_addr = nxt_ras[pointer];
+                    end
                     else begin
                         nxt_pointer -= 1;
-                        predict_if.predict_taken = 1;
                         predict_if.target_addr = nxt_ras[pointer-1];
                     end
                     //num = 2;
@@ -67,10 +70,14 @@ module return_predictor #(parameter entries=4)(input logic CLK, nRST, predictor_
                     //num = 3;
                 end
                 3'b110: begin //push and pop
+                    predict_if.predict_taken = 1;                    
                     if(pointer != 0) begin
-                        predict_if.predict_taken = 1;
                         predict_if.target_addr = nxt_ras[pointer-1];
                         nxt_ras[pointer-1] = inst[11:7];
+                    end
+                    else begin
+                        predict_if.target_addr = nxt_ras[pointer];
+                        nxt_ras[pointer] = inst[11:7];
                     end
                     //num = 4;
                 end
