@@ -39,5 +39,5 @@ targets:
                     - -Wno-WIDTH
                     - --timing
                     - --compiler clang
-                    - -CFLAGS -std=c++17 
+                    - -CFLAGS -std=c++20
                     - -CFLAGS -fno-exceptions

@@ -9,6 +9,7 @@
 #include <mutex>
 #include <queue>
 #include <random>
+#include <span>
 #include <sstream>
 
 uint64_t sim_time = 0;
@@ -114,8 +115,8 @@ struct Ram {
             return read(transaction.addr);
         } else if (transaction.action == TransactionAction::Write) {
             write(transaction.addr, transaction.data, 0xF);
-            return 0;
         }
+        return 0;
     }
 
     void dump() {
@@ -137,7 +138,8 @@ struct Ram {
     }
 };
 
-std::atomic_bool kill_caches = false;
+bool cache0_done = false;
+bool cache1_done = false;
 
 struct GenericBusIf {
     volatile uint32_t *addr;
@@ -171,23 +173,24 @@ struct Cache {
 
   public:
     std::vector<std::pair<Transaction, uint64_t>> all_transactions;
-    std::queue<Transaction> transactions;
+    std::span<Transaction, std::dynamic_extent> transactions;
     Ram &golden_model;
     uint32_t addr;
     GenericBusIf bus;
+    bool &done;
 
-    Cache(Ram &golden_model, GenericBusIf bus, const char *transaction_dump_file)
-        : golden_model(golden_model), bus(bus), transaction_dump_file(transaction_dump_file) {}
+    Cache(Ram &golden_model, GenericBusIf bus, const char *transaction_dump_file, bool &done)
+        : golden_model(golden_model), bus(bus), transaction_dump_file(transaction_dump_file),
+          done(done) {}
 
     void run() {
-        while (!kill_caches) {
-            populateTransactions();
-
+        while (transactions.size() > 0) {
             Transaction transaction = transactions.front();
-            transactions.pop();
+            transactions = transactions.subspan(1);
             executeTransaction(transaction);
         }
         dump();
+        done = true;
     }
 
     __attribute__((noinline)) void executeTransaction(Transaction transaction) {
@@ -215,14 +218,6 @@ struct Cache {
         golden_model.handle_transaction(transaction);
     }
 
-    void populateTransactions() {
-        Transaction prev = {TransactionAction::Write, 0x80000000, 0xBAD2BAD3};
-        while (transactions.size() < 16) {
-            transactions.push(rand_transaction(prev));
-            prev = transactions.back();
-        }
-    }
-
     void dump() {
         std::ofstream outfile;
         outfile.open(transaction_dump_file);
@@ -247,6 +242,33 @@ struct Cache {
             }
             outfile << buf << std::endl;
         }
+    }
+};
+
+// An epoch creates and assigns transactions to caches to provide determinism
+// to transaction generation. It manages the lifetimes of both caches and both
+// simulated rams.
+struct Epoch {
+    std::vector<Transaction> transactions;
+    uint32_t num_transactions;
+    Cache cache0;
+    Cache cache1;
+    Ram golden_model;
+    Ram sim_model;
+
+    Epoch(uint32_t num_transactions, GenericBusIf cache0_gbif, GenericBusIf cache1_gbif)
+        : num_transactions(num_transactions), golden_model(Ram("goldensim.dump")),
+          sim_model(Ram("memsim.dump")),
+          cache0(golden_model, cache0_gbif, "cache0_transactions.dump", cache0_done),
+          cache1(golden_model, cache1_gbif, "cache1_transactions.dump", cache1_done) {
+        transactions.reserve(num_transactions);
+        Transaction prev = {TransactionAction::Write, 0x80000000, 0xBAD2BAD3};
+        for (int i = 0; i < num_transactions; i++) {
+            prev = rand_transaction(prev);
+            transactions.push_back(prev);
+        }
+        cache0.transactions = std::span(transactions.begin(), num_transactions / 2);
+        cache1.transactions = std::span(transactions.begin() + num_transactions / 2, num_transactions / 2);
     }
 };
 
@@ -285,59 +307,31 @@ int main(int argc, char **argv) {
 
     dut = new Vcache_stress_wrapper;
     trace = new VerilatedFstC;
-    Ram golden_model("goldensim.dump");
-    Ram simulated_ram("memsim.dump");
+    GenericBusIf cache0_gbif(&dut->cache0_addr, &dut->cache0_wdata, &dut->cache0_ren,
+                             &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy);
+    GenericBusIf cache1_gbif(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
+                             &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy);
+    Epoch epoch(10, cache0_gbif, cache1_gbif);
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");
 
     reset();
 
-    std::thread cache0_thread = std::thread([&] {
-        Cache cache(golden_model,
-                    GenericBusIf(&dut->cache0_addr, &dut->cache0_wdata, &dut->cache0_ren,
-                                 &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy),
-                    "cache0_transactions.dump");
-        cache.run();
-    });
+    std::thread cache0_thread = std::thread([&] { epoch.cache0.run(); });
 
-    std::thread cache1_thread = std::thread([&] {
-        Cache cache(golden_model,
-                    GenericBusIf(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
-                                 &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy),
-                    "cache1_transactions.dump");
-        cache.run();
-    });
-
-    while (sim_time < 1000) {
-        tick();
-        if (dut->memory_busy) {
-            if (dut->memory_ren) {
-                dut->memory_rdata = simulated_ram.handle_transaction(
-                    {TransactionAction::Read, dut->memory_addr, 0x0});
-                dut->memory_busy = 0;
-            } else if (dut->memory_wen) {
-                simulated_ram.handle_transaction(
-                    {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
-                dut->memory_busy = 0;
-            }
-        } else {
-            dut->memory_busy = 1;
-        }
-    }
-
-    kill_caches = true;
+    std::thread cache1_thread = std::thread([&] { epoch.cache1.run(); });
 
     // Finish up any transactions if possible
-    while (dut->cache0_wen || dut->cache0_ren || dut->cache1_wen || dut->cache1_ren) {
+    while (!(cache0_done && cache1_done)) {
         tick();
         if (dut->memory_busy) {
             if (dut->memory_ren) {
-                dut->memory_rdata = simulated_ram.handle_transaction(
+                dut->memory_rdata = epoch.sim_model.handle_transaction(
                     {TransactionAction::Read, dut->memory_addr, 0x0});
                 dut->memory_busy = 0;
             } else if (dut->memory_wen) {
-                simulated_ram.handle_transaction(
+                epoch.sim_model.handle_transaction(
                     {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
                 dut->memory_busy = 0;
             }
@@ -360,11 +354,11 @@ int main(int argc, char **argv) {
         tick();
         if (dut->memory_busy) {
             if (dut->memory_ren) {
-                dut->memory_rdata = simulated_ram.handle_transaction(
+                dut->memory_rdata = epoch.sim_model.handle_transaction(
                     {TransactionAction::Read, dut->memory_addr, 0x0});
                 dut->memory_busy = 0;
             } else if (dut->memory_wen) {
-                simulated_ram.handle_transaction(
+                epoch.sim_model.handle_transaction(
                     {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
                 dut->memory_busy = 0;
             }
@@ -375,8 +369,8 @@ int main(int argc, char **argv) {
 
     dut->final();
     trace->close();
-    simulated_ram.dump();
-    golden_model.dump();
+    epoch.sim_model.dump();
+    epoch.golden_model.dump();
 
     cache0_thread.join();
     cache1_thread.join();
