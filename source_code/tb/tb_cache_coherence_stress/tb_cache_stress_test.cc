@@ -65,24 +65,6 @@ struct Ram {
     std::map<uint32_t, uint32_t> mmap;
     std::mutex lock;
 
-  protected:
-    inline uint32_t expand_mask(uint8_t mask) {
-        uint32_t acc = 0;
-        for (int i = 0; i < 4; i++) {
-            auto bit = ((mask & (1 << i)) != 0);
-            if (bit) {
-                acc |= (0xFF << (i * 8));
-            }
-        }
-
-        return acc;
-    }
-
-  public:
-    Ram() {}
-
-    Ram(const char *dump_file) : dump_file(dump_file) {}
-
     uint32_t read(uint32_t addr) {
         std::cout << "did read" << std::endl;
         auto it = mmap.find(addr);
@@ -110,12 +92,29 @@ struct Ram {
         }
     }
 
+  protected:
+    inline uint32_t expand_mask(uint8_t mask) {
+        uint32_t acc = 0;
+        for (int i = 0; i < 4; i++) {
+            auto bit = ((mask & (1 << i)) != 0);
+            if (bit) {
+                acc |= (0xFF << (i * 8));
+            }
+        }
+
+        return acc;
+    }
+
+  public:
+    Ram(const char *dump_file) : dump_file(dump_file) {}
+
     uint32_t handle_transaction(Transaction transaction) {
         std::lock_guard<std::mutex> guard(lock);
         if (transaction.action == TransactionAction::Read) {
             return read(transaction.addr);
         } else if (transaction.action == TransactionAction::Write) {
             write(transaction.addr, transaction.data, 0xF);
+            return 0;
         }
     }
 
@@ -153,6 +152,7 @@ struct GenericBusIf {
         : addr(addr), wdata(wdata), ren(ren), wen(wen), rdata(rdata), busy(busy) {}
 };
 
+/*
 struct RamWithBus {
     Ram ram;
     GenericBusIf bus;
@@ -163,6 +163,7 @@ struct RamWithBus {
         while (!kill_caches) {}
     }
 };
+*/
 
 struct Cache {
   private:
@@ -171,11 +172,11 @@ struct Cache {
   public:
     std::vector<std::pair<Transaction, uint64_t>> all_transactions;
     std::queue<Transaction> transactions;
-    Ram *golden_model;
+    Ram &golden_model;
     uint32_t addr;
     GenericBusIf bus;
 
-    Cache(Ram *golden_model, GenericBusIf bus, const char *transaction_dump_file)
+    Cache(Ram &golden_model, GenericBusIf bus, const char *transaction_dump_file)
         : golden_model(golden_model), bus(bus), transaction_dump_file(transaction_dump_file) {}
 
     void run() {
@@ -211,7 +212,7 @@ struct Cache {
         while (*time_ptr < curr_time + 4) {}
         *bus.ren = 0;
         *bus.wen = 0;
-        golden_model->handle_transaction(transaction);
+        golden_model.handle_transaction(transaction);
     }
 
     void populateTransactions() {
@@ -285,7 +286,7 @@ int main(int argc, char **argv) {
     dut = new Vcache_stress_wrapper;
     trace = new VerilatedFstC;
     Ram golden_model("goldensim.dump");
-    Ram simulated_ram;
+    Ram simulated_ram("memsim.dump");
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");
@@ -293,7 +294,7 @@ int main(int argc, char **argv) {
     reset();
 
     std::thread cache0_thread = std::thread([&] {
-        Cache cache(&golden_model,
+        Cache cache(golden_model,
                     GenericBusIf(&dut->cache0_addr, &dut->cache0_wdata, &dut->cache0_ren,
                                  &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy),
                     "cache0_transactions.dump");
@@ -301,7 +302,7 @@ int main(int argc, char **argv) {
     });
 
     std::thread cache1_thread = std::thread([&] {
-        Cache cache(&golden_model,
+        Cache cache(golden_model,
                     GenericBusIf(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
                                  &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy),
                     "cache1_transactions.dump");
@@ -312,10 +313,12 @@ int main(int argc, char **argv) {
         tick();
         if (dut->memory_busy) {
             if (dut->memory_ren) {
-                dut->memory_rdata = simulated_ram.read(dut->memory_addr);
+                dut->memory_rdata = simulated_ram.handle_transaction(
+                    {TransactionAction::Read, dut->memory_addr, 0x0});
                 dut->memory_busy = 0;
             } else if (dut->memory_wen) {
-                simulated_ram.write(dut->memory_addr, dut->memory_wdata, 0xF);
+                simulated_ram.handle_transaction(
+                    {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
                 dut->memory_busy = 0;
             }
         } else {
@@ -330,10 +333,12 @@ int main(int argc, char **argv) {
         tick();
         if (dut->memory_busy) {
             if (dut->memory_ren) {
-                dut->memory_rdata = simulated_ram.read(dut->memory_addr);
+                dut->memory_rdata = simulated_ram.handle_transaction(
+                    {TransactionAction::Read, dut->memory_addr, 0x0});
                 dut->memory_busy = 0;
             } else if (dut->memory_wen) {
-                simulated_ram.write(dut->memory_addr, dut->memory_wdata, 0xF);
+                simulated_ram.handle_transaction(
+                    {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
                 dut->memory_busy = 0;
             }
         } else {
@@ -355,10 +360,12 @@ int main(int argc, char **argv) {
         tick();
         if (dut->memory_busy) {
             if (dut->memory_ren) {
-                dut->memory_rdata = simulated_ram.read(dut->memory_addr);
+                dut->memory_rdata = simulated_ram.handle_transaction(
+                    {TransactionAction::Read, dut->memory_addr, 0x0});
                 dut->memory_busy = 0;
             } else if (dut->memory_wen) {
-                simulated_ram.write(dut->memory_addr, dut->memory_wdata, 0xF);
+                simulated_ram.handle_transaction(
+                    {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
                 dut->memory_busy = 0;
             }
         } else {
