@@ -94,3 +94,5 @@ system_fpga.summary
 
 # locally built mdbook
 doc/book/**
+*.txt
+*.dump
