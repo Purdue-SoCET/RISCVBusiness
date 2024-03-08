@@ -35,7 +35,7 @@ import rv32i_types_pkg::*;
 import rv32v_types_pkg::*;
 
 //enable or disable masking by looking at bit 25
-assign vcu_if.vcontrol.vmask_en = (vmajoropcode == VMOC_ALU_CFG && vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
+assign vcu_if.vcontrol.vmask_en = (vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
 
 // Register select extraction
 logic [4:0] vd, vs1, vs2, vs3;
@@ -168,9 +168,9 @@ assign vwidening = (vfunct6[5:4] == 2'b11);
 assign vnarrowing = (((vopi == VNSRL) ||
                     (vopi == VNSRA) ||
                     (vopi == VNCLIPU) ||
-                    (vopi == VNCLIP)) && (vmajoropcode == VMOC_ALU_CFG) && (vopi_valid) ) ||
+                    (vopi == VNCLIP)) && (vopi_valid) ) ||
                     (((vopm == VNMSUB) ||
-                    (vopm == VNMSAC)) && (vmajoropcode == VMOC_ALU_CFG) && (vopm_valid) );
+                    (vopm == VNMSAC)) && (vopm_valid) );
 
 assign twice_vsew = vsew_t'(vcu_if.vsew + 1);
 
@@ -181,7 +181,7 @@ assign veew_src1 = (vmeminstr && ~vindexed) ? vmem_eew : vcu_if.vsew;
 // For indexed load/store instructions, addr is vs2 which uses instr.width
 assign veew_src2 = vindexed   ? vmem_eew :
                    vnarrowing ? twice_vsew :
-                   (vopm_valid && (vmajoropcode == VMOC_ALU_CFG)) ? vopm_veew_src2 : vcu_if.vsew;
+                   (vopm_valid) ? vopm_veew_src2 : vcu_if.vsew;
 
 // For strided (including unit stride) load instructions, data uses instr.width
 // For indexed load instructions, vd is data which uses vtype.vsew
@@ -198,20 +198,22 @@ assign vcu_if.vcontrol.veew_dest = veew_dest;
 
 // OPI* execution unit control signals
 vexec_t vexec_opi;
-logic vopi_valid;
+logic vopi_valid_fn;
 logic vopi_disable_mask; 
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
     .vfunct3(vfunct3),
     .vm_bit(vcu_if.instr[25]), 
     .vexec(vexec_opi),
-    .valid(vopi_valid),
+    .valid(vopi_valid_fn),
     .disable_mask(vopi_disable_mask)
 );
+logic vopi_valid; 
+assign vopi_valid = vopi_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 
 
 // OPM* execution unit control signals
 vexec_t vexec_opm;
-logic vopm_valid;
+logic vopm_valid_fn;
 logic widen_vs2; 
 vsew_t vopm_veew_src2; 
 rv32v_opm_decode U_OPMDECODE(
@@ -220,9 +222,11 @@ rv32v_opm_decode U_OPMDECODE(
     .vsew(vcu_if.vsew),
     .vs1_sel(vs1), 
     .vexec(vexec_opm),
-    .valid(vopm_valid),
+    .valid(vopm_valid_fn),
     .veew_src2(vopm_veew_src2)
 );
+logic vopm_valid; 
+assign vopm_valid = vopm_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 
 
 // Final execution unit control signals
 logic vexecute_valid;

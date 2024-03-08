@@ -42,19 +42,20 @@ interface stage4_mem_stage_if;
     // Vector
     vexmem_t vexmem;
     vwb_t vwb;
+    logic[3:0] vmskset_fwd_bits; 
 
     modport fetch (
         input brj_addr, pc4
     );
 
     modport ex (
-        input reg_wdata, reg_write, rd_m, vwb,
+        input reg_wdata, reg_write, rd_m, vwb, vmskset_fwd_bits, 
         output ex_mem_reg, vexmem
     );
 
     modport mem (
         input ex_mem_reg, vexmem,
-        output brj_addr, reg_wdata, reg_write, rd_m, pc4, vwb
+        output brj_addr, reg_wdata, reg_write, rd_m, pc4, vwb, vmskset_fwd_bits
     );
 
 endinterface
