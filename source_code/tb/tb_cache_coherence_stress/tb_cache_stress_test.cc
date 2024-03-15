@@ -237,11 +237,21 @@ struct Cache {
                 snprintf(buf, 80, "read %x at %d", t.first.addr, t.second);
                 break;
             case TransactionAction::Write:
-                snprintf(buf, 80, "write %x %x at %d", t.first.addr, t.first.data, t.second);
+                snprintf(buf, 80, "write %x %x at %d", t.first.addr, endian_flip(t.first.data), t.second);
                 break;
             }
             outfile << buf << std::endl;
         }
+    }
+
+    uint32_t endian_flip(uint32_t num) {
+        uint32_t flipped_data = 0;
+        //Note, this line comes from StackOverflow
+        flipped_data = ((num>>24)&0xff) | // move byte 3 to byte 0
+                    ((num<<8)&0xff0000) | // move byte 1 to byte 2
+                    ((num>>8)&0xff00) | // move byte 2 to byte 1
+                    ((num<<24)&0xff000000); // byte 0 to byte 3
+        return flipped_data;
     }
 };
 

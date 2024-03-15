@@ -156,7 +156,9 @@ module bus_ctrl #(
             GRANT_EVICT: begin  // set the stimulus to WRITEBACK to L2
                 // nl2_store = ccif.dstore[requester_cpu];
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
-                ccif.dwait[requester_cpu] = 0;
+                //Cache waits until its block is completely written back
+                //Could optimize to have bus latch cache value and let the cache run?
+                ccif.dwait[requester_cpu] = 1; 
 
                 nl2_store = ccif.dstore[requester_cpu];
             end
@@ -233,6 +235,7 @@ module bus_ctrl #(
                         nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
                     end else begin
                         block_count_done = 1;
+                        ccif.dwait[requester_cpu] = 0; //Writeback complete
                     end
                 end
             end
