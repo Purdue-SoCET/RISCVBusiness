@@ -1,4 +1,4 @@
 #!/bin/bash
 edacfg xcelium2109 vmanager2109
-/package/eda/cadence/XCELIUM2109/tools/bin/xrun packages/*.sv caches/l1/l1_cache.sv multicore/coherence_control/coherency_unit.sv tb/tb_two_cache_coherency.sv tb/tb_two_cache_coh_wrapper.sv caches/sram/sram.sv standard_core/bus_ctrl.sv ram/ram_wrapper.sv ram/ram_sim_model.sv standard_core/endian_swapper.sv -incdir include/ -gui -access +rwc -parseinfo macro
+/package/eda/cadence/XCELIUM2109/tools/bin/xrun packages/*.sv caches/l1/l1_cache.sv caches/coherency_unit.sv tb/tb_two_cache_coherency.sv tb/tb_two_cache_coh_wrapper.sv caches/sram/sram.sv standard_core/bus_ctrl.sv ram/ram_wrapper.sv ram/ram_sim_model.sv standard_core/endian_swapper.sv -incdir include/ -gui -access +rwc -parseinfo macro
 
