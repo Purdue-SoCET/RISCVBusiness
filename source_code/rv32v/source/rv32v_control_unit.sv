@@ -189,7 +189,7 @@ assign veew_dest = vunitstride ? vmem_eew :
                    vstrided    ? vmem_eew :
                    vindexed    ? vcu_if.vsew :
                    vwidening   ? twice_vsew :
-                                 vcu_if.vsew;
+                   vopi_valid  ? vopi_veew_dest : vcu_if.vsew;
 
 assign vcu_if.vcontrol.veew_src1 = veew_src1;
 assign vcu_if.vcontrol.veew_src2 = veew_src2;
@@ -200,13 +200,15 @@ assign vcu_if.vcontrol.veew_dest = veew_dest;
 vexec_t vexec_opi;
 logic vopi_valid_fn;
 logic vopi_disable_mask; 
+vsew_t vopi_veew_dest; 
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
     .vfunct3(vfunct3),
     .vm_bit(vcu_if.instr[25]), 
     .vexec(vexec_opi),
     .valid(vopi_valid_fn),
-    .disable_mask(vopi_disable_mask)
+    .disable_mask(vopi_disable_mask), 
+    .veew_dest(vopi_veew_dest)
 );
 logic vopi_valid; 
 assign vopi_valid = vopi_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 

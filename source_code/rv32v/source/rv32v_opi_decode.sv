@@ -28,11 +28,13 @@ import rv32v_types_pkg::*;
 module rv32v_opi_decode(
     input vopi_t vopi,
     input vfunct3_t vfunct3,
-    input logic vm_bit,  
+    input logic vm_bit,
+    input vsew_t vsew,   
     
     output vexec_t vexec,
     output logic valid,
-    output logic disable_mask
+    output logic disable_mask, 
+    output vsew_t veew_dest
 );
 
 always_comb begin
@@ -47,6 +49,7 @@ always_comb begin
     vexec.vmaskop = VMSK_AND;
     vexec.vpermop = VPRM_CPS;
     vexec.vopunsigned = 1'b0;
+    veew_dest = vsew; 
 
     case (vopi)
         VADD: begin
@@ -112,6 +115,7 @@ always_comb begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = vm_bit ? VALU_VMADC : VALU_VMADC_NO_C; // Assuming VMADC uses the same operation as ADC
             disable_mask = 1'b1; 
+            veew_dest = SEW8; 
         end
         VSBC: begin
             vexec.vfu = VFU_ALU;
@@ -122,6 +126,7 @@ always_comb begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = vm_bit ? VALU_VMSBC : VALU_VMSBC_NO_B; // Assuming VMSBC uses the same operation as SBC
             disable_mask = 1'b1;
+            veew_dest = SEW8; 
         end
         VMERGE: begin
             vexec.vfu = VFU_ALU;
@@ -131,37 +136,45 @@ always_comb begin
         VMSEQ: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SEQ;
+            veew_dest = SEW8; 
         end
         VMSNE: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SNE;
+            veew_dest = SEW8; 
         end
         VMSLTU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLT;
             vexec.vopunsigned = 1'b1;
+            veew_dest = SEW8; 
         end
         VMSLT: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLT;
+            veew_dest = SEW8; 
         end
         VMSLEU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLE;
             vexec.vopunsigned = 1'b1;
+            veew_dest = SEW8; 
         end
         VMSLE: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLE;
+            veew_dest = SEW8; 
         end
         VMSGTU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SGT;
             vexec.vopunsigned = 1'b1;
+            veew_dest = SEW8; 
         end
         VMSGT: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SGT;
+            veew_dest = SEW8; 
         end
         VSADDU: begin
             vexec.vfu = VFU_ALU;
