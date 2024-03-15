@@ -15,7 +15,7 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
 
-  li x1, 18 // variable N 
+  li x1, 120 // variable N, range is 0 - 120
   li x2, 0 // variable i
   la x3, A_data
   la x4, B_data
@@ -50,7 +50,7 @@ RVTEST_DATA_BEGIN
 
   TEST_DATA
 
-	A_data:
+		A_data:
 	.word 0xfcfdfeff
 	.word 0x0201fafb
 	.word 0x06050403
@@ -70,6 +70,109 @@ RVTEST_DATA_BEGIN
     .word 0x11111111
 	.word 0x22222222
 	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
 	.word 0x44444444
 
 	B_data:
@@ -93,6 +196,109 @@ RVTEST_DATA_BEGIN
 	.word 0x22222222
 	.word 0x33333333
 	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
 
     C_data: 
     .word 0xfcfdfeff
@@ -114,6 +320,109 @@ RVTEST_DATA_BEGIN
     .word 0x11111111
 	.word 0x22222222
 	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+	.word 0xfcfdfeff
+	.word 0x0201fafb
+	.word 0x06050403
+	.word 0x4d3c2b1a
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
+    .word 0x11111111
+	.word 0x22222222
+	.word 0x33333333
+	.word 0x44444444
 	.word 0x44444444
 
 
