@@ -28,17 +28,19 @@ module rv32v_vector_bank
 (
     input logic CLK, nRST, 
 
-    input logic[4:0] vs1, vs2, vw,   
+    input logic[4:0] vs1, vs2, vs3, vw,   
     input word_t vwdata, 
     input logic[3:0] byte_wen, 
 
-    output word_t vdat1, vdat2, v0
+    output word_t vdat1, vdat2, vdat3, v0
 );
 
 word_t[31:0]  bank_reg_file; 
 
 assign vdat1 = bank_reg_file[vs1];
 assign vdat2 = bank_reg_file[vs2];
+assign vdat3 = bank_reg_file[vs3]; 
+
 assign v0 = bank_reg_file[0]; 
 
 always_ff @(posedge CLK, negedge nRST) begin

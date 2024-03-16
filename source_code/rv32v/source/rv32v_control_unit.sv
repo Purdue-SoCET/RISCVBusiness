@@ -39,7 +39,7 @@ import rv32v_types_pkg::*;
 /**********************************************************/
 
 //enable or disable masking by looking at bit 25
-assign vcu_if.vcontrol.vmask_en = (vmajoropcode == VMOC_ALU_CFG && vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
+assign vcu_if.vcontrol.vmask_en = (vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
 
 // Register select extraction
 logic [4:0] vd, vs1, vs2, vs3;
@@ -200,9 +200,9 @@ assign vwidening = (vfunct6[5:4] == 2'b11);
 assign vnarrowing = (((vopi == VNSRL) ||
                     (vopi == VNSRA) ||
                     (vopi == VNCLIPU) ||
-                    (vopi == VNCLIP)) && (vmajoropcode == VMOC_ALU_CFG) && (vopi_valid) ) ||
+                    (vopi == VNCLIP)) && (vopi_valid) ) ||
                     (((vopm == VNMSUB) ||
-                    (vopm == VNMSAC)) && (vmajoropcode == VMOC_ALU_CFG) && (vopm_valid) );
+                    (vopm == VNMSAC)) && (vopm_valid) );
 
 assign twice_vsew = vsew_t'(vcu_if.vsew + 1);
 
@@ -259,6 +259,8 @@ rv32v_opi_decode U_OPIDECODE(
     .valid(vopi_decode_valid),
     .disable_mask(vopi_disable_mask)
 );
+logic vopi_valid; 
+assign vopi_valid = vopi_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 
 
 // OPM* execution unit control signals
 vexec_t vexec_opm;
@@ -274,6 +276,8 @@ rv32v_opm_decode U_OPMDECODE(
     .valid(vopm_decode_valid),
     .veew_src2(vopm_veew_src2)
 );
+logic vopm_valid; 
+assign vopm_valid = vopm_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 
 
 // Final execution unit control signals
 logic vopi_valid;

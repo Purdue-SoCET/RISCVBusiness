@@ -76,8 +76,8 @@ module stage4_mem_stage (
     assign serial_if.stride = ex_mem_if.ex_mem_reg.rs2_data;
     assign serial_if.veew = ex_mem_if.vexmem.veew;
     assign serial_if.vlane_mask = velem_mask;
-    assign serial_if.vlane_addr = ex_mem_if.vexmem.valu_res;
-    assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs3;
+    assign serial_if.vlane_addr = ex_mem_if.vexmem.vres;
+    assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs1;
     assign serial_if.lsc_ready = lsc_if.lsc_ready;
 
     // Memory serializer
@@ -129,7 +129,8 @@ module stage4_mem_stage (
     assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen;
     assign hazard_if.is_visn = vmemop;
     assign hazard_if.velem_num = (ex_mem_if.vexmem.vuop_num << 2) + serial_if.vcurr_lane;
-
+    assign ex_mem_if.vmskset_fwd_bits = ex_mem_if.vexmem.vres[0][3:0]; 
+    
     assign halt = ex_mem_if.ex_mem_reg.halt;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign fw_if.reg_write = ex_mem_if.reg_write;
@@ -196,7 +197,7 @@ module stage4_mem_stage (
             5'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
             5'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
             5'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
-            5'd8:    ex_mem_if.reg_wdata = ex_mem_if.vexmem.valu_res[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
+            5'd8:    ex_mem_if.reg_wdata = ex_mem_if.vexmem.vres[0];  // assumes SEW-len element at idx=0 is sign-ext'd in EX
             5'd24:   ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.rs1_data;  // vl on rs1_data (for vset{i}vl{i})
             default: ex_mem_if.reg_wdata = '0;
         endcase
@@ -207,7 +208,7 @@ module stage4_mem_stage (
             5'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
             5'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
             5'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
-            5'd8:    fw_if.rd_mem_data = ex_mem_if.vexmem.valu_res[0];
+            5'd8:    fw_if.rd_mem_data = ex_mem_if.vexmem.vres[0];
             5'd24:   fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.rs1_data;
             default: fw_if.rd_mem_data = '0;
         endcase
@@ -230,7 +231,7 @@ module stage4_mem_stage (
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :
-                        (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? {4{ex_mem_if.ex_mem_reg.port_out}} : ex_mem_if.vexmem.valu_res;
+                        (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? {4{ex_mem_if.ex_mem_reg.port_out}} : ex_mem_if.vexmem.vres;
 
     always_comb begin
         if (ex_mem_if.vexmem.vmemdren) begin

@@ -5,33 +5,66 @@ module rv32v_ex_datapath(
     input logic CLK, nRST, 
     input word_t rdat1, rdat2,
     input vcontrol_t vctrls, 
-    input vwb_t vwb_ctrls, 
+    input vwb_t vwb_ctrls,
+    input logic[3:0] vmskset_fwd_bits,
+
     output vexmem_t vmem_in,
     output logic vex_stall
 );
 
 parameter NUM_LANES = 4; 
 
-logic[127:0] v0; 
+logic[127:0] v0;
+logic[127:0] vd; // vd selector is the one in execute and not the one writing back in mem
 word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2 ;  
 word_t[3:0] vopA, vopB; 
+word_t [3:0] vfu_res; 
 word_t ext_imm; 
 logic[3:0] mask_bits;
+logic[3:0] msku_lane_mask; 
 logic[3:0] vfu_stall;
+
+//mask set layer outputs
+logic is_vmskset_op; 
+logic[7:0] vmskset_res; 
+logic[3:0] vmskset_lane_mask; 
+
 
 logic vint_cmp_instr; 
 
-assign vint_cmp_instr = vctrls.vexec.valuop == VALU_SEQ ||
+assign vint_cmp_instr = vctrls.vexec.valuop == VALU_SEQ || // MOVE THIS TO DECODE
                         vctrls.vexec.valuop == VALU_SNE || 
                         vctrls.vexec.valuop == VALU_SLT ||
                         vctrls.vexec.valuop == VALU_SLE ||
                         vctrls.vexec.valuop == VALU_SGT; 
 
+assign is_vmskset_op = vctrls.vexec.valuop == VALU_SEQ || // MOVE THIS TO DECODE
+                       vctrls.vexec.valuop == VALU_SNE ||
+                       vctrls.vexec.valuop == VALU_SLT ||
+                       vctrls.vexec.valuop == VALU_SLE ||
+                       vctrls.vexec.valuop == VALU_SGT ||
+                       vctrls.vexec.valuop == VALU_VMADC_NO_C ||
+                       vctrls.vexec.valuop == VALU_VMADC ||
+                       vctrls.vexec.valuop == VALU_VMSBC_NO_B ||
+                       vctrls.vexec.valuop == VALU_VMSBC;                 
+// assign is_vmskset_op = 0;         
+
 assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
 
 // store data  
-assign vmem_in.vs3 = xbardat_src1; 
+assign vmem_in.vs1 = xbardat_src1; 
+
+// vres muxing due to vmskset instructions 
+assign vmem_in.vres[0] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[0]; 
+assign vmem_in.vres[1] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[1];
+assign vmem_in.vres[2] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[2];
+assign vmem_in.vres[3] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[3];
+
+// lane_mask muxsing due to vmskset instructions
+assign vmem_in.vlane_mask = is_vmskset_op ? vmskset_lane_mask : msku_lane_mask; 
+
+
 
 // Banks 
 rv32v_vector_bank VBANK0 (
@@ -39,7 +72,8 @@ rv32v_vector_bank VBANK0 (
     .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[0]), .byte_wen(vwb_ctrls.vbyte_wen[0]), 
     .vdat1(bankdat_src1[0]), .vdat2(bankdat_src2[0]), 
-    .v0(v0[31:0])
+    .v0(v0[31:0]),
+    .vdat3(vd[31:0])
 ); 
 
 rv32v_vector_bank VBANK1 (
@@ -47,7 +81,8 @@ rv32v_vector_bank VBANK1 (
     .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[1]), .byte_wen(vwb_ctrls.vbyte_wen[1]), 
     .vdat1(bankdat_src1[1]), .vdat2(bankdat_src2[1]), 
-    .v0(v0[63:32])
+    .v0(v0[63:32]),
+    .vdat3(vd[63:32])
 );
 
 rv32v_vector_bank VBANK2 (
@@ -55,7 +90,8 @@ rv32v_vector_bank VBANK2 (
     .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[2]), .byte_wen(vwb_ctrls.vbyte_wen[2]), 
     .vdat1(bankdat_src1[2]), .vdat2(bankdat_src2[2]), 
-    .v0(v0[95:64])
+    .v0(v0[95:64]),
+    .vdat3(vd[95:64])
 );
 
 rv32v_vector_bank VBANK3 (
@@ -63,7 +99,8 @@ rv32v_vector_bank VBANK3 (
     .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[3]), .byte_wen(vwb_ctrls.vbyte_wen[3]), 
     .vdat1(bankdat_src1[3]), .vdat2(bankdat_src2[3]), 
-    .v0(v0[127:96])
+    .v0(v0[127:96]),
+    .vdat3(vd[127:96])
 );
 
 
@@ -131,7 +168,7 @@ generate
             .mask_bit(mask_bits[k]),
             .vsew(vctrls.veew_src2),
             .vop(vctrls.vexec), 
-            .vres(vmem_in.valu_res[k]),
+            .vres(vfu_res[k]),
             .vfu_stall(vfu_stall[k])
         );
     end
@@ -148,9 +185,22 @@ rv32v_mask_unit RVV_MASKS(
     .mask_enable(vctrls.vmask_en), 
     .uop_num(vctrls.vuop_num), 
     .lane_active(vctrls.vlaneactive),
-    .lane_mask(vmem_in.vlane_mask),
+    .lane_mask(msku_lane_mask),
     .mask_bits(mask_bits)
 );
+
+
+//mask set layer for instructions that set mask bits 
+rv32v_mask_set_layer VMSKSET_LAYER(
+    .vfu_results({vfu_res[3][0], vfu_res[2][0], vfu_res[1][0], vfu_res[0][0]}), 
+    .vd(vd),
+    .vd_fwd_bits(vmskset_fwd_bits), 
+    .msku_lane_masks(msku_lane_masks), 
+    .vuopnum(vctrls.vuop_num), 
+
+    .vmskset_res(vmskset_res),
+    .vmskset_lane_mask(vmskset_lane_mask)
+); 
 
 
 // connect remaining signals from vctrls to vmem_in 

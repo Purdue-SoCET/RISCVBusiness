@@ -583,8 +583,8 @@ package rv32v_types_pkg;
 
   typedef struct packed {
     // lane specific
-    rv32i_types_pkg::word_t [3:0] valu_res;
-    rv32i_types_pkg::word_t [3:0] vs3; // rename to vs1 (that's how the decode specifies it) 
+    rv32i_types_pkg::word_t [3:0] vres;
+    rv32i_types_pkg::word_t [3:0] vs1; 
     logic [3:0] vlane_mask;
 
     // general 

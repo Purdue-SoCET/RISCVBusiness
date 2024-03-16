@@ -109,6 +109,8 @@ module stage4_execute_stage (
         .rdat1(rf_if.rs1_data), .rdat2(rf_if.rs2_data), 
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
+        .vmskset_fwd_bits(ex_mem_if.vmskset_fwd_bits), 
+        
         .vmem_in(vex_out),
         .vex_stall(vex_stall)
     );
