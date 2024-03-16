@@ -236,10 +236,6 @@ add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipelin
 add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipeline/shadow_if/vtype_spec/vta
 add wave -noupdate -group shadow_if -group vtype_spec /TOP/top_core/CORE/pipeline/shadow_if/vtype_spec/vma
 add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/sregwen
-add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
-add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/valu_res
 add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vbank_offset
 add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/veew
 add wave -noupdate -expand -group VEX_datapath /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vindexed
@@ -309,10 +305,6 @@ add wave -noupdate -group {Scalar execute out} /TOP/top_core/CORE/pipeline/mem_p
 add wave -noupdate -group {Scalar execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/ex_mem_reg/was_compressed
 add wave -noupdate -group {Scalar execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/ex_mem_reg/wfi_insn
 add wave -noupdate -group {Scalar execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/ex_mem_reg/zimm
-add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/valu_res
-add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/valu_res
-add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/valu_res
-add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/valu_res
 add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/vbank_offset
 add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/veew
 add wave -noupdate -expand -group {Vector execute out} /TOP/top_core/CORE/pipeline/mem_pipe_if/vexmem/vindexed
@@ -347,31 +339,90 @@ add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_b
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/ren
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/wdata
 add wave -noupdate -expand -group {Mem to D$} /TOP/top_core/CORE/pipeline/dgen_bus_if/wen
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/base
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/lsc_ready
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/stride
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vaddr_lsc
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vcurr_lane
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vdata_store_lsc
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/veew
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vindexed
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_mask
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vload_type
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdren
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdren_lsc
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen_lsc
-add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vuop_num
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/base
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/lsc_ready
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/stride
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vaddr_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vcurr_lane
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vdata_store_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/veew
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vindexed
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_addr
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_mask
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vlane_store_data
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vload_type
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdren
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdren_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen_lsc
+add wave -noupdate -expand -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vuop_num
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/dmemren
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/dmemwen
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/funct12
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/funct3
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/halt
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/instr_30
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/velem_mask
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/vlane_data
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/vlane_data
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/vlane_data
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/vlane_data
+add wave -noupdate -expand -group {Mem stage} -expand /TOP/top_core/CORE/pipeline/mem_stage_i/vlane_wen
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/vmemop
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/wb_stall
+add wave -noupdate -expand -group {Mem stage} /TOP/top_core/CORE/pipeline/mem_stage_i/wfi
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/BANK_NUM}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/adj_bank_offset}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/bank_offset}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/byte_wen}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/eew}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/lane_wen}
+add wave -noupdate -group write_xbar0 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[0]\/WBXBAR/vwdat}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/BANK_NUM}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/adj_bank_offset}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/bank_offset}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/byte_wen}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/eew}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/lane_wen}
+add wave -noupdate -group write_xbar1 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[1]\/WBXBAR/vwdat}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/BANK_NUM}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/adj_bank_offset}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/bank_offset}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/byte_wen}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/eew}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/lane_wen}
+add wave -noupdate -group write_xbar2 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[2]\/WBXBAR/vwdat}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/BANK_NUM}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/adj_bank_offset}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/bank_offset}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/byte_wen}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/eew}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/lane_dat}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/lane_wen}
+add wave -noupdate -group write_xbar3 {/TOP/top_core/CORE/pipeline/mem_stage_i/\gen_wb_xbar[3]\/WBXBAR/vwdat}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {133 ps} 0}
+WaveRestoreCursors {{Cursor 1} {132 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 166
 configure wave -valuecolwidth 100
@@ -387,4 +438,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {75 ps} {187 ps}
+WaveRestoreZoom {97 ps} {153 ps}

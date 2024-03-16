@@ -154,7 +154,7 @@ always_comb begin
 end
 
 assign vcu_if.vcontrol.vd_sel = vd_sel;
-assign vcu_if.vcontrol.vs2_sel = vs1_sel;
+assign vcu_if.vcontrol.vs1_sel = vs1_sel;
 assign vcu_if.vcontrol.vs1_sel = vs2_sel;
 
 // Register write enables
@@ -259,8 +259,6 @@ rv32v_opi_decode U_OPIDECODE(
     .valid(vopi_decode_valid),
     .disable_mask(vopi_disable_mask)
 );
-logic vopi_valid; 
-assign vopi_valid = vopi_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 
 
 // OPM* execution unit control signals
 vexec_t vexec_opm;
@@ -276,8 +274,6 @@ rv32v_opm_decode U_OPMDECODE(
     .valid(vopm_decode_valid),
     .veew_src2(vopm_veew_src2)
 );
-logic vopm_valid; 
-assign vopm_valid = vopm_valid_fn && (vmajoropcode==VMOC_ALU_CFG); 
 
 // Final execution unit control signals
 logic vopi_valid;
