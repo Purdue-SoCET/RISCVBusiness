@@ -69,6 +69,7 @@ always_comb begin
         VMOC_ALU_CFG: vmajoropcode = VMOC_ALU_CFG;
         default: begin
             // If the opcode didn't match any of our major opcodes, it's not a vector instruction
+            vmajoropcode = VMOC_INVALID;
             vmajoropcode_valid = 1'b0;
         end
     endcase
@@ -248,20 +249,20 @@ assign vcu_if.vcontrol.veew_dest = veew_dest;
 
 // OPI* execution unit control signals
 vexec_t vexec_opi;
-logic vopi_valid;
+logic vopi_decode_valid;
 logic vopi_disable_mask; 
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
     .vfunct3(vfunct3),
     .vm_bit(vcu_if.instr[25]), 
     .vexec(vexec_opi),
-    .valid(vopi_valid),
+    .valid(vopi_decode_valid),
     .disable_mask(vopi_disable_mask)
 );
 
 // OPM* execution unit control signals
 vexec_t vexec_opm;
-logic vopm_valid;
+logic vopm_decode_valid;
 logic widen_vs2; 
 vsew_t vopm_veew_src2; 
 rv32v_opm_decode U_OPMDECODE(
@@ -270,12 +271,24 @@ rv32v_opm_decode U_OPMDECODE(
     .vsew(vcu_if.vsew),
     .vs1_sel(vs1), 
     .vexec(vexec_opm),
-    .valid(vopm_valid),
+    .valid(vopm_decode_valid),
     .veew_src2(vopm_veew_src2)
 );
 
 // Final execution unit control signals
+logic vopi_valid;
+logic vopm_valid;
 logic vexecute_valid;
+
+assign vopi_valid = (vmajoropcode == VMOC_ALU_CFG &&
+                     vopi_decode_valid &&
+                     (vfunct3 == OPIVV ||
+                      vfunct3 == OPIVI ||
+                      vfunct3 == OPIVX));
+assign vopm_valid = (vmajoropcode == VMOC_ALU_CFG &&
+                     vopm_decode_valid &&
+                     (vfunct3 == OPMVV ||
+                      vfunct3 == OPMVX));
 
 always_comb begin
     // Arbitrary defaults just to prevent latches
@@ -287,17 +300,17 @@ always_comb begin
     vcu_if.vcontrol.vsignext = 1'b0; 
     vexecute_valid = 1'b0;
 
-    unique casez ({vopi_valid, vopm_valid, vmeminstr, vredinstr})
+    unique case ({vopi_valid, vopm_valid, vmeminstr, vredinstr})
         4'b1000: begin
             vcu_if.vcontrol.vexec = vexec_opi;
             vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned;
-            vexecute_valid = (vmajoropcode == VMOC_ALU_CFG);
+            vexecute_valid = 1'b1;
         end
 
         4'b0100: begin
             vcu_if.vcontrol.vexec = vexec_opm;
             vcu_if.vcontrol.vsignext = ~vexec_opm.vopunsigned; 
-            vexecute_valid = (vmajoropcode == VMOC_ALU_CFG);
+            vexecute_valid = 1'b1;
         end
 
         4'b0010: begin
@@ -309,7 +322,11 @@ always_comb begin
         4'b1001, 4'b0101: begin
             vcu_if.vcontrol.vexec = vexec_red;
             vcu_if.vcontrol.vsignext = ~vexec_red.vopunsigned;
-            vexecute_valid = (vmajoropcode == VMOC_ALU_CFG);
+            vexecute_valid = 1'b1;
+        end
+
+        default: begin
+            vexecute_valid = 1'b0;
         end
     endcase
 end
@@ -359,10 +376,13 @@ assign mem_evl = (vmaskldst) ? (mask_evl) :
 /* UOP GENERATION UNIT
 /**********************************************************/
 logic [2:0] vreg_offset;
+logic vgen_uops;
 
 rv32v_uop_gen_if vug_if();
 
-assign vug_if.gen = vcu_if.vvalid;
+assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG);
+
+assign vug_if.gen = vgen_uops;
 assign vug_if.stall = vcu_if.stall;
 assign vug_if.veew = veew_dest;
 assign vug_if.vl = (vredinstr) ? vl_red : mem_evl;

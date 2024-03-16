@@ -73,6 +73,7 @@ package rv32v_types_pkg;
   } width_t;
 
   typedef enum logic [6:0] { 
+    VMOC_INVALID = 7'h0,
     VMOC_LOAD = 7'h7,
     VMOC_STORE = 7'h27,
     VMOC_AMO = 7'h2f,

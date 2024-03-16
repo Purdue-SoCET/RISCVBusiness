@@ -318,11 +318,11 @@ int main(int argc, char **argv) {
     }
 
     if(sim_time >= 100000) {
-        std::cout << "Test TIMED OUT" << std::endl;
+        std::cout << "Test TIMED OUT in " << sim_time << " cycles" << std::endl;
     } else if(dut.top_core->get_x28() == 1) {
-        std::cout << "Test PASSED" << std::endl;
+        std::cout << "Test PASSED in " << sim_time << " cycles" << std::endl;
     } else {
-        std::cout << "Test FAILED: Test " << ((dut.top_core->get_x28() - 1) / 2) << std::endl;
+        std::cout << "Test FAILED: Test " << ((dut.top_core->get_x28() - 1) / 2) << " in " << sim_time << " cycles" << std::endl;
     }
     m_trace.close();
     memory.dump();
