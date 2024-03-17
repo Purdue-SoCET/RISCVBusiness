@@ -121,12 +121,31 @@ rv32v_read_xbar VSRC2_XBAR(
     .out_dat(xbardat_src2)
 ); 
 
+// scratch reg
+word_t[3:0] vscratchdata;
+
+rv32v_scratch_reg VSCRATCH (
+    .CLK(CLK), .nRST(nRST), 
+    .wen((vctrls.vd_sel.regclass == RC_SCRATCH) && vctrls.vregwen),
+    .vwdata({vfu_res[3], vfu_res[2], vfu_res[1], vfu_res[0]}),
+    .vrdata({vscratchdata})
+);
+
 // vector functional units 
 word_t temp_res; 
 always_comb begin
     vopB = xbardat_src1; 
     vopA = xbardat_src2; 
     temp_res = '0; 
+
+    // Override with scratch register if required
+    if(vctrls.vs1_sel.regclass == RC_SCRATCH) begin
+        vopB = vscratchdata;
+    end
+    if(vctrls.vs2_sel.regclass == RC_SCRATCH) begin
+        vopB = vscratchdata;
+    end
+
     if(vctrls.vxin1_use_imm) begin
         vopB = {4{ext_imm}};
     end
