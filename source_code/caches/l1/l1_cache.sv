@@ -81,7 +81,7 @@ module l1_cache #(
     } flush_idx_t;             // flush counter type
 
     typedef enum {
-       IDLE, HIT, FETCH, WB, FLUSH_CACHE
+       IDLE, HIT, FETCH, WB, FLUSH_CACHE, UPDATE
     } cache_fsm_t;            // cache state machine
     
     // counter signals
@@ -369,6 +369,9 @@ module l1_cache #(
                     flush_done 	       = 1;
                 end
             end
+            UPDATE: begin
+                
+            end
         endcase
     end
 
@@ -380,8 +383,10 @@ module l1_cache #(
                 if (idle_done)
                     next_state = HIT;
 	        end
-	        HIT: begin                    
-                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
+	        HIT: begin
+                if (new_data)
+                    next_state = UPDATE;                    
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
                     next_state = WB;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
@@ -391,19 +396,22 @@ module l1_cache #(
 	        FETCH: begin
                 if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
                     next_state = HIT; 
-                else if (word_count_done)
+                else
                     next_state = HIT;
 	        end
 	        WB: begin
                 if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
                     next_state = HIT; 
-                else if (word_count_done)
+                else
                     next_state = FETCH;
 	        end
 	        FLUSH_CACHE: begin        
                 if (flush_done)
                     next_state = HIT;
 	        end
+            UPDATE: begin
+                next_state = HIT;
+            end
 	    endcase
     end
 
