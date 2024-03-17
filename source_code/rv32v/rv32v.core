@@ -25,6 +25,7 @@ filesets:
             - source/rv32v_divider.sv
             - source/rv32v_mask_set_layer.sv
             - source/rv32v_scratch_reg.sv
+            - source/rv32v_reduction_unit.sv
         file_type: systemVerilogSource
 
 

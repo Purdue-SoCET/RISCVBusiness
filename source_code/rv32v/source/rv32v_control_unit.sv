@@ -38,9 +38,6 @@ import rv32v_types_pkg::*;
 /* FIELD EXTRACTION
 /**********************************************************/
 
-//enable or disable masking by looking at bit 25
-assign vcu_if.vcontrol.vmask_en = (vopi_valid && vopi_disable_mask) ? 1'b0 : ~vcu_if.instr[25]; 
-
 // Register select extraction
 logic [4:0] vd, vs1, vs2, vs3;
 logic [4:0] rd, rs1, rs2;
@@ -92,6 +89,10 @@ vopm_t vopm;
 assign vopi = vopi_t'(vfunct6);
 assign vopm = vopm_t'(vfunct6);
 
+// Mask enable extraction
+logic vencmasken;
+assign vencmasken = (vfunct3 != OPCFG) && !vcu_if.instr[25];
+
 /**********************************************************/
 /* CFG (VSET*) INSTRUCTIONS
 /**********************************************************/
@@ -122,8 +123,6 @@ always_comb begin
         vcu_if.vcontrol.vsetvl_type = NOT_CFG;
         vcu_if.vcontrol.vtype_imm = '0; 
     end
-
-
 end
 
 /**********************************************************/
@@ -331,6 +330,20 @@ always_comb begin
     endcase
 end
 
+// Mask enable logic
+always_comb begin
+    vcu_if.vcontrol.vmask_en = vencmasken;
+
+    if (vopi_valid && vopi_disable_mask) begin
+        vcu_if.vcontrol.vmask_en = 0;
+    end
+
+    if (vredinstr && !vmask_red) begin
+        vcu_if.vcontrol.vmask_en = 0;
+    end
+end
+
+
 /**********************************************************/
 /* MEMORY CONTROL SIGNALS
 /**********************************************************/
@@ -406,6 +419,7 @@ rv32v_uop_gen U_UOPGEN(
 logic vopi_red, vopm_red, vredinstr;
 vexec_t vexec_red;
 logic busy_red;
+logic vmask_red;
 word_t vl_red;
 
 assign vopi_red = (vopi_valid && vexec_opi.vfu == VFU_RED);
@@ -437,6 +451,7 @@ always_comb begin
     vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
     vl_red = vcu_if.vl;
     busy_red = 0;
+    vmask_red = 1;
 
     case (redstate)
         REDC_IDLE: begin
@@ -474,12 +489,12 @@ always_comb begin
 
         REDC_UNTIL_4: begin
             // If we fix the src1 and dest register to the scratch register
-            // and fix the src1 and dest bank offset to bank 0, then the uop
-            // generator will correctly generate uops to reduce down to 4 elements
+            // then the uop generator will correctly generate uops that will
+            // reduce the vector down to 4 elements since the scratch register
+            // always stores elements at native (extended) width
             vexec_red.vfu = VFU_ALU;
             vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            // TODO: pin src1 and dest to the lowest bank
             busy_red = 1;
 
             if (!vug_if.busy) begin
@@ -491,30 +506,15 @@ always_comb begin
         end
 
         REDC_LAST_4: begin
-            // Op the bottom two elements in the scratch register with the top two elements
-            // This requires a weird xbar config where the upper two elements of src2 are
-            // being pushed into the bottom two lanes, so need to override standard logic
-            vexec_red.vfu = VFU_ALU;
+            // Use the reduction functional unit to reduce the final 4 elements into
+            // the lane 0 of the scratch register (disable masking here)
+            vexec_red.vfu = VFU_RED;
             vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            // TODO: implement the weird xbar mapping
-            vl_red = 2;
-            busy_red = 1;
-
-            next_redstate = REDC_LAST_2;
-        end
-
-        REDC_LAST_2: begin
-            // Op the bottom element in the scratch register with the top element
-            // Same considerations as before apply here
-            vexec_red.vfu = VFU_ALU;
-            vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            // TODO: implement the weird xbar mapping
             vl_red = 1;
             busy_red = 1;
+            vmask_red = 0;
 
             next_redstate = REDC_FINAL;
         end
@@ -526,6 +526,7 @@ always_comb begin
             vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vl_red = 1;
             busy_red = 0;
+            vmask_red = 0;
 
             next_redstate = REDC_IDLE;
         end
