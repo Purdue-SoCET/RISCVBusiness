@@ -52,7 +52,6 @@ always_comb begin
     vexec.vmulwiden = 1'b0;
     vexec.vmulrethigh = 1'b0;
     vexec.vdivremainder = 1'b0;
-    vexec.vredop = VRED_AND;
     vexec.vmaskop = VMSK_AND;
     vexec.vpermop = VPRM_CPS;
     vexec.vsigntype = SIGNED;
