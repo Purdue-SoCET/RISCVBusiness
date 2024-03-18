@@ -1310,7 +1310,7 @@ RVTEST_CODE_END
 RVTEST_DATA_BEGIN
 TEST_DATA
 
-    .align 16
+    .align 8
 in_data:
     .word 0x03020100
     .word 0x07060504
@@ -1377,7 +1377,7 @@ in_data:
     .word 0xfbfaf9f8
     .word 0xfffefdfc
 
-    .align 16
+    .align 8
 out_data:
     .word 0x55555555
     .word 0x55555555

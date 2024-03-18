@@ -22,14 +22,8 @@ RVTEST_CODE_BEGIN
     addi x2, x2, 14
 # Vector load/store instructions
     vl4re8.v v8, (x1)
-    nop
-    nop
-    nop
 
     vs4r.v v8, (x2)
-    nop
-    nop
-    nop
 
 # Check data at byte offset 0
     lb x11, 0(x1)
@@ -1318,7 +1312,7 @@ RVTEST_CODE_END
 RVTEST_DATA_BEGIN
 TEST_DATA
 
-    .align 16
+    .align 8
 in_data:
     .word 0x03020100
     .word 0x07060504
@@ -1385,7 +1379,7 @@ in_data:
     .word 0xfbfaf9f8
     .word 0xfffefdfc
 
-    .align 16
+    .align 8
 out_data:
     .word 0x55555555
     .word 0x55555555

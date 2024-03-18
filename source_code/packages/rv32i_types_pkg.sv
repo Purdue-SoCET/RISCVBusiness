@@ -207,7 +207,7 @@ package rv32i_types_pkg;
         RC_SCALAR,
         RC_VECTOR,
         RC_FLOAT,
-        RC_IMP
+        RC_SCRATCH
     } regclass_t;
 
     typedef struct packed {

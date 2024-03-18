@@ -20,6 +20,8 @@ word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2 ;  
 word_t[3:0] vopA, vopB; 
 word_t [3:0] vfu_res; 
+word_t vred_res;
+word_t vres_0;
 word_t ext_imm; 
 logic[3:0] mask_bits;
 logic[3:0] msku_lane_mask; 
@@ -56,7 +58,7 @@ assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, v
 assign vmem_in.vs1 = xbardat_src1; 
 
 // vres muxing due to vmskset instructions 
-assign vmem_in.vres[0] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[0]; 
+assign vmem_in.vres[0] = is_vmskset_op ? {26'b0, vmskset_res} : vres_0;
 assign vmem_in.vres[1] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[1];
 assign vmem_in.vres[2] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[2];
 assign vmem_in.vres[3] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[3];
@@ -121,12 +123,31 @@ rv32v_read_xbar VSRC2_XBAR(
     .out_dat(xbardat_src2)
 ); 
 
+// scratch reg
+word_t[3:0] vscratchdata;
+
+rv32v_scratch_reg VSCRATCH (
+    .CLK(CLK), .nRST(nRST), 
+    .wen((vctrls.vd_sel.regclass == RC_SCRATCH) && vctrls.vregwen),
+    .vwdata({vfu_res[3], vfu_res[2], vfu_res[1], vfu_res[0]}),
+    .vrdata({vscratchdata})
+);
+
 // vector functional units 
 word_t temp_res; 
 always_comb begin
     vopB = xbardat_src1; 
     vopA = xbardat_src2; 
     temp_res = '0; 
+
+    // Override with scratch register if required
+    if(vctrls.vs1_sel.regclass == RC_SCRATCH) begin
+        vopB = vscratchdata;
+    end
+    if(vctrls.vs2_sel.regclass == RC_SCRATCH) begin
+        vopB = vscratchdata;
+    end
+
     if(vctrls.vxin1_use_imm) begin
         vopB = {4{ext_imm}};
     end
@@ -176,6 +197,15 @@ endgenerate
 
 assign vex_stall = |vfu_stall;
 
+// reduction unit
+rv32v_reduction_unit VREDUNIT (
+    .valuop(vctrls.vexec.valuop),
+    .vopunsigned(vctrls.vexec.vopunsigned),
+    .vdat_in(vopB),
+    .vdat_out(vred_res)
+);
+
+assign vres_0 = (vctrls.vexec.vfu == VFU_RED) ? vred_res : vfu_res[0];
 
 // Maskings
 

@@ -49,7 +49,6 @@ always_comb begin
     vexec.vfu = VFU_ALU;
     vexec.valuop = VALU_ADD;
     vexec.vmulop = UNFUSED;
-    vexec.vredop = VRED_AND;
     vexec.vmaskop = VMSK_AND;
     vexec.vpermop = VPRM_CPS;
     vexec.vsigntype = SIGNED;
@@ -58,37 +57,37 @@ always_comb begin
     case (vopm)
         VREDSUM: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_SUM;
+            vexec.valuop = VALU_ADD;
         end
         VREDAND: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_AND;
+            vexec.valuop = VALU_AND;
         end
         VREDOR: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_OR;
+            vexec.valuop = VALU_OR;
         end
         VREDXOR: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_XOR;
+            vexec.valuop = VALU_XOR;
         end
         VREDMINU: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_MIN;
+            vexec.valuop = VALU_MIN;
             vexec.vopunsigned = 1'b1;
         end
         VREDMIN: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_MIN;
+            vexec.valuop = VALU_MIN;
         end
         VREDMAXU: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_MAX;
+            vexec.valuop = VALU_MAX;
             vexec.vopunsigned = 1'b1;
         end
         VREDMAX: begin
             vexec.vfu = VFU_RED;
-            vexec.vredop = VRED_MAX;
+            vexec.valuop = VALU_MAX;
         end
         VAADDU: begin
             vexec.vfu = VFU_ALU;
