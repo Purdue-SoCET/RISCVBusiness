@@ -105,8 +105,8 @@ module stage4_execute_stage (
 
     //assign ex_mem_if.vexmem = '{default:0, veew: SEW32}; 
     rv32v_ex_datapath RVV_DATAPATH(
-        .CLK(CLK), .nRST(nRST),
-        .rdat1(rf_if.rs1_data), .rdat2(rf_if.rs2_data), 
+        .CLK(CLK), .nRST(nRST), 
+        .rdat1(rs1_post_fwd), .rdat2(rs2_post_fwd), 
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
         .vmskset_fwd_bits(ex_mem_if.vmskset_fwd_bits), 

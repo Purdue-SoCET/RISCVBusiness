@@ -51,6 +51,8 @@ assign vs1 = vcu_if.instr[19:15];
 assign rs2 = vcu_if.instr[24:20];
 assign vs2 = vcu_if.instr[24:20];
 
+assign vcu_if.vcontrol.vimm = vcu_if.instr[19:15]; 
+
 // Major opcode extraction
 vmajoropcode_t vmajoropcode;
 logic vmajoropcode_valid;
@@ -205,6 +207,8 @@ rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
     .vfunct3(vfunct3),
     .vm_bit(vcu_if.instr[25]), 
+    .vsew(vcu_if.vsew), 
+    
     .vexec(vexec_opi),
     .valid(vopi_valid_fn),
     .disable_mask(vopi_disable_mask), 

@@ -162,6 +162,11 @@ always_comb begin
             vres = vmul_out.vd_res;
         VFU_DIV:
             vres = vdiv_out.vd_res;
+        VFU_PRM: begin
+            case(vop.vpermop)
+                VPRM_SMV: vres = vopA; 
+            endcase
+        end 
     endcase
 end
 endmodule 
