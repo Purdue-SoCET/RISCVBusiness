@@ -16,7 +16,7 @@ RVTEST_RV32U
 RVTEST_CODE_BEGIN
 
 	vsetivli x0, 0, e32
-  	li x1, 0xbeef1234
+  li x1, 0xbeef1234
 	li x2, 0xbb44aa55
 	add x3, x0, x0
 	add x4, x0, x0
@@ -31,8 +31,8 @@ RVTEST_CODE_BEGIN
 	vsetivli x0, 0, e8
 	vmv.x.s x5, v3
 
-  	TEST_CASE(1, x3, 0xbeef1234, NOP)
-	TEST_CASE(2, x4, 0x0000aa55, NOP)
+  TEST_CASE(1, x3, 0xbeef1234, NOP)
+	TEST_CASE(2, x4, 0xffffaa55, NOP)
 	TEST_CASE(3, x5, 0x00000034, NOP)
 
   TEST_PASSFAIL

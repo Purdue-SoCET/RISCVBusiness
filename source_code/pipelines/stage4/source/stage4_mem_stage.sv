@@ -188,8 +188,7 @@ module stage4_mem_stage (
     assign ex_mem_if.reg_write = (ex_mem_if.ex_mem_reg.reg_write & (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_SCALAR))
                                  | ex_mem_if.vexmem.sregwen;
     assign ex_mem_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
-    assign ex_mem_if.vwb.vd = (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? ex_mem_if.ex_mem_reg.rd_m.regidx
-                                                                                : ex_mem_if.vexmem.vd_sel.regidx;
+    assign ex_mem_if.vwb.vd = ex_mem_if.vexmem.vd_sel.regidx;
 
     always_comb begin
         // TODO: RISC-MGMT
@@ -233,7 +232,7 @@ module stage4_mem_stage (
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :
-                        (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) ? {4{ex_mem_if.ex_mem_reg.port_out}} : ex_mem_if.vexmem.vres;
+                        (ex_mem_if.vexmem.vmv_s_x) ? {4{ex_mem_if.ex_mem_reg.rs1_data}} : ex_mem_if.vexmem.vres;
 
     always_comb begin
         if (ex_mem_if.vexmem.vmemdren) begin
@@ -243,8 +242,8 @@ module stage4_mem_stage (
                 2'd2: vlane_wen = {1'b0, ~dgen_bus_if.busy & velem_mask[2], 2'b0};
                 2'd3: vlane_wen = {      ~dgen_bus_if.busy & velem_mask[3], 3'b0};
             endcase
-        end else if (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_VECTOR) begin
-            vlane_wen = {3'b0, ex_mem_if.ex_mem_reg.reg_write};  // vmv.s.x always to element 0 of vd
+        end else if (ex_mem_if.vexmem.vmv_s_x) begin
+            vlane_wen = 4'b0001;  // vmv.s.x always to element 0 of vd
         end else if (ex_mem_if.vexmem.vregwen) begin
             vlane_wen = velem_mask;
         end else begin

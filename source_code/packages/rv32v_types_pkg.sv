@@ -554,6 +554,7 @@ package rv32v_types_pkg;
     rv32i_types_pkg::regsel_t vd_sel;
     logic vregwen;
     logic sregwen;
+    logic vmv_s_x;
     // Alignment/crossbar signals
     vsew_t veew_src1;
     vsew_t veew_src2;
@@ -600,6 +601,7 @@ package rv32v_types_pkg;
     logic vmemdwen;
     logic vregwen;
     logic sregwen;
+    logic vmv_s_x;
     vsew_t veew;
     rv32i_types_pkg::regsel_t vd_sel;
     logic [1:0] vbank_offset;

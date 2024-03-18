@@ -119,8 +119,7 @@ always_comb begin
             vexec.vpermop = VPRM_S1D;
         end
         VWXUNARY0: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            // don't care
         end
         VXUNARY0: begin
             case(vs1_sel)

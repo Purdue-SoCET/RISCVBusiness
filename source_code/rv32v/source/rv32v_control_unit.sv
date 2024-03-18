@@ -184,6 +184,9 @@ assign vcu_if.vcontrol.vxin1_use_rs1 = (vmajoropcode == VMOC_LOAD) ||
 assign vcu_if.vcontrol.vxin2_use_rs2 = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE) && 
                                        ~(mop == MOP_UINDEXED || mop == MOP_OINDEXED);
 
+// Vector-scalar move
+assign vcu_if.vcontrol.vmv_s_x = (vopm == VWXUNARY0 && vfunct3 == OPMVX && vopm_valid && vs2_sel.regidx == 0);
+
 /**********************************************************/
 /* WIDTH CONTROL LOGIC
 /**********************************************************/
