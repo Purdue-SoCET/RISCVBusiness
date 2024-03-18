@@ -112,7 +112,7 @@ rv32v_read_xbar VSRC1_XBAR(
     .veew(vctrls.veew_src1),
     .bank_offset(vctrls.vuop_num[1:0]),
     .sign_ext(vctrls.vsignext),
-    .out_dat(xbardat_src1)
+    .out_dat({xbardat_src1[3], xbardat_src1[2], xbardat_src1[1], xbardat_src1[0]})
 ); 
 
 rv32v_read_xbar VSRC2_XBAR(
@@ -129,8 +129,8 @@ word_t[3:0] vscratchdata;
 rv32v_scratch_reg VSCRATCH (
     .CLK(CLK), .nRST(nRST), 
     .wen((vctrls.vd_sel.regclass == RC_SCRATCH) && vctrls.vregwen),
-    .vwdata({vfu_res[3], vfu_res[2], vfu_res[1], vfu_res[0]}),
-    .vrdata({vscratchdata})
+    .vwdata({vmem_in.vres[3], vmem_in.vres[2], vmem_in.vres[1], vmem_in.vres[0]}),
+    .vrdata({vscratchdata[3], vscratchdata[2], vscratchdata[1], vscratchdata[0]})
 );
 
 // vector functional units 

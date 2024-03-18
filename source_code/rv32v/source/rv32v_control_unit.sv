@@ -154,7 +154,7 @@ end
 
 assign vcu_if.vcontrol.vd_sel = vd_sel;
 assign vcu_if.vcontrol.vs1_sel = vs1_sel;
-assign vcu_if.vcontrol.vs1_sel = vs2_sel;
+assign vcu_if.vcontrol.vs2_sel = vs2_sel;
 
 // Register write enables
 logic sregwen;
@@ -430,7 +430,6 @@ typedef enum logic [3:0] {
     REDC_IDLE,
     REDC_UNTIL_4,
     REDC_LAST_4,
-    REDC_LAST_2,
     REDC_FINAL
 } red_state_t;
 
@@ -465,13 +464,10 @@ always_comb begin
                 if (vcu_if.vl > 4) begin
                     // If we have more than 4 elements, we'll need to reduce to 4
                     next_redstate = REDC_UNTIL_4;
-                end else if (vcu_if.vl == 4 || vcu_if.vl == 3) begin
+                end else if (vcu_if.vl > 1) begin
                     // If we have 3 or 4 elements, go straight to the reduce 4 step
                     next_redstate = REDC_LAST_4;
-                end else if (vcu_if.vl == 2) begin
-                    // If we have 2 elements, go straight to the reduce 2 step
-                    next_redstate = REDC_LAST_2;
-                end else if (vcu_if.vl == 1) begin
+                end else begin
                     // If we have just 1 element, the operation is a simple op
                     // between the lowest two elements of vs1 and vs2
                     vexec_red.vfu = VFU_ALU;
@@ -512,7 +508,6 @@ always_comb begin
             vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            vl_red = 1;
             busy_red = 1;
             vmask_red = 0;
 
