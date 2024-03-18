@@ -46,7 +46,7 @@ Transaction rand_transaction(Transaction prev) {
         else if (rand_action <= 5)
             action = TransactionAction::Write;
         else
-            return prev;
+            action = TransactionAction::Noop;
     }
     {
         // TODO: Once caches reliably work, bump this up to test evictions and conflicts
@@ -56,6 +56,7 @@ Transaction rand_transaction(Transaction prev) {
         addr &= ~0x3;
     }
     data = rand();
+    if (action == TransactionAction::Noop) return prev;
     return Transaction(action, addr, data);
 }
 
@@ -190,6 +191,10 @@ struct Cache {
             executeTransaction(transaction);
         }
         dump();
+        *bus.addr = 0;
+        *bus.wdata = 0;
+        *bus.ren = 0;
+        *bus.wen = 0;
         done = true;
     }
 
@@ -321,7 +326,7 @@ int main(int argc, char **argv) {
                              &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy);
     GenericBusIf cache1_gbif(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
                              &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy);
-    Epoch epoch(37, cache0_gbif, cache1_gbif);
+    Epoch epoch(1000, cache0_gbif, cache1_gbif);
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");
@@ -377,13 +382,13 @@ int main(int argc, char **argv) {
         }
     } while (dut->cache0_flush || dut->cache1_flush);
 
+    cache0_thread.join();
+    cache1_thread.join();
+
     dut->final();
     trace->close();
     epoch.sim_model.dump();
     epoch.golden_model.dump();
-
-    cache0_thread.join();
-    cache1_thread.join();
 
     return 0;
 }

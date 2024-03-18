@@ -481,6 +481,14 @@ module l1_cache #(
             end
         endcase
 
+        // To properly catch this case, set epoch size to 10k and range to
+        // be % 512 in cache stress testbench
+        if (CLK == 1 && sramWEN) begin
+            if (sramSEL === sramSNOOPSEL) begin end else begin
+                $warning("sram sels should be same");
+            end
+        end
+
         for (int i = 0; i < ASSOC; i++) begin
             sramTags[i] = sramWrite.frames[i].tag;
             sramTagsMask[i] = sramMask.frames[i].tag;
