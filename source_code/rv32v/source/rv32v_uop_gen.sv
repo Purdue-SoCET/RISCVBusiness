@@ -95,6 +95,9 @@ assign vug_if.vuop_num = (refresh) ? 0 : vuop_num_reg;
 // Set busy flag until the last uop is being issued
 assign vug_if.busy = (vug_if.gen && elements_left > VLANE_COUNT);
 
+// Set last uop flag if last uop is being issued
+assign vug_if.vuop_last = (vug_if.gen && elements_left <= VLANE_COUNT);
+
 // Calculate bank offset
 assign vug_if.vbank_offset = {vug_if.vuop_num[1:0] << vug_if.veew}[1:0];
 

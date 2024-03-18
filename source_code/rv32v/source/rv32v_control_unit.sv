@@ -102,6 +102,7 @@ always_comb begin
     // Set the vset* type based on the top two bits
     vcu_if.vcontrol.vtype_imm = '0; 
     vcu_if.vcontrol.vkeepvl = 0; 
+    vcu_if.vcontrol.vuop_last = 0;  // to prevent setting vstart if vset*
     casez (vcu_if.instr[31:30])
         2'b0?: begin 
             vcu_if.vcontrol.vsetvl_type = VSETVLI;
@@ -124,6 +125,7 @@ always_comb begin
     if (!(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG)) begin
         vcu_if.vcontrol.vsetvl_type = NOT_CFG;
         vcu_if.vcontrol.vtype_imm = '0; 
+        vcu_if.vcontrol.vuop_last = vug_if.vuop_last;
     end
 end
 
@@ -410,6 +412,7 @@ assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
 assign vreg_offset = vug_if.vreg_offset;
 assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
 assign vcu_if.vbusy = (vredinstr) ? busy_red : vug_if.busy;
+assign vcu_if.vcontrol.vvalid = vmajoropcode_valid;
 assign vcu_if.vvalid = vmajoropcode_valid;
 
 rv32v_uop_gen U_UOPGEN(

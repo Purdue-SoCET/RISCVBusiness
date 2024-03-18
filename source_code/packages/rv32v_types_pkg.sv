@@ -536,6 +536,8 @@ package rv32v_types_pkg;
     vfu_t vfu;
     valuop_t valuop;
     vmulop_t vmulop;
+    logic vmulwiden;
+    logic vmulrethigh;
     logic vdivremainder;
     vmaskop_t vmaskop;
     vpermop_t vpermop;
@@ -544,6 +546,8 @@ package rv32v_types_pkg;
   } vexec_t;
 
   typedef struct packed {
+    logic vvalid;
+    logic vuop_last;
     // Register file signals
     rv32i_types_pkg::regsel_t vs1_sel;
     rv32i_types_pkg::regsel_t vs2_sel;
@@ -588,6 +592,8 @@ package rv32v_types_pkg;
     logic [3:0] vlane_mask;
 
     // general 
+    logic vvalid;
+    logic vuop_last;
     logic vindexed;
     logic [4:0] vuop_num;
     logic vmemdren;

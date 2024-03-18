@@ -368,6 +368,8 @@ module stage4_execute_stage (
     assign hazard_if.pc_e = ex_in.if_out.pc;
     assign hazard_if.ex_busy = (rv32m_busy && ex_in.ctrl_out.rv32m_control.select) | vex_stall; // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = ex_in.if_out.valid;
+    assign hazard_if.velem_num_e = ex_in.vctrl_out.vuop_num << 2;
+    assign hazard_if.vvalid_e = ex_in.vctrl_out.vvalid;
 
 
     // TODO: NEW

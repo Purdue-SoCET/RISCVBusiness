@@ -127,8 +127,10 @@ module stage4_mem_stage (
     // Vector-specific signals
     assign hazard_if.vd = ex_mem_if.vexmem.vd_sel;
     assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen;
-    assign hazard_if.is_visn = vmemop;
-    assign hazard_if.velem_num = (ex_mem_if.vexmem.vuop_num << 2) + serial_if.vcurr_lane;
+    assign hazard_if.vvalid_m = ex_mem_if.vexmem.vvalid;
+    assign hazard_if.velem_num_m = (vmemop) ? (ex_mem_if.vexmem.vuop_num << 2) + serial_if.vcurr_lane
+                                            : (ex_mem_if.vexmem.vuop_num + 1) << 2;  // if actively writing-back, vstart on next uop
+    assign hazard_if.vuop_last = ex_mem_if.vexmem.vuop_last & ~hazard_if.serializer_stall;
     assign ex_mem_if.vmskset_fwd_bits = ex_mem_if.vexmem.vres[0][3:0]; 
     
     assign halt = ex_mem_if.ex_mem_reg.halt;

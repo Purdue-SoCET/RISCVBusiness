@@ -139,15 +139,9 @@ module stage4_hazard_unit (
     assign prv_pipe_if.ex_rmgmt_cause = '0;//rm_if.ex_cause;
     assign prv_pipe_if.epc = epc;
     assign prv_pipe_if.badaddr = hazard_if.badaddr;
-    assign prv_pipe_if.velem_num = hazard_if.velem_num;
-    assign prv_pipe_if.set_vstart = (hazard_if.is_visn) ? prv_pipe_if.fault_l |
-                                                          prv_pipe_if.mal_l |
-                                                          prv_pipe_if.fault_s |
-                                                          prv_pipe_if.mal_s
-                                                          //| prv_pipe_if.intr  // need to add setting vstart on interrupt
-                                                                                // currently creates circular comb logic
-                                                        : 0;
-
+    assign prv_pipe_if.velem_num = (hazard_if.vuop_last) ? '0 :
+                                   (hazard_if.vvalid_m && !intr) ? hazard_if.velem_num_m : hazard_if.velem_num_e;
+    assign prv_pipe_if.set_vstart = hazard_if.vuop_last | ((exception) ? ((hazard_if.vvalid_m && !intr) | hazard_if.vvalid_e) : 0);
 
     /*
     * Pipeline control signals
