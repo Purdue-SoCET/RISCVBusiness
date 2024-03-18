@@ -215,7 +215,7 @@ module bus_ctrl #(
 
                 ccif.l2WEN = 1;
                 nblock_count = block_count;
-                nl2_store = ccif.dstore[supplier_cpu][(block_count * 32)+:32];
+                nl2_store = ccif.dload[requester_cpu][(block_count * 32)+:32];
                 if (ccif.l2state == L2_ACCESS) begin
                     if (block_count < BLOCK_SIZE - 1) begin
                         nblock_count = block_count + 1;
