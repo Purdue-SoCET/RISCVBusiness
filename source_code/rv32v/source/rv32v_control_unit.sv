@@ -52,6 +52,8 @@ assign vs1 = vcu_if.instr[19:15];
 assign rs2 = vcu_if.instr[24:20];
 assign vs2 = vcu_if.instr[24:20];
 
+assign vcu_if.vcontrol.vimm = vcu_if.instr[19:15]; 
+
 // Major opcode extraction
 vmajoropcode_t vmajoropcode;
 logic vmajoropcode_valid;
@@ -100,6 +102,7 @@ always_comb begin
     // Set the vset* type based on the top two bits
     vcu_if.vcontrol.vtype_imm = '0; 
     vcu_if.vcontrol.vkeepvl = 0; 
+    vcu_if.vcontrol.vuop_last = 0;  // to prevent setting vstart if vset*
     casez (vcu_if.instr[31:30])
         2'b0?: begin 
             vcu_if.vcontrol.vsetvl_type = VSETVLI;
@@ -122,6 +125,7 @@ always_comb begin
     if (!(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG)) begin
         vcu_if.vcontrol.vsetvl_type = NOT_CFG;
         vcu_if.vcontrol.vtype_imm = '0; 
+        vcu_if.vcontrol.vuop_last = vug_if.vuop_last;
     end
 end
 
@@ -250,10 +254,13 @@ assign vcu_if.vcontrol.veew_dest = veew_dest;
 vexec_t vexec_opi;
 logic vopi_decode_valid;
 logic vopi_disable_mask; 
+vsew_t vopi_veew_dest; 
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
     .vfunct3(vfunct3),
     .vm_bit(vcu_if.instr[25]), 
+    .vsew(vcu_if.vsew), 
+    
     .vexec(vexec_opi),
     .valid(vopi_decode_valid),
     .disable_mask(vopi_disable_mask)
@@ -405,6 +412,7 @@ assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
 assign vreg_offset = vug_if.vreg_offset;
 assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
 assign vcu_if.vbusy = (vredinstr) ? busy_red : vug_if.busy;
+assign vcu_if.vcontrol.vvalid = vmajoropcode_valid;
 assign vcu_if.vvalid = vmajoropcode_valid;
 
 rv32v_uop_gen U_UOPGEN(

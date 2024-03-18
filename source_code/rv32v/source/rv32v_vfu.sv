@@ -4,7 +4,7 @@ import rv32i_types_pkg::*;
 module rv32v_vfu(
     input logic CLK,
     input logic nRST,
-    input word_t vopA, vopB,
+    input word_t vopA, vopB, vopC,
     input logic mask_bit, 
     input vexec_t vop, 
     input vsew_t vsew, 
@@ -38,12 +38,12 @@ assign vmul_in = '{
     vmul_en: (vop.vfu == VFU_MUL) & ~mask_bit,
     vs1_data: vopA,
     vs2_data: vopB,
-    vd_data: '0, // TODO
+    vd_data: vopC,
     vsew: vsew,
     vmulop: vop.vmulop,
     sign: vop.vsigntype,
-    vmul_widen: 0, // TODO
-    vmul_ret_high: 0, // TODO
+    vmul_widen: vop.vmulwiden,
+    vmul_ret_high: vop.vmulrethigh,
     stall: 0,  // TODO
     flush: 0 // TODO
 };
@@ -54,7 +54,7 @@ assign vdiv_in = '{
     vs1_data: vopA,
     vs2_data: vopB,
     vsew: vsew,
-    vdivremainder: 0, // TODO
+    vdivremainder: vop.vdivremainder,
     vopunsigned: vop.vopunsigned,
     stall: 0,  // TODO
     flush: 0 // TODO
@@ -164,6 +164,11 @@ always_comb begin
             vres = vmul_out.vd_res;
         VFU_DIV:
             vres = vdiv_out.vd_res;
+        VFU_PRM: begin
+            case(vop.vpermop)
+                VPRM_SMV: vres = vopA; 
+            endcase
+        end 
     endcase
 end
 endmodule 

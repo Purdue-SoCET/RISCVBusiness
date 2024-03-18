@@ -105,8 +105,8 @@ module stage4_execute_stage (
 
     //assign ex_mem_if.vexmem = '{default:0, veew: SEW32}; 
     rv32v_ex_datapath RVV_DATAPATH(
-        .CLK(CLK), .nRST(nRST),
-        .rdat1(rf_if.rs1_data), .rdat2(rf_if.rs2_data), 
+        .CLK(CLK), .nRST(nRST), 
+        .rdat1(rs1_post_fwd), .rdat2(rs2_post_fwd), 
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
         .vmskset_fwd_bits(ex_mem_if.vmskset_fwd_bits), 
@@ -368,6 +368,8 @@ module stage4_execute_stage (
     assign hazard_if.pc_e = ex_in.if_out.pc;
     assign hazard_if.ex_busy = (rv32m_busy && ex_in.ctrl_out.rv32m_control.select) | vex_stall; // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = ex_in.if_out.valid;
+    assign hazard_if.velem_num_e = ex_in.vctrl_out.vuop_num << 2;
+    assign hazard_if.vvalid_e = ex_in.vctrl_out.vvalid;
 
 
     // TODO: NEW

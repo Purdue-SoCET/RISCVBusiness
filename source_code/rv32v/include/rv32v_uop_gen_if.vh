@@ -67,9 +67,12 @@ interface rv32v_uop_gen_if();
   // Output flag to indicate that uop generation is in progress
   logic busy;
 
+  // Output flag to indicate that last uop of an instruction is being generated
+  logic vuop_last;
+
   modport vug(
     input gen, stall, veew, vl,
-    output vuop_num, vbank_offset, vreg_offset, vlane_active, busy
+    output vuop_num, vbank_offset, vreg_offset, vlane_active, busy, vuop_last
   );
 
 endinterface

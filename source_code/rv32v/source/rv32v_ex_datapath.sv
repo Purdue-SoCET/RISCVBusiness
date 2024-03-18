@@ -16,12 +16,13 @@ parameter NUM_LANES = 4;
 
 logic[127:0] v0;
 logic[127:0] vd; // vd selector is the one in execute and not the one writing back in mem
-word_t[3:0] bankdat_src1, xbardat_src1;
-word_t[3:0] bankdat_src2, xbardat_src2 ;  
-word_t[3:0] vopA, vopB; 
 word_t [3:0] vfu_res; 
 word_t vred_res;
 word_t vres_0;
+word_t[3:0] bankdat_src1, xbardat_src1;
+word_t[3:0] bankdat_src2, xbardat_src2;
+word_t[3:0] bankdat_src3, xbardat_src3;  
+word_t[3:0] vopA, vopB, vopC;
 word_t ext_imm; 
 logic[3:0] mask_bits;
 logic[3:0] msku_lane_mask; 
@@ -66,43 +67,41 @@ assign vmem_in.vres[3] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[3];
 // lane_mask muxsing due to vmskset instructions
 assign vmem_in.vlane_mask = is_vmskset_op ? vmskset_lane_mask : msku_lane_mask; 
 
+assign vd = {bankdat_src3[3], bankdat_src3[2], bankdat_src3[1], bankdat_src3[0]};
+
 
 
 // Banks 
 rv32v_vector_bank VBANK0 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
+    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[0]), .byte_wen(vwb_ctrls.vbyte_wen[0]), 
-    .vdat1(bankdat_src1[0]), .vdat2(bankdat_src2[0]), 
-    .v0(v0[31:0]),
-    .vdat3(vd[31:0])
+    .vdat1(bankdat_src1[0]), .vdat2(bankdat_src2[0]), .vdat3(bankdat_src3[0]),
+    .v0(v0[31:0])
 ); 
 
 rv32v_vector_bank VBANK1 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
+    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[1]), .byte_wen(vwb_ctrls.vbyte_wen[1]), 
-    .vdat1(bankdat_src1[1]), .vdat2(bankdat_src2[1]), 
-    .v0(v0[63:32]),
-    .vdat3(vd[63:32])
+    .vdat1(bankdat_src1[1]), .vdat2(bankdat_src2[1]), .vdat3(bankdat_src3[1]),
+    .v0(v0[63:32])
 );
 
 rv32v_vector_bank VBANK2 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
+    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[2]), .byte_wen(vwb_ctrls.vbyte_wen[2]), 
-    .vdat1(bankdat_src1[2]), .vdat2(bankdat_src2[2]), 
-    .v0(v0[95:64]),
-    .vdat3(vd[95:64])
+    .vdat1(bankdat_src1[2]), .vdat2(bankdat_src2[2]), .vdat3(bankdat_src3[2]),
+    .v0(v0[95:64])
 );
 
 rv32v_vector_bank VBANK3 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), 
+    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[3]), .byte_wen(vwb_ctrls.vbyte_wen[3]), 
-    .vdat1(bankdat_src1[3]), .vdat2(bankdat_src2[3]), 
-    .v0(v0[127:96]),
-    .vdat3(vd[127:96])
+    .vdat1(bankdat_src1[3]), .vdat2(bankdat_src2[3]), .vdat3(bankdat_src3[3]),
+    .v0(v0[127:96])
 );
 
 
@@ -121,7 +120,15 @@ rv32v_read_xbar VSRC2_XBAR(
     .bank_offset(vctrls.vuop_num[1:0]),
     .sign_ext(vctrls.vsignext),
     .out_dat(xbardat_src2)
-); 
+);
+
+rv32v_read_xbar VSRC3_XBAR(
+    .bank_dat(bankdat_src3),
+    .veew(vctrls.veew_src2),
+    .bank_offset(vctrls.vuop_num[1:0]),
+    .sign_ext(vctrls.vsignext),
+    .out_dat(xbardat_src3)
+);
 
 // scratch reg
 word_t[3:0] vscratchdata;
@@ -138,6 +145,7 @@ word_t temp_res;
 always_comb begin
     vopB = xbardat_src1; 
     vopA = xbardat_src2; 
+    vopC = xbardat_src3;
     temp_res = '0; 
 
     // Override with scratch register if required
@@ -186,6 +194,7 @@ generate
             .nRST,
             .vopA(vopA[k]), 
             .vopB(vopB[k]),
+            .vopC(vopC[k]),
             .mask_bit(mask_bits[k]),
             .vsew(vctrls.veew_src2),
             .vop(vctrls.vexec), 
@@ -233,7 +242,9 @@ rv32v_mask_set_layer VMSKSET_LAYER(
 ); 
 
 
-// connect remaining signals from vctrls to vmem_in 
+// connect remaining signals from vctrls to vmem_in
+assign vmem_in.vvalid = vctrls.vvalid;
+assign vmem_in.vuop_last = vctrls.vuop_last;
 assign vmem_in.vindexed = vctrls.vindexed;
 assign vmem_in.vuop_num = vctrls.vuop_num; 
 assign vmem_in.vmemdren = vctrls.vmemdren;
