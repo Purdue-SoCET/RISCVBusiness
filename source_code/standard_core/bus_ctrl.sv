@@ -200,7 +200,8 @@ module bus_ctrl #(
             end
             TRANSFER_RX: begin // move data from cache to bus
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
-
+                //While snooping, sometimes may reach this state before cache hits SNOOP state
+                ccif.ccinv = nonRequesterEnable(requester_cpu);
                 ndload = ccif.dstore[supplier_cpu];
             end
             BUS_TO_CACHE: begin // move data from bus to cache (upwards or downwards); alert requester
@@ -227,7 +228,8 @@ module bus_ctrl #(
             WRITEBACK: begin
                 ccif.l2WEN = 1;
                 nblock_count = block_count;
-                nl2_store = ccif.dstore[supplier_cpu][(block_count * 32)+:32];
+                //nl2_store = ccif.dstore[supplier_cpu][(block_count * 32)+:32];
+                nl2_store = ccif.dstore[requester_cpu][(block_count * 32)+:32];
 
                 if (ccif.l2state == L2_ACCESS) begin
                     if (block_count < BLOCK_SIZE - 1) begin
