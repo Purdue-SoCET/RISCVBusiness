@@ -208,6 +208,10 @@ module bus_ctrl #(
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
                 ndload = ccif.dload[requester_cpu];
+                //Need to keep sending invalidations if prev transfer was a TRANSFER_RX
+                if(|ccif.ccwrite) begin
+                    ccif.ccinv = nonRequesterEnable(requester_cpu);
+                end
             end
             WRITEBACK_MS: begin // writeback using supplier while also doing cache to cache transfer
                 ccif.dwait[requester_cpu] = 0;
