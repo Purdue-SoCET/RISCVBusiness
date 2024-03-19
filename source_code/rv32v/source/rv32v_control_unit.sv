@@ -151,13 +151,13 @@ assign vmskset_instr = vopi_valid && (
                        );
 always_comb begin
     // Default values based on register select fields
-    vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
-    vs1_sel = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vreg_offset}};
-    vs2_sel = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
+    vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vug_if.vreg_offset_dest}};
+    vs1_sel = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vug_if.vreg_offset_src1}};
+    vs2_sel = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vug_if.vreg_offset_src2}};
 
     // Override vs1 to vs3 in case of a store
     if (vmemdwen) begin
-        vs1_sel = '{regclass: RC_VECTOR, regidx: vs3 + {2'b00, vreg_offset}};
+        vs1_sel = '{regclass: RC_VECTOR, regidx: vs3 + {2'b00, vug_if.vreg_offset_dest}};
     end
 
     // Override selects completely in case of a reduction
@@ -425,12 +425,17 @@ assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunc
 
 assign vug_if.gen = vgen_uops;
 assign vug_if.stall = vcu_if.stall;
-assign vug_if.veew = veew_dest;
+//assign vug_if.veew = veew_dest;
+assign vug_if.veew_dest = veew_dest; 
+assign vug_if.veew_src1 = veew_src1; 
+assign vug_if.veew_src2 = veew_src2; 
+
+
 assign vug_if.vl = (vredinstr) ? vl_red : mem_evl;
 
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
-assign vreg_offset = vug_if.vreg_offset;
+assign vreg_offset = vug_if.vreg_offset_dest;
 assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
 assign vcu_if.vbusy = (vredinstr) ? busy_red : vug_if.busy;
 assign vcu_if.vcontrol.vvalid = vmajoropcode_valid;
@@ -474,9 +479,9 @@ end
 
 always_comb begin
     vexec_red = (vopi_red) ? vexec_opi : vexec_opm;
-    vd_sel_red = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
-    vs1_sel_red = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vreg_offset}};
-    vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vreg_offset}};
+    vd_sel_red = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vug_if.vreg_offset_dest}};
+    vs1_sel_red = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vug_if.vreg_offset_src1}};
+    vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vug_if.vreg_offset_src2}};
     vl_red = vcu_if.vl;
     busy_red = 0;
     vmask_red = 1;

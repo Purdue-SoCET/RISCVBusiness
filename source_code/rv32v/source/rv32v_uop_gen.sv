@@ -53,7 +53,7 @@ logic [7:0] elements_left;
 // Register to store current uop number
 logic [7:0] vuop_num_reg;
 
-assign eew_bytes = (1 << vug_if.veew);
+assign eew_bytes = (1 << vug_if.veew_dest);
 
 assign advance = (!vug_if.stall && vug_if.gen);
 
@@ -99,15 +99,30 @@ assign vug_if.busy = (vug_if.gen && elements_left > VLANE_COUNT);
 assign vug_if.vuop_last = (vug_if.gen && elements_left <= VLANE_COUNT);
 
 // Calculate bank offset
-assign vug_if.vbank_offset = {vug_if.vuop_num[1:0] << vug_if.veew}[1:0];
+//assign vug_if.vbank_offset = {vug_if.vuop_num[1:0] << vug_if.veew}[1:0];
+assign vug_if.vbank_offset = '0; // not used now
 
 // Calculate reg offset
 always_comb begin
-    case (vug_if.veew)
-        rv32v_types_pkg::SEW8 : vug_if.vreg_offset = {vug_if.vuop_num >> 2}[2:0];
-        rv32v_types_pkg::SEW16: vug_if.vreg_offset = {vug_if.vuop_num >> 1}[2:0];
-        rv32v_types_pkg::SEW32: vug_if.vreg_offset = {vug_if.vuop_num >> 0}[2:0];
-        default: vug_if.vreg_offset = '0;
+    case (vug_if.veew_dest)
+        rv32v_types_pkg::SEW8 : vug_if.vreg_offset_dest = {vug_if.vuop_num >> 2}[2:0];
+        rv32v_types_pkg::SEW16: vug_if.vreg_offset_dest = {vug_if.vuop_num >> 1}[2:0];
+        rv32v_types_pkg::SEW32: vug_if.vreg_offset_dest = {vug_if.vuop_num >> 0}[2:0];
+        default: vug_if.vreg_offset_dest = '0;
+    endcase
+
+    case (vug_if.veew_src1)
+        rv32v_types_pkg::SEW8 : vug_if.vreg_offset_src1 = {vug_if.vuop_num >> 2}[2:0];
+        rv32v_types_pkg::SEW16: vug_if.vreg_offset_src1 = {vug_if.vuop_num >> 1}[2:0];
+        rv32v_types_pkg::SEW32: vug_if.vreg_offset_src1 = {vug_if.vuop_num >> 0}[2:0];
+        default: vug_if.vreg_offset_src1 = '0;
+    endcase
+
+    case (vug_if.veew_src2)
+        rv32v_types_pkg::SEW8 : vug_if.vreg_offset_src2 = {vug_if.vuop_num >> 2}[2:0];
+        rv32v_types_pkg::SEW16: vug_if.vreg_offset_src2 = {vug_if.vuop_num >> 1}[2:0];
+        rv32v_types_pkg::SEW32: vug_if.vreg_offset_src2 = {vug_if.vuop_num >> 0}[2:0];
+        default: vug_if.vreg_offset_src2 = '0;
     endcase
 end
 

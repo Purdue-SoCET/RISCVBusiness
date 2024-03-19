@@ -31,9 +31,44 @@ RVTEST_CODE_BEGIN
     vse32.v v5, 0(x2)
     lw x3, 0(x2)
     TEST_CASE(2, x3, 0x0000fffe)
-   
 
-    
+
+	vsetivli x0, 8, e16 
+	la x1, add_dat
+	vle16.v v0, 0(x1)
+	vle16.v v1, 0(x1)
+
+	vwadd.vv v2, v0, v1
+
+	vse32.v v2, 0(x2)
+
+	lw x3, 0(x2)
+	TEST_CASE(3, x3, 2, NOP)   
+
+	lw x3, 4(x2)
+	TEST_CASE(4, x3, 2, NOP) 
+
+	lw x3, 8(x2)
+	TEST_CASE(5, x3, 2, NOP)   
+
+	lw x3, 12(x2)
+	TEST_CASE(6, x3, 2, NOP) 
+
+	lw x3, 16(x2)
+	TEST_CASE(7, x3, 2, NOP)   
+
+	add x2, x2, 20  
+	lw x3, 0(x2)
+	TEST_CASE(8, x3, 2, NOP)  
+
+	add x2, x2, 4  
+	lw x3, 0(x2)
+	TEST_CASE(9, x3, 2, NOP)   
+
+	add x2, x2, 4  
+	lw x3, 0(x2)
+	TEST_CASE(10, x3, 2, NOP) 
+
 
 
 
@@ -61,5 +96,16 @@ RVTEST_DATA_BEGIN
 	.word 0x00000004
 	.word 0x00000005
 	.word 0x00000006
+	.word 0x00000007
+	.word 0x00000008
+
+
+	add_dat: 
+	.word 0x00010001
+	.word 0x00010001
+	.word 0x00010001
+	.word 0x00010001
+	
+
 
 RVTEST_DATA_END

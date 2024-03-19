@@ -48,7 +48,8 @@ interface rv32v_uop_gen_if();
   logic stall;
 
   // CSR input values
-  vsew_t veew;
+  //vsew_t veew;
+  vsew_t veew_dest, veew_src1, veew_src2; 
   word_t vl;
 
   // The sequence number of the uop of a particular instruction
@@ -59,7 +60,10 @@ interface rv32v_uop_gen_if();
 
   // The offset to be added to the architectural register numbers
   // to account for extended registers from LMUL > 1
-  logic [VREG_OFFSET_WIDTH-1:0] vreg_offset;
+  logic [VREG_OFFSET_WIDTH-1:0] vreg_offset_dest;
+  logic [VREG_OFFSET_WIDTH-1:0] vreg_offset_src1;
+  logic [VREG_OFFSET_WIDTH-1:0] vreg_offset_src2;
+
 
   // Per-lane active signals to indicate that valid data is present
   logic [VLANE_COUNT-1:0] vlane_active;
@@ -71,8 +75,8 @@ interface rv32v_uop_gen_if();
   logic vuop_last;
 
   modport vug(
-    input gen, stall, veew, vl,
-    output vuop_num, vbank_offset, vreg_offset, vlane_active, busy, vuop_last
+    input gen, stall, veew_dest, veew_src1, veew_src2, vl,
+    output vuop_num, vbank_offset, vreg_offset_dest, vreg_offset_src1, vreg_offset_src2, vlane_active, busy, vuop_last
   );
 
 endinterface
