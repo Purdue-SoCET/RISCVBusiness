@@ -228,7 +228,7 @@ module l1_cache #(
         hit_idx         = 0;
         hit_data        = 0;
         pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
-        ccif.snoop_hit  = 0;
+        //ccif.snoop_hit  = 0;
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
