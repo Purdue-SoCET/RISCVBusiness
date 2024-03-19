@@ -52,7 +52,7 @@ Transaction rand_transaction(Transaction prev) {
         // TODO: Once caches reliably work, bump this up to test evictions and conflicts
         // Cache sizes are 1kB, get 4kB range just to increase possibility we force evictions
         // TODO: Currently 512B range
-        addr = rand() % 64 + 0x80000000;
+        addr = rand() % 512 + 0x80000000;
         addr &= ~0x3;
     }
     data = rand();
@@ -73,8 +73,9 @@ struct Ram {
         if (it != mmap.end()) {
             return __builtin_bswap32(it->second);
         } else {
-            mmap.insert(std::make_pair(addr & ~0x7, c_default_value));
-            mmap.insert(std::make_pair((addr & ~0x7) + 4, c_default_value));
+            uint32_t other_addr = (addr % 8 == 0) ? addr + 4 : addr - 4;
+            mmap.insert(std::make_pair(addr, c_default_value));
+            mmap.insert(std::make_pair(other_addr, c_default_value));
             return c_default_value;
         }
     }
@@ -88,7 +89,7 @@ struct Ram {
             it->second = __builtin_bswap32(value & mask_exp) |
                          __builtin_bswap32(__builtin_bswap32(it->second) & ~mask_exp);
         } else {
-            uint32_t other_addr = addr & 0x7 ? addr - 4 : addr + 4;
+            uint32_t other_addr = (addr % 8 == 0) ? addr + 4 : addr - 4;
             mmap.insert(std::make_pair(addr, __builtin_bswap32(value)));
             mmap.insert(std::make_pair(other_addr, c_default_value));
         }
@@ -326,7 +327,7 @@ int main(int argc, char **argv) {
                              &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy);
     GenericBusIf cache1_gbif(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
                              &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy);
-    Epoch epoch(1000, cache0_gbif, cache1_gbif);
+    Epoch epoch(100, cache0_gbif, cache1_gbif);
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");

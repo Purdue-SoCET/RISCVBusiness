@@ -77,10 +77,8 @@ module coherency_unit #(
                 end
             end
             RESP_CHKTAG: begin
-                if (ccif.snoop_hit) begin
-                    next_state = RESP_SEND;
-                end else begin
-                    next_state = IDLE;
+                if (!ccif.snoop_busy) begin
+                    next_state = ccif.snoop_hit ? RESP_SEND : IDLE;
                 end
             end
             RESP_SEND: begin
