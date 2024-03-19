@@ -59,10 +59,10 @@ assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, v
 assign vmem_in.vs1 = xbardat_src1; 
 
 // vres muxing due to vmskset instructions 
-assign vmem_in.vres[0] = is_vmskset_op ? {26'b0, vmskset_res} : vres_0;
-assign vmem_in.vres[1] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[1];
-assign vmem_in.vres[2] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[2];
-assign vmem_in.vres[3] = is_vmskset_op ? {26'b0, vmskset_res} : vfu_res[3];
+assign vmem_in.vres[0] = is_vmskset_op ? {4{vmskset_res}} : vres_0;
+assign vmem_in.vres[1] = is_vmskset_op ? {4{vmskset_res}} : vfu_res[1];
+assign vmem_in.vres[2] = is_vmskset_op ? {4{vmskset_res}} : vfu_res[2];
+assign vmem_in.vres[3] = is_vmskset_op ? {4{vmskset_res}} : vfu_res[3];
 
 // lane_mask muxsing due to vmskset instructions
 assign vmem_in.vlane_mask = is_vmskset_op ? vmskset_lane_mask : msku_lane_mask; 
@@ -230,15 +230,17 @@ rv32v_mask_unit RVV_MASKS(
 
 
 //mask set layer for instructions that set mask bits 
+logic[1:0] vmskset_bank_off; 
 rv32v_mask_set_layer VMSKSET_LAYER(
     .vfu_results({vfu_res[3][0], vfu_res[2][0], vfu_res[1][0], vfu_res[0][0]}), 
     .vd(vd),
     .vd_fwd_bits(vmskset_fwd_bits), 
-    .msku_lane_masks(msku_lane_masks), 
+    .msku_lane_mask(msku_lane_mask), 
     .vuopnum(vctrls.vuop_num), 
 
     .vmskset_res(vmskset_res),
-    .vmskset_lane_mask(vmskset_lane_mask)
+    .vmskset_lane_mask(vmskset_lane_mask), 
+    .bank_offset(vmskset_bank_offset)
 ); 
 
 
@@ -254,7 +256,8 @@ assign vmem_in.sregwen = vctrls.sregwen;
 assign vmem_in.veew = vctrls.veew_dest;
 assign vmem_in.vmv_s_x = vctrls.vmv_s_x;
 assign vmem_in.vd_sel = vctrls.vd_sel; 
-assign vmem_in.vbank_offset = vctrls.vbank_offset; 
+//assign vmem_in.vbank_offset = vctrls.vbank_offset; 
+assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset : vctrls.vuop_num[1:0];  
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1; 
 assign vmem_in.vkeepvl = vctrls.vkeepvl;
 

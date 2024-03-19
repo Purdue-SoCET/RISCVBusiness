@@ -137,6 +137,18 @@ end
 regsel_t vd_sel, vs1_sel, vs2_sel;
 regsel_t vd_sel_red, vs1_sel_red, vs2_sel_red;
 
+logic vmskst_instr; 
+assign vmskset_instr = vopi_valid && (
+                        vexec_opi.valuop == VALU_SEQ || // MOVE THIS TO DECODE
+                        vexec_opi.valuop == VALU_SNE ||
+                        vexec_opi.valuop == VALU_SLT ||
+                        vexec_opi.valuop == VALU_SLE ||
+                        vexec_opi.valuop == VALU_SGT ||
+                        vexec_opi.valuop == VALU_VMADC_NO_C ||
+                        vexec_opi.valuop == VALU_VMADC ||
+                        vexec_opi.valuop == VALU_VMSBC_NO_B ||
+                        vexec_opi.valuop == VALU_VMSBC
+                       );
 always_comb begin
     // Default values based on register select fields
     vd_sel = '{regclass: RC_VECTOR, regidx: vd + {2'b00, vreg_offset}};
@@ -154,6 +166,12 @@ always_comb begin
         vs1_sel = vs1_sel_red;
         vs2_sel = vs2_sel_red;
     end
+
+    // Override in case of mask setting instructions (vd value never changes even of vs1 and vs2 do due to LMUL settings)
+    if(vmskset_instr) begin
+        vd_sel = '{regclass: RC_VECTOR, regidx: vd};
+
+    end 
 end
 
 assign vcu_if.vcontrol.vd_sel = vd_sel;

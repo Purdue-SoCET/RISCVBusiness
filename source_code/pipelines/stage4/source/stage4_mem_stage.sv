@@ -258,7 +258,7 @@ module stage4_mem_stage (
                 .lane_dat(vlane_data),
                 .lane_wen(vlane_wen),
                 .eew(ex_mem_if.vexmem.veew),
-                .bank_offset(ex_mem_if.vexmem.vuop_num[1:0]),
+                .bank_offset(ex_mem_if.vexmem.vbank_offset),
                 .vwdat(ex_mem_if.vwb.vwdata[i]),
                 .byte_wen(ex_mem_if.vwb.vbyte_wen[i])
             );
