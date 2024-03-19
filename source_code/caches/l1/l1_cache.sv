@@ -146,19 +146,14 @@ module l1_cache #(
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
     // sram instance
-    assign sramSEL = (state == SNOOP) ? sramSNOOPSEL : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits);
-    //assign sramSNOOPSEL =  4'b0111;
-    //assign sramSNOOPSEL =  decoded_snoop_addr.idx.idx_bits;
-    assign sramSNOOPSEL = (ccif.snoop_req)  ? snoop_decoded_addr.idx.idx_bits : ((state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx.idx_bits); //Same is sramSEL on IDLE
+    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
+                   : (state == SNOOP) ? snoop_decoded_addr.idx.idx_bits
+                   : decoded_addr.idx.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
         BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(sramWEN), .SEL(sramSNOOPSEL), .wMask(sramTagsMask));
 
-    // TODO: Update this with valid, dirty, exclusive bits
-    // assign ccif.frame_state = sramBus[SRAM_W-1:SRAM_W-2];
-    //Compare ccif.frame_tag with selected_tag later
-    
     assign ccif.valid = sramRead.frames[0].tag.valid; //frames[0] related to associativity, this line only works for ASSOC = 1
     assign ccif.dirty = sramRead.frames[0].tag.dirty; //frames[0] related to associativity, this line only works for ASSOC = 1
     assign ccif.exclusive = sramRead.frames[0].tag.exclusive; //frames[0] related to associativity, this line only works for ASSOC = 1
@@ -225,7 +220,9 @@ module l1_cache #(
     // TODO: update this with idx_bits
     // assign decoded_snoop_addr = decoded_cache_addr_t'(ccif.ccsnoopaddr);
 
-    // hit logic with pass through
+    // Hit logic with pass through
+    // CPU and bus sram have different always_comb blocks to prevent false
+    // circular logic
     always_comb begin
         hit 	        = 0;
         hit_idx         = 0;
@@ -242,8 +239,16 @@ module l1_cache #(
                 	    hit_idx   = i;
                     end
                 end
+            end
+        end
+    end
 
-                ccif.snoop_hit |= read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid;
+    always_comb begin
+        ccif.snoop_hit  = 0;
+
+        for(int i = 0; i < ASSOC; i++) begin
+            if (read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid) begin
+                ccif.snoop_hit = 1'b1;
             end
         end
     end
@@ -481,17 +486,33 @@ module l1_cache #(
             end
         endcase
 
-        // To properly catch this case, set epoch size to 10k and range to
-        // be % 512 in cache stress testbench
-        if (CLK == 1 && sramWEN) begin
-            if (sramSEL === sramSNOOPSEL) begin end else begin
-                $warning("sram sels should be same");
-            end
-        end
+        // Same as sramSEL except try to lookup the snoop addr when there's
+        // a request
+        sramSNOOPSEL    = sramWEN ? sramSEL
+                        : ccif.snoop_req ? snoop_decoded_addr.idx.idx_bits
+                        : sramSEL;
+        ccif.snoop_busy = sramWEN || !ccif.snoop_req;
 
         for (int i = 0; i < ASSOC; i++) begin
             sramTags[i] = sramWrite.frames[i].tag;
             sramTagsMask[i] = sramMask.frames[i].tag;
+        end
+    end
+
+    always_comb begin
+        // To properly catch this case, set epoch size to 10k and range to
+        // be % 512 in cache stress testbench
+        if (CLK == 1 && sramWEN) begin
+            if (sramSEL != sramSNOOPSEL) begin
+                $warning("WARNING: sram sels should be same");
+            end
+        end
+        if (sramSNOOPSEL == sramSEL) begin
+            for (int i = 0; i < ASSOC; i++) begin
+                if (read_tag_bits[i] != sramRead.frames[i].tag) begin
+                    $warning("WARNING: sram tags are out of sync!");
+                end
+            end
         end
     end
 
