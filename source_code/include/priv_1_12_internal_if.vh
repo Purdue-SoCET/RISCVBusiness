@@ -93,7 +93,7 @@ interface priv_1_12_internal_if;
 
     // Vector extension variables
     `ifdef RV32V_SUPPORTED
-        logic vsetvl, vkeepvl, set_vstart;
+        logic vsetvl, vkeepvl, set_vstart, vuop_last;
         vtype_t new_vtype;  // for updating vtype
         word_t vl, vstart;
         vtype_t vtype;
@@ -141,7 +141,7 @@ interface priv_1_12_internal_if;
 
     `ifdef RV32V_SUPPORTED
       modport vect (
-        input vsetvl, vkeepvl, new_vtype, set_vstart, velem_num,
+        input vsetvl, vkeepvl, new_vtype, set_vstart, vuop_last, velem_num,
         output vl, vtype, vstart
       );
     `endif // RV32V_SUPPORTED

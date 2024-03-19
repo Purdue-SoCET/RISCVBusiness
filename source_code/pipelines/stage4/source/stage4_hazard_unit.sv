@@ -142,6 +142,7 @@ module stage4_hazard_unit (
     assign prv_pipe_if.velem_num = (hazard_if.vuop_last) ? '0 :
                                    (hazard_if.vvalid_m && !intr) ? hazard_if.velem_num_m : hazard_if.velem_num_e;
     assign prv_pipe_if.set_vstart = hazard_if.vuop_last | ((exception) ? ((hazard_if.vvalid_m && !intr) | hazard_if.vvalid_e) : 0);
+    assign prv_pipe_if.vuop_last = hazard_if.vuop_last;
 
     /*
     * Pipeline control signals

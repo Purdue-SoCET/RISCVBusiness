@@ -72,7 +72,7 @@ interface prv_pipeline_if();
     word_t vl, vstart;
     vtype_t vtype;
     logic [6:0] velem_num;
-    logic set_vstart;
+    logic set_vstart, vuop_last;
   `endif // RV32V_SUPPORTED
 
   modport hazard (
@@ -82,7 +82,7 @@ interface prv_pipeline_if();
             breakpoint, env, wfi, badaddr, wb_enable,
             ex_rmgmt, ex_rmgmt_cause
             `ifdef RV32V_SUPPORTED
-            , velem_num, set_vstart
+            , velem_num, set_vstart, vuop_last
             `endif // RV32V_SUPPORTED
   );
 
@@ -111,7 +111,7 @@ interface prv_pipeline_if();
           daddr, iaddr, dren, dwen, iren,
           d_acc_width, i_acc_width,
           `ifdef RV32V_SUPPORTED
-            vsetvl, vkeepvl, new_vtype, velem_num, set_vstart,
+            vsetvl, vkeepvl, new_vtype, velem_num, set_vstart, vuop_last,
           `endif // RV32V_SUPPORTED
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
             prot_fault_s, prot_fault_l, prot_fault_i

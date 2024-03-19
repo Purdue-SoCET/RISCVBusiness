@@ -117,6 +117,7 @@ module priv_1_12_block (
         assign prv_intern_if.vkeepvl = prv_pipe_if.vkeepvl;
         assign prv_intern_if.new_vtype = prv_pipe_if.new_vtype;
         assign prv_intern_if.set_vstart = prv_pipe_if.set_vstart;
+        assign prv_intern_if.vuop_last = prv_pipe_if.vuop_last;
         assign prv_intern_if.velem_num = prv_pipe_if.velem_num;
         assign prv_pipe_if.vl = prv_intern_if.vl;
         assign prv_pipe_if.vtype = prv_intern_if.vtype;
