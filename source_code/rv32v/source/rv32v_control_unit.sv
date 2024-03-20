@@ -542,6 +542,7 @@ always_comb begin
             vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+            vl_red = 4;
             busy_red = 1;
             vmask_red = 0;
 

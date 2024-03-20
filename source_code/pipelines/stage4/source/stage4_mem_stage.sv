@@ -249,6 +249,11 @@ module stage4_mem_stage (
         end else begin
             vlane_wen = '0;
         end
+
+        // If the destination register is not a vector register, mask off all lanes
+        if (ex_mem_if.vexmem.vd_sel.regclass != RC_VECTOR) begin
+            vlane_wen = '0;
+        end
     end
 
     // Write-back crossbar for each vector RF bank

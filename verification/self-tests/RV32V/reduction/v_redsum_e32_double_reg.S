@@ -1,7 +1,7 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# Test redsum, e32, vl4
+# Test redsum, e32, vl8
 #-----------------------------------------------------------------------------
 #
 #
@@ -12,28 +12,28 @@
 RVTEST_RV32U
 RVTEST_CODE_BEGIN
 # Setup tasks
-    li x7, 4
-    vsetvli x8, x7, e32, m1
+    li x7, 8
+    vsetvli x8, x7, e32, m2
 
     la x1, in_data
     la x2, out_data
 
-    add x3, x1, 16
+    add x3, x1, 32
 
-    vle32.v v8, (x3)  # vs1[0] = 0x13121110
+    vle32.v v8, (x3)  # vs1[0] = 0x23222120
 
-    vle32.v v9, (x1)  # vs2[*] = 0x0f ... 0x00
+    vle32.v v16, (x1)  # vs2[*] = 0x1f ... 0x00
 
-    vle32.v v10, (x2)  # vd[*] = 0x55 ... 0x55
+    vle32.v v24, (x2)  # vd[*] = 0x55 ... 0x55
 
 # Reduction instruction
-    vredsum.vs v10, v9, v8
+    vredsum.vs v24, v16, v8
 
 # Dump result to memory
-    vse32.v v10, (x2)
+    vse32.v v24, (x2)
 
 # Load and check result word
-    li x11, 0x37322d28
+    li x11, 0xaba29990
     lw x12, 0(x2)
     li TESTNUM, 1
     bne x11, x12, fail
