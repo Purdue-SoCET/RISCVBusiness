@@ -21,7 +21,7 @@ RVTEST_CODE_BEGIN
 
     add x3, x1, 16
 
-    vle32.v v8, (x3)  # vs1[0] = 0x10
+    vle32.v v8, (x3)  # vs1[0] = 0x13121110
 
     vle32.v v9, (x1)  # vs2[*] = 0x0f ... 0x00
 
@@ -34,23 +34,23 @@ RVTEST_CODE_BEGIN
     vse32.v v10, (x2)
 
 # Load and check result word
-    li x11, 0x178
+    li x11, 0x37322D28
     lw x12, 0(x2)
     li TESTNUM, 1
     bne x11, x12, fail
 
 # Load and check other words
-    li x11, 0x55
+    li x11, 0x55555555
     lw x12, 4(x2)
     li TESTNUM, 2
     bne x11, x12, fail
 
-    li x11, 0x55
+    li x11, 0x55555555
     lw x12, 8(x2)
     li TESTNUM, 3
     bne x11, x12, fail
 
-    li x11, 0x55
+    li x11, 0x55555555
     lw x12, 12(x2)
     li TESTNUM, 4
     bne x11, x12, fail

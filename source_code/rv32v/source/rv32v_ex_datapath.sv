@@ -153,7 +153,7 @@ always_comb begin
         vopB = vscratchdata;
     end
     if(vctrls.vs2_sel.regclass == RC_SCRATCH) begin
-        vopB = vscratchdata;
+        vopA = vscratchdata;
     end
 
     if(vctrls.vxin1_use_imm) begin

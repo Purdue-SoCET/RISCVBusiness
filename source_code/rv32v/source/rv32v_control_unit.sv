@@ -552,6 +552,8 @@ always_comb begin
             // Op the bottom element of the scratch register with the bottom element of vs1
             // and put the result into the destination register
             vexec_red.vfu = VFU_ALU;
+            vd_sel_red = '{regclass: RC_VECTOR, regidx: vd};
+            vs1_sel_red = '{regclass: RC_VECTOR, regidx: vs1};
             vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vl_red = 1;
             busy_red = 0;
