@@ -13,27 +13,27 @@ RVTEST_RV32U
 RVTEST_CODE_BEGIN
 # Setup tasks
     li x7, 8
-    vsetvli x8, x7, e32, m2
+    vsetvli x8, x7, e32, m4
 
     la x1, in_data
     la x2, out_data
 
-    add x3, x1, 32
+    add x3, x1, 16
 
-    vle32.v v8, (x3)  # vs1[0] = 0x23222120
+    vl4re32.v v8, (x3)  # vs1[0] = 0x13121110
 
-    vle32.v v16, (x1)  # vs2[*] = 0x1f ... 0x00
+    vl4re32.v v16, (x1)  # vs2[*] = 0x1f ... 0x00
 
-    vle32.v v24, (x2)  # vd[*] = 0x55 ... 0x55
+    vl4re32.v v24, (x2)  # vd[*] = 0x55 ... 0x55
 
 # Reduction instruction
     vredsum.vs v24, v16, v8
 
 # Dump result to memory
-    vse32.v v24, (x2)
+    vs4r.v v24, (x2)
 
 # Load and check result word
-    li x11, 0xaba29990
+    li x11, 0x9b928980
     lw x12, 0(x2)
     li TESTNUM, 1
     bne x11, x12, fail
