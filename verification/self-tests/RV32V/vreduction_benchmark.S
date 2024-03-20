@@ -15,7 +15,7 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
 
-    li x1, 120 // loop variable N, range is 0 - 120
+    li x1, 130 // loop variable N, range is 0 - 130
     la x2, A_data
 
     // Initialize result register
@@ -41,7 +41,7 @@ loop:
 
 	// Load and check result
 	lw x4, 0(x3)
-	TEST_CASE(1, x4, 7260, NOP)
+	TEST_CASE(1, x4, 8515, NOP)
 
   TEST_PASSFAIL
 
@@ -53,7 +53,7 @@ RVTEST_DATA_BEGIN
   TEST_DATA
 
 A_data:
-	.word 0x00000001
+    .word 0x00000001
     .word 0x00000002
     .word 0x00000003
     .word 0x00000004
@@ -173,6 +173,16 @@ A_data:
     .word 0x00000076
     .word 0x00000077
     .word 0x00000078
+    .word 0x00000079
+    .word 0x0000007a
+    .word 0x0000007b
+    .word 0x0000007c
+    .word 0x0000007d
+    .word 0x0000007e
+    .word 0x0000007f
+    .word 0x00000080
+    .word 0x00000081
+    .word 0x00000082
 
 result:
 	.word 0x55555555

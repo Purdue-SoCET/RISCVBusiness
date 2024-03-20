@@ -210,7 +210,7 @@ assign vex_stall = |vfu_stall;
 rv32v_reduction_unit VREDUNIT (
     .valuop(vctrls.vexec.valuop),
     .vopunsigned(vctrls.vexec.vopunsigned),
-    .vdat_in(vopB),
+    .vdat_in(vopA),
     .vmask_in(msku_lane_mask),
     .vdat_out(vred_res)
 );

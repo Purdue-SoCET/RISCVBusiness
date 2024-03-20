@@ -490,17 +490,22 @@ always_comb begin
         REDC_IDLE: begin
             if (vredinstr) begin
                 // If we get a new reduction, copy vs2 to the scratch register
-                vexec_red.vfu = VFU_PASS_VS2;
-                vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-                vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2};
                 busy_red = 1;
 
                 if (vcu_if.vl > 4) begin
-                    // If we have more than 4 elements, we'll need to reduce to 4
+                    // If we have more than 4 elements, copy vs2 to the scratch
+                    // register to set up for reducing down to 4 elements
+                    vexec_red.vfu = VFU_PASS_VS2;
+                    vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+                    vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2};
                     next_redstate = REDC_UNTIL_4;
                 end else if (vcu_if.vl > 1) begin
-                    // If we have 3 or 4 elements, go straight to the reduce 4 step
-                    next_redstate = REDC_LAST_4;
+                    // If we have 2, 3, or 4 elements, we don't need to do the
+                    // copy and can instead directly reduce into the scratch register
+                    vexec_red.vfu = VFU_RED;
+                    vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
+                    vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2};
+                    next_redstate = REDC_FINAL;
                 end else begin
                     // If we have just 1 element, the operation is a simple op
                     // between the lowest two elements of vs1 and vs2
@@ -540,7 +545,6 @@ always_comb begin
             // the lane 0 of the scratch register (disable masking here)
             vexec_red.vfu = VFU_RED;
             vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
-            vs1_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vs2_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
             vl_red = 4;
             busy_red = 1;
