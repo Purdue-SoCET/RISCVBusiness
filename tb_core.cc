@@ -25,6 +25,8 @@
 #define MMIO_RANGE_BEGIN (MTIME_ADDR)
 #define MMIO_RANGE_END   (MAGIC_ADDR)
 
+#define SIM_TIME_MAX 999999999
+
 // doubles as mtime counter
 vluint64_t sim_time = 0;
 Vtop_core *dut_ptr;
@@ -281,7 +283,7 @@ int main(int argc, char **argv) {
 
 
     reset(dut, m_trace);
-    while(!dut.halt && sim_time < 100000) {
+    while(!dut.halt && sim_time < SIM_TIME_MAX) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
@@ -317,7 +319,7 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 100000) {
+    if(sim_time >= SIM_TIME_MAX) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;

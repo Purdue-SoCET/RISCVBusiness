@@ -31,6 +31,7 @@
 `include "cache_control_if.vh"
 `include "sparce_pipeline_if.vh"
 `include "rv32c_if.vh"
+`include "cpu_tracker_if.vh"
 
 module stage3 #(
     NUM_HARTS = 1,
@@ -47,7 +48,8 @@ module stage3 #(
     //risc_mgmt_if rm_if,
     cache_control_if cc_if,
     sparce_pipeline_if sparce_if,
-    rv32c_if rv32cif
+    rv32c_if rv32cif,
+    cpu_tracker_if cpu_tracker_if
 );
     //interface instantiations
     stage3_fetch_execute_if fetch_ex_if();

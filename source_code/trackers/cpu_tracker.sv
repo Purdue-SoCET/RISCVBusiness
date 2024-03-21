@@ -36,7 +36,9 @@ module cpu_tracker (
     input logic [12:0] imm_SB,
     input logic [11:0] imm_S, imm_I,
     input logic [20:0] imm_UJ,
-    input logic [31:0] imm_U
+    input logic [31:0] imm_U,
+    input integer icache_misses, icache_conflicts,
+    input integer dcache_misses, dcache_conflicts
 );
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
@@ -305,6 +307,10 @@ module cpu_tracker (
         $fwrite(fptr, "Program Statistics\n");
         $fwrite(fptr, "Loads: %d\n", loads);
         $fwrite(fptr, "Stores: %d\n", stores);
+        $fwrite(fptr, "Icache Misses: %d\n", icache_misses);
+        $fwrite(fptr, "Icache Conflicts: %d\n", icache_conflicts);
+        $fwrite(fptr, "Dcache Misses: %d\n", dcache_misses);
+        $fwrite(fptr, "Dcache Conflicts: %d\n", dcache_conflicts);
         $fwrite(fptr, "Clock Cycles: %d\n", clock_cyles);
         $fwrite(fptr, "Stalled Cycles: %d\n", stalled_cycles);
         for(integer i = 0; i < NUM_HARTS; i = i + 1) begin
