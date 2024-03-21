@@ -7,6 +7,7 @@ module rv32v_ex_datapath(
     input vcontrol_t vctrls, 
     input vwb_t vwb_ctrls,
     input logic[3:0] vmskset_fwd_bits,
+    input logic ex_stall,
 
     output vexmem_t vmem_in,
     output logic vex_stall
@@ -135,7 +136,7 @@ word_t[3:0] vscratchdata;
 
 rv32v_scratch_reg VSCRATCH (
     .CLK(CLK), .nRST(nRST), 
-    .vbyte_wen({4{vctrls.vd_sel.regclass == RC_SCRATCH}} & msku_lane_mask),
+    .vbyte_wen({4{!ex_stall && (vctrls.vd_sel.regclass == RC_SCRATCH)}} & msku_lane_mask),
     .vwdata({vmem_in.vres[3], vmem_in.vres[2], vmem_in.vres[1], vmem_in.vres[0]}),
     .vrdata({vscratchdata[3], vscratchdata[2], vscratchdata[1], vscratchdata[0]})
 );
