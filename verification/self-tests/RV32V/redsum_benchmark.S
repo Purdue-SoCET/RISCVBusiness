@@ -1,7 +1,7 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# vreduction_benchmark.S
+# reduction_benchmark.S
 #-----------------------------------------------------------------------------
 #
 # benchmarking 
@@ -19,38 +19,35 @@ RVTEST_CODE_BEGIN
     la x2, A_data
 
     // Initialize result register
-    vsub.vv v16, v16, v16
+    sub x16, x16, x16
 
 loop:
-    vsetvli x5, x1, e32, m8
-    vle32.v v8, 0(x2)
-    vredsum.vs v16, v8, v16
+    lw x8, 0(x2)
+    add x16, x16, x8
 
-    // update pointers 
-    slli x6, x5, 2
-    add x2, x2, x6
+    // update pointer
+    add x2, x2, 4
 
     // stripmining 
-    sub x1, x1, x5
+    add x1, x1, -1
     bne x1, x0, loop
 
-	// Store result to memory
-	vsetivli x5, 1, e32, m8
-	la x3, result
-	vse32.v v16, (x3)
+    // Store result to memory
+    la x3, result
+    sw x16, 0(x3)
 
-	// Load and check result
-	lw x4, 0(x3)
-	TEST_CASE(1, x4, 8515, NOP)
+    // Load and check result
+    lw x4, 0(x3)
+    TEST_CASE(1, x4, 8515, NOP)
 
-  TEST_PASSFAIL
+    TEST_PASSFAIL
 
 RVTEST_CODE_END
 
-  .data
+    .data
 RVTEST_DATA_BEGIN
 
-  TEST_DATA
+    TEST_DATA
 
 A_data:
     .word 0x00000001
@@ -183,8 +180,8 @@ A_data:
     .word 0x00000080
     .word 0x00000081
     .word 0x00000082
-
+  
 result:
-	.word 0x55555555
+    .word 0x55555555
 
 RVTEST_DATA_END

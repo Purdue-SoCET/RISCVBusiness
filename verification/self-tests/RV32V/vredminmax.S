@@ -1,7 +1,7 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# vredmixed.S
+# vredminmax.S
 #-----------------------------------------------------------------------------
 #
 # Test multiple back to back reductions of different operations 
@@ -75,7 +75,7 @@ array:
     .half 0x9431
     .half 0x6974
 
-    .word 0xffffffff
+    .align 4
 
 min_result:
   	.word 0x0

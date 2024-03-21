@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Wed Mar 20 05:43:18 2024
+[*] Thu Mar 21 03:18:54 2024
 [*]
 [dumpfile] "/home/omg/socet/RISCVBusiness/waveform.vcd"
-[dumpfile_mtime] "Wed Mar 20 05:42:17 2024"
-[dumpfile_size] 2353050
+[dumpfile_mtime] "Thu Mar 21 03:16:38 2024"
+[dumpfile_size] 15696473
 [savefile] "/home/omg/socet/RISCVBusiness/sim_scripts/stage4_pipeline.gtkw"
-[timestart] 219
+[timestart] 181
 [size] 1908 1047
-[pos] -1956 -16
-*-3.700783 214 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] -85 49
+*-2.700783 214 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [markername] AA
 [markername] BB
 [markername] CC
@@ -39,27 +39,46 @@
 [treeopen] TOP.
 [treeopen] top_core.
 [treeopen] top_core.CORE.
+[treeopen] top_core.CORE.fetch_ex_if.
 [treeopen] top_core.CORE.pipeline.
 [treeopen] top_core.CORE.pipeline.decode.U_VECTOR_DECODE.
 [treeopen] top_core.CORE.pipeline.decode.vcu_if.
-[treeopen] top_core.CORE.pipeline.ex_in.
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.vd_sel.
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.vs1_sel.
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.vs2_sel.
-[treeopen] top_core.CORE.pipeline.execute_stage_i.
 [treeopen] top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.
 [treeopen] top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vmem_in.
+[treeopen] top_core.CORE.pipeline.fetch_stage_i.
 [treeopen] top_core.CORE.pipeline.mem_stage_i.
 [sst_width] 374
 [signals_width] 335
 [sst_expanded] 1
-[sst_vpaned_height] 323
+[sst_vpaned_height] 322
 @28
 top_core.CORE.pipeline.decode.RVV_SHADOW_CSR.CLK
 top_core.CORE.pipeline.decode.RVV_SHADOW_CSR.nRST
 @200
 -
+@c00200
+-Fetch stage
+@22
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.badaddr[31:0]
+@28
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.fault_insn
+@22
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.instr[31:0]
+@28
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.mal_insn
+@22
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.pc4[31:0]
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.pc[31:0]
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.prediction[31:0]
+@28
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.token
+top_core.CORE.pipeline.fetch_stage_i.fetch_out.valid
+@1401200
+-Fetch stage
 @c00200
 -Decode shadow CSR
 @22
@@ -569,8 +588,6 @@ top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.VSCRATCH.vwdata[0][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.VSCRATCH.vwdata[1][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.VSCRATCH.vwdata[2][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.VSCRATCH.vwdata[3][31:0]
-@28
-top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.VSCRATCH.wen
 @1401200
 -Execute vector scratch
 @200
