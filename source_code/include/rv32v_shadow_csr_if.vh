@@ -59,6 +59,7 @@ interface rv32v_shadow_csr_if;
 
     // For speculatively updating values
     modport execute (
+        input vl_shadow, 
         output vsetvl, vkeepvl, vtype_spec, avl_spec
     );
 

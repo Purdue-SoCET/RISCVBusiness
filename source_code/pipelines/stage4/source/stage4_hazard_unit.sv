@@ -222,7 +222,17 @@ module stage4_hazard_unit (
                                   || mem_use_stall 
                                   || hazard_if.fence_stall
                                   || vex_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
-                                  
+    
+    assign hazard_if.vmask_calc_stall = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
+                                  // || (wait_for_imem && !dmem_access) // ???
+                                  //& (~ex_flush_hazard | e_ex_stage) // ???
+                                  //|| rm_if.execute_stall //
+                                  //|| branch_jump
+                                  //|| (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall)
+                                  //|| ex_flush_hazard
+                                  || mem_use_stall 
+                                  || hazard_if.fence_stall
+                                  || vex_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
      
      // TODO: Exceptions
     always_comb begin: VEX_STALL_LOGIC

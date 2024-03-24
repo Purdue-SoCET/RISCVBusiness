@@ -7,6 +7,8 @@ module rv32v_ex_datapath(
     input vcontrol_t vctrls, 
     input vwb_t vwb_ctrls,
     input logic[3:0] vmskset_fwd_bits,
+    input logic[31:0] vl,
+    input logic flush, stall, 
 
     output vexmem_t vmem_in,
     output logic vex_stall
@@ -58,14 +60,54 @@ assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, v
 // store data  
 assign vmem_in.vs1 = xbardat_src1; 
 
+logic is_mask_calc_instr; 
+assign is_mask_calc_instr = (vctrls.vexec.vfu == VFU_MSK) && (
+                            vctrls.vexec.vmaskop == VMSK_CNT ||
+                            vctrls.vexec.vmaskop == VMSK_FST || 
+                            vctrls.vexec.vmaskop == VMSK_SBF || 
+                            vctrls.vexec.vmaskop == VMSK_SIF || 
+                            vctrls.vexec.vmaskop == VMSK_SOF || 
+                            vctrls.vexec.vmaskop == VMSK_ITA || 
+                            vctrls.vexec.vmaskop == VMSK_IDX ); 
+
 // vres muxing due to vmskset instructions 
+always_comb begin
+    vmem_in.vres[0] = vres_0; 
+    vmem_in.vres[1] = vfu_res[1]; 
+    vmem_in.vres[2] = vfu_res[2]; 
+    vmem_in.vres[3] = vfu_res[3];
+
+    if(is_vmskset_op) begin
+        vmem_in.vres[0] = {4{vmskset_res}};
+        vmem_in.vres[1] = {4{vmskset_res}};
+        vmem_in.vres[2] = {4{vmskset_res}};
+        vmem_in.vres[3] = {4{vmskset_res}};
+    end
+    else if(is_mask_calc_instr) begin
+        vmem_in.vres[0] = mask_calc_out[31:0]; 
+        vmem_in.vres[1] = mask_calc_out[63:32]; 
+        vmem_in.vres[2] = mask_calc_out[95:64]; 
+        vmem_in.vres[3] = mask_calc_out[127:96]; 
+    end 
+
+end 
 assign vmem_in.vres[0] = is_vmskset_op ? {4{vmskset_res}} : vres_0;
 assign vmem_in.vres[1] = is_vmskset_op ? {4{vmskset_res}} : vfu_res[1];
 assign vmem_in.vres[2] = is_vmskset_op ? {4{vmskset_res}} : vfu_res[2];
 assign vmem_in.vres[3] = is_vmskset_op ? {4{vmskset_res}} : vfu_res[3];
 
 // lane_mask muxsing due to vmskset instructions
-assign vmem_in.vlane_mask = is_vmskset_op ? vmskset_lane_mask : msku_lane_mask; 
+always_comb begin
+    vmem_in.vlane_mask = msku_lane_mask; 
+    if(is_vmskset_op)
+        vmem_in.vlane_mask = vmskset_lane_mask; 
+    else if(is_mask_calc_instr) begin
+        case(vctrls.vexec.vmaskop)
+            VMSK_CNT, VMSK_FST, VMSK_SBF, VMSK_SIF, VMSK_SOF: vmem_in.vlane_mask = 'b1; 
+        endcase
+    end
+end 
+// assign vmem_in.vlane_mask = is_vmskset_op ?  : msku_lane_mask; 
 
 assign vd = {bankdat_src3[3], bankdat_src3[2], bankdat_src3[1], bankdat_src3[0]};
 
@@ -204,7 +246,7 @@ generate
     end
 endgenerate
 
-assign vex_stall = |vfu_stall;
+assign vex_stall = (|vfu_stall) | (mask_calc_busy);
 
 // reduction unit
 rv32v_reduction_unit VREDUNIT (
@@ -241,6 +283,23 @@ rv32v_mask_set_layer VMSKSET_LAYER(
     .vmskset_res(vmskset_res),
     .vmskset_lane_mask(vmskset_lane_mask), 
     .bank_offset(vmskset_bank_offset)
+); 
+
+
+logic[127:0] vmask_calc_mask_src; 
+logic[127:0] vmask_calc_mask_dest; 
+assign vmask_calc_mask_src = {bankdat_src2[3], bankdat_src2[2], bankdat_src2[1], bankdat_src2[0]};
+assign vmask_calc_mask_dest = {bankdat_src3[3], bankdat_src3[2], bankdat_src3[1], bankdat_src3[0]}; 
+
+logic mask_calc_busy; 
+logic[127:0] mask_calc_out; 
+rv32v_mask_calc VMSK_CALC_UNIT(
+    .CLK(CLK), .nRST(nRST), 
+    .mask_src(vmask_calc_mask_src), .mask_dest(vmask_calc_mask_dest), .v0_mask(v0), 
+    .vl(vl), .flush(flush), .stall(stall), .mask_en(vctrls.vmask_en), .final_instr(vctrls.vuop_last), 
+    .vexec(vctrls.vexec), .uop_num(vctrls.vuop_num), 
+
+    .busy(mask_calc_busy), .mask_calc_out(mask_calc_out) 
 ); 
 
 

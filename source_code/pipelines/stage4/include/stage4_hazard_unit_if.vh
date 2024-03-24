@@ -93,6 +93,7 @@ interface stage4_hazard_unit_if();
   logic vvalid_m;
   logic [6:0] velem_num_m;
   logic vuop_last;
+  logic vmask_calc_stall; 
 
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
@@ -117,7 +118,9 @@ interface stage4_hazard_unit_if();
             priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback, 
 
             stall_queue, flush_queue, 
-            stall_decode, flush_decode
+            stall_decode, flush_decode,
+
+            vmask_calc_stall
 
   );
 
@@ -132,12 +135,12 @@ interface stage4_hazard_unit_if();
   ); 
 
   modport queue (
-    input flush_queue, stall_queue, 
+    input flush_queue, stall_queue,
     output is_queue_full
   ); 
 
   modport execute (
-    input  ex_mem_stall, ex_mem_flush, npc_sel,
+    input  ex_mem_stall, ex_mem_flush, npc_sel, flush_queue, vmask_calc_stall, 
     output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex,
            vs1, vs2, vs1_used, vs2_used, ex_mask_en, vvalid_e, velem_num_e
   );

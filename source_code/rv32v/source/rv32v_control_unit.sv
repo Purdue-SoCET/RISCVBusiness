@@ -170,7 +170,10 @@ always_comb begin
     // Override in case of mask setting instructions (vd value never changes even of vs1 and vs2 do due to LMUL settings)
     if(vmskset_instr) begin
         vd_sel = '{regclass: RC_VECTOR, regidx: vd};
+    end 
 
+    if(vmask_calc_instr && vmask_calc_instr_uop) begin
+        vs2_sel = '{regclass: RC_VECTOR, regidx: vs2};
     end 
 end
 
@@ -229,6 +232,32 @@ assign vnarrowing = (((vopi == VNSRL) ||
                     (vopm == VNMSAC)) && (vopm_valid) );
 
 assign twice_vsew = vsew_t'(vcu_if.vsew + 1);
+logic vmask_calc_instr; 
+logic vmask_calc_instr_uop;
+assign vmask_calc_instr = (vopm_valid) &&  (
+                            vexec_opm.vmaskop == VMSK_CNT ||
+                            vexec_opm.vmaskop == VMSK_FST || 
+                            vexec_opm.vmaskop == VMSK_SBF || 
+                            vexec_opm.vmaskop == VMSK_SIF || 
+                            vexec_opm.vmaskop == VMSK_SOF || 
+                            vexec_opm.vmaskop == VMSK_ITA || 
+                            vexec_opm.vmaskop == VMSK_IDX ); 
+assign vmask_calc_instr_uop = (vexec_opm.vmaskop == VMSK_ITA || 
+                              vexec_opm.vmaskop == VMSK_IDX ); 
+// assign vmask_calc_instr_uop = 0; 
+//assign vmask_calc_instr = 0; 
+
+logic vmask_logical_instr;
+assign vmask_logical_instr = (vopm_valid) &&  (
+                            vopm == VMANDN ||
+                            vopm == VMAND  || 
+                            vopm == VMNAND || 
+                            vopm == VMOR   || 
+                            vopm == VMORN  || 
+                            vopm == VMNOR  || 
+                            vopm == VMXOR  || 
+                            vopm == VMXNOR ); 
+
 
 always_comb begin
     // Use VSEW for everything by default
@@ -260,7 +289,23 @@ always_comb begin
     // Override special src2 widths for OPM instructions
     if (vopm_valid) begin
         veew_src2 = vopm_veew_src2;
+
+        // Override with mask logical instructions (operate on all 128 bits in a register regardless of LMUL, SEW, and VL values)
+        if(vfunct6[5:3] == 3'b011) begin
+            veew_src1 = SEW32; 
+            veew_src2 = SEW32;
+            veew_dest = SEW32; 
+        end
     end
+
+    if(vmask_calc_instr) begin
+        veew_src2 = SEW32; 
+        veew_dest = SEW32;
+
+        if(vmask_calc_instr_uop)
+            veew_dest = vcu_if.vsew;  
+    end 
+
 end
 
 assign vcu_if.vcontrol.veew_src1 = veew_src1;
@@ -292,11 +337,13 @@ vexec_t vexec_opm;
 logic vopm_decode_valid;
 logic widen_vs2; 
 vsew_t vopm_veew_src2; 
+logic vopm_disable_mask; 
 rv32v_opm_decode U_OPMDECODE(
     .vopm(vopm),
     .vfunct3(vfunct3), 
     .vsew(vcu_if.vsew),
     .vs1_sel(vs1), 
+    .disable_mask(vopm_disable_mask), 
     .vexec(vexec_opm),
     .valid(vopm_decode_valid),
     .veew_src2(vopm_veew_src2)
@@ -365,6 +412,10 @@ always_comb begin
     if (vopi_valid && vopi_disable_mask) begin
         vcu_if.vcontrol.vmask_en = 0;
     end
+    
+    if(vopm_valid && vopm_disable_mask) begin
+        vcu_if.vcontrol.vmask_en = 0; 
+    end
 
     if (vredinstr && !vmask_red) begin
         vcu_if.vcontrol.vmask_en = 0;
@@ -421,7 +472,7 @@ logic vgen_uops;
 
 rv32v_uop_gen_if vug_if();
 
-assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG);
+assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) && !(vopm_valid && (vmask_logical_instr || (vmask_calc_instr && ~vmask_calc_instr_uop)));
 
 assign vug_if.gen = vgen_uops;
 assign vug_if.stall = vcu_if.stall;
@@ -436,7 +487,18 @@ assign vug_if.vl = (vredinstr) ? vl_red : mem_evl;
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
 assign vreg_offset = vug_if.vreg_offset_dest;
-assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
+
+// vlane active logic
+always_comb begin
+    assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active; 
+
+    if(vmask_logical_instr)
+        vcu_if.vcontrol.vlaneactive = '1; 
+    else if(vmask_calc_instr && ~vmask_calc_instr_uop)
+        vcu_if.vcontrol.vlaneactive = '1; 
+
+end 
+//assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
 assign vcu_if.vbusy = (vredinstr) ? busy_red : vug_if.busy;
 assign vcu_if.vcontrol.vvalid = vmajoropcode_valid;
 assign vcu_if.vvalid = vmajoropcode_valid;

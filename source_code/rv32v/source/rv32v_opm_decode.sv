@@ -33,7 +33,8 @@ module rv32v_opm_decode(
 
     output vexec_t vexec,
     output logic valid, 
-    output vsew_t veew_src2
+    output vsew_t veew_src2,
+    output logic disable_mask
 );
 
 logic[2:0] vsew_bits; 
@@ -56,6 +57,7 @@ always_comb begin
     vexec.vpermop = VPRM_CPS;
     vexec.vsigntype = SIGNED;
     vexec.vopunsigned = 1'b0;
+    disable_mask = 1'b0; 
 
     case (vopm)
         VREDSUM: begin
@@ -119,7 +121,16 @@ always_comb begin
             vexec.vpermop = VPRM_S1D;
         end
         VWXUNARY0: begin
-            // don't care
+            case(vs1_sel)
+                5'b10000: begin // VCPOP INSTR
+                    vexec.vfu = VFU_MSK; 
+                    vexec.vmaskop = VMSK_CNT;
+                end 
+                5'b10001: begin // VFIRST INSTR
+                    vexec.vfu = VFU_MSK; 
+                    vexec.vmaskop = VMSK_FST; 
+                end
+            endcase 
         end
         VXUNARY0: begin
             case(vs1_sel)
@@ -161,44 +172,66 @@ always_comb begin
             valid = 1'b0;             
         end
         VMUNARY0: begin
-            /* UNIMPLEMENTED */
-            valid = 1'b0;
+            vexec.vfu = VFU_MSK; 
+            case(vs1_sel)
+                5'b00001: begin
+                     vexec.vmaskop = VMSK_SBF; 
+                     disable_mask = 1'b1;
+                end 
+                5'b00010: begin
+                     vexec.vmaskop = VMSK_SOF;
+                     disable_mask = 1'b1;  
+                end 
+                5'b00011: begin
+                     vexec.vmaskop = VMSK_SIF; 
+                     disable_mask = 1'b1; 
+                end 
+                5'b10000: vexec.vmaskop = VMSK_ITA;
+                5'b10001: vexec.vmaskop = VMSK_IDX;  
+            endcase 
         end
         VCOMPRESS: begin
             vexec.vfu = VFU_PRM;
             vexec.vpermop = VPRM_CPS;
         end
         VMANDN: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_NDN;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_ANDN;
         end
         VMAND: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_AND;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_AND;
+            disable_mask = 1; 
         end
         VMOR: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_OR;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_OR;
+            disable_mask = 1; 
         end
         VMXOR: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_XOR;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_XOR;
+            disable_mask = 1; 
         end
         VMORN: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_NOR;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_NOR;
+            disable_mask = 1; 
         end
         VMNAND: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_NND;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_NAND;
+            disable_mask = 1; 
         end
         VMNOR: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_NOR;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_NOR;
+            disable_mask = 1; 
         end
         VMXNOR: begin
-            vexec.vfu = VFU_MSK;
-            vexec.vmaskop = VMSK_XNR;
+            vexec.vfu = VFU_ALU;
+            vexec.valuop = VALU_XNOR;
+            disable_mask = 1; 
         end
         VDIVU: begin
             vexec.vfu = VFU_DIV;

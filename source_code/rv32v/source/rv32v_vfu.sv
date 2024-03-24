@@ -93,8 +93,13 @@ always_comb begin
                     vres = {31'b0, temp_res[32]}; // borrow bit in temp_res[32]
                 end
                 VALU_AND: vres = vopA & vopB; 
+                VALU_NAND: vres = ~(vopA & vopB); 
+                VALU_ANDN: vres = vopA & (~vopB); 
                 VALU_OR: vres = vopA | vopB; 
+                VALU_NOR: vres = ~(vopA | vopB); 
+                VALU_ORN: vres = vopA | (~vopB); 
                 VALU_XOR: vres = vopA ^ vopB; 
+                VALU_XNOR: vres = ~(vopA ^ vopB);
                 VALU_SRL: begin
                     // we store in temp_res, the shift amount 
                     case(vsew)
@@ -164,11 +169,6 @@ always_comb begin
             vres = vmul_out.vd_res;
         VFU_DIV:
             vres = vdiv_out.vd_res;
-        VFU_PRM: begin
-            case(vop.vpermop)
-                VPRM_SMV: vres = vopA; 
-            endcase
-        end 
     endcase
 end
 endmodule 

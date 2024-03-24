@@ -396,8 +396,13 @@ package rv32v_types_pkg;
     VALU_EXT, 
     // Integer logical
     VALU_AND,
-    VALU_OR ,
+    VALU_NAND, 
+    VALU_ANDN, 
+    VALU_OR,
+    VALU_NOR,
+    VALU_ORN,  
     VALU_XOR,
+    VALU_XNOR, 
     // Integer shift
     VALU_SLL,
     VALU_SRL,
