@@ -18,6 +18,8 @@ bool posedge = false;
 bool negedge = false;
 Vcache_stress_wrapper *dut;
 VerilatedFstC *trace;
+// Used to provide ordering to stimulus updates
+std::mutex tick_lock;
 
 enum class TransactionAction {
     Read,
@@ -52,7 +54,7 @@ Transaction rand_transaction(Transaction prev) {
         // TODO: Once caches reliably work, bump this up to test evictions and conflicts
         // Cache sizes are 1kB, get 4kB range just to increase possibility we force evictions
         // TODO: Currently 512B range
-        addr = rand() % 512 + 0x80000000;
+        addr = rand() % 64 + 0x80000000;
         addr &= ~0x3;
     }
     data = rand();
@@ -65,6 +67,7 @@ struct Ram {
     const uint32_t c_default_value = 0x00000000;
     const char *dump_file = "memsim.dump";
     std::map<uint32_t, uint32_t> mmap;
+    // Used to protect against concurrent accesses to the map
     std::mutex lock;
 
     uint32_t read(uint32_t addr) {
@@ -156,19 +159,6 @@ struct GenericBusIf {
         : addr(addr), wdata(wdata), ren(ren), wen(wen), rdata(rdata), busy(busy) {}
 };
 
-/*
-struct RamWithBus {
-    Ram ram;
-    GenericBusIf bus;
-
-    RamWithBus(GenericBusIf bus) : ram(), bus(bus) {}
-
-    void run() {
-        while (!kill_caches) {}
-    }
-};
-*/
-
 struct Cache {
   private:
     const char *transaction_dump_file = "transaction.dump";
@@ -200,28 +190,34 @@ struct Cache {
     }
 
     __attribute__((noinline)) void executeTransaction(Transaction transaction) {
-        *bus.addr = transaction.addr;
-        *bus.wdata = transaction.data;
-        *bus.ren = 0;
-        *bus.wen = 0;
-        switch (transaction.action) {
-        case TransactionAction::Noop:
-            return;
-        case TransactionAction::Read:
-            *bus.ren = 1;
-            break;
-        case TransactionAction::Write:
-            *bus.wen = 1;
-            break;
+        {
+            std::lock_guard<std::mutex> tick_guard(tick_lock);
+            *bus.addr = transaction.addr;
+            *bus.wdata = transaction.data;
+            *bus.ren = 0;
+            *bus.wen = 0;
+            switch (transaction.action) {
+                case TransactionAction::Noop:
+                    return;
+                case TransactionAction::Read:
+                    *bus.ren = 1;
+                    break;
+                case TransactionAction::Write:
+                    *bus.wen = 1;
+                    break;
+            }
+            all_transactions.push_back(std::make_pair(transaction, sim_time));
         }
-        all_transactions.push_back(std::make_pair(transaction, sim_time));
         while (*bus.busy) {}
         uint64_t curr_time = sim_time;
         volatile uint64_t *time_ptr = &sim_time;
         while (*time_ptr < curr_time + 4) {}
-        *bus.ren = 0;
-        *bus.wen = 0;
-        golden_model.handle_transaction(transaction);
+        {
+            std::lock_guard<std::mutex> tick_guard(tick_lock);
+            *bus.ren = 0;
+            *bus.wen = 0;
+            golden_model.handle_transaction(transaction);
+        }
     }
 
     void dump() {
@@ -289,6 +285,7 @@ struct Epoch {
 };
 
 void tick() {
+    std::lock_guard<std::mutex> tick_guard(tick_lock);
     dut->CLK = 0;
     dut->eval();
     trace->dump(sim_time++);
