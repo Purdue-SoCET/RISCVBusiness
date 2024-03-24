@@ -114,6 +114,8 @@ always_comb begin: NXT_STATE_AND_INTERNAL_REG_LOGIC
                     if(~stall) begin
                         if(!final_instr)
                             nxt_internal_reg[31:0] = nxt_sum; 
+                        else 
+                            nxt_internal_reg = '0; 
                     end 
                 end 
             endcase 

@@ -14,8 +14,6 @@
 RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
-  
-  
   // simple test case 
   vsetivli x0, 4, e32
 
@@ -27,6 +25,11 @@ RVTEST_CODE_BEGIN
   vcpop.m x3, v1
 
   TEST_CASE(1, x3, 128, NOP)
+
+  li x6, 32
+  vsetvli x5, x6, e8, m8
+  vcpop.m x3, v1
+  TEST_CASE(2, x3, 32, NOP)
 
 
 
