@@ -3,7 +3,8 @@
 `include "component_selection_defines.vh"
 
 module top_core #(
-    parameter logic [31:0] RESET_PC = 32'h80000000
+    parameter logic [31:0] RESET_PC = 32'h80000000,
+    parameter NUM_HARTS = 1
 ) (
     input CLK,
     nRST,
@@ -92,6 +93,6 @@ module top_core #(
 `endif
 
 
-    RISCVBusiness #(.RESET_PC(RESET_PC)) CORE (.*);
+    RISCVBusiness #(.RESET_PC(RESET_PC), .HART_ID(0)) CORE (.*);
 
 endmodule

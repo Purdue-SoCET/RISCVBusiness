@@ -27,7 +27,7 @@
 `include "component_selection_defines.vh"
 
 module priv_1_12_csr #(
-  parameter int HARTID = 0
+  parameter int HART_ID
 )(
   input CLK,
   input nRST,
@@ -116,7 +116,7 @@ module priv_1_12_csr #(
   assign marchid = '0;
   assign mimpid = '0;
   assign mconfigptr = '0;
-  assign mhartid = HARTID;
+  assign mhartid = HART_ID;
 
   /* These registers are RO fields */
   assign misa.zero = '0;

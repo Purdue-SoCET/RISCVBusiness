@@ -33,7 +33,9 @@
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
 
-module RISCVBusiness (
+module RISCVBusiness #(
+    parameter HART_ID
+) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
     output logic wfi,
@@ -141,7 +143,7 @@ module RISCVBusiness (
         .predict_if(predict_if)
     );
 
-    priv_wrapper priv_wrapper_i (
+    priv_wrapper #(.HART_ID(HART_ID)) priv_wrapper_i (
         .CLK(CLK),
         .nRST(nRST),
         .prv_pipe_if(prv_pipe_if),
