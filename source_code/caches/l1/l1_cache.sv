@@ -61,6 +61,7 @@ module l1_cache #(
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2 + 1; // in bits (+1 for exclusive bit)
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
     localparam SRAM_TAG_W         = (N_TAG_BITS + 3) * ASSOC; // +3 for valid, dirty, and exclusive
+    localparam CLEAR_LENGTH       = $clog2(BLOCK_SIZE) + 2;
 
     //typedef enum logic[1:0] {INVALID=0, EXCLUSIVE, SHARED, MODIFIED} frame_state_t;
 
@@ -273,7 +274,12 @@ module l1_cache #(
         flush_done 	            = 0;
         idle_done               = 0;
         clear_done 	            = 0;
-        next_read_addr          = read_addr;
+        // This logic should not change as it may cause bizarre issues during
+        // simulation. During testing it was found that this exact logic was
+        // found in multiple places in the below `casez` statement, however,
+        // it wouldn't execute correctly. For example, 0x80000510 would become
+        // 0x80000500 for a block size of 2.
+        next_read_addr          = proc_gen_bus_if.addr & ~{CLEAR_LENGTH{1'b1}};
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
         ccif.dWEN               = 1'b0;
@@ -301,7 +307,6 @@ module l1_cache #(
                 end
             end
             HIT: begin
-                next_read_addr = decoded_addr;
                 // cache hit on a processor read
                 if(proc_gen_bus_if.ren && hit && !flush) begin
                     proc_gen_bus_if.busy = 0; 
@@ -360,12 +365,10 @@ module l1_cache #(
                 // cache miss on a clean block
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
-                    next_read_addr =  {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
-                    next_read_addr  =  {sramRead.frames[ridx].tag.tag_bits, decoded_addr.idx.idx_bits, (N_BLOCK_BITS + 2)'('0)};
             	end
             end 
             FETCH: begin
@@ -410,7 +413,6 @@ module l1_cache #(
                     sramWrite.frames[ridx].tag.valid = 0;
                     sramMask.frames[ridx].tag.dirty  = 0;
                     sramMask.frames[ridx].tag.valid  = 0;
-                    next_read_addr = {decoded_addr.idx.tag_bits, decoded_addr.idx.idx_bits, {N_BLOCK_BITS{1'b0}}, 2'b0};
                 end
             end
             SNOOP: begin
