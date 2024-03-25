@@ -527,7 +527,7 @@ module l1_cache #(
                     next_state = HIT;
 	        end
 	        HIT: begin
-                if (ccif.snoop_hit)
+                if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
                 else if (proc_gen_bus_if.wen && reserve && ~hit) // Don't transition on a failed sc
                     next_state = state;
@@ -541,13 +541,13 @@ module l1_cache #(
 	        FETCH: begin
                 if (!mem_gen_bus_if.busy)
                     next_state = HIT; 
-                else if (ccif.snoop_hit)
+                else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
 	        end
 	        WB: begin
                 if (!mem_gen_bus_if.busy)
                     next_state = HIT; 
-                else if (ccif.snoop_hit)
+                else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
 	        end
             SNOOP: begin
