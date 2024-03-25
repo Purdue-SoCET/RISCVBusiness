@@ -123,7 +123,10 @@ module branch_tracker (
                 forward_pred_taken_count <= forward_pred_taken_count + 1;
                 forward_taken_correct_count <= forward_taken_correct_count + 1;
             end
-        end 
+        end if (is_jalr) begin
+	   // if jump instruction, update unconditional counter
+	   unconditional_count <= unconditional_count + 1;
+	end 
     end : tracked_registers
 
     final begin : OUTPUT_STATS
