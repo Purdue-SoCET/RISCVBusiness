@@ -27,7 +27,7 @@ import rv32i_types_pkg::*;
 module rv32v_scratch_reg
 (
     input logic CLK, nRST, 
-    input logic wen,
+    input logic[3:0] vbyte_wen,
     input word_t[3:0] vwdata, 
     output word_t[3:0] vrdata
 );
@@ -35,8 +35,19 @@ module rv32v_scratch_reg
 always_ff @(posedge CLK, negedge nRST) begin
     if(~nRST) begin
         vrdata <= '0;
-    end else if(wen) begin
-        vrdata <= vwdata;
+    end else begin
+        if (vbyte_wen[0]) begin
+            vrdata[0] <= vwdata[0];
+        end
+        if (vbyte_wen[1]) begin
+            vrdata[1] <= vwdata[1];
+        end
+        if (vbyte_wen[2]) begin
+            vrdata[2] <= vwdata[2];
+        end
+        if (vbyte_wen[3]) begin
+            vrdata[3] <= vwdata[3];
+        end
     end
 end
 

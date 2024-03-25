@@ -7,8 +7,9 @@ module rv32v_ex_datapath(
     input vcontrol_t vctrls, 
     input vwb_t vwb_ctrls,
     input logic[3:0] vmskset_fwd_bits,
+    input logic output_stall,
     input logic[31:0] vl,
-    input logic flush, stall, 
+    input logic queue_flush, mask_stall, 
 
     output vexmem_t vmem_in,
     output logic vex_stall
@@ -177,7 +178,7 @@ word_t[3:0] vscratchdata;
 
 rv32v_scratch_reg VSCRATCH (
     .CLK(CLK), .nRST(nRST), 
-    .wen((vctrls.vd_sel.regclass == RC_SCRATCH) && vctrls.vregwen),
+    .vbyte_wen({4{!output_stall && (vctrls.vd_sel.regclass == RC_SCRATCH)}} & msku_lane_mask),
     .vwdata({vmem_in.vres[3], vmem_in.vres[2], vmem_in.vres[1], vmem_in.vres[0]}),
     .vrdata({vscratchdata[3], vscratchdata[2], vscratchdata[1], vscratchdata[0]})
 );
@@ -252,7 +253,8 @@ assign vex_stall = (|vfu_stall) | (mask_calc_busy);
 rv32v_reduction_unit VREDUNIT (
     .valuop(vctrls.vexec.valuop),
     .vopunsigned(vctrls.vexec.vopunsigned),
-    .vdat_in(vopB),
+    .vdat_in(vopA),
+    .vmask_in(msku_lane_mask),
     .vdat_out(vred_res)
 );
 
@@ -296,7 +298,7 @@ logic[127:0] mask_calc_out;
 rv32v_mask_calc VMSK_CALC_UNIT(
     .CLK(CLK), .nRST(nRST), 
     .mask_src(vmask_calc_mask_src), .mask_dest(vmask_calc_mask_dest), .v0_mask(v0), 
-    .vl(vl), .flush(flush), .stall(stall), .mask_en(vctrls.vmask_en), .final_instr(vctrls.vuop_last), 
+    .vl(vl), .flush(queue_flush), .stall(mask_stall), .mask_en(vctrls.vmask_en), .final_instr(vctrls.vuop_last), 
     .vexec(vctrls.vexec), .uop_num(vctrls.vuop_num), 
 
     .busy(mask_calc_busy), .mask_calc_out(mask_calc_out) 
