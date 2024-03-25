@@ -134,8 +134,9 @@ module coherency_unit #(
             RESP_CHKTAG: begin
                 ccif.addr = bcif.ccsnoopaddr[CPUID];
                 ccif.snoop_req = 1'b1;
-                bcif.ccsnoopdone[CPUID] = 1'b1;
-                bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
+                //bcif.ccsnoopdone[CPUID] = 1'b1;
+                bcif.ccsnoopdone[CPUID] = !ccif.snoop_busy & !ccif.snoop_hit;
+                //bcif.ccsnoophit[CPUID] = ccif.snoop_hit;
             end
             RESP_SEND: begin
                 ccif.addr = bcif.ccsnoopaddr[CPUID];
