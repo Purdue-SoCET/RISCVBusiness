@@ -54,7 +54,7 @@ Transaction rand_transaction(Transaction prev) {
         // TODO: Once caches reliably work, bump this up to test evictions and conflicts
         // Cache sizes are 1kB, get 4kB range just to increase possibility we force evictions
         // TODO: Currently 512B range
-        addr = rand() % 64 + 0x80000000;
+        addr = rand() % 512 + 0x80000000;
         addr &= ~0x3;
     }
     data = rand();
