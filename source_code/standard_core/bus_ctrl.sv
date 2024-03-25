@@ -35,7 +35,6 @@ module bus_ctrl #(
     // localparams/imports
     localparam CLEAR_LENGTH = $clog2(BLOCK_SIZE) + 2;
     localparam CPU_ID_LENGTH = $clog2(CPUS);
-    localparam BLOCK_CYCLES = 2; // TEMP
     // states
     bus_state_t state, nstate;
     // requester/supplier
@@ -47,7 +46,7 @@ module bus_ctrl #(
     transfer_width_t ndload, nl2_store;
     // stores whether we need to update requester to exclusive or if WRITEBACK is needed after transfer
     logic exclusiveUpdate, nexclusiveUpdate;
-    logic [$clog2(BLOCK_CYCLES):0] block_count, nblock_count;
+    logic [$clog2(BLOCK_SIZE):0] block_count, nblock_count;
     logic block_count_done;
     logic hit_delay;
 
@@ -134,7 +133,7 @@ module bus_ctrl #(
         nexclusiveUpdate = exclusiveUpdate;
         nrequester_cpu = requester_cpu;
         nsupplier_cpu = supplier_cpu;
-        nblock_count = 0;
+        nblock_count = block_count;
         block_count_done = 0;
         casez(state)
             IDLE: begin // obtain the requester CPU id
@@ -183,13 +182,16 @@ module bus_ctrl #(
                 nblock_count = block_count;
                 ccif.l2REN = 1;
 
-                if ((block_count < BLOCK_SIZE - 1) && (ccif.l2state == L2_ACCESS)) begin
-                    nblock_count = block_count + 1;
-                    ndload[block_count * 32+:32] = ccif.l2load;
-                    nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
-                end else begin
-                    block_count_done = ccif.l2state == L2_ACCESS;
-                    ndload[block_count * 32+:32] = ccif.l2load;
+                if (ccif.l2state == L2_ACCESS) begin
+                    ccif.l2REN = 0;
+                    if (block_count < BLOCK_SIZE - 1) begin
+                        nblock_count = block_count + 1;
+                        ndload[block_count * 32+:32] = ccif.l2load;
+                        nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
+                    end else begin
+                        block_count_done = ccif.l2state == L2_ACCESS;
+                        ndload[block_count * 32+:32] = ccif.l2load;
+                    end
                 end
             end
             TRANSFER_R: begin // move data from cache to bus
@@ -221,6 +223,7 @@ module bus_ctrl #(
                 nblock_count = block_count;
                 nl2_store = ccif.dload[requester_cpu][(block_count * 32)+:32];
                 if (ccif.l2state == L2_ACCESS) begin
+                    ccif.l2WEN = 0;
                     if (block_count < BLOCK_SIZE - 1) begin
                         nblock_count = block_count + 1;
                         nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
@@ -236,6 +239,7 @@ module bus_ctrl #(
                 nl2_store = ccif.dstore[requester_cpu][(block_count * 32)+:32];
 
                 if (ccif.l2state == L2_ACCESS) begin
+                    ccif.l2WEN = 0;
                     if (block_count < BLOCK_SIZE - 1) begin
                         nblock_count = block_count + 1;
                         nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
