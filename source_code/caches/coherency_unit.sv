@@ -28,7 +28,6 @@
 
 module coherency_unit #(
     parameter ADDR_WIDTH = 32, // Address width for cache lines
-    parameter CPUS = 2,        // Number of CPUs
     parameter BLOCK_SIZE = 2,
     parameter CPUID = 0
 ) (

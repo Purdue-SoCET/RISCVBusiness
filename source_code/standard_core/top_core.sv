@@ -4,7 +4,7 @@
 
 module top_core #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter NUM_HARTS = 1
+    parameter NUM_HARTS = 2
 ) (
     input CLK,
     nRST,
@@ -39,11 +39,10 @@ module top_core #(
 
     function [31:0] get_x28;
         // verilator public
-        get_x28 = CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[28];
+        get_x28 = CORE.x28;
     endfunction
 
-
-    bind stage3_mem_stage cpu_tracker #(.NUM_HARTS(1)) cpu_track1 (
+    bind stage3_mem_stage cpu_tracker #(.NUM_HARTS(2)) cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),
         .instr(ex_mem_if.ex_mem_reg.instr),
@@ -93,6 +92,6 @@ module top_core #(
 `endif
 
 
-    RISCVBusiness #(.RESET_PC(RESET_PC), .HART_ID(0)) CORE (.*);
+    RISCVBusiness #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) CORE (.*);
 
 endmodule
