@@ -28,14 +28,16 @@
 `include "component_selection_defines.vh"
 `include "bus_ctrl_if.vh"
 
-module memory_controller (
+module memory_controller #(
+    parameter NUM_HARTS
+) (
     input logic CLK,
     nRST,
     bus_ctrl_if.cc bcif,
     generic_bus_if.cpu out_gen_bus_if,
     input logic abort_bus
 );
-    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(2)) BUS_CTRL(
+    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2)) BUS_CTRL(
         .CLK(CLK),
         .nRST(nRST),
         .ccif(bcif),
