@@ -31,19 +31,20 @@ interface predictor_pipeline_if;
   word_t current_pc, target_addr, update_addr, pc_to_update;
   logic update_predictor;
   logic predict_taken, prediction, branch_result;
-  logic is_rv32c, is_branch, direction, is_jump;
+  logic is_rv32c, is_branch, direction, is_jump, is_jalr;
   logic [31:0] instr;
   logic[12:0] imm_sb;
 
   modport predictor(
     input current_pc, update_predictor, prediction, branch_result, update_addr,
 		  is_rv32c, imm_sb, pc_to_update, is_branch, is_jump, direction, instr,
+	  	  is_jalr,
     output predict_taken, target_addr
   );
 
   modport update(
     output update_predictor, prediction, branch_result,
-           update_addr, pc_to_update, direction
+           update_addr, pc_to_update, direction, is_jalr
   );
 
   modport access(
