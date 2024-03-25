@@ -25,13 +25,15 @@
 `include "prv_pipeline_if.vh"
 `include "core_interrupt_if.vh"
 
-module priv_wrapper (
+module priv_wrapper #(
+    parameter HART_ID
+) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
     prv_pipeline_if.priv_block prv_pipe_if,
     core_interrupt_if.core interrupt_if
 );
 
-    priv_1_12_block priv_block_i(.*);
+    priv_1_12_block #(.HART_ID(HART_ID)) priv_block_i(.*);
 
 endmodule
