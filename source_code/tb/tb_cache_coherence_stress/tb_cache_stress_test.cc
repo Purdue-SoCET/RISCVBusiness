@@ -208,12 +208,16 @@ struct Cache {
             }
             all_transactions.push_back(std::make_pair(transaction, sim_time));
         }
-        while (*bus.busy) {}
+        while (*bus.busy == 1) {
+            printf("Busy waiting %d ", *bus.busy);
+        }
         uint64_t curr_time = sim_time;
         volatile uint64_t *time_ptr = &sim_time;
-        while (*time_ptr < curr_time + 4) {}
+        while (*time_ptr < curr_time + 10) {}
         {
             std::lock_guard<std::mutex> tick_guard(tick_lock);
+            if(*bus.busy == 1)
+                printf("ERROR, busy was  %d ", *bus.busy);
             *bus.ren = 0;
             *bus.wen = 0;
             golden_model.handle_transaction(transaction);
