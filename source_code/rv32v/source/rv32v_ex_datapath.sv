@@ -104,7 +104,7 @@ always_comb begin
         vmem_in.vlane_mask = vmskset_lane_mask; 
     else if(is_mask_calc_instr) begin
         case(vctrls.vexec.vmaskop)
-            VMSK_CNT, VMSK_FST, VMSK_SBF, VMSK_SIF, VMSK_SOF: vmem_in.vlane_mask = 'b1; 
+            VMSK_SBF, VMSK_SIF, VMSK_SOF: vmem_in.vlane_mask = '1; 
         endcase
     end
 end 

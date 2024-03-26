@@ -19,7 +19,8 @@ RVTEST_CODE_BEGIN
   li x6, 20 
   vsetvli x5, x6 , e8, m2 
 
-  vid.v v2 
+  vid.v v2
+  vid.v v4
  
   la x2, sdat
   vse8.v v2, 0(x2) 
@@ -105,19 +106,12 @@ addi x2, x2, 1
 lb x3, 0(x2)
 TEST_CASE(20, x3, 19, NOP)
 
-
-  li x6, 4 
-  vsetvli x5, x6 , e8, m2 
-
-  vid.v v4
-
-
-  la x2, sdat
-  vse8.v v4, 0(x2) 
+la x2, sdat
+vse8.v v4, 0(x2)  
+lw x3, 0(x2)
+TEST_CASE(21, x3, 0x03020100, NOP)
 
 
-  lw x3, 0(x2)
-  TEST_CASE(21, x3, 0x03020100, NOP)
 
 
   TEST_PASSFAIL

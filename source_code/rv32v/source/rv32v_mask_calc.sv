@@ -256,13 +256,14 @@ always_comb begin
             nxt_vfirst_out = priority_enc_res; 
         end
             VFIRST_1: begin 
-            nxt_vfirst_out = priority_enc_res == '1 ? vfirst_out : priority_enc_res + 32; 
+            nxt_vfirst_out = vfirst_out == '1 ? (priority_enc_res == '1 ? '1 : priority_enc_res + 32) : vfirst_out; 
+                                                    
         end 
             VFIRST_2: begin 
-            nxt_vfirst_out = priority_enc_res == '1 ? vfirst_out : priority_enc_res + 64; 
+            nxt_vfirst_out = vfirst_out == '1 ? (priority_enc_res == '1 ? '1 : priority_enc_res + 64) : vfirst_out; 
         end
             VFIRST_DONE: begin
-             nxt_vfirst_out =priority_enc_res == '1 ? vfirst_out : priority_enc_res + 96;  
+             nxt_vfirst_out = vfirst_out == '1 ? (priority_enc_res == '1 ? '1 : priority_enc_res + 96) : vfirst_out; 
         end
     endcase 
 
@@ -280,21 +281,21 @@ always_comb begin
             if(vfirst_out != '1)
                 vms_out = (vms_out << vfirst_out) - 1; 
             else 
-                vms_out = 'b1; 
+                vms_out = '1; 
         end 
         VMSIF: begin
             vms_out = 1; 
             if(vfirst_out != '1)
                 vms_out = (vms_out << (vfirst_out+1)) - 1; 
             else 
-                vms_out = 'b1; 
+                vms_out = '1; 
         end
         VMSOF: begin
             vms_out = 1; 
             if(vfirst_out != '1)
                 vms_out = vms_out << vfirst_out; 
             else 
-                vms_out = 'b0; 
+                vms_out = '0; 
         end
     endcase 
 
