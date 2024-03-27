@@ -92,6 +92,6 @@ module top_core #(
 `endif
 
 
-    RISCVBusiness #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) CORE (.*);
+    multicore_wrapper #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) CORE (.*);
 
 endmodule
