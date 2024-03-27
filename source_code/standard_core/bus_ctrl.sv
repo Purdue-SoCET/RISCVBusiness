@@ -49,6 +49,9 @@ module bus_ctrl #(
     logic [$clog2(BLOCK_SIZE):0] block_count, nblock_count;
     logic block_count_done;
     logic hit_delay;
+    // Because responding caches can take a variable length of time to check
+    // the tag, we need to keep track of which ones have already responded.
+    logic [CPUS-1:0] cc_snoopdone, ncc_snoopdone;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
@@ -62,6 +65,7 @@ module bus_ctrl #(
             ccif.l2addr <= '0;
             block_count <= 0;
             hit_delay <= '0;
+            cc_snoopdone <= '0;
         end
         else begin
             requester_cpu <= nrequester_cpu;        // requester
@@ -74,6 +78,7 @@ module bus_ctrl #(
             ccif.l2addr <= nl2_addr;                // l2 addr to store at
             block_count <= nblock_count;            // temp to deal with current cache block setup
             hit_delay <= ccif.l2state == L2_ACCESS;
+            cc_snoopdone <= ncc_snoopdone;
         end
     end
 
@@ -95,9 +100,9 @@ module bus_ctrl #(
             GRANT_RX:           nstate = SNOOP_RX;
             GRANT_EVICT:        nstate = WRITEBACK;
             GRANT_INV:          nstate = SNOOP_INV;
-            SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
-            SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
-            SNOOP_INV:          nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? INVALIDATE : state;
+            SNOOP_R:            nstate = snoopStatus(requester_cpu, cc_snoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
+            SNOOP_RX:           nstate = snoopStatus(requester_cpu, cc_snoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
+            SNOOP_INV:          nstate = snoopStatus(requester_cpu, cc_snoopdone) ? INVALIDATE : state;
             // TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
             // TRANSFER_RX:        nstate = BUS_TO_CACHE;
             // READ_L2:            nstate = (ccif.l2state == L2_ACCESS) ? BUS_TO_CACHE : state;
@@ -135,8 +140,10 @@ module bus_ctrl #(
         nsupplier_cpu = supplier_cpu;
         nblock_count = block_count;
         block_count_done = 0;
+        ncc_snoopdone = cc_snoopdone;
         casez(state)
             IDLE: begin // obtain the requester CPU id
+                ncc_snoopdone = 0;
                 if (|ccif.dWEN)
                     nrequester_cpu = priorityEncode(ccif.dWEN);
                 else if (|(ccif.dREN & ccif.ccwrite))
@@ -166,6 +173,7 @@ module bus_ctrl #(
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
+                ncc_snoopdone |= ccif.ccsnoopdone;
             end
             SNOOP_RX: begin // determine what to do on busRDX
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
@@ -173,10 +181,12 @@ module bus_ctrl #(
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
                 nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
+                ncc_snoopdone |= ccif.ccsnoopdone;
             end
             SNOOP_INV: begin // snoop and invalidate non_requesters
                 ccif.ccinv = nonRequesterEnable(requester_cpu);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
+                ncc_snoopdone |= ccif.ccsnoopdone;
             end
             READ_L2: begin // reads data into bus from l2
                 nblock_count = block_count;
