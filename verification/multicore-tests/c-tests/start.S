@@ -1,3 +1,7 @@
+#include "amo_emu.h"
+
+WANT_AMO_EMU_SUPPORT
+
 .global _start
 _start:
     # Start out by getting mhartid to tell which core we're on
