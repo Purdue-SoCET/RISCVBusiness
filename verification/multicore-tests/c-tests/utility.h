@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+extern int32_t flag;
+extern int32_t hart1_done;
 #define MTIME_ADDR 0xFFFFFFE0
 #define MTIMEH_ADDR 0xFFFFFFE4
 #define MTIMECMP_ADDR 0xFFFFFFE8
