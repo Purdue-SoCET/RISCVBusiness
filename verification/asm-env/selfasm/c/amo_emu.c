@@ -123,10 +123,7 @@ static uint32_t get_mepc() {
 }
 
 __attribute__((noreturn, aligned(4))) void exception_handler() {
-    asm volatile("lw ra, 12(sp)\n"
-                 "addi sp, sp, 16\n" // Weird hack to undo function prologue
-                 "addi sp, sp, -128\n"
-                 "sw x31, 124(sp)\n"
+    asm volatile("sw x31, 124(sp)\n"
                  "sw x30, 120(sp)\n"
                  "sw x29, 116(sp)\n"
                  "sw x28, 112(sp)\n"
@@ -155,7 +152,6 @@ __attribute__((noreturn, aligned(4))) void exception_handler() {
                  "sw x5, 20(sp)\n"
                  "sw x4, 16(sp)\n"
                  "sw x3, 12(sp)\n"
-                 "sw x2, 8(sp)\n"
                  "sw x1, 4(sp)\n");
     uint32_t *regs;
     asm volatile("mv %0, sp" : "=r"(regs)::);
@@ -243,7 +239,6 @@ __attribute__((noreturn, aligned(4))) void exception_handler() {
                      "lw x5, 20(sp)\n"
                      "lw x4, 16(sp)\n"
                      "lw x3, 12(sp)\n"
-                     "lw x2, 8(sp)\n"
                      "lw x1, 4(sp)\n"
                      "addi sp, sp, 128\n"
                      "mret");
