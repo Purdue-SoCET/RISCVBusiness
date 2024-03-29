@@ -6,7 +6,6 @@ WANT_AMO_EMU_SUPPORT
 _start:
     # Start out by getting mhartid to tell which core we're on
     csrr s0, mhartid
-    li sp, 0x8000F000
     # Get a 2kB stack starting at 0x8000F000
     li sp, 0x8000F000
     slli t0, s0, 11
