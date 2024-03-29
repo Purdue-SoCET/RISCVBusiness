@@ -581,7 +581,7 @@ module l1_cache #(
         end
         addr_is_reserved = reservation_set.idx == decoded_addr.idx && reserve;
         reservation_is_valid = addr_is_reserved && reservation_set.reserved && hit;
-        if (addr_is_reserved && coherence_hit) begin
+        if (addr_is_reserved && coherence_hit && proc_gen_bus_if.ren) begin
             next_reservation_set.reserved = 1'b1;
         end else if (proc_gen_bus_if.ren || proc_gen_bus_if.wen || clear || flush) begin
             next_reservation_set.reserved = 1'b0;
