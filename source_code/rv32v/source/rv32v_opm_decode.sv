@@ -176,15 +176,12 @@ always_comb begin
             case(vs1_sel)
                 5'b00001: begin
                      vexec.vmaskop = VMSK_SBF; 
-                     disable_mask = 1'b1;
                 end 
                 5'b00010: begin
                      vexec.vmaskop = VMSK_SOF;
-                     disable_mask = 1'b1;  
                 end 
                 5'b00011: begin
                      vexec.vmaskop = VMSK_SIF; 
-                     disable_mask = 1'b1; 
                 end 
                 5'b10000: vexec.vmaskop = VMSK_ITA;
                 5'b10001: vexec.vmaskop = VMSK_IDX;  

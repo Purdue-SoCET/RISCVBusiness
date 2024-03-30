@@ -55,14 +55,12 @@ logic[31:0] nxt_vfirst_out;
 logic[31:0] priority_enc_res;  
 
 // VMS* SIGNALS 
-logic[128:0] vms_out; 
+logic[127:0] vms_out; 
 
 // VIOTA AND VID SIGNALS
 logic[31:0] prev_sum; 
 logic[31:0] nxt_sum; 
 logic[127:0] viota_out; // vid instruction uses the same datapath
-logic[3:0] v0_muxed; 
-logic[3:0] mask_src_muxed; 
 logic[3:0] viota_mask_src; 
 logic[7:0] viota_start_idx; 
 
@@ -273,20 +271,22 @@ end
 
 //**** VMSBF, VMSIF, VMSOF LOGIC ****//
 always_comb begin
-    vms_out = 0;  
+    vms_out = 0; 
     // these instructions use the value from vfirst to produce an output
     case(curr_state)
         VMSBF: begin
             vms_out = 1; 
-            if(vfirst_out != '1)
+            if(vfirst_out != 32'hffffffff)
                 vms_out = (vms_out << vfirst_out) - 1; 
             else 
                 vms_out = '1; 
         end 
         VMSIF: begin
             vms_out = 1; 
-            if(vfirst_out != '1)
-                vms_out = (vms_out << (vfirst_out+1)) - 1; 
+            if(vfirst_out != '1) begin
+                vms_out = (vms_out << (vfirst_out)) - 1; 
+                vms_out[vfirst_out] = 1'b1;
+            end 
             else 
                 vms_out = '1; 
         end
@@ -301,7 +301,7 @@ always_comb begin
 
     // mask the output dependeding on vl, mask_en, and v0
     for(int i = 0; i < 128; i++) begin
-        if(i > vl || (~mask_en | v0_mask[i]))
+        if(i > vl || (mask_en && ~v0_mask[i]))
             vms_out[i] = mask_dest[i]; // retains original value and does not overwrite it
     end 
 end 
@@ -311,17 +311,11 @@ assign prev_sum = internal_reg[31:0];
 
 always_comb begin
     viota_start_idx = {uop_num, 2'b0};   
-    // muxing logic 
-    v0_muxed[0] = (~mask_en) | v0_mask[viota_start_idx    ]; mask_src_muxed[0] =  mask_src[viota_start_idx    ];
-    v0_muxed[1] = (~mask_en) | v0_mask[viota_start_idx + 1]; mask_src_muxed[1] =  mask_src[viota_start_idx + 1];
-    v0_muxed[1] = (~mask_en) | v0_mask[viota_start_idx + 2]; mask_src_muxed[2] =  mask_src[viota_start_idx + 2];
-    v0_muxed[2] = (~mask_en) | v0_mask[viota_start_idx + 3]; mask_src_muxed[3] =  mask_src[viota_start_idx + 3];
 
-    // masking mask_src_muxed due to v0_muxed values
-    viota_mask_src[0] = v0_muxed[0] ? mask_src_muxed[0] : 1'b0; 
-    viota_mask_src[1] = v0_muxed[1] ? mask_src_muxed[1] : 1'b0; 
-    viota_mask_src[2] = v0_muxed[2] ? mask_src_muxed[2] : 1'b0; 
-    viota_mask_src[3] = v0_muxed[3] ? mask_src_muxed[3] : 1'b0; 
+    viota_mask_src[0] = mask_src_masked[viota_start_idx]; 
+    viota_mask_src[1] = mask_src_masked[viota_start_idx + 1]; 
+    viota_mask_src[2] = mask_src_masked[viota_start_idx + 2];
+    viota_mask_src[3] = mask_src_masked[viota_start_idx + 3];  
 
 
     // if instruction is vid instruction, set all the mask bits to 1s; 
