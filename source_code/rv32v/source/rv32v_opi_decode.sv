@@ -237,6 +237,7 @@ always_comb begin
         VWREDSUMU: begin
             vexec.vfu = VFU_RED;
             vexec.valuop = VALU_ADD;
+            vexec.vopunsigned = 1'b1;
         end
         VWREDSUM: begin
             vexec.vfu = VFU_RED;

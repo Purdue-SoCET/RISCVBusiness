@@ -304,7 +304,12 @@ always_comb begin
 
         if(vmask_calc_instr_uop)
             veew_dest = vcu_if.vsew;  
-    end 
+    end
+
+    // Override vs1 width for reduction finalization
+    if (vredinstr && redstate == REDC_FINAL) begin
+        veew_src1 = veew_dest;
+    end
 
 end
 
