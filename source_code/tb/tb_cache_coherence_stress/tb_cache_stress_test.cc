@@ -295,6 +295,10 @@ struct Cache {
                 state.setBusStim(bus);
             } else if (!done) {
                 printf("finished\n");
+                Transaction curr_transaction = state.intoTransaction();
+                all_transactions.push_back(
+                    std::make_tuple(curr_transaction, state.startCycle(), sim_time));
+                golden_model.handle_transaction(curr_transaction);
                 state = CacheState::Done();
                 state.setBusStim(bus);
                 done = true;
@@ -372,12 +376,10 @@ struct Epoch {
             if (dut->memory_ren) {
                 dut->memory_rdata =
                     sim_model.handle_transaction({TransactionAction::Read, dut->memory_addr, 0x0});
-                //tick_dut();
                 dut->memory_busy = 0;
             } else if (dut->memory_wen) {
                 sim_model.handle_transaction(
                     {TransactionAction::Write, dut->memory_addr, dut->memory_wdata});
-                //tick_dut();
                 dut->memory_busy = 0;
             }
         } else {
@@ -385,17 +387,6 @@ struct Epoch {
         }
         cache0.tick();
         cache1.tick();
-    }
-
-    //Wait for the caches to finish flushing after reset
-    void wait_for_flush() {
-        do {
-            tick();
-            if (dut->cache0_flush_done)
-                dut->cache0_flush = 0;
-            if (dut->cache1_flush_done)
-                dut->cache1_flush = 0;
-        } while (dut->cache0_flush || dut->cache1_flush);
     }
 
     void flush() {
@@ -441,13 +432,12 @@ int main(int argc, char **argv) {
                              &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy);
     GenericBusIf cache1_gbif(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
                              &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy);
-    Epoch epoch(500, cache0_gbif, cache1_gbif);
+    Epoch epoch(1000000, cache0_gbif, cache1_gbif);
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");
 
     reset();
-    //epoch.wait_for_flush();
 
     while (!(cache0_done && cache1_done)) {
         epoch.tick();
