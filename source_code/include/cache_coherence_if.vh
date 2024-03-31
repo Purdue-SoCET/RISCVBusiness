@@ -32,13 +32,14 @@ interface cache_coherence_if();
     logic snoop_busy; // Signifies that cache is currently writing to sram array and can't do a tag lookup right now
     logic snoop_hit; //Bus signifies if tag from SRAM array matches a snoop
     logic dWEN; //For write-back
+    logic snoop_complete; //Signifies that the snoop is about to end
 
     modport cache(
-        input  addr, state_transfer, snoop_req,
+        input  addr, state_transfer, snoop_req, snoop_complete,
         output valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN, snoop_busy
     );
     modport coherency_unit(
-        output addr, state_transfer, snoop_req,
+        output addr, state_transfer, snoop_req, snoop_complete,
         input  valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN, snoop_busy
     );
 endinterface

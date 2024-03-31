@@ -126,6 +126,7 @@ module coherency_unit #(
         ccif.addr = 32'hBAD1BAD1;
         ccif.state_transfer = cc_end_state'(INVALID);
         ccif.snoop_req = 1'b0;
+        ccif.snoop_complete = 1'b0;
 
         case(state)
             IDLE: begin
@@ -143,7 +144,8 @@ module coherency_unit #(
                 bcif.dstore[CPUID] =  ccif.requested_data;
                 bcif.ccsnoophit[CPUID] = 1'b1;
                 bcif.ccsnoopdone[CPUID] = 1'b1; //debateable
-                gbif.busy = !bcif.ccwait[CPUID];
+                gbif.busy = bcif.ccwait[CPUID];
+                //ccif.snoop_complete = !bcif.ccwait[CPUID]; 
                 if (bcif.ccinv[CPUID]) begin  //Anything -> I
                     ccif.state_transfer = cc_end_state'(INVALID); 
                 end else begin //Anything -> S

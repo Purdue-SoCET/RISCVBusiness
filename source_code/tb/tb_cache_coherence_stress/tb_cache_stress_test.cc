@@ -59,7 +59,7 @@ Transaction rand_transaction() {
         // TODO: Once caches reliably work, bump this up to test evictions and conflicts
         // Cache sizes are 1kB, get 4kB range just to increase possibility we force evictions
         // TODO: Currently 512B range
-        addr = rand() % 64 + 0x80000000;
+        addr = rand() % 512 + 0x80000000;
         addr &= ~0x3;
     }
     data = rand();
@@ -409,11 +409,6 @@ struct Epoch {
                 dut->cache1_flush = 0;
         } while (dut->cache0_flush || dut->cache1_flush);
     }
-
-    ~Epoch() {
-        cache0.dump();
-        cache1.dump();
-    }
 };
 
 void reset() {
@@ -446,7 +441,7 @@ int main(int argc, char **argv) {
                              &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy);
     GenericBusIf cache1_gbif(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
                              &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy);
-    Epoch epoch(50, cache0_gbif, cache1_gbif);
+    Epoch epoch(500, cache0_gbif, cache1_gbif);
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");
@@ -458,6 +453,8 @@ int main(int argc, char **argv) {
         epoch.tick();
     }
 
+    epoch.cache0.dump();
+    epoch.cache1.dump();
     epoch.flush();
 
     dut->final();

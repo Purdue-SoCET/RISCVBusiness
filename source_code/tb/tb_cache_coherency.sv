@@ -414,6 +414,16 @@ initial begin
     bcif.ccwrite[1] = 1'b0;
 
     check_state_transfer(INVALID);
+
+    //Test case 6: S -> M case
+    bcif.daddr[1] = 0;
+    bcif.dREN[1] = 0;
+    #(50);
+    tb_test_num = tb_test_num + 1;
+    tb_test_case = "Transition S -> M";
+
+    // Reset to isolate each test case
+    init_cache();
 end
 
 endprogram
