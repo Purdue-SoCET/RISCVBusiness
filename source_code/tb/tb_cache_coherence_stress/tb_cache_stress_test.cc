@@ -409,6 +409,11 @@ struct Epoch {
                 dut->cache1_flush = 0;
         } while (dut->cache0_flush || dut->cache1_flush);
     }
+
+    ~Epoch() {
+        cache0.dump();
+        cache1.dump();
+    }
 };
 
 void reset() {
