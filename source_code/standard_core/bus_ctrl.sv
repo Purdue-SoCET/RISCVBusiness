@@ -26,7 +26,7 @@
 
 module bus_ctrl #(
     parameter BLOCK_SIZE = 2,
-    parameter CPUS = 4
+    parameter CPUS = 2
 )(
     input logic CLK, nRST,
     bus_ctrl_if.cc ccif,
@@ -226,6 +226,7 @@ module bus_ctrl #(
                 end
             end
             WRITEBACK_MS: begin // writeback using supplier while also doing cache to cache transfer
+                ccif.ccwait = nonRequesterEnable(requester_cpu);
                 ccif.dwait[requester_cpu] = 0;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
 
@@ -236,7 +237,7 @@ module bus_ctrl #(
                     nblock_count = block_count + 1;
                     if (block_count < BLOCK_SIZE - 1) begin
                         nl2_addr = ccif.l2addr + (nblock_count * 4);
-                        nl2_store = ccif.dstore[requester_cpu][(nblock_count * 32)+:32];
+                        nl2_store = ccif.dstore[supplier_cpu][(nblock_count * 32)+:32];
                     end
                 end
             end
