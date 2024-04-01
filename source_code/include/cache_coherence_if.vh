@@ -23,9 +23,10 @@ localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
 typedef logic [31:0] word_t;
 
 typedef struct {
-    integer to_i_transitions; // How many times we have to invalidate
-    integer to_s_transitions; // How many times we get to share
-    integer to_e_transitions; // How many times we get exclusive access
+    integer invalidated_blocks; // How many times we were invalidated
+    integer shared_blocks;      // How many times we send a block to be shared
+    integer to_s_transitions;   // How many times we get to share with another cache
+    integer to_e_transitions;   // How many times we get exclusive access
 } cache_coherence_statistics_t;
 
 interface cache_coherence_if();

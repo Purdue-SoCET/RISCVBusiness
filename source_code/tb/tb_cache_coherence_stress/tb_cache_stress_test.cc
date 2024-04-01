@@ -447,8 +447,14 @@ int main(int argc, char **argv) {
     epoch.sim_model.dump();
     epoch.golden_model.dump();
 
-    printf("cache0: invalidations: %d, shares: %d, exclusives: %d\n", dut->cache0_to_i, dut->cache0_to_s, dut->cache0_to_e);
-    printf("cache1: invalidations: %d, shares: %d, exclusives: %d\n", dut->cache1_to_i, dut->cache1_to_s, dut->cache1_to_e);
+    printf(
+        "cache0: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
+        dut->cache0_invalidated_blocks, dut->cache0_shared_blocks, dut->cache0_to_s_transitions,
+        dut->cache0_to_e_transitions);
+    printf(
+        "cache1: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
+        dut->cache1_invalidated_blocks, dut->cache1_shared_blocks, dut->cache1_to_s_transitions,
+        dut->cache1_to_e_transitions);
 
     return 0;
 }
