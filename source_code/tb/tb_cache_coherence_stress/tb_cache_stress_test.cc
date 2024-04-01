@@ -447,5 +447,8 @@ int main(int argc, char **argv) {
     epoch.sim_model.dump();
     epoch.golden_model.dump();
 
+    printf("cache0: invalidations: %d, shares: %d, exclusives: %d\n", dut->cache0_to_i, dut->cache0_to_s, dut->cache0_to_e);
+    printf("cache1: invalidations: %d, shares: %d, exclusives: %d\n", dut->cache1_to_i, dut->cache1_to_s, dut->cache1_to_e);
+
     return 0;
 }
