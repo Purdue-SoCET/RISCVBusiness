@@ -43,7 +43,7 @@ module coherency_unit #(
     localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
 
-    typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_INV, WRITEBACK} state_type; //States for Coherency Unit
+    typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_FAIL, RESP_INV, WRITEBACK} state_type; //States for Coherency Unit
     state_type state, next_state;
 
     typedef enum logic[1:0] {  
@@ -77,7 +77,12 @@ module coherency_unit #(
             end
             RESP_CHKTAG: begin
                 if (!ccif.snoop_busy) begin
-                    next_state = ccif.snoop_hit ? RESP_SEND : IDLE;
+                    next_state = ccif.snoop_hit ? RESP_SEND : RESP_FAIL;
+                end
+            end
+            RESP_FAIL: begin
+                if (!bcif.ccwait[CPUID]) begin
+                    next_state = IDLE;
                 end
             end
             RESP_SEND: begin
@@ -155,6 +160,10 @@ module coherency_unit #(
                     bcif.ccdirty[CPUID] = 1'b1;
                 end
              end
+            RESP_FAIL : begin
+                bcif.ccsnoophit[CPUID] = 1'b0;
+                bcif.ccsnoopdone[CPUID] = 1'b1;
+            end
             WRITE_REQ: begin //handle S -> M, I -> M here
                 bcif.daddr[CPUID] = gbif.addr;
                 bcif.dREN[CPUID] = 1'b1;
