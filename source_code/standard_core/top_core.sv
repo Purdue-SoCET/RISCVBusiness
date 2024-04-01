@@ -42,22 +42,22 @@ module top_core #(
         get_x28 = CORE.x28;
     endfunction
 
-    bind stage3_mem_stage cpu_tracker #(.NUM_HARTS(2)) cpu_track1 (
+    bind multicore_wrapper cpu_tracker #(.NUM_HARTS(2)) cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),
-        .instr(ex_mem_if.ex_mem_reg.instr),
-        .pc(ex_mem_if.ex_mem_reg.pc),
-        .opcode(rv32i_types_pkg::opcode_t'(ex_mem_if.ex_mem_reg.instr[6:0])),
+        .instr(instr),
+        .pc(pc),
+        .opcode(opcode),
         .funct3(funct3),
         .funct12(funct12),
-        .rs1(ex_mem_if.ex_mem_reg.instr[19:15]),
-        .rs2(ex_mem_if.ex_mem_reg.instr[24:20]),
-        .rd(ex_mem_if.ex_mem_reg.rd_m),
-        .imm_S(ex_mem_if.ex_mem_reg.tracker_signals.imm_S), // TODO: Extract constants. Maybe we could pass these in the pipeline and they'd be removed by synthesis?
-        .imm_I(ex_mem_if.ex_mem_reg.tracker_signals.imm_I),
-        .imm_U(ex_mem_if.ex_mem_reg.tracker_signals.imm_U),
-        .imm_UJ(ex_mem_if.ex_mem_reg.tracker_signals.imm_UJ),
-        .imm_SB(ex_mem_if.ex_mem_reg.tracker_signals.imm_SB),
+        .rs1(rs1),
+        .rs2(rs2),
+        .rd(rd),
+        .imm_S(imm_S), // TODO: Extract constants. Maybe we could pass these in the pipeline and they'd be removed by synthesis?
+        .imm_I(imm_I),
+        .imm_U(imm_U),
+        .imm_UJ(imm_UJ),
+        .imm_SB(imm_UJ),
         .instr_30(instr_30)
     );
 
