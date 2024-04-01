@@ -635,7 +635,7 @@ package rv32v_types_pkg;
   } vcsr_addr_t;
 
   /**********************************************************/
-  /* VECTOR PIPELINED FUs STRUCTs
+  /* VECTOR FUs STRUCTs
   /**********************************************************/
 
   typedef struct packed {
@@ -672,6 +672,27 @@ package rv32v_types_pkg;
     rv32i_types_pkg::word_t vd_res;
     logic vdiv_busy;
   } vdiv_output_t;
+
+  typedef struct packed {
+    vpermop_t vpermop;
+    rv32i_types_pkg::word_t offset;
+    rv32i_types_pkg::word_t [3:0] vs2_data;
+    rv32i_types_pkg::word_t [3:0] vscratchdata;
+    rv32i_types_pkg::word_t rs1_data;
+    vsew_t vsew;
+    logic [$clog2(VLMAX)-1:0] vl;
+    logic [4:0] vuop_num;
+    logic vuop_last;
+    logic [3:0] vlaneactive;
+    logic [4:0] vd_sel;
+  } vperm_input_t;
+
+  typedef struct packed {
+    logic [4:0] vd_sel_perm;
+    logic [1:0] vbank_offset;
+    rv32i_types_pkg::word_t [3:0] velems_out;
+    logic [3:0] vperm_mask;
+  } vperm_output_t;
 
 endpackage
 `endif

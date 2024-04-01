@@ -27,6 +27,7 @@ filesets:
             - source/rv32v_scratch_reg.sv
             - source/rv32v_reduction_unit.sv
             - source/rv32v_mask_calc.sv
+            - source/rv32v_permutation_unit.sv
         file_type: systemVerilogSource
 
 

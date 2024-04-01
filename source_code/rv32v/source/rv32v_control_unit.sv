@@ -174,7 +174,12 @@ always_comb begin
 
     if(vmask_calc_instr && vmask_calc_instr_uop) begin
         vs2_sel = '{regclass: RC_VECTOR, regidx: vs2};
-    end 
+    end
+
+    // Override in case of permutation instructions (currently only slide(1)up/slide(1)down)
+    if (vperminstr) begin
+        vd_sel = vd_sel_perm;
+    end
 end
 
 assign vcu_if.vcontrol.vd_sel = vd_sel;
@@ -487,7 +492,7 @@ assign vug_if.veew_src1 = veew_src1;
 assign vug_if.veew_src2 = veew_src2; 
 
 
-assign vug_if.vl = (vredinstr) ? vl_red : mem_evl;
+assign vug_if.vl = (vredinstr) ? vl_red : (vperm_var_offset) ? vl_perm : mem_evl;
 
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
@@ -641,5 +646,19 @@ always_comb begin
     endcase
 end
 
+/**********************************************************/
+/* PERMUTATION CONTROL LOGIC
+/**********************************************************/
+logic vopi_perm, vopm_perm, vperminstr, vperm_var_offset;
+regsel_t vd_sel_perm;
+word_t vl_perm;
+
+assign vopi_perm = (vopi_valid && vexec_opi.vfu == VFU_PRM);
+assign vopm_perm = (vopm_valid && vexec_opm.vfu == VFU_PRM);
+assign vperminstr = (vopi_perm || vopm_perm);
+assign vperm_var_offset = (vopi_perm && ((vexec_opi.vpermop == VPRM_SLU) || (vexec_opi.vpermop == VPRM_SLD)));
+
+assign vd_sel_perm = '{regclass: RC_SCRATCH, regidx: vd};
+assign vl_perm = vcu_if.vl + 4;  // need extra uOP for offset%4 != 0
 
 endmodule
