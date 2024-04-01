@@ -21,7 +21,7 @@ logic[127:0] v0;
 logic[127:0] vd; // vd selector is the one in execute and not the one writing back in mem
 word_t [3:0] vfu_res; 
 word_t vred_res;
-word_t vres_0, vres_1, vres_2, vres_3;
+word_t vres_0;
 word_t [3:0] vscratch_write_data;
 word_t[3:0] bankdat_src1, xbardat_src1;
 word_t[3:0] bankdat_src2, xbardat_src2;
@@ -66,10 +66,7 @@ assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, v
 assign vmem_in.vs1 = xbardat_src1;
 
 // vres muxing when using cross-lane vfu
-assign vres_0 = (vctrls.vexec.vfu == VFU_RED) ? vred_res : ((vctrls.vexec.vfu == VFU_PRM) ? vperm_out.velems_out[0] : vfu_res[0]);
-assign vres_1 = (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.velems_out[1] : vfu_res[1];
-assign vres_2 = (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.velems_out[2] : vfu_res[2];
-assign vres_3 = (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.velems_out[3] : vfu_res[3];
+assign vres_0 = (vctrls.vexec.vfu == VFU_RED) ? vred_res : vfu_res[0];
 
 logic is_mask_calc_instr; 
 assign is_mask_calc_instr = (vctrls.vexec.vfu == VFU_MSK) && (
@@ -99,13 +96,15 @@ always_comb begin
         vmem_in.vres[1] = mask_calc_out[63:32]; 
         vmem_in.vres[2] = mask_calc_out[95:64]; 
         vmem_in.vres[3] = mask_calc_out[127:96]; 
-    end 
+    end
+    else if (vctrls.vexec.vfu == VFU_PRM) begin
+        vmem_in.vres[0] = vperm_out.velems_out[0]; 
+        vmem_in.vres[1] = vperm_out.velems_out[1]; 
+        vmem_in.vres[2] = vperm_out.velems_out[2]; 
+        vmem_in.vres[3] = vperm_out.velems_out[3];
+    end
 
-end 
-assign vmem_in.vres[0] = is_vmskset_op ? {4{vmskset_res}} : vres_0;
-assign vmem_in.vres[1] = is_vmskset_op ? {4{vmskset_res}} : vres_1;
-assign vmem_in.vres[2] = is_vmskset_op ? {4{vmskset_res}} : vres_2;
-assign vmem_in.vres[3] = is_vmskset_op ? {4{vmskset_res}} : vres_3;
+end
 
 // lane_mask muxsing due to vmskset instructions
 always_comb begin
@@ -117,7 +116,7 @@ always_comb begin
             VMSK_SBF, VMSK_SIF, VMSK_SOF: vmem_in.vlane_mask = '1; 
         endcase
     end else if (vctrls.vexec.vfu == VFU_PRM) begin
-        vperm_out.vperm_mask;
+        vmem_in.vlane_mask = vperm_out.vperm_mask;
     end
 end 
 // assign vmem_in.vlane_mask = is_vmskset_op ?  : msku_lane_mask; 
