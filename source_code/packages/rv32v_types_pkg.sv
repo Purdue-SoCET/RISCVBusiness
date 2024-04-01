@@ -572,6 +572,7 @@ package rv32v_types_pkg;
     logic vxin2_use_rs2;
     logic [4:0] vimm;
     // Execution lane signals
+    logic vpadscratch;
     vexec_t vexec;
     logic vmask_en; 
     // Memory signals

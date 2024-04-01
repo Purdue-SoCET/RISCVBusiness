@@ -30,69 +30,28 @@ module rv32v_reduction_unit
     input logic vopunsigned,
     input word_t[3:0] vdat_in,
     input logic[3:0] vmask_in,
+    input word_t vpad_in,
     output word_t vdat_out
 );
 
-word_t masked_value;
 word_t[3:0] vdat_masked;
 word_t[1:0] interm;
-
-// Block to figure out which values to use as mask
-always_comb begin
-    masked_value = '0;
-
-    case (valuop)
-        VALU_ADD: begin
-            masked_value = '0;
-        end
-
-        VALU_MAX: begin
-            // Masked off lanes use minimum possible value
-            if (vopunsigned) begin
-                masked_value = '0;
-            end else begin
-                masked_value = '1;
-            end
-        end
-
-        VALU_MIN: begin
-            // Masked off lanes use maximum possible value
-            if (vopunsigned) begin
-                masked_value = '1;
-            end else begin
-                masked_value = '0;
-            end
-        end
-
-        VALU_AND: begin
-            masked_value = '1;
-        end
-
-        VALU_OR: begin
-            masked_value = '0;
-        end
-
-        VALU_XOR: begin
-            masked_value = '0;
-        end
-    endcase
-end
 
 // Block to mask off input lanes as required
 always_comb begin
     vdat_masked = vdat_in;
 
     if (!vmask_in[0]) begin
-       vdat_masked[0] = masked_value;
+       vdat_masked[0] = vpad_in;
     end
     if (!vmask_in[1]) begin
-       vdat_masked[1] = masked_value;
+       vdat_masked[1] = vpad_in;
     end
     if (!vmask_in[2]) begin
-       vdat_masked[2] = masked_value;
+       vdat_masked[2] = vpad_in;
     end
     if (!vmask_in[3]) begin
-       vdat_masked[3] = masked_value;
+       vdat_masked[3] = vpad_in;
     end
 end
 

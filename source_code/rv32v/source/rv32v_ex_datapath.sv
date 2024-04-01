@@ -173,11 +173,55 @@ rv32v_read_xbar VSRC3_XBAR(
     .out_dat(xbardat_src3)
 );
 
+// mask padding generator
+word_t vpad_word;
+
+always_comb begin
+    vpad_word = '0;
+
+    case (vctrls.vexec.valuop)
+        VALU_ADD: begin
+            vpad_word = '0;
+        end
+
+        VALU_MAX: begin
+            // Masked off lanes use minimum possible value
+            if (vctrls.vexec.vopunsigned) begin
+                vpad_word = '0;
+            end else begin
+                vpad_word = '1;
+            end
+        end
+
+        VALU_MIN: begin
+            // Masked off lanes use maximum possible value
+            if (vctrls.vexec.vopunsigned) begin
+                vpad_word = '1;
+            end else begin
+                vpad_word = '0;
+            end
+        end
+
+        VALU_AND: begin
+            vpad_word = '1;
+        end
+
+        VALU_OR: begin
+            vpad_word = '0;
+        end
+
+        VALU_XOR: begin
+            vpad_word = '0;
+        end
+    endcase
+end
+
 // scratch reg
 word_t[3:0] vscratchdata;
 
 rv32v_scratch_reg VSCRATCH (
-    .CLK(CLK), .nRST(nRST), 
+    .CLK(CLK), .nRST(nRST),
+    .vpad_inactive(vctrls.vpadscratch), .vpad_word(vpad_word),
     .vbyte_wen({4{!output_stall && (vctrls.vd_sel.regclass == RC_SCRATCH)}} & msku_lane_mask),
     .vwdata({vmem_in.vres[3], vmem_in.vres[2], vmem_in.vres[1], vmem_in.vres[0]}),
     .vrdata({vscratchdata[3], vscratchdata[2], vscratchdata[1], vscratchdata[0]})

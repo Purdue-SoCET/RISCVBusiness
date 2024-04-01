@@ -521,11 +521,14 @@ logic vopi_red, vopm_red, vredinstr;
 vexec_t vexec_red;
 logic busy_red;
 logic vmask_red;
+logic vpad_red;
 word_t vl_red;
 
 assign vopi_red = (vopi_valid && vexec_opi.vfu == VFU_RED);
 assign vopm_red = (vopm_valid && vexec_opm.vfu == VFU_RED);
 assign vredinstr = (vopi_red || vopm_red);
+
+assign vcu_if.vcontrol.vpadscratch = vpad_red;
 
 typedef enum logic [3:0] {
     REDC_IDLE,
@@ -550,6 +553,7 @@ always_comb begin
     vs1_sel_red = '{regclass: RC_VECTOR, regidx: vs1 + {2'b00, vug_if.vreg_offset_src1}};
     vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2 + {2'b00, vug_if.vreg_offset_src2}};
     vl_red = vcu_if.vl;
+    vpad_red = 0;
     busy_red = 0;
     vmask_red = 1;
 
@@ -565,6 +569,7 @@ always_comb begin
                     vexec_red.vfu = VFU_PASS_VS2;
                     vd_sel_red = '{regclass: RC_SCRATCH, regidx: '0};
                     vs2_sel_red = '{regclass: RC_VECTOR, regidx: vs2};
+                    vpad_red = 1;
                     next_redstate = REDC_UNTIL_4;
                 end else if (vcu_if.vl > 1) begin
                     // If we have 2, 3, or 4 elements, we don't need to do the
