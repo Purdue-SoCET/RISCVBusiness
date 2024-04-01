@@ -76,7 +76,6 @@ struct Ram {
     std::map<uint32_t, uint32_t> mmap;
 
     uint32_t read(uint32_t addr) {
-        std::cout << "did read" << std::endl;
         auto it = mmap.find(addr);
         if (it != mmap.end()) {
             return __builtin_bswap32(it->second);
@@ -90,7 +89,6 @@ struct Ram {
 
     void write(uint32_t addr, uint32_t value, uint8_t mask) {
         // NOTE: For now, assuming that all memory is legally acessible.
-        std::cout << "did write" << std::endl;
         auto it = mmap.find(addr);
         if (it != mmap.end()) {
             auto mask_exp = expand_mask(mask);
@@ -230,7 +228,7 @@ struct CacheState {
         switch (e) {
         case CacheStateEnum::Wait:
         case CacheStateEnum::Start:
-        //case CacheStateEnum::Done:
+        case CacheStateEnum::Done:
             break;
         case CacheStateEnum::Read:
             *gbif.addr = addr;
@@ -240,9 +238,6 @@ struct CacheState {
             *gbif.addr = addr;
             *gbif.wdata = data;
             *gbif.wen = 1;
-            break;
-        case CacheStateEnum::Done:
-            //tick_dut();
             break;
         }
     }
