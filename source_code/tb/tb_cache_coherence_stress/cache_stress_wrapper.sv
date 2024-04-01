@@ -105,7 +105,8 @@ module cache_stress_wrapper (
         .nRST(nRST),
         .ccif(cache0_coherency_if),
         .bcif(bus_ctrl_if),
-        .gbif(cache0_mem_gen_bus_if)
+        .gbif(cache0_mem_gen_bus_if),
+        .coherence_statistics()
     );
 
     l1_cache #(
@@ -135,7 +136,8 @@ module cache_stress_wrapper (
         .nRST(nRST),
         .ccif(cache1_coherency_if),
         .bcif(bus_ctrl_if),
-        .gbif(cache1_mem_gen_bus_if)
+        .gbif(cache1_mem_gen_bus_if),
+        .coherence_statistics()
     );
 
     bus_ctrl #(

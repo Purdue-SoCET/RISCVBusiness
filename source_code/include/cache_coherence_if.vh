@@ -22,6 +22,12 @@ localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
 //localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2; //Will add later for tag IO
 typedef logic [31:0] word_t;
 
+typedef struct {
+    integer to_i_transitions; // How many times we have to invalidate
+    integer to_s_transitions; // How many times we get to share
+    integer to_e_transitions; // How many times we get exclusive access
+} cache_coherence_statistics_t;
+
 interface cache_coherence_if();
     cc_end_state state_transfer;
     word_t addr;

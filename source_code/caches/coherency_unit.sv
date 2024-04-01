@@ -34,7 +34,8 @@ module coherency_unit #(
     input logic CLK, nRST,
     bus_ctrl_if.tb bcif,            // Bus Controller Interface
     cache_coherence_if.coherency_unit ccif, // Cache Coherence Interface
-    generic_bus_if.generic_bus gbif //Bus from cache
+    generic_bus_if.generic_bus gbif, //Bus from cache
+    output cache_coherence_statistics_t coherence_statistics
 );
     localparam CACHE_SIZE         = 1024;
     localparam ASSOC              = 1;
@@ -45,6 +46,7 @@ module coherency_unit #(
 
     typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_FAIL, RESP_INV, WRITEBACK} state_type; //States for Coherency Unit
     state_type state, next_state;
+    cache_coherence_statistics_t next_coherence_statistics;
 
     typedef enum logic[1:0] {  
         MODIFIED,
@@ -56,8 +58,10 @@ module coherency_unit #(
     always_ff @(posedge CLK or negedge nRST) begin
         if (!nRST) begin
             state <=  IDLE;
+            coherence_statistics <= '{default: 0};
         end else begin
             state <= next_state;
+            coherence_statistics <= next_coherence_statistics;
         end
     end
 
@@ -118,6 +122,7 @@ module coherency_unit #(
     end
 
     always_comb begin: OUTPUTLOGIC
+        next_coherence_statistics = coherence_statistics;
         gbif.rdata = 32'hBAD1BAD1;
         gbif.busy = 1'b1;
         bcif.ccdirty[CPUID] = 1'b0;
@@ -153,8 +158,10 @@ module coherency_unit #(
                 //ccif.snoop_complete = !bcif.ccwait[CPUID]; 
                 if (bcif.ccinv[CPUID]) begin  //Anything -> I
                     ccif.state_transfer = cc_end_state'(INVALID); 
+                    if (!bcif.ccwait[CPUID]) next_coherence_statistics.to_i_transitions += 1;
                 end else begin //Anything -> S
                     ccif.state_transfer = cc_end_state'(SHARED); 
+                    if (!bcif.ccwait[CPUID]) next_coherence_statistics.to_s_transitions += 1;
                 end
                 if (ccif.dirty) begin
                     bcif.ccdirty[CPUID] = 1'b1;
@@ -178,8 +185,10 @@ module coherency_unit #(
                 bcif.daddr[CPUID] = gbif.addr;
                 if (bcif.ccexclusive[CPUID]) begin //I -> E
                     ccif.state_transfer = cc_end_state'(EXCLUSIVE); 
+                    if (!bcif.dwait[CPUID]) next_coherence_statistics.to_e_transitions += 1;
                 end else begin //I -> S
                     ccif.state_transfer = cc_end_state'(SHARED);
+                    if (!bcif.dwait[CPUID]) next_coherence_statistics.to_s_transitions += 1;
                 end
                 if (!bcif.dwait[CPUID]) begin
                     gbif.rdata = bcif.dload[CPUID];
