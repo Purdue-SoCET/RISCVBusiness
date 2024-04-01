@@ -142,10 +142,6 @@ module l1_cache #(
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
 
-    //Test signals
-    logic proc_bus_busy, next_proc_bus_busy;
-
-    assign proc_gen_bus_if.busy = proc_bus_busy;
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
     // sram instance
@@ -174,7 +170,6 @@ module l1_cache #(
             flush_req <= 0;
             abort_bus <= 0;
             reservation_set <= 0;
-            proc_bus_busy <= 1;
         end
         else begin
             state <= next_state;                        // cache state machine
@@ -185,7 +180,6 @@ module l1_cache #(
             flush_req <= nflush_req;                    // flush requested by core
             abort_bus <= !proc_gen_bus_if.ren;
             reservation_set <= next_reservation_set;
-            proc_bus_busy <= next_proc_bus_busy;
         end
     end
     
@@ -269,8 +263,7 @@ module l1_cache #(
         sramWEN                 = 0;
         sramWrite               = 0;
         sramMask                = '1;
-        //proc_gen_bus_if.busy    = 1;
-        next_proc_bus_busy      = 1;
+        proc_gen_bus_if.busy    = 1;
         proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
@@ -318,15 +311,13 @@ module l1_cache #(
             HIT: begin
                 // cache hit on a processor read
                 if(proc_gen_bus_if.ren && hit && !flush) begin
-                    //proc_gen_bus_if.busy = 0; 
-                    next_proc_bus_busy = 0;
+                    proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                 end
                 // cache hit on a processor write
                 else if(proc_gen_bus_if.wen && hit && !flush) begin
-                    //proc_gen_bus_if.busy = 0;
-                    next_proc_bus_busy = 0;
+                    proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
                     casez (proc_gen_bus_if.byte_en)
                         4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
@@ -354,8 +345,7 @@ module l1_cache #(
                     mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
                     mem_gen_bus_if.addr     = proc_gen_bus_if.addr;
                     mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en;
-                    //proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
-                    next_proc_bus_busy = mem_gen_bus_if.busy;
+                    proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
                     proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;
                     if(proc_gen_bus_if.wen) begin
                         casez (proc_gen_bus_if.byte_en)
@@ -371,8 +361,7 @@ module l1_cache #(
                 end
                 // Cache miss of sc
                 else if (proc_gen_bus_if.wen && reservation_is_valid && ~hit && ~pass_through) begin
-                    //proc_gen_bus_if.busy = 0;
-                    next_proc_bus_busy = 0;
+                    proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = 32'b1;
                 end
                 // cache miss on a clean block
@@ -411,6 +400,10 @@ module l1_cache #(
                     sramWrite.frames[ridx].tag.dirty = (ccif.state_transfer == MODIFIED);
                     sramMask.frames[ridx].tag.exclusive = 0;
                     sramMask.frames[ridx].tag.dirty = 0;
+
+                    if (proc_gen_bus_if.wen) begin
+                        sramWrite.frames[ridx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
+                    end
                 end
             end
             WB: begin
