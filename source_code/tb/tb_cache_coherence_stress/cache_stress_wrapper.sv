@@ -26,7 +26,10 @@ module cache_stress_wrapper (
     output logic memory_ren,
     output logic memory_wen,
     input logic [31:0] memory_rdata,
-    input logic memory_busy
+    input logic memory_busy,
+
+    output integer cache0_to_i, cache0_to_s, cache0_to_e,
+                   cache1_to_i, cache1_to_s, cache1_to_e
 );
     generic_bus_if cache0_proc_gen_bus_if();
     generic_bus_if cache1_proc_gen_bus_if();
@@ -37,6 +40,8 @@ module cache_stress_wrapper (
     cache_coherence_if cache0_coherency_if();
     cache_coherence_if cache1_coherency_if();
     bus_ctrl_if bus_ctrl_if();
+
+    cache_coherence_statistics_t cache0_stats, cache1_stats;
 
     always_comb begin
         c0c_if.dcache_flush = cache0_flush;
@@ -76,6 +81,13 @@ module cache_stress_wrapper (
         memory_wdata = out_gen_bus_if.wdata;
         memory_ren = out_gen_bus_if.ren;
         memory_wen = out_gen_bus_if.wen;
+
+        cache0_to_i = cache0_stats.to_i_transitions;
+        cache0_to_s = cache0_stats.to_s_transitions;
+        cache0_to_e = cache0_stats.to_e_transitions;
+        cache1_to_i = cache1_stats.to_i_transitions;
+        cache1_to_s = cache1_stats.to_s_transitions;
+        cache1_to_e = cache1_stats.to_e_transitions;
     end
 
     l1_cache #(
@@ -106,7 +118,7 @@ module cache_stress_wrapper (
         .ccif(cache0_coherency_if),
         .bcif(bus_ctrl_if),
         .gbif(cache0_mem_gen_bus_if),
-        .coherence_statistics()
+        .coherence_statistics(cache0_stats)
     );
 
     l1_cache #(
@@ -137,7 +149,7 @@ module cache_stress_wrapper (
         .ccif(cache1_coherency_if),
         .bcif(bus_ctrl_if),
         .gbif(cache1_mem_gen_bus_if),
-        .coherence_statistics()
+        .coherence_statistics(cache1_stats)
     );
 
     bus_ctrl #(
