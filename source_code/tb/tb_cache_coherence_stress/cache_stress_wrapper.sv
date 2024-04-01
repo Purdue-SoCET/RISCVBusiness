@@ -28,8 +28,8 @@ module cache_stress_wrapper (
     input logic [31:0] memory_rdata,
     input logic memory_busy,
 
-    output integer cache0_to_i, cache0_to_s, cache0_to_e,
-                   cache1_to_i, cache1_to_s, cache1_to_e
+    output integer cache0_invalidated_blocks, cache0_shared_blocks, cache0_to_s_transitions, cache0_to_e_transitions,
+                   cache1_invalidated_blocks, cache1_shared_blocks, cache1_to_s_transitions, cache1_to_e_transitions
 );
     generic_bus_if cache0_proc_gen_bus_if();
     generic_bus_if cache1_proc_gen_bus_if();
@@ -82,12 +82,14 @@ module cache_stress_wrapper (
         memory_ren = out_gen_bus_if.ren;
         memory_wen = out_gen_bus_if.wen;
 
-        cache0_to_i = cache0_stats.to_i_transitions;
-        cache0_to_s = cache0_stats.to_s_transitions;
-        cache0_to_e = cache0_stats.to_e_transitions;
-        cache1_to_i = cache1_stats.to_i_transitions;
-        cache1_to_s = cache1_stats.to_s_transitions;
-        cache1_to_e = cache1_stats.to_e_transitions;
+        cache0_invalidated_blocks = cache0_stats.invalidated_blocks;
+        cache0_shared_blocks = cache0_stats.shared_blocks;
+        cache0_to_s_transitions = cache0_stats.to_s_transitions;
+        cache0_to_e_transitions = cache0_stats.to_e_transitions;
+        cache1_invalidated_blocks = cache1_stats.invalidated_blocks;
+        cache1_shared_blocks = cache1_stats.shared_blocks;
+        cache1_to_s_transitions = cache1_stats.to_s_transitions;
+        cache1_to_e_transitions = cache1_stats.to_e_transitions;
     end
 
     l1_cache #(

@@ -158,10 +158,10 @@ module coherency_unit #(
                 //ccif.snoop_complete = !bcif.ccwait[CPUID]; 
                 if (bcif.ccinv[CPUID]) begin  //Anything -> I
                     ccif.state_transfer = cc_end_state'(INVALID); 
-                    if (!bcif.ccwait[CPUID]) next_coherence_statistics.to_i_transitions += 1;
+                    if (!bcif.ccwait[CPUID]) next_coherence_statistics.invalidated_blocks += 1;
                 end else begin //Anything -> S
                     ccif.state_transfer = cc_end_state'(SHARED); 
-                    if (!bcif.ccwait[CPUID]) next_coherence_statistics.to_s_transitions += 1;
+                    if (!bcif.ccwait[CPUID]) next_coherence_statistics.shared_blocks += 1;
                 end
                 if (ccif.dirty) begin
                     bcif.ccdirty[CPUID] = 1'b1;

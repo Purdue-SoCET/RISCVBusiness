@@ -291,18 +291,20 @@ module cpu_tracker #(
         for (int i = 0; i < NUM_HARTS; i = i + 1) begin
             $sformat(
                 output_str,
-                "core%d: icache: invalidations: %d, shares: %d, exclusives: %d\n",
+                "core%d: icache: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
                 i,
-                cache_statistics[i * 2].to_i_transitions,
+                cache_statistics[i * 2].invalidated_blocks,
+                cache_statistics[i * 2].shared_blocks,
                 cache_statistics[i * 2].to_s_transitions,
                 cache_statistics[i * 2].to_e_transitions
             );
             $fwrite(fptr, output_str);
             $sformat(
                 output_str,
-                "core%d: dcache: invalidations: %d, shares: %d, exclusives: %d\n",
+                "core%d: dcache: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
                 i,
-                cache_statistics[i * 2 + 1].to_i_transitions,
+                cache_statistics[i * 2 + 1].invalidated_blocks,
+                cache_statistics[i * 2 + 1].shared_blocks,
                 cache_statistics[i * 2 + 1].to_s_transitions,
                 cache_statistics[i * 2 + 1].to_e_transitions
             );
