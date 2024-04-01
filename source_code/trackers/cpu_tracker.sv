@@ -43,7 +43,8 @@ module cpu_tracker #(
     input logic [NUM_HARTS-1:0] [11:0] imm_S,
     input logic [NUM_HARTS-1:0] [11:0] imm_I,
     input logic [NUM_HARTS-1:0] [20:0] imm_UJ,
-    input logic [NUM_HARTS-1:0] [31:0] imm_U
+    input logic [NUM_HARTS-1:0] [31:0] imm_U,
+    input cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0]
 );
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
@@ -287,6 +288,26 @@ module cpu_tracker #(
     end
 
     final begin : CLOSE_FILE
+        for (int i = 0; i < NUM_HARTS; i = i + 1) begin
+            $sformat(
+                output_str,
+                "core%d: icache: invalidations: %d, shares: %d, exclusives: %d\n",
+                i,
+                cache_statistics[i * 2].to_i_transitions,
+                cache_statistics[i * 2].to_s_transitions,
+                cache_statistics[i * 2].to_e_transitions
+            );
+            $fwrite(fptr, output_str);
+            $sformat(
+                output_str,
+                "core%d: dcache: invalidations: %d, shares: %d, exclusives: %d\n",
+                i,
+                cache_statistics[i * 2 + 1].to_i_transitions,
+                cache_statistics[i * 2 + 1].to_s_transitions,
+                cache_statistics[i * 2 + 1].to_e_transitions
+            );
+            $fwrite(fptr, output_str);
+        end
         $fclose(fptr);
     end
 endmodule

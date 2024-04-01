@@ -23,6 +23,7 @@
 */
 
 `include "generic_bus_if.vh"
+`include "cache_coherence_if.vh"
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
@@ -40,6 +41,7 @@ module RISCVBusiness #(
     input logic CLK, nRST,
     input logic [63:0] mtime,
     output logic wfi, halt,
+    output cache_coherence_statistics_t dcache_statistics, icache_statistics,
     core_interrupt_if.core interrupt_if,
     bus_ctrl_if bus_ctrl_if
 );
@@ -132,7 +134,8 @@ module RISCVBusiness #(
         .nRST(nRST),
         .ccif(i_cache_coherency_if),
         .bcif(bus_ctrl_if),
-        .gbif(icache_mc_if)
+        .gbif(icache_mc_if),
+        .coherence_statistics(icache_statistics)
     );
 
     coherency_unit #(
@@ -142,7 +145,8 @@ module RISCVBusiness #(
         .nRST(nRST),
         .ccif(d_cache_coherency_if),
         .bcif(bus_ctrl_if),
-        .gbif(dcache_mc_if)
+        .gbif(dcache_mc_if),
+        .coherence_statistics(dcache_statistics)
     );
 
     /*

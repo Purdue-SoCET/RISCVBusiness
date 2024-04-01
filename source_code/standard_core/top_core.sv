@@ -58,7 +58,8 @@ module top_core #(
         .imm_U(imm_U),
         .imm_UJ(imm_UJ),
         .imm_SB(imm_UJ),
-        .instr_30(instr_30)
+        .instr_30(instr_30),
+        .cache_statistics(cache_statistics)
     );
 
 

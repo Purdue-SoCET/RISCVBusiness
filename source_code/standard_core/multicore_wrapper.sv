@@ -1,4 +1,5 @@
 `include "generic_bus_if.vh"
+`include "cache_coherence_if.vh"
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
@@ -55,6 +56,7 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [11:0] imm_I;
     logic [NUM_HARTS-1:0] [20:0] imm_UJ;
     logic [NUM_HARTS-1:0] [31:0] imm_U;
+    cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0];
 
     // Hart 0's x28
     logic [31:0] x28;
@@ -75,6 +77,8 @@ module multicore_wrapper #(
                 .mtime(mtime),
                 .wfi(pipeline_wfi),
                 .halt(pipeline_halts[HART_ID]),
+                .icache_statistics(cache_statistics[HART_ID * 2]),
+                .dcache_statistics(cache_statistics[HART_ID * 2 + 1]),
                 .interrupt_if(interrupt_if),
                 .bus_ctrl_if(bus_ctrl_if)
             );
