@@ -58,10 +58,12 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [31:0] imm_U;
     cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0];
 
-    // Hart 0's x28
+    // This requires that all x28s are 1 in order to pass tests
     logic [31:0] x28;
+    logic [NUM_HARTS-1:0] x28s;
 
     assign halt = &pipeline_halts;
+    assign x28 = &x28s;
 
     genvar HART_ID;
     generate
@@ -101,9 +103,7 @@ module multicore_wrapper #(
                 imm_U[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_U;
             end
 
-            if (HART_ID == 0) begin
-                assign x28 = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28];
-            end
+            assign x28s[HART_ID] = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] == 32'b1;
         end
     endgenerate
 
