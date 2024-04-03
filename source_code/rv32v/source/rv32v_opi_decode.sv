@@ -198,7 +198,8 @@ always_comb begin
             vexec.valuop = VALU_SLL;
         end
         VSMUL: begin
-            vexec.vfu = VFU_MUL;
+            // Can't find this instruction in the spec, so for now just hard code to vmv<nr>r.v
+            vexec.vfu = VFU_PASS_VS2;
         end
         VSRL: begin
             vexec.vfu = VFU_ALU;

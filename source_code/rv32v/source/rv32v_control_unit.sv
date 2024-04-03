@@ -432,6 +432,17 @@ always_comb begin
     end
 end
 
+// Whole register move logic
+logic [3:0] nreg;
+logic wholereg_mv;
+word_t wholereg_mv_evl;
+
+assign nreg = vcu_if.instr[17:15] + 1;
+
+assign wholereg_mv = (vopi_valid) && vopi == VSMUL && vfunct3 == OPIVI;
+
+// For whole register move, evl = NREG*VLEN/EEW = (simm[2:0] << 4) >> eew
+assign wholereg_mv_evl = ({nreg, 4'b0} >> veew_dest);
 
 /**********************************************************/
 /* MEMORY CONTROL SIGNALS
@@ -439,7 +450,7 @@ end
 logic vmeminstr, vmemdren, vmemdwen, vunitstride, vstrided, vindexed, vmaskldst, vwholereg;;
 lumop_t lumop;
 logic [3:0] nf;
-word_t vlby8, mask_evl, wholereg_evl, mem_evl;
+word_t vlby8, mask_evl, wholereg_ldst_evl, mem_evl;
 
 assign lumop = lumop_t'(vcu_if.instr[24:20]);
 assign nf = vcu_if.instr[31:29] + 1;
@@ -467,11 +478,11 @@ assign vlby8 = (vcu_if.vl >> 3);
 assign mask_evl = (vcu_if.vl[2:0] ? vlby8 + 1 : vlby8);
 
 // For whole register load/store, evl = NFIELDS*VLEN/EEW = (nf << 4) >> eew
-assign wholereg_evl = ({nf, 4'b0} >> veew_dest);
+assign wholereg_ldst_evl = ({nf, 4'b0} >> veew_dest);
 
 // Resolve the final evl
 assign mem_evl = (vmaskldst) ? (mask_evl) :
-                 (vwholereg) ? (wholereg_evl) :
+                 (vwholereg) ? (wholereg_ldst_evl) :
                                (vcu_if.vl);
 
 /**********************************************************/
@@ -492,7 +503,10 @@ assign vug_if.veew_src1 = veew_src1;
 assign vug_if.veew_src2 = veew_src2; 
 
 
-assign vug_if.vl = (vredinstr) ? vl_red : (vperm_var_offset) ? vl_perm : mem_evl;
+assign vug_if.vl = (vredinstr)        ? vl_red : 
+                   (vperm_var_offset) ? vl_perm : 
+                   (wholereg_mv)      ? wholereg_mv_evl :
+                                        mem_evl;
 
 assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
