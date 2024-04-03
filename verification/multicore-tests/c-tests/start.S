@@ -4,6 +4,16 @@ WANT_AMO_EMU_SUPPORT
 
 .global _start
 _start:
+    # Let both of them fight over clearing bss
+clr_bss:
+    la t0, __bss_start
+    la t1, __bss_end
+    beq t0, t1, start
+clr_bss_loop:
+    sb zero, 0(t0)
+    addi t0, t0, 1
+    ble t0, t1, clr_bss_loop
+start:
     # Start out by getting mhartid to tell which core we're on
     csrr s0, mhartid
     # Get a 2kB stack starting at 0x8000F000
