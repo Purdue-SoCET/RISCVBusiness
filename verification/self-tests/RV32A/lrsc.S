@@ -23,7 +23,8 @@ amoadd.w a2, a1, (a0)
 
 # for now, only run this on core 0
 li a3, 1
-1: bgeu a2, a3, 1b
+li t3, 1
+1: bgeu a2, a3, done
 
 1: lw a1, (a0)
 bltu a1, a3, 1b
