@@ -137,7 +137,7 @@ module l1_cache #(
     logic idle_done;
     // Reservation tracking
     reservation_set_t reservation_set, next_reservation_set;
-    logic addr_is_reserved, reservation_is_valid;
+    logic addr_is_reserved;
 
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
@@ -236,7 +236,7 @@ module l1_cache #(
             for(int i = 0; i < ASSOC; i++) begin
                 if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
-                    if((proc_gen_bus_if.ren && (!reserve || coherence_hit)) || (proc_gen_bus_if.wen && coherence_hit)) begin //Read or write hit
+                    if(proc_gen_bus_if.ren || (proc_gen_bus_if.wen && coherence_hit)) begin //Read or write hit
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].data;
                 	    hit_idx   = i;
@@ -314,6 +314,9 @@ module l1_cache #(
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                    if (reserve && !addr_is_reserved) begin
+                        proc_gen_bus_if.busy = 1;
+                    end
                 end
                 // cache hit on a processor write
                 else if(proc_gen_bus_if.wen && hit && !flush) begin
@@ -334,9 +337,9 @@ module l1_cache #(
                     sramMask.frames[hit_idx].tag.dirty = 0;
                     sramMask.frames[hit_idx].tag.exclusive = 0;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                    if (reservation_is_valid) begin
+                    if (reserve) begin
                         // 0 is success, 1 is failure
-                        proc_gen_bus_if.rdata = 32'b0;
+                        proc_gen_bus_if.rdata = !addr_is_reserved;
                     end
                 end
                 // passthrough
@@ -360,7 +363,7 @@ module l1_cache #(
                     end 
                 end
                 // Cache miss of sc
-                else if (proc_gen_bus_if.wen && reservation_is_valid && ~hit && ~pass_through) begin
+                else if (proc_gen_bus_if.wen && reserve && !addr_is_reserved && ~hit && ~pass_through) begin
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = 32'b1;
                 end
@@ -381,7 +384,7 @@ module l1_cache #(
                 else
                     mem_gen_bus_if.ren = 1;
                 */
-                mem_gen_bus_if.wen = proc_gen_bus_if.wen || reserve;
+                mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                 mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                 mem_gen_bus_if.addr = read_addr;
                 sramWrite.frames[ridx].tag.valid = 0;
@@ -537,7 +540,7 @@ module l1_cache #(
 	        HIT: begin
                 if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
-                else if (proc_gen_bus_if.wen && reservation_is_valid && ~hit && ~pass_through) // Don't transition on a failed sc
+                else if (proc_gen_bus_if.wen && reserve && !addr_is_reserved && ~hit && ~pass_through) // Don't transition on a failed sc
                     next_state = state;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through)
                     next_state = WB;
@@ -581,15 +584,12 @@ module l1_cache #(
     // TODO: Remove exclusive signal
     always_comb begin
         next_reservation_set = reservation_set;
-        if (proc_gen_bus_if.ren && reserve) begin
+        if (proc_gen_bus_if.ren && reserve && hit) begin
             next_reservation_set.idx = decoded_addr.idx;
-        end
-        addr_is_reserved = reservation_set.idx == decoded_addr.idx && reserve;
-        reservation_is_valid = addr_is_reserved && reservation_set.reserved && hit;
-        if (addr_is_reserved && coherence_hit && proc_gen_bus_if.ren) begin
             next_reservation_set.reserved = 1'b1;
         end else if (proc_gen_bus_if.ren || proc_gen_bus_if.wen || clear || flush) begin
             next_reservation_set.reserved = 1'b0;
         end
+        addr_is_reserved = reservation_set.idx == decoded_addr.idx && reservation_set.reserved;
     end
 endmodule
