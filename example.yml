@@ -29,6 +29,9 @@ microarch_params:
   # RV32C
   rv32c_enabled : "disabled"
 
+  # RV32M
+  rv32m_supported : "true"
+
   # RV32V
   rv32v_supported : "true"
   
