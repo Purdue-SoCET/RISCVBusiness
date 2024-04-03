@@ -16,6 +16,12 @@ RVTEST_CODE_BEGIN
 
 WANT_AMO_EMU_SUPPORT
 
+# Only run on hart0
+li t3, 1
+csrr s0, mhartid
+bnez s0, done
+li t3, 0
+
 TEST_CASE(2, a4, 0xffffffff80000000, \
     li a0, 0xffffffff80000000; \
     li a1, 0xfffffffffffff800; \
