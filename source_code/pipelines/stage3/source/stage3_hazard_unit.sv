@@ -63,15 +63,13 @@ module stage3_hazard_unit (
 
     // Hazard detection
     //assign rs1_match = (hazard_if.rs1_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
-    assign rs1_match = 1'b0;
     //assign rs2_match  = (hazard_if.rs2_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
     assign rs2_match = 1'b0;
     //assign cannot_forward = (hazard_if.dren || hazard_if.csr_read); // cannot forward outputs generated in mem stage
     assign cannot_forward = 1'b0;
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
-    //assign branch_jump = /* hazard_if.jump || */ (hazard_if.branch && hazard_if.mispredict); 
-    assign branch_jump = 1'b0;
+    assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren && !hazard_if.rv32c_ready; // don't wait for imem when rv32c is done early
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
     assign mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
@@ -90,8 +88,7 @@ module stage3_hazard_unit (
     assign intr = ~exception & prv_pipe_if.intr;
 
     assign prv_pipe_if.pipe_clear = 1'b1; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
-    //assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
-    assign ex_flush_hazard = 1'b0;
+    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
 
     assign hazard_if.insert_priv_pc = prv_pipe_if.insert_pc;
     assign hazard_if.priv_pc = prv_pipe_if.priv_pc;
@@ -105,7 +102,7 @@ module stage3_hazard_unit (
     assign hazard_if.rollback = (hazard_if.ifence && !hazard_if.fence_stall); // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
 
     // EPC priority logic
-    assign epc = hazard_if.valid_m && !intr ? hazard_if.pc_m :
+    assign epc = hazard_if.valid_m && (!intr || branch_jump) ? hazard_if.pc_m :
                 (hazard_if.valid_e ? hazard_if.pc_e : hazard_if.pc_f);
 
     /* Send Exception notifications to Prv Block */
@@ -165,7 +162,7 @@ module stage3_hazard_unit (
                                   || (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
 
     assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
-                                  || branch_jump     // Control hazard
+                                  //|| branch_jump     // Control hazard
                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
                                   || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
 

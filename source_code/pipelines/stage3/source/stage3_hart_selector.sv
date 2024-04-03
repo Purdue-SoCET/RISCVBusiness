@@ -58,7 +58,7 @@ module stage3_hart_selector (
     end
 
     always_comb begin
-      if(hazard_if.pc_en) begin
+      if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
         if (count == (NUM_HARTS - 1)) next_count = 0;
         else next_count = count + 1;
       end else next_count = count;

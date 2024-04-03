@@ -6,11 +6,12 @@ extern volatile int flag;
 extern volatile int t_count;
 
 void thread1() {
-  flag |= 0x1;
+  flag &= 0x1;
   thread_terimate(0, &t_count);
 }
 
 void thread2() {
+  flag &= 0x1;
   thread_terimate(1, &t_count);
 }
 

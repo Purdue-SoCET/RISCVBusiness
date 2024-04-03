@@ -4,7 +4,7 @@
 
 module top_core #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter logic [31:0] NUM_HARTS = 32'h3
+    parameter logic [31:0] NUM_HARTS = 32'h2
 ) (
     input CLK,
     nRST,

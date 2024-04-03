@@ -26,6 +26,7 @@
 #define MMIO_RANGE_END   (MAGIC_ADDR)
 
 #define SIM_TIME_MAX 999999999
+// #define SIM_TIME_MAX 100000
 
 // doubles as mtime counter
 vluint64_t sim_time = 0;

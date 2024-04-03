@@ -12,7 +12,7 @@
     #define EXT_ADDR_CLEAR  0xFFFFFFF8
     #define MAGIC_ADDR      0xFFFFFFFC
 
-    #define NUM_THREADS 3
+    #define NUM_THREADS 2
     
     void print(char *string);
     void put_uint32_hex(uint32_t hex);

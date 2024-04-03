@@ -7,9 +7,9 @@ _start:
     lui sp, 0x800F0
     addi sp, sp, 0x088
     j thread2
-    lui sp, 0x80F00
-    addi sp, sp, 0x044
-    j thread3
+    # lui sp, 0x80F00
+    # addi sp, sp, 0x044
+    # j thread3
 
 .global done
 done:
@@ -25,6 +25,6 @@ thread_wait_loop:
 
 .global flag
 .data
-flag: .word 0x00
+flag: .word 0x01
 .global t_count
 t_count: .word 0x00
