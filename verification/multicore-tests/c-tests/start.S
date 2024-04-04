@@ -4,7 +4,10 @@ WANT_AMO_EMU_SUPPORT
 
 .global _start
 _start:
-    # Let both of them fight over clearing bss
+    # Start out by getting mhartid to tell which core we're on
+    csrr s0, mhartid
+    # Only clear bss on hart0
+    bnez s0, wait_bss_start
 clr_bss:
     la t0, __bss_start
     la t1, __bss_end
@@ -13,9 +16,16 @@ clr_bss_loop:
     sb zero, 0(t0)
     addi t0, t0, 1
     ble t0, t1, clr_bss_loop
+    la t0, bss_cleared
+    addi t1, zero, 1
+    sw t1, 0(t0)
+wait_bss_start:
+    la t0, bss_cleared
+wait_bss:
+    lw t1, 0(t0)
+    beqz t1, wait_bss
+
 start:
-    # Start out by getting mhartid to tell which core we're on
-    csrr s0, mhartid
     # Get a 2kB stack starting at 0x8000F000
     li sp, 0x8000F000
     slli t0, s0, 11
@@ -35,12 +45,16 @@ start:
     jalr ra, t0
 
 .global done
-done:
+hart0_done:
     la a0, hart1_done
 wait_for_hart1_done:
     lw a1, 0(a0)
     beq a1, zero, wait_for_hart1_done
     la x28, flag
+    lw x28, 0(x28)
+    j __inf_loop
+hart1_done_end:
+    la x28, hart1_done
     lw x28, 0(x28)
 __inf_loop:
     j __inf_loop
@@ -57,6 +71,8 @@ hart_wait_loop:
 flag: .word 0x00
 .global hart1_done
 hart1_done: .word 0x00
+.global bss_cleared
+bss_cleared: .word 0x00
 
 .global main_array
 main_array:
@@ -65,5 +81,5 @@ main_array:
 
 .global done_array
 done_array:
-.int done
-.int hart_wait_loop
+.int hart0_done
+.int hart1_done_end
