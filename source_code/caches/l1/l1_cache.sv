@@ -219,7 +219,7 @@ module l1_cache #(
     // TODO: update this with idx_bits
     // assign decoded_snoop_addr = decoded_cache_addr_t'(ccif.ccsnoopaddr);
 
-    logic coherence_hit;
+    logic coherence_hit, sc_valid_block;
 
     // Hit logic with pass through
     // CPU and bus sram have different always_comb blocks to prevent false
@@ -231,10 +231,12 @@ module l1_cache #(
         pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
         //ccif.snoop_hit  = 0;
         coherence_hit   = 0;
+        sc_valid_block  = 0;
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
                 if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
+                    sc_valid_block = addr_is_reserved;
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
                     if(proc_gen_bus_if.ren || (proc_gen_bus_if.wen && coherence_hit)) begin //Read or write hit
 	                    hit       = 1'b1;
@@ -314,12 +316,13 @@ module l1_cache #(
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                    // Delay so we can set the reservation set
                     if (reserve && !addr_is_reserved) begin
                         proc_gen_bus_if.busy = 1;
                     end
                 end
                 // cache hit on a processor write
-                else if(proc_gen_bus_if.wen && hit && !flush) begin
+                else if(proc_gen_bus_if.wen && hit && (!reserve || (reserve && addr_is_reserved)) && !flush) begin
                     proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
                     casez (proc_gen_bus_if.byte_en)
@@ -337,10 +340,7 @@ module l1_cache #(
                     sramMask.frames[hit_idx].tag.dirty = 0;
                     sramMask.frames[hit_idx].tag.exclusive = 0;
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                    if (reserve) begin
-                        // 0 is success, 1 is failure
-                        proc_gen_bus_if.rdata = !addr_is_reserved;
-                    end
+                    proc_gen_bus_if.rdata = 0;
                 end
                 // passthrough
                 else if(pass_through) begin
@@ -363,7 +363,7 @@ module l1_cache #(
                     end 
                 end
                 // Cache miss of sc
-                else if (proc_gen_bus_if.wen && reserve && !addr_is_reserved && ~hit && ~pass_through) begin
+                else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) begin
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = 32'b1;
                 end
@@ -540,7 +540,7 @@ module l1_cache #(
 	        HIT: begin
                 if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
-                else if (proc_gen_bus_if.wen && reserve && !addr_is_reserved && ~hit && ~pass_through) // Don't transition on a failed sc
+                else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) // Don't transition on a failed sc
                     next_state = state;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through)
                     next_state = WB;
@@ -587,7 +587,7 @@ module l1_cache #(
         if (proc_gen_bus_if.ren && reserve && hit) begin
             next_reservation_set.idx = decoded_addr.idx;
             next_reservation_set.reserved = 1'b1;
-        end else if (proc_gen_bus_if.ren || proc_gen_bus_if.wen || clear || flush) begin
+        end else if (((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && !proc_gen_bus_if.busy) || clear || flush) begin
             next_reservation_set.reserved = 1'b0;
         end
         addr_is_reserved = reservation_set.idx == decoded_addr.idx && reservation_set.reserved;
