@@ -17,6 +17,12 @@ bool negedge = false;
 Vcache_stress_wrapper *dut;
 VerilatedFstC *trace;
 
+void print_help_exit() {
+    std::cerr << "Usage: ./build.sh <num_transactions> <flags...>" << std::endl;
+    std::cerr << "\t--help: Print this" << std::endl;
+    exit(1);
+}
+
 void tick_dut() {
     dut->CLK = 0;
     dut->eval();
@@ -419,7 +425,17 @@ void reset() {
 }
 
 int main(int argc, char **argv) {
-    srand(0);
+    srand(time(NULL));
+
+    uint32_t num_transactions = 1000000;
+    if (argc == 2) {
+        if (!strncmp("--help", argv[1], strlen("--help"))) {
+            print_help_exit();
+        }
+        num_transactions = std::stoul(argv[1]);
+    }
+
+    printf("Running with %d transactions\n", num_transactions);
 
     dut = new Vcache_stress_wrapper;
     trace = new VerilatedFstC;
@@ -427,7 +443,7 @@ int main(int argc, char **argv) {
                              &dut->cache0_wen, &dut->cache0_rdata, &dut->cache0_busy);
     GenericBusIf cache1_gbif(&dut->cache1_addr, &dut->cache1_wdata, &dut->cache1_ren,
                              &dut->cache1_wen, &dut->cache1_rdata, &dut->cache1_busy);
-    Epoch epoch(1000000, cache0_gbif, cache1_gbif);
+    Epoch epoch(num_transactions, cache0_gbif, cache1_gbif);
     Verilated::traceEverOn(true);
     dut->trace(trace, 5);
     trace->open("cache_stress_wrapper.fst");
