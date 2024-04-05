@@ -493,7 +493,24 @@ logic vgen_uops;
 
 rv32v_uop_gen_if vug_if();
 
-assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) && !(vopm_valid && (vmask_logical_instr || (vmask_calc_instr && ~vmask_calc_instr_uop)));
+always_comb begin
+    vgen_uops = vmajoropcode_valid;
+
+    // Suppress uop generation for vset* instructions
+    if (vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) begin
+        vgen_uops = 0;
+    end
+
+    // Suppress uop generation for mask calc instructions
+    if (vopm_valid && (vmask_logical_instr || (vmask_calc_instr && ~vmask_calc_instr_uop))) begin
+        vgen_uops = 0;
+    end
+
+    // Suppress uop generation for vector-scalar move instructions
+    if (vopm_valid && vfunct6 == VWXUNARY0 && (vfunct3 == OPMVV || vfunct3 == OPMVX)) begin
+        vgen_uops = 0;
+    end
+end
 
 assign vug_if.gen = vgen_uops;
 assign vug_if.stall = vcu_if.stall;
