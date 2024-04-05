@@ -58,6 +58,8 @@ UARCH_PARAMS = \
     'sparce_enabled' : [ 'enabled', 'disabled' ],
     # RV32C
     'rv32c_enabled' : [ 'enabled', 'disabled' ],
+    # RV32M
+    'rv32m_supported' : [ 'true', 'false' ],
     # RV32V
     'rv32v_supported' : [ 'true', 'false' ],
     # base ISA Configurations
@@ -180,6 +182,10 @@ def create_include(config):
   bus_type = uarch_params['bus_interface_type'].split('_if')[0]
   bus_define = '`define BUS_INTERFACE_' + bus_type.upper() + '\n'
   include_file.write(bus_define)
+
+  # Handle RV32M_SUPPORTED define
+  if uarch_params['rv32m_supported'] == 'true':
+    include_file.write('`define RV32M_SUPPORTED\n')
 
   # Handle RV32V_SUPPORTED define
   if uarch_params['rv32v_supported'] == 'true':
