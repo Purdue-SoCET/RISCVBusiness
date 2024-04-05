@@ -18,177 +18,113 @@ RVTEST_CODE_BEGIN
         la      sp, endstack
         j       main
 
-matmul:                                 # @matmul
-        blez    a3, .LBB0_18
-        addi    sp, sp, -32
-        sw      s0, 28(sp)                      # 4-byte Folded Spill
-        sw      s1, 24(sp)                      # 4-byte Folded Spill
-        sw      s2, 20(sp)                      # 4-byte Folded Spill
-        sw      s3, 16(sp)                      # 4-byte Folded Spill
-        sw      s4, 12(sp)                      # 4-byte Folded Spill
-        sw      s5, 8(sp)                       # 4-byte Folded Spill
-        sw      s6, 4(sp)                       # 4-byte Folded Spill
-        li      t0, 0
-        slli    a7, a4, 2
-        csrr    a5, vlenb
-        slli    s4, a5, 1
-        srli    t1, a5, 1
-        slli    t2, a6, 2
-        li      t3, 1
-        srli    a5, a5, 3
-        slli    t4, a5, 2
-        vsetvli a5, zero, e32, m2, ta, ma
-        vmv.v.i v8, 0
-        j       .LBB0_3
-.LBB0_2:                                #   in Loop: Header=BB0_3 Depth=1
-        addi    t0, t0, 1
-        add     a0, a0, a7
-        beq     t0, a3, .LBB0_17
-.LBB0_3:                                # =>This Loop Header: Depth=1
-        blez    a6, .LBB0_2
-        li      t5, 0
-        mul     a5, t0, a6
-        slli    a5, a5, 2
-        add     t6, a2, a5
-        mv      s3, a1
-        j       .LBB0_7
-.LBB0_5:                                #   in Loop: Header=BB0_7 Depth=2
-        li      s5, 0
-.LBB0_6:                                #   in Loop: Header=BB0_7 Depth=2
-        slli    a5, t5, 2
-        add     a5, a5, t6
-        sw      s5, 0(a5)
-        addi    t5, t5, 1
-        addi    s3, s3, 4
-        beq     t5, a6, .LBB0_2
-.LBB0_7:                                #   Parent Loop BB0_3 Depth=1
-        blez    a4, .LBB0_5
-        li      s0, 8
-        mv      a5, t1
-        bltu    s0, t1, .LBB0_10
-        li      a5, 8
-.LBB0_10:                               #   in Loop: Header=BB0_7 Depth=2
-        li      s2, 0
-        li      s5, 0
-        bltu    a4, a5, .LBB0_15
-        bne     a6, t3, .LBB0_15
-        neg     a5, t4
-        and     s2, a5, a4
-        mv      a5, s2
-        mv      s0, s3
-        mv      s1, a0
-        vmv2r.v v10, v8
-.LBB0_13:                               #   Parent Loop BB0_3 Depth=1
-        vl2re32.v       v12, (s1)
-        vl2re32.v       v14, (s0)
-        vmacc.vv        v10, v14, v12
-        add     s1, s1, s4
-        sub     a5, a5, t1
-        add     s0, s0, s4
-        bnez    a5, .LBB0_13
-        vmv.s.x v12, zero
-        vredsum.vs      v10, v10, v12
-        vmv.x.s s5, v10
-        beq     s2, a4, .LBB0_6
-.LBB0_15:                               #   in Loop: Header=BB0_7 Depth=2
-        sub     s6, a4, s2
-        mul     a5, t2, s2
-        add     a5, a5, s3
-        slli    s1, s2, 2
-        add     s1, s1, a0
-.LBB0_16:                               #   Parent Loop BB0_3 Depth=1
-        lw      s2, 0(s1)
-        lw      s0, 0(a5)
-        mul     s0, s0, s2
-        add     s5, s5, s0
-        addi    s6, s6, -1
-        add     a5, a5, t2
-        addi    s1, s1, 4
-        bnez    s6, .LBB0_16
-        j       .LBB0_6
-.LBB0_17:
-        lw      s0, 28(sp)                      # 4-byte Folded Reload
-        lw      s1, 24(sp)                      # 4-byte Folded Reload
-        lw      s2, 20(sp)                      # 4-byte Folded Reload
-        lw      s3, 16(sp)                      # 4-byte Folded Reload
-        lw      s4, 12(sp)                      # 4-byte Folded Reload
-        lw      s5, 8(sp)                       # 4-byte Folded Reload
-        lw      s6, 4(sp)                       # 4-byte Folded Reload
-        addi    sp, sp, 32
-.LBB0_18:
+matmul:
+        ble     a3,zero,.L18
+        addi    sp,sp,-32
+        vsetvli t6,zero,e32,m1,ta,ma
+        vid.v   v4
+        sw      s1,24(sp)
+        mv      s1,a6
+        slli    a6,a6,2
+        srai    a5,a6,2
+        vmul.vx v4,v4,a5
+        sw      s0,28(sp)
+        sw      s2,20(sp)
+        sw      s3,16(sp)
+        vsll.vi v4,v4,2
+        sw      s4,12(sp)
+        mv      s0,a3
+        mv      s2,a1
+        mv      s3,a2
+        mv      t4,a4
+        mv      t3,a0
+        add     t5,a1,a6
+        slli    s4,a4,2
+        li      t2,0
+        li      t0,0
+.L3:
+        ble     s1,zero,.L6
+.L9:
+        slli    t1,t2,2
+        add     t1,s3,t1
+        mv      a7,s2
+.L10:
+        bgt     t4,zero,.L5
+        sw      zero,0(t1)
+        addi    a7,a7,4
+        addi    t1,t1,4
+        bne     t5,a7,.L10
+        addi    t0,t0,1
+        add     t2,t2,s1
+        add     t3,t3,s4
+        bne     s0,t0,.L9
+        lw      s0,28(sp)
+        lw      s1,24(sp)
+        lw      s2,20(sp)
+        lw      s3,16(sp)
+        lw      s4,12(sp)
+        addi    sp,sp,32
+        jr      ra
+.L26:
+        vsetvli a5,zero,e32,m1,ta,ma
+        vmv.s.x v2,a4
+        addi    a7,a7,4
+        vredsum.vs      v1,v1,v2
+        addi    t1,t1,4
+        vmv.x.s a5,v1
+        sw      a5,-4(t1)
+        beq     t5,a7,.L6
+.L5:
+        vmv.v.i v1,0
+        mv      a2,t3
+        mv      a3,a7
+        mv      a4,t4
+.L4:
+        vsetvli a5,a4,e32,m1,tu,ma
+        mul     a1,a6,a5
+        vle32.v v3,0(a2)
+        vluxei32.v      v2,(a3),v4
+        slli    a0,a5,2
+        sub     a4,a4,a5
+        add     a2,a2,a0
+        vmacc.vv        v1,v3,v2
+        add     a3,a3,a1
+        bne     a4,zero,.L4
+        j       .L26
+.L6:
+        addi    t0,t0,1
+        add     t2,t2,s1
+        add     t3,t3,s4
+        bne     s0,t0,.L3
+        lw      s0,28(sp)
+        lw      s1,24(sp)
+        lw      s2,20(sp)
+        lw      s3,16(sp)
+        lw      s4,12(sp)
+        addi    sp,sp,32
+        jr      ra
+.L18:
         ret
 main:                                   # @main
         addi    sp, sp, -16
         sw      ra, 12(sp)                      # 4-byte Folded Spill
-        sw      s0, 8(sp)                       # 4-byte Folded Spill
-        sw      s1, 4(sp)                       # 4-byte Folded Spill
         lui     a0, %hi(matrix1)
         addi    a0, a0, %lo(matrix1)
         lui     a1, %hi(matrix2)
         addi    a1, a1, %lo(matrix2)
-        lui     s1, %hi(result)
-        addi    s0, s1, %lo(result)
+        lui     a2, %hi(result)
+        addi    a2, a2, %lo(result)
         li      a3, 16
         li      a4, 16
         li      a6, 16
-        mv      a2, s0
         call    matmul
-        csrr    a3, vlenb
-        srli    a0, a3, 3
-        li      a1, 64
-        bgeu    a1, a0, .LBB1_2
-        li      a1, 0
         li      a0, 0
-        j       .LBB1_5
-.LBB1_2:
-        li      a1, 508
-        mul     a0, a0, a1
-        andi    a1, a0, 256
-        srli    a0, a3, 1
-        lui     a2, %hi(expect)
-        addi    a2, a2, %lo(expect)
-        slli    a3, a3, 1
-        vsetvli a4, zero, e32, m2, ta, ma
-        vmv.v.i v8, 0
-        mv      a4, a1
-.LBB1_3:                                # =>This Inner Loop Header: Depth=1
-        vl2re32.v       v10, (s0)
-        vl2re32.v       v12, (a2)
-        vsetvli zero, zero, e32, m2, ta, mu
-        vmsne.vv        v0, v10, v12
-        vadd.vi v8, v8, 1, v0.t
-        add     s0, s0, a3
-        sub     a4, a4, a0
-        add     a2, a2, a3
-        bnez    a4, .LBB1_3
-        vmv.s.x v10, zero
-        vredsum.vs      v8, v8, v10
-        vmv.x.s a0, v8
-        bnez    a1, .LBB1_7
-.LBB1_5:
-        slli    a2, a1, 2
-        lui     a1, %hi(expect)
-        addi    a3, a1, %lo(expect)
-        add     a1, a3, a2
-        addi    a4, s1, %lo(result)
-        add     a2, a2, a4
-        addi    a3, a3, 1024
-.LBB1_6:                                # =>This Inner Loop Header: Depth=1
-        lw      a4, 0(a2)
-        lw      a5, 0(a1)
-        xor     a4, a4, a5
-        snez    a4, a4
-        add     a0, a0, a4
-        addi    a1, a1, 4
-        addi    a2, a2, 4
-        bne     a1, a3, .LBB1_6
-.LBB1_7:
         lw      ra, 12(sp)                      # 4-byte Folded Reload
-        lw      s0, 8(sp)                       # 4-byte Folded Reload
-        lw      s1, 4(sp)                       # 4-byte Folded Reload
-        addi    sp, sp, 16    
+        addi    sp, sp, 16
 
         // Check for errors
+        la a1, errors
+        sw a0, 0(a1)
         TEST_CASE(1, a0, 0, NOP)
 
         TEST_PASSFAIL
@@ -980,5 +916,8 @@ result:
 stack:
         .zero   4096
 endstack:
+
+errors:
+        .word   0xffffffff
 
 RVTEST_DATA_END

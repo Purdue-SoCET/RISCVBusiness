@@ -188,7 +188,7 @@ module stage4_execute_stage (
             shadow_if.avl_spec = vlmax; 
 
         // logic for setting the illegal bit in shadow_if.vtype_spec
-        if(shadow_if.vtype_spec[31:7] != 0) begin
+        if((shadow_if.vtype_spec.vill != 0) || (shadow_if.vtype_spec.reserved != 0)) begin
             shadow_if.vtype_spec = vtype_t'(0); 
             shadow_if.vtype_spec.vill = 1'b1;
         end
