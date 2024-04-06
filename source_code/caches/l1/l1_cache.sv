@@ -498,7 +498,7 @@ module l1_cache #(
         case (e_qstate)
             IDLE: begin
                 // TODO: Bring in THREAD_CNT PARAMETER INTO QUEUE
-                if (e_wptr == e_rptr - 1) begin
+                if (e_wptr == e_rptr) begin
                     n_eqstate = DISABLE;
                 end
                 else if (enqueue) begin
@@ -534,7 +534,7 @@ module l1_cache #(
                         // dequeue the next value
                         n_word_cnt = word_cnt + 1;
                         mem_gen_bus_if.addr = egress_queue[e_rptr][word_cnt];
-                        mem_gen_bus_if.data = egress_queue[e_rptr][word_cnt + BLOCK_SIZE]
+                        mem_gen_bus_if.data = egress_queue[e_rptr][word_cnt + BLOCK_SIZE];
                         mem_gen_bus_if.ren = ~egress_queue[e_rptr][BLOCK_SIZE * 2];
                         mem_gen_bus_if.wen = egress_queue[e_rptr][BLOCK_SIZE * 2];
                     end
@@ -547,7 +547,7 @@ module l1_cache #(
             end
 
             DISABLE: begin
-                if (e_qsize != 0) begin
+                if (e_wptr < e_rptr) begin
                     n_eqstate = IDLE;
                 end
             end
