@@ -35,7 +35,7 @@ rv32v_divider RV32V_DIV (
 
 // RV32V multiplier signals
 assign vmul_in = '{
-    vmul_en: (vop.vfu == VFU_MUL) & ~mask_bit,
+    vmul_en: (vop.vfu == VFU_MUL),
     vs1_data: vopA,
     vs2_data: vopB,
     vd_data: vopC,
@@ -50,7 +50,7 @@ assign vmul_in = '{
 
 // RV32V divider signals
 assign vdiv_in = '{
-    vdiv_en: (vop.vfu == VFU_DIV) & ~mask_bit,
+    vdiv_en: (vop.vfu == VFU_DIV),
     vs1_data: vopA,
     vs2_data: vopB,
     vsew: vsew,

@@ -109,7 +109,7 @@ main:                                   # @main
         addi    s0, a0, %lo(output)
         lui     a0, %hi(inputs)
         addi    s1, a0, %lo(inputs)
-        addi    s2, s0, 10
+        addi    s2, s0, 200
 .LBB1_1:                                # =>This Inner Loop Header: Depth=1
         lh      a0, 0(s1)
         call    filter_new_sample
@@ -122,7 +122,7 @@ main:                                   # @main
         addi    a1, a1, %lo(expect)
         lui     a2, %hi(output)
         addi    a2, a2, %lo(output)
-        addi    a3, a1, 10
+        addi    a3, a1, 200
 .LBB1_3:                                # =>This Inner Loop Header: Depth=1
         lhu     a4, 0(a2)
         lhu     a5, 0(a1)
