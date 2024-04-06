@@ -454,27 +454,22 @@ module l1_cache #(
 
 
     // Queue design
-    typedef enum logic[1:0] {IDLE, ENQUEUE, DISABLE, DEQUEUE} queue_t;
     // queue has these dimensions:
     // #thread items, each entry having block size words of 32 bits
     // TODO: parametrize queue instantiation
 
-
-    logic [ $clog2(THREAD_CNT) - 1: 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1  : 0] [WORD_SIZE - 1 : 0] egress_queue, n_egress_queue;
-    // 
-    // bits 31:0 address, bit 32 is write
-
-
     // egress queue
+    typedef enum logic[1:0] {IDLE, ENQUEUE, DISABLE, DEQUEUE} queue_t;
+    logic [ $clog2(THREAD_CNT) - 1: 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1  : 0] [WORD_SIZE - 1 : 0] egress_queue, n_egress_queue;
     queue_t e_qstate, ne_qstate; // egress queue state
     logic [3:0] e_wptr, ne_wptr;
     logic [3:0] e_rptr, ne_rptr;
     logic [3:0] e_qsize;
     logic enqueue;
-    logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr;
-    logic e_qwrite;
-    logic [$clog2(BLOCK_SIZE) - 1 : 0] [WORD_SIZE - 1 : 0] qwrite_data;
-    logic [$clog2(BLOCK_SIZE) - 1 : 0] word_cnt, n_word_cnt;
+    logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr; // addresses inputted into queue
+    logic e_qwrite; // write enable for item
+    logic [$clog2(BLOCK_SIZE) - 1 : 0] [WORD_SIZE - 1 : 0] qwrite_data; // data to write if writing
+    logic [$clog2(BLOCK_SIZE) - 1 : 0] word_cnt, n_word_cnt; 
     always_ff(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             e_qstate <= '0;
