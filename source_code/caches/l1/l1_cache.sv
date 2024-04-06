@@ -452,4 +452,115 @@ module l1_cache #(
             nflush_req = 0;
     end
 
+
+    // Queue design
+    typedef enum logic[1:0] {IDLE, ENQUEUE, DISABLE, DEQUEUE} queue_t;
+    // queue has these dimensions:
+    // #thread items, each entry having block size words of 32 bits
+    // TODO: parametrize queue instantiation
+
+
+    logic [ $clog2(THREAD_CNT) - 1: 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1  : 0] [WORD_SIZE - 1 : 0] egress_queue, n_egress_queue;
+    // 
+    // bits 31:0 address, bit 32 is write
+
+
+    // egress queue
+    queue_t e_qstate, ne_qstate; // egress queue state
+    logic [3:0] e_wptr, ne_wptr;
+    logic [3:0] e_rptr, ne_rptr;
+    logic [3:0] e_qsize;
+    logic enqueue;
+    logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr;
+    logic e_qwrite;
+    logic [$clog2(BLOCK_SIZE) - 1 : 0] [WORD_SIZE - 1 : 0] qwrite_data;
+    logic [$clog2(BLOCK_SIZE) - 1 : 0] word_cnt, n_word_cnt;
+    always_ff(posedge CLK, negedge nRST) begin
+        if (~nRST) begin
+            e_qstate <= '0;
+            egress_queue <= '0;
+            e_wptr <= '0;
+            e_rptr <= '0;
+            word_cnt = '0;
+        end
+        else begin
+            e_qstate <= ne_qstate;
+            egress_queue <= n_egress_queue;
+            e_wptr <= ne_ewptr;
+            e_rptr <= ne_rptr;
+            word_cnt <= n_word_cnt;
+        end
+    end
+    assign e_qsize = e_wptr - e_rptr;
+
+    genvar word_sel, write_data_sel;
+    generate
+    always_comb begin
+        ne_qstate = e_qstate;
+        ne_wptr = e_wptr;
+        ne_rptr = e_rptr;
+
+        case (e_qstate)
+            IDLE: begin
+                // TODO: Bring in THREAD_CNT PARAMETER INTO QUEUE
+                if (e_wptr == e_rptr - 1) begin
+                    n_eqstate = DISABLE;
+                end
+                else if (enqueue) begin
+                    ne_qstate = ENQUEUE;
+                    ne_wptr = e_wptr + 1;
+                    for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
+                        n_egress_queue[e_wptr][word_sel] = qdata_addr[word_sel];
+                    end
+                    for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
+                        n_egress_queue[e_wptr][write_data_sel] = qwrite_data[write_data_sel];
+                    end
+                    n_egress_queue[e_wptr][BLOCK_SIZE * 2] = e_qwrite;
+                end
+                // ramreceived is a placeholder signal that determines we need to read from queue 
+                else if (ramreceived & ramready) begin
+                    ne_qstate = DEQUEUE;
+                    ne_rptr = e_rptr + 1;
+                    output_addr = egress_queue[e_rptr];
+                end
+                else if (ramready) begin
+                    ne_qstate = IDLE;
+                end
+            end
+            ENQUEUE: begin
+ 
+                n_eqstate = IDLE;
+            end
+
+            DEQUEUE: begin
+                if (word_cnt < BLOCK_SIZE) begin
+                    ne_qstate = DEQUEUE;
+                    if (!(mem_gen_bus_if.busy & mem_gen_bus_if.error)) begin
+                        // dequeue the next value
+                        n_word_cnt = word_cnt + 1;
+                        mem_gen_bus_if.addr = egress_queue[e_rptr][word_cnt];
+                        mem_gen_bus_if.data = egress_queue[e_rptr][word_cnt + BLOCK_SIZE]
+                        mem_gen_bus_if.ren = ~egress_queue[e_rptr][BLOCK_SIZE * 2];
+                        mem_gen_bus_if.wen = egress_queue[e_rptr][BLOCK_SIZE * 2];
+                    end
+                end
+                else begin
+                    n_word_cnt = 0;
+                    n_eqstate = IDLE;
+                    ne_rptr = (e_rptr + 1 == THREAD_CNT) ? 0 : e_rptr + 1;
+                end
+            end
+
+            DISABLE: begin
+                if (e_qsize != 0) begin
+                    n_eqstate = IDLE;
+                end
+            end
+        endcase
+    end
+    endgenerate
+    // ingress queue
+    queue_t iqstate, niqstate; // ingress queue state
+
+
 endmodule
