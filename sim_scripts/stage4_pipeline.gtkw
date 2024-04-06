@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Thu Mar 21 03:18:54 2024
+[*] Fri Apr  5 23:58:01 2024
 [*]
 [dumpfile] "/home/omg/socet/RISCVBusiness/waveform.vcd"
-[dumpfile_mtime] "Thu Mar 21 03:16:38 2024"
-[dumpfile_size] 15696473
+[dumpfile_mtime] "Fri Apr  5 23:43:21 2024"
+[dumpfile_size] 306642826
 [savefile] "/home/omg/socet/RISCVBusiness/sim_scripts/stage4_pipeline.gtkw"
-[timestart] 181
-[size] 1908 1047
-[pos] -85 49
-*-2.700783 214 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[timestart] 1819
+[size] 2244 1399
+[pos] 23 -34
+*-2.700783 1849 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [markername] AA
 [markername] BB
 [markername] CC
@@ -47,14 +47,14 @@
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.vd_sel.
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.vs1_sel.
 [treeopen] top_core.CORE.pipeline.ex_in.vctrl_out.vs2_sel.
-[treeopen] top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.
+[treeopen] top_core.CORE.pipeline.execute_stage_i.
+[treeopen] top_core.CORE.pipeline.execute_stage_i.rf_if.
 [treeopen] top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vmem_in.
-[treeopen] top_core.CORE.pipeline.fetch_stage_i.
 [treeopen] top_core.CORE.pipeline.mem_stage_i.
 [sst_width] 374
 [signals_width] 335
 [sst_expanded] 1
-[sst_vpaned_height] 322
+[sst_vpaned_height] 451
 @28
 top_core.CORE.pipeline.decode.RVV_SHADOW_CSR.CLK
 top_core.CORE.pipeline.decode.RVV_SHADOW_CSR.nRST
@@ -457,7 +457,7 @@ top_core.CORE.pipeline.ex_in.vctrl_out.vxin1_use_rs1
 top_core.CORE.pipeline.ex_in.vctrl_out.vxin2_use_rs2
 @1401200
 -Execute vector control
-@c00200
+@800200
 -Execute vector data
 @28
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.CLK
@@ -535,7 +535,7 @@ top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.xbardat_src3[0][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.xbardat_src3[1][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.xbardat_src3[2][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.xbardat_src3[3][31:0]
-@1401200
+@1000200
 -Execute vector data
 @c00200
 -Execute vector output
@@ -592,7 +592,7 @@ top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.VSCRATCH.vwdata[3][31:0]
 -Execute vector scratch
 @200
 -
-@c00200
+@800200
 -Memory D$
 @22
 top_core.CORE.pipeline.mem_stage_i.dgen_bus_if.addr[31:0]
@@ -610,7 +610,7 @@ top_core.CORE.pipeline.mem_stage_i.dgen_bus_if.ren
 top_core.CORE.pipeline.mem_stage_i.dgen_bus_if.wdata[31:0]
 @28
 top_core.CORE.pipeline.mem_stage_i.dgen_bus_if.wen
-@1401200
+@1000200
 -Memory D$
 @c00200
 -Memory vector WB
@@ -626,5 +626,16 @@ top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[2][31:0]
 top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[3][31:0]
 @1401200
 -Memory vector WB
+@800201
+-Memory scalar WB
+@29
+top_core.CORE.pipeline.execute_stage_i.rf_if.rd.regclass[1:0]
+@23
+top_core.CORE.pipeline.execute_stage_i.rf_if.rd.regidx[4:0]
+top_core.CORE.pipeline.execute_stage_i.rf_if.w_data[31:0]
+@29
+top_core.CORE.pipeline.execute_stage_i.rf_if.wen
+@1000201
+-Memory scalar WB
 [pattern_trace] 1
 [pattern_trace] 0
