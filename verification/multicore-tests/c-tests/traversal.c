@@ -1,6 +1,8 @@
 #include "utility.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <limits.h>
 
 typedef struct TreeNode {
     int value;
@@ -8,92 +10,65 @@ typedef struct TreeNode {
     struct TreeNode *right;
 } TreeNode;
 
-#define MAX_NODES 16
-typedef struct {
-    TreeNode pool[MAX_NODES];
-    char used[MAX_NODES];
-} TreeNodePool;
+TreeNode node8 = {8, NULL, NULL};
+TreeNode node7 = {7, NULL, NULL};
+TreeNode node6 = {6, &node8, NULL};
+TreeNode node5 = {5, NULL, &node7};
+TreeNode node4 = {4, &node6, NULL};
+TreeNode node3 = {3, NULL, &node5};
+TreeNode node2 = {2, &node4, NULL};
+TreeNode node1 = {1, &node2, &node3}; // Root node
 
-TreeNodePool globalPool = {{0}, {0}};
+
+/*  1
+   / \
+  2   3
+ /     \
+ 4      5
+/        \
+6         7
+/
+8
+*/
 
 void hart0_main();
 void hart1_main();
-void TraverseLeftNRoot(TreeNode *node);
-void TraverseRight(TreeNode *node);
-void PrintValue(int value);
-TreeNode* createNode(int value, TreeNodePool *pool); 
-TreeNode* createSampleTree(TreeNodePool *pool);
-TreeNode* allocate_node(TreeNodePool *pool);
-void free_node(TreeNodePool *pool, TreeNode *node);
+void traverseLeftRoot(TreeNode *node);
+void traverseRight(TreeNode *node);
+void my_itoa(int value, char* str, int base);
 
-TreeNode* createNode(int value, TreeNodePool *pool) {
-    TreeNode* newNode = allocate_node(pool);
-    if (!newNode) {
-        return NULL;
-    }
-    newNode->value = value;
-    newNode->left = NULL;
-    newNode->right = NULL;
-    return newNode;
-}
-
-TreeNode* createSampleTree(TreeNodePool *pool) {
-    TreeNode* root = createNode(10, pool);
-    root->left = createNode(5, pool);
-    root->right = createNode(15, pool);
-    root->left->left = createNode(3, pool);
-    root->left->right = createNode(7, pool);
-    root->right->right = createNode(18, pool);
-
-    return root;
-}
 
 void hart0_main() {
     flag = 0;
-    TreeNode* root = createSampleTree(&globalPool); // Pass the global pool
-    print("Hello from hart0 - Starting left-root traversal!\n");
-    TraverseLeftNRoot(root);
-    flag = 1;
+    TreeNode* root = &node1;
+    //print("Hello from hart0 - Starting left-root traversal!\n");
+    if (root != NULL) {
+        traverseLeftRoot(root);
+    }
+    flag = 1; 
 }
 
 void hart1_main() {
     hart1_done = 0;
-    TreeNode* root = createSampleTree(&globalPool); // Pass the global pool
-    print("Hello from hart1 - Starting right traversal!\n");
-    TraverseRight(root);
-    hart1_done = 1;
-}
-
-void TraverseLeftNRoot(TreeNode *node) {
-    if (node == NULL) return;
-    TraverseLeftNRoot(node->left);
-    PrintValue(node->value); 
-}
-
-void TraverseRight(TreeNode *node) {
-    if (node == NULL) return;
-    TraverseRight(node->right); //go right
-    PrintValue(node->value); 
-}
-
-void PrintValue(int value) {
-    char buffer[12]; 
-    print(buffer);
-}
-
-TreeNode* allocate_node(TreeNodePool *pool) {
-    for (int i = 0; i < MAX_NODES; i++) {
-        if (!pool->used[i]) {
-            pool->used[i] = 1;
-            return &pool->pool[i];
-        }
+    TreeNode* root = &node1;
+    //print("Hello from hart1 - Starting right traversal!\n");
+    if (root != NULL && root->right != NULL) {
+        traverseRight(root->right);
     }
-    return NULL;
+    hart1_done = 1; 
 }
 
-void free_node(TreeNodePool *pool, TreeNode *node) {
-    int index = node - pool->pool;
-    if (index >= 0 && index < MAX_NODES) {
-        pool->used[index] = 0;
+void traverseLeftRoot(TreeNode *node) {
+    if (node == NULL) return;
+    if (node->left != NULL) {
+        traverseLeftRoot(node->left);
     }
+    print("l"); 
 }
+
+void traverseRight(TreeNode *node) {
+    if (node == NULL) return;
+    print("r");
+    traverseRight(node->right);
+}
+
