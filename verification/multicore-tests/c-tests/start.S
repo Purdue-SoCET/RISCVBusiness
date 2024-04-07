@@ -6,24 +6,27 @@ WANT_AMO_EMU_SUPPORT
 _start:
     # Start out by getting mhartid to tell which core we're on
     csrr s0, mhartid
+    .option push
+    .option norelax
+    la gp, __global_pointer$
+    .option pop
+    la s1, bss_cleared
     # Only clear bss on hart0
-    bnez s0, wait_bss_start
+    bnez s0, wait_for_bss_cleared
 clr_bss:
     la t0, __bss_start
     la t1, __bss_end
-    beq t0, t1, start
+    beq t0, t1, set_bss_cleared
 clr_bss_loop:
     sb zero, 0(t0)
     addi t0, t0, 1
-    ble t0, t1, clr_bss_loop
-    la t0, bss_cleared
-    addi t1, zero, 1
-    sw t1, 0(t0)
-wait_bss_start:
-    la t0, bss_cleared
-wait_bss:
-    lw t1, 0(t0)
-    beqz t1, wait_bss
+    blt t0, t1, clr_bss_loop
+set_bss_cleared:
+    addi t0, zero, 1
+    sw t0, 0(s1)
+wait_for_bss_cleared:
+    lw t0, 0(s1)
+    beqz t0, wait_for_bss_cleared
 
 start:
     # Get a 2kB stack starting at 0x8000F000
