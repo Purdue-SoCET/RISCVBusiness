@@ -29,7 +29,8 @@
 module coherency_unit #(
     parameter ADDR_WIDTH = 32, // Address width for cache lines
     parameter BLOCK_SIZE = 2,
-    parameter CPUID = 0
+    parameter CPUID = 0,
+    parameter NONCACHE_START_ADDR = 32'hF000_0000
 ) (
     input logic CLK, nRST,
     bus_ctrl_if.tb bcif,            // Bus Controller Interface
@@ -47,6 +48,7 @@ module coherency_unit #(
     typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_FAIL, RESP_INV, WRITEBACK} state_type; //States for Coherency Unit
     state_type state, next_state;
     cache_coherence_statistics_t next_coherence_statistics;
+    logic pass_through;
 
     typedef enum logic[1:0] {  
         MODIFIED,
@@ -67,11 +69,12 @@ module coherency_unit #(
 
     always_comb begin
         next_state = state;
+        pass_through = gbif.addr >= NONCACHE_START_ADDR && (gbif.ren || gbif.wen);
         case(state)
             IDLE: begin
                 if (bcif.ccwait[CPUID]) begin
                     next_state = RESP_CHKTAG;
-                end else if (ccif.dWEN && gbif.wen) begin
+                end else if (ccif.dWEN && gbif.wen || pass_through) begin
                     next_state = state_type'(WRITEBACK);
                 end else if (gbif.wen) begin
                     next_state = WRITE_REQ;

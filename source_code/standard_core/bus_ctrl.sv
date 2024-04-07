@@ -26,7 +26,8 @@
 
 module bus_ctrl #(
     parameter BLOCK_SIZE = 2,
-    parameter CPUS = 2
+    parameter CPUS = 2,
+    parameter NONCACHE_START_ADDR = 32'hF000_0000
 )(
     input logic CLK, nRST,
     bus_ctrl_if.cc ccif,
@@ -49,6 +50,7 @@ module bus_ctrl #(
     logic [$clog2(BLOCK_SIZE):0] block_count, nblock_count;
     logic block_count_done, nblock_count_done;
     logic hit_delay;
+    logic pass_through;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
@@ -136,6 +138,8 @@ module bus_ctrl #(
         nrequester_cpu = requester_cpu;
         nsupplier_cpu = supplier_cpu;
         nblock_count = block_count;
+        pass_through = ccif.daddr[requester_cpu] >= NONCACHE_START_ADDR;
+
         casez(state)
             IDLE: begin // obtain the requester CPU id
                 if (|ccif.dWEN)
@@ -155,7 +159,7 @@ module bus_ctrl #(
             end
             GRANT_EVICT: begin  // set the stimulus to WRITEBACK to L2
                 // nl2_store = ccif.dstore[requester_cpu];
-                nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
+                nl2_addr = pass_through ? ccif.daddr[requester_cpu] : ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
                 //Cache waits until its block is completely written back
                 //Could optimize to have bus latch cache value and let the cache run?
                 ccif.dwait[requester_cpu] = 1; 
@@ -166,7 +170,7 @@ module bus_ctrl #(
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
-                nl2_addr = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
+                nl2_addr = pass_through ? ccif.daddr[requester_cpu] : ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
             end
             SNOOP_RX: begin // determine what to do on busRDX
                 nexclusiveUpdate = !(|ccif.ccIsPresent);
@@ -186,7 +190,7 @@ module bus_ctrl #(
                 if (ccif.l2state == L2_ACCESS) begin
                     ccif.l2REN = 0;
                     nblock_count = block_count + 1;
-                    if (block_count < BLOCK_SIZE - 1) begin
+                    if (!pass_through && block_count < BLOCK_SIZE - 1) begin
                         ndload[block_count * 32+:32] = ccif.l2load;
                         nl2_addr = ccif.l2addr + ((block_count + 1) * 4);
                     end else begin
@@ -239,7 +243,7 @@ module bus_ctrl #(
                 if (ccif.l2state == L2_ACCESS) begin
                     ccif.l2WEN = 0;
                     nblock_count = block_count + 1;
-                    if (block_count < BLOCK_SIZE - 1) begin
+                    if (!pass_through && block_count < BLOCK_SIZE - 1) begin
                         nl2_addr = ccif.l2addr + (nblock_count * 4);
                         nl2_store = ccif.dstore[requester_cpu][(nblock_count * 32)+:32];
                     end
@@ -251,7 +255,7 @@ module bus_ctrl #(
 
         if (block_count_done)
             nblock_count = 0;
-        nblock_count_done = nblock_count == BLOCK_SIZE;
+        nblock_count_done = (nblock_count == BLOCK_SIZE) || (pass_through && ccif.l2state == L2_ACCESS);
     end
 
     // function to obtain all non requesters
