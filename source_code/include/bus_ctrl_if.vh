@@ -26,7 +26,6 @@
 `define BUS_CTRL_IF_VH
 
 // parameters
-parameter NUM_HARTS = 2; //Can this be made adjustable?
 parameter CPUS = NUM_HARTS * 2;
 //parameter BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth

@@ -75,6 +75,8 @@ ISA_PARAMS = \
 
 UARCH_PARAMS = \
   {
+    # Multicore configurations
+    'num_harts' : [],
     # Branch/Jump Configurations
     'br_predictor_type' : ['not_taken'],
     # Cache Configurations
@@ -163,8 +165,8 @@ def create_include(config):
 
   # Handle localparam configurations
   isa_params = config['isa_params']
-  free_params = ['noncache_start_addr']
-  int_params = ['dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc']
+  free_params = ['num_harts', 'noncache_start_addr']
+  int_params = ['num_harts', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc']
   include_file.write('// ISA Params:\n') 
   for isa_param in isa_params:
     try:
