@@ -16,5 +16,7 @@ extern volatile int32_t hart1_done;
 
 void print(const char *fmt, ...);
 void put_uint32_hex(uint32_t hex);
+uint32_t get_cycles();
+uint32_t get_instrs();
 
 #endif
