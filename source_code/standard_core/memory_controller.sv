@@ -46,7 +46,7 @@ module memory_controller #(
 
     always_comb begin
         out_gen_bus_if.addr = bus_ctrl_if.l2addr;
-        out_gen_bus_if.byte_en = '1;
+        out_gen_bus_if.byte_en = bus_ctrl_if.l2_byte_en;
         out_gen_bus_if.ren = bus_ctrl_if.l2REN;
         out_gen_bus_if.wen = bus_ctrl_if.l2WEN;
         out_gen_bus_if.wdata = bus_ctrl_if.l2store;
