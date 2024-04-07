@@ -148,3 +148,15 @@ void __attribute__((noinline)) format(const char *fmt, char *buf, ...) {
     vformat(fmt, buf, args);
     va_end(args);
 }
+
+uint32_t get_cycles() {
+    uint32_t ret;
+    __asm__ volatile("csrr %0, mcycle\n" : "=r"(ret));
+    return ret;
+}
+
+uint32_t get_instrs() {
+    uint32_t ret;
+    __asm__ volatile("csrr %0, minstret\n" : "=r"(ret));
+    return ret;
+}
