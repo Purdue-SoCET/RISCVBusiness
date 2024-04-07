@@ -18,7 +18,7 @@ void swap(int ptr1, int ptr2, int *arr);
 #define N 5
 
 #if N == 5
-    int arr[] = {1,2,3,4,5};
+    int arr[] = {3,2,1,4,5};
     int out_arr[N] = {0};
 #endif
 
@@ -40,20 +40,20 @@ int compareFunc(const void* a, const void* b);
 
 void hart0_main() {
     flag = 0;
-    //print("Hello from hart0 - Starting the left array sort\n");
+    print("Hello from hart0 - Starting the left array sort\n");
 
     //Copy bottom half of array
-    //memcpy(left_half, arr, sizeof(int)*N/2);
-    memcpy(left_half, arr, sizeof(int)*2);
-    //qsort(0, N/2, left_half);
-    qsort(0, 1, left_half);
+    memcpy(left_half, arr, sizeof(int)*(N/2));
+    //memcpy(left_half, arr, sizeof(int)*2);
+    qsort(0, (N/2)-1, left_half);
+    //qsort(0, 1, left_half);
     while(!hart1_done) {}; //Wait for both cores to finish
 
     //Merge the two arrays
    
-    print("Left Half: %d %d %d\n", left_half[0], left_half[1], left_half[2]);
+    //print("Left Half: %d %d %d\n", left_half[0], left_half[1], left_half[2]);
     //print("Left Half: %d %d\n", left_half[0], left_half[1]);
-    print("Right Half: %d %d %d\n", right_half[0], right_half[1], right_half[2]);
+    //print("Right Half: %d %d %d\n", right_half[0], right_half[1], right_half[2]);
  
     //Ensure the array is actually sorted
     for(int i = 0; i < N/2-1; i++)
@@ -74,12 +74,11 @@ void hart1_main() {
     //If N is odd
     #if N % 2
         memcpy(right_half, &arr[N/2], sizeof(int)*(N/2 + 1));
-        //qsort(0, N/2 + 1, right_half);
-        qsort(0, 2, right_half);
+        qsort(0, N/2, right_half); //Need end to be index, not length
+        //qsort(0, 2, right_half);
     #else
         memcpy(right_half, &arr[N/2], sizeof(int)*N/2);
-        //qsort(right_half, N/2 + 1, sizeof(int));    
-        qsort(0, N/2, right_half);
+        qsort(0, N/2 - 1, right_half);
     #endif 
 
     
