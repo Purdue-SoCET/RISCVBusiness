@@ -136,6 +136,7 @@ module coherency_unit #(
         bcif.daddr[CPUID] = 32'b0;
         bcif.dWEN[CPUID] = 1'b0;
         bcif.dREN[CPUID] = 1'b0;
+        bcif.dbyte_en[CPUID] = gbif.byte_en;
         ccif.addr = 32'hBAD1BAD1;
         ccif.state_transfer = cc_end_state'(INVALID);
         ccif.snoop_req = 1'b0;

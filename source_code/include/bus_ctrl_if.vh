@@ -71,6 +71,7 @@ interface bus_ctrl_if ();
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
     bus_word_t          [CPUS-1:0] daddr;
+    logic         [CPUS-1:0] [3:0] dbyte_en;
     // L1 coherence INPUTS to bus 
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
     logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
@@ -87,6 +88,7 @@ interface bus_ctrl_if ();
     bus_word_t l2load, l2store;
     logic l2WEN, l2REN; 
     bus_word_t l2addr; 
+    logic [3:0] l2_byte_en;
 
     // HACK: dstore becomes multidriven here. memory_controller expects to drive dstore but
     // this is also used when testbenching
@@ -103,19 +105,19 @@ interface bus_ctrl_if ();
 
     // modports
     modport cc(
-        input   dREN, dWEN, daddr, dstore, 
+        input   dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state,
         output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
-                l2addr, l2store, l2REN, l2WEN
+                l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 
 
     modport tb(
         input   dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
-                l2addr, l2store, l2REN, l2WEN,
-        output  dREN, dWEN, daddr, dstore, 
+                l2addr, l2store, l2REN, l2WEN, l2_byte_en,
+        output  dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state
     ); 

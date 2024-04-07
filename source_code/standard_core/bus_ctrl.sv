@@ -256,6 +256,8 @@ module bus_ctrl #(
         if (block_count_done)
             nblock_count = 0;
         nblock_count_done = (nblock_count == BLOCK_SIZE) || (pass_through && ccif.l2state == L2_ACCESS);
+
+        ccif.l2_byte_en = pass_through ? ccif.dbyte_en[requester_cpu] : 'hF;
     end
 
     // function to obtain all non requesters
