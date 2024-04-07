@@ -8,7 +8,7 @@ import pathlib
 utility_files = ["start.S", "utility.c", "amo_emu.c", "mutex.c"]
 
 compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32imac_zicsr', '-mabi=ilp32', '-mcmodel=medany',
-                '-static', '-nostdlib', '-O2', '-Tlink.ld', '-std=c11'] + utility_files
+                '-static', '-nostdlib', '-O2', '-Tlink.ld', '-std=c11', '-fno-builtin'] + utility_files
 
 cvt_cmd = ['riscv64-unknown-elf-objcopy', '-O', 'binary']
 
