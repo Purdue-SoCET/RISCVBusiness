@@ -3,7 +3,7 @@
 module rv32b_decode(
     input [31:0] insn,
     output logic claim,
-    output rv32b_pkg::rv32b_op_t operation
+    output rv32b_pkg::rv32b_decode_t rv32b_control
 );
     import rv32i_types_pkg::*;
     import rv32b_pkg::*;
@@ -15,6 +15,7 @@ module rv32b_decode(
     localparam RV32B_MINOR_ZEXT      = 7'b0000100;
 
     rv32b_insn_t insn_split;
+    rv32b_op_t operation;
     logic shift_add, log_with_negate, bit_counting, min_max, 
         sign_extend, zero_extend, rotate, orc, rev8;
 
@@ -86,5 +87,7 @@ module rv32b_decode(
             end
         end
     end
+
+    assign rv32b_control = {claim, operation};
 
 endmodule

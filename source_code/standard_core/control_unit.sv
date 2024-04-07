@@ -42,6 +42,7 @@ module control_unit (
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
     import rv32m_pkg::*;
+    import rv32b_pkg::*;
 
     stype_t  instr_s;
     itype_t  instr_i;
@@ -55,6 +56,7 @@ module control_unit (
     logic claimed;
     // Per-extension claim signals
     logic rv32m_claim;
+    logic rv32b_claim;
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -206,7 +208,7 @@ module control_unit (
     end
 
     assign cu_if.illegal_insn = maybe_illegal && !claimed;
-    assign claimed = rv32m_claim; // Add OR conditions for new extensions
+    assign claimed = rv32m_claim || rv32b_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions
     always_comb begin
@@ -267,5 +269,16 @@ module control_unit (
     assign cu_if.rv32m_control = {1'b0, rv32m_op_t'(0)};
     assign rv32m_claim = 1'b0;
     `endif // RV32M_SUPPORTED
+
+    `ifdef RV32B_SUPPORTED
+    rv32b_decode RV32B_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32b_claim),
+        .rv32b_control(cu_if.rv32b_control)
+    );
+    `else
+    assign cu_if.rv32b_control = {1'b0, rv32b_op_t'(0)};
+    assign rv32m_claim = 1'b0;
+    `endif
 
 endmodule
