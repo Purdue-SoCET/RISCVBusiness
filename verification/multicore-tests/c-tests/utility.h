@@ -14,7 +14,7 @@ extern volatile int32_t hart1_done;
 #define EXT_ADDR_CLEAR 0xFFFFFFF8
 #define MAGIC_ADDR 0xFFFFFFFC
 
-void print(char *string);
+void print(const char *fmt, ...);
 void put_uint32_hex(uint32_t hex);
 
 #endif
