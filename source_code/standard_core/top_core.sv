@@ -3,8 +3,7 @@
 `include "component_selection_defines.vh"
 
 module top_core #(
-    parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter NUM_HARTS = 2
+    parameter logic [31:0] RESET_PC = 32'h80000000
 ) (
     input CLK,
     nRST,
@@ -42,7 +41,7 @@ module top_core #(
         get_x28 = CORE.x28;
     endfunction
 
-    bind multicore_wrapper cpu_tracker #(.NUM_HARTS(2)) cpu_track1 (
+    bind multicore_wrapper cpu_tracker #(.NUM_HARTS(NUM_HARTS)) cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),
         .instr(instr),
