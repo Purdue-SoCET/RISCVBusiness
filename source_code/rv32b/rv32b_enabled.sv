@@ -10,7 +10,7 @@ module rv32b_enabled(
 
     import rv32b_pkg::*;
 
-    rv32b_alu(
+    rv32b_alu RV32BALU(
         .a(rv32b_a),
         .b(rv32b_b),
         .aluop(operation),
