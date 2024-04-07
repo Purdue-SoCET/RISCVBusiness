@@ -100,7 +100,7 @@ module l1_cache #(
     } flush_idx_t;             // flush counter type
 
     typedef enum {
-       IDLE, HIT, FETCH, WB, FLUSH_CACHE, SNOOP
+       IDLE, HIT, FETCH, WB, FLUSH_CACHE, SNOOP, CANCEL_REQ
     } cache_fsm_t;            // cache state machine
 
     typedef struct packed {
@@ -385,7 +385,7 @@ module l1_cache #(
                     mem_gen_bus_if.ren = 1;
                 */
                 mem_gen_bus_if.wen = proc_gen_bus_if.wen;
-                mem_gen_bus_if.ren = proc_gen_bus_if.ren;
+                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !abort_bus;
                 mem_gen_bus_if.addr = read_addr;
                 sramWrite.frames[ridx].tag.valid = 0;
                 sramMask.frames[ridx].tag.valid = 0;
@@ -497,6 +497,13 @@ module l1_cache #(
                     flush_done 	       = 1;
                 end
             end
+            CANCEL_REQ: begin
+                mem_gen_bus_if.wen     = 0;
+                mem_gen_bus_if.ren     = 1;
+                mem_gen_bus_if.addr    = decoded_addr;
+                mem_gen_bus_if.byte_en = 0;
+                proc_gen_bus_if.busy   = 1;
+            end
         endcase
 
         // Same as sramSEL except try to lookup the snoop addr when there's
@@ -554,20 +561,29 @@ module l1_cache #(
                     next_state = HIT; 
                 else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
-	        end
-	        WB: begin
+                else if (!abort_bus && !proc_gen_bus_if.ren)
+                    next_state = CANCEL_REQ;
+            end
+            WB: begin
                 if (!mem_gen_bus_if.busy)
                     next_state = HIT; 
                 else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
-	        end
+            end
             SNOOP: begin
                 next_state = ccif.snoop_req ? SNOOP : HIT;
             end
-	        FLUSH_CACHE: begin
+            FLUSH_CACHE: begin
                 if (flush_done)
                     next_state = HIT;
-	        end
+            end
+            CANCEL_REQ: begin
+               if (!mem_gen_bus_if.busy) begin
+                   next_state = HIT;
+               end else if (ccif.snoop_hit && !ccif.snoop_busy) begin
+                   next_state = SNOOP;
+               end
+            end
 	    endcase
     end
 
