@@ -9,11 +9,13 @@
 
 int global = 0;
 float global_sum = 0;
+//int global_sum = 0;
 mutex global_lock;
 int next_term = 0;
 
+void calc_term(int n);
 
-//Performs an atomic add and swap. The old value loaded via lr is stored
+//Performs an atomic increment and swap. The old value loaded via lr is stored
 //in dest. Addr is the address of the variable to swap with
 //src does nothing, but it breaks things when removed
 void atomic_swap(uint32_t* dest, uint32_t src, uint32_t addr) {
@@ -29,15 +31,6 @@ void atomic_swap(uint32_t* dest, uint32_t src, uint32_t addr) {
     *dest = d;
 }
 
-/*void atomic_fadd(void *ptr, float val) {
-    __asm__ volatile("1:\n"
-                     "lr.w ft1, (%[addr])\n"
-                     "fadd.s ft0, ft1, %[src]\n"
-                     "sc.w t2, ft0, (%[addr])\n"
-                     "bnez t2, 1b\n"
-                     :
-                     : [addr] "r"(ptr), [src] "r"(val));
-}*/
 void atomic_add(void *ptr, int val) {
     __asm__ volatile("1:\n"
                      "lr.w t1, (%[addr])\n"
@@ -52,8 +45,10 @@ void hart0_main() {
     int prevVal = 0;
     for (int i = 0; i < N; i++) {
         atomic_swap((uint32_t*) &prevVal, 1, (uint32_t) &global);
+        calc_term(prevVal);
     }
     while (hart1_done == 0) {}
+    print("Sum = %d\n", global_sum);
     flag = global == (N * 2);
 }
 
@@ -61,14 +56,19 @@ void hart1_main() {
     int prevVal = 0;
     for (int i = 0; i < N; i++) {
         atomic_swap((uint32_t*) &prevVal, 1, (uint32_t) &global);
+        calc_term(prevVal);
     }
     hart1_done = 1;
 }
 
-double calc_term(int n)
+void calc_term(int n)
 {
-    float val = 1 / (n*n);
+    print("Finding term %d\n", n);
+    float val = 1 / (n*n); //Missing divide functions?
+    print("Got the value for term %d. It's %x\n", n, val);
     mutex_lock(&global_lock);
-    global_sum = global_sum + val;
+    print("Got the lock for term %d\n", n);
+    //global_sum += 1;
+    global_sum += val;
     mutex_unlock(&global_lock);
 }
