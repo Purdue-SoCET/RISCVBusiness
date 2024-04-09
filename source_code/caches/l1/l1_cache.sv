@@ -355,7 +355,7 @@ module l1_cache #(
                 for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
                     qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
                 end
-                mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
+                //mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
                 // increment eviction word counter
                 //if(~mem_gen_bus_if.busy) begin
                     //enable_word_count = 1;
