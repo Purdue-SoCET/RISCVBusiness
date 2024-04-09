@@ -89,10 +89,14 @@ def run_selected_tests(isa, envs, machine_mode_tests):
 def main():
     parser = argparse.ArgumentParser(prog='RISC-V Tests', description='Runner for RISCVBusiness RISC-V Tests')
     parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' is supported at this time.', default=['p'])
-    parser.add_argument('--isa', choices=supported_isa, nargs='*', help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.', required=True)
+    parser.add_argument('--isa', choices=supported_isa, nargs='*', help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.', default=[])
     parser.add_argument('--machine', action='store_true', help='Enable M-mode tests. Not currently supported.')
     parser.add_argument('--supervisor', action='store_true', help='Enable S-mode tests. Not currently supported.')
     args = parser.parse_args()
+
+    if not args.machine and not args.isa and not args.supervisor:
+        print("Must supply at least one of --isa, --machine, or --supervisor")
+        exit(1)
 
     if 'v' in args.environment or 'pm' in args.environment or 'pt' in args.environment:
         print("Environments 'pt', 'pm' and 'v' are not yet supported.")
