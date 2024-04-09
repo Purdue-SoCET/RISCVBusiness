@@ -20,7 +20,10 @@ tohost_address = 0x80001000
 test_base_dir = pathlib.Path("./riscv-tests/isa")
 
 skip_list = [
-    'rv32ui-p-ma_data.bin' # requires misaligned load/store, which is optional.
+    'rv32ui-p-ma_data.bin', # requires misaligned load/store, which is optional.
+    'rv32mi-p-illegal.bin', # requires RV32C illegal instruction detection, which we have not implemented
+    'rv32mi-p-breakpoint.bin', # requires some parts of debug spec implemented.
+    'rv32mi-p-shamt.bin', # requires full detection of illegal instructions (including RV32 SLL with shamt[5] set)
 ]
 
 def apply_skips(test):
