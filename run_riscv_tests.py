@@ -42,29 +42,44 @@ def run_test(fname):
 
     return ('PASSED' in res.stdout)
 
-def run_selected_tests(isa):
+def run_selected_tests(isa, envs, machine_mode_tests):
     pass_count = 0
     total_count = 0
     global tohost_address
-    # rv32uX-p-*
-    for ext in isa:
-        print(f"ISA: RV32{ext.capitalize()}")
-        # TODO: Add ELF parsing to TB so we can get 'tohost'
-        # dynamically. This is a hack.
-        if ext == 'c':
-            tohost_address = 0x80003000
-        else:
-            tohost_address = 0x80001000
 
-        tests = test_base_dir.glob(f"rv32u{ext}-p-*.bin")
-        for test in filter(apply_skips, tests):
-            total_count += 1
-            status = run_test(test)
-            if status:
-                pass_count += 1
+    for env in envs:
+        print(f"Running '{env}' TVM tests...")
+        for ext in isa:
+            print(f"ISA: RV32{ext.capitalize()}")
+            # TODO: Add ELF parsing to TB so we can get 'tohost'
+            # dynamically. This is a hack.
+            if ext == 'c':
+                tohost_address = 0x80003000
             else:
-                print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+                tohost_address = 0x80001000
 
+            tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
+            for test in filter(apply_skips, tests):
+                total_count += 1
+                status = run_test(test)
+                if status:
+                    pass_count += 1
+                else:
+                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+
+        # machine-mode tests
+        if machine_mode_tests:
+            tohost_address = 0x80001000
+            print(f"Machine Mode tests")
+            tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
+            for test in filter(apply_skips, tests):
+                total_count += 1
+                status = run_test(test)
+                if status:
+                    pass_count += 1
+                else:
+                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+        
     if pass_count == total_count:
         print(f"{Colors.GREEN}[All tests passed.]{Colors.END}")
     else:
@@ -73,25 +88,25 @@ def run_selected_tests(isa):
 
 def main():
     parser = argparse.ArgumentParser(prog='RISC-V Tests', description='Runner for RISCVBusiness RISC-V Tests')
-    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], help='riscv-tests "TVM" option. Only \'p\' is supported at this time.', default='p')
+    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' is supported at this time.', default=['p'])
     parser.add_argument('--isa', choices=supported_isa, nargs='*', help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.', required=True)
     parser.add_argument('--machine', action='store_true', help='Enable M-mode tests. Not currently supported.')
     parser.add_argument('--supervisor', action='store_true', help='Enable S-mode tests. Not currently supported.')
     args = parser.parse_args()
 
-    if args.environment != 'p':
-        print("Only the 'p' TVM (physical memory, single-hart, no interrupts) is supported currently.")
+    if 'v' in args.environment or 'pm' in args.environment or 'pt' in args.environment:
+        print("Environments 'pt', 'pm' and 'v' are not yet supported.")
         exit(1)
     
-    if args.machine:
-        print("M-mode tests are not currently supported.")
-        exit(1)
+    # if args.machine:
+    #     print("M-mode tests are not currently supported.")
+    #     exit(1)
     
     if args.supervisor:
-        print("S-mode tests are not currently supported.")
+        print("S-mode not currently supported on RISCVBusiness.")
         exit(1)
     
-    run_selected_tests(args.isa)
+    run_selected_tests(args.isa, args.environment, args.machine)
 
 if __name__ == "__main__":
     main()
