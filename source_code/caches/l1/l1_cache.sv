@@ -88,7 +88,7 @@ module l1_cache #(
     
     // counter signals
     flush_idx_t flush_idx, next_flush_idx;
-    logic   [N_BLOCK_BITS:0] word_num, next_word_num;
+    //logic   [N_BLOCK_BITS:0] word_num, next_word_num;
     logic   enable_word_count, clear_word_count, 
             clear_flush_count, enable_flush_count, enable_flush_count_nowb;
     logic   word_count_done;
@@ -159,14 +159,14 @@ module l1_cache #(
     
     // counters
     always_comb begin
-        next_word_num = word_num;
+        //next_word_num = word_num;
         next_flush_idx = flush_idx;
-        word_count_done = ~mem_gen_bus_if.busy && (BLOCK_SIZE - 1) == word_num;
+        //word_count_done = ~mem_gen_bus_if.busy && (BLOCK_SIZE - 1) == word_num;
         // word counter logic
-        if (clear_word_count)
-            next_word_num = 0;
-        else if (enable_word_count)
-            next_word_num = word_num + 1;
+        // if (clear_word_count)
+        //     next_word_num = 0;
+        // else if (enable_word_count)
+        //     next_word_num = word_num + 1;
 
         // flush counter logic
         if (clear_flush_count)
@@ -208,6 +208,8 @@ module l1_cache #(
 
     // cache output logic
     // Outputs: counter control signals, cache, signals to memory, signals to processor
+    genvar word_num;
+    generate
     always_comb begin
         sramWEN                 = 0;
         sramWrite               = 0;
@@ -317,15 +319,18 @@ module l1_cache #(
             end 
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-                mem_gen_bus_if.ren = 1;
-                mem_gen_bus_if.addr = read_addr;
                 sramMask.frames[ridx].valid = 0;
                 sramWrite.frames[ridx].valid = 0;
+                enqueue = 1'b1;
+                for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
+                    // mem_gen_bus_if.ren = 1;
+                    qdata_addr[word_sel] = read_addr + word_sel*4;
+                end
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
                     //sramWEN                                = 1'b1;
                     //enable_word_count                      = 1'b1;
-                    next_read_addr 						   = read_addr + 4;
+                    //next_read_addr 						   = read_addr + 4;
                     // sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
                     // sramMask.frames[ridx].data[word_num]   = 1'b0;
                 //end
@@ -341,13 +346,20 @@ module l1_cache #(
             end
             WB: begin
                 // set stim for eviction
-                mem_gen_bus_if.wen = 1'b1;
-                mem_gen_bus_if.addr = read_addr; 
+                e_qwrite = 1'b1;
+                enqueue = 1'b1;
+                for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
+                    qdata_addr[word_sel] = read_addr + word_sel*4;
+                end
+                // mem_gen_bus_if.addr = read_addr; 
+                for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
+                    qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
+                end
                 mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
                 // increment eviction word counter
                 //if(~mem_gen_bus_if.busy) begin
                     //enable_word_count = 1;
-                    next_read_addr    = read_addr + 4;
+                    // next_read_addr    = read_addr + 4;
                 //end
                 // invalidate when eviction is complete
                 //if(word_count_done) begin
@@ -402,6 +414,7 @@ module l1_cache #(
             end
         endcase
     end
+    endgenerate
 
     // next state logic
     always_comb begin
