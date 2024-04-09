@@ -233,6 +233,11 @@ module stage3_execute_stage (
     assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
 
+    // CSR Read-only determination
+    // No write occurs if CSRRS/C(I) with a statically-zero source operand
+    logic csr_read_only;
+    assign csr_read_only = (cu_if.csr_clr || cu_if.csr_set)
+                            && ((cu_if.csr_imm && cu_if.zimm == 5'b0) || rf_if.rs1 == 5'b0);
 
     // TODO: NEW
     always_ff @(posedge CLK, negedge nRST) begin
@@ -262,7 +267,7 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.csr_clr        <= cu_if.csr_clr;
                     ex_mem_if.ex_mem_reg.csr_set        <= cu_if.csr_set;
                     ex_mem_if.ex_mem_reg.csr_imm        <= cu_if.csr_imm;
-                    ex_mem_if.ex_mem_reg.csr_read_only  <= (rf_if.rs1 == '0) || (cu_if.zimm == '0);
+                    ex_mem_if.ex_mem_reg.csr_read_only  <= csr_read_only;
                     ex_mem_if.ex_mem_reg.breakpoint     <= cu_if.breakpoint;
                     ex_mem_if.ex_mem_reg.ecall_insn     <= cu_if.ecall_insn;
                     ex_mem_if.ex_mem_reg.ret_insn       <= cu_if.ret_insn;
