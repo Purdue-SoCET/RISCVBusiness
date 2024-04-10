@@ -133,7 +133,7 @@ void __attribute__((noinline)) vformat(const char *fmt, char *buf, va_list args)
 }
 
 void __attribute__((noinline)) vprint(const char *fmt, va_list args) {
-    char print_buf[128];
+    char print_buf[512];
     vformat(fmt, print_buf, args);
     print_string(print_buf);
 }
