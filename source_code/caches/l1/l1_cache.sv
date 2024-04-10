@@ -357,7 +357,7 @@ module l1_cache #(
                 eq_datain[BLOCK_SIZE*2] = 1'b1;
 
                 enqueue = 1'b1;
-                for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
+                for (integer word_sel = 0; word_sel < BLOCK_SIZE; word_sel = word_sel + 1) begin
                     qdata_addr[word_sel] = read_addr + word_sel*4;
                     eq_datain[word_sel] = read_addr + word_sel*4;
                 end
@@ -491,9 +491,9 @@ module l1_cache #(
     // TODO INCLUDE THREAD COUNT PARAMETER
     logic [ $clog2(3) - 1: 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1  : 0] [WORD_SIZE - 1 : 0] egress_queue;
     logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] eq_datain, eq_dataout;
-    queue_t e_qstate, ne_qstate; // egress queue state
+    //queue_t e_qstate, ne_qstate; // egress queue state
     logic [3:0] eq_wptr;//, ne_wptr;
-    logic [3:0] eq_rptr;, ne_rptr;
+    logic [3:0] eq_rptr;// ne_rptr;
     // logic [3:0] e_qsize;
     logic enqueue;
     logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr; // addresses inputted into queue
@@ -505,21 +505,21 @@ module l1_cache #(
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
-            eq_word_cnt <= '0;
+            eq_wordcnt <= '0;
         end
         else begin
-            eq_word_cnt <= n_eq_word_cnt;
+            eq_wordcnt <= n_eq_wordcnt;
         end
     end
 
     always_comb begin
-        n_eq_word_cnt = eq_word_cnt;
-        eq_wordcntdone = eq_word_cnt == BLOCK_SIZE - 1 && ~mem_gen_bus_if.busy;
+        n_eq_wordcnt = eq_wordcnt;
+        eq_wordcntdone = eq_wordcnt == BLOCK_SIZE - 1 && ~mem_gen_bus_if.busy;
         if (eq_wordcntdone) begin
             n_eq_wordcnt = 0;
         end
         else if (~mem_gen_bus_if.busy) begin
-            n_eq_word_cnt = eq_word_cnt + 1;
+            n_eq_wordcnt = eq_wordcnt + 1;
         end
     end
 
@@ -529,6 +529,7 @@ module l1_cache #(
             egress_queue <= '0;
             eq_wptr <= '0;
             eq_rptr <= '0;
+            eq_dataout <= '0;
         end
         else begin
             if (enqueue) begin
@@ -544,7 +545,7 @@ module l1_cache #(
                     eq_dataout <= egress_queue[eq_rptr[2:0]];
                 end
                 if (eq_wordcntdone) begin
-                    eq_rptr = eq_rptr + 1;
+                    eq_rptr <= eq_rptr + 1;
                     // mem_gen_bus_if.addr = egress_queue[eq_rptr[2:0]][eq_wordcnt];
                     // mem_gen_bus_if.wdata = egress_queue[eq_rptr[2:0]][eq_wordcnt + BLOCK_SIZE];
                     // mem_gen_bus_if.wen = egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
@@ -554,15 +555,16 @@ module l1_cache #(
                 end
             end
         end
-
-        always_comb begin
-            mem_gen_bus_if.addr = eq_dataout[eq_wordcnt];
-            mem_gen_bus_if.wdata = eq_dataout[eq_wordcnt + BLOCK_SIZE];
-            mem_gen_bus_if.wen = eq_dataout[BLOCK_SIZE * 2];
-            mem_gen_bus_if.ren = ~eq_empty ? ~eq_dataout[BLOCK_SIZE * 2] : 0;
-        end
-
     end
+
+    always_comb begin
+        mem_gen_bus_if.addr = eq_dataout[eq_wordcnt];
+        mem_gen_bus_if.wdata = eq_dataout[eq_wordcnt + BLOCK_SIZE];
+        mem_gen_bus_if.wen = eq_dataout[BLOCK_SIZE * 2];
+        mem_gen_bus_if.ren = ~eq_empty ? ~eq_dataout[BLOCK_SIZE * 2] : 0;
+    end
+
+
 
     // ingress queue
     logic iq_wen, iq_ren;
