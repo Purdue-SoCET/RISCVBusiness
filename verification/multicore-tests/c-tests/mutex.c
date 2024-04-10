@@ -15,15 +15,15 @@ void atomic_unset(void *ptr) {
     __asm__ volatile("1:\n"
                      "lr.w t0, (%[addr])\n"
                      "sc.w t0, zero, (%[addr])\n"
-                     "bnez t2, 1b\n"
+                     "bnez t0, 1b\n"
                      :
                      : [addr] "r"(ptr));
 }
 
-void mutex_lock(mutex *m) {
+void mutex_lock(volatile mutex *m) {
     atomic_set(&m->lock);
 }
 
-void mutex_unlock(mutex *m) {
+void mutex_unlock(volatile mutex *m) {
     atomic_unset(&m->lock);
 }

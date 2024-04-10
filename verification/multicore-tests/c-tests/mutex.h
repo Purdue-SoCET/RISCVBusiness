@@ -5,7 +5,7 @@ typedef struct {
     _Atomic int lock;
 } mutex;
 
-void mutex_lock(mutex *m);
-void mutex_unlock(mutex *m);
+void mutex_lock(volatile mutex *m);
+void mutex_unlock(volatile mutex *m);
 
 #endif
