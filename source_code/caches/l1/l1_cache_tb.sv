@@ -23,11 +23,7 @@
 */
 
 // setup
-localparam CLK_PERIOD = 10; 
-localparam TB_SRAM_WR_SIZE = 128;
-localparam TB_SRAM_HEIGHT = 128;
-localparam TB_IS_BIDIRECTIONAL = 0;
-typedef logic [TB_SRAM_WR_SIZE-1:0] sram2_entry_size_t; // is this legal
+localparam CLK_PERIOD = 10;
 `include "generic_bus_if.vh"
 
 `timescale 1ns/10ps
@@ -45,8 +41,7 @@ module l1_cache_tb();
 
 	// DUT instance.
 
-    l1_cache #
-        DUT (CLK, nRST, .mem_gen_bus_if(mem_gen_bus_if), .proc_gen_bus_if(proc_gen_bus_if))
+    l1_cache DUT (.CLK(CLK), .nRST(nRST), .mem_gen_bus_if(mem_gen_bus_if), .proc_gen_bus_if(proc_gen_bus_if));
 
 	task reset_dut; 
 		@(negedge CLK) nRST = 1'b0; 
@@ -55,7 +50,33 @@ module l1_cache_tb();
 	endtask
 
 	initial begin
+        proc_gen_bus_if.addr = 32'h00000010;
+        proc_gen_bus_if.ren = 1'b1;
+        proc_gen_bus_if.wen = 1'b0;
+		$timeformat(-9, 0, " ns", 20);
+		reset_dut();
 
+
+        for (int i = 0; i < 18; i++) begin
+            #(CLK_PERIOD);
+        end
+        
+        proc_gen_bus_if.addr = 32'h00000004;
+        proc_gen_bus_if.ren = 1'b1;
+        proc_gen_bus_if.wen = 1'b0;
+
+        for (int i = 0; i < 2; i++) begin
+            #(CLK_PERIOD);
+        end
+
+        proc_gen_bus_if.addr = 32'h00000026;
+        proc_gen_bus_if.ren = 1'b1;
+        proc_gen_bus_if.wen = 1'b0;
+		
+		#(CLK_PERIOD * 4);
+
+		mem_gen_bus_if.busy = 1'b0;
+		#(CLK_PERIOD * 5);
 		$finish; 
 	end
 endmodule
