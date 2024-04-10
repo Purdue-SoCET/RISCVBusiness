@@ -31,15 +31,8 @@
 module stage3_hart_selector (
     input logic CLK,
     nRST,
-    stage3_fetch_execute_if.fetch fetch_ex_if,
-    stage3_mem_pipe_if.fetch mem_fetch_if,
     stage3_hazard_unit_if.fetch hazard_if,
-    stage3_hart_selector_if.hart_selector_unit hart_selector_if,
-    predictor_pipeline_if.access predict_if,
-    generic_bus_if.cpu igen_bus_if,
-    sparce_pipeline_if.pipe_fetch sparce_if,
-    rv32c_if.fetch rv32cif,
-    prv_pipeline_if.fetch prv_pipe_if
+    stage3_hart_selector_if.hart_selector_unit hart_selector_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
@@ -48,6 +41,8 @@ module stage3_hart_selector (
 
     word_t next_count;
     word_t count;
+    word_t [NUM_HARTS-1:0] stalled_threads;
+    word_t active_thread;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
@@ -57,15 +52,19 @@ module stage3_hart_selector (
         end
     end
 
+    // always_comb begin
+    //     if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
+    //         if (count == 10) next_count = 0;
+    //         else next_count = count + 1;
+    //     end else next_count = count;
+    // end
+
     always_comb begin
       if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
         if (count == (NUM_HARTS - 1)) next_count = 0;
         else next_count = count + 1;
       end else next_count = count;
     end
-
-    assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
-
     
-
+    assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
 endmodule

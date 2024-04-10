@@ -186,6 +186,7 @@ module stage3_mem_stage(
 
     assign halt = ex_mem_if.ex_mem_reg.halt;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
+    assign fw_if.thread_m = ex_mem_if.ex_mem_reg.hart_id;
     assign fw_if.reg_write = ex_mem_if.reg_write;
     assign fw_if.load = (ex_mem_if.ex_mem_reg.dren || ex_mem_if.ex_mem_reg.dwen);
 
