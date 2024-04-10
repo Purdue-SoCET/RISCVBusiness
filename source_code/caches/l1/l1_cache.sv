@@ -238,7 +238,7 @@ module l1_cache #(
         next_read_addr          = read_addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
-        next_conflicts               = conflicts;
+        next_conflicts          = conflicts;
         next_misses             = misses;
         e_qwrite = '0;
         
