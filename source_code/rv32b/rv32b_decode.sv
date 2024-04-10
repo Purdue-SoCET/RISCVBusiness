@@ -13,12 +13,12 @@ module rv32b_decode(
     localparam RV32B_MINOR_SEXT_COUNT_ROTATE  = 7'b0110000; // sign extend, bit counting, and rotate have same minor opcode
     localparam RV32B_MINOR_MINMAX    = 7'b0000101;
     localparam RV32B_MINOR_ZEXT      = 7'b0000100;
+    localparam RV32B_MINOR_BCLR_BEXT = 7'b0100100;
+    localparam RV32B_MINOR_BINV      = 7'b0110100;
+    localparam RV32B_MINOR_BSET      = 7'b0010100;
 
     rv32b_insn_t insn_split;
     rv32b_op_t operation;
-    logic shift_add, log_with_negate, bit_counting, min_max, 
-        sign_extend, zero_extend, rotate, orc, rev8;
-
 
     assign insn_split = rv32b_insn_t'(insn);
 
@@ -28,9 +28,9 @@ module rv32b_decode(
         // shift-add
         if(insn_split.opcode_major == REGREG && insn_split.opcode_minor == RV32B_MINOR_SHIFTADD) begin
             casez(insn_split.funct)
-                2'b01: operation = SH1ADD;
-                2'b10: operation = SH2ADD;
-                2'b11: operation = SH3ADD;
+                3'b010: operation = SH1ADD;
+                3'b100: operation = SH2ADD;
+                3'b110: operation = SH3ADD;
                 default: claim = 1'b0; // Illegal encoding for RV32B
             endcase
         // logical-with-negate
@@ -77,14 +77,30 @@ module rv32b_decode(
                 3'b101: operation = MINU;
                 default: claim = 1'b0;
             endcase
-        end else if(insn_split.opcode_major == IMMED) begin
-            if(insn[31:20] == 12'b001_010_000_111 && insn[14:12] == 3'b101) begin
-                operation = ORC;
-            end else if(insn[31:20] == 12'b011_010_011_000 && insn[14:12] == 3'b101) begin
+        end else if((insn_split.opcode_major == REGREG || insn_split.opcode_major == IMMED) && insn_split.opcode_minor == RV32B_MINOR_BCLR_BEXT) begin 
+            casez(insn_split.funct)
+                3'b001: operation = BCLR;
+                3'b101: operation = BEXT;
+                default: claim = 1'b0;
+            endcase
+        end else if((insn_split.opcode_major == REGREG || insn_split.opcode_major == IMMED) && insn_split.opcode_minor == RV32B_MINOR_BINV) begin 
+            if(insn_split.funct == 3'b001) begin
+                operation = BINV;
+            end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b11000 && insn_split.funct == 3'b101) begin
                 operation = REV8;
             end else begin
                 claim = 1'b0;
             end
+        end else if((insn_split.opcode_major == REGREG || insn_split.opcode_major == IMMED) && insn_split.opcode_minor == RV32B_MINOR_BSET) begin 
+            if(insn_split.funct == 3'b001) begin
+                operation = BSET;
+            end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b00111 && insn_split.funct == 3'b101) begin
+                operation = ORC;
+            end else begin
+                claim = 1'b0;
+            end
+        end else begin
+            claim = 1'b0;
         end
     end
 
