@@ -1,6 +1,9 @@
+#include "mutex.h"
 #include "utility.h"
 #include <stdarg.h>
 #include <stdint.h>
+
+mutex print_lock;
 
 void print_string(char *string) {
     volatile char *magic = (volatile char *)MAGIC_ADDR;
@@ -136,10 +139,12 @@ void __attribute__((noinline)) vprint(const char *fmt, va_list args) {
 }
 
 void __attribute__((noinline)) print(const char *fmt, ...) {
+    mutex_lock(&print_lock);
     va_list args;
     va_start(args, fmt);
     vprint(fmt, args);
     va_end(args);
+    mutex_unlock(&print_lock);
 }
 
 void __attribute__((noinline)) format(const char *fmt, char *buf, ...) {
