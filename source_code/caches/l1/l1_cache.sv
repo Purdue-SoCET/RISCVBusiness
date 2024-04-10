@@ -88,7 +88,7 @@ module l1_cache #(
     
     // counter signals
     flush_idx_t flush_idx, next_flush_idx;
-    //logic   [N_BLOCK_BITS:0] word_num, next_word_num;
+    logic   [N_BLOCK_BITS:0] word_num, next_word_num;
     logic   enable_word_count, clear_word_count, 
             clear_flush_count, enable_flush_count, enable_flush_count_nowb;
     logic   word_count_done;
@@ -117,6 +117,11 @@ module l1_cache #(
 
     // error handling
     assign proc_gen_bus_if.error = mem_gen_bus_if.error;
+
+
+    // ingress queue signals
+    logic iq_empty, iq_full;
+    logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] iq_datain, iq_dataout, n_iq_datain;
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx_bits;
@@ -208,7 +213,7 @@ module l1_cache #(
 
     // cache output logic
     // Outputs: counter control signals, cache, signals to memory, signals to processor
-    genvar word_num;
+    genvar gen_word_num;
     generate
     always_comb begin
         sramWEN                 = 0;
@@ -234,6 +239,7 @@ module l1_cache #(
         next_last_used          = last_used;
         next_conflicts               = conflicts;
         next_misses             = misses;
+        e_qwrite = '0;
         
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx_bits] == (ASSOC - 1)))
@@ -322,9 +328,10 @@ module l1_cache #(
                 sramMask.frames[ridx].valid = 0;
                 sramWrite.frames[ridx].valid = 0;
                 enqueue = 1'b1;
-                for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
+                for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
                     // mem_gen_bus_if.ren = 1;
-                    qdata_addr[word_sel] = read_addr + word_sel*4;
+                    qdata_addr[queue_word] = read_addr + queue_word*4;
+                    eq_datain[queue_word] = read_addr + queue_word*4;
                 end
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
@@ -347,13 +354,17 @@ module l1_cache #(
             WB: begin
                 // set stim for eviction
                 e_qwrite = 1'b1;
+                eq_datain[BLOCK_SIZE*2] = 1'b1;
+
                 enqueue = 1'b1;
                 for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
                     qdata_addr[word_sel] = read_addr + word_sel*4;
+                    eq_datain[word_sel] = read_addr + word_sel*4;
                 end
                 // mem_gen_bus_if.addr = read_addr; 
-                for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
+                for (integer write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
                     qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
+                    eq_datain[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
                 end
                 //mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
                 // increment eviction word counter
@@ -406,13 +417,15 @@ module l1_cache #(
                     sramWEN = 1;
                     //clear_word_count 					    = 1'b1;
                     sramWrite.frames[ridx].valid            = 1'b1;
-                    sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
+                    //sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
+                    // read next data from queue
+                    iq_ren =  1'b1;
                     sramMask.frames[ridx].valid             = 1'b0;
                     sramMask.frames[ridx].tag               = 1'b0;
                     //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
                     sramMask.frames[ridx].data[word_num]   = 1'b0;
-                    for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
-                        sramWrite.frames[ridx].data[write_data_sel - BLOCK_SIZE] = QUEUE DATA GOES HERE;
+                    for (integer update_write_data_sel = BLOCK_SIZE; update_write_data_sel < BLOCK_SIZE * 2; update_write_data_sel = update_write_data_sel + 1) begin
+                        sramWrite.frames[ridx].data[update_write_data_sel - BLOCK_SIZE] = iq_dataout[update_write_data_sel];
                     end
             end
         endcase
@@ -428,7 +441,7 @@ module l1_cache #(
                     next_state = HIT;
 	        end
 	        HIT: begin
-                if (new_data)
+                if (!iq_empty)
                     next_state = UPDATE;                    
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) 
                     next_state = WB;
@@ -475,103 +488,142 @@ module l1_cache #(
     // TODO: parametrize queue instantiation
 
     // egress queue
-    typedef enum logic[1:0] {IDLE, ENQUEUE, DISABLE, DEQUEUE} queue_t;
-    logic [ $clog2(THREAD_CNT) - 1: 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1  : 0] [WORD_SIZE - 1 : 0] egress_queue, n_egress_queue;
+    // TODO INCLUDE THREAD COUNT PARAMETER
+    logic [ $clog2(3) - 1: 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1  : 0] [WORD_SIZE - 1 : 0] egress_queue;
+    logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] eq_datain, eq_dataout;
     queue_t e_qstate, ne_qstate; // egress queue state
-    logic [3:0] e_wptr, ne_wptr;
-    logic [3:0] e_rptr, ne_rptr;
-    logic [3:0] e_qsize;
+    logic [3:0] eq_wptr;//, ne_wptr;
+    logic [3:0] eq_rptr;, ne_rptr;
+    // logic [3:0] e_qsize;
     logic enqueue;
     logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr; // addresses inputted into queue
     logic e_qwrite; // write enable for item
     logic [$clog2(BLOCK_SIZE) - 1 : 0] [WORD_SIZE - 1 : 0] qwrite_data; // data to write if writing
-    logic [$clog2(BLOCK_SIZE) - 1 : 0] word_cnt, n_word_cnt; 
-    always_ff(posedge CLK, negedge nRST) begin
+    logic eq_empty;
+    logic [$clog2(BLOCK_SIZE) - 1 : 0] eq_wordcnt, n_eq_wordcnt;
+    logic eq_wordcntdone;
+
+    always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
-            e_qstate <= '0;
-            egress_queue <= '0;
-            e_wptr <= '0;
-            e_rptr <= '0;
-            word_cnt = '0;
+            eq_word_cnt <= '0;
         end
         else begin
-            e_qstate <= ne_qstate;
-            egress_queue <= n_egress_queue;
-            e_wptr <= ne_ewptr;
-            e_rptr <= ne_rptr;
-            word_cnt <= n_word_cnt;
+            eq_word_cnt <= n_eq_word_cnt;
         end
     end
-    assign e_qsize = e_wptr - e_rptr;
 
-    genvar word_sel, write_data_sel;
-    generate
     always_comb begin
-        ne_qstate = e_qstate;
-        ne_wptr = e_wptr;
-        ne_rptr = e_rptr;
-
-        case (e_qstate)
-            IDLE: begin
-                // TODO: Bring in THREAD_CNT PARAMETER INTO QUEUE
-                if (e_wptr == e_rptr) begin
-                    n_eqstate = DISABLE;
-                end
-                else if (enqueue) begin
-                    ne_qstate = ENQUEUE;
-                    ne_wptr = e_wptr + 1;
-                    for (word_sel = 0; word_sel < BLOCK_SIZE; word_sel++) begin
-                        n_egress_queue[e_wptr][word_sel] = qdata_addr[word_sel];
-                    end
-                    for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
-                        n_egress_queue[e_wptr][write_data_sel] = qwrite_data[write_data_sel];
-                    end
-                    n_egress_queue[e_wptr][BLOCK_SIZE * 2] = e_qwrite;
-                end
-                // ramreceived is a placeholder signal that determines we need to read from queue 
-                else if (ramreceived & ramready) begin
-                    ne_qstate = DEQUEUE;
-                    ne_rptr = e_rptr + 1;
-                    output_addr = egress_queue[e_rptr];
-                end
-                else if (ramready) begin
-                    ne_qstate = IDLE;
-                end
-            end
-            ENQUEUE: begin
- 
-                n_eqstate = IDLE;
-            end
-
-            DEQUEUE: begin
-                if (word_cnt < BLOCK_SIZE) begin
-                    ne_qstate = DEQUEUE;
-                    if (!(mem_gen_bus_if.busy & mem_gen_bus_if.error)) begin
-                        // dequeue the next value
-                        n_word_cnt = word_cnt + 1;
-                        mem_gen_bus_if.addr = egress_queue[e_rptr][word_cnt];
-                        mem_gen_bus_if.data = egress_queue[e_rptr][word_cnt + BLOCK_SIZE];
-                        mem_gen_bus_if.ren = ~egress_queue[e_rptr][BLOCK_SIZE * 2];
-                        mem_gen_bus_if.wen = egress_queue[e_rptr][BLOCK_SIZE * 2];
-                    end
-                end
-                else begin
-                    n_word_cnt = 0;
-                    n_eqstate = IDLE;
-                    ne_rptr = (e_rptr + 1 == THREAD_CNT) ? 0 : e_rptr + 1;
-                end
-            end
-
-            DISABLE: begin
-                if (e_wptr < e_rptr) begin
-                    n_eqstate = IDLE;
-                end
-            end
-        endcase
+        n_eq_word_cnt = eq_word_cnt;
+        eq_wordcntdone = eq_word_cnt == BLOCK_SIZE - 1 && ~mem_gen_bus_if.busy;
+        if (eq_wordcntdone) begin
+            n_eq_wordcnt = 0;
+        end
+        else if (~mem_gen_bus_if.busy) begin
+            n_eq_word_cnt = eq_word_cnt + 1;
+        end
     end
-    endgenerate
-    // ingress queue
-    queue_t iqstate, niqstate; // ingress queue state
 
+    assign eq_empty = eq_wptr == eq_rptr;
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (~nRST) begin
+            egress_queue <= '0;
+            eq_wptr <= '0;
+            eq_rptr <= '0;
+        end
+        else begin
+            if (enqueue) begin
+                egress_queue[eq_wptr[2:0]] <= eq_datain;
+                eq_wptr <= eq_wptr + 1;
+            end
+            if (~eq_empty) begin
+                if (~mem_gen_bus_if.busy) begin
+                    // mem_gen_bus_if.addr = egress_queue[eq_rptr[2:0]][eq_wordcnt];
+                    // mem_gen_bus_if.wdata = egress_queue[eq_rptr[2:0]][eq_wordcnt + BLOCK_SIZE];
+                    // mem_gen_bus_if.wen = egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
+                    // mem_gen_bus_if.ren = ~egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
+                    eq_dataout <= egress_queue[eq_rptr[2:0]];
+                end
+                if (eq_wordcntdone) begin
+                    eq_rptr = eq_rptr + 1;
+                    // mem_gen_bus_if.addr = egress_queue[eq_rptr[2:0]][eq_wordcnt];
+                    // mem_gen_bus_if.wdata = egress_queue[eq_rptr[2:0]][eq_wordcnt + BLOCK_SIZE];
+                    // mem_gen_bus_if.wen = egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
+                    // mem_gen_bus_if.ren = ~egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
+                    // iq_dataout <= n_iq_dataout;
+                    eq_dataout <= egress_queue[eq_rptr[2:0]];
+                end
+            end
+        end
+
+        always_comb begin
+            mem_gen_bus_if.addr = eq_dataout[eq_wordcnt];
+            mem_gen_bus_if.wdata = eq_dataout[eq_wordcnt + BLOCK_SIZE];
+            mem_gen_bus_if.wen = eq_dataout[BLOCK_SIZE * 2];
+            mem_gen_bus_if.ren = ~eq_empty ? ~eq_dataout[BLOCK_SIZE * 2] : 0;
+        end
+
+    end
+
+    // ingress queue
+    logic iq_wen, iq_ren;
+    // TODO: $clog2(THREAD_CNT) instead of 3
+    logic [$clog2(3) : 0] iq_wptr, iq_rptr;
+    logic [$clog2(3) - 1 : 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] ingress_queue;
+
+    logic iq_wordcnt, iq_wordcntdone, n_iq_wordcnt;
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (~nRST) begin
+            iq_wordcnt <= '0;
+        end
+        else begin
+            iq_wordcnt <= n_iq_wordcnt;
+        end
+    end
+
+    always_comb begin
+        n_iq_wordcnt = iq_wordcnt;
+        n_iq_datain = iq_datain;
+        iq_wordcntdone = ~mem_gen_bus_if.busy && (BLOCK_SIZE - 1) == iq_wordcnt;
+        if (iq_wordcntdone) begin
+            n_iq_wordcnt = '0;
+            n_iq_datain[iq_wordcnt] = '0; // TODO: Get addresses into queue
+            n_iq_datain[iq_wordcnt + BLOCK_SIZE] = mem_gen_bus_if.rdata;
+        end
+        else if (~mem_gen_bus_if.busy) begin
+            n_iq_wordcnt = iq_wordcnt + 1;
+            n_iq_datain[iq_wordcnt] = '0;
+            n_iq_datain[iq_wordcnt + BLOCK_SIZE] = mem_gen_bus_if.rdata;
+        end
+    end
+
+    assign iq_wen = iq_wordcntdone; // TODO: Possibly enqueues data too early?
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (!nRST) begin
+            iq_wptr <= '0;
+            iq_rptr <= '0;
+            ingress_queue <= '0;
+            iq_dataout <= '0;
+        end
+        else begin
+            if (~mem_gen_bus_if.busy) begin
+                // TODO: THREAD_CNT instead of 3
+                ingress_queue[iq_wptr[3 - 1 : 0]] <= iq_datain;
+                if (iq_wordcntdone) begin
+                    iq_wptr <= iq_wptr + 1;
+                end
+            end
+            if (iq_ren) begin
+                // TODO: THREAD_CNT instead of 3
+                iq_dataout <= ingress_queue[iq_rptr[$clog2(3) - 1 : 0]];
+                iq_rptr <= iq_rptr + 1;
+            end
+        end
+    end
+
+    assign iq_empty = iq_wptr == iq_rptr;
+    // TODO: possible full condition?
+
+    // BIG TODO: implement an address queue so that the same addresses can come back
 
 endmodule
