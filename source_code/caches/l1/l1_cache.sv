@@ -631,7 +631,7 @@ module l1_cache #(
     // BIG TODO: implement an address queue so that the same addresses can come back
     // Address Queue
     // TODO: replace 3 with address size
-    logic [$clog(3) - 1 : 0] [WORD_SIZE - 1 : 0] addr_queue;
+    logic [$clog2(3) - 1 : 0] [WORD_SIZE - 1 : 0] addr_queue;
     // TODO: parameterize
     logic [2 : 0] aq_wptr, aq_rptr;
     logic [WORD_SIZE - 1 : 0] aq_dataout, aq_datain;
