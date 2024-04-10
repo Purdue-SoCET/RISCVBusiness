@@ -26,8 +26,8 @@
 *	            - ASSOC | either 1 or 2
 */
 
-`include "generic_bus_if.vh"
-`include "cpu_tracker_if.vh"
+`include "/home/ascifab/a/socet65/fgmt/RISCVBusiness/generic_bus_if.vh"
+`include "/home/ascifab/a/socet65/fgmt/RISCVBusiness/cpu_tracker_if.vh"
 
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
