@@ -4,14 +4,16 @@
 
 int global = 0;
 
-void atomic_add(void *ptr, int val) {
+uint32_t atomic_add(void *ptr, int val) {
+    uint32_t d;
     __asm__ volatile("1:\n"
-                     "lr.w t1, (%[addr])\n"
+                     "lr.w %[d], (%[addr])\n"
                      "add t0, t1, %[src]\n"
                      "sc.w t2, t0, (%[addr])\n"
                      "bnez t2, 1b\n"
-                     :
+                     : [d] "=r"(d)
                      : [addr] "r"(ptr), [src] "r"(val));
+    return d;
 }
 
 void hart0_main() {
