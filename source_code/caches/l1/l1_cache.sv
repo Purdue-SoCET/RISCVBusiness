@@ -404,13 +404,16 @@ module l1_cache #(
             end
             UPDATE: begin
                     sramWEN = 1;
-                    clear_word_count 					    = 1'b1;
+                    //clear_word_count 					    = 1'b1;
                     sramWrite.frames[ridx].valid            = 1'b1;
-                    sramWrite.frames[ridx].tag 	            = decoded_req_addr.tag_bits;
+                    sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
                     sramMask.frames[ridx].valid             = 1'b0;
                     sramMask.frames[ridx].tag               = 1'b0;
-                    sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
+                    //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
                     sramMask.frames[ridx].data[word_num]   = 1'b0;
+                    for (write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
+                        sramWrite.frames[ridx].data[write_data_sel - BLOCK_SIZE] = QUEUE DATA GOES HERE;
+                    end
             end
         endcase
     end
