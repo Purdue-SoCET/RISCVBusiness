@@ -278,7 +278,7 @@ module control_unit (
     );
     `else
     assign cu_if.rv32b_control = {1'b0, rv32b_op_t'(0)};
-    assign rv32m_claim = 1'b0;
+    assign rv32b_claim = 1'b0;
     `endif
 
 endmodule
