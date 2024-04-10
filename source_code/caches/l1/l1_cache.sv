@@ -101,7 +101,7 @@ module l1_cache #(
     // address
     word_t read_addr, next_read_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
-    decoded_cache_addr_t decoded_addr;
+    decoded_cache_addr_t decoded_addr, aq_decoded;
     // Cache Hit
     logic hit, pass_through;
     word_t [BLOCK_SIZE-1:0] hit_data;
@@ -192,6 +192,7 @@ module l1_cache #(
 
     // decoded address conversion
     assign decoded_addr = decoded_cache_addr_t'(proc_gen_bus_if.addr);
+    assign aq_decoded = decoded_cache_addr_t'(aq_dataout);
 
     // hit logic with pass through
     always_comb begin
@@ -418,6 +419,7 @@ module l1_cache #(
                     //clear_word_count 					    = 1'b1;
                     sramWrite.frames[ridx].valid            = 1'b1;
                     //sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
+                    sramWrite.frames[ridx].tag = aq_decoded.tag_bits;
                     // read next data from queue
                     iq_ren =  1'b1;
                     sramMask.frames[ridx].valid             = 1'b0;
@@ -627,5 +629,32 @@ module l1_cache #(
     // TODO: possible full condition?
 
     // BIG TODO: implement an address queue so that the same addresses can come back
+    // Address Queue
+    // TODO: replace 3 with address size
+    logic [$clog(3) - 1 : 0] [WORD_SIZE - 1 : 0] addr_queue;
+    // TODO: parameterize
+    logic [2 : 0] aq_wptr, aq_rptr;
+    logic [WORD_SIZE - 1 : 0] aq_dataout, aq_datain;
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (~nRST) begin
+            addr_queue <= '0;
+            aq_dataout <= '0;
+            aq_wptr <= '0;
+            aq_rptr <= '0;
+        end
+        else begin
+            if (enqueue) begin
+                addr_queue[aq_wptr] <= eq_datain[0];
+                aq_wptr <= aq_wptr + 1;
+            end
+            if (iq_ren) begin
+                aq_dataout <= addr_queue[aq_rptr];
+                aq_rptr <= aq_rptr + 1;
+            end
+        end
+    end
+
+
 
 endmodule
