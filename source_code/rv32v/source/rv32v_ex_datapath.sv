@@ -63,7 +63,13 @@ assign is_vmskset_op = vctrls.vexec.valuop == VALU_SEQ || // MOVE THIS TO DECODE
 assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
 
 // store data  
-assign vmem_in.vs1 = xbardat_src1;
+always_comb begin
+    vmem_in.vs1 = xbardat_src1; 
+
+    if(vctrls.vseg_op) begin
+        vmem_in.vs1 = {4{xbardat_src1[vctrls.vlaneactive[1:0]]}}; 
+    end 
+end
 
 // vres muxing when using cross-lane vfu
 assign vres_0 = (vctrls.vexec.vfu == VFU_RED) ? vred_res : vfu_res[0];
@@ -106,7 +112,7 @@ always_comb begin
 
 end
 
-// lane_mask muxsing due to vmskset instructions
+// lane_mask muxing due to vmskset instructions
 always_comb begin
     vmem_in.vlane_mask = msku_lane_mask; 
     if(is_vmskset_op)
@@ -118,6 +124,8 @@ always_comb begin
     end else if (vctrls.vexec.vfu == VFU_PRM) begin
         vmem_in.vlane_mask = vperm_out.vperm_mask;
     end
+
+
 end 
 // assign vmem_in.vlane_mask = is_vmskset_op ?  : msku_lane_mask; 
 // mux data to write to scratch register
@@ -165,7 +173,7 @@ rv32v_vector_bank VBANK3 (
 rv32v_read_xbar VSRC1_XBAR(
     .bank_dat(bankdat_src1), 
     .veew(vctrls.veew_src1),
-    .bank_offset(vctrls.vuop_num[1:0]),
+    .bank_offset(vctrls.vbank_offset),
     .sign_ext(vctrls.vsignext),
     .out_dat({xbardat_src1[3], xbardat_src1[2], xbardat_src1[1], xbardat_src1[0]})
 ); 
@@ -173,7 +181,7 @@ rv32v_read_xbar VSRC1_XBAR(
 rv32v_read_xbar VSRC2_XBAR(
     .bank_dat(bankdat_src2), 
     .veew(vctrls.veew_src2),
-    .bank_offset(vctrls.vuop_num[1:0]),
+    .bank_offset(vctrls.vbank_offset),
     .sign_ext(vctrls.vsignext),
     .out_dat(xbardat_src2)
 );
@@ -181,7 +189,7 @@ rv32v_read_xbar VSRC2_XBAR(
 rv32v_read_xbar VSRC3_XBAR(
     .bank_dat(bankdat_src3),
     .veew(vctrls.veew_src2),
-    .bank_offset(vctrls.vuop_num[1:0]),
+    .bank_offset(vctrls.vbank_offset),
     .sign_ext(vctrls.vsignext),
     .out_dat(xbardat_src3)
 );
@@ -284,6 +292,13 @@ always_comb begin
     if(vctrls.vxin2_use_rs2) begin
         vopA = {4{rdat2}}; 
     end
+
+
+    // override in case of segment load/store instructions indexed instructions . 
+    if(vctrls.vseg_op) begin
+        vopA = {4{xbardat_src2[vctrls.vlaneactive[1:0]]}}; 
+        vopA[0] = vopA[0] + vctrls.nf_counter; 
+    end 
 end
 
 genvar k; 
@@ -346,7 +361,8 @@ rv32v_mask_unit RVV_MASKS(
     .uop_num(vctrls.vuop_num), 
     .lane_active(vctrls.vlaneactive),
     .lane_mask(msku_lane_mask),
-    .mask_bits(mask_bits)
+    .mask_bits(mask_bits), 
+    .is_seg_op(vctrls.vseg_op)
 );
 
 
@@ -396,8 +412,14 @@ assign vmem_in.vmv_s_x = vctrls.vmv_s_x;
 // Permutation instructions write to scratch register in EX & back to vector RF in MEM/WB
 assign vmem_in.vd_sel = (vctrls.vexec.vfu == VFU_PRM) ? '{regclass: RC_VECTOR, regidx: vctrls.vd_sel.regidx} : vctrls.vd_sel;
 //assign vmem_in.vbank_offset = vctrls.vbank_offset; 
-assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset : (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.vbank_offset : vctrls.vuop_num[1:0];
+assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset : (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.vbank_offset : vctrls.vbank_offset;
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1;
 assign vmem_in.vkeepvl = vctrls.vkeepvl;
+
+// seg signals 
+assign vmem_in.vstrided = vctrls.vstrided; 
+assign vmem_in.vunitstride = vctrls.vunitstride; 
+assign vmem_in.vseg_op = vctrls.vseg_op; 
+assign vmem_in.vnew_seg = vctrls.vnew_seg; 
 
 endmodule 

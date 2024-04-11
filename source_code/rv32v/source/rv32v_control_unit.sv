@@ -53,6 +53,7 @@ assign rs2 = vcu_if.instr[24:20];
 assign vs2 = vcu_if.instr[24:20];
 
 assign vcu_if.vcontrol.vimm = vcu_if.instr[19:15]; 
+assign vug_if.nf_seg = vcu_if.instr[31:29]; 
 
 // Major opcode extraction
 vmajoropcode_t vmajoropcode;
@@ -77,6 +78,11 @@ end
 // Load/store mop extraction
 mop_t mop;  // Used for determining load/store addressing mode
 assign mop = mop_t'(vcu_if.instr[27:26]);
+
+assign vug_if.is_seg_op = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE) && (vug_if.nf_seg != 0); 
+assign vcu_if.vcontrol.vseg_op = vug_if.is_seg_op; 
+assign vcu_if.vcontrol.vnew_seg = vug_if.new_seg; 
+assign vcu_if.vcontrol.nf_counter = vug_if.nf_counter; 
 
 // ALU vfunct3 extraction
 vfunct3_t vfunct3;  // Used for determining arithmetic instruction format
@@ -263,7 +269,10 @@ assign vmask_logical_instr = (vopm_valid) &&  (
                             vopm == VMXOR  || 
                             vopm == VMXNOR ); 
 
-
+logic[2:0] vlmul_bits;
+logic[2:0] vsew_bits; 
+assign vlmul_bits = vcu_if.vlmul; 
+assign vsew_bits = vcu_if.vsew; 
 always_comb begin
     // Use VSEW for everything by default
     veew_src1 = vcu_if.vsew;
@@ -316,6 +325,15 @@ always_comb begin
         veew_src1 = veew_dest;
     end
 
+
+    // emul logic for segment load/store instructions 
+    vug_if.emul_dest = vlmul_t'((vlmul_bits + veew_dest) - vsew_bits); 
+    if(vug_if.emul_dest > 3'd3)
+        vug_if.emul_dest = LMUL1; 
+    
+    vug_if.emul_src1 = vlmul_t'((vlmul_bits + veew_src1) - vsew_bits); 
+    if(vug_if.emul_src1 > 3'd3)
+        vug_if.emul_src1 = LMUL1; 
 end
 
 assign vcu_if.vcontrol.veew_src1 = veew_src1;

@@ -51,8 +51,15 @@ interface rv32v_mem_serializer_if;
     logic lsc_ready;
     // logic serial_busy;
 
+    // segmented load/store signals 
+    logic strided; 
+    logic unit_strided; 
+    logic vnew_seg; 
+    logic vseg_op; 
+
     modport serial (
         input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, vlane_store_data, lsc_ready,
+              strided, unit_strided, vnew_seg, vseg_op,
         output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vdata_store_lsc, vcurr_lane, vload_type
     );
 

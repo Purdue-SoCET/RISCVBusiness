@@ -52,6 +52,7 @@ interface rv32v_control_unit_if();
   // Busy flag
   logic vbusy;
 
+
   modport vcu(
     input instr, vsew, vlmul, vl, stall, vill, rs1, rd, 
     output vcontrol, vvalid, vbusy
