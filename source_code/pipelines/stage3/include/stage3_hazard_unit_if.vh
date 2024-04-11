@@ -46,6 +46,7 @@ interface stage3_hazard_unit_if();
   logic if_ex_stall, ex_mem_stall;
   logic iren, suppress_iren;
   logic rollback; // signal for rolling back fetched instructions after instruction in mem stage, for certain CSR and ifence instructions
+  logic mem_use_stall;
 
   // xTVEC Insertion
   word_t priv_pc;
@@ -75,7 +76,8 @@ interface stage3_hazard_unit_if();
     output  pc_en, npc_sel,
             if_ex_flush, ex_mem_flush,
             if_ex_stall, ex_mem_stall,
-            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback
+            priv_pc, insert_priv_pc, iren, suppress_iren, suppress_data, rollback,
+            mem_use_stall
   );
 
   modport fetch (
@@ -84,7 +86,7 @@ interface stage3_hazard_unit_if();
   );
 
   modport execute (
-    input  ex_mem_stall, ex_mem_flush, npc_sel,
+    input  ex_mem_stall, ex_mem_flush, npc_sel, mem_use_stall,
     output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy
   );
 

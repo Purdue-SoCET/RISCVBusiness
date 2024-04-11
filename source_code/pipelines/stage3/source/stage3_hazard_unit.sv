@@ -43,7 +43,6 @@ module stage3_hazard_unit (
     logic wait_for_dmem;
     logic rs1_match;
     logic rs2_match;
-    logic mem_use_stall;
     logic cannot_forward;
     logic fetch_busy;
     logic execute_busy;
@@ -70,7 +69,7 @@ module stage3_hazard_unit (
     assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren && !hazard_if.rv32c_ready; // don't wait for imem when rv32c is done early
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
-    assign mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
+    assign hazard_if.mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
 
     assign hazard_if.npc_sel = branch_jump;
 
@@ -170,7 +169,7 @@ module stage3_hazard_unit (
                                   //& (~ex_flush_hazard | e_ex_stage) // ???
                                   //|| rm_if.execute_stall //
                                   || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump) // Ugly case -- need to flush for control hazards when X busy, but other cases require stalling to take priority to prevent data loss (e.g. slow instruction fetch, valid insn in X, load in M --> giving flush priority would destroy insn in X)
-                                  || mem_use_stall 
+                                  || hazard_if.mem_use_stall 
                                   || hazard_if.fence_stall; // Data hazard -- stall until dependency clears (from E/M flush after writeback)
      // TODO: Exceptions
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition

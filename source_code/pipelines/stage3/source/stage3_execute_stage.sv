@@ -117,7 +117,7 @@ module stage3_execute_stage (
     rv32m_wrapper RV32M_FU (
         .CLK,
         .nRST,
-        .rv32m_start(cu_if.rv32m_control.select),
+        .rv32m_start(cu_if.rv32m_control.select && !hazard_if.mem_use_stall),
         .operation(cu_if.rv32m_control.op), // TODO: Better way?
         .rv32m_a(rs1_post_fwd), // All RV32M are reg-reg, so just feed post-fwd regs
         .rv32m_b(rs2_post_fwd),
