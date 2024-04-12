@@ -6,9 +6,10 @@ import os
 import pathlib
 
 utility_files = ["start.S", "utility.c", "amo_emu.c", "mutex.c"]
+#utility_files.extend(["temp_float_floatis.S", "temp_float_add.S", "temp_float_extend.S"])
 
 compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32imac_zicsr', '-mabi=ilp32', '-mcmodel=medany',
-                '-static', '-nostdlib', '-O2', '-Tlink.ld', '-std=c11', '-fno-builtin'] + utility_files
+                '-static', '-O2', '-Tlink.ld', '-std=c11', '-nostartfiles'] + utility_files
 
 cvt_cmd = ['riscv64-unknown-elf-objcopy', '-O', 'binary']
 
