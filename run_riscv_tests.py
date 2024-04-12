@@ -16,7 +16,6 @@ supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
 # For now, only support 'p' environment. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
 verilator_binary = "./rvb_out/sim-verilator/Vtop_core"
-tohost_address = 0x80001000
 test_base_dir = pathlib.Path("./riscv-tests/isa")
 
 skip_list = [
@@ -33,7 +32,71 @@ def apply_skips(test):
     
     return True
 
+def get_hostaddress(fname):
+    # Get binary name
+    binary = pathlib.Path(fname).with_suffix("")
+    with open(binary, "rb") as fp:
+        bytes = fp.read()
+
+        # Determine whether to interpret bytes as little or big endian
+        ei_data = int(bytes[0x05])
+        if ei_data == 1:
+            endianness = "little"
+        else:
+            endianness = "big"
+
+        SECTION_SIZE = 0x28
+
+        # Get start of section headers
+        e_shoff_bytes = bytes[0x20:0x24]
+        e_shoff = int.from_bytes(e_shoff_bytes, endianness)
+
+        # Get number of sections
+        e_shnum_bytes = bytes[0x30:0x32]
+        e_shnum = int.from_bytes(e_shnum_bytes, endianness)
+
+        # Get index of the section string table
+        e_shstrndx_bytes = bytes[0x32:0x34]
+        e_shstrndx = int.from_bytes(e_shstrndx_bytes, endianness)
+
+        # Get section headers
+        shdr = bytes[e_shoff:]
+
+        # Get section string table
+        sh_strtab_header = shdr[e_shstrndx*SECTION_SIZE:(e_shstrndx + 1)*SECTION_SIZE]
+        sh_strtab_offset = int.from_bytes(sh_strtab_header[0x10:0x14], endianness)
+        sh_strtab_size = int.from_bytes(sh_strtab_header[0x14:0x18], endianness)
+        sh_strtab = bytes[sh_strtab_offset:sh_strtab_offset+sh_strtab_size]
+
+        # Get the symbol table
+        SHT_SYMTAB = 0x2
+        SHT_STRTAB = 0x3
+        symtab = None
+        strtab = None
+        for i in range(e_shnum):
+            section = shdr[i*SECTION_SIZE:(i+1)*SECTION_SIZE]
+            sh_type = int.from_bytes(section[0x04:0x08], endianness)
+            sh_offset = int.from_bytes(section[0x10:0x14], endianness)
+            sh_size = int.from_bytes(section[0x14:0x18], endianness)
+            if sh_type == SHT_SYMTAB:
+                symtab = bytes[sh_offset:][:sh_size]
+            if sh_type == SHT_STRTAB:
+                strtab = bytes[sh_offset:][:sh_size]
+            if symtab != None and strtab != None:
+                break
+
+        # Walk the symbol table looking for tohost
+        SYM_ENTR_SIZE = 0x10
+        for i in range(1, len(symtab) // SYM_ENTR_SIZE):
+            sym_tab_entry = symtab[i*SYM_ENTR_SIZE:(i+1)*SYM_ENTR_SIZE]
+            st_name = int.from_bytes(sym_tab_entry[0x00:0x04], endianness)
+            st_value = int.from_bytes(sym_tab_entry[0x04:0x08], endianness)
+            if str(strtab[st_name:][:len("tohost")], 'utf-8') == "tohost":
+                tohost_address = st_value
+    return tohost_address
+
 def run_test(fname):
+    tohost_address = get_hostaddress(fname)
     res = subprocess.run([verilator_binary, '--tohost-address', str(tohost_address), fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ')
@@ -48,18 +111,11 @@ def run_test(fname):
 def run_selected_tests(isa, envs, machine_mode_tests):
     pass_count = 0
     total_count = 0
-    global tohost_address
 
     for env in envs:
         print(f"Running '{env}' TVM tests...")
         for ext in isa:
             print(f"ISA: RV32{ext.capitalize()}")
-            # TODO: Add ELF parsing to TB so we can get 'tohost'
-            # dynamically. This is a hack.
-            if ext == 'c':
-                tohost_address = 0x80003000
-            else:
-                tohost_address = 0x80001000
 
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             for test in filter(apply_skips, tests):
@@ -72,7 +128,6 @@ def run_selected_tests(isa, envs, machine_mode_tests):
 
         # machine-mode tests
         if machine_mode_tests:
-            tohost_address = 0x80001000
             print(f"Machine Mode tests")
             tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
             for test in filter(apply_skips, tests):
