@@ -1,20 +1,9 @@
+#include "fast_amo_emu.h"
 #include "utility.h"
 
 #define N 500
 
-int global = 0;
-
-uint32_t atomic_add(void *ptr, int val) {
-    uint32_t d;
-    __asm__ volatile("1:\n"
-                     "lr.w %[d], (%[addr])\n"
-                     "add t0, t1, %[src]\n"
-                     "sc.w t2, t0, (%[addr])\n"
-                     "bnez t2, 1b\n"
-                     : [d] "=r"(d)
-                     : [addr] "r"(ptr), [src] "r"(val));
-    return d;
-}
+uint32_t global = 0;
 
 void hart0_main() {
     for (int i = 0; i < N; i++) {
