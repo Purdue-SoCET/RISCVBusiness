@@ -18,5 +18,6 @@ void print(const char *fmt, ...);
 void put_uint32_hex(uint32_t hex);
 uint32_t get_cycles();
 uint32_t get_instrs();
+void __attribute__((noinline)) wait_for_hart1_done();
 
 #endif
