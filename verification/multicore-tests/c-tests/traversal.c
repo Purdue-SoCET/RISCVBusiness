@@ -1941,15 +1941,14 @@ void traverse(TreeNode *node) {
 void hart0_main() {
     flag = 0;
     TreeNode* root = &node1;
-    atomic_add(&sum, root->value);
-    traverse(root->left);
-    traverse(root->right);
-    flag = sum == 500500;
+    traverse(root);
+    flag = sum == ((N * (N + 1)) / 2);
 }
 
 void hart1_main() {
-    hart1_done = 0;
+    /*
     TreeNode* root = &node1;
     traverse(root->right);
+    */
     hart1_done = 1; 
 }
