@@ -165,3 +165,9 @@ uint32_t get_instrs() {
     __asm__ volatile("csrr %0, minstret\n" : "=r"(ret));
     return ret;
 }
+
+void wait_for_hart1_done() {
+    while (hart1_done == 0) {
+        __asm__ volatile("");
+    }
+}

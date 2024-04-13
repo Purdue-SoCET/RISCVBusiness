@@ -9,7 +9,7 @@ void hart0_main() {
     for (int i = 0; i < N; i++) {
         (*ptr)++;
     }
-    while (hart1_done == 0) {}
+    wait_for_hart1_done();
     flag = global == (N * 2);
 }
 

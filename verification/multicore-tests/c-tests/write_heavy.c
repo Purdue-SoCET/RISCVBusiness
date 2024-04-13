@@ -25,9 +25,7 @@ void doWork() {
 void hart0_main() {
     uint32_t start = get_cycles();
     doWork();
-    while (hart1_done == 0) {
-        __asm__ volatile("");
-    }
+    wait_for_hart1_done();
     uint32_t end = get_cycles();
     uint32_t val = *(uint32_t *)&sum;
     flag = val == 0x3FBEE5D5;
