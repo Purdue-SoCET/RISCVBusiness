@@ -5,6 +5,11 @@
 #error "N must be defined!"
 #endif
 
+#if N % 2
+#error "N must be even!"
+#endif
+
+#include "utility.h"
 #include <stdbool.h>
 #include <stdint.h>
 

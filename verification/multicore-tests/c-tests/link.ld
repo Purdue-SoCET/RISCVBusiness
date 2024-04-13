@@ -45,6 +45,11 @@ SECTIONS
 
     PROVIDE(_edata = .);
 
+    .noinit :
+    {
+        *(.noinit .noinit.*)
+    } > RAM
+
     PROVIDE(__bss_start = .);
     .bss :
     {
