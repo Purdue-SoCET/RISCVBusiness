@@ -2,9 +2,6 @@
 
 WANT_AMO_EMU_SUPPORT
 
-.extern hart0_main
-.extern hart1_main
-
 .global _start
 _start:
     # Start out by getting mhartid to tell which core we're on

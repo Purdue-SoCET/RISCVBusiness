@@ -2,10 +2,10 @@
 #define MUTEX_H
 
 typedef struct {
-    _Atomic int lock;
+    int lock;
 } mutex;
 
-void mutex_lock(volatile mutex *m);
-void mutex_unlock(volatile mutex *m);
+void __attribute__((noinline)) mutex_lock(volatile mutex *m);
+void __attribute__((noinline)) mutex_unlock(volatile mutex *m);
 
 #endif

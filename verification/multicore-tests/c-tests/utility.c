@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-mutex print_lock;
+mutex print_lock = {0};
 
 void print_string(char *string) {
     volatile char *magic = (volatile char *)MAGIC_ADDR;

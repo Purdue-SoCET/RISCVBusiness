@@ -5,84 +5,59 @@
 #include "mutex.h"
 
 //Number of terms
-#define N 4
+#define N 6
 
-int global = 1;
-float global_sum = 0;
-int global_sum_int = 0;
-mutex global_lock;
-uint32_t next_term = 1;
+uint32_t term = 0;
+float sum = 0;
+mutex sum_lock = {0};
 
-void calc_term(int n);
+void __attribute__ ((noinline)) calc_term(uint32_t n);
 
-//Performs an atomic increment and swap. The old value loaded via lr is stored
-//in dest. Addr is the address of the variable to swap with
-//src does nothing, but it breaks things when removed
-void atomic_swap(uint32_t* dest, uint32_t src, uint32_t addr) {
+// Atomically increments `ptr` by `val`. Returns previous value.
+uint32_t __attribute__ ((noinline)) atomic_add(void *ptr, uint32_t val) {
     uint32_t d;
     __asm__ volatile("1:\n"
-                     "lr.w %[d], (%[addr])\n"
-                     "addi t0, %[d], 1\n"
-                     "sc.w t0, t0, (%[addr])\n"
-                     "bnez t0, 1b\n"
-                     : [d] "=&r"(d)
-                     : [addr] "r"(addr), [src] "r" (src)
-                     : "memory", "t0");
-    *dest = d;
-}
-
-uint32_t atomic_add(void *ptr, uint32_t val) {
-    uint32_t d;
-    __asm__ volatile("1:\n"
-                     "lr.w %[d], (%[addr])\n"
-                     "add t0, %[d], %[src]\n"
-                     "sc.w t2, t0, (%[addr])\n"
+                     "lr.w t0, (%[addr])\n"
+                     "add t1, t0, %[src]\n"
+                     "sc.w t2, t1, (%[addr])\n"
                      "bnez t2, 1b\n"
+                     "mv %[d], t0\n"
                      : [d] "=r"(d)
                      : [addr] "r"(ptr), [src] "r"(val));
     return d;
 }
 
-void hart0_main() {
-    uint32_t prevVal = 0;
-    //for(int i = 0; i < N; i++) {
-    while(prevVal < N) {
-        atomic_swap((uint32_t*) &prevVal, 1, (uint32_t) &global);
-        calc_term(prevVal);
+void doWork() {
+    uint32_t n = atomic_add(&term, 1);
+    while(n <= N) {
+        calc_term(n);
+        n = atomic_add(&term, 1);
     }
-    while (hart1_done == 0) {}
-    print("Sum = %x\n", global_sum);
-    print("Sum_int = %d\n", global_sum_int);
-    flag = 1;
+}
+
+void hart0_main() {
+    uint32_t start = get_cycles();
+    doWork();
+    while (hart1_done == 0) {
+        __asm__ volatile("");
+    }
+    uint32_t end = get_cycles();
+    uint32_t val = *(uint32_t *)&sum;
+    flag = val == 0x3FBEE5D5;
+    print("Sum = %x\n", val);
+    print("Start cycles = %d, end cycles = %d\n", start, end);
 }
 
 
 void hart1_main() {
-    int prevVal = 0;
-
+    doWork();
     hart1_done = 1;
-/*
-    return;
-
-    for (int i = 0; i < N; i++) {
-        atomic_swap((uint32_t*) &prevVal, 1, (uint32_t) &global);
-        calc_term(prevVal);
-    }
-    hart1_done = 1;
-*/
 }
 
-void calc_term(int n)
-{
-    print("Finding term %d\n", n);
-    float val = 1.0;
-    if(n == 0) return;
-    //float val = 1 / (n*n); //Missing divide functions?
-    print("Term %d is %d\n", n, val);
-    mutex_lock(&global_lock);
-    print("Got lock for term %d\n", n);
-    global_sum_int += 1;
-    global_sum += val;
-    mutex_unlock(&global_lock);
-    print("Freed the lock for term %d\n", n);
+void __attribute__ ((noinline)) calc_term(uint32_t n) {
+    if (n == 0) return;
+    float term = 1. / (n*n);
+    mutex_lock(&sum_lock);
+    sum += term;
+    mutex_unlock(&sum_lock);
 }
