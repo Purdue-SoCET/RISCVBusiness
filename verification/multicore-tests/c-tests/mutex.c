@@ -8,7 +8,8 @@ void atomic_set(void *ptr) {
                      "sc.w t2, t0, (%[addr])\n"
                      "bnez t2, 1b\n"
                      :
-                     : [addr] "r"(ptr));
+                     : [addr] "r"(ptr)
+                     : "t0", "t1", "t2");
 }
 
 void atomic_unset(void *ptr) {
@@ -17,7 +18,8 @@ void atomic_unset(void *ptr) {
                      "sc.w t0, zero, (%[addr])\n"
                      "bnez t0, 1b\n"
                      :
-                     : [addr] "r"(ptr));
+                     : [addr] "r"(ptr)
+                     : "t0");
 }
 
 void mutex_lock(volatile mutex *m) {
