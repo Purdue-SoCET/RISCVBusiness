@@ -2,10 +2,10 @@
 
 #define N 35
 
-int global = 0;
+uint32_t global = 0;
 
 void hart0_main() {
-    volatile int *ptr = &global;
+    volatile uint32_t *ptr = &global;
     for (int i = 0; i < N; i++) {
         (*ptr)++;
     }
@@ -14,7 +14,7 @@ void hart0_main() {
 }
 
 void hart1_main() {
-    volatile int *ptr = &global;
+    volatile uint32_t *ptr = &global;
     for (int i = 0; i < N; i++) {
         (*ptr)++;
     }
