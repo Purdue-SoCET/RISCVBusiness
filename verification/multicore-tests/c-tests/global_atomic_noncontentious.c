@@ -11,7 +11,7 @@ void hart0_main() {
         atomic_add(&global[0], 1);
     }
     wait_for_hart1_done();
-    flag = global[0] == N;
+    flag = (global[0] + global[2]) == (N * 2);
 }
 
 void hart1_main() {
