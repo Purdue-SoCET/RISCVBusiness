@@ -44,7 +44,7 @@ module branch_predictor_wrapper (
 			"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
 			"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
 			"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
-			"return"   : return_predictor #(.entries(4)) predictor (.*); //return address predictor
+			"return"   : return_predictor #(.entries(10)) predictor (.*); //return address predictor
         endcase
     endgenerate
 endmodule
