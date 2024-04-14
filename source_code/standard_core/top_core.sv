@@ -67,7 +67,8 @@ module top_core #(
         .update_predictor(predict_if.update_predictor),
         .direction(predict_if.direction),
         .prediction(predict_if.prediction),
-        .branch_result(predict_if.branch_result)
+        .branch_result(predict_if.branch_result),
+	.is_jalr(predict_if.is_jalr)
     );
 
     core_interrupt_if interrupt_if ();

@@ -69,7 +69,10 @@ module branch_tracker (
             backward_pred_taken_count <= '0;
             backward_taken_correct_count <= '0;
             backward_not_taken_correct_count <= '0;
-        end else if (update_predictor & !prediction & !branch_result) begin
+        end else if (is_jalr) begin
+	   // if jump instruction, update unconditional counter
+	   unconditional_count <= unconditional_count + 1;
+	end else if (update_predictor & !prediction & !branch_result) begin
             // Predicted not taken and branch result is not taken
             prediction_count <= prediction_count + 1;
             correct_pred_count <= correct_pred_count + 1;
@@ -119,10 +122,7 @@ module branch_tracker (
                 forward_pred_taken_count <= forward_pred_taken_count + 1;
                 forward_taken_correct_count <= forward_taken_correct_count + 1;
             end
-        end if (is_jalr) begin
-	   // if jump instruction, update unconditional counter
-	   unconditional_count <= unconditional_count + 1;
-	end 
+        end 
     end : tracked_registers
 
     final begin : OUTPUT_STATS
