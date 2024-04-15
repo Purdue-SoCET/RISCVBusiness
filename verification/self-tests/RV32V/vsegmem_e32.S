@@ -1,7 +1,7 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# vseg_mem.S
+# vsegmem_e32.S
 #-----------------------------------------------------------------------------
 #
 # Test vector segmented memory operations 
@@ -15,9 +15,9 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
   
-  //** Test simple unit segment load/stores ***//
-    vsetivli x10, 4, e32, m1
-
+  //** Test unit segment load/stores ***//
+    vsetivli x10, 4, e16, m1
+  
     la x1, ldat
     vlseg2e32.v v1, 0(x1)
 

@@ -79,7 +79,7 @@ end
 mop_t mop;  // Used for determining load/store addressing mode
 assign mop = mop_t'(vcu_if.instr[27:26]);
 
-assign vug_if.is_seg_op = (vmajoropcode == VMOC_LOAD || vmajoropcode == VMOC_STORE) && (vug_if.nf_seg != 0); 
+assign vug_if.is_seg_op = vmeminstr && (vug_if.nf_seg != 0) && ~vmaskldst && ~vwholereg ; 
 assign vcu_if.vcontrol.vseg_op = vug_if.is_seg_op; 
 assign vcu_if.vcontrol.vnew_seg = vug_if.new_seg; 
 assign vcu_if.vcontrol.nf_counter = vug_if.nf_counter; 
@@ -488,8 +488,8 @@ assign vcu_if.vcontrol.vunitstride = vunitstride;
 assign vcu_if.vcontrol.vstrided = vstrided;
 assign vcu_if.vcontrol.vindexed = vindexed;
 
-assign vmaskldst = (lumop == LUMOP_UNIT_MASK);
-assign vwholereg = (lumop == LUMOP_UNIT_FULLREG);
+assign vmaskldst = (lumop == LUMOP_UNIT_MASK) && (mop == MOP_UNIT);
+assign vwholereg = (lumop == LUMOP_UNIT_FULLREG) && (mop == MOP_UNIT);
 
 // For mask load/store, evl = ceil(vl/8)
 assign vlby8 = (vcu_if.vl >> 3);

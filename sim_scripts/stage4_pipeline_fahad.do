@@ -285,6 +285,10 @@ add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/ex_mem_if/vexmem/vseg
 add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/ex_mem_if/vexmem/vunitstride
 add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/ex_mem_if/vexmem/vstrided
 add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/SLZR/seg_addr
+add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/SLZR/next_addr
+add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/SLZR/serial_if/vaddr_lsc
+add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/SLZR/serial_if/lsc_ready
+add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/SLZR/serial_if/vlane_mask
 add wave -noupdate /TOP/top_core/CORE/pipeline/execute_stage_i/ex_mem_if/vexmem/vres
 add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/ex_mem_if/ex_mem_reg/pc
 add wave -noupdate /TOP/top_core/CORE/pipeline/mem_stage_i/ex_mem_if/ex_mem_reg/rs1_data
@@ -387,7 +391,7 @@ add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage
 add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen_lsc
 add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vuop_num
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {70 ps} 0}
+WaveRestoreCursors {{Cursor 1} {97 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 166
 configure wave -valuecolwidth 133
@@ -403,4 +407,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {61 ps} {120 ps}
+WaveRestoreZoom {71 ps} {130 ps}

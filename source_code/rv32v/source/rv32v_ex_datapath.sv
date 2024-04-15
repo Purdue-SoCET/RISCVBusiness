@@ -250,6 +250,7 @@ rv32v_scratch_reg VSCRATCH (
 
 // vector functional units 
 word_t temp_res; 
+logic[4:0] vseg_idx_offset; 
 always_comb begin
     vopB = xbardat_src1; 
     vopA = xbardat_src2; 
@@ -294,10 +295,12 @@ always_comb begin
     end
 
 
-    // override in case of segment load/store instructions indexed instructions . 
+    // override in case of segment load/store instructions indexed instructions. 
+    vseg_idx_offset = vctrls.nf_counter; 
+    vseg_idx_offset = vseg_idx_offset << vctrls.veew_dest; 
     if(vctrls.vseg_op) begin
         vopA = {4{xbardat_src2[vctrls.vlaneactive[1:0]]}}; 
-        vopA[0] = vopA[0] + vctrls.nf_counter; 
+        vopA[0] = vopA[0] + vseg_idx_offset; 
     end 
 end
 
