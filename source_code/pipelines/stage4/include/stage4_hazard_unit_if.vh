@@ -93,7 +93,9 @@ interface stage4_hazard_unit_if();
   logic vvalid_m;
   logic [6:0] velem_num_m;
   logic vuop_last;
-  logic vmask_calc_stall; 
+  logic vmask_calc_stall;
+  logic not_interruptable;
+  logic keep_vstart_e, keep_vstart_m;
 
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
@@ -109,7 +111,7 @@ interface stage4_hazard_unit_if();
             vsetvl_dec, vsetvl_ex, queue_wen, vbusy,
 
             vregwen, vs1, vs2, vd, vs1_used, vs2_used, ex_mask_en, vvalid_e, vvalid_m, velem_num_e, velem_num_m,
-            vuop_last,
+            vuop_last, not_interruptable, keep_vstart_e, keep_vstart_m,
 
 
     output  pc_en, npc_sel,
@@ -142,7 +144,7 @@ interface stage4_hazard_unit_if();
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel, flush_queue, vmask_calc_stall, 
     output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex,
-           vs1, vs2, vs1_used, vs2_used, ex_mask_en, vvalid_e, velem_num_e
+           vs1, vs2, vs1_used, vs2_used, ex_mask_en, vvalid_e, velem_num_e, not_interruptable, keep_vstart_e
   );
 
   modport mem (
@@ -153,7 +155,7 @@ interface stage4_hazard_unit_if();
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,
             token_mem, serializer_stall,
-            vd, vregwen, vvalid_m, velem_num_m, vuop_last
+            vd, vregwen, vvalid_m, velem_num_m, vuop_last, keep_vstart_m
   );
 
  endinterface

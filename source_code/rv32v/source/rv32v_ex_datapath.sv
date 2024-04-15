@@ -9,10 +9,10 @@ module rv32v_ex_datapath(
     input logic[3:0] vmskset_fwd_bits,
     input logic output_stall,
     input logic queue_flush, mask_stall, 
-    input word_t vl,
+    input word_t vl, vlmax,
 
     output vexmem_t vmem_in,
-    output logic vex_stall
+    output logic vex_stall, vex_frontend_stall
 );
 
 parameter NUM_LANES = 4; 
@@ -31,15 +31,23 @@ word_t ext_imm;
 logic[3:0] mask_bits;
 logic[3:0] msku_lane_mask; 
 logic[3:0] vfu_stall;
+logic[4:0] vs2_sel;
+logic[1:0] vs2_bank_offset;
 
+// permutation unit related
 vperm_input_t vperm_in;
 vperm_output_t vperm_out;
+logic vrgtr_busy, vrgtr_vs2_read;
+vrgather_vs2_t vrgtr_vs2_sel;
+logic [1:0] vrgtr_elem_num;
 
 //mask set layer outputs
 logic is_vmskset_op; 
 logic[7:0] vmskset_res; 
-logic[3:0] vmskset_lane_mask; 
+logic[3:0] vmskset_lane_mask;
 
+// scratch reg
+word_t[3:0] vscratchdata;
 
 logic vint_cmp_instr; 
 
@@ -121,16 +129,18 @@ always_comb begin
 end 
 // assign vmem_in.vlane_mask = is_vmskset_op ?  : msku_lane_mask; 
 // mux data to write to scratch register
-assign vscratch_write_data = (vctrls.vexec.vfu == VFU_PRM) ? xbardat_src2 : vmem_in.vres;
+assign vscratch_write_data = ((vctrls.vexec.vfu == VFU_PRM) & vperm_out.vs2_to_scratch) ? xbardat_src2 : vmem_in.vres;
 
 assign vd = {bankdat_src3[3], bankdat_src3[2], bankdat_src3[1], bankdat_src3[0]};
 
-
+assign vrgtr_vs2_sel = vrgather_vs2_t'(vscratchdata[vrgtr_elem_num][9:0]);
+assign vs2_sel = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vs2_sel : vctrls.vs2_sel;
+assign vs2_bank_offset = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vbank_offset : vctrls.vuop_num[1:0];
 
 // Banks 
 rv32v_vector_bank VBANK0 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
+    .vs1(vctrls.vs1_sel), .vs2(vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[0]), .byte_wen(vwb_ctrls.vbyte_wen[0]), 
     .vdat1(bankdat_src1[0]), .vdat2(bankdat_src2[0]), .vdat3(bankdat_src3[0]),
     .v0(v0[31:0])
@@ -138,7 +148,7 @@ rv32v_vector_bank VBANK0 (
 
 rv32v_vector_bank VBANK1 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
+    .vs1(vctrls.vs1_sel), .vs2(vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[1]), .byte_wen(vwb_ctrls.vbyte_wen[1]), 
     .vdat1(bankdat_src1[1]), .vdat2(bankdat_src2[1]), .vdat3(bankdat_src3[1]),
     .v0(v0[63:32])
@@ -146,7 +156,7 @@ rv32v_vector_bank VBANK1 (
 
 rv32v_vector_bank VBANK2 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
+    .vs1(vctrls.vs1_sel), .vs2(vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[2]), .byte_wen(vwb_ctrls.vbyte_wen[2]), 
     .vdat1(bankdat_src1[2]), .vdat2(bankdat_src2[2]), .vdat3(bankdat_src3[2]),
     .v0(v0[95:64])
@@ -154,7 +164,7 @@ rv32v_vector_bank VBANK2 (
 
 rv32v_vector_bank VBANK3 (
     .CLK(CLK), .nRST(nRST), 
-    .vs1(vctrls.vs1_sel), .vs2(vctrls.vs2_sel), .vs3(vctrls.vd_sel),
+    .vs1(vctrls.vs1_sel), .vs2(vs2_sel), .vs3(vctrls.vd_sel),
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[3]), .byte_wen(vwb_ctrls.vbyte_wen[3]), 
     .vdat1(bankdat_src1[3]), .vdat2(bankdat_src2[3]), .vdat3(bankdat_src3[3]),
     .v0(v0[127:96])
@@ -173,7 +183,7 @@ rv32v_read_xbar VSRC1_XBAR(
 rv32v_read_xbar VSRC2_XBAR(
     .bank_dat(bankdat_src2), 
     .veew(vctrls.veew_src2),
-    .bank_offset(vctrls.vuop_num[1:0]),
+    .bank_offset(vs2_bank_offset),
     .sign_ext(vctrls.vsignext),
     .out_dat(xbardat_src2)
 );
@@ -229,13 +239,10 @@ always_comb begin
     endcase
 end
 
-// scratch reg
-word_t[3:0] vscratchdata;
-
 rv32v_scratch_reg VSCRATCH (
     .CLK(CLK), .nRST(nRST), 
     .vpad_inactive(vctrls.vpadscratch), .vpad_word(vpad_word),
-    .vbyte_wen({4{!output_stall && (vctrls.vd_sel.regclass == RC_SCRATCH)}} & msku_lane_mask),
+    .vbyte_wen({4{!(output_stall & ~vrgtr_busy) && (vctrls.vd_sel.regclass == RC_SCRATCH)}} & msku_lane_mask & vperm_out.nkeep_scratch),
     .vwdata({vscratch_write_data[3], vscratch_write_data[2], vscratch_write_data[1], vscratch_write_data[0]}),
     .vrdata({vscratchdata[3], vscratchdata[2], vscratchdata[1], vscratchdata[0]})
 );
@@ -304,7 +311,9 @@ generate
     end
 endgenerate
 
-assign vex_stall = (|vfu_stall) | (mask_calc_busy);
+assign vex_stall = (|vfu_stall) | mask_calc_busy | vrgtr_busy;
+// stall frontend only
+assign vex_frontend_stall = vrgtr_vs2_read;
 
 // reduction unit
 rv32v_reduction_unit VREDUNIT (
@@ -320,21 +329,29 @@ rv32v_permutation_unit RV32V_PERM (
     .CLK,
     .nRST,
     .vperm_in,
-    .vperm_out
+    .stall(output_stall),
+    .flush(queue_flush),
+    .vperm_out,
+    .vrgtr_elem_num,
+    .vrgtr_vs2_read,
+    .vrgtr_busy
 );
 
 assign vperm_in = '{
     vpermop: vctrls.vexec.vpermop,
     offset: (vctrls.vxin1_use_imm) ? ext_imm : rdat1,
+    vs1_data: xbardat_src1,
     vs2_data: xbardat_src2,
     vscratchdata: vscratchdata,
     rs1_data: rdat1,
     vsew: vctrls.veew_dest,
-    vl: vl[$clog2(VLMAX)-1:0],
+    vl: vl,
+    vlmax: vlmax,
     vuop_num: vctrls.vuop_num,
     vuop_last: vctrls.vuop_last,
     vlaneactive: vctrls.vlaneactive,
-    vd_sel: vctrls.vd_sel.regidx
+    vd_sel: vctrls.vd_sel.regidx,
+    vs2_sel: vctrls.vs2_sel
 };
 
 // Maskings

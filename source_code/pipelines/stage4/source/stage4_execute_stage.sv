@@ -56,16 +56,10 @@ module stage4_execute_stage (
     // import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
 
-
-    //import stage3_types_pkg::*;
-
-    vexmem_t vex_out; 
-    word_t vstride; 
-    // word_t vl; 
-    // vtype_t vtype; 
-    word_t vlmax; // determined from lmul and sew settings 
-    // logic vsetvl;
-    logic vex_stall;
+    vexmem_t vex_out;
+    word_t vstride;
+    word_t vlmax; // determined from lmul and sew settings
+    logic vex_stall, vex_frontend_stall;
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -102,8 +96,6 @@ module stage4_execute_stage (
 
     end
 
-
-    //assign ex_mem_if.vexmem = '{default:0, veew: SEW32}; 
     rv32v_ex_datapath RVV_DATAPATH(
         .CLK(CLK), .nRST(nRST), 
         .rdat1(rs1_post_fwd), .rdat2(rs2_post_fwd), 
@@ -111,11 +103,12 @@ module stage4_execute_stage (
         .vwb_ctrls(ex_mem_if.vwb), 
         .vmskset_fwd_bits(ex_mem_if.vmskset_fwd_bits), 
         .output_stall(hazard_if.ex_mem_stall || hazard_if.ex_mem_flush),
-        .vl(shadow_if.vl_shadow), .queue_flush(hazard_if.flush_queue),
+        .vl(shadow_if.vl_shadow), .vlmax(vlmax), .queue_flush(hazard_if.flush_queue),
         .mask_stall(hazard_if.vmask_calc_stall),  
         
         .vmem_in(vex_out),
-        .vex_stall(vex_stall)
+        .vex_stall(vex_stall),
+        .vex_frontend_stall(vex_frontend_stall)
     );
 
     // stride calculation for mem operations

@@ -23,6 +23,7 @@
 */
 
 import rv32i_types_pkg::*;
+import rv32v_types_pkg::*;
 
 module rv32v_scratch_reg
 (

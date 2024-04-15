@@ -46,7 +46,7 @@ always_comb begin
     vexec.vfu = VFU_ALU;
     vexec.valuop = VALU_ADD;
     vexec.vmaskop = VMSK_AND;
-    vexec.vpermop = VPRM_CPS;
+    vexec.vpermop = VPRM_SMV;
     vexec.vopunsigned = 1'b0;
     veew_dest = vsew; 
 

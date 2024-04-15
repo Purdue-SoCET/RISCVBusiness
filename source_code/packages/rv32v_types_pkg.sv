@@ -676,15 +676,18 @@ package rv32v_types_pkg;
   typedef struct packed {
     vpermop_t vpermop;
     rv32i_types_pkg::word_t offset;
+    rv32i_types_pkg::word_t [3:0] vs1_data;
     rv32i_types_pkg::word_t [3:0] vs2_data;
     rv32i_types_pkg::word_t [3:0] vscratchdata;
     rv32i_types_pkg::word_t rs1_data;
     vsew_t vsew;
-    logic [$clog2(VLMAX)-1:0] vl;
+    rv32i_types_pkg::word_t vl;
+    rv32i_types_pkg::word_t vlmax;
     logic [4:0] vuop_num;
     logic vuop_last;
     logic [3:0] vlaneactive;
     logic [4:0] vd_sel;
+    logic [4:0] vs2_sel;
   } vperm_input_t;
 
   typedef struct packed {
@@ -692,7 +695,19 @@ package rv32v_types_pkg;
     logic [1:0] vbank_offset;
     rv32i_types_pkg::word_t [3:0] velems_out;
     logic [3:0] vperm_mask;
+    logic [4:0] vrgtr_vs2;
+    logic [1:0] vrgtr_bank_offset;
+    logic vs2_to_scratch;
+    logic [3:0] nkeep_scratch;
+    logic [1:0] vrgtr_elem_num;
   } vperm_output_t;
+
+  typedef struct packed {
+    logic zero_elem;
+    logic [4:0] vs2_sel;
+    logic [1:0] vbank_offset;
+    logic [1:0] vs2_src_lane;
+  } vrgather_vs2_t;
 
 endpackage
 `endif

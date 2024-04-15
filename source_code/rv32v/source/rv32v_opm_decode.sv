@@ -54,7 +54,7 @@ always_comb begin
     vexec.vmulrethigh = 1'b0;
     vexec.vdivremainder = 1'b0;
     vexec.vmaskop = VMSK_AND;
-    vexec.vpermop = VPRM_CPS;
+    vexec.vpermop = VPRM_SMV;
     vexec.vsigntype = SIGNED;
     vexec.vopunsigned = 1'b0;
     disable_mask = 1'b0; 

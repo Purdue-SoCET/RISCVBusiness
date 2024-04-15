@@ -25,6 +25,7 @@
 `include "rv32v_lsc_if.vh"
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
+`include "component_selection_defines.vh"
 
 module rv32v_load_store_controller (
     input logic CLK,

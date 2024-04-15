@@ -493,7 +493,8 @@ logic vgen_uops;
 
 rv32v_uop_gen_if vug_if();
 
-assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) && !(vopm_valid && (vmask_logical_instr || (vmask_calc_instr && ~vmask_calc_instr_uop)));
+assign vgen_uops = vmajoropcode_valid && !(vmajoropcode == VMOC_ALU_CFG && vfunct3 == OPCFG) && !(vopm_valid && (vmask_logical_instr || (vmask_calc_instr && ~vmask_calc_instr_uop)))
+                                      && !use_vperm_uop;
 
 assign vug_if.gen = vgen_uops;
 assign vug_if.stall = vcu_if.stall;
@@ -508,7 +509,7 @@ assign vug_if.vl = (vredinstr)        ? vl_red :
                    (wholereg_mv)      ? wholereg_mv_evl :
                                         mem_evl;
 
-assign vcu_if.vcontrol.vuop_num = vug_if.vuop_num;
+assign vcu_if.vcontrol.vuop_num = (use_vperm_uop) ? vperm_uop_num : vug_if.vuop_num;
 assign vcu_if.vcontrol.vbank_offset = vug_if.vbank_offset;
 assign vreg_offset = vug_if.vreg_offset_dest;
 
@@ -520,10 +521,12 @@ always_comb begin
         vcu_if.vcontrol.vlaneactive = '1; 
     else if(vmask_calc_instr && ~vmask_calc_instr_uop)
         vcu_if.vcontrol.vlaneactive = '1; 
+    else if (vperminstr && use_vperm_uop)
+        vcu_if.vcontrol.vlaneactive = vperm_vlane_active;
 
 end 
 //assign vcu_if.vcontrol.vlaneactive = vug_if.vlane_active;
-assign vcu_if.vbusy = (vredinstr) ? busy_red : vug_if.busy;
+assign vcu_if.vbusy = (vredinstr) ? busy_red : (vperminstr & use_vperm_uop) | vug_if.busy;
 assign vcu_if.vcontrol.vvalid = vmajoropcode_valid;
 assign vcu_if.vvalid = vmajoropcode_valid;
 
@@ -666,6 +669,16 @@ end
 logic vopi_perm, vopm_perm, vperminstr, vperm_var_offset;
 regsel_t vd_sel_perm;
 word_t vl_perm;
+logic [4:0] vperm_uop_num;
+logic [3:0] vperm_vlane_active;
+logic use_vperm_uop;
+
+typedef enum logic {
+    SLIDE_SETUP,
+    SLIDE_MOVE
+} slide_state_t;
+
+slide_state_t slidestate, next_slidestate;
 
 assign vopi_perm = (vopi_valid && vexec_opi.vfu == VFU_PRM);
 assign vopm_perm = (vopm_valid && vexec_opm.vfu == VFU_PRM);
@@ -674,5 +687,34 @@ assign vperm_var_offset = (vopi_perm && ((vexec_opi.vpermop == VPRM_SLU) || (vex
 
 assign vd_sel_perm = '{regclass: RC_SCRATCH, regidx: vd};
 assign vl_perm = vcu_if.vl + 4;  // need extra uOP for offset%4 != 0
+
+always_ff @(posedge CLK, negedge nRST) begin
+    if (~nRST) begin
+        slidestate <= SLIDE_SETUP;
+    end else if (!vcu_if.stall) begin
+        slidestate <= next_slidestate;
+    end
+end
+
+always_comb begin
+    next_slidestate = slidestate;
+    vperm_uop_num = '0;
+    use_vperm_uop = 0;
+    vperm_vlane_active = '0;
+
+    if (vperminstr && ((vexec_opi.vpermop == VPRM_SLD) || (vexec_opm.vpermop == VPRM_S1D))) begin  // slide{1}down
+        case (slidestate)
+            SLIDE_SETUP: begin
+                use_vperm_uop = 1;
+                next_slidestate = SLIDE_MOVE;
+            end
+            SLIDE_MOVE: begin
+                if (!vug_if.busy) begin  // reset to SETUP after all move uOPs
+                    next_slidestate = SLIDE_SETUP;
+                end
+            end
+        endcase
+    end
+end
 
 endmodule
