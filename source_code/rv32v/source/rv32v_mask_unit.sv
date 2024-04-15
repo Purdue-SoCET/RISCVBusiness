@@ -44,10 +44,10 @@ always_comb begin
     if(~mask_enable)
         lane_mask = lane_active; 
     else begin
-        lane_mask[0] = lane_active & v0[first_elem_no]; 
-        lane_mask[1] = lane_active & v0[first_elem_no + 1]; 
-        lane_mask[2] = lane_active & v0[first_elem_no + 2]; 
-        lane_mask[3] = lane_active & v0[first_elem_no + 3]; 
+        lane_mask[0] = lane_active[0] & v0[first_elem_no]; 
+        lane_mask[1] = lane_active[1] & v0[first_elem_no + 1]; 
+        lane_mask[2] = lane_active[2] & v0[first_elem_no + 2]; 
+        lane_mask[3] = lane_active[3] & v0[first_elem_no + 3]; 
     end
 
     if(is_seg_op & mask_enable) begin
@@ -73,7 +73,7 @@ always_comb begin
         endcase 
     end
 
-    mask_bits = {v0[first_elem_no + 3], lane_active & v0[first_elem_no + 2], lane_active & v0[first_elem_no + 1], lane_active & v0[first_elem_no]};
+    mask_bits = {v0[first_elem_no + 3], v0[first_elem_no + 2],v0[first_elem_no + 1], v0[first_elem_no]};
 end
 
 endmodule

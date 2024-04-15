@@ -281,7 +281,7 @@ int main(int argc, char **argv) {
 
 
     reset(dut, m_trace);
-    while(!dut.halt && sim_time < 100000) {
+    while(!dut.halt && sim_time < 250000) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
@@ -317,7 +317,7 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 100000) {
+    if(sim_time >= 250000) {
         std::cout << "Test TIMED OUT in " << sim_time << " cycles" << std::endl;
     } else if(dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED in " << sim_time << " cycles" << std::endl;

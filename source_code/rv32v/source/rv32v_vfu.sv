@@ -35,7 +35,7 @@ rv32v_divider RV32V_DIV (
 
 // RV32V multiplier signals
 assign vmul_in = '{
-    vmul_en: (vop.vfu == VFU_MUL) & ~mask_bit,
+    vmul_en: (vop.vfu == VFU_MUL),
     vs1_data: vopA,
     vs2_data: vopB,
     vd_data: vopC,
@@ -50,7 +50,7 @@ assign vmul_in = '{
 
 // RV32V divider signals
 assign vdiv_in = '{
-    vdiv_en: (vop.vfu == VFU_DIV) & ~mask_bit,
+    vdiv_en: (vop.vfu == VFU_DIV),
     vs1_data: vopA,
     vs2_data: vopB,
     vsew: vsew,
@@ -117,7 +117,7 @@ always_comb begin
                         SEW32: temp_res = vopB[4:0];
                         default: temp_res = '0; 
                     endcase 
-                    vres = vopA >>> temp_res; 
+                    vres = $signed(vopA) >>> temp_res; 
                 end 
                 VALU_SLL: begin
                     case(vsew)
@@ -134,19 +134,19 @@ always_comb begin
                     if(vop.vopunsigned)
                         vres = (vopA < vopB) ? 32'b1 : 32'b0; 
                     else 
-                        vres = ($signed(vopA) <= $signed(vopB)) ? 32'b1 : 32'b0; 
+                        vres = ($signed(vopA) < $signed(vopB)) ? 32'b1 : 32'b0; 
                 end
                 VALU_SLE: begin
                     if(vop.vopunsigned)
-                        vres = (vopA < vopB) ? 32'b1 : 32'b0; 
+                        vres = (vopA <= vopB) ? 32'b1 : 32'b0; 
                     else 
                         vres = ($signed(vopA) <= $signed(vopB)) ? 32'b1 : 32'b0; 
                 end
                 VALU_SGT: begin
                     if(vop.vopunsigned)
-                        vres = (vopA < vopB) ? 32'b1 : 32'b0; 
+                        vres = (vopA > vopB) ? 32'b1 : 32'b0; 
                     else 
-                        vres = ($signed(vopA) < $signed(vopB)) ? 32'b1 : 32'b0; 
+                        vres = ($signed(vopA) > $signed(vopB)) ? 32'b1 : 32'b0; 
                 end
                 VALU_MIN: begin
                     if(vop.vopunsigned)

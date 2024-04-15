@@ -122,6 +122,9 @@ always_comb begin
         end
         VWXUNARY0: begin
             case(vs1_sel)
+                5'b00000: begin // VMV.X.S INSTR
+                    vexec.vfu = VFU_PASS_VS2;
+                end
                 5'b10000: begin // VCPOP INSTR
                     vexec.vfu = VFU_MSK; 
                     vexec.vmaskop = VMSK_CNT;
