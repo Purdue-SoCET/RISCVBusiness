@@ -584,6 +584,11 @@ package rv32v_types_pkg;
     logic vunitstride;
     logic vstrided;
     logic vindexed;
+
+    // segment load/store instructions 
+    logic vseg_op;
+    logic vnew_seg; 
+    logic[2:0] nf_counter; 
     
     // CSR signals
     cfgsel_t vsetvl_type;
@@ -602,6 +607,8 @@ package rv32v_types_pkg;
     logic vvalid;
     logic vuop_last;
     logic vindexed;
+    logic vstrided; 
+    logic vunitstride; 
     logic [4:0] vuop_num;
     logic vmemdren;
     logic vmemdwen;
@@ -611,6 +618,10 @@ package rv32v_types_pkg;
     vsew_t veew;
     rv32i_types_pkg::regsel_t vd_sel;
     logic [1:0] vbank_offset;
+
+    // segment load/store signals 
+    logic vseg_op; 
+    logic vnew_seg; 
 
     // CSR
     logic vsetvl;

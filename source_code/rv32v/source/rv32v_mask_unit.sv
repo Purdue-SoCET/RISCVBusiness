@@ -30,6 +30,7 @@ module rv32v_mask_unit
     input logic mask_enable, 
     input logic[4:0] uop_num,
     input logic[3:0] lane_active, 
+    input logic is_seg_op, 
 
     output logic[3:0] lane_mask,
     output logic[3:0] mask_bits
@@ -43,13 +44,36 @@ always_comb begin
     if(~mask_enable)
         lane_mask = lane_active; 
     else begin
-        lane_mask[0] = lane_active & v0[first_elem_no]; 
-        lane_mask[1] = lane_active & v0[first_elem_no + 1]; 
-        lane_mask[2] = lane_active & v0[first_elem_no + 2]; 
-        lane_mask[3] = lane_active & v0[first_elem_no + 3]; 
+        lane_mask[0] = lane_active[0] & v0[first_elem_no]; 
+        lane_mask[1] = lane_active[1] & v0[first_elem_no + 1]; 
+        lane_mask[2] = lane_active[2] & v0[first_elem_no + 2]; 
+        lane_mask[3] = lane_active[3] & v0[first_elem_no + 3]; 
     end
 
-    mask_bits = {v0[first_elem_no + 3], lane_active & v0[first_elem_no + 2], lane_active & v0[first_elem_no + 1], lane_active & v0[first_elem_no]};
+    if(is_seg_op & mask_enable) begin
+        if(~v0[uop_num])
+            lane_mask = '0; 
+        else begin
+            case(lane_active[1:0])
+            2'b00: lane_mask = 4'b0001; 
+            2'b01: lane_mask = 4'b0010; 
+            2'b10: lane_mask = 4'b0100; 
+            default: lane_mask = 4'b1000; 
+        endcase 
+        end 
+
+    end
+    else if(is_seg_op) begin
+        // convert lane_active encoding to 1-hot encoding
+        case(lane_active[1:0])
+            2'b00: lane_mask = 4'b0001; 
+            2'b01: lane_mask = 4'b0010; 
+            2'b10: lane_mask = 4'b0100; 
+            default: lane_mask = 4'b1000; 
+        endcase 
+    end
+
+    mask_bits = {v0[first_elem_no + 3], v0[first_elem_no + 2],v0[first_elem_no + 1], v0[first_elem_no]};
 end
 
 endmodule

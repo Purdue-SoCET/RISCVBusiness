@@ -90,7 +90,10 @@ RVTEST_CODE_END
 RVTEST_DATA_BEGIN
 
   TEST_DATA
-
+  .byte 0x11
+  .byte 0x00
+  .byte 0x00
+  .byte 0x00
 	ldat:
 	.word 0x00000001
 	.word 0x00000002

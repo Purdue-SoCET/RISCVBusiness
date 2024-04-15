@@ -56,7 +56,7 @@ interface rv32v_uop_gen_if();
   logic [VUOP_NUM_WIDTH-1:0] vuop_num;
 
   // The register bank containing the first element of this uop
-  logic [VLANE_WIDTH-1:0] vbank_offset;
+  logic [VLANE_WIDTH-1:0] vbank_offset; 
 
   // The offset to be added to the architectural register numbers
   // to account for extended registers from LMUL > 1
@@ -74,9 +74,17 @@ interface rv32v_uop_gen_if();
   // Output flag to indicate that last uop of an instruction is being generated
   logic vuop_last;
 
+
+  // segmented decoding signals 
+  logic is_seg_op;  
+  logic[2:0] nf_seg; // number of fields in seg instr
+  logic[2:0] nf_counter; // used for indexed instr
+  vlmul_t emul_dest, emul_src1;   
+  logic new_seg; 
+
   modport vug(
-    input gen, stall, veew_dest, veew_src1, veew_src2, vl,
-    output vuop_num, vbank_offset, vreg_offset_dest, vreg_offset_src1, vreg_offset_src2, vlane_active, busy, vuop_last
+    input gen, stall, veew_dest, veew_src1, veew_src2, vl, is_seg_op, nf_seg,  emul_dest, emul_src1, 
+    output vuop_num, vbank_offset, vreg_offset_src1, vreg_offset_src2, vreg_offset_dest, vlane_active, busy, vuop_last, new_seg, nf_counter
   );
 
 endinterface

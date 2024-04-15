@@ -79,6 +79,18 @@ module stage4_mem_stage (
     assign serial_if.vlane_addr = ex_mem_if.vexmem.vres;
     assign serial_if.vlane_store_data = ex_mem_if.vexmem.vs1;
     assign serial_if.lsc_ready = lsc_if.lsc_ready;
+    
+    // segment load/store serializer signals
+    assign serial_if.vseg_op = ex_mem_if.vexmem.vseg_op; 
+    assign serial_if.vnew_seg = ex_mem_if.vexmem.vnew_seg;
+    assign serial_if.strided = ex_mem_if.vexmem.vstrided; 
+    assign serial_if.unit_strided = ex_mem_if.vexmem.vunitstride;
+    assign serial_if.veew = ex_mem_if.vexmem.veew;
+    
+ 
+
+ 
+
 
     // Memory serializer
     rv32v_mem_serializer SLZR (
@@ -215,7 +227,7 @@ module stage4_mem_stage (
         endcase
     end
 
-    // Element mask considering vlane_mask and vstart
+    // Element mask considering vlane_mask and vstart:
     always_comb begin
         if (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart[$clog2(VLMAX)-1:2]) begin
             velem_mask = '0;
@@ -229,6 +241,13 @@ module stage4_mem_stage (
         end else begin
             velem_mask = ex_mem_if.vexmem.vlane_mask;
         end
+
+        // segmented load/store instruction handling
+         if((ex_mem_if.vexmem.vseg_op) && (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart))
+            velem_mask = '0; 
+         else if(ex_mem_if.vexmem.vseg_op)
+            velem_mask = ex_mem_if.vexmem.vlane_mask;
+
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :
@@ -242,6 +261,11 @@ module stage4_mem_stage (
                 2'd2: vlane_wen = {1'b0, ~dgen_bus_if.busy & velem_mask[2], 2'b0};
                 2'd3: vlane_wen = {      ~dgen_bus_if.busy & velem_mask[3], 3'b0};
             endcase
+
+            if(ex_mem_if.vexmem.vseg_op) begin
+                vlane_wen = dgen_bus_if.busy ? '0 : 
+                            (velem_mask != 0 ? ex_mem_if.vexmem.vlane_mask : '0); 
+            end
         end else if (ex_mem_if.vexmem.vmv_s_x) begin
             vlane_wen = 4'b0001;  // vmv.s.x always to element 0 of vd
         end else if (ex_mem_if.vexmem.vregwen) begin
@@ -254,6 +278,7 @@ module stage4_mem_stage (
         if (ex_mem_if.vexmem.vd_sel.regclass != RC_VECTOR) begin
             vlane_wen = '0;
         end
+
     end
 
     // Write-back crossbar for each vector RF bank
