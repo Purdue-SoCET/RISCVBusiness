@@ -139,7 +139,7 @@ def run_selected_tests(isa, envs, machine_mode_tests):
                     print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
         
     if pass_count == total_count:
-        print(f"{Colors.GREEN}[All tests passed.]{Colors.END}")
+        print(f"{Colors.GREEN}[All {pass_count} tests passed.]{Colors.END}")
     else:
         print(f"{Colors.YELLOW}[Passed {pass_count}/{total_count} tests.]{Colors.END}")
 
