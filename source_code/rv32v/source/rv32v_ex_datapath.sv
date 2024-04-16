@@ -143,7 +143,7 @@ assign vd = {bankdat_src3[3], bankdat_src3[2], bankdat_src3[1], bankdat_src3[0]}
 
 assign vrgtr_vs2_sel = vrgather_vs2_t'(vscratchdata[vrgtr_elem_num][9:0]);
 assign vs2_sel = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vs2_sel : vctrls.vs2_sel;
-assign vs2_bank_offset = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vbank_offset : vctrls.vuop_num[1:0];
+assign vs2_bank_offset = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vbank_offset : vctrls.vbank_offset;
 
 // Banks 
 rv32v_vector_bank VBANK0 (
