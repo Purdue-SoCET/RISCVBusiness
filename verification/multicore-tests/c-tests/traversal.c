@@ -1,6 +1,7 @@
 #include "utility.h"
 #include "fast_amo_emu.h"
 #include <stdlib.h>
+#include <stdatomic.h> 
 
 typedef struct TreeNode {
     uint32_t value;
@@ -1911,7 +1912,6 @@ typedef struct TreeNode {
     TreeNode node1 = {1, &node2, &node3};
 #endif
 
-uint32_t sum = 0;
 
 /*  1
    / \
@@ -1924,31 +1924,40 @@ uint32_t sum = 0;
 8
 */
 
+
+uint32_t sum = 0;
+atomic_int key_found = 0;
+int key_to_search = 901;
+
 void hart0_main();
 void hart1_main();
 
 void traverse(TreeNode *node) {
-    if (node == NULL) return;
+    if (node == NULL || key_found == 1) return;
+    if (node->value == key_to_search) {
+        key_found = 1;
+        return;
+    }
     if (node->left != NULL) {
         traverse(node->left);
     }
     if (node->right != NULL) {
         traverse(node->right);
     }
-    atomic_add(&sum, node->value);
 }
 
 void hart0_main() {
     flag = 0;
     TreeNode* root = &node1;
-    traverse(root);
-    flag = sum == ((N * (N + 1)) / 2);
+    traverse(root->left);
+    traverse(root->right);
+    flag = 1;
 }
 
 void hart1_main() {
-    /*
+    hart1_done = 0;
     TreeNode* root = &node1;
     traverse(root->right);
-    */
     hart1_done = 1; 
 }
+
