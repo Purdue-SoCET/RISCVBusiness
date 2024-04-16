@@ -131,7 +131,7 @@ module l1_cache #(
         logic wen;
     } item;
     item [2:0] egress_queue;
-    
+
     //logic [ 1 : 0] [ 2  : 0] [WORD_SIZE - 1 : 0] egress_queue;
     logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0]  eq_dataout;
     item eq_datain;
@@ -295,10 +295,10 @@ module l1_cache #(
             eq_datain.pair[i].data = '0;
         end
 
-        mem_gen_bus_if.addr = eq_dataout[eq_wordcnt];
-        mem_gen_bus_if.wdata = eq_dataout[eq_wordcnt + BLOCK_SIZE];
-        mem_gen_bus_if.wen = eq_dataout[BLOCK_SIZE * 2];
-        mem_gen_bus_if.ren = ~eq_empty ? ~eq_dataout[BLOCK_SIZE * 2] : 0;
+        mem_gen_bus_if.addr = egress_queue[eq_rptr].pair[eq_wordcnt].addr;
+        mem_gen_bus_if.wdata = egress_queue[eq_rptr].pair[eq_wordcnt].data;
+        mem_gen_bus_if.wen = egress_queue[eq_rptr].wen;
+        mem_gen_bus_if.ren = ~eq_empty ? ~egress_queue[eq_rptr].wen : 0;
         
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx_bits] == (ASSOC - 1)))
@@ -585,28 +585,11 @@ module l1_cache #(
                 eq_wptr <= eq_wptr + 1;
             end
             if (~eq_empty) begin
-                if (~mem_gen_bus_if.busy) begin
-                    // mem_gen_bus_if.addr = egress_queue[eq_rptr[2:0]][eq_wordcnt];
-                    // mem_gen_bus_if.wdata = egress_queue[eq_rptr[2:0]][eq_wordcnt + BLOCK_SIZE];
-                    // mem_gen_bus_if.wen = egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
-                    // mem_gen_bus_if.ren = ~egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
-                    eq_dataout <= egress_queue[eq_rptr[2:0]];
-                end
                 if (eq_wordcntdone) begin
                     eq_rptr <= eq_rptr + 1;
-                    // mem_gen_bus_if.addr = egress_queue[eq_rptr[2:0]][eq_wordcnt];
-                    // mem_gen_bus_if.wdata = egress_queue[eq_rptr[2:0]][eq_wordcnt + BLOCK_SIZE];
-                    // mem_gen_bus_if.wen = egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
-                    // mem_gen_bus_if.ren = ~egress_queue[eq_rptr[2:0]][BLOCK_SIZE*2];
-                    // iq_dataout <= n_iq_dataout;
-                    eq_dataout <= egress_queue[eq_rptr[2:0]];
                 end
             end
         end
-    end
-
-    always_comb begin
-
     end
 
 
@@ -687,7 +670,5 @@ module l1_cache #(
             end
         end
     end
-
-
 
 endmodule

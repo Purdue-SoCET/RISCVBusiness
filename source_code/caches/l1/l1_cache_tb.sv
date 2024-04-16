@@ -14,9 +14,9 @@
 *	limitations under the License.
 *
 *
-*	Filename:     sram_tb.sv
+*	Filename:     l1_cache_tb.sv
 *
-*	Created by:   Jimmy Mingze Jin
+*	Created by:   Pranav Srisankar
 *	Email:        jin357@purdue.edu
 *	Date Created: 01/29/2023
 *	Description:  basic sram tb
@@ -53,6 +53,7 @@ module l1_cache_tb();
         proc_gen_bus_if.addr = 32'h00000010;
         proc_gen_bus_if.ren = 1'b1;
         proc_gen_bus_if.wen = 1'b0;
+		mem_gen_bus_if.busy = 1'b1;
 		$timeformat(-9, 0, " ns", 20);
 		reset_dut();
 
@@ -65,18 +66,25 @@ module l1_cache_tb();
         proc_gen_bus_if.ren = 1'b1;
         proc_gen_bus_if.wen = 1'b0;
 
-        for (int i = 0; i < 2; i++) begin
-            #(CLK_PERIOD);
-        end
+		#(CLK_PERIOD * 2);
 
-        proc_gen_bus_if.addr = 32'h00000026;
-        proc_gen_bus_if.ren = 1'b1;
+        proc_gen_bus_if.addr = 32'hDEADBEEF;
+        proc_gen_bus_if.ren = 1'b0;
         proc_gen_bus_if.wen = 1'b0;
 		
+		for (int i = 0; i < 6; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			#(CLK_PERIOD);
+		end
+
 		#(CLK_PERIOD * 4);
 
-		mem_gen_bus_if.busy = 1'b0;
-		#(CLK_PERIOD * 5);
+		for (int i = 0; i < 6; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			#(CLK_PERIOD);
+		end
+
+
 		$finish; 
 	end
 endmodule
