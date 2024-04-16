@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
-[*] Mon Mar 18 18:01:39 2024
+[*] Tue Apr 16 21:51:29 2024
 [*]
 [dumpfile] "waveform.vcd"
-[dumpfile_mtime] "Mon Mar 18 17:58:00 2024"
-[dumpfile_size] 2061252
+[dumpfile_mtime] "Tue Apr 16 21:45:04 2024"
+[dumpfile_size] 36192446
 [savefile] "rvv_format.gtkw"
-[timestart] 0
-[size] 1920 1080
-[pos] -1 -26
-*-5.730774 125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[timestart] 63
+[size] 1512 844
+[pos] -1 0
+*-5.730774 113 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -46,6 +46,7 @@
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.
 [treeopen] TOP.top_core.CORE.pipeline.fetch_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.hazard_if.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.
@@ -75,7 +76,7 @@ TOP.top_core.CORE.pipeline.fetch_stage_i.instr[31:0]
 -Fetch
 @800200
 -uOP out
-@29
+@28
 TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vvalid
 @22
 TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vuop_num[4:0]
@@ -171,8 +172,11 @@ TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
 -Scalar RF
 @800200
 -Hazard unit
-@28
+@29
 TOP.top_core.CORE.pipeline.hazard_if.ex_busy
+@28
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
 TOP.top_core.CORE.pipeline.hazard_unit_i.exception
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data

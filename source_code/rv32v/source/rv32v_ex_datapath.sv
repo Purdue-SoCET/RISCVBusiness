@@ -7,12 +7,12 @@ module rv32v_ex_datapath(
     input vcontrol_t vctrls, 
     input vwb_t vwb_ctrls,
     input logic[3:0] vmskset_fwd_bits,
-    input logic output_stall,
+    input logic ex_mem_stall, ex_mem_flush, 
     input logic queue_flush, mask_stall, 
     input word_t vl, vlmax,
 
     output vexmem_t vmem_in,
-    output logic vex_stall, vex_frontend_stall
+    output logic vex_stall
 );
 
 parameter NUM_LANES = 4; 
@@ -33,6 +33,7 @@ logic[3:0] msku_lane_mask;
 logic[3:0] vfu_stall;
 logic[4:0] vs2_sel;
 logic[1:0] vs2_bank_offset;
+logic output_stall;
 
 // permutation unit related
 vperm_input_t vperm_in;
@@ -48,6 +49,8 @@ logic[3:0] vmskset_lane_mask;
 
 // scratch reg
 word_t[3:0] vscratchdata;
+
+assign output_stall = ex_mem_stall || ex_mem_flush;
 
 logic vint_cmp_instr; 
 
@@ -330,8 +333,6 @@ generate
 endgenerate
 
 assign vex_stall = (|vfu_stall) | mask_calc_busy | vrgtr_busy;
-// stall frontend only
-assign vex_frontend_stall = vrgtr_vs2_read;
 
 // reduction unit
 rv32v_reduction_unit VREDUNIT (
@@ -347,7 +348,7 @@ rv32v_permutation_unit RV32V_PERM (
     .CLK,
     .nRST,
     .vperm_in,
-    .stall(output_stall),
+    .stall(ex_mem_stall),  // Optimization: only stall on load-use (current load could be independent)
     .flush(queue_flush),
     .vperm_out,
     .vrgtr_elem_num,
@@ -369,7 +370,8 @@ assign vperm_in = '{
     vuop_last: vctrls.vuop_last,
     vlaneactive: vctrls.vlaneactive,
     vd_sel: vctrls.vd_sel.regidx,
-    vs2_sel: vctrls.vs2_sel
+    vs2_sel: vctrls.vs2_sel,
+    use_rs1_data: (vctrls.vxin1_use_imm | vctrls.vxin1_use_rs1)
 };
 
 // Maskings
@@ -432,7 +434,8 @@ assign vmem_in.vmv_s_x = vctrls.vmv_s_x;
 // Permutation instructions write to scratch register in EX & back to vector RF in MEM/WB
 assign vmem_in.vd_sel = (vctrls.vexec.vfu == VFU_PRM) ? '{regclass: RC_VECTOR, regidx: vctrls.vd_sel.regidx} : vctrls.vd_sel;
 //assign vmem_in.vbank_offset = vctrls.vbank_offset; 
-assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset : (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.vbank_offset : vctrls.vbank_offset;
+assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset :
+                              ((vctrls.vexec.vfu == VFU_PRM) & vperm_out.vslide) ? vperm_out.vbank_offset : vctrls.vbank_offset;
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1;
 assign vmem_in.vkeepvl = vctrls.vkeepvl;
 

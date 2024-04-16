@@ -59,7 +59,7 @@ module stage4_execute_stage (
     vexmem_t vex_out;
     word_t vstride;
     word_t vlmax; // determined from lmul and sew settings
-    logic vex_stall, vex_frontend_stall;
+    logic vex_stall;
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -102,13 +102,13 @@ module stage4_execute_stage (
         .vctrls(ex_in.vctrl_out), 
         .vwb_ctrls(ex_mem_if.vwb), 
         .vmskset_fwd_bits(ex_mem_if.vmskset_fwd_bits), 
-        .output_stall(hazard_if.ex_mem_stall || hazard_if.ex_mem_flush),
+        .ex_mem_stall(hazard_if.ex_mem_stall),
+        .ex_mem_flush(hazard_if.ex_mem_flush),
         .vl(shadow_if.vl_shadow), .vlmax(vlmax), .queue_flush(hazard_if.flush_queue),
         .mask_stall(hazard_if.vmask_calc_stall),  
         
         .vmem_in(vex_out),
-        .vex_stall(vex_stall),
-        .vex_frontend_stall(vex_frontend_stall)
+        .vex_stall(vex_stall)
     );
 
     // stride calculation for mem operations
@@ -142,9 +142,13 @@ module stage4_execute_stage (
                 shadow_if.avl_spec = rs1_post_fwd;
                 shadow_if.vtype_spec = ex_in.vctrl_out.vtype_imm; 
             end
-            default: begin
+            VSETVL: begin
                 shadow_if.avl_spec = rs1_post_fwd;
-                shadow_if.vtype_spec = word_t'(rs2_post_fwd); 
+                shadow_if.vtype_spec = word_t'(rs2_post_fwd);
+            end
+            default: begin  // NOT_CFG
+                shadow_if.avl_spec = '0;
+                shadow_if.vtype_spec = vtype_t'({'0, shadow_if.vsew_shadow, shadow_if.vlmul_shadow});
             end
         endcase
 

@@ -1,7 +1,7 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# vrgather.S
+# vrgather_vv.S
 #-----------------------------------------------------------------------------
 #
 # Test vrgather.vv instruction
@@ -21,6 +21,7 @@ RVTEST_CODE_BEGIN
 	la x3, sdat
   vle32.v v1, (x1)
   vle32.v v2, (x2)
+	vle32.v v0, (x3)
   vrgather.vv v3, v2, v1
 	vse32.v v3, (x3)
 	lw x4, 0(x3)
@@ -29,9 +30,9 @@ RVTEST_CODE_BEGIN
 	lw x7, 12(x3)
 
   TEST_CASE(1, x10, 4, NOP)
-	TEST_CASE(2, x4, 0x0b0a0908, NOP)
-	TEST_CASE(3, x5, 0x07060504, NOP)
-	TEST_CASE(4, x6, 0x07060504, NOP)
+	TEST_CASE(2, x4, 0x0f0e0d0c, NOP)
+	TEST_CASE(3, x5, 0x0b0a0908, NOP)
+	TEST_CASE(4, x6, 0x0b0a0908, NOP)
 	TEST_CASE(5, x7, 0x0, NOP)
 
   TEST_PASSFAIL

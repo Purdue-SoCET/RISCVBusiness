@@ -142,6 +142,7 @@ end
 // Register select
 regsel_t vd_sel, vs1_sel, vs2_sel;
 regsel_t vd_sel_red, vs1_sel_red, vs2_sel_red;
+regsel_t vs2_sel_perm;
 
 logic vmskst_instr; 
 assign vmskset_instr = vopi_valid && (
@@ -182,10 +183,15 @@ always_comb begin
         vs2_sel = '{regclass: RC_VECTOR, regidx: vs2};
     end
 
-    // Override in case of permutation instructions (currently only slide(1)up/slide(1)down)
+    // Override vd in case of permutation instructions (currently only slide(1)up/slide(1)down keep vd constant)
+    // Override vs2 in case of vrgather_i_x.v{i,x}
     if (vperminstr) begin
         vd_sel = vd_sel_perm;
+        if (vrgather_i_x) begin
+            vs2_sel = vs2_sel_perm;
+        end
     end
+
 end
 
 assign vcu_if.vcontrol.vd_sel = vd_sel;
@@ -705,7 +711,7 @@ end
 /**********************************************************/
 /* PERMUTATION CONTROL LOGIC
 /**********************************************************/
-logic vopi_perm, vopm_perm, vperminstr, vperm_var_offset;
+logic vopi_perm, vopm_perm, vperminstr, vperm_var_offset, vrgather_i_x;
 regsel_t vd_sel_perm;
 word_t vl_perm;
 logic [4:0] vperm_uop_num;
@@ -723,8 +729,9 @@ assign vopi_perm = (vopi_valid && vexec_opi.vfu == VFU_PRM);
 assign vopm_perm = (vopm_valid && vexec_opm.vfu == VFU_PRM);
 assign vperminstr = (vopi_perm || vopm_perm);
 assign vperm_var_offset = (vopi_perm && ((vexec_opi.vpermop == VPRM_SLU) || (vexec_opi.vpermop == VPRM_SLD)));
+assign vrgather_i_x = (vexec_opi.vpermop == VPRM_GTR) && ((vfunct3 == OPIVI) || (vfunct3 == OPIVX));
 
-assign vd_sel_perm = '{regclass: RC_SCRATCH, regidx: vd};
+assign vs2_sel_perm = '{regclass: RC_VECTOR, regidx: vs2};
 assign vl_perm = vcu_if.vl + 4;  // need extra uOP for offset%4 != 0
 
 always_ff @(posedge CLK, negedge nRST) begin
@@ -740,6 +747,7 @@ always_comb begin
     vperm_uop_num = '0;
     use_vperm_uop = 0;
     vperm_vlane_active = '0;
+    vd_sel_perm = '{regclass: RC_SCRATCH, regidx: vd + {2'b00, vug_if.vreg_offset_dest}};
 
     if (vperminstr && ((vexec_opi.vpermop == VPRM_SLD) || (vexec_opm.vpermop == VPRM_S1D))) begin  // slide{1}down
         case (slidestate)
@@ -753,6 +761,11 @@ always_comb begin
                 end
             end
         endcase
+    end
+
+    if ((vexec_opi.vpermop == VPRM_SLD) || (vexec_opi.vpermop == VPRM_SLU) ||
+        (vexec_opm.vpermop == VPRM_S1D) || (vexec_opm.vpermop == VPRM_S1U)) begin
+        vd_sel_perm = '{regclass: RC_SCRATCH, regidx: vd};
     end
 end
 
