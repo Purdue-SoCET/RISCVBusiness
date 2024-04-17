@@ -105,7 +105,7 @@ module stage3_execute_stage (
     /******************
     * Functional Units
     *******************/
-    logic rv32m_busy;
+    logic rv32m_done;
     word_t rv32m_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
@@ -117,11 +117,11 @@ module stage3_execute_stage (
     rv32m_wrapper RV32M_FU (
         .CLK,
         .nRST,
-        .rv32m_start(cu_if.rv32m_control.select),
+        .rv32m_start(cu_if.rv32m_control.select && !hazard_if.mem_use_stall),
         .operation(cu_if.rv32m_control.op), // TODO: Better way?
         .rv32m_a(rs1_post_fwd), // All RV32M are reg-reg, so just feed post-fwd regs
         .rv32m_b(rs2_post_fwd),
-        .rv32m_busy,
+        .rv32m_done,
         .rv32m_out
     );
 
@@ -230,14 +230,16 @@ module stage3_execute_stage (
     assign fw_if.rs2_e = rf_if.rs2;
 
     assign hazard_if.pc_e = fetch_ex_if.fetch_ex_reg.pc;
-    assign hazard_if.ex_busy = (rv32m_busy && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
+    assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
 
 
     // TODO: NEW
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
+            /*verilator lint_off ENUMVALUE*/
             ex_mem_if.ex_mem_reg <= '{default: '0};
+            /*verilator lint_on ENUMVALUE*/
         end else begin
             // TODO: This register is ~180b. Not awful, but can it be smaller?
             // PS: Does it even matter? Synth. tools may be able to merge regs.
@@ -298,7 +300,9 @@ module stage3_execute_stage (
                 ex_mem_if.ex_mem_reg.tracker_signals.imm_U  <= cu_if.imm_U;
 
             end else if(hazard_if.ex_mem_flush && !hazard_if.ex_mem_stall) begin
+                /*verilator lint_off ENUMVALUE*/
                 ex_mem_if.ex_mem_reg <= '{default: '0};
+                /*verilator lint_on ENUMVALUE*/
             end
             // else: retain state
         end

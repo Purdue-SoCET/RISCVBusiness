@@ -34,19 +34,67 @@ module branch_predictor_wrapper (
     //predictor_pipeline_if.access access_if
 );
     // Predictor used based on the BR_PREDICTOR_TYPE definition
+
+    predictor_pipeline_if predict_temp1();
+    predictor_pipeline_if predict_temp2();    
    
     always_comb begin
         $display(BR_PREDICTOR_TYPE);
-    end 
-    generate
-        case (BR_PREDICTOR_TYPE)
-            "not_taken": nottaken_predictor predictor (.*);	// static not taken predictor
-			"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
-			"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
-			"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
-			"return"   : return_predictor #(.entries(10)) predictor (.*); //return address predictor
-			"btb_ghr_pht" : btb_ghr_pht predictor (.*);	// BTB with global history and prediction history
-        endcase
-    endgenerate
-endmodule
 
+        predict_temp1.current_pc = predict_if.current_pc;
+        predict_temp1.update_predictor = predict_if.update_predictor;
+        predict_temp1.prediction = predict_if.prediction;
+        predict_temp1.branch_result = predict_if.branch_result;
+        predict_temp1.update_addr = predict_if.update_addr;
+        predict_temp1.is_rv32c = predict_if.is_rv32c;
+        predict_temp1.imm_sb = predict_if.imm_sb;
+        predict_temp1.pc_to_update = predict_if.pc_to_update;
+        predict_temp1.is_branch = predict_if.is_branch;
+        predict_temp1.is_jump = predict_if.is_jump;
+        predict_temp1.direction = predict_if.direction;
+        predict_temp1.instr = predict_if.instr;
+        predict_temp1.is_jalr = predict_if.is_jalr;
+
+        predict_temp2.current_pc = predict_if.current_pc;
+        predict_temp2.update_predictor = predict_if.update_predictor;
+        predict_temp2.prediction = predict_if.prediction;
+        predict_temp2.branch_result = predict_if.branch_result;
+        predict_temp2.update_addr = predict_if.update_addr;
+        predict_temp2.is_rv32c = predict_if.is_rv32c;
+        predict_temp2.imm_sb = predict_if.imm_sb;
+        predict_temp2.pc_to_update = predict_if.pc_to_update;
+        predict_temp2.is_branch = predict_if.is_branch;
+        predict_temp2.is_jump = predict_if.is_jump;
+        predict_temp2.direction = predict_if.direction;
+        predict_temp2.instr = predict_if.instr;
+        predict_temp2.is_jalr = predict_if.is_jalr;
+        
+        if(predict_if.is_jalr) begin //might have to be is_jalr or is_jump
+            predict_if.predict_taken = predict_temp2.predict_taken;
+            predict_if.target_addr = predict_temp2.target_addr;
+        end
+        else begin
+            predict_if.predict_taken = predict_temp1.predict_taken;
+            predict_if.target_addr = predict_temp2.target_addr;
+        end
+    end
+    generate
+        //case (BR_PREDICTOR_TYPE)
+        //    "not_taken": nottaken_predictor predictor (.*);	// static not taken predictor
+		//	"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
+		//	"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
+		//	"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
+		//	"return"   : return_predictor #(.entries(10)) predictor (.*); //return address predictor
+        //endcase
+            case (BR_PREDICTOR_TYPE)
+                "not_taken": nottaken_predictor predictor (CLK, nRST, predict_temp1);	// static not taken predictor
+		        "btfnt"	   : btfnt_predictor predictor (CLK, nRST, predict_temp1);	// static backward taken/forward not taken predictor
+		        "btb_1"	   : btb predictor (CLK, nRST, predict_temp1);				// branch target buffer with 1 bit predictor
+		        "btb_2"	   : btb #(.PRED_BITS(2)) predictor (CLK, nRST, predict_temp1); // BTB with 2-bit predictor
+			"btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);	// BTB with global history and prediction history
+
+            endcase
+    endgenerate
+    return_predictor #(.entries(4)) predictor (CLK, nRST, predict_temp2);
+
+endmodule

@@ -60,12 +60,12 @@ class Error(Exception):
         return self.error_string
 
 class run_config():
-    def __init__(self, config_json:dict):
+    def __init__(self, config_json: dict, args: dict):
         # top level info
-        self.arch = str(config_json["arch"])
+        self.arch = str(args.get("arch") or config_json["arch"])
         self.abi = str(config_json["abi"])
-        self.xlen = str(config_json["xlen"])
-        self.test_type = str(config_json["test_type"])
+        self.test_type = str(args.get("test_type") or config_json["test_type"])
+        self.march = str(args.get("march") or config_json["march"])
         self.top_level = str(config_json["top_level"])
         # read directory definitions
         self.build_dir = pathlib.Path(config_json["build_dir"])
@@ -179,10 +179,12 @@ def compile_asm(filepath: Type[pathlib.Path], outpath: Type[pathlib.Path],\
     config: Type[run_config], logger: Type[logging.Logger])\
     -> Type[pathlib.Path]:
     # main compile arguments
-    # notes: need to parameratize the .T, .I, abi, and xlen flags
+    # notes: need to parameratize the .T, .I, abi, and march flags
     # also probably pass the filepath too
-    compile_cmd_arr = ["riscv64-unknown-elf-gcc", 
-                "-march=" + config.xlen + "_zicsr_zifencei", "-mabi=" + config.abi,
+    compile_cmd_arr = ["riscv64-unknown-elf-gcc",
+                "-march=" + config.march + "_zicsr_zifencei", "-mabi=" + config.abi, 
+                #"-march=" + config.xlen + "_zicsr_zifencei", "-mabi=" + config.abi,
+                #"-march=" + config.march, "-mabi=" + config.abi,
                 "-static", "-mcmodel=medany", "-fvisibility=hidden",
                 "-nostdlib", "-nostartfiles",
                 "-T"+str(config.link_file),
@@ -399,6 +401,9 @@ def parse_args()-> Type[run_config]:
     parser.add_argument("--arch", "-a", dest="arch",
         type=str, default=None, 
         help="Specify the architecture targeted. Option(s): RV32I Default: RV32I")
+    parser.add_argument("--march", "-m", dest="march",
+        type=str, default=None,
+        help="Specify the compiler architecture to be built. Default: rv32i")
     parser.add_argument("--test_type", "-t", dest="test_type",
         type=str, default=None, 
         help="Specify what type of tests to run. Option(s): asm, selfasm,c Default: selfasm")
@@ -413,11 +418,7 @@ def parse_args()-> Type[run_config]:
     with open(args.config_file, "r") as conf_fp:
         conf_dict = json.load(conf_fp)
 
-    config = run_config(conf_dict)
-    if(args.arch):
-        config.arch = args.arch
-    if(args.test_type):
-        config.test_type = args.test_type
+    config = run_config(conf_dict, vars(args))
     if(args.file_names):
         # find all the files that match the pattern
         print(args.file_names)

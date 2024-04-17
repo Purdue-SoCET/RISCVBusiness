@@ -37,7 +37,7 @@ ISA_PARAMS = \
 UARCH_PARAMS = \
   {
     # Branch/Jump Configurations
-    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2', 'return', 'btb_ghr_pht'],
+    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2', 'btb_ghr_pht'],
     # Cache Configurations
     'cache_config' : ['separate'],
     'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
@@ -152,10 +152,10 @@ def create_include(config):
       if uarch_param not in free_params and not isinstance(uarch_params[uarch_param], int):
         err = 'Illegal configuration of incorrect type for ' + uarch_param
         sys.exit(err)
-      if uarch_params['dcache_size'] % (uarch_params['dcache_block_size'] * uarch_params['dcache_assoc']) is not 0:
+      if uarch_params['dcache_size'] % (uarch_params['dcache_block_size'] * uarch_params['dcache_assoc']) != 0:
         err = 'Invalid dcache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
-      if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) is not 0:
+      if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
         err = 'Invalid icache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
     elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
