@@ -17,7 +17,7 @@ module ghr_pht #(
     // GHR LOGIC
     logic [(SIZE - 1):0] GHR, nxt_GHR;
     always_ff @(posedge CLK, negedge nRST) begin : GHR_REG_LOGIC
-        if (nRST) begin
+        if (!nRST) begin
             GHR <= '0;
         end
 
@@ -27,14 +27,17 @@ module ghr_pht #(
     end
 
     always_comb begin : GHR_NXT_LOGIC
-        nxt_GHR = {GHR[(SIZE - 2):0],previous_branch};
+	nxt_GHR = GHR;
+	if (predict_if.update_predictor) begin
+            nxt_GHR = {GHR[(SIZE - 2):0],previous_branch};
+	end
     end
 
     // PHT LOGIC
     logic [(PRED_BITS - 1):0] PHT [(2**SIZE - 1):0];
     logic [(PRED_BITS - 1):0] nxt_PHT;
     always_ff @(posedge CLK, negedge nRST) begin : PHT_REG_LOGIC
-        if (nRST) begin
+        if (!nRST) begin
             //PHT[(2**SIZE - 1):0] <= '0;
 	    PHT <= '{default:2'b00};
         end
