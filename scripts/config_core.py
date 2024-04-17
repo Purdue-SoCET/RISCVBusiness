@@ -78,7 +78,7 @@ UARCH_PARAMS = \
     # Multicore configurations
     'num_harts' : [],
     # Branch/Jump Configurations
-    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2', 'return'],
+    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2', 'return', 'btb_ghr_pht'],
     # Cache Configurations
     'cache_config' : ['separate'],
     'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],

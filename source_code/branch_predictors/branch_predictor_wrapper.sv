@@ -19,7 +19,7 @@
 *   Created by:   John Skubic
 *   Email:        jskubic@purdue.edu
 *   Date Created: 06/19/2016
-*   Description:  Branch Predictor, BTB, RAS
+*   Description:  Branch Predictor, BTB, RAS, GHR_PHT
 *                 Replace declaration of not taken predictor as desired
 */
 
@@ -45,6 +45,7 @@ module branch_predictor_wrapper (
 			"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
 			"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
 			"return"   : return_predictor #(.entries(10)) predictor (.*); //return address predictor
+			"btb_ghr_pht" : btb_ghr_pht predictor (.*);	// BTB with global history and prediction history
         endcase
     endgenerate
 endmodule

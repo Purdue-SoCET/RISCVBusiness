@@ -26,6 +26,8 @@ filesets:
             - source_code/branch_predictors/btfnt_predictor/btfnt_predictor.sv
             - source_code/branch_predictors/btb/btb.sv
             - source_code/branch_predictors/return_predictor/return_predictor.sv
+            - source_code/branch_predictors/ghr_pht/ghr_pht.sv
+            - source_code/branch_predictors/btb_ghr_pht/btb_ghr_pht.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
             #- source_code/pipelines/tspp/tspp_hazard_unit.sv
             #- source_code/pipelines/tspp/tspp_fetch_stage.sv
