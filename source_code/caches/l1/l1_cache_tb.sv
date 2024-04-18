@@ -84,7 +84,34 @@ module l1_cache_tb();
 			#(CLK_PERIOD);
 		end
 
+		proc_gen_bus_if.addr = 32'h0000F000;
+		proc_gen_bus_if.ren = 1'b1;
+		proc_gen_bus_if.wen = 1'b0;
 
+		for (int i = 0; i < 6; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			#(CLK_PERIOD);
+		end
+
+		proc_gen_bus_if.addr = 32'h0000E000;
+		proc_gen_bus_if.ren = 1'b1;
+		proc_gen_bus_if.wen = 1'b0;
+
+		for (int i = 0; i < 5; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			#(CLK_PERIOD);
+		end
+
+		proc_gen_bus_if.addr = 32'h0000D000;
+		proc_gen_bus_if.ren = 1'b0;
+		proc_gen_bus_if.wen = 1'b1;
+		proc_gen_bus_if.wdata = 32'hFFFFFFFF;
+
+		for (int i = 0; i < 6; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			#(CLK_PERIOD);
+		end
+		
 		$finish; 
 	end
 endmodule
