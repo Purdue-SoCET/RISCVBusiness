@@ -38,7 +38,7 @@ RVTEST_CODE_BEGIN
     bne x1,x0, loop
     
 
-	TEST_CASE(1, x0, 0, NOP)
+ TEST_CASE(1, x0, 0, NOP)
 
   TEST_PASSFAIL
 

@@ -20,13 +20,17 @@ RVTEST_CODE_BEGIN
   la x3, A_data
   la x4, B_data
   la x5, C_data 
+
+  addi x3, x3, -4
+  addi x4, x4, -4
+  addi x5, x5, -4
   loop:
     sub x6, x2, x1
     beq x6, x0, exit 
-    slli x7, x2, 2
-    add x3, x3, x7
-    add x4, x4, x7
-    add x5, x5, x7
+
+    addi x3, x3, 4
+    addi x4, x4, 4
+    addi x5, x5, 4
 
     lw x8, 0(x3)  
     lw x9, 0(x4)
@@ -37,6 +41,7 @@ RVTEST_CODE_BEGIN
     j loop 
 
   exit:
+
 
 
 	TEST_CASE(1, x0, 0, NOP)
