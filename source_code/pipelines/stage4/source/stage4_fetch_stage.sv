@@ -113,7 +113,7 @@ module stage4_fetch_stage (
     assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) fetch_out <= '0;
-        else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_out <= '0;
+        else if ((hazard_if.if_ex_flush && !hazard_if.if_ex_stall) || hazard_if.npc_sel) fetch_out <= '0;
         else if (!hazard_if.if_ex_stall) begin
             if(mal_insn || fault_insn) begin
                 // Squash to NOP if exception

@@ -1,10 +1,10 @@
 # See LICENSE for license details.
 
 #*****************************************************************************
-# vslide1down_e8.S
+# vslideup_e32.S
 #-----------------------------------------------------------------------------
 #
-# Test vslide1down.vx instruction
+# Test vslideup.vx instruction
 #
 
 #include "riscv_test.h"
@@ -15,18 +15,27 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
 
-	vsetivli x10, 3, e8
+	vsetivli x10, 5, e32, m2
   la x1, ldat
 	la x2, sdat
-  li x3, 0xcc
-  vle8.v v1, (x1)
-  vslide1down.vx v2, v1, x3
-  vse8.v v2, (x2)
+  li x3, 3
+  vle32.v v2, (x1)
+  vle32.v v4, (x2)
+  vslideup.vx v4, v2, x3
+  vse32.v v4, (x2)
 
   lw x4, 0(x2)
+  lw x5, 4(x2)
+  lw x6, 8(x2)
+  lw x7, 12(x2)
+  lw x8, 16(x2)
 
-  TEST_CASE(1, x10, 0x3, NOP)
-	TEST_CASE(2, x4, 0x55cc0201, NOP)
+  TEST_CASE(1, x10, 0x5, NOP)
+	TEST_CASE(2, x4, 0x55555555, NOP)
+  TEST_CASE(3, x5, 0x55555555, NOP)
+  TEST_CASE(4, x6, 0x55555555, NOP)
+  TEST_CASE(5, x7, 0x03020100, NOP)
+  TEST_CASE(6, x8, 0x07060504, NOP)
 
   TEST_PASSFAIL
 
@@ -42,8 +51,12 @@ RVTEST_DATA_BEGIN
   .word 0x07060504
   .word 0x0b0a0908
   .word 0x0f0e0d0c
+  .word 0x13121110
+  .word 0x17161514
 
   sdat:
+  .word 0x55555555
+  .word 0x55555555
   .word 0x55555555
   .word 0x55555555
   .word 0x55555555
