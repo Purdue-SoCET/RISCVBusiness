@@ -253,25 +253,3 @@ RVTEST_DATA_BEGIN
   .word 0xf
 
 RVTEST_DATA_END
-
-/*
-// for loop for checking
-  li x6, 0 // index i
-  li x7, 4 // loop iterations N 
-loop: 
-  beq x6, x7, exit
-  addi TESTNUM, x6, 0
-  slli x8, x6, 2
-
-  add x9, x8, x1
-  lw x3, 0(x9) // input operand
-  add x3, x3, x3 // expected result
-
-  add x9, x8, x2
-  lw x4, 0(x9) // actual result
-
-  bne x4, x3, fail
-
-  addi x6, x6, 1
-  j loop
-*/
