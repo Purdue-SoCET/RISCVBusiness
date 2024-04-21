@@ -112,7 +112,7 @@ always_comb begin
         end
         VMADC: begin
             vexec.vfu = VFU_ALU;
-            vexec.valuop = vm_bit ? VALU_VMADC : VALU_VMADC_NO_C; // Assuming VMADC uses the same operation as ADC
+            vexec.valuop = ~vm_bit ? VALU_VMADC : VALU_VMADC_NO_C; // Assuming VMADC uses the same operation as ADC
             disable_mask = 1'b1; 
             veew_dest = SEW8; 
         end
@@ -123,7 +123,7 @@ always_comb begin
         end
         VMSBC: begin
             vexec.vfu = VFU_ALU;
-            vexec.valuop = vm_bit ? VALU_VMSBC : VALU_VMSBC_NO_B; // Assuming VMSBC uses the same operation as SBC
+            vexec.valuop = ~vm_bit ? VALU_VMSBC : VALU_VMSBC_NO_B; // Assuming VMSBC uses the same operation as SBC
             disable_mask = 1'b1;
             veew_dest = SEW8; 
         end

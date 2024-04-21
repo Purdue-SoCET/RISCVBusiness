@@ -289,6 +289,9 @@ always_comb begin
         veew_dest = twice_vsew;
     end
 
+    if(vmskset_instr)
+        veew_dest = SEW8; 
+    
     // Non-indexed store instructions use instr.width for data src and dest
     if (vmeminstr && !vindexed) begin
         veew_src1 = vmem_eew;

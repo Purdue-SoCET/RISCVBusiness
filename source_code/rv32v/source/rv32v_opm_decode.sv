@@ -136,6 +136,8 @@ always_comb begin
             endcase 
         end
         VXUNARY0: begin
+            vexec.vfu = VFU_ALU; 
+            valid = 1'b0;             
             case(vs1_sel)
                 5'd2: begin // vzext.vf8 instr 
                     veew_src2 = vsew_t'(vsew_bits - 3); 
@@ -171,8 +173,6 @@ always_comb begin
                     valid = 1'b1; 
                 end
             endcase 
-
-            valid = 1'b0;             
         end
         VMUNARY0: begin
             vexec.vfu = VFU_MSK; 
@@ -287,6 +287,7 @@ always_comb begin
         VWADDU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADD;
+            vexec.vopunsigned = 1'b1;
         end
         VWADD: begin
             vexec.vfu = VFU_ALU;
@@ -295,6 +296,7 @@ always_comb begin
         VWSUBU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SUB;
+            vexec.vopunsigned = 1'b1;
         end
         VWSUB: begin
             vexec.vfu = VFU_ALU;
