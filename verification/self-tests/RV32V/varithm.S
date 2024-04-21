@@ -157,15 +157,73 @@ RVTEST_CODE_BEGIN
   TEST_CASE(22, x3, 9, NOP)
 
 
+  //vector single width instructions 
+  li x4, 0xffffffff
+  vmv.s.x v2, x4
+  li x4, 0xffffff02
+  vmv.s.x v4, x4
+
+  vsll.vv v3, v2, v4
+  vmv.x.s x3, v3
+  TEST_CASE(23, x3, 0xfffffffc, NOP)
+
+  vsrl.vv v3, v2, v4
+  vmv.x.s x3, v3
+  TEST_CASE(24, x3, 0x3fffffff, NOP)
+
+  vsra.vv v3, v2, v4
+  vmv.x.s x3, v3
+  TEST_CASE(25, x3, 0xffffffff, NOP)
+
+
+  // vector narrowing instructions
+  li x4, 0xaaaaaaaa
+  vmv.s.x v2, x4
+  vsetivli x10, 1, e16
+  vnsrl.wi v3, v2, 4 
+  vmv.x.s x3, v3
+  TEST_CASE(26, x3, 0xffffaaaa, NOP)
+
+  li x4, 20
+  vnsrl.wx v3, v2, x4
+  vmv.x.s x3, v3
+  TEST_CASE(27, x3, 0x00000aaa, NOP)
+
+  vnsra.wx v3, v2, x4
+  vmv.x.s x3, v3
+  TEST_CASE(28, x3, 0xfffffaaa, NOP)
+
+
+  // integer min/max instructions
+  vsetivli x10, 1, e32
+  li x4, -1
+  vmv.s.x v2, x4
+  vminu.vx v3, v2, x0
+  vmv.x.s x3, v3
+  TEST_CASE(29, x3, 0, NOP)
+
+  vmin.vx v3, v2, x0
+  vmv.x.s x3, v3
+  TEST_CASE(30, x3, -1, NOP)
+
+  vmaxu.vx v3, v2, x0
+  vmv.x.s x3, v3
+  TEST_CASE(31, x3, -1, NOP)
+
+  vmax.vx v3, v2, x0
+  vmv.x.s x3, v3
+  TEST_CASE(32, x3, 0, NOP)
+
+
+
+
+
 
 
 
 
 
   
-
-
-
 
   TEST_PASSFAIL
 
