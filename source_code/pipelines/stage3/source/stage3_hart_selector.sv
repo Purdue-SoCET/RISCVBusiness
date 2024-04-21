@@ -42,29 +42,33 @@ module stage3_hart_selector (
     word_t next_count;
     word_t count;
     word_t [NUM_HARTS-1:0] stalled_threads;
-    word_t active_thread;
+    word_t next_hart_id;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             count <= '0;
+            hart_selector_if.hart_id <= '0;
         end else begin
             count <= next_count;
+            hart_selector_if.hart_id <= next_hart_id;
         end
     end
 
-    // always_comb begin
-    //     if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
-    //         if (count == 10) next_count = 0;
-    //         else next_count = count + 1;
-    //     end else next_count = count;
-    // end
-
     always_comb begin
+      next_hart_id = hart_selector_if.hart_id;
       if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
-        if (count == (NUM_HARTS - 1)) next_count = 0;
+        if (count == 10) begin
+           next_count = 0;
+           if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
+              next_hart_id = 32'd0;
+            end
+            else begin
+              next_hart_id = hart_selector_if.hart_id + 32'd1;
+           end
+        end
         else next_count = count + 1;
       end else next_count = count;
     end
     
-    assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
+    //assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
 endmodule

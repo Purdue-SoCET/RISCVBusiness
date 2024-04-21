@@ -55,6 +55,7 @@ interface stage3_hazard_unit_if();
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
         breakpoint, env, wfi;
   word_t badaddr;
+  word_t fetch_hart_id, exec_hart_id;
 
   // Pipeline Tokens
   logic token_ex;
@@ -71,7 +72,7 @@ interface stage3_hazard_unit_if();
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
             badaddr, ifence,
             token_ex, token_mem, rv32c_ready,
-            valid_e, valid_m, ex_busy,
+            valid_e, valid_m, ex_busy, fetch_hart_id, exec_hart_id,
     output  pc_en, npc_sel,
             if_ex_flush, ex_mem_flush,
             if_ex_stall, ex_mem_stall,
@@ -80,12 +81,12 @@ interface stage3_hazard_unit_if();
 
   modport fetch (
     input   pc_en, npc_sel, if_ex_stall, if_ex_flush, priv_pc, insert_priv_pc, iren, suppress_iren, rollback,
-    output  i_mem_busy, rv32c_ready, pc_f
+    output  i_mem_busy, rv32c_ready, pc_f, fetch_hart_id
   );
 
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,
-    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy
+    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, exec_hart_id
   );
 
   modport mem (

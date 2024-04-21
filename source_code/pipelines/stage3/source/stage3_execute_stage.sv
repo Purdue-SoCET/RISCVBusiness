@@ -256,6 +256,7 @@ module stage3_execute_stage (
     assign hazard_if.pc_e = fetch_ex_if.fetch_ex_reg.pc;
     assign hazard_if.ex_busy = (rv32m_busy && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
+    assign hazard_if.exec_hart_id = ex_mem_if.ex_mem_reg.hart_id;
 
 
     // TODO: NEW

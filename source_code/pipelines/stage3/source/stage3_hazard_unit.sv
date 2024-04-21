@@ -69,7 +69,7 @@ module stage3_hazard_unit (
     assign cannot_forward = 1'b0;
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
-    assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);
+    assign branch_jump = (hazard_if.jump || (hazard_if.branch && hazard_if.mispredict)) && (hazard_if.exec_hart_id == hazard_if.fetch_hart_id);
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren && !hazard_if.rv32c_ready; // don't wait for imem when rv32c is done early
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
     assign mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
@@ -157,14 +157,16 @@ module stage3_hazard_unit (
                             || prv_pipe_if.insert_pc
                             || prv_pipe_if.ret;//) //&& !wait_for_imem;
 
-    assign hazard_if.if_ex_flush  = ex_flush_hazard // control hazard
-                                  || branch_jump    // control hazard
-                                  || (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
+    assign hazard_if.if_ex_flush  = (ex_flush_hazard // control hazard
+                                  || branch_jump  // control hazard
+                                  || (wait_for_imem && !hazard_if.ex_mem_stall)); // Flush if fetch stage lagging, but ex/mem are moving
+                                  // && (hazard_if.exec_hart_id == hazard_if.fetch_hart_id);
 
-    assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
-                                  //|| branch_jump     // Control hazard
+    assign hazard_if.ex_mem_flush = (ex_flush_hazard // Control hazard
+                                  || branch_jump   // Control hazard
                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
-                                  || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
+                                  || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall)); // if_ex_stall covers mem_use stall condition
+                                  //&& (hazard_if.exec_hart_id == hazard_if.fetch_hart_id);
 
 
     assign hazard_if.if_ex_stall  = hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
