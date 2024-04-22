@@ -29,7 +29,8 @@
 
 module stage3_hazard_unit (
     stage3_hazard_unit_if.hazard_unit hazard_if,
-    prv_pipeline_if.hazard prv_pipe_if
+    prv_pipeline_if.hazard prv_pipe_if,
+    global_events_if.pipeline global_events_if
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
 );
@@ -155,17 +156,20 @@ module stage3_hazard_unit (
                             || branch_jump
                             || ex_flush_hazard
                             || prv_pipe_if.insert_pc
-                            || prv_pipe_if.ret;//) //&& !wait_for_imem;
+                            || prv_pipe_if.ret
+                            || global_events_if.cache_miss; //) //&& !wait_for_imem;
 
     assign hazard_if.if_ex_flush  = (ex_flush_hazard // control hazard
                                   || branch_jump  // control hazard
-                                  || (wait_for_imem && !hazard_if.ex_mem_stall)); // Flush if fetch stage lagging, but ex/mem are moving
+                                  || (wait_for_imem && !hazard_if.ex_mem_stall)) // Flush if fetch stage lagging, but ex/mem are moving
                                   // && (hazard_if.exec_hart_id == hazard_if.fetch_hart_id);
+                                  || global_events_if.cache_miss;
 
     assign hazard_if.ex_mem_flush = (ex_flush_hazard // Control hazard
                                   || branch_jump   // Control hazard
                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
-                                  || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall)); // if_ex_stall covers mem_use stall condition
+                                  || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall)) // if_ex_stall covers mem_use stall condition
+                                  || global_events_if.cache_miss; // Data hazard -- flush once data memory is no longer busy (request complete)
                                   //&& (hazard_if.exec_hart_id == hazard_if.fetch_hart_id);
 
 

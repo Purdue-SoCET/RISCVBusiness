@@ -32,6 +32,7 @@
 `include "sparce_pipeline_if.vh"
 `include "rv32c_if.vh"
 `include "cpu_tracker_if.vh"
+`include "global_events_if.vh"
 
 module stage3 #(
     NUM_HARTS = 1,
@@ -43,6 +44,7 @@ module stage3 #(
     output logic wfi,
     generic_bus_if.cpu igen_bus_if,
     generic_bus_if.cpu dgen_bus_if,
+    global_events_if.pipeline global_events_if,
     prv_pipeline_if prv_pipe_if,
     predictor_pipeline_if predict_if,
     //risc_mgmt_if rm_if,
@@ -61,8 +63,8 @@ module stage3 #(
 
     //module instantiations
     stage3_program_counter #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) program_counter_i(.mem_fetch_if(mem_pipe_if), .*);
-    stage3_hart_selector #(.NUM_HARTS(NUM_HARTS)) hart_selector_i(CLK, nRST, .hazard_if(hazard_if), .hart_selector_if(hart_selector_if));
-    stage3_fetch_stage #(.NUM_HARTS(NUM_HARTS), .RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
+    stage3_hart_selector #(.NUM_HARTS(NUM_HARTS)) hart_selector_i(CLK, nRST, .hazard_if(hazard_if), .hart_selector_if(hart_selector_if), .global_events_if(global_events_if));
+    stage3_fetch_stage #(.NUM_HARTS(NUM_HARTS), .RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .global_events_if(global_events_if), .*);
     stage3_execute_stage #(.NUM_HARTS(NUM_HARTS)) execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_hazard_unit hazard_unit_i(.*);

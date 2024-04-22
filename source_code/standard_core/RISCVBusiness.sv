@@ -66,6 +66,7 @@ module RISCVBusiness (
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
     cpu_tracker_if cpu_tracker_if ();
+    global_events_if global_events_if();
 
 
     //interface instantiations
@@ -75,6 +76,7 @@ module RISCVBusiness (
     stage3 #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) pipeline(
         .igen_bus_if(tspp_icache_gen_bus_if),
         .dgen_bus_if(tspp_dcache_gen_bus_if),
+        .global_events_if(global_events_if),
         .*
     );
 
@@ -173,6 +175,7 @@ module RISCVBusiness (
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
+        .global_events_if(global_events_if),
         .cc_if(cc_if),
         .cpu_tracker_if(cpu_tracker_if)
     );

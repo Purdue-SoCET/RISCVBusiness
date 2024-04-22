@@ -42,6 +42,7 @@ module l1_cache #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
+    global_events_if.caches global_events_if,
     output integer conflicts, misses
 );
     import rv32i_types_pkg::*;
@@ -137,7 +138,7 @@ module l1_cache #(
         addr_pair_t [1 : 0] pair;
         logic wen;
     } item;
-    item [2:0] egress_queue;
+    item [1:0] egress_queue;
 
     //logic [ 1 : 0] [ 2  : 0] [WORD_SIZE - 1 : 0] egress_queue;
     logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0]  eq_dataout;
@@ -328,6 +329,7 @@ module l1_cache #(
                 end
             end
             HIT: begin
+                global_events_if.cache_miss = 0;
                 next_read_addr = decoded_addr;
                 clear_word_count = 1;
                 // cache hit on a processor read
@@ -380,6 +382,7 @@ module l1_cache #(
                 	next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                   if(sramRead.frames[ridx].valid) next_conflicts = conflicts + 1;
                   next_misses = misses + 1;
+                  global_events_if.cache_miss = 1;
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
@@ -387,12 +390,14 @@ module l1_cache #(
 			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
               next_conflicts = conflicts + 1;
               next_misses = misses + 1;
+              global_events_if.cache_miss = 1;
             	end
             end 
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
                 sramMask.frames[ridx].valid = 0;
                 sramWrite.frames[ridx].valid = 0;
+                //global_events_if.cache_miss = 0;
                 enqueue = 1'b1;
                 for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
                     // mem_gen_bus_if.ren = 1;
@@ -420,6 +425,7 @@ module l1_cache #(
             end
             WB: begin
                 // set stim for eviction
+                global_events_if.cache_miss = 0;
                 e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
                 eq_datain.wen = 1'b1;
@@ -679,9 +685,11 @@ module l1_cache #(
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             iq_wordcnt <= '0;
+            iq_datain <= '0;
         end
         else begin
             iq_wordcnt <= n_iq_wordcnt;
+            iq_datain <= n_iq_datain;
         end
     end
 
@@ -691,13 +699,13 @@ module l1_cache #(
         iq_wordcntdone = ~mem_gen_bus_if.busy && (BLOCK_SIZE - 1) == iq_wordcnt;
         if (iq_wordcntdone) begin
             n_iq_wordcnt = '0;
-            n_iq_datain[iq_wordcnt] = '0; // TODO: Get addresses into queue
-            n_iq_datain[iq_wordcnt + BLOCK_SIZE] = mem_gen_bus_if.rdata;
+            //n_iq_datain[iq_wordcnt] = '0; // TODO: Get addresses into queue
+            n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
         end
         else if (~mem_gen_bus_if.busy) begin
             n_iq_wordcnt = iq_wordcnt + 1;
-            n_iq_datain[iq_wordcnt] = '0;
-            n_iq_datain[iq_wordcnt + BLOCK_SIZE] = mem_gen_bus_if.rdata;
+            //n_iq_datain[iq_wordcnt] = '0;
+            n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
         end
     end
 
@@ -741,7 +749,7 @@ module l1_cache #(
         end
         else begin
             if (enqueue) begin
-                addr_queue[aq_wptr] <= eq_datain.pair[0];
+                addr_queue[aq_wptr] <= read_addr;
                 aq_wptr <= aq_wptr + 1;
             end
             if (iq_ren) begin

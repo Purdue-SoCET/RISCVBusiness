@@ -36,6 +36,7 @@ module stage3_program_counter (
     stage3_mem_pipe_if.fetch mem_fetch_if,
     stage3_hazard_unit_if.fetch hazard_if,
     stage3_hart_selector_if.fetch hart_selector_if,
+    global_events_if.pipeline global_events_if,
     predictor_pipeline_if.access predict_if,
     generic_bus_if.cpu igen_bus_if,
     sparce_pipeline_if.pipe_fetch sparce_if,
@@ -58,8 +59,9 @@ module stage3_program_counter (
                 pc_if.pc[i] <= RESET_PC + (i * 12);
             end else if((hazard_if.pc_en && hart_selector_if.hart_id == i) || (hazard_if.npc_sel && mem_fetch_if.ex_mem_reg.hart_id == i)) begin // if (hazard_if.pc_en /*| rv32cif.done_earlier*/)
                 if(hazard_if.npc_sel && mem_fetch_if.ex_mem_reg.hart_id == i) pc_if.pc[mem_fetch_if.ex_mem_reg.hart_id] <= pc_if.npc[mem_fetch_if.ex_mem_reg.hart_id];
+                else if(global_events_if.cache_miss && mem_fetch_if.ex_mem_reg.hart_id == i) pc_if.pc[mem_fetch_if.ex_mem_reg.hart_id] <= pc_if.npc[mem_fetch_if.ex_mem_reg.hart_id];
                 else if(!hazard_if.if_ex_flush) pc_if.pc[hart_selector_if.hart_id] <= pc_if.npc[hart_selector_if.hart_id];
-            end
+            end 
           end
         end
       endgenerate

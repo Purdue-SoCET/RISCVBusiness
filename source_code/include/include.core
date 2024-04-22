@@ -30,6 +30,7 @@ filesets:
             - decompressor_if.vh : {is_include_file: true}
             - fetch_buffer_if.vh : {is_include_file: true}
             - sparce_pipeline_if.vh : {is_include_file: true}
+            - global_events_if.vh : {is_include_file: true}
         file_type: systemVerilogSource
 
 targets:

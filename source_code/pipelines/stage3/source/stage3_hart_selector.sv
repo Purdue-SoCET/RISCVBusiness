@@ -32,7 +32,8 @@ module stage3_hart_selector (
     input logic CLK,
     nRST,
     stage3_hazard_unit_if.fetch hazard_if,
-    stage3_hart_selector_if.hart_selector_unit hart_selector_if
+    stage3_hart_selector_if.hart_selector_unit hart_selector_if,
+    global_events_if.pipeline global_events_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
@@ -70,10 +71,22 @@ module stage3_hart_selector (
     //   end else next_count = count;
     // end
 
+    always @ (global_events_if.cache_miss) begin
+      next_hart_id = hart_selector_if.hart_id;
+      if (global_events_if.cache_miss) begin
+          if (hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
+              next_hart_id = 32'd0;
+          end
+          else begin
+              next_hart_id = hart_selector_if.hart_id + 32'd1;
+          end
+      end
+    end
+
 
     // always_comb begin
     //   next_hart_id = hart_selector_if.hart_id;
-    //   if(hart_selector_if.branch_jump) begin
+    //   if(global_events_if.cache_miss) begin
     //     if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
     //       next_hart_id = 32'd0;
     //     end

@@ -34,6 +34,7 @@ module separate_caches (
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
+    global_events_if.caches global_events_if,
     cache_control_if.caches cc_if,
     cpu_tracker_if.caches cpu_tracker_if
 );
@@ -74,6 +75,7 @@ module separate_caches (
                 .nRST(nRST),
                 .mem_gen_bus_if(dcache_mem_gen_bus_if),
                 .proc_gen_bus_if(dcache_proc_gen_bus_if),
+                .global_events_if(global_events_if),
                 .flush(cc_if.dcache_flush),
                 .clear(cc_if.dcache_clear),
                 .flush_done(cc_if.dflush_done),

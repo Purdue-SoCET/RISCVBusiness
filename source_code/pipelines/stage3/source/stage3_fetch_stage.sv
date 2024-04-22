@@ -39,6 +39,7 @@ module stage3_fetch_stage (
     stage3_hazard_unit_if.fetch hazard_if,
     stage3_program_counter_if.fetch pc_if,
     stage3_hart_selector_if.fetch hart_selector_if,
+    global_events_if.pipeline global_events_if,
     predictor_pipeline_if.access predict_if,
     generic_bus_if.cpu igen_bus_if,
     sparce_pipeline_if.pipe_fetch sparce_if,
@@ -81,7 +82,8 @@ module stage3_fetch_stage (
 
     generate for (i = 0; i < NUM_HARTS; i = i + 1) begin : pc
       assign pc4or2[i] = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc_if.pc[i] + 2) : (pc_if.pc[i] + 4);
-      assign pc_if.npc[i] = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
+      assign pc_if.npc[i] = (global_events_if.cache_miss && mem_fetch_if.ex_mem_reg.hart_id == i) ? mem_fetch_if.ex_mem_reg.pc
+            : hazard_if.insert_priv_pc    ? hazard_if.priv_pc
             : (hazard_if.rollback        ? mem_fetch_if.pc4
             : (sparce_if.skipping       ? sparce_if.sparce_target
             : (hazard_if.npc_sel && (mem_fetch_if.ex_mem_reg.hart_id == i) ? mem_fetch_if.brj_addr
