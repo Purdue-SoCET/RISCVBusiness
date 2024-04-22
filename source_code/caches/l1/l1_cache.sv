@@ -28,7 +28,8 @@
 
 `include "generic_bus_if.vh"
 `include "cpu_tracker_if.vh"
-`include "rv32i_types_pkg.sv"
+//`include "rv32i_types_pkg.sv"
+
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
