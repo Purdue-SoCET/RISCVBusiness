@@ -86,7 +86,7 @@ interface stage3_hazard_unit_if();
 
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,
-    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, exec_hart_id
+    output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy
   );
 
   modport mem (
@@ -96,7 +96,7 @@ interface stage3_hazard_unit_if();
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,
-            token_mem
+            token_mem, exec_hart_id
   );
 
  endinterface

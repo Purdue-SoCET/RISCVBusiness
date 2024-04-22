@@ -69,6 +69,19 @@ module stage3_hart_selector (
         else next_count = count + 1;
       end else next_count = count;
     end
+
+
+    // always_comb begin
+    //   next_hart_id = hart_selector_if.hart_id;
+    //   if(hart_selector_if.branch_jump) begin
+    //     if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
+    //       next_hart_id = 32'd0;
+    //     end
+    //     else begin
+    //       next_hart_id = hart_selector_if.hart_id + 32'd1;
+    //     end
+    //   end
+    // end
     
     //assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
 endmodule

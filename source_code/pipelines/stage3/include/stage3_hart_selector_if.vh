@@ -32,13 +32,20 @@ interface stage3_hart_selector_if #(
   import stage3_types_pkg::*;
  
   word_t hart_id;
+  logic branch_jump;
 
   modport hart_selector_unit(
+    input branch_jump,
     output hart_id
   );
 
   modport fetch(
     input hart_id
+  );
+
+  modport execute(
+    input hart_id,
+    output branch_jump
   );
 endinterface
 `endif
