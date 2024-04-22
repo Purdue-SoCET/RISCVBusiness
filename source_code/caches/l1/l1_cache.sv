@@ -163,14 +163,14 @@ module l1_cache #(
     response_t [2:0] ingress_queue;
     logic iq_wen, iq_ren;
     // TODO: $clog2(THREAD_CNT) instead of 3
-    logic [$clog2(3) : 0] iq_wptr, iq_rptr;
+    logic [$clog2(2) : 0] iq_wptr, iq_rptr;
     //logic [$clog2(3) - 1 : 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] ingress_queue;
 
     logic iq_wordcnt, iq_wordcntdone, n_iq_wordcnt;
 
     // Address Queue Signals
     // TODO: replace 3 with address size
-    logic [$clog2(3) - 1 : 0] [WORD_SIZE - 1 : 0] addr_queue;
+    logic [$clog2(2) - 1 : 0] [WORD_SIZE - 1 : 0] addr_queue;
     // TODO: parameterize
     logic [2 : 0] aq_wptr, aq_rptr;
     logic [WORD_SIZE - 1 : 0] aq_dataout, aq_datain;
@@ -399,6 +399,7 @@ module l1_cache #(
                     //eq_datain[queue_word] = read_addr + queue_word*4;
                     eq_datain.pair[queue_word].addr = read_addr + queue_word*4;
                 end
+                proc_gen_bus_if.busy = 0; 
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
                     //sramWEN                                = 1'b1;
@@ -712,14 +713,14 @@ module l1_cache #(
         else begin
             if (~mem_gen_bus_if.busy) begin
                 // TODO: THREAD_CNT instead of 3
-                ingress_queue[iq_wptr[3 - 1 : 0]] <= iq_datain;
+                ingress_queue[iq_wptr[2 - 1 : 0]] <= iq_datain;
                 if (iq_wordcntdone) begin
                     iq_wptr <= iq_wptr + 1;
                 end
             end
             if (iq_ren) begin
                 // TODO: THREAD_CNT instead of 3
-                iq_dataout <= ingress_queue[iq_rptr[$clog2(3) - 1 : 0]];
+                iq_dataout <= ingress_queue[iq_rptr[$clog2(2) - 1 : 0]];
                 iq_rptr <= iq_rptr + 1;
             end
         end
