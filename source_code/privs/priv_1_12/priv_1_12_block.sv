@@ -64,10 +64,10 @@ module priv_1_12_block #(
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;
     assign prv_intern_if.timer_int_s = 1'b0;
-    assign prv_intern_if.timer_int_m = interrupt_if.timer_int;
+    assign prv_intern_if.timer_int_m = interrupt_if.timer_int[HART_ID];
     assign prv_intern_if.soft_int_u = 1'b0;
     assign prv_intern_if.soft_int_s = 1'b0;
-    assign prv_intern_if.soft_int_m = interrupt_if.soft_int;
+    assign prv_intern_if.soft_int_m = interrupt_if.soft_int[HART_ID];
     assign prv_intern_if.ext_int_u = 1'b0;
     assign prv_intern_if.ext_int_s = 1'b0;
     assign prv_intern_if.ext_int_m = interrupt_if.ext_int;
@@ -75,10 +75,10 @@ module priv_1_12_block #(
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;
     assign prv_intern_if.clear_timer_int_s = 1'b0;
-    assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear;
+    assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear[HART_ID];
     assign prv_intern_if.clear_soft_int_u = 1'b0;
     assign prv_intern_if.clear_soft_int_s = 1'b0;
-    assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear;
+    assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear[HART_ID];
     assign prv_intern_if.clear_ext_int_u = 1'b0;
     assign prv_intern_if.clear_ext_int_s = 1'b0;
     assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear;
