@@ -134,7 +134,7 @@ struct Ram {
 
     void dump() {
         std::ofstream outfile;
-        outfile.open(dump_file);
+        outfile.open(dump_file, std::ios::out | std::ios::trunc);
         if (!outfile) {
             std::ostringstream ss;
             ss << "Couldn't open " << dump_file << std::endl;
@@ -309,7 +309,7 @@ struct Cache {
 
     void dump() {
         std::ofstream outfile;
-        outfile.open(transaction_dump_file);
+        outfile.open(transaction_dump_file, std::ios::out | std::ios::trunc);
         if (!outfile) {
             std::ostringstream ss;
             ss << "Couldn't open " << transaction_dump_file << std::endl;
