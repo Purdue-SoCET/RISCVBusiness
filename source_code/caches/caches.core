@@ -12,6 +12,7 @@ filesets:
             - direct_mapped_tpf/direct_mapped_tpf_cache.sv
             - pass_through/pass_through_cache.sv
             - l1/l1_cache.sv
+            - l1/l1_icache.sv
             - sram/sram.sv
         file_type: systemVerilogSource
 

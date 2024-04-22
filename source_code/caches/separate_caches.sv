@@ -110,7 +110,7 @@ module separate_caches (
                 .clear_done(cc_if.iclear_done)
             );
             "l1":
-            l1_cache #(
+            l1_icache #(
                 .CACHE_SIZE(ICACHE_SIZE),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
                 .ASSOC(ICACHE_ASSOC),
