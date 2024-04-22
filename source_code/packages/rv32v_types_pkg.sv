@@ -553,6 +553,8 @@ package rv32v_types_pkg;
   typedef struct packed {
     logic vvalid;
     logic vuop_last;
+    logic not_interruptible;
+    logic keep_vstart;
     // Register file signals
     rv32i_types_pkg::regsel_t vs1_sel;
     rv32i_types_pkg::regsel_t vs2_sel;
@@ -606,6 +608,7 @@ package rv32v_types_pkg;
     // general 
     logic vvalid;
     logic vuop_last;
+    logic keep_vstart;
     logic vindexed;
     logic vstrided; 
     logic vunitstride; 
@@ -700,12 +703,12 @@ package rv32v_types_pkg;
     logic [4:0] vd_sel;
     logic [4:0] vs2_sel;
     logic use_rs1_data;
+    logic [3:0] v0_mask;
   } vperm_input_t;
 
   typedef struct packed {
     logic [4:0] vd_sel_perm;
     logic [1:0] vbank_offset;
-    logic vslide;
     rv32i_types_pkg::word_t [3:0] velems_out;
     logic [3:0] vperm_mask;
     logic [4:0] vrgtr_vs2;

@@ -101,7 +101,8 @@ module stage4_hazard_unit (
     assign intr = ~exception & prv_pipe_if.intr;
 
     assign prv_pipe_if.pipe_clear = 1'b1; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
-    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem && !hazard_if.not_interruptible) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+    // Micro-ops can be marked as 'not interruptable' while in execute, so wait until it advances to memory stage to flush and take interrupt
 
     assign hazard_if.insert_priv_pc = prv_pipe_if.insert_pc;
     assign hazard_if.priv_pc = prv_pipe_if.priv_pc;
@@ -115,7 +116,9 @@ module stage4_hazard_unit (
     assign hazard_if.rollback = (hazard_if.ifence && !hazard_if.fence_stall); // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
 
     // EPC priority logic
-    assign epc = hazard_if.valid_m && !intr ? hazard_if.pc_m :
+    // Upon interrupt, current scalar ld/st or vector element is allowed to finish. If vector serializer is on last element (which will be written back), take execute pc.
+    // Else if not on last element, take mem pc as we need to finish remaining elements in micro-op upon return.
+    assign epc = hazard_if.valid_m && (!intr || !hazard_if.vmem_last_elem) ? hazard_if.pc_m :
                 (hazard_if.valid_e ? hazard_if.pc_e : ( hazard_if.valid_decode ? hazard_if.pc_decode : hazard_if.pc_f));
 
     /* Send Exception notifications to Prv Block */
@@ -140,8 +143,13 @@ module stage4_hazard_unit (
     assign prv_pipe_if.epc = epc;
     assign prv_pipe_if.badaddr = hazard_if.badaddr;
     assign prv_pipe_if.velem_num = (hazard_if.vuop_last) ? '0 :
-                                   (hazard_if.vvalid_m && !intr) ? hazard_if.velem_num_m : hazard_if.velem_num_e;
-    assign prv_pipe_if.set_vstart = hazard_if.vuop_last | ((exception) ? ((hazard_if.vvalid_m && !intr) | hazard_if.vvalid_e) : 0);
+                                   hazard_if.valid_m && (!intr || !hazard_if.vmem_last_elem) ? hazard_if.velem_num_m : hazard_if.velem_num_e;
+    assign prv_pipe_if.set_vstart = hazard_if.vuop_last |
+                                    ((exception | (prv_pipe_if.intr & !hazard_if.not_interruptible)) ?
+                                      ((hazard_if.valid_m && (!intr || !hazard_if.vmem_last_elem)) ?
+                                        ~hazard_if.keep_vstart_m :
+                                        (hazard_if.vvalid_e) ? ~hazard_if.keep_vstart_e : 0)
+                                      : 0);
     assign prv_pipe_if.vuop_last = hazard_if.vuop_last;
 
     /*

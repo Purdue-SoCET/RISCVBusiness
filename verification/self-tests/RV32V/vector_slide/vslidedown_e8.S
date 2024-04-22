@@ -15,11 +15,12 @@ RVTEST_RV32U
 
 RVTEST_CODE_BEGIN
 
-	vsetivli x20, 21, e8, m2
+	vsetvli x20, x0, e8, m2  // vlmax=32
   la x1, ldat
 	la x2, sdat
   li x3, 10
   vle8.v v2, (x1)
+  vsetivli x20, 21, e8, m2
   vle8.v v4, (x2)
   vslidedown.vx v4, v2, x3
   vse8.v v4, (x2)
@@ -34,10 +35,10 @@ RVTEST_CODE_BEGIN
   TEST_CASE(1, x20, 21, NOP)
   TEST_CASE(2, x4, 0x0d0c0b0a, NOP)
   TEST_CASE(3, x5, 0x11100f0e, NOP)
-  TEST_CASE(4, x6, 0x55141312, NOP)
-  TEST_CASE(5, x7, 0x55555555, NOP)
-  TEST_CASE(6, x8, 0x55555555, NOP)
-  TEST_CASE(7, x9, 0x55555555, NOP)
+  TEST_CASE(4, x6, 0x15141312, NOP)
+  TEST_CASE(5, x7, 0x19181716, NOP)
+  TEST_CASE(6, x8, 0x1d1c1b1a, NOP)
+  TEST_CASE(7, x9, 0x5555551e, NOP)
 
   TEST_PASSFAIL
 

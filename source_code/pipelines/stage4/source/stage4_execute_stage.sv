@@ -370,6 +370,8 @@ module stage4_execute_stage (
     assign hazard_if.valid_e = ex_in.if_out.valid;
     assign hazard_if.velem_num_e = ex_in.vctrl_out.vuop_num << 2;
     assign hazard_if.vvalid_e = ex_in.vctrl_out.vvalid;
+    assign hazard_if.not_interruptible = ex_in.vctrl_out.not_interruptible;
+    assign hazard_if.keep_vstart_e = ex_in.vctrl_out.keep_vstart;
 
 
     // TODO: NEW

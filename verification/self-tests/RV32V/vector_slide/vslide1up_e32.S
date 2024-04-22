@@ -19,8 +19,8 @@ RVTEST_CODE_BEGIN
   la x1, ldat
 	la x2, sdat
   li x3, 0xabcdef01
-  vle32.v v1, (x1)
-  vslide1up.vx v2, v1, x3
+  vle32.v v0, (x1)
+  vslide1up.vx v2, v0, x3
   vse32.v v2, (x2)
 
   lw x4, 0(x2)

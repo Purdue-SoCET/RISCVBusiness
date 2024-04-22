@@ -86,16 +86,13 @@ module stage4_mem_stage (
     assign serial_if.strided = ex_mem_if.vexmem.vstrided; 
     assign serial_if.unit_strided = ex_mem_if.vexmem.vunitstride;
     assign serial_if.veew = ex_mem_if.vexmem.veew;
-    
- 
-
- 
 
 
     // Memory serializer
     rv32v_mem_serializer SLZR (
         .CLK,
         .nRST,
+        .flush(hazard_if.ex_mem_flush),
         .serial_if,
         .serializer_stall(hazard_if.serializer_stall)
     );
@@ -140,11 +137,13 @@ module stage4_mem_stage (
     assign hazard_if.vd = ex_mem_if.vexmem.vd_sel;
     assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen;
     assign hazard_if.vvalid_m = ex_mem_if.vexmem.vvalid;
-    assign hazard_if.velem_num_m = (vmemop) ? (ex_mem_if.vexmem.vuop_num << 2) + serial_if.vcurr_lane
+    assign hazard_if.velem_num_m = (vmemop) ? (ex_mem_if.vexmem.vuop_num << 2) + serial_if.vcurr_lane + 1  // if a memory access starts, it will finish
                                             : (ex_mem_if.vexmem.vuop_num + 1) << 2;  // if actively writing-back, vstart on next uop
     assign hazard_if.vuop_last = ex_mem_if.vexmem.vuop_last & ~hazard_if.serializer_stall;
+    assign hazard_if.vmem_last_elem = (serial_if.vcurr_lane == 2'd3);
+    assign hazard_if.keep_vstart_m = ex_mem_if.vexmem.keep_vstart;
     assign ex_mem_if.vmskset_fwd_bits = ex_mem_if.vexmem.vres[0][3:0]; 
-    
+
     assign halt = ex_mem_if.ex_mem_reg.halt;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign fw_if.reg_write = ex_mem_if.reg_write;

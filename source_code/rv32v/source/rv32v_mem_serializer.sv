@@ -27,6 +27,7 @@
 module rv32v_mem_serializer (
     input logic CLK,
     input logic nRST,
+    input logic flush,
     rv32v_mem_serializer_if.serial serial_if,
     output logic serializer_stall
 );
@@ -51,6 +52,10 @@ module rv32v_mem_serializer (
             serial_state <= VL0;
             next_addr <= '0;
             seg_addr <= '0; 
+        end else if (flush) begin
+            serial_state <= VL0;
+            next_addr <= '0;
+            seg_addr <= '0;
         end else begin
             serial_state <= next_serial_state;
             next_addr <= next_next_addr;

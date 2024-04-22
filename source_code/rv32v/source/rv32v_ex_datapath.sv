@@ -371,7 +371,8 @@ assign vperm_in = '{
     vlaneactive: vctrls.vlaneactive,
     vd_sel: vctrls.vd_sel.regidx,
     vs2_sel: vctrls.vs2_sel,
-    use_rs1_data: (vctrls.vxin1_use_imm | vctrls.vxin1_use_rs1)
+    use_rs1_data: (vctrls.vxin1_use_imm | vctrls.vxin1_use_rs1),
+    v0_mask: mask_bits
 };
 
 // Maskings
@@ -435,9 +436,10 @@ assign vmem_in.vmv_s_x = vctrls.vmv_s_x;
 assign vmem_in.vd_sel = (vctrls.vexec.vfu == VFU_PRM) ? '{regclass: RC_VECTOR, regidx: vctrls.vd_sel.regidx} : vctrls.vd_sel;
 //assign vmem_in.vbank_offset = vctrls.vbank_offset; 
 assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset :
-                              ((vctrls.vexec.vfu == VFU_PRM) & vperm_out.vslide) ? vperm_out.vbank_offset : vctrls.vbank_offset;
+                              (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.vbank_offset : vctrls.vbank_offset;
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1;
 assign vmem_in.vkeepvl = vctrls.vkeepvl;
+assign vmem_in.keep_vstart = vctrls.keep_vstart;
 
 // seg signals 
 assign vmem_in.vstrided = vctrls.vstrided; 
