@@ -100,5 +100,4 @@ interface stage3_hazard_unit_if();
   );
 
  endinterface
-
 `endif

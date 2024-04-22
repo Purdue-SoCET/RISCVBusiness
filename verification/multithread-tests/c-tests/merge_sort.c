@@ -12,6 +12,10 @@ void thread1() {
     thread_terimate(0, &t_count);
 }
 
+void interrupt_thread() {
+  
+}
+
 void thread2() {
     int arr[] = {45, 12, 78, 34, 91, 27, 63, 50};
     int size = 8;

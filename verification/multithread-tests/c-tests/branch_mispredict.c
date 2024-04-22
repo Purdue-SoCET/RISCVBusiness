@@ -15,6 +15,10 @@ void thread1() {
   thread_terimate(0, &t_count);
 }
 
+void interrupt_thread() {
+  
+}
+
 void thread2() {
   volatile int result = 0;
   for(int i = 0; i < LOOP_SIZE; i++) {

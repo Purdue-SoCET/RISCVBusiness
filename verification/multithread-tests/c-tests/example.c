@@ -10,6 +10,10 @@ void thread1() {
   thread_terimate(0, &t_count);
 }
 
+void interrupt_thread() {
+  
+}
+
 void thread2() {
   flag &= 0x1;
   thread_terimate(1, &t_count);

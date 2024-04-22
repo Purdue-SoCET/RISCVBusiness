@@ -53,10 +53,10 @@ void thread_terimate(int tid, volatile int* t_count) {
     
     // check if all threads are done
     int total = 0;
-    for (int i = 0; i < NUM_THREADS; i++) {
+    for (int i = 0; i < NUM_THREADS - INTERRUPT_THREADS; i++) {
       total += t_count[i];
     }
-    if (total == NUM_THREADS) {
+    if (total == NUM_THREADS - INTERRUPT_THREADS) {
       asm volatile("j done");
     } else {
       asm volatile("j thread_wait_loop");

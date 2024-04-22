@@ -13,6 +13,7 @@
     #define MAGIC_ADDR      0xFFFFFFFC
 
     #define NUM_THREADS 2
+    #define INTERRUPT_THREADS 1
     
     void print(char *string);
     void put_uint32_hex(uint32_t hex);
