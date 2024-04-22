@@ -40,6 +40,7 @@ module stage3_execute_stage (
     stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hazard_unit_if.execute hazard_if,
     stage3_forwarding_unit_if.execute fw_if,
+    stage3_hart_selector_if.execute hart_selector_if,
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif
@@ -246,11 +247,13 @@ module stage3_execute_stage (
     /********************************
     * Hazard/Forwarding Unit Signals
     *********************************/
+    assign hart_selector_if.branch_jump = cu_if.jump | cu_if.branch;
     assign hazard_if.rs1_e = rf_if.rs1;
     assign hazard_if.rs2_e = rf_if.rs2;
 
     assign fw_if.rs1_e = rf_if.rs1;
     assign fw_if.rs2_e = rf_if.rs2;
+    assign fw_if.thread_e = fetch_ex_if.fetch_ex_reg.hart_id;
 
     assign hazard_if.pc_e = fetch_ex_if.fetch_ex_reg.pc;
     assign hazard_if.ex_busy = (rv32m_busy && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall

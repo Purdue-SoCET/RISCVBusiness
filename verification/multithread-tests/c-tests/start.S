@@ -25,6 +25,6 @@ thread_wait_loop:
 
 .global flag
 .data
-flag: .word 0x01
+flag: .word 0x1
 .global t_count
 t_count: .word 0x00

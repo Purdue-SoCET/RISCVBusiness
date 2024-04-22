@@ -31,15 +31,8 @@
 module stage3_hart_selector (
     input logic CLK,
     nRST,
-    stage3_fetch_execute_if.fetch fetch_ex_if,
-    stage3_mem_pipe_if.fetch mem_fetch_if,
     stage3_hazard_unit_if.fetch hazard_if,
-    stage3_hart_selector_if.hart_selector_unit hart_selector_if,
-    predictor_pipeline_if.access predict_if,
-    generic_bus_if.cpu igen_bus_if,
-    sparce_pipeline_if.pipe_fetch sparce_if,
-    rv32c_if.fetch rv32cif,
-    prv_pipeline_if.fetch prv_pipe_if
+    stage3_hart_selector_if.hart_selector_unit hart_selector_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
@@ -48,24 +41,47 @@ module stage3_hart_selector (
 
     word_t next_count;
     word_t count;
+    word_t [NUM_HARTS-1:0] stalled_threads;
+    word_t next_hart_id;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             count <= '0;
+            hart_selector_if.hart_id <= '0;
         end else begin
             count <= next_count;
+            hart_selector_if.hart_id <= next_hart_id;
         end
     end
 
     always_comb begin
+      next_hart_id = hart_selector_if.hart_id;
       if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
-        if (count == (NUM_HARTS - 1)) next_count = 0;
+        if (count == 10) begin
+           next_count = 0;
+           if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
+              next_hart_id = 32'd0;
+            end
+            else begin
+              next_hart_id = hart_selector_if.hart_id + 32'd1;
+           end
+        end
         else next_count = count + 1;
       end else next_count = count;
     end
 
-    assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
 
+    // always_comb begin
+    //   next_hart_id = hart_selector_if.hart_id;
+    //   if(hart_selector_if.branch_jump) begin
+    //     if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
+    //       next_hart_id = 32'd0;
+    //     end
+    //     else begin
+    //       next_hart_id = hart_selector_if.hart_id + 32'd1;
+    //     end
+    //   end
+    // end
     
-
+    //assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
 endmodule

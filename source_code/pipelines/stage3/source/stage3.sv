@@ -61,7 +61,7 @@ module stage3 #(
 
     //module instantiations
     stage3_program_counter #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) program_counter_i(.mem_fetch_if(mem_pipe_if), .*);
-    stage3_hart_selector #(.NUM_HARTS(NUM_HARTS)) hart_selector_i(.mem_fetch_if(mem_pipe_if), .*);
+    stage3_hart_selector #(.NUM_HARTS(NUM_HARTS)) hart_selector_i(CLK, nRST, .hazard_if(hazard_if), .hart_selector_if(hart_selector_if));
     stage3_fetch_stage #(.NUM_HARTS(NUM_HARTS), .RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
     stage3_execute_stage #(.NUM_HARTS(NUM_HARTS)) execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);

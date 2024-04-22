@@ -25,8 +25,9 @@
 #define MMIO_RANGE_BEGIN (MTIME_ADDR)
 #define MMIO_RANGE_END   (MAGIC_ADDR)
 
-#define SIM_TIME_MAX 999999999
-// #define SIM_TIME_MAX 100000
+//#define SIM_TIME_MAX 999999999
+#define RAM_LATENCY 0
+#define SIM_TIME_MAX 1000000
 
 // doubles as mtime counter
 vluint64_t sim_time = 0;
@@ -253,6 +254,15 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
     tick(dut, trace);
 }
 
+void wait_latency(Vtop_core& dut, VerilatedFstC& trace) {
+    for(uint32_t i = 0; i < RAM_LATENCY; i++) {
+        dut.mtime = sim_time;
+        dut.busy = 1;
+        tick(dut, trace);
+    }
+    dut.busy = 0;
+}
+
 
 int main(int argc, char **argv) {
 
@@ -284,18 +294,22 @@ int main(int argc, char **argv) {
 
 
     reset(dut, m_trace);
+    uint32_t latency = 2;
+    uint32_t count = 0;
     while(!dut.halt && sim_time < SIM_TIME_MAX) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
-            dut.busy = 0;
+          dut.busy = 0;
             if(dut.ren) {
                 uint32_t addr = dut.addr & 0xFFFFFFFC;
                 if(addr < BUS_ERROR_TOP) {
                     dut.error = 1;
                 }else if(!MemoryMap::is_mmio_region(addr)) {
+                    wait_latency(dut, m_trace);
                     dut.rdata = memory.read(addr);
                 } else {
+                    wait_latency(dut, m_trace);
                     dut.rdata = memory.mmio_read(addr);
                 }
             } else if(dut.wen) {
@@ -305,8 +319,10 @@ int main(int argc, char **argv) {
                 if(addr < BUS_ERROR_TOP) {
                     dut.error = 1;
                 } else if(!MemoryMap::is_mmio_region(addr)) {
+                    wait_latency(dut, m_trace);
                     memory.write(addr, value, mask);
                 } else {
+                    wait_latency(dut, m_trace);
                     memory.mmio_write(addr, value, mask);
                 }
             }
@@ -315,7 +331,6 @@ int main(int argc, char **argv) {
         }
 
         dut.mtime = sim_time;
-
         tick(dut, m_trace);
         update_interrupt_signals(dut);
     }
