@@ -81,7 +81,7 @@ module l1_cache_tb();
 
 		#(CLK_PERIOD * 2);
 
-		test = "testing done";
+		test = "testing done beep boop";
         proc_gen_bus_if.addr = 32'hFFFFFFFF;
         proc_gen_bus_if.ren = 1'b0;
         proc_gen_bus_if.wen = 1'b0;

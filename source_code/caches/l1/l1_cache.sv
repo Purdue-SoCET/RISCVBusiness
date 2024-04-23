@@ -176,9 +176,9 @@ module l1_cache #(
     typedef struct packed {
         logic [1:0] [31:0] addr;
     } addr_pairs;
-    addr_pairs [2:0] addr_queue;
+    addr_pairs [1:0] addr_queue;
     // TODO: parameterize
-    logic [2 : 0] aq_wptr, aq_rptr;
+    logic [0 : 0] aq_wptr, aq_rptr;
     addr_pairs aq_dataout, aq_datain;
 
 
