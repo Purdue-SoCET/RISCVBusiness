@@ -1,2 +1,2 @@
-vlog -sv -work work l1_cache_tb.sv l1_cache.sv ../sram/sram.sv +incdir+/home/asicfab/a/socet104/AFTx07/RISCVBusiness/source_code/include
+vlog -sv -work work l1_cache_tb.sv l1_cache.sv rv32i_types_pkg.sv ../sram/sram.sv +incdir+/home/asicfab/a/socet104/AFTx07/RISCVBusiness/source_code/include
 vsim -voptargs="+acc" work.l1_cache_tb -do "do wave.do; run -all"

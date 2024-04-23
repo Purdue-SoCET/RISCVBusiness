@@ -17,9 +17,9 @@
 *	Filename:     l1_cache_tb.sv
 *
 *	Created by:   Pranav Srisankar
-*	Email:        jin357@purdue.edu
-*	Date Created: 01/29/2023
-*	Description:  basic sram tb
+*	Email:        psrisank@purdue.edu
+*	Date Created: 04/10/2024
+*	Description:  basic l1 cache tb
 */
 
 // setup
