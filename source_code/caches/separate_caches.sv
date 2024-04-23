@@ -27,7 +27,9 @@
 `include "component_selection_defines.vh"
 `include "cpu_tracker_if.vh"
 
-module separate_caches (
+module separate_caches #(
+    parameter NUM_HARTS = 1
+)(
     input logic CLK,
     nRST,
     generic_bus_if.cpu icache_mem_gen_bus_if,
@@ -68,7 +70,8 @@ module separate_caches (
                 .CACHE_SIZE(DCACHE_SIZE),
                 .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
                 .ASSOC(DCACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+                .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
+                .NUM_HARTS(NUM_HARTS)
             )
             dcache (
                 .CLK(CLK),
@@ -116,7 +119,8 @@ module separate_caches (
                 .CACHE_SIZE(ICACHE_SIZE),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
                 .ASSOC(ICACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+                .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
+                .THREAD_CNT(THREAD_CNT)
             )
             icache (
                 .CLK(CLK),

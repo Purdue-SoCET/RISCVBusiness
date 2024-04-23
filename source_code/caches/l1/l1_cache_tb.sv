@@ -43,7 +43,7 @@ module l1_cache_tb();
 
 	// DUT instance.
 
-    l1_cache DUT (.CLK(CLK), .nRST(nRST), .mem_gen_bus_if(mem_gen_bus_if), .proc_gen_bus_if(proc_gen_bus_if));
+    l1_cache #(.NUM_HARTS(2)) DUT (.CLK(CLK), .nRST(nRST), .mem_gen_bus_if(mem_gen_bus_if), .proc_gen_bus_if(proc_gen_bus_if));
 
 	task reset_dut; 
 		@(negedge CLK) nRST = 1'b0; 
