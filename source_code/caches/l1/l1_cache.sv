@@ -193,6 +193,7 @@ module l1_cache #(
     always_ff @ (posedge CLK, negedge nRST) begin
         if(~nRST) begin
             state <= IDLE;
+            ustate <= UIDLE;
             flush_idx <= 0;
             word_num <= 0;
             last_used <= 0;
@@ -202,6 +203,7 @@ module l1_cache #(
         end
         else begin
             state <= next_state;                        // cache state machine
+            ustate <= next_ustate;
             flush_idx <= next_flush_idx;                // index for flushing the cache entries
             word_num <= next_word_num;                  // word counter for fetching/writing back
             last_used <= next_last_used;                // MRU index
@@ -625,7 +627,7 @@ module l1_cache #(
         next_ustate = ustate;
         casez(ustate)
             UIDLE: begin
-                if (!iq_empty && !((state == IDLE) && (proc_gen_bus_if.wen && hit && !flush)))
+                if (!iq_empty && !((state == HIT) && (proc_gen_bus_if.wen && hit && !flush)))
                     next_ustate = UPDATE;
             end
             UPDATE: begin
