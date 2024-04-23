@@ -1,0 +1,10 @@
+Tue Apr 23 19:04:38 EDT 2024
+Trace back: bad option "xview": must be cget or configure
+    while executing
+"$w xview scroll $amt $what"
+    (procedure "grid_mouseButton" line 19)
+    invoked from within
+"grid_mouseButton .main_pane.wave.interior.cs.body.pw.wf.grid.row0,selector.data .main_pane.wave.interior.cs.body.pw.wf.grid .main_pane.wave.interior.c..."
+    (command bound to event)
+  <2:/package/eda/mg/questa2021.4/questasim/linux_x86_64/tk8.6/bgerror.tcl:106: ::tkerror {bad option "xview": must be cget or configure}
+  <1:eval:1: ::tk::dialog::error::bgerror {bad option "xview": must be cget or configure}
