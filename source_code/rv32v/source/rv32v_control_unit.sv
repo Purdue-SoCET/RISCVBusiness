@@ -366,7 +366,8 @@ rv32v_opi_decode U_OPIDECODE(
     
     .vexec(vexec_opi),
     .valid(vopi_decode_valid),
-    .disable_mask(vopi_disable_mask)
+    .disable_mask(vopi_disable_mask),
+    .veew_dest(vopi_veew_dest)
 );
 
 // OPM* execution unit control signals
