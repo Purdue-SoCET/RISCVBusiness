@@ -23,11 +23,11 @@
 */
 
 // setup
+localparam CLK_PERIOD = 10;
 `include "generic_bus_if.vh"
 
 `timescale 1ns/10ps
 module l1_cache_tb(); 
-	localparam CLK_PERIOD = 10;
 
 	// CLK/nRST
 	logic CLK = 0, nRST = 1;
