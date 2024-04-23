@@ -1,0 +1,868 @@
+# See LICENSE for license details.
+
+#*****************************************************************************
+# vlininterp.S
+#-----------------------------------------------------------------------------
+#
+# Linear interpolation by a factor of two of a sine wave
+#
+
+#include "riscv_test.h"
+#include "test_macros.h"
+
+
+RVTEST_RV32U
+
+RVTEST_CODE_BEGIN
+        // Jump to main (will halt there)
+        la      sp, endstack
+        j       main
+
+lininterp:
+        li      a5,1
+        ble     a2,a5,.L5
+        addi    a2,a2,-1
+        addi    a4,a0,2
+.L3:
+        vsetvli a5,a2,e16,m1,ta,ma
+        vle16.v v1,0(a0)
+        vle16.v v6,0(a4)
+        slli    a3,a5,1
+        slli    a6,a5,2
+        sub     a2,a2,a5
+        add     a0,a0,a3
+        vmv1r.v v2,v1
+        vwadd.vv        v4,v1,v6
+        add     a4,a4,a3
+        vnsra.wi        v3,v4,1
+        vsseg2e16.v     v2,(a1)
+        add     a1,a1,a6
+        bne     a2,zero,.L3
+.L5:
+        ret
+main:                                   # @main
+        addi    sp, sp, -16
+        sw      ra, 12(sp)                      # 4-byte Folded Spill
+        sw      s0, 8(sp)                       # 4-byte Folded Spill
+        lui     a0, %hi(input)
+        addi    a0, a0, %lo(input)
+        lui     a1, %hi(output)
+        addi    s0, a1, %lo(output)
+        li      a2, 256
+        mv      a1, s0
+        call    lininterp
+        li      a0, 0
+        lui     a1, %hi(expect)
+        addi    a1, a1, %lo(expect)
+        addi    a2, a1, 1024
+.LBB1_1:                                # =>This Inner Loop Header: Depth=1
+        lhu     a3, 0(s0)
+        lhu     a4, 0(a1)
+        xor     a3, a3, a4
+        snez    a3, a3
+        add     a0, a0, a3
+        addi    a1, a1, 2
+        addi    s0, s0, 2
+        bne     a1, a2, .LBB1_1
+        lw      ra, 12(sp)                      # 4-byte Folded Reload
+        lw      s0, 8(sp)                       # 4-byte Folded Reload
+        addi    sp, sp, 16
+
+        // Check for errors
+        la a1, errors
+        sw a0, 0(a1)
+        TEST_CASE(1, a0, 0, NOP)
+
+        TEST_PASSFAIL
+
+RVTEST_CODE_END
+
+        .data
+RVTEST_DATA_BEGIN
+
+        TEST_DATA
+
+input:
+        .half   0                               # 0x0
+        .half   1284                            # 0x504
+        .half   2567                            # 0xa07
+        .half   3846                            # 0xf06
+        .half   5119                            # 0x13ff
+        .half   6384                            # 0x18f0
+        .half   7639                            # 0x1dd7
+        .half   8882                            # 0x22b2
+        .half   10112                           # 0x2780
+        .half   11326                           # 0x2c3e
+        .half   12523                           # 0x30eb
+        .half   13700                           # 0x3584
+        .half   14857                           # 0x3a09
+        .half   15990                           # 0x3e76
+        .half   17100                           # 0x42cc
+        .half   18182                           # 0x4706
+        .half   19237                           # 0x4b25
+        .half   20262                           # 0x4f26
+        .half   21256                           # 0x5308
+        .half   22218                           # 0x56ca
+        .half   23145                           # 0x5a69
+        .half   24036                           # 0x5de4
+        .half   24891                           # 0x613b
+        .half   25707                           # 0x646b
+        .half   26484                           # 0x6774
+        .half   27220                           # 0x6a54
+        .half   27915                           # 0x6d0b
+        .half   28566                           # 0x6f96
+        .half   29173                           # 0x71f5
+        .half   29736                           # 0x7428
+        .half   30253                           # 0x762d
+        .half   30723                           # 0x7803
+        .half   31146                           # 0x79aa
+        .half   31521                           # 0x7b21
+        .half   31848                           # 0x7c68
+        .half   32126                           # 0x7d7e
+        .half   32354                           # 0x7e62
+        .half   32533                           # 0x7f15
+        .half   32661                           # 0x7f95
+        .half   32739                           # 0x7fe3
+        .half   32767                           # 0x7fff
+        .half   32745                           # 0x7fe9
+        .half   32672                           # 0x7fa0
+        .half   32549                           # 0x7f25
+        .half   32376                           # 0x7e78
+        .half   32153                           # 0x7d99
+        .half   31881                           # 0x7c89
+        .half   31560                           # 0x7b48
+        .half   31190                           # 0x79d6
+        .half   30772                           # 0x7834
+        .half   30307                           # 0x7663
+        .half   29795                           # 0x7463
+        .half   29238                           # 0x7236
+        .half   28635                           # 0x6fdb
+        .half   27989                           # 0x6d55
+        .half   27299                           # 0x6aa3
+        .half   26568                           # 0x67c8
+        .half   25795                           # 0x64c3
+        .half   24983                           # 0x6197
+        .half   24133                           # 0x5e45
+        .half   23245                           # 0x5acd
+        .half   22322                           # 0x5732
+        .half   21364                           # 0x5374
+        .half   20374                           # 0x4f96
+        .half   19352                           # 0x4b98
+        .half   18300                           # 0x477c
+        .half   17221                           # 0x4345
+        .half   16114                           # 0x3ef2
+        .half   14983                           # 0x3a87
+        .half   13829                           # 0x3605
+        .half   12654                           # 0x316e
+        .half   11459                           # 0x2cc3
+        .half   10247                           # 0x2807
+        .half   9019                            # 0x233b
+        .half   7777                            # 0x1e61
+        .half   6523                            # 0x197b
+        .half   5259                            # 0x148b
+        .half   3987                            # 0xf93
+        .half   2709                            # 0xa95
+        .half   1426                            # 0x592
+        .half   142                             # 0x8e
+        .half   64394                           # 0xfb8a
+        .half   63111                           # 0xf687
+        .half   61832                           # 0xf188
+        .half   60558                           # 0xec8e
+        .half   59292                           # 0xe79c
+        .half   58036                           # 0xe2b4
+        .half   56791                           # 0xddd7
+        .half   55559                           # 0xd907
+        .half   54343                           # 0xd447
+        .half   53145                           # 0xcf99
+        .half   51965                           # 0xcafd
+        .half   50806                           # 0xc676
+        .half   49670                           # 0xc206
+        .half   48558                           # 0xbdae
+        .half   47472                           # 0xb970
+        .half   46414                           # 0xb54e
+        .half   45386                           # 0xb14a
+        .half   44388                           # 0xad64
+        .half   43423                           # 0xa99f
+        .half   42492                           # 0xa5fc
+        .half   41596                           # 0xa27c
+        .half   40738                           # 0x9f22
+        .half   39917                           # 0x9bed
+        .half   39136                           # 0x98e0
+        .half   38395                           # 0x95fb
+        .half   37696                           # 0x9340
+        .half   37040                           # 0x90b0
+        .half   36428                           # 0x8e4c
+        .half   35860                           # 0x8c14
+        .half   35338                           # 0x8a0a
+        .half   34863                           # 0x882f
+        .half   34434                           # 0x8682
+        .half   34054                           # 0x8506
+        .half   33722                           # 0x83ba
+        .half   33439                           # 0x829f
+        .half   33205                           # 0x81b5
+        .half   33021                           # 0x80fd
+        .half   32887                           # 0x8077
+        .half   32803                           # 0x8023
+        .half   32769                           # 0x8001
+        .half   32786                           # 0x8012
+        .half   32853                           # 0x8055
+        .half   32971                           # 0x80cb
+        .half   33138                           # 0x8172
+        .half   33356                           # 0x824c
+        .half   33622                           # 0x8356
+        .half   33938                           # 0x8492
+        .half   34303                           # 0x85ff
+        .half   34715                           # 0x879b
+        .half   35175                           # 0x8967
+        .half   35682                           # 0x8b62
+        .half   36234                           # 0x8d8a
+        .half   36832                           # 0x8fe0
+        .half   37474                           # 0x9262
+        .half   38158                           # 0x950e
+        .half   38885                           # 0x97e5
+        .half   39653                           # 0x9ae5
+        .half   40461                           # 0x9e0d
+        .half   41307                           # 0xa15b
+        .half   42191                           # 0xa4cf
+        .half   43110                           # 0xa866
+        .half   44064                           # 0xac20
+        .half   45051                           # 0xaffb
+        .half   46070                           # 0xb3f6
+        .half   47118                           # 0xb80e
+        .half   48195                           # 0xbc43
+        .half   49298                           # 0xc092
+        .half   50426                           # 0xc4fa
+        .half   51578                           # 0xc97a
+        .half   52751                           # 0xce0f
+        .half   53944                           # 0xd2b8
+        .half   55154                           # 0xd772
+        .half   56381                           # 0xdc3d
+        .half   57621                           # 0xe115
+        .half   58874                           # 0xe5fa
+        .half   60137                           # 0xeae9
+        .half   61408                           # 0xefe0
+        .half   62686                           # 0xf4de
+        .half   63968                           # 0xf9e0
+        .half   65252                           # 0xfee4
+        .half   1000                            # 0x3e8
+        .half   2283                            # 0x8eb
+        .half   3563                            # 0xdeb
+        .half   4838                            # 0x12e6
+        .half   6104                            # 0x17d8
+        .half   7362                            # 0x1cc2
+        .half   8608                            # 0x21a0
+        .half   9841                            # 0x2671
+        .half   11059                           # 0x2b33
+        .half   12260                           # 0x2fe4
+        .half   13442                           # 0x3482
+        .half   14603                           # 0x390b
+        .half   15742                           # 0x3d7e
+        .half   16856                           # 0x41d8
+        .half   17945                           # 0x4619
+        .half   19006                           # 0x4a3e
+        .half   20038                           # 0x4e46
+        .half   21039                           # 0x522f
+        .half   22008                           # 0x55f8
+        .half   22943                           # 0x599f
+        .half   23842                           # 0x5d22
+        .half   24705                           # 0x6081
+        .half   25530                           # 0x63ba
+        .half   26316                           # 0x66cc
+        .half   27061                           # 0x69b5
+        .half   27765                           # 0x6c75
+        .half   28426                           # 0x6f0a
+        .half   29043                           # 0x7173
+        .half   29615                           # 0x73af
+        .half   30142                           # 0x75be
+        .half   30623                           # 0x779f
+        .half   31057                           # 0x7951
+        .half   31442                           # 0x7ad2
+        .half   31780                           # 0x7c24
+        .half   32068                           # 0x7d44
+        .half   32308                           # 0x7e34
+        .half   32497                           # 0x7ef1
+        .half   32637                           # 0x7f7d
+        .half   32726                           # 0x7fd6
+        .half   32766                           # 0x7ffe
+        .half   32754                           # 0x7ff2
+        .half   32693                           # 0x7fb5
+        .half   32581                           # 0x7f45
+        .half   32419                           # 0x7ea3
+        .half   32207                           # 0x7dcf
+        .half   31946                           # 0x7cca
+        .half   31635                           # 0x7b93
+        .half   31276                           # 0x7a2c
+        .half   30869                           # 0x7895
+        .half   30414                           # 0x76ce
+        .half   29913                           # 0x74d9
+        .half   29365                           # 0x72b5
+        .half   28772                           # 0x7064
+        .half   28136                           # 0x6de8
+        .half   27455                           # 0x6b3f
+        .half   26733                           # 0x686d
+        .half   25970                           # 0x6572
+        .half   25166                           # 0x624e
+        .half   24324                           # 0x5f04
+        .half   23445                           # 0x5b95
+        .half   22529                           # 0x5801
+        .half   21579                           # 0x544b
+        .half   20596                           # 0x5074
+        .half   19581                           # 0x4c7d
+        .half   18535                           # 0x4867
+        .half   17462                           # 0x4436
+        .half   16361                           # 0x3fe9
+        .half   15236                           # 0x3b84
+        .half   14087                           # 0x3707
+        .half   12916                           # 0x3274
+        .half   11725                           # 0x2dcd
+        .half   10517                           # 0x2915
+        .half   9292                            # 0x244c
+        .half   8053                            # 0x1f75
+        .half   6801                            # 0x1a91
+        .half   5539                            # 0x15a3
+        .half   4269                            # 0x10ad
+        .half   2992                            # 0xbb0
+        .half   1710                            # 0x6ae
+        .half   426                             # 0x1aa
+        .half   64678                           # 0xfca6
+        .half   63394                           # 0xf7a2
+        .half   62114                           # 0xf2a2
+        .half   60839                           # 0xeda7
+        .half   59571                           # 0xe8b3
+        .half   58313                           # 0xe3c9
+        .half   57065                           # 0xdee9
+        .half   55831                           # 0xda17
+        .half   54611                           # 0xd553
+        .half   53408                           # 0xd0a0
+        .half   52224                           # 0xcc00
+        .half   51060                           # 0xc774
+        .half   49919                           # 0xc2ff
+        .half   48802                           # 0xbea2
+        .half   47710                           # 0xba5e
+
+expect:
+        .half   0                               # 0x0
+        .half   642                             # 0x282
+        .half   1284                            # 0x504
+        .half   1925                            # 0x785
+        .half   2567                            # 0xa07
+        .half   3206                            # 0xc86
+        .half   3846                            # 0xf06
+        .half   4482                            # 0x1182
+        .half   5119                            # 0x13ff
+        .half   5751                            # 0x1677
+        .half   6384                            # 0x18f0
+        .half   7011                            # 0x1b63
+        .half   7639                            # 0x1dd7
+        .half   8260                            # 0x2044
+        .half   8882                            # 0x22b2
+        .half   9497                            # 0x2519
+        .half   10112                           # 0x2780
+        .half   10719                           # 0x29df
+        .half   11326                           # 0x2c3e
+        .half   11924                           # 0x2e94
+        .half   12523                           # 0x30eb
+        .half   13111                           # 0x3337
+        .half   13700                           # 0x3584
+        .half   14278                           # 0x37c6
+        .half   14857                           # 0x3a09
+        .half   15423                           # 0x3c3f
+        .half   15990                           # 0x3e76
+        .half   16545                           # 0x40a1
+        .half   17100                           # 0x42cc
+        .half   17641                           # 0x44e9
+        .half   18182                           # 0x4706
+        .half   18709                           # 0x4915
+        .half   19237                           # 0x4b25
+        .half   19749                           # 0x4d25
+        .half   20262                           # 0x4f26
+        .half   20759                           # 0x5117
+        .half   21256                           # 0x5308
+        .half   21737                           # 0x54e9
+        .half   22218                           # 0x56ca
+        .half   22681                           # 0x5899
+        .half   23145                           # 0x5a69
+        .half   23590                           # 0x5c26
+        .half   24036                           # 0x5de4
+        .half   24463                           # 0x5f8f
+        .half   24891                           # 0x613b
+        .half   25299                           # 0x62d3
+        .half   25707                           # 0x646b
+        .half   26095                           # 0x65ef
+        .half   26484                           # 0x6774
+        .half   26852                           # 0x68e4
+        .half   27220                           # 0x6a54
+        .half   27567                           # 0x6baf
+        .half   27915                           # 0x6d0b
+        .half   28240                           # 0x6e50
+        .half   28566                           # 0x6f96
+        .half   28869                           # 0x70c5
+        .half   29173                           # 0x71f5
+        .half   29454                           # 0x730e
+        .half   29736                           # 0x7428
+        .half   29994                           # 0x752a
+        .half   30253                           # 0x762d
+        .half   30488                           # 0x7718
+        .half   30723                           # 0x7803
+        .half   30934                           # 0x78d6
+        .half   31146                           # 0x79aa
+        .half   31333                           # 0x7a65
+        .half   31521                           # 0x7b21
+        .half   31684                           # 0x7bc4
+        .half   31848                           # 0x7c68
+        .half   31987                           # 0x7cf3
+        .half   32126                           # 0x7d7e
+        .half   32240                           # 0x7df0
+        .half   32354                           # 0x7e62
+        .half   32443                           # 0x7ebb
+        .half   32533                           # 0x7f15
+        .half   32597                           # 0x7f55
+        .half   32661                           # 0x7f95
+        .half   32700                           # 0x7fbc
+        .half   32739                           # 0x7fe3
+        .half   32753                           # 0x7ff1
+        .half   32767                           # 0x7fff
+        .half   32756                           # 0x7ff4
+        .half   32745                           # 0x7fe9
+        .half   32708                           # 0x7fc4
+        .half   32672                           # 0x7fa0
+        .half   32610                           # 0x7f62
+        .half   32549                           # 0x7f25
+        .half   32462                           # 0x7ece
+        .half   32376                           # 0x7e78
+        .half   32264                           # 0x7e08
+        .half   32153                           # 0x7d99
+        .half   32017                           # 0x7d11
+        .half   31881                           # 0x7c89
+        .half   31720                           # 0x7be8
+        .half   31560                           # 0x7b48
+        .half   31375                           # 0x7a8f
+        .half   31190                           # 0x79d6
+        .half   30981                           # 0x7905
+        .half   30772                           # 0x7834
+        .half   30539                           # 0x774b
+        .half   30307                           # 0x7663
+        .half   30051                           # 0x7563
+        .half   29795                           # 0x7463
+        .half   29516                           # 0x734c
+        .half   29238                           # 0x7236
+        .half   28936                           # 0x7108
+        .half   28635                           # 0x6fdb
+        .half   28312                           # 0x6e98
+        .half   27989                           # 0x6d55
+        .half   27644                           # 0x6bfc
+        .half   27299                           # 0x6aa3
+        .half   26933                           # 0x6935
+        .half   26568                           # 0x67c8
+        .half   26181                           # 0x6645
+        .half   25795                           # 0x64c3
+        .half   25389                           # 0x632d
+        .half   24983                           # 0x6197
+        .half   24558                           # 0x5fee
+        .half   24133                           # 0x5e45
+        .half   23689                           # 0x5c89
+        .half   23245                           # 0x5acd
+        .half   22783                           # 0x58ff
+        .half   22322                           # 0x5732
+        .half   21843                           # 0x5553
+        .half   21364                           # 0x5374
+        .half   20869                           # 0x5185
+        .half   20374                           # 0x4f96
+        .half   19863                           # 0x4d97
+        .half   19352                           # 0x4b98
+        .half   18826                           # 0x498a
+        .half   18300                           # 0x477c
+        .half   17760                           # 0x4560
+        .half   17221                           # 0x4345
+        .half   16667                           # 0x411b
+        .half   16114                           # 0x3ef2
+        .half   15548                           # 0x3cbc
+        .half   14983                           # 0x3a87
+        .half   14406                           # 0x3846
+        .half   13829                           # 0x3605
+        .half   13241                           # 0x33b9
+        .half   12654                           # 0x316e
+        .half   12056                           # 0x2f18
+        .half   11459                           # 0x2cc3
+        .half   10853                           # 0x2a65
+        .half   10247                           # 0x2807
+        .half   9633                            # 0x25a1
+        .half   9019                            # 0x233b
+        .half   8398                            # 0x20ce
+        .half   7777                            # 0x1e61
+        .half   7150                            # 0x1bee
+        .half   6523                            # 0x197b
+        .half   5891                            # 0x1703
+        .half   5259                            # 0x148b
+        .half   4623                            # 0x120f
+        .half   3987                            # 0xf93
+        .half   3348                            # 0xd14
+        .half   2709                            # 0xa95
+        .half   2067                            # 0x813
+        .half   1426                            # 0x592
+        .half   784                             # 0x310
+        .half   142                             # 0x8e
+        .half   65036                           # 0xfe0c
+        .half   64394                           # 0xfb8a
+        .half   63752                           # 0xf908
+        .half   63111                           # 0xf687
+        .half   62471                           # 0xf407
+        .half   61832                           # 0xf188
+        .half   61195                           # 0xef0b
+        .half   60558                           # 0xec8e
+        .half   59925                           # 0xea15
+        .half   59292                           # 0xe79c
+        .half   58664                           # 0xe528
+        .half   58036                           # 0xe2b4
+        .half   57413                           # 0xe045
+        .half   56791                           # 0xddd7
+        .half   56175                           # 0xdb6f
+        .half   55559                           # 0xd907
+        .half   54951                           # 0xd6a7
+        .half   54343                           # 0xd447
+        .half   53744                           # 0xd1f0
+        .half   53145                           # 0xcf99
+        .half   52555                           # 0xcd4b
+        .half   51965                           # 0xcafd
+        .half   51385                           # 0xc8b9
+        .half   50806                           # 0xc676
+        .half   50238                           # 0xc43e
+        .half   49670                           # 0xc206
+        .half   49114                           # 0xbfda
+        .half   48558                           # 0xbdae
+        .half   48015                           # 0xbb8f
+        .half   47472                           # 0xb970
+        .half   46943                           # 0xb75f
+        .half   46414                           # 0xb54e
+        .half   45900                           # 0xb34c
+        .half   45386                           # 0xb14a
+        .half   44887                           # 0xaf57
+        .half   44388                           # 0xad64
+        .half   43905                           # 0xab81
+        .half   43423                           # 0xa99f
+        .half   42957                           # 0xa7cd
+        .half   42492                           # 0xa5fc
+        .half   42044                           # 0xa43c
+        .half   41596                           # 0xa27c
+        .half   41167                           # 0xa0cf
+        .half   40738                           # 0x9f22
+        .half   40327                           # 0x9d87
+        .half   39917                           # 0x9bed
+        .half   39526                           # 0x9a66
+        .half   39136                           # 0x98e0
+        .half   38765                           # 0x976d
+        .half   38395                           # 0x95fb
+        .half   38045                           # 0x949d
+        .half   37696                           # 0x9340
+        .half   37368                           # 0x91f8
+        .half   37040                           # 0x90b0
+        .half   36734                           # 0x8f7e
+        .half   36428                           # 0x8e4c
+        .half   36144                           # 0x8d30
+        .half   35860                           # 0x8c14
+        .half   35599                           # 0x8b0f
+        .half   35338                           # 0x8a0a
+        .half   35100                           # 0x891c
+        .half   34863                           # 0x882f
+        .half   34648                           # 0x8758
+        .half   34434                           # 0x8682
+        .half   34244                           # 0x85c4
+        .half   34054                           # 0x8506
+        .half   33888                           # 0x8460
+        .half   33722                           # 0x83ba
+        .half   33580                           # 0x832c
+        .half   33439                           # 0x829f
+        .half   33322                           # 0x822a
+        .half   33205                           # 0x81b5
+        .half   33113                           # 0x8159
+        .half   33021                           # 0x80fd
+        .half   32954                           # 0x80ba
+        .half   32887                           # 0x8077
+        .half   32845                           # 0x804d
+        .half   32803                           # 0x8023
+        .half   32786                           # 0x8012
+        .half   32769                           # 0x8001
+        .half   32777                           # 0x8009
+        .half   32786                           # 0x8012
+        .half   32819                           # 0x8033
+        .half   32853                           # 0x8055
+        .half   32912                           # 0x8090
+        .half   32971                           # 0x80cb
+        .half   33054                           # 0x811e
+        .half   33138                           # 0x8172
+        .half   33247                           # 0x81df
+        .half   33356                           # 0x824c
+        .half   33489                           # 0x82d1
+        .half   33622                           # 0x8356
+        .half   33780                           # 0x83f4
+        .half   33938                           # 0x8492
+        .half   34120                           # 0x8548
+        .half   34303                           # 0x85ff
+        .half   34509                           # 0x86cd
+        .half   34715                           # 0x879b
+        .half   34945                           # 0x8881
+        .half   35175                           # 0x8967
+        .half   35428                           # 0x8a64
+        .half   35682                           # 0x8b62
+        .half   35958                           # 0x8c76
+        .half   36234                           # 0x8d8a
+        .half   36533                           # 0x8eb5
+        .half   36832                           # 0x8fe0
+        .half   37153                           # 0x9121
+        .half   37474                           # 0x9262
+        .half   37816                           # 0x93b8
+        .half   38158                           # 0x950e
+        .half   38521                           # 0x9679
+        .half   38885                           # 0x97e5
+        .half   39269                           # 0x9965
+        .half   39653                           # 0x9ae5
+        .half   40057                           # 0x9c79
+        .half   40461                           # 0x9e0d
+        .half   40884                           # 0x9fb4
+        .half   41307                           # 0xa15b
+        .half   41749                           # 0xa315
+        .half   42191                           # 0xa4cf
+        .half   42650                           # 0xa69a
+        .half   43110                           # 0xa866
+        .half   43587                           # 0xaa43
+        .half   44064                           # 0xac20
+        .half   44557                           # 0xae0d
+        .half   45051                           # 0xaffb
+        .half   45560                           # 0xb1f8
+        .half   46070                           # 0xb3f6
+        .half   46594                           # 0xb602
+        .half   47118                           # 0xb80e
+        .half   47656                           # 0xba28
+        .half   48195                           # 0xbc43
+        .half   48746                           # 0xbe6a
+        .half   49298                           # 0xc092
+        .half   49862                           # 0xc2c6
+        .half   50426                           # 0xc4fa
+        .half   51002                           # 0xc73a
+        .half   51578                           # 0xc97a
+        .half   52164                           # 0xcbc4
+        .half   52751                           # 0xce0f
+        .half   53347                           # 0xd063
+        .half   53944                           # 0xd2b8
+        .half   54549                           # 0xd515
+        .half   55154                           # 0xd772
+        .half   55767                           # 0xd9d7
+        .half   56381                           # 0xdc3d
+        .half   57001                           # 0xdea9
+        .half   57621                           # 0xe115
+        .half   58247                           # 0xe387
+        .half   58874                           # 0xe5fa
+        .half   59505                           # 0xe871
+        .half   60137                           # 0xeae9
+        .half   60772                           # 0xed64
+        .half   61408                           # 0xefe0
+        .half   62047                           # 0xf25f
+        .half   62686                           # 0xf4de
+        .half   63327                           # 0xf75f
+        .half   63968                           # 0xf9e0
+        .half   64610                           # 0xfc62
+        .half   65252                           # 0xfee4
+        .half   358                             # 0x166
+        .half   1000                            # 0x3e8
+        .half   1641                            # 0x669
+        .half   2283                            # 0x8eb
+        .half   2923                            # 0xb6b
+        .half   3563                            # 0xdeb
+        .half   4200                            # 0x1068
+        .half   4838                            # 0x12e6
+        .half   5471                            # 0x155f
+        .half   6104                            # 0x17d8
+        .half   6733                            # 0x1a4d
+        .half   7362                            # 0x1cc2
+        .half   7985                            # 0x1f31
+        .half   8608                            # 0x21a0
+        .half   9224                            # 0x2408
+        .half   9841                            # 0x2671
+        .half   10450                           # 0x28d2
+        .half   11059                           # 0x2b33
+        .half   11659                           # 0x2d8b
+        .half   12260                           # 0x2fe4
+        .half   12851                           # 0x3233
+        .half   13442                           # 0x3482
+        .half   14022                           # 0x36c6
+        .half   14603                           # 0x390b
+        .half   15172                           # 0x3b44
+        .half   15742                           # 0x3d7e
+        .half   16299                           # 0x3fab
+        .half   16856                           # 0x41d8
+        .half   17400                           # 0x43f8
+        .half   17945                           # 0x4619
+        .half   18475                           # 0x482b
+        .half   19006                           # 0x4a3e
+        .half   19522                           # 0x4c42
+        .half   20038                           # 0x4e46
+        .half   20538                           # 0x503a
+        .half   21039                           # 0x522f
+        .half   21523                           # 0x5413
+        .half   22008                           # 0x55f8
+        .half   22475                           # 0x57cb
+        .half   22943                           # 0x599f
+        .half   23392                           # 0x5b60
+        .half   23842                           # 0x5d22
+        .half   24273                           # 0x5ed1
+        .half   24705                           # 0x6081
+        .half   25117                           # 0x621d
+        .half   25530                           # 0x63ba
+        .half   25923                           # 0x6543
+        .half   26316                           # 0x66cc
+        .half   26688                           # 0x6840
+        .half   27061                           # 0x69b5
+        .half   27413                           # 0x6b15
+        .half   27765                           # 0x6c75
+        .half   28095                           # 0x6dbf
+        .half   28426                           # 0x6f0a
+        .half   28734                           # 0x703e
+        .half   29043                           # 0x7173
+        .half   29329                           # 0x7291
+        .half   29615                           # 0x73af
+        .half   29878                           # 0x74b6
+        .half   30142                           # 0x75be
+        .half   30382                           # 0x76ae
+        .half   30623                           # 0x779f
+        .half   30840                           # 0x7878
+        .half   31057                           # 0x7951
+        .half   31249                           # 0x7a11
+        .half   31442                           # 0x7ad2
+        .half   31611                           # 0x7b7b
+        .half   31780                           # 0x7c24
+        .half   31924                           # 0x7cb4
+        .half   32068                           # 0x7d44
+        .half   32188                           # 0x7dbc
+        .half   32308                           # 0x7e34
+        .half   32402                           # 0x7e92
+        .half   32497                           # 0x7ef1
+        .half   32567                           # 0x7f37
+        .half   32637                           # 0x7f7d
+        .half   32681                           # 0x7fa9
+        .half   32726                           # 0x7fd6
+        .half   32746                           # 0x7fea
+        .half   32766                           # 0x7ffe
+        .half   32760                           # 0x7ff8
+        .half   32754                           # 0x7ff2
+        .half   32723                           # 0x7fd3
+        .half   32693                           # 0x7fb5
+        .half   32637                           # 0x7f7d
+        .half   32581                           # 0x7f45
+        .half   32500                           # 0x7ef4
+        .half   32419                           # 0x7ea3
+        .half   32313                           # 0x7e39
+        .half   32207                           # 0x7dcf
+        .half   32076                           # 0x7d4c
+        .half   31946                           # 0x7cca
+        .half   31790                           # 0x7c2e
+        .half   31635                           # 0x7b93
+        .half   31455                           # 0x7adf
+        .half   31276                           # 0x7a2c
+        .half   31072                           # 0x7960
+        .half   30869                           # 0x7895
+        .half   30641                           # 0x77b1
+        .half   30414                           # 0x76ce
+        .half   30163                           # 0x75d3
+        .half   29913                           # 0x74d9
+        .half   29639                           # 0x73c7
+        .half   29365                           # 0x72b5
+        .half   29068                           # 0x718c
+        .half   28772                           # 0x7064
+        .half   28454                           # 0x6f26
+        .half   28136                           # 0x6de8
+        .half   27795                           # 0x6c93
+        .half   27455                           # 0x6b3f
+        .half   27094                           # 0x69d6
+        .half   26733                           # 0x686d
+        .half   26351                           # 0x66ef
+        .half   25970                           # 0x6572
+        .half   25568                           # 0x63e0
+        .half   25166                           # 0x624e
+        .half   24745                           # 0x60a9
+        .half   24324                           # 0x5f04
+        .half   23884                           # 0x5d4c
+        .half   23445                           # 0x5b95
+        .half   22987                           # 0x59cb
+        .half   22529                           # 0x5801
+        .half   22054                           # 0x5626
+        .half   21579                           # 0x544b
+        .half   21087                           # 0x525f
+        .half   20596                           # 0x5074
+        .half   20088                           # 0x4e78
+        .half   19581                           # 0x4c7d
+        .half   19058                           # 0x4a72
+        .half   18535                           # 0x4867
+        .half   17998                           # 0x464e
+        .half   17462                           # 0x4436
+        .half   16911                           # 0x420f
+        .half   16361                           # 0x3fe9
+        .half   15798                           # 0x3db6
+        .half   15236                           # 0x3b84
+        .half   14661                           # 0x3945
+        .half   14087                           # 0x3707
+        .half   13501                           # 0x34bd
+        .half   12916                           # 0x3274
+        .half   12320                           # 0x3020
+        .half   11725                           # 0x2dcd
+        .half   11121                           # 0x2b71
+        .half   10517                           # 0x2915
+        .half   9904                            # 0x26b0
+        .half   9292                            # 0x244c
+        .half   8672                            # 0x21e0
+        .half   8053                            # 0x1f75
+        .half   7427                            # 0x1d03
+        .half   6801                            # 0x1a91
+        .half   6170                            # 0x181a
+        .half   5539                            # 0x15a3
+        .half   4904                            # 0x1328
+        .half   4269                            # 0x10ad
+        .half   3630                            # 0xe2e
+        .half   2992                            # 0xbb0
+        .half   2351                            # 0x92f
+        .half   1710                            # 0x6ae
+        .half   1068                            # 0x42c
+        .half   426                             # 0x1aa
+        .half   65320                           # 0xff28
+        .half   64678                           # 0xfca6
+        .half   64036                           # 0xfa24
+        .half   63394                           # 0xf7a2
+        .half   62754                           # 0xf522
+        .half   62114                           # 0xf2a2
+        .half   61476                           # 0xf024
+        .half   60839                           # 0xeda7
+        .half   60205                           # 0xeb2d
+        .half   59571                           # 0xe8b3
+        .half   58942                           # 0xe63e
+        .half   58313                           # 0xe3c9
+        .half   57689                           # 0xe159
+        .half   57065                           # 0xdee9
+        .half   56448                           # 0xdc80
+        .half   55831                           # 0xda17
+        .half   55221                           # 0xd7b5
+        .half   54611                           # 0xd553
+        .half   54009                           # 0xd2f9
+        .half   53408                           # 0xd0a0
+        .half   52816                           # 0xce50
+        .half   52224                           # 0xcc00
+        .half   51642                           # 0xc9ba
+        .half   51060                           # 0xc774
+        .half   50489                           # 0xc539
+        .half   49919                           # 0xc2ff
+        .half   49360                           # 0xc0d0
+        .half   48802                           # 0xbea2
+        .half   48256                           # 0xbc80
+        .half   0                               # 0x0
+        .half   0                               # 0x0
+
+output:
+        .zero   1024
+
+        .align 4
+stack:
+        .zero   4096
+endstack:
+
+errors:
+        .word   0xffffffff
+
+RVTEST_DATA_END
