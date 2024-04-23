@@ -42,7 +42,7 @@ module l1_cache #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
-    global_events_if.caches global_events_if,
+    //global_events_if.caches global_events_if,
     output integer conflicts, misses
 );
     import rv32i_types_pkg::*;
@@ -157,24 +157,29 @@ module l1_cache #(
 
     // Ingress queue signals
     logic iq_empty, iq_full;
-    logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] iq_datain, iq_dataout, n_iq_datain;
     typedef struct packed {
-        logic [31 : 0] data;
+        logic [BLOCK_SIZE - 1 : 0] [31 : 0] data;
     } response_t;
     response_t [2:0] ingress_queue;
     logic iq_wen, iq_ren;
+    response_t iq_datain, iq_dataout, n_iq_datain;
+
     // TODO: $clog2(THREAD_CNT) instead of 3
     logic [$clog2(2) : 0] iq_wptr, iq_rptr;
     //logic [$clog2(3) - 1 : 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] ingress_queue;
 
-    logic iq_wordcnt, iq_wordcntdone, n_iq_wordcnt;
+    logic [2:0] iq_wordcnt,  n_iq_wordcnt;
+    logic iq_wordcntdone;
 
     // Address Queue Signals
     // TODO: replace 3 with address size
-    logic [$clog2(2) - 1 : 0] [WORD_SIZE - 1 : 0] addr_queue;
+    typedef struct packed {
+        logic [1:0] [31:0] addr;
+    } addr_pairs;
+    addr_pairs [2:0] addr_queue;
     // TODO: parameterize
     logic [2 : 0] aq_wptr, aq_rptr;
-    logic [WORD_SIZE - 1 : 0] aq_dataout, aq_datain;
+    addr_pairs aq_dataout, aq_datain;
 
 
 
@@ -301,6 +306,8 @@ module l1_cache #(
         eq_datain.wen = '0;
         for (integer i = 0; i < BLOCK_SIZE; i++) begin
             eq_datain.pair[i].data = '0;
+            eq_datain.pair[i].addr = '0;
+
         end
 
         mem_gen_bus_if.addr = egress_queue[eq_rptr].pair[eq_wordcnt].addr;
@@ -329,7 +336,7 @@ module l1_cache #(
                 end
             end
             HIT: begin
-                global_events_if.cache_miss = 0;
+                //global_events_if.cache_miss = 0;
                 next_read_addr = decoded_addr;
                 clear_word_count = 1;
                 // cache hit on a processor read
@@ -380,9 +387,16 @@ module l1_cache #(
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
                 	next_read_addr =  {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-                  if(sramRead.frames[ridx].valid) next_conflicts = conflicts + 1;
-                  next_misses = misses + 1;
-                  global_events_if.cache_miss = 1;
+                    if(sramRead.frames[ridx].valid) next_conflicts = conflicts + 1;
+                        next_misses = misses + 1;
+                    enqueue = 1'b1;
+                    for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
+                        // mem_gen_bus_if.ren = 1;
+                        //eq_datain[queue_word] = read_addr + queue_word*4;
+                        eq_datain.pair[queue_word].addr = next_read_addr + queue_word*4;
+                        aq_datain.addr[queue_word] = next_read_addr + queue_word*4;
+                    end
+                  //global_events_if.cache_miss = 1;
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
@@ -390,7 +404,7 @@ module l1_cache #(
 			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
               next_conflicts = conflicts + 1;
               next_misses = misses + 1;
-              global_events_if.cache_miss = 1;
+            //   global_events_if.cache_miss = 1;
             	end
             end 
             FETCH: begin
@@ -398,12 +412,12 @@ module l1_cache #(
                 sramMask.frames[ridx].valid = 0;
                 sramWrite.frames[ridx].valid = 0;
                 //global_events_if.cache_miss = 0;
-                enqueue = 1'b1;
-                for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
-                    // mem_gen_bus_if.ren = 1;
-                    //eq_datain[queue_word] = read_addr + queue_word*4;
-                    eq_datain.pair[queue_word].addr = read_addr + queue_word*4;
-                end
+                // enqueue = 1'b1;
+                // for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
+                //     // mem_gen_bus_if.ren = 1;
+                //     //eq_datain[queue_word] = read_addr + queue_word*4;
+                //     eq_datain.pair[queue_word].addr = read_addr + queue_word*4;
+                // end
                 proc_gen_bus_if.busy = 0; 
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
@@ -425,7 +439,7 @@ module l1_cache #(
             end
             WB: begin
                 // set stim for eviction
-                global_events_if.cache_miss = 0;
+                // global_events_if.cache_miss = 0;
                 e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
                 eq_datain.wen = 1'b1;
@@ -696,16 +710,16 @@ module l1_cache #(
     always_comb begin
         n_iq_wordcnt = iq_wordcnt;
         n_iq_datain = iq_datain;
-        iq_wordcntdone = ~mem_gen_bus_if.busy && (BLOCK_SIZE - 1) == iq_wordcnt;
+        iq_wordcntdone = /*~mem_gen_bus_if.busy &&*/ (BLOCK_SIZE) == iq_wordcnt;
         if (iq_wordcntdone) begin
             n_iq_wordcnt = '0;
             //n_iq_datain[iq_wordcnt] = '0; // TODO: Get addresses into queue
-            n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
+            //n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
         end
         else if (~mem_gen_bus_if.busy) begin
             n_iq_wordcnt = iq_wordcnt + 1;
             //n_iq_datain[iq_wordcnt] = '0;
-            n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
+            n_iq_datain.data[iq_wordcnt] = mem_gen_bus_if.rdata;
         end
     end
 
@@ -719,7 +733,7 @@ module l1_cache #(
             iq_dataout <= '0;
         end
         else begin
-            if (~mem_gen_bus_if.busy) begin
+            if (iq_wen) begin
                 // TODO: THREAD_CNT instead of 3
                 ingress_queue[iq_wptr[2 - 1 : 0]] <= iq_datain;
                 if (iq_wordcntdone) begin
@@ -749,7 +763,7 @@ module l1_cache #(
         end
         else begin
             if (enqueue) begin
-                addr_queue[aq_wptr] <= read_addr;
+                addr_queue[aq_wptr] <= aq_datain;
                 aq_wptr <= aq_wptr + 1;
             end
             if (iq_ren) begin

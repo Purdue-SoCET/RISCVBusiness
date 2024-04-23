@@ -7,7 +7,7 @@ import pathlib
 
 
 compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32i', '-mabi=ilp32', '-mcmodel=medany',
-                '-static', '-nostdlib', '-O2', '-Tlink.ld', 'start.S', 'utility.c']
+                '-static', '-O2', '-Tlink.ld', 'start.S', 'utility.c']
 
 cvt_cmd = ['riscv64-unknown-elf-objcopy', '-O', 'binary']
 
