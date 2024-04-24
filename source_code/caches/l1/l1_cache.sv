@@ -756,7 +756,7 @@ module l1_cache #(
             //n_iq_datain[iq_wordcnt] = '0; // TODO: Get addresses into queue
             //n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
         end
-        else if (~mem_gen_bus_if.busy) begin
+        else if (~mem_gen_bus_if.busy && mem_gen_bus_if.ren) begin
             n_iq_wordcnt = iq_wordcnt + 1;
             //n_iq_datain[iq_wordcnt] = '0;
             n_iq_datain.data[iq_wordcnt] = mem_gen_bus_if.rdata;
