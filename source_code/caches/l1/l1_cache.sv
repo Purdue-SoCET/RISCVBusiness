@@ -313,9 +313,9 @@ module l1_cache #(
 
         end
 
-        mem_gen_bus_if.addr = egress_queue[eq_rptr].pair[eq_wordcnt].addr;
-        mem_gen_bus_if.wdata = egress_queue[eq_rptr].pair[eq_wordcnt].data;
-        mem_gen_bus_if.wen = egress_queue[eq_rptr].wen;
+        mem_gen_bus_if.addr = ~eq_empty ? egress_queue[eq_rptr].pair[eq_wordcnt].addr : '0;
+        mem_gen_bus_if.wdata = ~eq_empty ? egress_queue[eq_rptr].pair[eq_wordcnt].data : '0;
+        mem_gen_bus_if.wen = ~eq_empty ? egress_queue[eq_rptr].wen : 0;
         mem_gen_bus_if.ren = ~eq_empty ? ~egress_queue[eq_rptr].wen : 0;
         
         // associativity, using NRU
@@ -405,8 +405,16 @@ module l1_cache #(
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
                     next_decoded_req_addr = decoded_addr;
 			        next_read_addr  =  {sramRead.frames[ridx].tag, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-              next_conflicts = conflicts + 1;
-              next_misses = misses + 1;
+                    next_conflicts = conflicts + 1;
+                    next_misses = misses + 1;
+                    eq_datain.wen = 1'b1;
+                    enqueue = 1'b1;
+                    for (integer word_sel = 0; word_sel < BLOCK_SIZE; word_sel = word_sel + 1) begin
+                        //qdata_addr[word_sel] = read_addr + word_sel*4;
+                        //eq_datain[word_sel] = read_addr + word_sel*4;
+                        eq_datain.pair[word_sel].addr = next_read_addr + word_sel*4;
+                        eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
+                    end
             //   global_events_if.cache_miss = 1;
             	end
             end 
@@ -445,14 +453,14 @@ module l1_cache #(
                 // global_events_if.cache_miss = 0;
                 // e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
-                eq_datain.wen = 1'b1;
-                enqueue = 1'b1;
-                for (integer word_sel = 0; word_sel < BLOCK_SIZE; word_sel = word_sel + 1) begin
-                    //qdata_addr[word_sel] = read_addr + word_sel*4;
-                    //eq_datain[word_sel] = read_addr + word_sel*4;
-                    eq_datain.pair[word_sel].addr = read_addr + word_sel*4;
-                    eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
-                end
+                // eq_datain.wen = 1'b1;
+                // enqueue = 1'b1;
+                // for (integer word_sel = 0; word_sel < BLOCK_SIZE; word_sel = word_sel + 1) begin
+                //     //qdata_addr[word_sel] = read_addr + word_sel*4;
+                //     //eq_datain[word_sel] = read_addr + word_sel*4;
+                //     eq_datain.pair[word_sel].addr = read_addr + word_sel*4;
+                //     eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
+                // end
                 // mem_gen_bus_if.addr = read_addr; 
                 // for (integer write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
                 //     qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
@@ -691,12 +699,23 @@ module l1_cache #(
         end
         else begin
             if (enqueue) begin
-                egress_queue[eq_wptr[2:0]] <= eq_datain;
-                eq_wptr <= eq_wptr + 1;
+                egress_queue[eq_wptr[$clog2(NUM_HARTS) - 1:0]] <= eq_datain;
+                //eq_wptr <= eq_wptr + 1;
+                if (eq_wptr + 1 == NUM_HARTS) begin
+                    eq_wptr <= 0;
+                end
+                else begin
+                    eq_wptr <= eq_wptr + 1;
+                end
             end
             if (~eq_empty) begin
                 if (eq_wordcntdone) begin
-                    eq_rptr <= eq_rptr + 1;
+                    if ((eq_rptr + 1) == NUM_HARTS) begin
+                        eq_rptr <= '0;
+                    end
+                    else begin
+                        eq_rptr <= eq_rptr + 1;
+                    end
                 end
             end
         end
@@ -752,7 +771,7 @@ module l1_cache #(
             end
             if (iq_ren) begin
                 // TODO: THREAD_CNT instead of 3
-                iq_dataout <= ingress_queue[iq_rptr[$clog2(2) - 1 : 0]];
+                iq_dataout <= ingress_queue[iq_rptr[$clog2(NUM_HARTS) - 1 : 0]];
                 iq_rptr <= iq_rptr + 1;
             end
         end
