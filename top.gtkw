@@ -1,37 +1,39 @@
 [*]
 [*] GTKWave Analyzer v3.3.111 (w)1999-2020 BSI
-[*] Tue Apr 23 21:49:57 2024
+[*] Wed Apr 24 22:59:53 2024
 [*]
 [dumpfile] "/home/asicfab/a/socet103/RISCVBusiness/waveform.fst"
-[dumpfile_mtime] "Tue Apr 23 21:33:53 2024"
-[dumpfile_size] 17564353
+[dumpfile_mtime] "Wed Apr 24 22:55:36 2024"
+[dumpfile_size] 13618596
 [savefile] "/home/asicfab/a/socet103/RISCVBusiness/top.gtkw"
-[timestart] 181
+[timestart] 111
 [size] 1920 1003
 [pos] -1 -1
-*-3.700783 233 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-3.700783 156 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [treeopen] TOP.top_core.
 [treeopen] TOP.top_core.CORE.
 [treeopen] TOP.top_core.CORE.fetch_ex_if.
 [treeopen] TOP.top_core.CORE.pipeline.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.ex_mem_if.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.fetch_ex_if.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.
-[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RV32M_FU.
 [treeopen] TOP.top_core.CORE.pipeline.fetch_stage_i.fetch_ex_if.
 [treeopen] TOP.top_core.CORE.pipeline.fetch_stage_i.mem_fetch_if.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.
-[treeopen] TOP.top_core.CORE.sep_caches.
-[treeopen] TOP.top_core.CORE.sep_caches.genblk1.
-[treeopen] TOP.top_core.CORE.sep_caches.genblk1.dcache.
 [treeopen] TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[0].
+[treeopen] TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[1].
+[treeopen] TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[2].
+[treeopen] TOP.top_core.CORE.sep_caches.genblk1.dcache.sramRead.
+[treeopen] TOP.top_core.CORE.sep_caches.genblk1.dcache.sramWrite.
 [treeopen] TOP.top_core.CORE.sep_caches.genblk2.
-[sst_width] 459
+[sst_width] 684
 [signals_width] 299
 [sst_expanded] 1
-[sst_vpaned_height] 330
+[sst_vpaned_height] 569
 @28
 TOP.top_core.CORE.branch_predictor_i.CLK
 TOP.top_core.CORE.nRST
@@ -74,6 +76,10 @@ TOP.top_core.CORE.pipeline.hart_selector_if.hart_id[31:0]
 TOP.top_core.CORE.pipeline.hart_selector_if.branch_jump
 @420
 TOP.top_core.CORE.pipeline.hart_selector_i.NUM_HARTS
+@22
+TOP.top_core.CORE.pipeline.hart_selector_i.count[31:0]
+@29
+TOP.top_core.CORE.pipeline.hazard_unit_i.global_events_if.cache_miss
 @200
 -PC Counter
 @28
@@ -115,16 +121,25 @@ TOP.top_core.CORE.pipeline.fetch_stage_i.mem_fetch_if.ex_mem_reg.port_out[31:0]
 TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.hart_id[31:0]
 @200
 -DCACHE
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[0][14][31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.registers[0][15][31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.decoded_addr.tag_bits[24:0]
+@28
+TOP.top_core.CORE.sep_caches.genblk1.dcache.ridx[0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.sramRead.frames[0].dirty
+TOP.top_core.CORE.sep_caches.genblk1.dcache.sramRead.frames[1].dirty
 @100000028
 TOP.top_core.CORE.sep_caches.genblk1.dcache.state[31:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.ustate[31:0]
 @28
 TOP.top_core.CORE.sep_caches.genblk1.dcache.enqueue
-@22
-TOP.top_core.CORE.sep_caches.genblk1.dcache.eq_rptr[3:0]
-TOP.top_core.CORE.sep_caches.genblk1.dcache.eq_wptr[3:0]
-@28
 TOP.top_core.CORE.sep_caches.genblk1.dcache.eq_wordcntdone
+TOP.top_core.CORE.sep_caches.genblk1.dcache.eq_rptr[1:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.eq_wptr[1:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.eq_empty
+@22
+TOP.top_core.CORE.sep_caches.genblk1.dcache.aq_decoded.tag_bits[24:0]
 @200
 -egress_queue[0]
 @22
@@ -133,10 +148,23 @@ TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[0].pair[0].data[31:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[0].pair[1].addr[31:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[0].pair[1].data[31:0]
 @200
+-egress_queue[1]
+@22
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[1].pair[0].addr[31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[1].pair[0].data[31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[1].pair[1].addr[31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[1].pair[1].data[31:0]
+@200
+-egress_queue[2]
+@22
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[2].pair[0].addr[31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[2].pair[0].data[31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[2].pair[1].addr[31:0]
+TOP.top_core.CORE.sep_caches.genblk1.dcache.egress_queue[2].pair[1].data[31:0]
+@200
 -ingress_queue[0]
 @28
 TOP.top_core.CORE.sep_caches.genblk1.dcache.iq_empty
-TOP.top_core.CORE.sep_caches.genblk1.dcache.n_iq_wordcnt[2:0]
 @22
 TOP.top_core.CORE.sep_caches.genblk1.dcache.ingress_queue[0].data[0][31:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.ingress_queue[1].data[1][31:0]
@@ -144,9 +172,7 @@ TOP.top_core.CORE.sep_caches.genblk1.dcache.ingress_queue[1].data[1][31:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.iq_wptr[1:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.iq_rptr[1:0]
 TOP.top_core.CORE.sep_caches.genblk1.dcache.iq_ren
-@29
 TOP.top_core.CORE.sep_caches.genblk1.dcache.iq_wen
-@28
 TOP.top_core.CORE.sep_caches.genblk1.dcache.iq_wordcntdone
 @200
 -mem_gen_bus

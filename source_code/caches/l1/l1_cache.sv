@@ -43,7 +43,7 @@ module l1_cache #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
-    //global_events_if.caches global_events_if,
+    global_events_if.caches global_events_if,
     output integer conflicts, misses
 );
     import rv32i_types_pkg::*;
@@ -104,7 +104,7 @@ module l1_cache #(
     cache_fsm_t state, next_state;
     update_fsm_t ustate, next_ustate;
     // lru
-    logic [N_FRAME_BITS-1:0] ridx;
+    logic [N_FRAME_BITS-1:0] aq_ridx, ridx;
     logic [N_SETS-1:0] last_used;
     logic [N_SETS-1:0] next_last_used;
     // address
@@ -139,7 +139,7 @@ module l1_cache #(
         addr_pair_t [1 : 0] pair;
         logic wen;
     } item;
-    item [NUM_HARTS - 1 : 0] egress_queue;
+    item [NUM_HARTS: 0] egress_queue;
 
     //logic [ 1 : 0] [ 2  : 0] [WORD_SIZE - 1 : 0] egress_queue;
     // logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0]  eq_dataout;
@@ -256,7 +256,7 @@ module l1_cache #(
 
     // decoded address conversion
     assign decoded_addr = decoded_cache_addr_t'(proc_gen_bus_if.addr);
-    assign aq_decoded = decoded_cache_addr_t'(aq_dataout);
+    assign aq_decoded = decoded_cache_addr_t'(aq_dataout.addr[0]);
 
     // hit logic with pass through
     always_comb begin
@@ -339,7 +339,7 @@ module l1_cache #(
                 end
             end
             HIT: begin
-                //global_events_if.cache_miss = 0;
+                global_events_if.cache_miss = 0;
                 next_read_addr = decoded_addr;
                 clear_word_count = 1;
                 // cache hit on a processor read
@@ -399,7 +399,7 @@ module l1_cache #(
                         eq_datain.pair[queue_word].addr = next_read_addr + queue_word*4;
                         aq_datain.addr[queue_word] = next_read_addr + queue_word*4;
                     end
-                  //global_events_if.cache_miss = 1;
+                  global_events_if.cache_miss = 1;
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
@@ -415,7 +415,7 @@ module l1_cache #(
                         eq_datain.pair[word_sel].addr = next_read_addr + word_sel*4;
                         eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
                     end
-            //   global_events_if.cache_miss = 1;
+              global_events_if.cache_miss = 1;
             	end
             end 
             FETCH: begin
@@ -429,7 +429,7 @@ module l1_cache #(
                 //     //eq_datain[queue_word] = read_addr + queue_word*4;
                 //     eq_datain.pair[queue_word].addr = read_addr + queue_word*4;
                 // end
-                proc_gen_bus_if.busy = 1; 
+                proc_gen_bus_if.busy = 0; 
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
                     //sramWEN                                = 1'b1;
@@ -590,22 +590,25 @@ module l1_cache #(
         endcase
 
         casez(ustate)
-            UIDLE:;
+            UIDLE: begin
+                aq_ridx = '0;
+            end
             UPDATE: begin
+                aq_ridx = last_used[aq_decoded.idx_bits] + 1;
                 sramWEN = 1;
                 //clear_word_count 					    = 1'b1;
-                sramWrite.frames[ridx].valid            = 1'b1;
+                sramWrite.frames[aq_ridx].valid            = 1'b1;
                 //sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
-                sramWrite.frames[ridx].tag = aq_decoded.tag_bits;
+                sramWrite.frames[aq_ridx].tag = aq_decoded.tag_bits;
                 // read next data from queue
                 iq_ren =  1'b0;
-                sramMask.frames[ridx].valid             = 1'b0;
-                sramMask.frames[ridx].tag               = 1'b0;
+                sramMask.frames[aq_ridx].valid             = 1'b0;
+                sramMask.frames[aq_ridx].tag               = 1'b0;
                 //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
-                sramMask.frames[ridx].data[word_num]   = 1'b0;
+                sramMask.frames[aq_ridx].data[word_num]   = 1'b0;
                 for (integer update_write_data_sel = 0; update_write_data_sel < BLOCK_SIZE; update_write_data_sel = update_write_data_sel + 1) begin
-                    sramWrite.frames[ridx].data[update_write_data_sel] = iq_dataout.data[update_write_data_sel];
-                    sramMask.frames[ridx].data[update_write_data_sel]   = 1'b0;
+                    sramWrite.frames[aq_ridx].data[update_write_data_sel] = iq_dataout.data[update_write_data_sel];
+                    sramMask.frames[aq_ridx].data[update_write_data_sel]   = 1'b0;
                 end
             end
         endcase
@@ -710,9 +713,9 @@ module l1_cache #(
         end
         else begin
             if (enqueue) begin
-                egress_queue[eq_wptr[$clog2(NUM_HARTS) - 1:0]] <= eq_datain;
+                egress_queue[eq_wptr] <= eq_datain;
                 //eq_wptr <= eq_wptr + 1;
-                if (eq_wptr + 1 == NUM_HARTS) begin
+                if (eq_wptr == NUM_HARTS) begin
                     eq_wptr <= 0;
                 end
                 else begin
@@ -721,7 +724,7 @@ module l1_cache #(
             end
             if (~eq_empty) begin
                 if (eq_wordcntdone) begin
-                    if ((eq_rptr + 1) == NUM_HARTS) begin
+                    if ((eq_rptr) == NUM_HARTS) begin
                         eq_rptr <= '0;
                     end
                     else begin
@@ -773,16 +776,16 @@ module l1_cache #(
             iq_dataout <= '0;
         end
         else begin
-            if (iq_wen && mem_gen_bus_if.ren) begin
+            if (iq_wen) begin
                 // TODO: THREAD_CNT instead of 3
-                ingress_queue[iq_wptr[2 - 1 : 0]] <= iq_datain;
+                ingress_queue[iq_wptr] <= iq_datain;
                 if (iq_wordcntdone) begin
                     iq_wptr <= iq_wptr + 1;
                 end
             end
             if (iq_ren) begin
                 // TODO: THREAD_CNT instead of 3
-                iq_dataout <= ingress_queue[iq_rptr[$clog2(NUM_HARTS) - 1 : 0]];
+                iq_dataout <= ingress_queue[iq_rptr];
                 iq_rptr <= iq_rptr + 1;
             end
         end
@@ -802,7 +805,7 @@ module l1_cache #(
             aq_rptr <= '0;
         end
         else begin
-            if (enqueue) begin
+            if (enqueue && ~eq_datain.wen) begin
                 addr_queue[aq_wptr] <= aq_datain;
                 aq_wptr <= aq_wptr + 1;
             end

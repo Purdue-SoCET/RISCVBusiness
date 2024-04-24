@@ -32,8 +32,9 @@ module stage3_hart_selector (
     input logic CLK,
     nRST,
     stage3_hazard_unit_if.fetch hazard_if,
+    stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hart_selector_if.hart_selector_unit hart_selector_if,
-    global_events_if.pipeline global_events_if
+    global_events_if global_events_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
@@ -43,36 +44,47 @@ module stage3_hart_selector (
     word_t next_count;
     word_t count;
     word_t [NUM_HARTS-1:0] stalled_threads;
+    logic [NUM_HARTS-1:0] active_threads, next_active_threads;
     word_t next_hart_id;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             count <= '0;
             hart_selector_if.hart_id <= '0;
+            active_threads <= '1;
         end else begin
             count <= next_count;
             hart_selector_if.hart_id <= next_hart_id;
+            active_threads <= next_active_threads;
         end
     end
 
     always_comb begin
-      if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
-        if (count == 10) next_count = 0;
-        else next_count = count + 1;
-      end else next_count = count;
+      next_active_threads = active_threads;
+      if(global_events_if.thread_terminated) begin
+        next_active_threads[ex_mem_if.ex_mem_reg.hart_id] = 1'b0;
+      end
     end
 
-    always @ (global_events_if.cache_miss, count) begin
+    always_comb begin
+      if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
+        if (count == 10 || global_events_if.cache_miss) next_count = 0;
+        else next_count = count + 1;
+      end else begin
+        if(global_events_if.cache_miss) next_count = 0;
+        else next_count = count;
+      end
+    end
+
+    always @ (global_events_if.cache_miss, next_count) begin
       next_hart_id = hart_selector_if.hart_id;
-      if (global_events_if.cache_miss) begin
+      if (global_events_if.cache_miss || count == 10) begin
           if (hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
               next_hart_id = 32'd0;
           end
           else begin
               next_hart_id = hart_selector_if.hart_id + 32'd1;
           end
-      end else if(count == 10 && hart_selector_if.hart_id != 0) begin
-          next_hart_id = 32'd0;
-      end
+      end 
     end
 endmodule

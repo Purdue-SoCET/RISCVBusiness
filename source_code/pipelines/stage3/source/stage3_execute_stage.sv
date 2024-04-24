@@ -41,6 +41,7 @@ module stage3_execute_stage (
     stage3_hazard_unit_if.execute hazard_if,
     stage3_forwarding_unit_if.execute fw_if,
     stage3_hart_selector_if.execute hart_selector_if,
+    global_events_if.pipeline global_events_if,
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif
@@ -214,7 +215,7 @@ module stage3_execute_stage (
     *************************/
     assign rf_if.w_data = ex_mem_if.reg_wdata;
     assign rf_if.rd = ex_mem_if.rd_m;
-    assign rf_if.wen = ex_mem_if.reg_write && !hazard_if.ex_mem_stall; // TODO: The second signal only matters for some miniscule power reduction by not writing each cycle. This is correct with only the wen signal due to no loop from reg read to reg write
+    assign rf_if.wen = ex_mem_if.reg_write && !hazard_if.ex_mem_stall && !global_events_if.cache_miss; // TODO: The second signal only matters for some miniscule power reduction by not writing each cycle. This is correct with only the wen signal due to no loop from reg read to reg write
     assign rf_if.hart_id_write = ex_mem_if.ex_mem_reg.hart_id;
     assign rf_if.hart_id_read = fetch_ex_if.fetch_ex_reg.hart_id;
 
@@ -327,7 +328,6 @@ module stage3_execute_stage (
                 ex_mem_if.ex_mem_reg.tracker_signals.imm_U  <= cu_if.imm_U;
 
             end else if(hazard_if.ex_mem_flush && !hazard_if.ex_mem_stall) begin
-                
                 ex_mem_if.ex_mem_reg <= '{default: '0};
                 
             end

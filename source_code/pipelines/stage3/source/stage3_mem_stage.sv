@@ -18,6 +18,7 @@ module stage3_mem_stage(
     cache_control_if.pipeline cc_if,
     predictor_pipeline_if.update predict_if,
     cpu_tracker_if.cpu_tracker cpu_tracker_if,
+    global_events_if.pipeline global_events_if,
     output logic halt,
     output logic wfi
 );
@@ -33,8 +34,9 @@ module stage3_mem_stage(
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
 
-
-
+    always_comb begin
+      global_events_if.thread_terminated = ex_mem_if.ex_mem_reg.pc == 32'h8000002c;
+    end
 
     /*************
     * Data Access
