@@ -186,7 +186,7 @@ module l1_cache #(
 
 
     // sram instance
-    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx_bits;
+    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : ((state == UPDATE) ? aq_decoded.idx_bits : decoded_addr.idx_bits);
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
 
@@ -584,8 +584,8 @@ module l1_cache #(
                 sramMask.frames[ridx].tag               = 1'b0;
                 //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
                 sramMask.frames[ridx].data[word_num]   = 1'b0;
-                for (integer update_write_data_sel = BLOCK_SIZE; update_write_data_sel < BLOCK_SIZE * 2; update_write_data_sel = update_write_data_sel + 1) begin
-                    sramWrite.frames[ridx].data[update_write_data_sel - BLOCK_SIZE] = iq_dataout[update_write_data_sel];
+                for (integer update_write_data_sel = 0; update_write_data_sel < BLOCK_SIZE; update_write_data_sel = update_write_data_sel + 1) begin
+                    sramWrite.frames[ridx].data[update_write_data_sel] = iq_dataout[update_write_data_sel];
                 end
             end
         endcase
