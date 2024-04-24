@@ -139,21 +139,21 @@ module l1_cache #(
         addr_pair_t [1 : 0] pair;
         logic wen;
     } item;
-    item [1:0] egress_queue;
+    item [NUM_HARTS - 1 : 0] egress_queue;
 
     //logic [ 1 : 0] [ 2  : 0] [WORD_SIZE - 1 : 0] egress_queue;
-    logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0]  eq_dataout;
+    // logic [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0]  eq_dataout;
     item eq_datain;
     //queue_t e_qstate, ne_qstate; // egress queue state
-    logic [3:0] eq_wptr;//, ne_wptr;
-    logic [3:0] eq_rptr;// ne_rptr;
+    logic [$clog2(NUM_HARTS) : 0] eq_wptr;//, ne_wptr;
+    logic [$clog2(NUM_HARTS) : 0] eq_rptr;// ne_rptr;
     // logic [3:0] e_qsize;
     logic enqueue;
-    logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr; // addresses inputted into queue
-    logic e_qwrite; // write enable for item
-    logic [$clog2(BLOCK_SIZE) - 1 : 0] [WORD_SIZE - 1 : 0] qwrite_data; // data to write if writing
+    // logic [$clog2(BLOCK_SIZE) - 1:0] [WORD_SIZE - 1 : 0] qdata_addr; // addresses inputted into queue
+    // logic e_qwrite; // write enable for item
+    // logic [$clog2(BLOCK_SIZE) - 1 : 0] [WORD_SIZE - 1 : 0] qwrite_data; // data to write if writing
     logic eq_empty;
-    logic [$clog2(BLOCK_SIZE) - 1 : 0] eq_wordcnt, n_eq_wordcnt;
+    logic [$clog2(BLOCK_SIZE) : 0] eq_wordcnt, n_eq_wordcnt;
     logic eq_wordcntdone;
 
     // Ingress queue signals
@@ -161,15 +161,15 @@ module l1_cache #(
     typedef struct packed {
         logic [BLOCK_SIZE - 1 : 0] [31 : 0] data;
     } response_t;
-    response_t [2:0] ingress_queue;
+    response_t [NUM_HARTS - 1 : 0] ingress_queue;
     logic iq_wen, iq_ren;
     response_t iq_datain, iq_dataout, n_iq_datain;
 
     // TODO: $clog2(THREAD_CNT) instead of 3
-    logic [$clog2(2) : 0] iq_wptr, iq_rptr;
+    logic [$clog2(NUM_HARTS) : 0] iq_wptr, iq_rptr;
     //logic [$clog2(3) - 1 : 0] [$clog2(BLOCK_SIZE * 2 + 1) - 1 : 0] [WORD_SIZE - 1 : 0] ingress_queue;
 
-    logic [2:0] iq_wordcnt,  n_iq_wordcnt;
+    logic [$clog2(BLOCK_SIZE) : 0] iq_wordcnt,  n_iq_wordcnt;
     logic iq_wordcntdone;
 
     // Address Queue Signals
@@ -186,7 +186,7 @@ module l1_cache #(
 
 
     // sram instance
-    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : decoded_addr.idx_bits;
+    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num : ((state == UPDATE) ? aq_decoded.idx_bits : decoded_addr.idx_bits);
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         SRAM(CLK, nRST, sramWrite, sramRead, 1'b1, sramWEN, sramSEL, sramMask);
 
@@ -304,7 +304,7 @@ module l1_cache #(
         next_last_used          = last_used;
         next_conflicts          = conflicts;
         next_misses             = misses;
-        e_qwrite = '0;
+        // e_qwrite = '0;
         enqueue = 1'b0;
         eq_datain.wen = '0;
         for (integer i = 0; i < BLOCK_SIZE; i++) begin
@@ -443,21 +443,21 @@ module l1_cache #(
             WB: begin
                 // set stim for eviction
                 // global_events_if.cache_miss = 0;
-                e_qwrite = 1'b1;
+                // e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
                 eq_datain.wen = 1'b1;
                 enqueue = 1'b1;
                 for (integer word_sel = 0; word_sel < BLOCK_SIZE; word_sel = word_sel + 1) begin
-                    qdata_addr[word_sel] = read_addr + word_sel*4;
+                    //qdata_addr[word_sel] = read_addr + word_sel*4;
                     //eq_datain[word_sel] = read_addr + word_sel*4;
                     eq_datain.pair[word_sel].addr = read_addr + word_sel*4;
                     eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
                 end
                 // mem_gen_bus_if.addr = read_addr; 
-                for (integer write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
-                    qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
-                    // eq_datain[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
-                end
+                // for (integer write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
+                //     qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
+                //     // eq_datain[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
+                // end
                 //mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
                 // increment eviction word counter
                 //if(~mem_gen_bus_if.busy) begin
@@ -476,21 +476,21 @@ module l1_cache #(
                 //end
             end
             UWB: begin
-                e_qwrite = 1'b1;
+                // e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
                 eq_datain.wen = 1'b1;
                 enqueue = 1'b1;
                 for (integer word_sel = 0; word_sel < BLOCK_SIZE; word_sel = word_sel + 1) begin
-                    qdata_addr[word_sel] = {sramRead.frames[ridx].tag, ridx, word_sel, 2'b00};//read_addr + word_sel*4;
+                    // qdata_addr[word_sel] = {sramRead.frames[ridx].tag, ridx, word_sel, 2'b00};//read_addr + word_sel*4;
                     //eq_datain[word_sel] = read_addr + word_sel*4; //{sramRead.frames[ridx].tag, ridx, word_sel, 2'b00};
                     eq_datain.pair[word_sel].addr = {sramRead.frames[ridx].tag, ridx, word_sel, 2'b00}; //read_addr + word_sel*4; 
                     eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
                 end
                 // mem_gen_bus_if.addr = read_addr; 
-                for (integer write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
-                    qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
-                    // eq_datain[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
-                end
+                // for (integer write_data_sel = BLOCK_SIZE; write_data_sel < BLOCK_SIZE * 2; write_data_sel++) begin
+                //     qwrite_data[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
+                //     // eq_datain[write_data_sel] = sramRead.frames[ridx].data[write_data_sel - BLOCK_SIZE];
+                // end
                 //mem_gen_bus_if.wdata = sramRead.frames[ridx].data[word_num];
                 // increment eviction word counter
                 //if(~mem_gen_bus_if.busy) begin
@@ -554,6 +554,21 @@ module l1_cache #(
             //         end
             // end
         endcase
+        
+        next_ustate = ustate;
+        iq_ren = 1'b0;
+        casez(ustate)
+            UIDLE: begin
+                iq_ren = 1'b0;
+                if (!iq_empty && !((state == HIT) && (proc_gen_bus_if.wen && hit && !flush))) begin
+                    next_ustate = UPDATE;
+                    iq_ren = 1'b1;
+                end
+            end
+            UPDATE: begin
+                next_ustate = UIDLE;
+            end
+        endcase
 
         casez(ustate)
             UIDLE:;
@@ -564,13 +579,14 @@ module l1_cache #(
                 //sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
                 sramWrite.frames[ridx].tag = aq_decoded.tag_bits;
                 // read next data from queue
-                iq_ren =  1'b1;
+                iq_ren =  1'b0;
                 sramMask.frames[ridx].valid             = 1'b0;
                 sramMask.frames[ridx].tag               = 1'b0;
                 //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
                 sramMask.frames[ridx].data[word_num]   = 1'b0;
-                for (integer update_write_data_sel = BLOCK_SIZE; update_write_data_sel < BLOCK_SIZE * 2; update_write_data_sel = update_write_data_sel + 1) begin
-                    sramWrite.frames[ridx].data[update_write_data_sel - BLOCK_SIZE] = iq_dataout[update_write_data_sel];
+                for (integer update_write_data_sel = 0; update_write_data_sel < BLOCK_SIZE; update_write_data_sel = update_write_data_sel + 1) begin
+                    sramWrite.frames[ridx].data[update_write_data_sel] = iq_dataout.data[update_write_data_sel];
+                    sramMask.frames[ridx].data[update_write_data_sel]   = 1'b0;
                 end
             end
         endcase
@@ -625,16 +641,7 @@ module l1_cache #(
 
     //next update logic
     always_comb begin
-        next_ustate = ustate;
-        casez(ustate)
-            UIDLE: begin
-                if (!iq_empty && !((state == HIT) && (proc_gen_bus_if.wen && hit && !flush)))
-                    next_ustate = UPDATE;
-            end
-            UPDATE: begin
-                next_ustate = UIDLE;
-            end
-        endcase
+
     end
 
     // flush saver
@@ -680,7 +687,7 @@ module l1_cache #(
             egress_queue <= '0;
             eq_wptr <= '0;
             eq_rptr <= '0;
-            eq_dataout <= '0;
+            // eq_dataout <= '0;
         end
         else begin
             if (enqueue) begin

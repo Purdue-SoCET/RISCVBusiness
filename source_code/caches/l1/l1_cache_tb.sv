@@ -43,7 +43,7 @@ module l1_cache_tb();
 
 	// DUT instance.
 
-    l1_cache #(.NUM_HARTS(2)) DUT (.CLK(CLK), .nRST(nRST), .mem_gen_bus_if(mem_gen_bus_if), .proc_gen_bus_if(proc_gen_bus_if));
+    l1_cache #(.NUM_HARTS(2)) DUT (.CLK(CLK), .nRST(nRST), .flush(tb_flush), .mem_gen_bus_if(mem_gen_bus_if), .proc_gen_bus_if(proc_gen_bus_if));
 
 	task reset_dut; 
 		@(negedge CLK) nRST = 1'b0; 
@@ -79,6 +79,14 @@ module l1_cache_tb();
         proc_gen_bus_if.wen = 1'b0;
 		proc_gen_bus_if.wdata = '0;
 
+		#(CLK_PERIOD * 1);
+
+		test = "write address 18";
+        proc_gen_bus_if.addr = 32'h00000018;
+        proc_gen_bus_if.ren = 1'b0;
+        proc_gen_bus_if.wen = 1'b1;
+		proc_gen_bus_if.wdata = 32'hFEEDBEEF;
+
 		#(CLK_PERIOD * 2);
 
 		test = "testing done beep boop";
@@ -87,7 +95,41 @@ module l1_cache_tb();
         proc_gen_bus_if.wen = 1'b0;
 		proc_gen_bus_if.wdata = '0;
 
-		#(CLK_PERIOD);
+		#(CLK_PERIOD * 1);
+
+		for (int i = 0; i < 16; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			if (~mem_gen_bus_if.busy) begin
+				mem_gen_bus_if.rdata = 32'hDEADBEEF;
+			end
+			else begin
+				mem_gen_bus_if.rdata = 32'hBAD0BAD0;
+			end
+			#(CLK_PERIOD);
+		end
+
+		test = "simulate no mem requests";
+		proc_gen_bus_if.addr = 32'h00000000;
+        proc_gen_bus_if.ren = 1'b0;
+        proc_gen_bus_if.wen = 1'b0;
+		proc_gen_bus_if.wdata = 32'h00000000;
+
+		#(CLK_PERIOD * 20);
+
+		test = "write address 18";
+        proc_gen_bus_if.addr = 32'h00000018;
+        proc_gen_bus_if.ren = 1'b0;
+        proc_gen_bus_if.wen = 1'b1;
+		proc_gen_bus_if.wdata = 32'hFEEDBEEF;
+		tb_flush = '0;
+
+		#(CLK_PERIOD * 1);
+
+		test = "evict address 18";
+        proc_gen_bus_if.addr = 32'h00000098;
+        proc_gen_bus_if.ren = 1'b1;
+        proc_gen_bus_if.wen = 1'b0;
+		proc_gen_bus_if.wdata = 32'h0;		
 
 		for (int i = 0; i < 16; i++) begin
 			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
@@ -101,19 +143,6 @@ module l1_cache_tb();
 		end
 
 		$finish;
-
-
-		test = "read address DEADBEEF";
-        proc_gen_bus_if.addr = 32'hDEADBEEF;
-        proc_gen_bus_if.ren = 1'b0;
-        proc_gen_bus_if.wen = 1'b0;
-		proc_gen_bus_if.wdata = '0;
-		
-
-		for (int i = 0; i < 6; i++) begin
-			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
-			#(CLK_PERIOD);
-		end
 
 		// #(CLK_PERIOD * 4);
 
