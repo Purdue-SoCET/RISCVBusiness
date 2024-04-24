@@ -79,7 +79,21 @@ module l1_cache_tb();
         proc_gen_bus_if.wen = 1'b0;
 		proc_gen_bus_if.wdata = '0;
 
+		#(CLK_PERIOD * 1);
+
+		test = "write address 18";
+        proc_gen_bus_if.addr = 32'h00000018;
+        proc_gen_bus_if.ren = 1'b0;
+        proc_gen_bus_if.wen = 1'b1;
+		proc_gen_bus_if.wdata = 32'hFEEDBEEF;
+
 		#(CLK_PERIOD * 2);
+		
+
+		for (int i = 0; i < 6; i++) begin
+			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
+			#(CLK_PERIOD);
+		end
 
 		test = "testing done beep boop";
         proc_gen_bus_if.addr = 32'hFFFFFFFF;
@@ -100,20 +114,8 @@ module l1_cache_tb();
 			#(CLK_PERIOD);
 		end
 
+
 		$finish;
-
-
-		test = "read address DEADBEEF";
-        proc_gen_bus_if.addr = 32'hDEADBEEF;
-        proc_gen_bus_if.ren = 1'b0;
-        proc_gen_bus_if.wen = 1'b0;
-		proc_gen_bus_if.wdata = '0;
-		
-
-		for (int i = 0; i < 6; i++) begin
-			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
-			#(CLK_PERIOD);
-		end
 
 		// #(CLK_PERIOD * 4);
 
