@@ -585,7 +585,7 @@ module l1_cache #(
                 //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
                 sramMask.frames[ridx].data[word_num]   = 1'b0;
                 for (integer update_write_data_sel = 0; update_write_data_sel < BLOCK_SIZE; update_write_data_sel = update_write_data_sel + 1) begin
-                    sramWrite.frames[ridx].data[update_write_data_sel] = iq_dataout[update_write_data_sel];
+                    sramWrite.frames[ridx].data[update_write_data_sel] = iq_dataout.data[update_write_data_sel];
                 end
             end
         endcase
