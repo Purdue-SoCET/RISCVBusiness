@@ -90,10 +90,6 @@ module l1_cache_tb();
 		#(CLK_PERIOD * 2);
 		
 
-		for (int i = 0; i < 6; i++) begin
-			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
-			#(CLK_PERIOD);
-		end
 
 		test = "testing done beep boop";
         proc_gen_bus_if.addr = 32'hFFFFFFFF;
