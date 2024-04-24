@@ -16,7 +16,7 @@ void thread1() {
 }
 
 void interrupt_thread() {
-  for(int i = 0; i < LOOP_SIZE; i++) {
+  while(1) {
     asm volatile("nop");
   }
 }

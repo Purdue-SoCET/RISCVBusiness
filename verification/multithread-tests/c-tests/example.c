@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "utility.h"
 
+#define ARRAY_SIZE 5
 
 extern volatile int flag;
 extern volatile int t_count;
@@ -11,7 +12,9 @@ void thread1() {
 }
 
 void interrupt_thread() {
-  
+  while(1) {
+    asm volatile("nop");
+  }
 }
 
 void thread2() {

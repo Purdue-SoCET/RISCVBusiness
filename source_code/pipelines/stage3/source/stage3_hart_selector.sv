@@ -55,23 +55,14 @@ module stage3_hart_selector (
         end
     end
 
-    // always_comb begin
-    //   next_hart_id = hart_selector_if.hart_id;
-    //   if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
-    //     if (count == 10) begin
-    //        next_count = 0;
-    //        if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
-    //           next_hart_id = 32'd0;
-    //         end
-    //         else begin
-    //           next_hart_id = hart_selector_if.hart_id + 32'd1;
-    //        end
-    //     end
-    //     else next_count = count + 1;
-    //   end else next_count = count;
-    // end
+    always_comb begin
+      if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
+        if (count == 10) next_count = 0;
+        else next_count = count + 1;
+      end else next_count = count;
+    end
 
-    always @ (global_events_if.cache_miss) begin
+    always @ (global_events_if.cache_miss, count) begin
       next_hart_id = hart_selector_if.hart_id;
       if (global_events_if.cache_miss) begin
           if (hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
@@ -80,21 +71,8 @@ module stage3_hart_selector (
           else begin
               next_hart_id = hart_selector_if.hart_id + 32'd1;
           end
+      end else if(count == 10 && hart_selector_if.hart_id != 0) begin
+          next_hart_id = 32'd0;
       end
     end
-
-
-    // always_comb begin
-    //   next_hart_id = hart_selector_if.hart_id;
-    //   if(global_events_if.cache_miss) begin
-    //     if(hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
-    //       next_hart_id = 32'd0;
-    //     end
-    //     else begin
-    //       next_hart_id = hart_selector_if.hart_id + 32'd1;
-    //     end
-    //   end
-    // end
-    
-    //assign hart_selector_if.hart_id = count; // active hart_id to fetch inst from
 endmodule
