@@ -304,7 +304,7 @@ module l1_cache #(
         next_last_used          = last_used;
         next_conflicts          = conflicts;
         next_misses             = misses;
-        e_qwrite = '0;
+        // e_qwrite = '0;
         enqueue = 1'b0;
         eq_datain.wen = '0;
         for (integer i = 0; i < BLOCK_SIZE; i++) begin
@@ -443,7 +443,7 @@ module l1_cache #(
             WB: begin
                 // set stim for eviction
                 // global_events_if.cache_miss = 0;
-                e_qwrite = 1'b1;
+                // e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
                 eq_datain.wen = 1'b1;
                 enqueue = 1'b1;
@@ -476,7 +476,7 @@ module l1_cache #(
                 //end
             end
             UWB: begin
-                e_qwrite = 1'b1;
+                // e_qwrite = 1'b1;
                 //eq_datain[BLOCK_SIZE*2] = 1'b1;
                 eq_datain.wen = 1'b1;
                 enqueue = 1'b1;
@@ -554,6 +554,21 @@ module l1_cache #(
             //         end
             // end
         endcase
+        
+        next_ustate = ustate;
+        iq_ren = 1'b0;
+        casez(ustate)
+            UIDLE: begin
+                iq_ren = 1'b0;
+                if (!iq_empty && !((state == HIT) && (proc_gen_bus_if.wen && hit && !flush))) begin
+                    next_ustate = UPDATE;
+                    iq_ren = 1'b1;
+                end
+            end
+            UPDATE: begin
+                next_ustate = UIDLE;
+            end
+        endcase
 
         casez(ustate)
             UIDLE:;
@@ -564,7 +579,7 @@ module l1_cache #(
                 //sramWrite.frames[ridx].tag 	            = QUEUE ADDR GOES HERE;
                 sramWrite.frames[ridx].tag = aq_decoded.tag_bits;
                 // read next data from queue
-                iq_ren =  1'b1;
+                iq_ren =  1'b0;
                 sramMask.frames[ridx].valid             = 1'b0;
                 sramMask.frames[ridx].tag               = 1'b0;
                 //sramWrite.frames[ridx].data[word_num]  = mem_gen_bus_if.rdata;
@@ -625,16 +640,7 @@ module l1_cache #(
 
     //next update logic
     always_comb begin
-        next_ustate = ustate;
-        casez(ustate)
-            UIDLE: begin
-                if (!iq_empty && !((state == HIT) && (proc_gen_bus_if.wen && hit && !flush)))
-                    next_ustate = UPDATE;
-            end
-            UPDATE: begin
-                next_ustate = UIDLE;
-            end
-        endcase
+
     end
 
     // flush saver
