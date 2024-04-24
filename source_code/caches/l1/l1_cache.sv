@@ -481,6 +481,17 @@ module l1_cache #(
                     sramWrite.frames[ridx].valid = 0;
                     sramMask.frames[ridx].valid = 0;
                     next_read_addr = {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+
+                    if (!(mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))) begin
+                        enqueue = 1'b1;
+                        for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
+                            // mem_gen_bus_if.ren = 1;
+                            //eq_datain[queue_word] = read_addr + queue_word*4;
+                            eq_datain.pair[queue_word].addr = next_read_addr + queue_word*4;
+                            aq_datain.addr[queue_word] = next_read_addr + queue_word*4;
+                        end 
+                    end
+                    // next_read_addr = {decoded_addr.tag_bits, decoded_addr.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                 //end
             end
             UWB: begin
@@ -745,7 +756,7 @@ module l1_cache #(
             //n_iq_datain[iq_wordcnt] = '0; // TODO: Get addresses into queue
             //n_iq_datain[iq_wordcnt] = mem_gen_bus_if.rdata;
         end
-        else if (~mem_gen_bus_if.busy) begin
+        else if (~mem_gen_bus_if.busy && mem_gen_bus_if.ren) begin
             n_iq_wordcnt = iq_wordcnt + 1;
             //n_iq_datain[iq_wordcnt] = '0;
             n_iq_datain.data[iq_wordcnt] = mem_gen_bus_if.rdata;
@@ -762,7 +773,7 @@ module l1_cache #(
             iq_dataout <= '0;
         end
         else begin
-            if (iq_wen) begin
+            if (iq_wen && mem_gen_bus_if.ren) begin
                 // TODO: THREAD_CNT instead of 3
                 ingress_queue[iq_wptr[2 - 1 : 0]] <= iq_datain;
                 if (iq_wordcntdone) begin
