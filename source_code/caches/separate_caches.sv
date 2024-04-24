@@ -28,7 +28,7 @@
 `include "cpu_tracker_if.vh"
 
 module separate_caches #(
-    parameter NUM_HARTS = 1
+    parameter NUM_HARTS = 2
 )(
     input logic CLK,
     nRST,
@@ -119,8 +119,7 @@ module separate_caches #(
                 .CACHE_SIZE(ICACHE_SIZE),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
                 .ASSOC(ICACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
-                .THREAD_CNT(THREAD_CNT)
+                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
             )
             icache (
                 .CLK(CLK),
