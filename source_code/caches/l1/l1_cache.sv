@@ -421,7 +421,7 @@ module l1_cache #(
                 //     //eq_datain[queue_word] = read_addr + queue_word*4;
                 //     eq_datain.pair[queue_word].addr = read_addr + queue_word*4;
                 // end
-                proc_gen_bus_if.busy = 0; 
+                proc_gen_bus_if.busy = 1; 
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
                     //sramWEN                                = 1'b1;
