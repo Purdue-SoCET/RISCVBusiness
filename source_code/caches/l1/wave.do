@@ -56,7 +56,7 @@ add wave -noupdate /l1_cache_tb/DUT/sramMask
 add wave -noupdate /l1_cache_tb/DUT/sramWEN
 add wave -noupdate /l1_cache_tb/DUT/sramSEL
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {242200 ps} 0}
+WaveRestoreCursors {{Cursor 1} {671350 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 150
 configure wave -valuecolwidth 100
@@ -72,4 +72,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ps
 update
-WaveRestoreZoom {32530 ps} {435140 ps}
+WaveRestoreZoom {603650 ps} {704310 ps}

@@ -131,6 +131,14 @@ module l1_cache_tb();
         proc_gen_bus_if.wen = 1'b0;
 		proc_gen_bus_if.wdata = 32'h0;		
 
+		#(CLK_PERIOD * 1);
+
+		test = "eviction queued";
+        proc_gen_bus_if.addr = 32'h00000098;
+        proc_gen_bus_if.ren = 1'b0;
+        proc_gen_bus_if.wen = 1'b0;
+		proc_gen_bus_if.wdata = 32'h0;	
+
 		for (int i = 0; i < 16; i++) begin
 			mem_gen_bus_if.busy = ~mem_gen_bus_if.busy;
 			if (~mem_gen_bus_if.busy) begin
