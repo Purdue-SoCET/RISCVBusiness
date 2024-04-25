@@ -12,15 +12,14 @@ int main() {
     result += 5;
   }
 
+  flag &= result == (LOOP_SIZE * 5);
+  result = 0;
+
   for(int i = 0; i < LOOP_SIZE; i++) {
     result += 10;
   }
 
-  // for(int i = 0; i < LOOP_SIZE; i++) {
-  //   result += 15;
-  // }
-
-  flag = 1;
+  flag &= result == (LOOP_SIZE * 10);
 }
 
 
