@@ -79,7 +79,7 @@ Disassembly of section .text:
 800000f4:	00478793          	addi	a5,a5,4
 800000f8:	34179073          	csrw	mepc,a5
 800000fc:	00000517          	auipc	a0,0x0
-80000100:	0c450513          	addi	a0,a0,196 # 800001c0 <main+0x64>
+80000100:	09c50513          	addi	a0,a0,156 # 80000198 <main+0x3c>
 80000104:	f15ff0ef          	jal	ra,80000018 <print>
 80000108:	00100793          	li	a5,1
 8000010c:	00001717          	auipc	a4,0x1
@@ -114,56 +114,39 @@ Disassembly of section .text.startup:
 80000170:	f4078793          	addi	a5,a5,-192 # 800000ac <handler>
 80000174:	30579073          	csrw	mtvec,a5
 80000178:	00000517          	auipc	a0,0x0
-8000017c:	06050513          	addi	a0,a0,96 # 800001d8 <main+0x7c>
+8000017c:	03850513          	addi	a0,a0,56 # 800001b0 <main+0x54>
 80000180:	e99ff0ef          	jal	ra,80000018 <print>
 80000184:	00000073          	ecall
-80000188:	00000517          	auipc	a0,0x0
-8000018c:	06850513          	addi	a0,a0,104 # 800001f0 <main+0x94>
-80000190:	e89ff0ef          	jal	ra,80000018 <print>
-80000194:	00001797          	auipc	a5,0x1
-80000198:	e6c78793          	addi	a5,a5,-404 # 80001000 <flag>
-8000019c:	0007a503          	lw	a0,0(a5)
-800001a0:	e99ff0ef          	jal	ra,80000038 <put_uint32_hex>
-800001a4:	00000517          	auipc	a0,0x0
-800001a8:	05850513          	addi	a0,a0,88 # 800001fc <main+0xa0>
-800001ac:	e6dff0ef          	jal	ra,80000018 <print>
-800001b0:	00c12083          	lw	ra,12(sp)
-800001b4:	00000513          	li	a0,0
-800001b8:	01010113          	addi	sp,sp,16
-800001bc:	00008067          	ret
+80000188:	00c12083          	lw	ra,12(sp)
+8000018c:	00000513          	li	a0,0
+80000190:	01010113          	addi	sp,sp,16
+80000194:	00008067          	ret
 
 Disassembly of section .rodata.str1.4:
 
-800001c0 <.rodata.str1.4>:
-800001c0:	614d                	addi	sp,sp,176
-800001c2:	6564                	flw	fs1,76(a0)
-800001c4:	6920                	flw	fs0,80(a0)
-800001c6:	2074                	fld	fa3,192(s0)
-800001c8:	6f74                	flw	fa3,92(a4)
-800001ca:	6820                	flw	fs0,80(s0)
-800001cc:	6e61                	lui	t3,0x18
-800001ce:	6c64                	flw	fs1,92(s0)
-800001d0:	7265                	lui	tp,0xffff9
-800001d2:	0a21                	addi	s4,s4,8
-800001d4:	0000                	unimp
-800001d6:	0000                	unimp
-800001d8:	754a                	flw	fa0,176(sp)
-800001da:	706d                	c.lui	zero,0xffffb
-800001dc:	6e69                	lui	t3,0x1a
-800001de:	6f742067          	0x6f742067
-800001e2:	6820                	flw	fs0,80(s0)
-800001e4:	6e61                	lui	t3,0x18
-800001e6:	6c64                	flw	fs1,92(s0)
-800001e8:	7265                	lui	tp,0xffff9
-800001ea:	2e2e                	fld	ft8,200(sp)
-800001ec:	0a2e                	slli	s4,s4,0xb
-800001ee:	0000                	unimp
-800001f0:	6c46                	flw	fs8,80(sp)
-800001f2:	6761                	lui	a4,0x18
-800001f4:	6920                	flw	fs0,80(a0)
-800001f6:	78302073          	csrr	zero,0x783
-800001fa:	0000                	unimp
-800001fc:	000a                	c.slli	zero,0x2
+80000198 <.rodata.str1.4>:
+80000198:	614d                	addi	sp,sp,176
+8000019a:	6564                	flw	fs1,76(a0)
+8000019c:	6920                	flw	fs0,80(a0)
+8000019e:	2074                	fld	fa3,192(s0)
+800001a0:	6f74                	flw	fa3,92(a4)
+800001a2:	6820                	flw	fs0,80(s0)
+800001a4:	6e61                	lui	t3,0x18
+800001a6:	6c64                	flw	fs1,92(s0)
+800001a8:	7265                	lui	tp,0xffff9
+800001aa:	0a21                	addi	s4,s4,8
+800001ac:	0000                	unimp
+800001ae:	0000                	unimp
+800001b0:	754a                	flw	fa0,176(sp)
+800001b2:	706d                	c.lui	zero,0xffffb
+800001b4:	6e69                	lui	t3,0x1a
+800001b6:	6f742067          	0x6f742067
+800001ba:	6820                	flw	fs0,80(s0)
+800001bc:	6e61                	lui	t3,0x18
+800001be:	6c64                	flw	fs1,92(s0)
+800001c0:	7265                	lui	tp,0xffff9
+800001c2:	2e2e                	fld	ft8,200(sp)
+800001c4:	0a2e                	slli	s4,s4,0xb
 	...
 
 Disassembly of section .data:
