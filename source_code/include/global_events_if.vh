@@ -32,17 +32,17 @@
 interface global_events_if;
 
   import rv32i_types_pkg::*;
-  logic cache_miss, thread_terminated, cache_updated, halt_proc;
+  logic cache_miss, thread_terminated, cache_updated, halt_proc, ecall_interrupt;
   word_t hart_id;
 
   modport hart_selector(
-    input cache_miss, thread_terminated, cache_updated,
+    input cache_miss, thread_terminated, cache_updated, ecall_interrupt,
     output halt_proc
   );
 
   modport pipeline (
     input cache_miss, hart_id, halt_proc,
-    output thread_terminated
+    output thread_terminated, ecall_interrupt
   );
 
   modport caches (

@@ -399,7 +399,7 @@ module l1_cache #(
                         eq_datain.pair[queue_word].addr = next_read_addr + queue_word*4;
                         aq_datain.addr[queue_word] = next_read_addr + queue_word*4;
                     end
-                  global_events_if.cache_miss = 1;
+                  //global_events_if.cache_miss = 1;
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
@@ -415,13 +415,13 @@ module l1_cache #(
                         eq_datain.pair[word_sel].addr = next_read_addr + word_sel*4;
                         eq_datain.pair[word_sel].data = sramRead.frames[ridx].data[word_sel];
                     end
-              global_events_if.cache_miss = 1;
+              //global_events_if.cache_miss = 1;
             	end
             end 
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-                sramMask.frames[ridx].valid = 0;
-                sramWrite.frames[ridx].valid = 0;
+                // sramMask.frames[ridx].valid = 0;
+                // sramWrite.frames[ridx].valid = 0;
                 //global_events_if.cache_miss = 0;
                 // enqueue = 1'b1;
                 // for (int queue_word = 0; queue_word < BLOCK_SIZE; queue_word = queue_word + 1) begin
@@ -429,7 +429,7 @@ module l1_cache #(
                 //     //eq_datain[queue_word] = read_addr + queue_word*4;
                 //     eq_datain.pair[queue_word].addr = read_addr + queue_word*4;
                 // end
-                proc_gen_bus_if.busy = 0; 
+                proc_gen_bus_if.busy = 1; 
                 // fill data
                 //if(~mem_gen_bus_if.busy) begin
                     //sramWEN                                = 1'b1;
@@ -639,10 +639,12 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
-                    next_state = HIT; 
-                else
-                    next_state = HIT;
+              if(ustate == UPDATE) next_state = HIT;
+              else next_state = FETCH;
+                // if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))
+                //     next_state = HIT; 
+                // else
+                //     next_state = HIT;
 	        end
 	        WB: begin
                 if (mem_gen_bus_if.error || decoded_addr != decoded_req_addr || !(proc_gen_bus_if.ren || proc_gen_bus_if.wen))

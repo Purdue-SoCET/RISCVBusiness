@@ -34,9 +34,8 @@ module stage3_mem_stage(
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
 
-    always_comb begin
-      global_events_if.thread_terminated = ex_mem_if.ex_mem_reg.pc == 32'h8000002c;
-    end
+    assign global_events_if.thread_terminated = ex_mem_if.ex_mem_reg.pc == 32'h8000002c;
+    assign global_events_if.ecall_interrupt = ex_mem_if.ex_mem_reg.ecall_insn;
 
     /*************
     * Data Access

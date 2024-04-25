@@ -53,6 +53,11 @@ void thread_terimate() {
   asm volatile("j thread_wait_loop");
 }
 
+void interrupt_terminate() {
+  asm volatile("j interrupt_thread");
+}
+
+
 // void thread_terimate(int tid, volatile int* t_count) {
 //     // set thread to done (1)
 //     t_count[tid] = 1;

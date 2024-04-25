@@ -61,13 +61,8 @@ module stage3_hart_selector (
         end
     end
 
-    assign global_events_if.halt_proc = ~|active_threads;
 
-    // always_comb begin
-    //   for(int i = 0; i < NUM_HARTS; i++) begin
-    //     global_events_if.halt_proc &= (~active_threads[i]);
-    //   end
-    // end
+    //assign global_events_if.halt_proc = ~|active_threads;
 
     always_comb begin
       next_active_threads = active_threads;
@@ -86,18 +81,30 @@ module stage3_hart_selector (
       end
     end
 
-    always @ (global_events_if.cache_miss, next_count, global_events_if.thread_terminated) begin
+    // always @ (global_events_if.cache_miss, next_count, global_events_if.thread_terminated) begin
+    //   next_hart_id = hart_selector_if.hart_id;
+    //   next_stalled_threads = stalled_threads;
+    //   if (global_events_if.cache_miss || global_events_if.thread_terminated) begin
+    //     word_t current_hart_id = hart_selector_if.hart_id;
+    //     for(word_t i = 32'd0; i < NUM_HARTS; i = i + 32'd1) begin
+    //       current_hart_id = (current_hart_id + 32'd1) % NUM_HARTS;
+    //       if (active_threads[current_hart_id]) begin
+    //         next_hart_id = current_hart_id;
+    //         break;
+    //       end  
+    //     end
+    //   end 
+    // end
+
+    // interupt thread logic
+    assign global_events_if.halt_proc = ~active_threads[0];
+    always @(global_events_if.ecall_interrupt, global_events_if.thread_terminated) begin
       next_hart_id = hart_selector_if.hart_id;
-      next_stalled_threads = stalled_threads;
-      if (global_events_if.cache_miss || global_events_if.thread_terminated) begin
+      if (global_events_if.ecall_interrupt) begin
         word_t current_hart_id = hart_selector_if.hart_id;
-        for(word_t i = 32'd0; i < NUM_HARTS; i = i + 32'd1) begin
-          current_hart_id = (current_hart_id + 32'd1) % NUM_HARTS;
-          if (active_threads[current_hart_id]) begin
-            next_hart_id = current_hart_id;
-            break;
-          end  
-        end
-      end 
-    end
+        next_hart_id = 32'd1;
+      end else if(global_events_if.thread_terminated && hart_selector_if.hart_id == 32'd1) begin
+        next_hart_id = 32'd0;
+      end
+    end 
 endmodule

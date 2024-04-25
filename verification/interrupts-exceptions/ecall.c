@@ -33,9 +33,5 @@ int main() {
     print("Jumping to handler...\n");
     asm volatile("ecall");
 
-    print("Flag is 0x");
-    put_uint32_hex(flag);
-    print("\n");
-
     return 0;
 }
