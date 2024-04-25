@@ -34,7 +34,7 @@ module stage3_hart_selector (
     stage3_hazard_unit_if.fetch hazard_if,
     stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hart_selector_if.hart_selector_unit hart_selector_if,
-    global_events_if global_events_if
+    global_events_if.hart_selector global_events_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
@@ -43,7 +43,7 @@ module stage3_hart_selector (
 
     word_t next_count;
     word_t count;
-    word_t [NUM_HARTS-1:0] stalled_threads;
+    logic [NUM_HARTS-1:0] stalled_threads, next_stalled_threads;
     logic [NUM_HARTS-1:0] active_threads, next_active_threads;
     word_t next_hart_id;
 
@@ -52,12 +52,22 @@ module stage3_hart_selector (
             count <= '0;
             hart_selector_if.hart_id <= '0;
             active_threads <= '1;
+            stalled_threads <= '0;
         end else begin
             count <= next_count;
             hart_selector_if.hart_id <= next_hart_id;
             active_threads <= next_active_threads;
+            stalled_threads <= next_stalled_threads;
         end
     end
+
+    assign global_events_if.halt_proc = ~|active_threads;
+
+    // always_comb begin
+    //   for(int i = 0; i < NUM_HARTS; i++) begin
+    //     global_events_if.halt_proc &= (~active_threads[i]);
+    //   end
+    // end
 
     always_comb begin
       next_active_threads = active_threads;
@@ -76,15 +86,18 @@ module stage3_hart_selector (
       end
     end
 
-    always @ (global_events_if.cache_miss, next_count) begin
+    always @ (global_events_if.cache_miss, next_count, global_events_if.thread_terminated) begin
       next_hart_id = hart_selector_if.hart_id;
-      if (global_events_if.cache_miss || count == 10) begin
-          if (hart_selector_if.hart_id == (NUM_HARTS - 32'd1)) begin
-              next_hart_id = 32'd0;
-          end
-          else begin
-              next_hart_id = hart_selector_if.hart_id + 32'd1;
-          end
+      next_stalled_threads = stalled_threads;
+      if (global_events_if.cache_miss || global_events_if.thread_terminated) begin
+        word_t current_hart_id = hart_selector_if.hart_id;
+        for(word_t i = 32'd0; i < NUM_HARTS; i = i + 32'd1) begin
+          current_hart_id = (current_hart_id + 32'd1) % NUM_HARTS;
+          if (active_threads[current_hart_id]) begin
+            next_hart_id = current_hart_id;
+            break;
+          end  
+        end
       end 
     end
 endmodule

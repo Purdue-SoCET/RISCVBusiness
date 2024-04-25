@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include "utility.h"
 
-#define LOOP_SIZE 10
+#define LOOP_SIZE 10000
 
 extern volatile int flag;
 extern volatile int t_count;
@@ -12,7 +12,8 @@ void thread1() {
     result += 5;
   }
   flag &= (result == (LOOP_SIZE * 5));
-  thread_terimate(0, &t_count);
+  //asm volatile("j thread_wait_loop");
+  thread_terimate();
 }
 
 void interrupt_thread() {
@@ -21,7 +22,8 @@ void interrupt_thread() {
     result += 10;
   }
   flag &= (result == (LOOP_SIZE * 10));
-  thread_terimate(1, &t_count);
+  //asm volatile("j thread_wait_loop");
+  thread_terimate();
 }
 
 void thread2() {
@@ -30,7 +32,8 @@ void thread2() {
     result += 10;
   }
   flag &= (result == (LOOP_SIZE * 10));
-  thread_terimate(1, &t_count);
+  asm volatile("j thread_wait_loop");
+  //thread_terimate(1, &t_count);
 }
 
 void thread3() {

@@ -47,21 +47,27 @@ int check_sort(int* arr, int size) {
     return 1;
 }
 
-void thread_terimate(int tid, volatile int* t_count) {
-    // set thread to done (1)
-    t_count[tid] = 1;
-    
-    // check if all threads are done
-    int total = 0;
-    for (int i = 0; i < NUM_THREADS; i++) {
-      total += t_count[i];
-    }
-    if (total == NUM_THREADS) {
-      asm volatile("j done");
-    } else {
-      asm volatile("j thread_wait_loop");
-    }
+void thread_terimate() {
+  asm volatile("la x28, flag");
+  asm volatile("lw x28, 0(x28)");
+  asm volatile("j thread_wait_loop");
 }
+
+// void thread_terimate(int tid, volatile int* t_count) {
+//     // set thread to done (1)
+//     t_count[tid] = 1;
+    
+//     // check if all threads are done
+//     int total = 0;
+//     for (int i = 0; i < NUM_THREADS; i++) {
+//       total += t_count[i];
+//     }
+//     if (total == NUM_THREADS) {
+//       asm volatile("j done");
+//     } else {
+//       asm volatile("j thread_wait_loop");
+//     }
+// }
 
 void merge(int* arr, int left, int mid, int right) {
     int n1 = mid - left + 1;

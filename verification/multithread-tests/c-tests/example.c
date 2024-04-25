@@ -8,13 +8,11 @@ extern volatile int t_count;
 
 void thread1() {
   flag &= 0x1;
-  thread_terimate(0, &t_count);
+  thread_terimate();
 }
 
 void interrupt_thread() {
-  while(1) {
-    asm volatile("nop");
-  }
+  thread_terimate();
 }
 
 void thread2() {

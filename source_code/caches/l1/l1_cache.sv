@@ -592,8 +592,10 @@ module l1_cache #(
         casez(ustate)
             UIDLE: begin
                 aq_ridx = '0;
+                global_events_if.cache_updated = 1'b0;
             end
             UPDATE: begin
+                global_events_if.cache_updated = 1'b1;
                 aq_ridx = last_used[aq_decoded.idx_bits] + 1;
                 sramWEN = 1;
                 //clear_word_count 					    = 1'b1;

@@ -178,7 +178,7 @@ module stage3_mem_stage(
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
-    assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
+    assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt || global_events_if.halt_proc;
     assign hazard_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign hazard_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
@@ -186,7 +186,7 @@ module stage3_mem_stage(
     assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
 
-    assign halt = ex_mem_if.ex_mem_reg.halt;
+    assign halt = ex_mem_if.ex_mem_reg.halt || global_events_if.halt_proc;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign fw_if.thread_m = ex_mem_if.ex_mem_reg.hart_id;
     assign hazard_if.exec_hart_id = ex_mem_if.ex_mem_reg.hart_id;

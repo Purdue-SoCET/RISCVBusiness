@@ -5,7 +5,7 @@ _start:
     addi sp, sp, 0x000
     j thread1
     lui sp, 0x800F0
-    addi sp, sp, 0x088
+    addi sp, sp, 0x080
     j interrupt_thread
     # lui sp, 0x80F00
     # addi sp, sp, 0x044
