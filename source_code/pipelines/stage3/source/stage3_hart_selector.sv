@@ -78,7 +78,7 @@ module stage3_hart_selector (
 
     always_comb begin
       if(hazard_if.pc_en && !hazard_if.if_ex_flush) begin
-        if (count == 10 || global_events_if.cache_miss) next_count = 0;
+        if (count == 25 || global_events_if.cache_miss) next_count = 0;
         else next_count = count + 1;
       end else begin
         if(global_events_if.cache_miss) next_count = 0;
@@ -89,7 +89,7 @@ module stage3_hart_selector (
     always @ (global_events_if.cache_miss, next_count, global_events_if.thread_terminated) begin
       next_hart_id = hart_selector_if.hart_id;
       next_stalled_threads = stalled_threads;
-      if (global_events_if.cache_miss || global_events_if.thread_terminated) begin
+      if (global_events_if.cache_miss || global_events_if.thread_terminated || count == 25) begin
         word_t current_hart_id = hart_selector_if.hart_id;
         for(word_t i = 32'd0; i < NUM_HARTS; i = i + 32'd1) begin
           current_hart_id = (current_hart_id + 32'd1) % NUM_HARTS;

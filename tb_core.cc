@@ -26,7 +26,7 @@
 #define MMIO_RANGE_END   (MAGIC_ADDR)
 
 //#define SIM_TIME_MAX 999999999
-#define RAM_LATENCY 2
+#define RAM_LATENCY 10
 #define SIM_TIME_MAX 1000000
 
 // doubles as mtime counter
