@@ -21,6 +21,16 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     flag = 1;
 }
 
+// void do_nothing() {
+//     asm volatile("nop");
+//     uint32_t mepc_value;
+//     asm volatile("csrr %0, mepc" : "=r"(mepc_value));
+//     mepc_value += 4;
+//     asm volatile("csrw mepc, %0" : : "r"(mepc_value));
+//     //print("Bullshit handler\n");
+//     asm volatile("mret");
+// }
+
 
 int main() {
     
