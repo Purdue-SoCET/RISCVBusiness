@@ -19,91 +19,69 @@ RVTEST_CODE_BEGIN
         j       main
 
 matmul:
-        ble     a3,zero,.L18
-        addi    sp,sp,-32
-        vsetvli t6,zero,e32,m1,ta,ma
-        vid.v   v4
-        sw      s1,24(sp)
-        mv      s1,a6
-        slli    a6,a6,2
-        srai    a5,a6,2
-        vmul.vx v4,v4,a5
-        sw      s0,28(sp)
-        sw      s2,20(sp)
-        sw      s3,16(sp)
-        vsll.vi v4,v4,2
-        sw      s4,12(sp)
+        ble     a3,zero,.L17
+        addi    sp,sp,-16
+        sw      s0,12(sp)
+        sw      s1,8(sp)
+        sw      s2,4(sp)
         mv      s0,a3
+        mv      s1,a0
         mv      s2,a1
-        mv      s3,a2
         mv      t4,a4
-        mv      t3,a0
-        add     t5,a1,a6
-        slli    s4,a4,2
+        mv      t5,a6
+        mv      t3,a2
+        slli    t6,a6,2
         li      t2,0
         li      t0,0
+        ble     a4,zero,.L15
 .L3:
-        ble     s1,zero,.L6
-.L9:
-        slli    t1,t2,2
-        add     t1,s3,t1
-        mv      a7,s2
-.L10:
-        bgt     t4,zero,.L5
-        sw      zero,0(t1)
-        addi    a7,a7,4
-        addi    t1,t1,4
-        bne     t5,a7,.L10
-        addi    t0,t0,1
-        add     t2,t2,s1
-        add     t3,t3,s4
-        bne     s0,t0,.L9
-        lw      s0,28(sp)
-        lw      s1,24(sp)
-        lw      s2,20(sp)
-        lw      s3,16(sp)
-        lw      s4,12(sp)
-        addi    sp,sp,32
-        jr      ra
-.L26:
-        vsetvli a5,zero,e32,m1,ta,ma
-        vmv.s.x v2,a4
-        addi    a7,a7,4
-        vredsum.vs      v1,v1,v2
-        addi    t1,t1,4
-        vmv.x.s a5,v1
-        sw      a5,-4(t1)
-        beq     t5,a7,.L6
-.L5:
-        vmv.v.i v1,0
-        mv      a2,t3
-        mv      a3,a7
-        mv      a4,t4
-.L4:
-        vsetvli a5,a4,e32,m1,tu,ma
-        mul     a1,a6,a5
-        vle32.v v3,0(a2)
-        vluxei32.v      v2,(a3),v4
-        slli    a0,a5,2
-        sub     a4,a4,a5
-        add     a2,a2,a0
-        vmacc.vv        v1,v3,v2
-        add     a3,a3,a1
-        bne     a4,zero,.L4
-        j       .L26
+        slli    a6,t2,2
+        add     a6,s1,a6
+        mv      t1,s2
+        li      a7,0
+.L8:
+        bgt     t5,zero,.L5
+        addi    a7,a7,1
+        add     t1,t1,t6
+        addi    a6,a6,4
+        bne     t4,a7,.L8
 .L6:
         addi    t0,t0,1
-        add     t2,t2,s1
-        add     t3,t3,s4
-        bne     s0,t0,.L3
-        lw      s0,28(sp)
-        lw      s1,24(sp)
-        lw      s2,20(sp)
-        lw      s3,16(sp)
-        lw      s4,12(sp)
-        addi    sp,sp,32
+        add     t3,t3,t6
+        add     t2,t2,t4
+        bne     t0,s0,.L3
+.L15:
+        lw      s0,12(sp)
+        lw      s1,8(sp)
+        lw      s2,4(sp)
+        addi    sp,sp,16
         jr      ra
-.L18:
+.L24:
+        addi    a7,a7,1
+        add     t1,t1,t6
+        addi    a6,a6,4
+        beq     t4,a7,.L6
+.L5:
+        vsetvli a5,zero,e32,m8,ta,ma
+        vlse32.v        v24,0(a6),zero
+        mv      a0,t3
+        mv      a1,t1
+        mv      a3,t5
+        mv      a4,t3
+.L4:
+        vsetvli a5,a3,e32,m8,ta,ma
+        vle32.v v8,0(a0)
+        vle32.v v16,0(a1)
+        slli    a2,a5,2
+        sub     a3,a3,a5
+        add     a0,a0,a2
+        add     a1,a1,a2
+        vmacc.vv        v8,v24,v16
+        vse32.v v8,0(a4)
+        add     a4,a4,a2
+        bne     a3,zero,.L4
+        j       .L24
+.L17:
         ret
 main:                                   # @main
         addi    sp, sp, -16
