@@ -57,10 +57,14 @@ module stage3_mem_stage(
 
     // Address alignment
     always_comb begin
-        if (byte_en == 4'hf) mal_addr = (dgen_bus_if.addr[1:0] != 2'b00);
-        else if (byte_en == 4'h3 || byte_en == 4'hc) begin
-            mal_addr = (dgen_bus_if.addr[1:0] == 2'b01 || dgen_bus_if.addr[1:0] == 2'b11);
-        end else mal_addr = 1'b0;
+        casez(ex_mem_if.ex_mem_reg.load_type)
+            LW: mal_addr = dgen_bus_if.addr[1:0] != 2'b00;
+            LH, LHU: mal_addr = dgen_bus_if.addr[0] != 1'b0;
+            default: mal_addr = 1'b0;
+        endcase
+        // if (ex_mem_if.ex_mem_reg.load_type == LW) mal_addr = (dgen_bus_if.addr[1:0] != 2'b00);
+        // else if (ex_mem_if.ex_mem_reg.load_type == LH || ex_mem_if.ex) mal_addr = (dgen_bus_if.addr[0] != 1'b0);
+        // else mal_addr = 1'b0;
     end
 
     endian_swapper store_swap(
@@ -231,7 +235,7 @@ module stage3_mem_stage(
     * Writeback
     ************/
     assign ex_mem_if.brj_addr = ex_mem_if.ex_mem_reg.brj_addr;
-    assign ex_mem_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
+    assign ex_mem_if.reg_write = ex_mem_if.ex_mem_reg.reg_write  && !hazard_if.suppress_data; // suppress reg write if load suppressed
     assign ex_mem_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
 
     always_comb begin

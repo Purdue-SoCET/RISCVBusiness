@@ -1,0 +1,12 @@
+diff --git a/p/riscv_test.h b/p/riscv_test.h
+index 7bf35cf..254030e 100644
+--- a/p/riscv_test.h
++++ b/p/riscv_test.h
+@@ -200,6 +200,7 @@ handle_exception:                                                       \
+   write_tohost:                                                         \
+         sw TESTNUM, tohost, t5;                                         \
+         sw zero, tohost + 4, t5;                                        \
++        fence.i;                                                        \
+         j write_tohost;                                                 \
+ reset_vector:                                                           \
+         INIT_XREG;                                                      \
