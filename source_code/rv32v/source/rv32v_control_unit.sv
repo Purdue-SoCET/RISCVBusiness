@@ -146,7 +146,7 @@ regsel_t vs2_sel_perm;
 
 logic vmskst_instr; 
 assign vmskset_instr = vopi_valid && (
-                        vexec_opi.valuop == VALU_SEQ || // MOVE THIS TO DECODE
+                        vexec_opi.valuop == VALU_SEQ || 
                         vexec_opi.valuop == VALU_SNE ||
                         vexec_opi.valuop == VALU_SLT ||
                         vexec_opi.valuop == VALU_SLE ||
@@ -472,11 +472,15 @@ assign wholereg_mv = (vopi_valid) && vopi == VSMUL && vfunct3 == OPIVI;
 // For whole register move, evl = NREG*VLEN/EEW = (simm[2:0] << 4) >> eew
 assign wholereg_mv_evl = ({nreg, 4'b0} >> veew_dest);
 
-// Mark as not interruptible while in execute
-assign vcu_if.vcontrol.not_interruptible = 0;  // TODO
+// Mark as not interruptible while in execute. These instructions must be committed if they reach the execute stage & not flushed by interrupts. 
+assign vcu_if.vcontrol.not_interruptible = vmskset_instr && (vug_if.vuop_num[0] == 1'b1);  
 
-// If functional unit in execute cannot restart from an arbitrary vstart
-assign vcu_if.vcontrol.keep_vstart = 0;  // TODO
+// If functional unit in execute cannot restart from an arbitrary vstart. Include the following instructions 
+/*
+- all reduction ops 
+- all mask_calc instructions 
+*/ 
+assign vcu_if.vcontrol.keep_vstart = vredinstr || vmask_calc_instr;  
 
 /**********************************************************/
 /* MEMORY CONTROL SIGNALS
