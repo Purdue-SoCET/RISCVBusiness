@@ -16,7 +16,7 @@ The spec defines a set of standard vector extensions, out of which this project 
 
 Below is a high-level overview of our proposed pipeline architecture.
 
-![Vector pipeline diagram](images/rvv_naive_detailed_f23.svg)
+![Vector pipeline diagram](images/rvv_pipeline.jpg)
 
 The architecture is largely derived from the 3-stage pipeline used on AFTx07, with the major addition of a uop queue in between the instruction decode and execute logic. This allows us to split long vector operations into smaller uops that can be natively executed by our 4-wide vector execute stage. All instructions whether scalar or vector share the pipeline and stay strictly in order to minimize complexity. The load store controller serializes accesses to the cache to allow us to handle wide vector operations with our single-ported cache. We add a shadow copy of the vector CSRs in the decode stage to ensure that changes made by `vset*` instructions get immediately reflected in the vector instructions following them without requiring a stall. The shadow copy is overwritten by the primary CSRs in the mem stage whenever there is a pipeline flush.
 

@@ -27,10 +27,5 @@ The uop-queue and decode resolution blocks are also fully parametrizable with th
 - **QUEUE_LEN** - Maximum number of elements the queue can hold. 
 - **DISPATCH_SIZE** - Maximum number of uops to be dispatched in one cycle. 
 
-## Current Progress
-The scalar decode, decode resolution, and the uop queue are mostly done and pass all the tests in the verification folder. 
 
 
-## Contributors
-
-- Fahad Aloufi (faloufi@purdue.edu)
