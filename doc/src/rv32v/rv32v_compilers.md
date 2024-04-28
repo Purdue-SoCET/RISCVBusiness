@@ -56,3 +56,6 @@ Once the build is done, you'll want to add the `bin` directory to your PATH so t
 
 ### Clang
 Clang already has auto-vectorization support for the RISC-V "V" extension integrated into the latest release. In theory, the process of setting up Clang for the vector core should be as simple as getting the appropriate release and adding it to your PATH. However, this has not been tested so be warned that you may run into snags.
+
+## Contributors
+- Om Gupta (guptao@purdue.edu)
