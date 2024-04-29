@@ -85,7 +85,8 @@ module stage4_execute_stage (
         if(ex_in.vctrl_out.vlaneactive && !ex_in.vctrl_out.vxin2_use_rs2)
             hazard_if.vs2_used = 1'b1; 
         
-        hazard_if.ex_mask_en = ex_in.vctrl_out.vlaneactive ? ex_in.vctrl_out.vmask_en : 0; 
+        // Merge requires setting the mask enable here since it's dependent on v0, but we still have to disable the mask for writeback purposes since every element is written
+        hazard_if.ex_mask_en = ex_in.vctrl_out.vlaneactive ? ex_in.vctrl_out.vmask_en || ex_in.vctrl_out.vexec.valuop == VALU_MERGE : 0; 
 
         if(ex_in.vctrl_out.vuop_num != 0) begin
             // only do hazard tracking across different instructions

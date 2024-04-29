@@ -21,20 +21,27 @@ RVTEST_CODE_BEGIN
 lininterp:
         li      a5,1
         ble     a2,a5,.L5
+        vsetvli a5,zero,e32,m1,ta,ma
+        vmv.v.i v6,0
         addi    a2,a2,-1
         addi    a4,a0,2
 .L3:
-        vsetvli a5,a2,e16,m1,ta,ma
-        vle16.v v1,0(a0)
-        vle16.v v6,0(a4)
+        vsetvli a5,a2,e16,mf2,ta,ma
+        vle16.v v4,0(a0)
+        vle16.v v5,0(a4)
         slli    a3,a5,1
         slli    a6,a5,2
         sub     a2,a2,a5
         add     a0,a0,a3
-        vmv1r.v v2,v1
-        vwadd.vv        v4,v1,v6
+        vmv1r.v v2,v4
+        vwadd.vv        v1,v4,v5
+        vsetvli zero,zero,e32,m1,ta,ma
         add     a4,a4,a3
-        vnsra.wi        v3,v4,1
+        vmslt.vi        v0,v1,0
+        vmerge.vim      v4,v6,-1,v0
+        vsub.vv v1,v1,v4
+        vsetvli zero,zero,e16,mf2,ta,ma
+        vnsra.wi        v3,v1,1
         vsseg2e16.v     v2,(a1)
         add     a1,a1,a6
         bne     a2,zero,.L3

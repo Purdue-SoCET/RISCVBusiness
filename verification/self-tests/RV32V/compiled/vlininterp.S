@@ -21,20 +21,27 @@ RVTEST_CODE_BEGIN
 lininterp:
         li      a5,1
         ble     a2,a5,.L5
+        vsetvli a5,zero,e32,m1,ta,ma
+        vmv.v.i v6,0
         addi    a2,a2,-1
         addi    a4,a0,2
 .L3:
-        vsetvli a5,a2,e16,m1,ta,ma
-        vle16.v v1,0(a0)
-        vle16.v v6,0(a4)
+        vsetvli a5,a2,e16,mf2,ta,ma
+        vle16.v v4,0(a0)
+        vle16.v v5,0(a4)
         slli    a3,a5,1
         slli    a6,a5,2
         sub     a2,a2,a5
         add     a0,a0,a3
-        vmv1r.v v2,v1
-        vwadd.vv        v4,v1,v6
+        vmv1r.v v2,v4
+        vwadd.vv        v1,v4,v5
+        vsetvli zero,zero,e32,m1,ta,ma
         add     a4,a4,a3
-        vnsra.wi        v3,v4,1
+        vmslt.vi        v0,v1,0
+        vmerge.vim      v4,v6,-1,v0
+        vsub.vv v1,v1,v4
+        vsetvli zero,zero,e16,mf2,ta,ma
+        vnsra.wi        v3,v1,1
         vsseg2e16.v     v2,(a1)
         add     a1,a1,a6
         bne     a2,zero,.L3
@@ -504,9 +511,9 @@ expect:
         .half   142                             # 0x8e
         .half   65036                           # 0xfe0c
         .half   64394                           # 0xfb8a
-        .half   63752                           # 0xf908
+        .half   63753                           # 0xf909
         .half   63111                           # 0xf687
-        .half   62471                           # 0xf407
+        .half   62472                           # 0xf408
         .half   61832                           # 0xf188
         .half   61195                           # 0xef0b
         .half   60558                           # 0xec8e
@@ -514,7 +521,7 @@ expect:
         .half   59292                           # 0xe79c
         .half   58664                           # 0xe528
         .half   58036                           # 0xe2b4
-        .half   57413                           # 0xe045
+        .half   57414                           # 0xe046
         .half   56791                           # 0xddd7
         .half   56175                           # 0xdb6f
         .half   55559                           # 0xd907
@@ -524,7 +531,7 @@ expect:
         .half   53145                           # 0xcf99
         .half   52555                           # 0xcd4b
         .half   51965                           # 0xcafd
-        .half   51385                           # 0xc8b9
+        .half   51386                           # 0xc8ba
         .half   50806                           # 0xc676
         .half   50238                           # 0xc43e
         .half   49670                           # 0xc206
@@ -538,21 +545,21 @@ expect:
         .half   45386                           # 0xb14a
         .half   44887                           # 0xaf57
         .half   44388                           # 0xad64
-        .half   43905                           # 0xab81
+        .half   43906                           # 0xab82
         .half   43423                           # 0xa99f
-        .half   42957                           # 0xa7cd
+        .half   42958                           # 0xa7ce
         .half   42492                           # 0xa5fc
         .half   42044                           # 0xa43c
         .half   41596                           # 0xa27c
         .half   41167                           # 0xa0cf
         .half   40738                           # 0x9f22
-        .half   40327                           # 0x9d87
+        .half   40328                           # 0x9d88
         .half   39917                           # 0x9bed
-        .half   39526                           # 0x9a66
+        .half   39527                           # 0x9a67
         .half   39136                           # 0x98e0
-        .half   38765                           # 0x976d
+        .half   38766                           # 0x976e
         .half   38395                           # 0x95fb
-        .half   38045                           # 0x949d
+        .half   38046                           # 0x949e
         .half   37696                           # 0x9340
         .half   37368                           # 0x91f8
         .half   37040                           # 0x90b0
@@ -562,15 +569,15 @@ expect:
         .half   35860                           # 0x8c14
         .half   35599                           # 0x8b0f
         .half   35338                           # 0x8a0a
-        .half   35100                           # 0x891c
+        .half   35101                           # 0x891d
         .half   34863                           # 0x882f
-        .half   34648                           # 0x8758
+        .half   34649                           # 0x8759
         .half   34434                           # 0x8682
         .half   34244                           # 0x85c4
         .half   34054                           # 0x8506
         .half   33888                           # 0x8460
         .half   33722                           # 0x83ba
-        .half   33580                           # 0x832c
+        .half   33581                           # 0x832d
         .half   33439                           # 0x829f
         .half   33322                           # 0x822a
         .half   33205                           # 0x81b5
@@ -582,13 +589,13 @@ expect:
         .half   32803                           # 0x8023
         .half   32786                           # 0x8012
         .half   32769                           # 0x8001
-        .half   32777                           # 0x8009
+        .half   32778                           # 0x800a
         .half   32786                           # 0x8012
-        .half   32819                           # 0x8033
+        .half   32820                           # 0x8034
         .half   32853                           # 0x8055
         .half   32912                           # 0x8090
         .half   32971                           # 0x80cb
-        .half   33054                           # 0x811e
+        .half   33055                           # 0x811f
         .half   33138                           # 0x8172
         .half   33247                           # 0x81df
         .half   33356                           # 0x824c
@@ -596,13 +603,13 @@ expect:
         .half   33622                           # 0x8356
         .half   33780                           # 0x83f4
         .half   33938                           # 0x8492
-        .half   34120                           # 0x8548
+        .half   34121                           # 0x8549
         .half   34303                           # 0x85ff
         .half   34509                           # 0x86cd
         .half   34715                           # 0x879b
         .half   34945                           # 0x8881
         .half   35175                           # 0x8967
-        .half   35428                           # 0x8a64
+        .half   35429                           # 0x8a65
         .half   35682                           # 0x8b62
         .half   35958                           # 0x8c76
         .half   36234                           # 0x8d8a
@@ -612,7 +619,7 @@ expect:
         .half   37474                           # 0x9262
         .half   37816                           # 0x93b8
         .half   38158                           # 0x950e
-        .half   38521                           # 0x9679
+        .half   38522                           # 0x967a
         .half   38885                           # 0x97e5
         .half   39269                           # 0x9965
         .half   39653                           # 0x9ae5
@@ -622,39 +629,39 @@ expect:
         .half   41307                           # 0xa15b
         .half   41749                           # 0xa315
         .half   42191                           # 0xa4cf
-        .half   42650                           # 0xa69a
+        .half   42651                           # 0xa69b
         .half   43110                           # 0xa866
         .half   43587                           # 0xaa43
         .half   44064                           # 0xac20
-        .half   44557                           # 0xae0d
+        .half   44558                           # 0xae0e
         .half   45051                           # 0xaffb
-        .half   45560                           # 0xb1f8
+        .half   45561                           # 0xb1f9
         .half   46070                           # 0xb3f6
         .half   46594                           # 0xb602
         .half   47118                           # 0xb80e
-        .half   47656                           # 0xba28
+        .half   47657                           # 0xba29
         .half   48195                           # 0xbc43
-        .half   48746                           # 0xbe6a
+        .half   48747                           # 0xbe6b
         .half   49298                           # 0xc092
         .half   49862                           # 0xc2c6
         .half   50426                           # 0xc4fa
         .half   51002                           # 0xc73a
         .half   51578                           # 0xc97a
-        .half   52164                           # 0xcbc4
+        .half   52165                           # 0xcbc5
         .half   52751                           # 0xce0f
-        .half   53347                           # 0xd063
+        .half   53348                           # 0xd064
         .half   53944                           # 0xd2b8
         .half   54549                           # 0xd515
         .half   55154                           # 0xd772
-        .half   55767                           # 0xd9d7
+        .half   55768                           # 0xd9d8
         .half   56381                           # 0xdc3d
         .half   57001                           # 0xdea9
         .half   57621                           # 0xe115
-        .half   58247                           # 0xe387
+        .half   58248                           # 0xe388
         .half   58874                           # 0xe5fa
-        .half   59505                           # 0xe871
+        .half   59506                           # 0xe872
         .half   60137                           # 0xeae9
-        .half   60772                           # 0xed64
+        .half   60773                           # 0xed65
         .half   61408                           # 0xefe0
         .half   62047                           # 0xf25f
         .half   62686                           # 0xf4de
@@ -828,7 +835,7 @@ expect:
         .half   63394                           # 0xf7a2
         .half   62754                           # 0xf522
         .half   62114                           # 0xf2a2
-        .half   61476                           # 0xf024
+        .half   61477                           # 0xf025
         .half   60839                           # 0xeda7
         .half   60205                           # 0xeb2d
         .half   59571                           # 0xe8b3
@@ -840,15 +847,15 @@ expect:
         .half   55831                           # 0xda17
         .half   55221                           # 0xd7b5
         .half   54611                           # 0xd553
-        .half   54009                           # 0xd2f9
+        .half   54010                           # 0xd2fa
         .half   53408                           # 0xd0a0
         .half   52816                           # 0xce50
         .half   52224                           # 0xcc00
         .half   51642                           # 0xc9ba
         .half   51060                           # 0xc774
-        .half   50489                           # 0xc539
+        .half   50490                           # 0xc53a
         .half   49919                           # 0xc2ff
-        .half   49360                           # 0xc0d0
+        .half   49361                           # 0xc0d1
         .half   48802                           # 0xbea2
         .half   48256                           # 0xbc80
         .half   0                               # 0x0
