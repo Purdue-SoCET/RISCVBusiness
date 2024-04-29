@@ -18,3 +18,18 @@ In this document we delve into more detail about the decode, execute, and memory
 
 
 ## Mem Stage
+
+
+
+## Tricky Instructions 
+
+### Reductions
+
+
+### Permutations
+
+
+### Masking Instructions 
+
+
+### Segmented Memory Instructions  
