@@ -251,9 +251,9 @@ module stage4_hazard_unit (
           vex_stall = 1; 
         else if((hazard_if.vd == hazard_if.vs2) && hazard_if.vs2_used)
           vex_stall = 1; 
-        else if(hazard_if.ex_mask_en && (hazard_if.vd.regidx == 0)) 
+        else if(hazard_if.ex_mask_dep && (hazard_if.vd.regidx == 0)) 
           vex_stall = 1; 
-        else if(hazard_if.vd == hazard_if.vs3 && hazard_if.vs3_used)
+        else if(hazard_if.vd == hazard_if.vd_ex && hazard_if.vd_used)
           vex_stall = 1; 
       end
     end

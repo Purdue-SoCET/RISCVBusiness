@@ -357,7 +357,8 @@ assign vcu_if.vcontrol.veew_dest = veew_dest;
 vexec_t vexec_opi;
 logic vopi_decode_valid;
 logic vopi_disable_mask; 
-logic vopi_vuse_vs3; 
+logic vopi_vmask_dep; 
+logic vopi_vuse_vd; 
 rv32v_opi_decode U_OPIDECODE(
     .vopi(vopi),
     .vfunct3(vfunct3),
@@ -367,7 +368,8 @@ rv32v_opi_decode U_OPIDECODE(
     .vexec(vexec_opi),
     .valid(vopi_decode_valid),
     .disable_mask(vopi_disable_mask),
-    .vuse_vs3(vopi_vuse_vs3)
+    .vuse_vd(vopi_vuse_vd), 
+    .vmask_dep(vopi_vmask_dep)
 );
 
 // OPM* execution unit control signals
@@ -376,7 +378,7 @@ logic vopm_decode_valid;
 logic widen_vs2; 
 vsew_t vopm_veew_src2; 
 logic vopm_disable_mask; 
-logic vopm_vuse_vs3; 
+logic vopm_vuse_vd; 
 rv32v_opm_decode U_OPMDECODE(
     .vopm(vopm),
     .vfunct3(vfunct3), 
@@ -386,7 +388,7 @@ rv32v_opm_decode U_OPMDECODE(
     .vexec(vexec_opm),
     .valid(vopm_decode_valid),
     .veew_src2(vopm_veew_src2),
-    .vuse_vs3(vopm_vuse_vs3)
+    .vuse_vd(vopm_vuse_vd)
 );
 
 // Final execution unit control signals
@@ -413,21 +415,22 @@ always_comb begin
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
     vcu_if.vcontrol.vsignext = 1'b0; 
     vexecute_valid = 1'b0;
+    vcu_if.vcontrol.vmask_dep = vmask_en; 
+    vcu_if.vcontrol.vuse_vd = 1'b0; 
 
     unique case ({vopi_valid, vopm_valid, vmeminstr, vredinstr})
         4'b1000: begin
             vcu_if.vcontrol.vexec = vexec_opi;
             vcu_if.vcontrol.vsignext = ~vexec_opi.vopunsigned;
-            vcu_if.vcontrol.vuse_vs3 = vopi_vuse_vs3; 
-            vcu_if.vcontrol.vs3_sel = '{regclass: RC_VECTOR, regidx: 5'b0}; 
+            vcu_if.vcontrol.vuse_vd = vopi_vuse_vd; 
+            vcu_if.vcontrol.vmask_dep = vmask_en | vopi_vmask_dep; 
             vexecute_valid = 1'b1;
         end
 
         4'b0100: begin
             vcu_if.vcontrol.vexec = vexec_opm;
             vcu_if.vcontrol.vsignext = ~vexec_opm.vopunsigned; 
-            vcu_if.vcontrol.vuse_vs3 = vopm_vuse_vs3; 
-            vcu_if.vcontrol.vs3_sel = vd_sel; 
+            vcu_if.vcontrol.vuse_vd = vopm_vuse_vd; 
             vexecute_valid = 1'b1;
         end
 
@@ -450,19 +453,24 @@ always_comb begin
 end
 
 // Mask enable logic
+logic vmask_en; 
 always_comb begin
     vcu_if.vcontrol.vmask_en = vencmasken;
+    vmask_en = vencmasken; 
 
     if (vopi_valid && vopi_disable_mask) begin
         vcu_if.vcontrol.vmask_en = 0;
+        vmask_en = 1'b0; 
     end
     
     if(vopm_valid && vopm_disable_mask) begin
         vcu_if.vcontrol.vmask_en = 0; 
+        vmask_en = 1'b0; 
     end
 
     if (vredinstr && !vmask_red) begin
         vcu_if.vcontrol.vmask_en = 0;
+        vmask_en = 1'b0; 
     end
 end
 

@@ -18,7 +18,7 @@ Below is a high-level overview of our proposed pipeline architecture.
 
 ![Vector pipeline diagram](images/rvv_pipeline.jpg)
 
-The architecture is largely derived from the 3-stage pipeline used on AFTx07, with the major addition of a uop queue in between the instruction decode and execute logic. This allows us to split long vector operations into smaller uops that can be natively executed by our 4-wide vector execute stage. All instructions whether scalar or vector share the pipeline and stay strictly in order to minimize complexity. The load store controller serializes accesses to the cache to allow us to handle wide vector operations with our single-ported cache. We add a shadow copy of the vector CSRs in the decode stage to ensure that changes made by `vset*` instructions get immediately reflected in the vector instructions following them without requiring a stall. The shadow copy is overwritten by the primary CSRs in the mem stage whenever there is a pipeline flush.
+The architecture is largely derived from the 3-stage pipeline used on AFTx07, with the major addition of a uop queue in between the instruction decode and execute logic. This allows us to split long vector operations into smaller uops that can be natively executed by our 4-wide vector execute stage. All instructions whether scalar or vector share the pipeline and stay strictly in order to minimize complexity. The load store controller serializes accesses to the cache to allow us to handle wide vector operations with our single-ported cache. We add a shadow copy of the vector CSRs in the decode stage to ensure that changes made by `vset*` instructions do not require stalling for many cycles. The shadow copy is overwritten by the primary CSRs in the mem stage whenever there is a pipeline flush.
 
 The design uses a 128-bit wide vector register file split into 4 32-bit wide banks. These feed 4 vector execution lane through a crossbar, each of which is capable of performing various vector operations at a native width of 32 bits. To support sub-word and mixed-width operations, the read crossbar shifts and masks the data coming from the vector register banks to allow reuse of the native-width functional units, and the reverse operation is applied during writeback.
 
@@ -27,9 +27,17 @@ The design uses a 128-bit wide vector register file split into 4 32-bit wide ban
 
 We have verified that we are able to generate vectorized code using the latest version of Clang/LLVM. GCC is in the process of adding auto-vectorization support for RVV, but the changes have not been merged into the mainline releases as of May 2024. We were able to compile simple benchmarks based on data-parallel workloads using GCC and Clang, and were able to observe vector code generation and large performance increases over scalar versions of the same code.
 
-Unfortunately, while we are able to compile Embench with vectorization enabled, the hot loops in the benchmarks end up not being vectorized. At least in the case of matrix multiplication, this appears to be due to potential pointer aliasing, and unfortunately there is no way for us to fix that issue without changing the benchmark code, which would sort of defeat the purpose of running a standardized benchmark suite in the first place.
+While compiling and running Embench with vectorization enabled, the hot loops in the benchmarks end up not being vectorized. At least in the case of matrix multiplication, this appears to be due to potential pointer aliasing. We find the way that those benchmarks are written to not be friendly to vectorization and therefore do not see speedups compared to the previous design. To gauge the performance of vector processor on data-parallel tasks we rely on our compiled benchmarks which we discuss more in [rv32v_results.md](rv32v_results.md)
 
 For more information on compilers and software, refer to our [Compilers documentation](rv32v_compilers.md).
+
+
+## Directory Structure
+Our 4 stage pipeline architecture is implemented in the *source_code/pipelines/stage4* folder. 
+
+Source files for functional units and other blocks used in our design related to the vector extension are located in *source_code/rv32v*
+
+Our unit tests and our vector benchmarks  are stored in *verification/self-tests/RV32V*. 
 
 
 ## Status
@@ -44,7 +52,7 @@ We also ran the Skywater 130 PDK synthesis flow made by the design flow team on 
 
 ## Future Work
 
-While we have made our best effort to verify correctness of the design as much as possible, there is still a lot more verification that needs to take place. Specifically, testing of edge cases, especially with interrupts and exceptions, is something that we anticipate could reveal more bugs.
+While we did our best to verify the correctness of the design as much as possible through writing hundreds of unit tests, there is still more verification that needs to take place due to the large size and variability of the RISC-V vector extension. Specifically, testing of edge cases, especially with interrupts and exceptions, is something that we anticipate could reveal more bugs.
 
 In order of expected impact, potential performance optimizations are:
 - Memory access coalescing
@@ -55,7 +63,7 @@ In order of expected impact, potential performance optimizations are:
 
 Additionally, future projects could also look into reducing area by combining multipliers and dividers across lanes and across functional units. Vector instructions could maintain performance by pipelining the multipliers and dividers such that the entire pipeline is still 4-stage, but multiple vector ops could be in flight in the execute stage at the same time on a single functional unit. This would decrease area while maintaining frequency and performance for both scalar and vector instructions.
 
-Finally, a larger project may be to simple make scalar instructions issue on a given vector execution lane, thus eliminating the isolated scalar pipeline entirely. One could even envision allowing superscalar issue of independent scalar instructions from the micro-op queue into different lanes, increasing performance further.
+Finally, a larger project may be to make scalar instructions issue on a given vector execution lane, thus eliminating the isolated scalar pipeline entirely. One could even envision allowing superscalar issue of independent scalar instructions from the micro-op queue into different lanes, increasing performance further.
 
 
 ## Contributors

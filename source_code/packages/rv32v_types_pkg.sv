@@ -558,7 +558,6 @@ package rv32v_types_pkg;
     // Register file signals
     rv32i_types_pkg::regsel_t vs1_sel;
     rv32i_types_pkg::regsel_t vs2_sel;
-    rv32i_types_pkg::regsel_t vs3_sel; // some instr use a third operand 
     rv32i_types_pkg::regsel_t vd_sel;
     logic vregwen;
     logic sregwen;
@@ -574,12 +573,13 @@ package rv32v_types_pkg;
     logic vxin1_use_imm;
     logic vxin1_use_rs1;
     logic vxin2_use_rs2;
-    logic vuse_vs3; // instr uses a third operand  
+    logic vuse_vd; // some instr uses a third operand in vd 
     logic [4:0] vimm;
     // Execution lane signals
     logic vpadscratch;
     vexec_t vexec;
-    logic vmask_en; 
+    logic vmask_en; // used for masking  
+    logic vmask_dep; // used for hazard tracking if intruction reads v0 either for masking or not. 
     // Memory signals
     logic [3:0] vlaneactive;
     logic vmemdren;

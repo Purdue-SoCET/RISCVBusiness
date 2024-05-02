@@ -78,10 +78,10 @@ module stage4_execute_stage (
     always_comb begin
         hazard_if.vs1 = ex_in.vctrl_out.vs1_sel; 
         hazard_if.vs2 = ex_in.vctrl_out.vs2_sel; 
-        hazard_if.vs3 = ex_in.vctrl_out.vs3_sel; 
+        hazard_if.vd_ex = ex_in.vctrl_out.vd_sel; 
         hazard_if.vs1_used = 1'b0; 
         hazard_if.vs2_used = 1'b0; 
-        hazard_if.vs3_used = ex_in.vctrl_out.vuse_vs3; 
+        hazard_if.vd_used = ex_in.vctrl_out.vuse_vd; 
         if(ex_in.vctrl_out.vlaneactive && (ex_in.vctrl_out.vmemdwen || (!ex_in.vctrl_out.vxin1_use_imm && !ex_in.vctrl_out.vxin1_use_rs1)))
             hazard_if.vs1_used = 1'b1; 
         if(ex_in.vctrl_out.vlaneactive && !ex_in.vctrl_out.vxin2_use_rs2)
@@ -89,13 +89,13 @@ module stage4_execute_stage (
         
         // Merge requires setting the mask enable here since it's dependent on v0, but we still have to disable the mask for writeback purposes since every element is written
         //hazard_if.ex_mask_en = ex_in.vctrl_out.vlaneactive ? ex_in.vctrl_out.vmask_en || ex_in.vctrl_out.vexec.valuop == VALU_MERGE : 0; 
-        hazard_if.ex_mask_en = ex_in.vctrl_out.vlaneactive ? ex_in.vctrl_out.vmask_en : 1'b0;
+        hazard_if.ex_mask_dep = ex_in.vctrl_out.vlaneactive ? ex_in.vctrl_out.vmask_dep : 1'b0;
         if(ex_in.vctrl_out.vuop_num != 0) begin
             // only do hazard tracking across different instructions
-            hazard_if.ex_mask_en = 0;   
+            hazard_if.ex_mask_dep = 0;   
             hazard_if.vs1_used = 0;
             hazard_if.vs2_used = 0; 
-            hazard_if.vs3_used = 0;
+            hazard_if.vd_used = 0;
         end
 
     end

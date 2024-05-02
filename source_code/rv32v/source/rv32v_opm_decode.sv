@@ -35,7 +35,7 @@ module rv32v_opm_decode(
     output logic valid, 
     output vsew_t veew_src2,
     output logic disable_mask, 
-    output logic vuse_vs3
+    output logic vuse_vd
 );
 
 logic[2:0] vsew_bits; 
@@ -59,7 +59,7 @@ always_comb begin
     vexec.vsigntype = SIGNED;
     vexec.vopunsigned = 1'b0;
     disable_mask = 1'b0; 
-    vuse_vs3 = 1'b0; 
+    vuse_vd = 1'b0; 
 
     case (vopm)
         VREDSUM: begin
@@ -181,12 +181,15 @@ always_comb begin
             case(vs1_sel)
                 5'b00001: begin
                      vexec.vmaskop = VMSK_SBF; 
+                     vuse_vd = 1'b1; 
                 end 
                 5'b00010: begin
                      vexec.vmaskop = VMSK_SOF;
+                     vuse_vd = 1'b1; 
                 end 
                 5'b00011: begin
                      vexec.vmaskop = VMSK_SIF; 
+                     vuse_vd = 1'b1; 
                 end 
                 5'b10000: vexec.vmaskop = VMSK_ITA;
                 5'b10001: vexec.vmaskop = VMSK_IDX;  
@@ -273,22 +276,22 @@ always_comb begin
         VMADD: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_MADD;
-            vuse_vs3 = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VNMSUB: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_NMSUB;
-            vuse_vs3 = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VMACC: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_MACC;
-            vuse_vs3 = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VNMSAC: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_NMSAC;
-            vuse_vs3 = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VWADDU: begin
             vexec.vfu = VFU_ALU;
@@ -352,11 +355,13 @@ always_comb begin
             vexec.vmulwiden = 1'b1;
             vexec.vsigntype = UNSIGNED;
             vexec.vopunsigned = 1'b1;
+            vuse_vd = 1'b1; 
         end
         VWMACC: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_MACC;
             vexec.vmulwiden = 1'b1;
+            vuse_vd = 1'b1; 
         end
         VWMACCUS: begin
             vexec.vfu = VFU_MUL;
@@ -364,6 +369,7 @@ always_comb begin
             vexec.vmulwiden = 1'b1;
             vexec.vsigntype = UNSIGNED_SIGNED;
             vexec.vopunsigned = 1'b1;
+            vuse_vd = 1'b1; 
         end
         VWMACCSU: begin
             vexec.vfu = VFU_MUL;
@@ -371,6 +377,7 @@ always_comb begin
             vexec.vmulwiden = 1'b1;
             vexec.vsigntype = SIGNED_UNSIGNED;
             vexec.vopunsigned = 1'b1;
+            vuse_vd = 1'b1; 
         end
 
         default: begin

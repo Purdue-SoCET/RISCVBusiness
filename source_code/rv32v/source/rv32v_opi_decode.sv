@@ -34,7 +34,8 @@ module rv32v_opi_decode(
     output vexec_t vexec,
     output logic valid,
     output logic disable_mask, 
-    output logic vuse_vs3
+    output logic vmask_dep,
+    output logic vuse_vd
 );
 
 always_comb begin
@@ -48,7 +49,8 @@ always_comb begin
     vexec.vmaskop = VMSK_AND;
     vexec.vpermop = VPRM_SMV;
     vexec.vopunsigned = 1'b0;
-    vuse_vs3 = 1'b0; 
+    vuse_vd = 1'b0; 
+    vmask_dep = 1'b0; 
 
     case (vopi)
         VADD: begin
@@ -109,66 +111,76 @@ always_comb begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_ADC;
             disable_mask = 1'b1;
-            vuse_vs3 = 1'b1;   
+            vmask_dep = 1'b1;    
         end
         VMADC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = ~vm_bit ? VALU_VMADC : VALU_VMADC_NO_C; // Assuming VMADC uses the same operation as ADC
-            vuse_vs3 = ~vm_bit ? 1'b1 : 1'b0;  
+            vmask_dep = ~vm_bit ? 1'b1 : 1'b0; 
+            vuse_vd = 1'b1; 
             disable_mask = 1'b1;  
         end
         VSBC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SBC;
             disable_mask = 1'b1; 
-            vuse_vs3 = 1'b1;  
+            vmask_dep = 1'b1; 
         end
         VMSBC: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = ~vm_bit ? VALU_VMSBC : VALU_VMSBC_NO_B; // Assuming VMSBC uses the same operation as SBC
-            vuse_vs3 = ~vm_bit ? 1'b1 : 1'b0;  
+            vmask_dep = ~vm_bit ? 1'b1 : 1'b0; 
+            vuse_vd = 1'b1; 
             disable_mask = 1'b1; 
         end
         VMERGE: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = vm_bit ? VALU_INT_MOVE : VALU_MERGE; 
             disable_mask = 1'b1;  
-            vuse_vs3 = 1'b1; 
+            vmask_dep = 1'b1; 
         end
         VMSEQ: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SEQ; 
+            vuse_vd = 1'b1; 
         end
         VMSNE: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SNE; 
+            vuse_vd = 1'b1; 
         end
         VMSLTU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLT;
             vexec.vopunsigned = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VMSLT: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLT; 
+            vuse_vd = 1'b1; 
         end
         VMSLEU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLE;
             vexec.vopunsigned = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VMSLE: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SLE; 
+            vuse_vd = 1'b1; 
         end
         VMSGTU: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SGT;
             vexec.vopunsigned = 1'b1; 
+            vuse_vd = 1'b1; 
         end
         VMSGT: begin
             vexec.vfu = VFU_ALU;
             vexec.valuop = VALU_SGT; 
+            vuse_vd = 1'b1; 
         end
         VSADDU: begin
             vexec.vfu = VFU_ALU;
