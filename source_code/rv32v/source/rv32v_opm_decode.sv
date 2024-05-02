@@ -28,13 +28,14 @@ import rv32v_types_pkg::*;
 module rv32v_opm_decode(
     input vopm_t vopm,
     input vfunct3_t vfunct3,
-    input logic[4:0] vs1_sel, 
+    input logic[4:0] vs1_sel,
     input vsew_t vsew, 
 
     output vexec_t vexec,
     output logic valid, 
     output vsew_t veew_src2,
-    output logic disable_mask
+    output logic disable_mask, 
+    output logic vuse_vs3
 );
 
 logic[2:0] vsew_bits; 
@@ -58,6 +59,7 @@ always_comb begin
     vexec.vsigntype = SIGNED;
     vexec.vopunsigned = 1'b0;
     disable_mask = 1'b0; 
+    vuse_vs3 = 1'b0; 
 
     case (vopm)
         VREDSUM: begin
@@ -271,18 +273,22 @@ always_comb begin
         VMADD: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_MADD;
+            vuse_vs3 = 1'b1; 
         end
         VNMSUB: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_NMSUB;
+            vuse_vs3 = 1'b1; 
         end
         VMACC: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_MACC;
+            vuse_vs3 = 1'b1; 
         end
         VNMSAC: begin
             vexec.vfu = VFU_MUL;
             vexec.vmulop = VMUL_NMSAC;
+            vuse_vs3 = 1'b1; 
         end
         VWADDU: begin
             vexec.vfu = VFU_ALU;

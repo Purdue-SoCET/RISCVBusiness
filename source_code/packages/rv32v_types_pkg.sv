@@ -558,6 +558,7 @@ package rv32v_types_pkg;
     // Register file signals
     rv32i_types_pkg::regsel_t vs1_sel;
     rv32i_types_pkg::regsel_t vs2_sel;
+    rv32i_types_pkg::regsel_t vs3_sel; // some instr use a third operand 
     rv32i_types_pkg::regsel_t vd_sel;
     logic vregwen;
     logic sregwen;
@@ -565,6 +566,7 @@ package rv32v_types_pkg;
     // Alignment/crossbar signals
     vsew_t veew_src1;
     vsew_t veew_src2;
+
     vsew_t veew_dest;
     logic [1:0] vbank_offset;
     logic vsignext;  // 0 -> zero extend; 1 -> sign extend
@@ -572,6 +574,7 @@ package rv32v_types_pkg;
     logic vxin1_use_imm;
     logic vxin1_use_rs1;
     logic vxin2_use_rs2;
+    logic vuse_vs3; // instr uses a third operand  
     logic [4:0] vimm;
     // Execution lane signals
     logic vpadscratch;

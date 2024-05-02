@@ -86,8 +86,8 @@ interface stage4_hazard_unit_if();
   logic [6:0] velem_num_e;
 
   // vector unit hazard tracking signals
-  regsel_t vs1, vs2, vd; 
-  logic vs1_used, vs2_used; 
+  regsel_t vs1, vs2, vs3, vd; 
+  logic vs1_used, vs2_used, vs3_used; 
   logic vregwen; 
   logic ex_mask_en;
   logic vvalid_m;
@@ -111,7 +111,7 @@ interface stage4_hazard_unit_if();
             is_queue_full, pc_decode, valid_decode,
             vsetvl_dec, vsetvl_ex, queue_wen, vbusy,
 
-            vregwen, vs1, vs2, vd, vs1_used, vs2_used, ex_mask_en, vvalid_e, vvalid_m, velem_num_e, velem_num_m,
+            vregwen, vs1, vs2, vs3, vd, vs1_used, vs2_used, vs3_used, ex_mask_en, vvalid_e, vvalid_m, velem_num_e, velem_num_m,
             vuop_last, not_interruptible, keep_vstart_e, keep_vstart_m, vmem_last_elem,
 
 
@@ -145,7 +145,7 @@ interface stage4_hazard_unit_if();
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel, flush_queue, vmask_calc_stall, 
     output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex,
-           vs1, vs2, vs1_used, vs2_used, ex_mask_en, vvalid_e, velem_num_e, not_interruptible, keep_vstart_e
+           vs1, vs2, vs3, vs1_used, vs2_used, vs3_used, ex_mask_en, vvalid_e, velem_num_e, not_interruptible, keep_vstart_e
   );
 
   modport mem (

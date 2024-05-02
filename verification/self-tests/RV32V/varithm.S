@@ -240,36 +240,66 @@ RVTEST_CODE_BEGIN
   lw x5, 12(x4)
   TEST_CASE(36, x5, 0x40, NOP)
 
-
-  // integer move instruction
-  vmv.v.v v4, v3
-  vse32.v v4, 0(x4)
+  // vmerge test with a RAW hazard on v0 
+  NOP
+  NOP
+  NOP
+  NOP
+  NOP
+  vmslt.vi        v0,v1,0 // v0 should be 0b0000
+  vmerge.vvm v3, v2, v1, v0
+  vse32.v v3, 0(x4)
 
   lw x5, 0(x4)
   TEST_CASE(37, x5, 0x10, NOP)
 
   lw x5, 4(x4)
-  TEST_CASE(38, x5, 0x2, NOP)
+  TEST_CASE(38, x5, 0x20, NOP)
 
   lw x5, 8(x4)
-  TEST_CASE(39, x5, 0x3, NOP)
+  TEST_CASE(39, x5, 0x30, NOP)
 
   lw x5, 12(x4)
   TEST_CASE(40, x5, 0x40, NOP)
 
+
+
+
+
+  // integer move instruction
+  vlm.v v0, (x1)
+  vmerge.vvm v3, v2, v1, v0
+  la x4, res_data
+  vse32.v v3, 0(x4)
+  
+  vmv.v.v v4, v3
+  vse32.v v4, 0(x4)
+
+  lw x5, 0(x4)
+  TEST_CASE(41, x5, 0x10, NOP)
+
+  lw x5, 4(x4)
+  TEST_CASE(42, x5, 0x2, NOP)
+
+  lw x5, 8(x4)
+  TEST_CASE(43, x5, 0x3, NOP)
+
+  lw x5, 12(x4)
+  TEST_CASE(44, x5, 0x40, NOP)
+
   vmv.v.i v4, -1
   vse32.v v4, 0(x4)
   lw x5, 0(x4)
-  TEST_CASE(41, x5, -1, NOP)
+  TEST_CASE(45, x5, -1, NOP)
 
   lw x5, 4(x4)
-  TEST_CASE(42, x5, -1, NOP)
+  TEST_CASE(46, x5, -1, NOP)
 
   lw x5, 8(x4)
-  TEST_CASE(43, x5, -1, NOP)
+  TEST_CASE(47, x5, -1, NOP)
 
   lw x5, 12(x4)
-  TEST_CASE(44, x5, -1, NOP)
+  TEST_CASE(48, x5, -1, NOP)
 
 
   TEST_PASSFAIL

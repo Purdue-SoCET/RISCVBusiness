@@ -245,6 +245,7 @@ add wave -noupdate /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/vctr
 add wave -noupdate -label vs2_sel /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/vctrls/vs2_sel/regidx
 add wave -noupdate /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/vopA
 add wave -noupdate /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/vopB
+add wave -noupdate /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/v0
 add wave -noupdate -label vres_0 /TOP/top_core/CORE/pipeline/execute_stage_i/vex_out/vres
 add wave -noupdate -label vd_sel -radix unsigned /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/vctrls/vd_sel/regidx
 add wave -noupdate /TOP/top_core/CORE/pipeline/execute_stage_i/RVV_DATAPATH/vctrls/vregwen
@@ -391,7 +392,7 @@ add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage
 add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vmemdwen_lsc
 add wave -noupdate -group {Mem serializer} /TOP/top_core/CORE/pipeline/mem_stage_i/serial_if/vuop_num
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {97 ps} 0}
+WaveRestoreCursors {{Cursor 1} {2593 ps} 0}
 quietly wave cursor active 1
 configure wave -namecolwidth 166
 configure wave -valuecolwidth 133
@@ -407,4 +408,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {71 ps} {130 ps}
+WaveRestoreZoom {2540 ps} {2662 ps}

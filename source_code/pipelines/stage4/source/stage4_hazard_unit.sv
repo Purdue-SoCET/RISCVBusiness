@@ -253,6 +253,8 @@ module stage4_hazard_unit (
           vex_stall = 1; 
         else if(hazard_if.ex_mask_en && (hazard_if.vd.regidx == 0)) 
           vex_stall = 1; 
+        else if(hazard_if.vd == hazard_if.vs3 && hazard_if.vs3_used)
+          vex_stall = 1; 
       end
     end
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
