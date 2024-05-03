@@ -30,8 +30,8 @@
 `include "component_selection_defines.vh"
 
 module control_unit (
-          control_unit_if.control_unit       cu_if,
-          rv32i_reg_file_if.cu               rf_if,
+    control_unit_if.control_unit       cu_if,
+    rv32i_reg_file_if.cu               rf_if,
     input logic                        [4:0] rmgmt_rsel_s_0,
     rmgmt_rsel_s_1,
     rmgmt_rsel_d,
@@ -43,6 +43,7 @@ module control_unit (
     import machine_mode_types_1_12_pkg::*;
     import rv32m_pkg::*;
     import rv32b_pkg::*;
+    import rv32z_pkg::*;
 
     stype_t  instr_s;
     itype_t  instr_i;
@@ -57,6 +58,7 @@ module control_unit (
     // Per-extension claim signals
     logic rv32m_claim;
     logic rv32b_claim;
+    logic rv32z_claim;
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -105,6 +107,7 @@ module control_unit (
             REGREG, IMMED, LOAD: cu_if.alu_a_sel = 2'd0;
             STORE:               cu_if.alu_a_sel = 2'd1;
             AUIPC:               cu_if.alu_a_sel = 2'd2;
+            FLUSH:               cu_if.alu_a_sel = 2'd0;    //Port A gets data from register
             default:             cu_if.alu_a_sel = 2'd2;
         endcase
     end
@@ -115,6 +118,7 @@ module control_unit (
             REGREG:      cu_if.alu_b_sel = 2'd1;
             IMMED, LOAD: cu_if.alu_b_sel = 2'd2;
             AUIPC:       cu_if.alu_b_sel = 2'd3;
+            FLUSH:       cu_if.alu_b_sel = 2'd3;        //Port B is immediate
             default:     cu_if.alu_b_sel = 2'd1;
         endcase
     end
@@ -127,7 +131,7 @@ module control_unit (
             LUI:                  cu_if.w_sel = 3'd2;
             IMMED, AUIPC, REGREG: cu_if.w_sel = 3'd3; // RV32M: Opcodes are REGREG, no change needed
             SYSTEM:               cu_if.w_sel = 3'd4;
-            default:              cu_if.w_sel = 3'd0;
+            default:              cu_if.w_sel = 3'd0; //add for flush instruction, will have to change bits everywhere
         endcase
     end
 
@@ -137,9 +141,11 @@ module control_unit (
             STORE, BRANCH:                              cu_if.wen = 1'b0;
             IMMED, LUI, AUIPC, REGREG, JAL, JALR, LOAD: cu_if.wen = 1'b1;
             SYSTEM:                                     cu_if.wen = cu_if.csr_rw_valid;
+            //FLUSH:                                      cu_if.wen = 1'b1;   //need new signal for write back to memory
             default:                                    cu_if.wen = 1'b0;
         endcase
     end
+
 
     // Assign alu opcode
     logic sr, aluop_srl, aluop_sra, aluop_add, aluop_sub, aluop_and, aluop_or;
@@ -208,7 +214,7 @@ module control_unit (
     end
 
     assign cu_if.illegal_insn = maybe_illegal && !claimed;
-    assign claimed = rv32m_claim || rv32b_claim; // Add OR conditions for new extensions
+    assign claimed = rv32m_claim || rv32b_claim || rv32z_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions
     always_comb begin
@@ -258,6 +264,9 @@ module control_unit (
     assign cu_if.csr_addr     = csr_addr_t'(instr_i.imm11_00);
     assign cu_if.zimm         = cu_if.instr[19:15];
 
+    //Flush Zicbom extension instructions
+    assign cu_if.flush_snoop = (cu_if.opcode == MISCMEM) && cu_if.;
+
     // Extension decoding
     `ifdef RV32M_SUPPORTED
     rv32m_decode RV32M_DECODE(
@@ -279,6 +288,17 @@ module control_unit (
     `else
     assign cu_if.rv32b_control = {1'b0, rv32b_op_t'(0)};
     assign rv32b_claim = 1'b0;
+    `endif
+
+    `ifdef RV32Z_SUPPORTED
+    rv32b_decode RV32Z_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32z_claim),
+        .rv32b_control(cu_if.rv32z_control)
+    );
+    `else
+    assign cu_if.rv32z_control = {1'b0, rv32z_op_t'(0)};
+    assign rv32z_claim = 1'b0;
     `endif
 
 endmodule
