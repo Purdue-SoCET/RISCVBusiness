@@ -33,7 +33,7 @@ source_code/fpga/output_files
 *.cmd
 mitll*
 # Ignore temporary files created by gedit
-*~
+*.~*
 # Ignore test cache files
 run_tests_cache.json
 # Ignore log files and Verilator outputs
@@ -56,11 +56,14 @@ __pycache__/
 
 # ignore xrun files
 INCA_libs/
+cov_work
 xcelium.d/
-xrun.history
-xrun.key
+*.history
+*.key
+*.diag
 .simvision
-waves.shm/
+*.shm/
+*.temp*
 
 open_files.sh
 

@@ -34,7 +34,5 @@ microarch_params:
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:
-      - name: "rv32m"
-      - name: "rv32a"
   nonstandard_extensions:
 
