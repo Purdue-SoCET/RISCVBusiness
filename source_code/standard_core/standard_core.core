@@ -9,7 +9,6 @@ filesets:
             - branch_res.sv
             - dmem_extender.sv
             - endian_swapper.sv
-            - ../include/bus_ctrl_if.vh : {is_include_file: true}
             - bus_ctrl.sv
             - memory_controller.sv
             - multicore_wrapper.sv

@@ -30,7 +30,7 @@ microarch_params:
   sparce_enabled : "disabled"
 
   # RV32C
-  rv32c_enabled : "enabled"
+  rv32c_enabled : "disabled"
   
   # Halt
   infinite_loop_halts : "true"
@@ -41,7 +41,5 @@ microarch_params:
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:
-    - name: "rv32m"
-    - name: "rv32a"
   nonstandard_extensions:
 
