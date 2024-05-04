@@ -1,8 +1,26 @@
 diff --git a/p/riscv_test.h b/p/riscv_test.h
-index 7bf35cf..254030e 100644
+index 7bf35cf..42000ad 100644
 --- a/p/riscv_test.h
 +++ b/p/riscv_test.h
-@@ -200,6 +200,7 @@ handle_exception:                                                       \
+@@ -154,7 +154,7 @@
+ 
+ #define RISCV_MULTICORE_DISABLE                                         \
+   csrr a0, mhartid;                                                     \
+-  1: bnez a0, 1b
++  1: bnez a0, _halt
+ 
+ #define EXTRA_TVEC_USER
+ #define EXTRA_TVEC_MACHINE
+@@ -175,6 +175,8 @@ _start:                                                                 \
+         /* reset vector */                                              \
+         j reset_vector;                                                 \
+         .align 2;                                                       \
++_halt:                                                                  \
++        j _halt;                                                        \
+ trap_vector:                                                            \
+         /* test whether the test came from pass/fail */                 \
+         csrr t5, mcause;                                                \
+@@ -200,6 +202,7 @@ handle_exception:                                                       \
    write_tohost:                                                         \
          sw TESTNUM, tohost, t5;                                         \
          sw zero, tohost + 4, t5;                                        \
