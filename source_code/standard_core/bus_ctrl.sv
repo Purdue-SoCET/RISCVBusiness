@@ -221,7 +221,7 @@ module bus_ctrl #(
             end
             WRITEBACK_MS: begin // writeback using supplier while also doing cache to cache transfer
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
-                ccif.dwait[requester_cpu] = 0;
+                ccif.dwait[requester_cpu] = !block_count_done;
                 ccif.ccexclusive[requester_cpu] = exclusiveUpdate;
 
                 ccif.l2WEN = !block_count_done;
