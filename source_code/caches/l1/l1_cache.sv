@@ -127,7 +127,7 @@ module l1_cache #(
     word_t [BLOCK_SIZE-1:0] hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
-    cache_set_t sramWrite, sramRead, sramMask, sramBus;
+    cache_set_t sramWrite, sramRead, sramMask;
     cache_tag_t [ASSOC-1:0] sramTags, sramTagsMask;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
@@ -152,10 +152,6 @@ module l1_cache #(
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
         BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(sramWEN), .SEL(sramSNOOPSEL), .wMask(sramTagsMask));
-
-    assign ccif.valid = sramRead.frames[0].tag.valid; //frames[0] related to associativity, this line only works for ASSOC = 1
-    assign ccif.dirty = sramRead.frames[0].tag.dirty; //frames[0] related to associativity, this line only works for ASSOC = 1
-    assign ccif.exclusive = sramRead.frames[0].tag.exclusive; //frames[0] related to associativity, this line only works for ASSOC = 1
 
     assign bus_frame_tag = snoop_decoded_addr.idx.tag_bits;
 
@@ -215,9 +211,7 @@ module l1_cache #(
     end
 
     // decoded address conversion
-    assign decoded_addr = decoded_cache_addr_t'(proc_gen_bus_if.addr);
-    // TODO: update this with idx_bits
-    // assign decoded_snoop_addr = decoded_cache_addr_t'(ccif.ccsnoopaddr);
+    assign decoded_addr = state == SNOOP ? snoop_decoded_addr : decoded_cache_addr_t'(proc_gen_bus_if.addr);
 
     logic coherence_hit, sc_valid_block;
 
@@ -229,7 +223,6 @@ module l1_cache #(
         hit_idx         = 0;
         hit_data        = 0;
         pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
-        //ccif.snoop_hit  = 0;
         coherence_hit   = 0;
         sc_valid_block  = 0;
 
@@ -238,7 +231,8 @@ module l1_cache #(
                 if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
                     sc_valid_block = addr_is_reserved;
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
-                    if(proc_gen_bus_if.ren || (proc_gen_bus_if.wen && coherence_hit)) begin //Read or write hit
+                    //Read or write hit
+                    if((state == HIT && (proc_gen_bus_if.ren || (proc_gen_bus_if.wen && coherence_hit))) || state == SNOOP) begin
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].data;
                 	    hit_idx   = i;
@@ -250,10 +244,16 @@ module l1_cache #(
 
     always_comb begin
         ccif.snoop_hit  = 0;
+        ccif.valid = 0;
+        ccif.dirty = 0;
+        ccif.exclusive = 0;
 
         for(int i = 0; i < ASSOC; i++) begin
             if (read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid) begin
                 ccif.snoop_hit = 1'b1;
+                ccif.valid = read_tag_bits[i].valid;
+                ccif.dirty = read_tag_bits[i].dirty;
+                ccif.exclusive = read_tag_bits[i].exclusive;
             end
         end
     end
@@ -378,12 +378,6 @@ module l1_cache #(
                     end
             end 
             FETCH: begin
-                // set cache to be invalid before cache completes fetch
-                /* if(proc_gen_bus_if.wen)  //Doing a write request
-                    mem_gen_bus_if.wen = 1;
-                else
-                    mem_gen_bus_if.ren = 1;
-                */
                 mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                 mem_gen_bus_if.ren = proc_gen_bus_if.ren || !abort_bus;
                 mem_gen_bus_if.addr = read_addr;
@@ -435,8 +429,6 @@ module l1_cache #(
                 end
             end
             SNOOP: begin
-                //mem_gen_bus_if.wdata = Need to get syntax for this, data that bus can read from SRAM
-                //Need to route this into SRAM as needed = mem_gen_bus_if.rdata
                 ccif.requested_data = sramRead.frames[hit_idx].data;
                 if (!mem_gen_bus_if.busy) begin
                     sramWEN = 1;
@@ -540,6 +532,23 @@ module l1_cache #(
                 if (read_tag_bits[i] != sramRead.frames[i].tag) begin
                     $warning("WARNING: sram tags are out of sync!");
                 end
+            end
+        end
+        if (state == SNOOP && next_state == SNOOP) begin
+            if (sramSNOOPSEL != sramSEL) begin
+                $timeformat(-12, 2, " ps", 20);
+                $warning("WARNING: sram selection incorrect!");
+            end
+            if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
+                $timeformat(-12, 2, " ps", 20);
+                $warning("WARNING: returning incorrect hit_idx data!");
+                $warning(
+                    "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
+                    hit_idx,
+                    decoded_addr.idx.tag_bits,
+                    sramRead.frames[hit_idx].tag.tag_bits,
+                    bus_frame_tag
+                );
             end
         end
     end

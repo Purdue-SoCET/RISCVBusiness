@@ -425,7 +425,9 @@ void reset() {
 }
 
 int main(int argc, char **argv) {
-    srand(time(NULL));
+    uint32_t seed = time(NULL);
+    srand(seed);
+    printf("Seed value: %d\n", seed);
 
     uint32_t num_transactions = 1000000;
     if (argc == 2) {
