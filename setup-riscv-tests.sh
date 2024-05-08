@@ -2,8 +2,9 @@
 
 git submodule update --init --recursive
 pushd riscv-tests
+git apply ../riscv-tests-isa.patch
 pushd env
-git apply ../../riscv-tests-patch.patch
+git apply ../../riscv-tests-env.patch
 popd
 autoconf
 ./configure
