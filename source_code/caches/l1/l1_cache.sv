@@ -55,15 +55,13 @@ module l1_cache #(
     localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
     localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
-    localparam N_SET_BITS         = $clog2(N_SETS);// + (N_SETS == 1);
-    localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE);// + (BLOCK_SIZE == 1);
+    localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
+    localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2 + 1; // in bits (+1 for exclusive bit)
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
     localparam SRAM_TAG_W         = (N_TAG_BITS + 3) * ASSOC; // +3 for valid, dirty, and exclusive
     localparam CLEAR_LENGTH       = $clog2(BLOCK_SIZE) + 2;
-
-    //typedef enum logic[1:0] {INVALID=0, EXCLUSIVE, SHARED, MODIFIED} frame_state_t;
 
     typedef struct packed {
         logic exclusive;
@@ -73,7 +71,6 @@ module l1_cache #(
     } cache_tag_t;
 
     typedef struct packed{
-        //frame_state_t mesi_state;
         cache_tag_t tag;
         word_t [BLOCK_SIZE - 1:0] data;
     } cache_frame_t;    // cache frame
@@ -178,7 +175,7 @@ module l1_cache #(
             reservation_set <= next_reservation_set;
         end
     end
-    
+
     // counters
     always_comb begin
         next_flush_idx = flush_idx;
@@ -186,8 +183,8 @@ module l1_cache #(
         // flush counter logic
         if (clear_flush_count)
             next_flush_idx = 0;
-        else if (enable_flush_count_nowb && BLOCK_SIZE != 1) // kinda sus
-            next_flush_idx = flush_idx + BLOCK_SIZE; 
+        else if (enable_flush_count_nowb && BLOCK_SIZE != 1)
+            next_flush_idx = flush_idx + 1;
         else if (enable_flush_count || enable_flush_count_nowb)
             next_flush_idx = flush_idx + 1;
 
@@ -259,7 +256,6 @@ module l1_cache #(
     end
 
     // cache output logic
-    //assign cc_if.dflush_done = idle_done;
     // Outputs: counter control signals, cache, signals to memory, signals to processor
     always_comb begin
         sramWEN                 = 0;
@@ -378,6 +374,7 @@ module l1_cache #(
                     end
             end 
             FETCH: begin
+                // set cache to be invalid before cache completes fetch
                 mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                 mem_gen_bus_if.ren = proc_gen_bus_if.ren || !abort_bus;
                 mem_gen_bus_if.addr = read_addr;
@@ -574,7 +571,7 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (!mem_gen_bus_if.busy)
+                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error)
                     next_state = HIT; 
                 else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
