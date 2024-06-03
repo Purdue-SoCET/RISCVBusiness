@@ -68,7 +68,7 @@ UARCH_PARAMS = \
 RISC_MGMT_PARAMS = \
   {
     # Valid standard extensions
-    'standard_extensions' : {'name' : ['rv32m']},
+    'standard_extensions' : {'name' : ['rv32m', 'rv32b']},
     # Valid nonstandard extensions
     'nonstandard_extensions' : {'encoding' : ['R_TYPE', 'M_TYPE', 'J_TYPE', 'BR_TYPE', 'G_TYPE']}
   }
