@@ -1,5 +1,3 @@
-
-
 module rv32b_decode(
     input [31:0] insn,
     output logic claim,
@@ -23,7 +21,7 @@ module rv32b_decode(
     assign insn_split = rv32b_insn_t'(insn);
 
     always_comb begin
-        claim = 1'b1; // Reverse this?
+        claim = 1'b1;
         operation = SH1ADD;
         // shift-add
         if(insn_split.opcode_major == REGREG && insn_split.opcode_minor == RV32B_MINOR_SHIFTADD) begin

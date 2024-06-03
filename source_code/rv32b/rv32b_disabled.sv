@@ -1,4 +1,3 @@
-
 module rv32b_disabled(
     input rv32b_pkg::rv32b_op_t operation,
     input [31:0] rv32b_a,

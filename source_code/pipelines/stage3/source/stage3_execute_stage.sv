@@ -194,8 +194,6 @@ module stage3_execute_stage (
 
     // FU output mux -- feeds into pipeline register
     // Add to this when more FUs are added
-    // TODO: Make this nicer, with enum for FU selection
-    //assign ex_out = (cu_if.rv32m_control.select) ? rv32m_out : alu_if.port_out;
     always_comb begin
         if(cu_if.rv32m_control.select) begin
             ex_out = rv32m_out;
