@@ -194,27 +194,28 @@ module l1_cache #(
     // cache output logic
     // Outputs: counter control signals, cache, signals to memory, signals to processor
     always_comb begin
-        sramWEN                 = 0;
-        sramWrite               = 0;
-        sramMask                = '1;
-        proc_gen_bus_if.busy    = 1;
-        proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
-        mem_gen_bus_if.ren      = 0;
-        mem_gen_bus_if.wen      = 0;
-        mem_gen_bus_if.addr     = 0; 
-        mem_gen_bus_if.wdata    = 0; 
-        mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
-        enable_flush_count      = 0;
-        enable_word_count       = 0;
-        enable_flush_count_nowb = 0;
-        clear_flush_count       = 0;
-        clear_word_count        = 0;
-        flush_done 	            = 0;
-        idle_done               = 0;
-        clear_done 	            = 0;
-        next_read_addr          = read_addr;
-        next_decoded_req_addr   = decoded_req_addr;
-        next_last_used          = last_used;
+        sramWEN                    = 0;
+        sramWrite                  = 0;
+        sramMask                   = '1;
+        proc_gen_bus_if.busy       = 1;
+        proc_gen_bus_if.rdata      = 0; // TODO: Can this be optimized?
+        proc_gen_bus_if.rdata_wide = 0;
+        mem_gen_bus_if.ren         = 0;
+        mem_gen_bus_if.wen         = 0;
+        mem_gen_bus_if.addr        = 0; 
+        mem_gen_bus_if.wdata       = 0; 
+        mem_gen_bus_if.byte_en     = '1; // set this to all 1s for evictions
+        enable_flush_count         = 0;
+        enable_word_count          = 0;
+        enable_flush_count_nowb    = 0;
+        clear_flush_count          = 0;
+        clear_word_count           = 0;
+        flush_done 	               = 0;
+        idle_done                  = 0;
+        clear_done 	               = 0;
+        next_read_addr             = read_addr;
+        next_decoded_req_addr      = decoded_req_addr;
+        next_last_used             = last_used;
         
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx_bits] == (ASSOC - 1)))
@@ -243,6 +244,7 @@ module l1_cache #(
                 if(proc_gen_bus_if.ren && hit && !flush) begin
                     proc_gen_bus_if.busy = 0; 
                     proc_gen_bus_if.rdata = hit_data[decoded_addr.block_bits];
+                    proc_gen_bus_if.rdata_wide = BLOCK_SIZE == DCACHE_BLOCK_SIZE ? hit_data : 0;
 		            next_last_used[decoded_addr.idx_bits] = hit_idx;
                 end
                 // cache hit on a processor write
@@ -265,12 +267,13 @@ module l1_cache #(
                 end
                 // passthrough
                 else if(pass_through && (proc_gen_bus_if.wen || proc_gen_bus_if.ren)) begin
-                    mem_gen_bus_if.wen      = proc_gen_bus_if.wen;
-                    mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
-                    mem_gen_bus_if.addr     = proc_gen_bus_if.addr;
-                    mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en;
-                    proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
-                    proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;
+                    mem_gen_bus_if.wen         = proc_gen_bus_if.wen;
+                    mem_gen_bus_if.ren         = proc_gen_bus_if.ren;
+                    mem_gen_bus_if.addr        = proc_gen_bus_if.addr;
+                    mem_gen_bus_if.byte_en     = proc_gen_bus_if.byte_en;
+                    proc_gen_bus_if.busy       = mem_gen_bus_if.busy;
+                    proc_gen_bus_if.rdata      = mem_gen_bus_if.rdata;
+                    proc_gen_bus_if.rdata_wide = (DCACHE_BLOCK_SIZE)'(mem_gen_bus_if.rdata);
                     if(proc_gen_bus_if.wen) begin
                         casez (proc_gen_bus_if.byte_en)
                             4'b0001:    mem_gen_bus_if.wdata  = {24'd0, proc_gen_bus_if.wdata[7:0]};
