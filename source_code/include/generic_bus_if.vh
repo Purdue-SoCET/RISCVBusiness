@@ -31,19 +31,21 @@ interface generic_bus_if ();
   logic [RAM_ADDR_SIZE-1:0] addr;
   word_t wdata;
   word_t rdata;
+  word_t [DCACHE_BLOCK_SIZE-1:0] wdata_wide;
+  word_t [DCACHE_BLOCK_SIZE-1:0] rdata_wide;
   logic ren,wen;
   logic busy;
   logic error;
   logic [3:0] byte_en;
 
   modport generic_bus (
-    input addr, ren, wen, wdata, byte_en,
-    output rdata, busy, error
+    input addr, ren, wen, wdata, wdata_wide, byte_en,
+    output rdata, rdata_wide, busy, error
   );
 
   modport cpu (
-    input rdata, busy, error,
-    output addr, ren, wen, wdata, byte_en
+    input rdata, rdata_wide, busy, error,
+    output addr, ren, wen, wdata, wdata_wide, byte_en
   );
 
 endinterface
