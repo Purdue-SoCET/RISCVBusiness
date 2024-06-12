@@ -11,6 +11,7 @@ filesets:
             - source/stage4_fetch_stage.sv
             - source/stage4_execute_stage.sv
             - source/stage4_mem_stage.sv
+            - source/stage4_mem_stage_coalescing.sv
             - source/stage4_hazard_unit.sv
             - source/stage4_forwarding_unit.sv
             - source/stage4.sv

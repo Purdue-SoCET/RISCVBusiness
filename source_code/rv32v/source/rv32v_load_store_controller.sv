@@ -17,7 +17,9 @@
 *   Filename:     rv32v_load_store_controller.sv
 *
 *   Created by:   Maxwell Michalec
+*                 William Cunningham
 *   Email:        michalem@purdue.edu
+*                 wrcunnin@purdue.edu
 *   Date Created: 01/30/2024
 *   Description:  Load-store controller for RV32V core
 */
