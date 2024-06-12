@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     rv32v_mem_serializer_if.vh
+*   Filename:     rv32v_mem_coalescer_if.vh
 *
 *   Created by:   Maxwell Michalec
 *   Email:        michalem@purdue.edu
@@ -46,10 +46,11 @@ interface rv32v_mem_serializer_if;
     // LSC control signals
     logic vmemdwen_lsc, vmemdren_lsc;
     word_t vaddr_lsc, vdata_store_lsc;
-    logic [$clog2(NUM_LANES)-1:0] vcurr_lane;
+    word_t [NUM_LANES-1:0] vaddr_wide_lsc;
+    logic vcurr_lane;
+    logic [NUM_LANES-1:0] ven_lanes;
     load_t vload_type;
     logic lsc_ready;
-    // logic serial_busy;
 
     // segmented load/store signals 
     logic strided; 
@@ -60,7 +61,7 @@ interface rv32v_mem_serializer_if;
     modport serial (
         input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, vlane_store_data, lsc_ready,
               strided, unit_strided, vnew_seg, vseg_op,
-        output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vdata_store_lsc, vcurr_lane, vload_type
+        output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vaddr_wide_lsc, vdata_store_lsc, vcurr_lane, ven_lanes, vload_type
     );
 
 endinterface

@@ -1,0 +1,217 @@
+[*]
+[*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
+[*] Tue Jun 11 18:27:04 2024
+[*]
+[dumpfile] "/home/asicfab/a/socet190/socet/RISCVBusiness/waveform.vcd"
+[dumpfile_mtime] "Tue Jun 11 18:08:00 2024"
+[dumpfile_size] 17552355
+[savefile] "/home/asicfab/a/socet190/socet/RISCVBusiness/rvv_format_william.gtkw"
+[timestart] 0
+[size] 1824 1080
+[pos] -1 -1
+*-5.730774 129 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[markername] AA
+[markername] BB
+[markername] CC
+[markername] DD
+[markername] EE
+[markername] FF
+[markername] GG
+[markername] HH
+[markername] II
+[markername] JJ
+[markername] KK
+[markername] LL
+[markername] MM
+[markername] NN
+[markername] OO
+[markername] PP
+[markername] QQ
+[markername] RR
+[markername] SS
+[markername] TT
+[markername] UU
+[markername] VV
+[markername] WW
+[markername] XX
+[markername] YY
+[markername] ZZ
+[treeopen] TOP.
+[treeopen] TOP.top_core.
+[treeopen] TOP.top_core.CORE.
+[treeopen] TOP.top_core.CORE.pipeline.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.
+[treeopen] TOP.top_core.CORE.pipeline.fetch_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.hazard_if.
+[treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.
+[treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.
+[treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.
+[treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.SLZR.
+[treeopen] TOP.top_core.CORE.pipeline.uop_out.
+[treeopen] TOP.top_core.CORE.pipeline.uop_out.vctrl_out.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.
+[sst_width] 253
+[signals_width] 285
+[sst_expanded] 1
+[sst_vpaned_height] 560
+@28
+TOP.CLK
+TOP.nRST
+@800200
+-Fetch
+@22
+TOP.top_core.CORE.pipeline.fetch_stage_i.pc[31:0]
+TOP.top_core.CORE.pipeline.fetch_stage_i.instr[31:0]
+@1000200
+-Fetch
+@800200
+-uOP out
+@28
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vvalid
+@22
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vuop_num[4:0]
+@28
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.sregwen
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmv_s_x
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vsetvl_type[1:0]
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdren
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdwen
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vstrided
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vunitstride
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_dest[2:0]
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src1[2:0]
+TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src2[2:0]
+@1000200
+-uOP out
+@800200
+-EX/MEM
+@28
+TOP.top_core.CORE.pipeline.mem_stage_i.vmemop
+@22
+TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.pc4[31:0]
+@28
+TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.reg_write
+TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.w_sel[2:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.SLZR.serial_state[1:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.SLZR.next_serial_state[1:0]
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.SLZR.serial_if.base[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.SLZR.serial_if.stride[31:0]
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vuop_num[4:0]
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
+@800200
+-LSC
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[1][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[2][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[3][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[1][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[2][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[3][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
+@28
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
+@800200
+-dgen_bus_if
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.addr[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata_wide[0][31:0]
+@23
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata_wide[1][31:0]
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata_wide[1][31:0]
+@28
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.busy
+@1000200
+-dgen_bus_if
+-LSC
+@800200
+-vexmem
+@28
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.sregwen
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vregwen
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmv_s_x
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vsetvl
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdren
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdwen
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.veew[2:0]
+@1000200
+-vexmem
+-EX/MEM
+@800200
+-Arch CSR
+@28
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.valid_write
+@22
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.csr_addr[11:0]
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vl[31:0]
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vstart[31:0]
+@28
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vill
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vlmul[2:0]
+TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vsew[2:0]
+@1000200
+-Arch CSR
+@800200
+-Scalar RF
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs1_data[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs2_data[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.w_data[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rd.regidx[4:0]
+@28
+TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
+@1000200
+-Scalar RF
+@800200
+-Hazard unit
+@28
+TOP.top_core.CORE.pipeline.hazard_if.ex_busy
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
+TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
+TOP.top_core.CORE.pipeline.hazard_unit_i.exception
+TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
+TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data
+@1000200
+-Hazard unit
+@800200
+-Vector RF WB
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.vlane_wen[3:0]
+@28
+TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vbank_offset[1:0]
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[0][3:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[1][3:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[2][3:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[3][3:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vd[4:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[0][31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[1][31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[2][31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[3][31:0]
+@1000200
+-Vector RF WB
+[pattern_trace] 1
+[pattern_trace] 0
