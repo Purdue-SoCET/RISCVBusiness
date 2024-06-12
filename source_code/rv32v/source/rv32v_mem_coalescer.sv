@@ -81,16 +81,16 @@ module rv32v_mem_coalescer (
     // Calculating stride addresses
     always_comb begin
         next_strided_addr = strided_addr;
-        if (coalescer_if.vuop_num == '0 && coalescer_state == VL0) begin
-            next_strided_addr[0] = coalescer_if.vaddr_lsc;
-            next_strided_addr[1] = coalescer_if.vaddr_lsc + coalescer_if.stride;
-            next_strided_addr[2] = coalescer_if.vaddr_lsc + (coalescer_if.stride << 1);
-            next_strided_addr[3] = coalescer_if.vaddr_lsc + (coalescer_if.stride << 1) + coalescer_if.stride;
-        end else if (coalescer_if.lsc_ready && next_coalescer_state == VL0) begin
+        if (coalescer_if.lsc_ready && next_coalescer_state == VL0) begin
             next_strided_addr[0] = strided_addr[3] + coalescer_if.stride;
             next_strided_addr[1] = strided_addr[3] + (coalescer_if.stride << 1);
             next_strided_addr[2] = strided_addr[3] + (coalescer_if.stride << 1) + coalescer_if.stride;
             next_strided_addr[3] = strided_addr[3] + (coalescer_if.stride << 2);
+        end else if (coalescer_if.vuop_num == '0 && coalescer_state == VL0) begin
+            next_strided_addr[0] = coalescer_if.vaddr_lsc;
+            next_strided_addr[1] = coalescer_if.vaddr_lsc + coalescer_if.stride;
+            next_strided_addr[2] = coalescer_if.vaddr_lsc + (coalescer_if.stride << 1);
+            next_strided_addr[3] = coalescer_if.vaddr_lsc + (coalescer_if.stride << 1) + coalescer_if.stride;
         end
     end
 
