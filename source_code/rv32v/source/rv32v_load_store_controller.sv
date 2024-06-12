@@ -36,12 +36,17 @@ module rv32v_load_store_controller (
 );
 
     import rv32i_types_pkg::*;
-    import rv32v_types_pkg::*; 
+    import rv32v_types_pkg::*;
+
+    localparam N_BLOCK_BITS = $clog2(DCACHE_BLOCK_SIZE) + (DCACHE_BLOCK_SIZE == 1);
+
     word_t store_swapped;
     word_t dload_ext;
     logic mal_addr;
     logic [1:0] byte_offset;
     logic [3:0] byte_en, byte_en_temp, byte_en_standard;
+    logic [NUM_LANES-1:0] [3:0] byte_en_wide, byte_en_temp_wide, byte_en_standard_wide;
+    word_t [NUM_LANES-1:0] word_select_wide, dload_ext_wide;
 
     assign dgen_bus_if.ren = lsc_if.ren;
     assign dgen_bus_if.wen = lsc_if.wen;
@@ -50,10 +55,12 @@ module rv32v_load_store_controller (
     assign dgen_bus_if.addr = lsc_if.addr;
     assign byte_offset = lsc_if.addr[1:0];
     assign lsc_if.dload_ext = dload_ext;
+    assign lsc_if.dload_ext_wide = dload_ext_wide;
     assign lsc_if.lsc_ready = ~dgen_bus_if.busy;
     assign lsc_if.mal_addr = mal_addr;
 
     assign byte_en_temp = byte_en_standard;
+    assign byte_en_temp_wide = byte_en_standard_wide;
 
     // Address alignment
     always_comb begin
@@ -75,6 +82,29 @@ module rv32v_load_store_controller (
         .ext_out(dload_ext)
     );
 
+    // Wide data 
+    genvar i;
+    generate
+        for (i = 0; i < NUM_LANES; i = i + 1) begin
+            dmem_extender dmem_ext_wide (
+                .dmem_in(word_select_wide[i]),
+                .load_type(lsc_if.load_type),
+                .byte_en(byte_en_wide[i]),
+                .ext_out(dload_ext_wide[i])
+            );
+        end
+    endgenerate
+    
+    // Word Select for Wide Accesses
+    genvar lane_num;
+    generate
+        for (lane_num = 0; lane_num < NUM_LANES; lane_num = lane_num + 1) begin
+            // word index == (lsc_if.addr_wide[lane_num])[(N_BLOCK_BITS - 1 + 2):(2)]
+            assign word_select_wide[lane_num] = lsc_if.ven_lanes[lane_num] ? dgen_bus_if.rdata_wide[lsc_if.addr_wide[lane_num][(N_BLOCK_BITS - 1 + 2):(2)]] :'0;
+        end
+    endgenerate
+
+    // rdata/wdata byte_en select (+ wide byte selects too)
     always_comb begin : LOAD_TYPE
         case (lsc_if.load_type)
             LB, LBU: begin
@@ -85,6 +115,34 @@ module rv32v_load_store_controller (
                     2'b11:   byte_en_standard = 4'b1000;
                     default: byte_en_standard = 4'b0000;
                 endcase
+                case (lsc_if.addr_wide[0][1:0])
+                    2'b00:   byte_en_standard_wide[0] = 4'b0001;
+                    2'b01:   byte_en_standard_wide[0] = 4'b0010;
+                    2'b10:   byte_en_standard_wide[0] = 4'b0100;
+                    2'b11:   byte_en_standard_wide[0] = 4'b1000;
+                    default: byte_en_standard_wide[0] = 4'b0000;
+                endcase
+                case (lsc_if.addr_wide[1][1:0])
+                    2'b00:   byte_en_standard_wide[1] = 4'b0001;
+                    2'b01:   byte_en_standard_wide[1] = 4'b0010;
+                    2'b10:   byte_en_standard_wide[1] = 4'b0100;
+                    2'b11:   byte_en_standard_wide[1] = 4'b1000;
+                    default: byte_en_standard_wide[1] = 4'b0000;
+                endcase
+                case (lsc_if.addr_wide[2][1:0])
+                    2'b00:   byte_en_standard_wide[2] = 4'b0001;
+                    2'b01:   byte_en_standard_wide[2] = 4'b0010;
+                    2'b10:   byte_en_standard_wide[2] = 4'b0100;
+                    2'b11:   byte_en_standard_wide[2] = 4'b1000;
+                    default: byte_en_standard_wide[2] = 4'b0000;
+                endcase
+                case (lsc_if.addr_wide[3][1:0])
+                    2'b00:   byte_en_standard_wide[3] = 4'b0001;
+                    2'b01:   byte_en_standard_wide[3] = 4'b0010;
+                    2'b10:   byte_en_standard_wide[3] = 4'b0100;
+                    2'b11:   byte_en_standard_wide[3] = 4'b1000;
+                    default: byte_en_standard_wide[3] = 4'b0000;
+                endcase
             end
 
             LH, LHU: begin
@@ -93,13 +151,37 @@ module rv32v_load_store_controller (
                     2'b10:   byte_en_standard = 4'b1100;
                     default: byte_en_standard = 4'b0000;
                 endcase
+                case (lsc_if.addr_wide[0][1:0])
+                    2'b00:   byte_en_standard_wide[0] = 4'b0011;
+                    2'b10:   byte_en_standard_wide[0] = 4'b1100;
+                    default: byte_en_standard_wide[0] = 4'b0000;
+                endcase
+                case (lsc_if.addr_wide[1][1:0])
+                    2'b00:   byte_en_standard_wide[1] = 4'b0011;
+                    2'b10:   byte_en_standard_wide[1] = 4'b1100;
+                    default: byte_en_standard_wide[1] = 4'b0000;
+                endcase
+                case (lsc_if.addr_wide[2][1:0])
+                    2'b00:   byte_en_standard_wide[2] = 4'b0011;
+                    2'b10:   byte_en_standard_wide[2] = 4'b1100;
+                    default: byte_en_standard_wide[2] = 4'b0000;
+                endcase
+                case (lsc_if.addr_wide[3][1:0])
+                    2'b00:   byte_en_standard_wide[3] = 4'b0011;
+                    2'b10:   byte_en_standard_wide[3] = 4'b1100;
+                    default: byte_en_standard_wide[3] = 4'b0000;
+                endcase
             end
 
             LW: begin
                 byte_en_standard = 4'b1111;
+                byte_en_standard_wide = '1;
             end
 
-            default: byte_en_standard = 4'b0000;
+            default: begin
+                byte_en_standard = 4'b0000;
+                byte_en_standard_wide = '0;
+            end
         endcase
     end : LOAD_TYPE
 
@@ -116,10 +198,23 @@ module rv32v_load_store_controller (
     generate
         if(BUS_ENDIANNESS == "big") begin : g_data_bus_be
             assign byte_en = byte_en_temp;
+            assign byte_en_wide = byte_en_temp;
         end else if(BUS_ENDIANNESS == "little") begin : g_data_bus_le
             assign byte_en = lsc_if.ren ? byte_en_temp
                                         : {byte_en_temp[0], byte_en_temp[1],
                                            byte_en_temp[2], byte_en_temp[3]};
+            assign byte_en_wide[0] = lsc_if.ren ? byte_en_temp_wide
+                                                : {byte_en_temp_wide[0][0], byte_en_temp_wide[0][1],
+                                                   byte_en_temp_wide[0][2], byte_en_temp_wide[0][3]};
+            assign byte_en_wide[1] = lsc_if.ren ? byte_en_temp_wide
+                                                : {byte_en_temp_wide[1][0], byte_en_temp_wide[1][1],
+                                                   byte_en_temp_wide[1][2], byte_en_temp_wide[1][3]};
+            assign byte_en_wide[2] = lsc_if.ren ? byte_en_temp_wide
+                                                : {byte_en_temp_wide[2][0], byte_en_temp_wide[2][1],
+                                                   byte_en_temp_wide[2][2], byte_en_temp_wide[2][3]};
+            assign byte_en_wide[3] = lsc_if.ren ? byte_en_temp_wide
+                                                : {byte_en_temp_wide[3][0], byte_en_temp_wide[3][1],
+                                                   byte_en_temp_wide[3][2], byte_en_temp_wide[3][3]};
         end
     endgenerate
 
