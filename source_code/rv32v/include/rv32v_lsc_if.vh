@@ -33,14 +33,16 @@ interface rv32v_lsc_if;
     // Mux scalar vs vector before load-store controller
     logic wen, ren;
     word_t addr, store_data, dload_ext;
+    word_t [NUM_LANES-1:0] addr_wide, dload_ext_wide;
+    logic  [NUM_LANES-1:0] ven_lanes;
     // logic [3:0] byte_en;
     load_t load_type;
     logic ifence, fence_stall, mal_addr;
     logic lsc_ready;
 
     modport lsc (
-        input wen, ren, addr, store_data, load_type, ifence,
-        output dload_ext, fence_stall, mal_addr, lsc_ready
+        input wen, ren, addr, addr_wide, store_data, load_type, ifence, ven_lanes,
+        output dload_ext, dload_ext_wide, fence_stall, mal_addr, lsc_ready
     );
 
 endinterface
