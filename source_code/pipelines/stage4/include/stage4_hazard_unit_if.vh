@@ -43,6 +43,7 @@ interface stage4_hazard_unit_if();
   logic ex_busy;
   logic serializer_stall;
   logic intr;
+  logic coalescer_stall;
 
   // Control (outputs)
   logic pc_en, npc_sel;
@@ -108,7 +109,7 @@ interface stage4_hazard_unit_if();
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
             badaddr, ifence,
             token_ex, token_mem, rv32c_ready,
-            valid_e, valid_m, ex_busy, serializer_stall,
+            valid_e, valid_m, ex_busy, serializer_stall, coalescer_stall,
 
             is_queue_full, pc_decode, valid_decode,
             vsetvl_dec, vsetvl_ex, queue_wen, vbusy,
@@ -158,7 +159,7 @@ interface stage4_hazard_unit_if();
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,
-            token_mem, serializer_stall,
+            token_mem, serializer_stall, coalescer_stall,
             vd, vregwen, vvalid_m, velem_num_m, vuop_last, keep_vstart_m, vmem_last_elem
   );
 
