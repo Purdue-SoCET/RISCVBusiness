@@ -80,6 +80,7 @@ module stage4_mem_stage_coalescing (
     assign coalescer_if.base = ex_mem_if.ex_mem_reg.rs1_data;
     assign coalescer_if.stride = ex_mem_if.ex_mem_reg.rs2_data;
     assign coalescer_if.veew = ex_mem_if.vexmem.veew;
+    assign coalescer_if.vuop_last = ex_mem_if.vexmem.vuop_last;
     assign coalescer_if.vlane_mask = velem_mask;
     assign coalescer_if.vlane_addr = ex_mem_if.vexmem.vres;
     assign coalescer_if.vlane_store_data = ex_mem_if.vexmem.vs1;
@@ -145,7 +146,7 @@ module stage4_mem_stage_coalescing (
     assign hazard_if.velem_num_m = (vmemop) ? (ex_mem_if.vexmem.vuop_num << 2) + coalescer_if.vcurr_lane + 1  // if a memory access starts, it will finish
                                             : (ex_mem_if.vexmem.vuop_num + 1) << 2;  // if actively writing-back, vstart on next uop
     assign hazard_if.vuop_last = ex_mem_if.vexmem.vuop_last & ~hazard_if.coalescer_stall;
-    assign hazard_if.vmem_last_elem = (coalescer_if.vcurr_lane == 2'd3); // will need to change. this is not always true. may need a signal directly from MCU
+    assign hazard_if.vmem_last_elem = (coalescer_if.last_lane); // will need to change. this is not always true. may need a signal directly from MCU
     assign hazard_if.keep_vstart_m = ex_mem_if.vexmem.keep_vstart;
     assign ex_mem_if.vmskset_fwd_bits = ex_mem_if.vexmem.vres[0][3:0]; 
 

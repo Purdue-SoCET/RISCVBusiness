@@ -32,9 +32,12 @@ interface rv32v_lsc_if;
 
     // Mux scalar vs vector before load-store controller
     logic wen, ren;
+    logic  [NUM_LANES-1:0] ven_lanes;
+    
     word_t addr, store_data, dload_ext;
     word_t [NUM_LANES-1:0] addr_wide, dload_ext_wide;
-    logic  [NUM_LANES-1:0] ven_lanes;
+    word_t [DCACHE_BLOCK_SIZE-1:0] store_data_wide;
+    
     // logic [3:0] byte_en;
     load_t load_type;
     logic ifence, fence_stall, mal_addr;

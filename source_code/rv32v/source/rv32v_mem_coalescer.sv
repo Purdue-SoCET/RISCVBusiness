@@ -82,6 +82,10 @@ module rv32v_mem_coalescer (
     always_comb begin
         next_strided_addr = strided_addr;
         if (coalescer_if.lsc_ready && next_coalescer_state == VL0) begin
+            // next_strided_addr[0] = coalescer_if.vuop_last ? '0 : strided_addr[3] + coalescer_if.stride;
+            // next_strided_addr[1] = coalescer_if.vuop_last ? '0 : strided_addr[3] + (coalescer_if.stride << 1);
+            // next_strided_addr[2] = coalescer_if.vuop_last ? '0 : strided_addr[3] + (coalescer_if.stride << 1) + coalescer_if.stride;
+            // next_strided_addr[3] = coalescer_if.vuop_last ? '0 : strided_addr[3] + (coalescer_if.stride << 2);
             next_strided_addr[0] = strided_addr[3] + coalescer_if.stride;
             next_strided_addr[1] = strided_addr[3] + (coalescer_if.stride << 1);
             next_strided_addr[2] = strided_addr[3] + (coalescer_if.stride << 1) + coalescer_if.stride;
@@ -102,7 +106,7 @@ module rv32v_mem_coalescer (
             tag_match[1] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
             tag_match[2] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
             tag_match[3] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
-        end else begin
+        end else if (~coalescer_if.vmemdwen) begin
             casez (coalescer_state)
                 VL0: begin
                     tag_match[0] = 1;
@@ -123,6 +127,8 @@ module rv32v_mem_coalescer (
                     tag_match[3] = 1;
                 end
             endcase
+        end else begin
+            tag_match[coalescer_state] = 1;
         end
     end
 
@@ -168,15 +174,17 @@ module rv32v_mem_coalescer (
                             3'b011:  next_coalescer_state = VL3;
                             default: next_coalescer_state = VL0;
                         endcase
-                        // if (coalescer_if.vuop_num == '0) begin  // new instruction, next = base + stride
-                        //     next_next_addr = coalescer_if.base + coalescer_if.stride;
-                        // end else begin
-                        //     next_next_addr = next_addr + coalescer_if.stride;
-                        // end
+                        if (coalescer_if.vuop_num == '0) begin  // new instruction, next = base + stride
+                            next_next_addr = coalescer_if.base + coalescer_if.stride;
+                        end else begin
+                            next_next_addr = next_addr + coalescer_if.stride;
+                        end
+
                         if (next_coalescer_state == VL0)
                             next_next_addr = strided_addr[3] + coalescer_if.stride;
-                        else
+                        else if (coalescer_if.vuop_num != '0) begin
                             next_next_addr = strided_addr[next_coalescer_state];
+                        end
                         
                         if (next_coalescer_state == VL0) begin
                             coalescer_stall = 0;
@@ -331,13 +339,33 @@ module rv32v_mem_coalescer (
         coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & coalescer_if.vlane_mask[coalescer_if.vcurr_lane];
         coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[coalescer_if.vcurr_lane];
 
+        coalescer_if.vdata_store_wide_lsc = '0;
+        if (tag_match[0])
+            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[0];
+        if (tag_match[1])
+            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[1];
+        if (tag_match[2])
+            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[2];
+        if (tag_match[3])
+            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[3];
+
         if(coalescer_if.vseg_op) begin
             coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (coalescer_if.vlane_mask != 0); 
             coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & (coalescer_if.vlane_mask != 0);
-            coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[0]; 
+            coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[0];
+            coalescer_if.vdata_store_wide_lsc = (DCACHE_BLOCK_SIZE)'(coalescer_if.vlane_store_data[0]);
         end
-
-
     end 
+
+    always_comb begin
+        coalescer_if.last_lane = 0;
+
+        casez(coalescer_state)
+            VL0: coalescer_if.last_lane = tag_match[3:0] == 4'b1111;
+            VL1: coalescer_if.last_lane = tag_match[3:1] == 3'b111;
+            VL2: coalescer_if.last_lane = tag_match[3:2] == 2'b11;
+            VL3: coalescer_if.last_lane = 1;
+        endcase
+    end
     
 endmodule // rv32v_mem_coalescer

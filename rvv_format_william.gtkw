@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
-[*] Wed Jun 12 19:27:03 2024
+[*] Fri Jun 14 21:16:57 2024
 [*]
 [dumpfile] "/home/asicfab/a/socet190/socet/RISCVBusiness/waveform.vcd"
-[dumpfile_mtime] "Wed Jun 12 19:17:24 2024"
-[dumpfile_size] 3528371
+[dumpfile_mtime] "Fri Jun 14 20:32:12 2024"
+[dumpfile_size] 39008960
 [savefile] "/home/asicfab/a/socet190/socet/RISCVBusiness/rvv_format_william.gtkw"
-[timestart] 31
-[size] 1824 1080
-[pos] -1 -1
-*-5.730774 140 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[timestart] 561
+[size] 1920 859
+[pos] 0 0
+*-5.730774 757 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -44,21 +44,27 @@
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.jump_calc.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.
 [treeopen] TOP.top_core.CORE.pipeline.fetch_stage_i.
-[treeopen] TOP.top_core.CORE.pipeline.hazard_if.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.ex_mem_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.MCU.
-[sst_width] 253
-[signals_width] 321
+[treeopen] TOP.top_core.CORE.pipeline.uop_out.
+[treeopen] TOP.top_core.CORE.pipeline.uop_out.vctrl_out.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.
+[sst_width] 229
+[signals_width] 337
 [sst_expanded] 1
-[sst_vpaned_height] 370
+[sst_vpaned_height] 420
 @28
 TOP.CLK
 TOP.nRST
@@ -102,279 +108,12 @@ TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vuop_num[4:0]
 TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
 @800200
 -MCU
-@1000200
--MCU
-@800200
--LSC
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
-@1000200
--LSC
-@800200
--vexmem
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.sregwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vregwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmv_s_x
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vsetvl
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdren
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.veew[2:0]
-@1000200
--vexmem
--EX/MEM
-@800200
--Arch CSR
-@28
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.valid_write
-@22
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.csr_addr[11:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vl[31:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vstart[31:0]
-@28
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vill
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vlmul[2:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vsew[2:0]
-@1000200
--Arch CSR
-@800200
--Scalar RF
-@22
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs1_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs2_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.w_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rd.regidx[4:0]
-@28
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
-@1000200
--Scalar RF
-@800200
--Hazard unit
-@28
-TOP.top_core.CORE.pipeline.hazard_if.ex_busy
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
-TOP.top_core.CORE.pipeline.hazard_unit_i.exception
-TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
-TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data
-@1000200
--Hazard unit
-@800200
--Vector RF WB
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.vlane_wen[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vbank_offset[1:0]
-@22
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[0][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[1][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[2][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[3][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vd[4:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[0][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[1][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[2][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[3][31:0]
-@1000200
--Vector RF WB
-@28
-TOP.CLK
-TOP.nRST
-@800200
--Fetch
-@22
-TOP.top_core.CORE.pipeline.fetch_stage_i.pc[31:0]
-TOP.top_core.CORE.pipeline.fetch_stage_i.instr[31:0]
-@1000200
--Fetch
-@800200
--uOP out
-@28
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vvalid
-@22
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vuop_num[4:0]
-@28
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.sregwen
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmv_s_x
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vsetvl_type[1:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdren
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdwen
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vstrided
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vunitstride
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_dest[2:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src1[2:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src2[2:0]
-@1000200
--uOP out
-@800200
--EX/MEM
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.vmemop
-@22
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.pc4[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.reg_write
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.w_sel[2:0]
-@22
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vuop_num[4:0]
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
-@800200
--LSC
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
-@800200
--dgen_bus_if
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.addr[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.busy
-@1000200
--dgen_bus_if
--LSC
-@800200
--vexmem
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.sregwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vregwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmv_s_x
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vsetvl
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdren
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.veew[2:0]
-@1000200
--vexmem
--EX/MEM
-@800200
--Arch CSR
-@28
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.valid_write
-@22
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.csr_addr[11:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vl[31:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vstart[31:0]
-@28
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vill
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vlmul[2:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vsew[2:0]
-@1000200
--Arch CSR
-@800200
--Scalar RF
-@22
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs1_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs2_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.w_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rd.regidx[4:0]
-@28
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
-@1000200
--Scalar RF
-@800200
--Hazard unit
-@28
-TOP.top_core.CORE.pipeline.hazard_if.ex_busy
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
-TOP.top_core.CORE.pipeline.hazard_unit_i.exception
-TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
-TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data
-@1000200
--Hazard unit
-@800200
--Vector RF WB
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.vlane_wen[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vbank_offset[1:0]
-@22
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[0][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[1][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[2][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[3][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vd[4:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[0][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[1][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[2][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[3][31:0]
-@1000200
--Vector RF WB
-@28
-TOP.CLK
-TOP.nRST
-@800200
--Fetch
-@22
-TOP.top_core.CORE.pipeline.fetch_stage_i.pc[31:0]
-TOP.top_core.CORE.pipeline.fetch_stage_i.instr[31:0]
-@1000200
--Fetch
-@800200
--uOP out
-@28
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vvalid
-@22
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vuop_num[4:0]
-@28
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.sregwen
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmv_s_x
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vsetvl_type[1:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdren
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdwen
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vstrided
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vunitstride
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_dest[2:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src1[2:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src2[2:0]
-@1000200
--uOP out
-@800200
--EX/MEM
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.vmemop
-@22
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.pc4[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.reg_write
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.w_sel[2:0]
-@22
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vuop_num[4:0]
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
-@800200
--MCU
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.base[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.lsc_ready
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.stride[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.strided
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.unit_strided
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_lsc[31:0]
+@24
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_state[1:0]
 @23
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[0][31:0]
+[color] 1
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_addr[31:0]
 @22
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[1][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[2][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[3][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.strided_addr[0][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.strided_addr[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.strided_addr[2][31:0]
@@ -383,185 +122,48 @@ TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_strided_addr[0][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_strided_addr[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_strided_addr[2][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_strided_addr[3][31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.tag_match[3:0]
+@800200
+-coalescer_if
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_lsc[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[1][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[2][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vaddr_wide_lsc[3][31:0]
 @24
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_state[1:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_coalescer_state[1:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vcurr_lane[1:0]
 @28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vcurr_lane
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.ven_lanes[3:0]
 @22
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vdata_store_lsc[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.veew[2:0]
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.ven_lanes[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vindexed
-@22
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vdata_store_wide_lsc[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vdata_store_wide_lsc[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_addr[0][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_addr[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_addr[2][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_addr[3][31:0]
+@28
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_mask[3:0]
+@22
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_store_data[0][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_store_data[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_store_data[2][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vlane_store_data[3][31:0]
 @28
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vload_type[2:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vindexed
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vmemdren
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vmemdren_lsc
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vmemdwen
-TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vmemdwen_lsc
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vnew_seg
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vseg_op
 @22
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vuop_num[4:0]
 @1000200
+-coalescer_if
 -MCU
 @800200
 -LSC
 @22
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[0][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[1][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[2][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[3][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[0][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[1][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[2][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[3][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
-@1000200
--LSC
-@800200
--vexmem
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.sregwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vregwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmv_s_x
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vsetvl
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdren
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vmemdwen
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.veew[2:0]
-@1000200
--vexmem
--EX/MEM
-@800200
--Arch CSR
-@28
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.valid_write
-@22
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.csr_addr[11:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vl[31:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vstart[31:0]
-@28
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vill
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vlmul[2:0]
-TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.vtype.vsew[2:0]
-@1000200
--Arch CSR
-@800200
--Scalar RF
-@22
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs1_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rs2_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.w_data[31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.rd.regidx[4:0]
-@28
-TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
-@1000200
--Scalar RF
-@800200
--Hazard unit
-@28
-TOP.top_core.CORE.pipeline.hazard_if.ex_busy
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
-TOP.top_core.CORE.pipeline.hazard_unit_i.exception
-TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
-TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data
-@1000200
--Hazard unit
-@800200
--Vector RF WB
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.vlane_wen[3:0]
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vbank_offset[1:0]
-@22
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[0][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[1][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[2][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vbyte_wen[3][3:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vd[4:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[0][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[1][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[2][31:0]
-TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vwb_ctrls.vwdata[3][31:0]
-@1000200
--Vector RF WB
-@28
-TOP.CLK
-TOP.nRST
-@800200
--Fetch
-@22
-TOP.top_core.CORE.pipeline.fetch_stage_i.pc[31:0]
-TOP.top_core.CORE.pipeline.fetch_stage_i.instr[31:0]
-@1000200
--Fetch
-@800200
--uOP out
-@28
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vvalid
-@22
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vuop_num[4:0]
-@28
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.sregwen
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmv_s_x
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vsetvl_type[1:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdren
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vmemdwen
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vstrided
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.vunitstride
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_dest[2:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src1[2:0]
-TOP.top_core.CORE.pipeline.uop_out.vctrl_out.veew_src2[2:0]
-@1000200
--uOP out
-@800200
--EX/MEM
-@28
-TOP.top_core.CORE.pipeline.mem_stage_i.vmemop
-@22
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.pc4[31:0]
-@28
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.reg_write
-TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.w_sel[2:0]
-@22
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vuop_num[4:0]
-TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
-@800200
--LSC
-@22
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[0][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[1][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[2][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[3][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[0][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[1][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[2][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext_wide[3][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
 @28
@@ -575,10 +177,6 @@ TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.addr[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata[31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata_wide[0][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata_wide[1][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata_wide[0][31:0]
-TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata_wide[1][31:0]
 @28
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.busy
 @1000200
@@ -626,8 +224,6 @@ TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
 -Hazard unit
 @28
 TOP.top_core.CORE.pipeline.hazard_if.ex_busy
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
-TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
 TOP.top_core.CORE.pipeline.hazard_unit_i.exception
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data
