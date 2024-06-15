@@ -53,6 +53,7 @@ module stage4_mem_stage_coalescing (
     logic vmemop, dmemwen, dmemren;
     word_t [NUM_LANES-1:0] vlane_data;
     logic [NUM_LANES-1:0] vlane_wen, velem_mask;
+    logic ven_lanes_one_hot;
 
     // Interfaces
     rv32v_mem_coalescer_if coalescer_if();
@@ -254,22 +255,12 @@ module stage4_mem_stage_coalescing (
             velem_mask = ex_mem_if.vexmem.vlane_mask;
 
     end
-
-    // assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :
-    //                     (ex_mem_if.vexmem.vmv_s_x) ? {4{ex_mem_if.ex_mem_reg.rs1_data}} : ex_mem_if.vexmem.vres;
-
-    assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? (coalescer_if.ven_lanes == 4'b0001 ? {4{lsc_if.dload_ext}} : lsc_if.dload_ext_wide) :
+    assign ven_lanes_one_hot = (coalescer_if.ven_lanes == 4'b0001) || (coalescer_if.ven_lanes == 4'b0010) || (coalescer_if.ven_lanes == 4'b0100) || (coalescer_if.ven_lanes == 4'b1000);
+    assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? (ven_lanes_one_hot ? {4{lsc_if.dload_ext}} : lsc_if.dload_ext_wide) :
                         (ex_mem_if.vexmem.vmv_s_x) ? {4{ex_mem_if.ex_mem_reg.rs1_data}} : ex_mem_if.vexmem.vres;
 
     always_comb begin
         if (ex_mem_if.vexmem.vmemdren) begin
-            // casez (coalescer_if.vcurr_lane)
-            //     2'd0: vlane_wen = {3'b0, ~dgen_bus_if.busy & velem_mask[0]      };
-            //     2'd1: vlane_wen = {2'b0, ~dgen_bus_if.busy & velem_mask[1], 1'b0};
-            //     2'd2: vlane_wen = {1'b0, ~dgen_bus_if.busy & velem_mask[2], 2'b0};
-            //     2'd3: vlane_wen = {      ~dgen_bus_if.busy & velem_mask[3], 3'b0};
-            // endcase
-
             vlane_wen = ~dgen_bus_if.busy ? velem_mask & coalescer_if.ven_lanes : '0; // Coalescer
 
             if(ex_mem_if.vexmem.vseg_op) begin

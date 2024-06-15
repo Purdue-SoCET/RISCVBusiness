@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
-[*] Fri Jun 14 21:16:57 2024
+[*] Sat Jun 15 19:27:23 2024
 [*]
 [dumpfile] "/home/asicfab/a/socet190/socet/RISCVBusiness/waveform.vcd"
-[dumpfile_mtime] "Fri Jun 14 20:32:12 2024"
-[dumpfile_size] 39008960
+[dumpfile_mtime] "Sat Jun 15 19:26:40 2024"
+[dumpfile_size] 17899104
 [savefile] "/home/asicfab/a/socet190/socet/RISCVBusiness/rvv_format_william.gtkw"
-[timestart] 561
-[size] 1920 859
-[pos] 0 0
-*-5.730774 757 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[timestart] 0
+[size] 2560 1219
+[pos] -1 -1
+*-5.730774 173 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -54,6 +54,10 @@
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.ex_mem_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[0].
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[1].
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[2].
+[treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[3].
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.MCU.
 [treeopen] TOP.top_core.CORE.pipeline.uop_out.
@@ -64,7 +68,7 @@
 [sst_width] 229
 [signals_width] 337
 [sst_expanded] 1
-[sst_vpaned_height] 420
+[sst_vpaned_height] 645
 @28
 TOP.CLK
 TOP.nRST
@@ -110,10 +114,11 @@ TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
 -MCU
 @24
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_state[1:0]
-@23
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_coalescer_state[1:0]
+@22
 [color] 1
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_addr[31:0]
-@22
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.next_next_addr[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.strided_addr[0][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.strided_addr[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.strided_addr[2][31:0]
@@ -156,6 +161,11 @@ TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vnew_seg
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vseg_op
 @22
 TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vuop_num[4:0]
+@28
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.strided
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.unit_strided
+@24
+TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.stride[31:0]
 @1000200
 -coalescer_if
 -MCU
@@ -163,20 +173,41 @@ TOP.top_core.CORE.pipeline.mem_stage_i.MCU.coalescer_if.vuop_num[4:0]
 -LSC
 @22
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[1][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[2][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.addr_wide[3][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.dload_ext[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dload_ext_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dload_ext_wide[1][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dload_ext_wide[2][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dload_ext_wide[3][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.store_data[31:0]
+@28
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.byte_en_wide[0][3:0]
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.byte_en_wide[1][3:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.byte_en_wide[2][3:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.byte_en_wide[3][3:0]
 @28
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.ren
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.wen
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.lsc_if.lsc_ready
+@22
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[1].dmem_ext_wide.dmem_in[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[1].dmem_ext_wide.ext_out[31:0]
 @800200
 -dgen_bus_if
 @22
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.addr[31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.byte_en[3:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.wdata_wide[1][31:0]
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata[31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata_wide[0][31:0]
+TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.rdata_wide[1][31:0]
 @28
 TOP.top_core.CORE.pipeline.mem_stage_i.LSC.dgen_bus_if.busy
 @1000200
