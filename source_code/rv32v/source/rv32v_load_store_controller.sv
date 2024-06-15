@@ -200,21 +200,21 @@ module rv32v_load_store_controller (
     generate
         if(BUS_ENDIANNESS == "big") begin : g_data_bus_be
             assign byte_en = byte_en_temp;
-            assign byte_en_wide = byte_en_temp;
+            assign byte_en_wide = byte_en_temp_wide;
         end else if(BUS_ENDIANNESS == "little") begin : g_data_bus_le
             assign byte_en = lsc_if.ren ? byte_en_temp
                                         : {byte_en_temp[0], byte_en_temp[1],
                                            byte_en_temp[2], byte_en_temp[3]};
-            assign byte_en_wide[0] = lsc_if.ren ? byte_en_temp_wide
+            assign byte_en_wide[0] = lsc_if.ren ? byte_en_temp_wide[0]
                                                 : {byte_en_temp_wide[0][0], byte_en_temp_wide[0][1],
                                                    byte_en_temp_wide[0][2], byte_en_temp_wide[0][3]};
-            assign byte_en_wide[1] = lsc_if.ren ? byte_en_temp_wide
+            assign byte_en_wide[1] = lsc_if.ren ? byte_en_temp_wide[1]
                                                 : {byte_en_temp_wide[1][0], byte_en_temp_wide[1][1],
                                                    byte_en_temp_wide[1][2], byte_en_temp_wide[1][3]};
-            assign byte_en_wide[2] = lsc_if.ren ? byte_en_temp_wide
+            assign byte_en_wide[2] = lsc_if.ren ? byte_en_temp_wide[2]
                                                 : {byte_en_temp_wide[2][0], byte_en_temp_wide[2][1],
                                                    byte_en_temp_wide[2][2], byte_en_temp_wide[2][3]};
-            assign byte_en_wide[3] = lsc_if.ren ? byte_en_temp_wide
+            assign byte_en_wide[3] = lsc_if.ren ? byte_en_temp_wide[3]
                                                 : {byte_en_temp_wide[3][0], byte_en_temp_wide[3][1],
                                                    byte_en_temp_wide[3][2], byte_en_temp_wide[3][3]};
         end
