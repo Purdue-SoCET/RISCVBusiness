@@ -44,6 +44,7 @@ module rv32v_mem_coalescer (
     coalescer_state_t coalescer_state, next_coalescer_state;
     word_t next_addr, next_next_addr, seg_addr, next_seg_addr, temp_tag_match_addr;
     logic  [NUM_LANES-1:0] tag_match;
+    logic  [NUM_LANES-1:0][((DCACHE_BLOCK_SIZE*WORD_SIZE)-1):0] temp_vdata_store_en_wide;
     word_t [NUM_LANES-1:0] strided_addr, next_strided_addr;
 
     /*
@@ -107,7 +108,8 @@ module rv32v_mem_coalescer (
             tag_match[1] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
             tag_match[2] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
             tag_match[3] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
-        end else if (~coalescer_if.vmemdwen) begin
+        // end else if (~coalescer_if.vmemdwen) begin
+        end else begin
             casez (coalescer_state)
                 VL0: begin
                     tag_match[0] = 1;
@@ -261,9 +263,6 @@ module rv32v_mem_coalescer (
                     end
 
                     if (coalescer_if.lsc_ready | ~coalescer_if.vlane_mask[1]) begin
-                        // next_next_addr = next_addr + coalescer_if.stride;
-                        
-
                         casez (tag_match[3:2])
                             2'b?0:  next_coalescer_state = VL2;
                             2'b01:  next_coalescer_state = VL3;
@@ -292,8 +291,6 @@ module rv32v_mem_coalescer (
                     end
 
                     if (coalescer_if.lsc_ready | ~coalescer_if.vlane_mask[2]) begin
-                        // next_next_addr = next_addr + coalescer_if.stride;
-                        
                         casez (tag_match[3])
                             1'b0:  next_coalescer_state = VL3;
                             default: next_coalescer_state = VL0;
@@ -346,28 +343,174 @@ module rv32v_mem_coalescer (
         coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & coalescer_if.vlane_mask[coalescer_if.vcurr_lane];
         coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & coalescer_if.vlane_mask[coalescer_if.vcurr_lane];
         coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[coalescer_if.vcurr_lane];
-
         coalescer_if.vdata_store_wide_lsc = '0;
-        if (tag_match[0])
-            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[0];
-        if (tag_match[1])
-            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[1];
-        if (tag_match[2])
-            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[2];
-        if (tag_match[3])
-            coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[3];
+        coalescer_if.vdata_store_en_wide_lsc = '0;
+        temp_vdata_store_en_wide = '0;
 
         if(coalescer_if.vseg_op) begin
             coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (coalescer_if.vlane_mask != 0); 
             coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & (coalescer_if.vlane_mask != 0);
             coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[0];
             coalescer_if.vdata_store_wide_lsc = (DCACHE_BLOCK_SIZE)'(coalescer_if.vlane_store_data[0]);
+        end else begin
+            casez(coalescer_if.veew) // may need to REALLY reduce this logic. seems expensive
+                SEW8 : begin
+                    if (tag_match[0]) begin
+                        case(coalescer_if.vaddr_wide_lsc[0][1:0])
+                            2'b00: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[0][7:0];
+                                temp_vdata_store_en_wide[0] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            2'b01: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[0][7:0];
+                                temp_vdata_store_en_wide[0] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                            end
+                            2'b10: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[0][7:0];
+                                temp_vdata_store_en_wide[0] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                            2'b11: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[0][7:0];
+                                temp_vdata_store_en_wide[0] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                            end
+                        endcase
+                    end
+                    if (tag_match[1]) begin
+                        case(coalescer_if.vaddr_wide_lsc[1][1:0])
+                            2'b00: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[1][7:0];
+                                temp_vdata_store_en_wide[1] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            2'b01: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[1][7:0];
+                                temp_vdata_store_en_wide[1] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                            end
+                            2'b10: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[1][7:0];
+                                temp_vdata_store_en_wide[1] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                            2'b11: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[1][7:0];
+                                temp_vdata_store_en_wide[1] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                            end
+                        endcase
+                    end
+                    if (tag_match[2]) begin
+                        case(coalescer_if.vaddr_wide_lsc[2][1:0])
+                            2'b00: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[2][7:0];
+                                temp_vdata_store_en_wide[2] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            2'b01: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[2][7:0];
+                                temp_vdata_store_en_wide[2] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                            end
+                            2'b10: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[2][7:0];
+                                temp_vdata_store_en_wide[2] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                            2'b11: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[2][7:0];
+                                temp_vdata_store_en_wide[2] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                            end
+                        endcase
+                    end
+                    if (tag_match[3]) begin
+                        case(coalescer_if.vaddr_wide_lsc[3][1:0])
+                            2'b00: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[3][7:0];
+                                temp_vdata_store_en_wide[3] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            2'b01: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[3][7:0];
+                                temp_vdata_store_en_wide[3] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                            end
+                            2'b10: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[3][7:0];
+                                temp_vdata_store_en_wide[3] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                            2'b11: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[3][7:0];
+                                temp_vdata_store_en_wide[3] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                            end
+                        endcase
+                    end
+                end
+                SEW16: begin
+                    if (tag_match[0]) begin
+                        case(coalescer_if.vaddr_wide_lsc[0][1])
+                            1'b0: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[0][15:0];
+                                temp_vdata_store_en_wide[0] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            1'b1: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[0][15:0];
+                                temp_vdata_store_en_wide[0] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                        endcase
+                    end
+                    if (tag_match[1]) begin
+                        case(coalescer_if.vaddr_wide_lsc[1][1])
+                            1'b0: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[1][15:0];
+                                temp_vdata_store_en_wide[1] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            1'b1: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[1][15:0];
+                                temp_vdata_store_en_wide[1] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                        endcase
+                    end
+                    if (tag_match[2]) begin
+                        case(coalescer_if.vaddr_wide_lsc[2][1])
+                            1'b0: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[0][15:0];
+                                temp_vdata_store_en_wide[2] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            1'b1: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[0][15:0];
+                                temp_vdata_store_en_wide[2] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                        endcase
+                    end
+                    if (tag_match[3]) begin
+                        case(coalescer_if.vaddr_wide_lsc[3][1])
+                            1'b0: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[3][15:0];
+                                temp_vdata_store_en_wide[3] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
+                            end
+                            1'b1: begin
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[3][15:0];
+                                temp_vdata_store_en_wide[3] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                            end
+                        endcase
+                    end
+                end
+                SEW32: begin
+                    if (tag_match[0]) begin
+                        coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[0];
+                                temp_vdata_store_en_wide[0] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
+                    end
+                    if (tag_match[1]) begin
+                        coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[1];
+                                temp_vdata_store_en_wide[1] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
+                    end
+                    if (tag_match[2]) begin
+                        coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[2];
+                                temp_vdata_store_en_wide[2] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
+                    end
+                    if (tag_match[3]) begin
+                        coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[3];
+                                temp_vdata_store_en_wide[3] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
+                    end
+                end
+            endcase
         end
-    end 
+        coalescer_if.vdata_store_en_wide_lsc = ~(temp_vdata_store_en_wide[0] | temp_vdata_store_en_wide[1] | temp_vdata_store_en_wide[2] | temp_vdata_store_en_wide[3]); // inverted for sramMask in L1
+    end
 
     always_comb begin
         coalescer_if.last_lane = 0;
-
         casez(coalescer_state)
             VL0: coalescer_if.last_lane = tag_match[3:0] == 4'b1111;
             VL1: coalescer_if.last_lane = tag_match[3:1] == 3'b111;

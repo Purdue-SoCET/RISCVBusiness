@@ -48,8 +48,10 @@ interface rv32v_mem_serializer_if;
     word_t vaddr_lsc, vdata_store_lsc;
     word_t [NUM_LANES-1:0] vaddr_wide_lsc;
     word_t [DCACHE_BLOCK_SIZE-1:0] vdata_store_wide_lsc;
+    logic [((DCACHE_BLOCK_SIZE*WORD_SIZE)-1):0] vdata_store_en_wide_lsc;
     logic [$clog2(NUM_LANES)-1:0] vcurr_lane;
     logic [NUM_LANES-1:0] ven_lanes;
+    
     load_t vload_type;
     logic lsc_ready;
     logic last_lane, vuop_last;
@@ -63,7 +65,7 @@ interface rv32v_mem_serializer_if;
     modport serial (
         input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, vlane_store_data, lsc_ready,
               strided, unit_strided, vnew_seg, vseg_op, vuop_last,
-        output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vaddr_wide_lsc, vdata_store_lsc, vdata_store_wide_lsc, vcurr_lane, ven_lanes, vload_type, last_lane
+        output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vaddr_wide_lsc, vdata_store_lsc, vdata_store_wide_lsc, vdata_store_en_wide_lsc, vcurr_lane, ven_lanes, vload_type, last_lane
     );
 
 endinterface
