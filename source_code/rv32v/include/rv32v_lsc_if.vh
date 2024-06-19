@@ -37,14 +37,15 @@ interface rv32v_lsc_if;
     word_t addr, store_data, dload_ext;
     word_t [NUM_LANES-1:0] addr_wide, dload_ext_wide;
     word_t [DCACHE_BLOCK_SIZE-1:0] store_data_wide;
+    logic [((DCACHE_BLOCK_SIZE*WORD_SIZE)-1):0] store_en_wide;
     
     // logic [3:0] byte_en;
     load_t load_type;
-    logic ifence, fence_stall, mal_addr;
+    logic ifence, fence_stall, mal_addr, wide_vstore;
     logic lsc_ready;
 
     modport lsc (
-        input wen, ren, addr, addr_wide, store_data, load_type, ifence, ven_lanes,
+        input wen, ren, addr, addr_wide, store_data, store_data_wide, store_en_wide, wide_vstore, load_type, ifence, ven_lanes,
         output dload_ext, dload_ext_wide, fence_stall, mal_addr, lsc_ready
     );
 

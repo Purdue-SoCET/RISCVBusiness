@@ -54,6 +54,9 @@ module rv32v_load_store_controller (
     assign dgen_bus_if.wen = lsc_if.wen;
     // assign dgen_bus_if.byte_en = lsc_if.byte_en;
     assign dgen_bus_if.byte_en = byte_en;
+    assign dgen_bus_if.byte_en_wide = lsc_if.store_en_wide;
+    assign dgen_bus_if.wen_wide = lsc_if.wide_vstore;
+    assign dgen_bus_if.wdata_wide = lsc_if.store_data_wide;
     assign dgen_bus_if.addr = lsc_if.addr;
     assign byte_offset = lsc_if.addr[1:0];
     assign lsc_if.dload_ext = dload_ext;

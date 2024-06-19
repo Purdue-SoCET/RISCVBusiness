@@ -247,7 +247,17 @@ module l1_cache #(
                     proc_gen_bus_if.rdata_wide = BLOCK_SIZE == DCACHE_BLOCK_SIZE ? hit_data : 0;
 		            next_last_used[decoded_addr.idx_bits] = hit_idx;
                 end
-                // cache hit on a processor write
+                // cache hit on a processor wide write
+                else if(proc_gen_bus_if.wen_wide && hit && !flush) begin
+                    proc_gen_bus_if.busy = 0;
+                    sramWEN = 1;
+                    sramMask.frames[hit_idx].data = proc_gen_bus_if.byte_en_wide;
+                    sramMask.frames[hit_idx].dirty = 0;														   				   
+                    sramWrite.frames[hit_idx].data = proc_gen_bus_if.wdata_wide;
+		            sramWrite.frames[hit_idx].dirty = 1;
+		            next_last_used[decoded_addr.idx_bits] = hit_idx;
+                end
+                // cache hit on a processor word write
                 else if(proc_gen_bus_if.wen && hit && !flush) begin
                     proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
