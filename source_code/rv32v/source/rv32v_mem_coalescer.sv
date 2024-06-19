@@ -104,30 +104,30 @@ module rv32v_mem_coalescer (
         tag_match = '0;
         tag_match[coalescer_state] = 1;
         if (coalescer_if.vindexed) begin
-            tag_match[0] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[0][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
-            tag_match[1] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
-            tag_match[2] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
-            tag_match[3] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
+            tag_match[0] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[0][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[0];
+            tag_match[1] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[1];
+            tag_match[2] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[2];
+            tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[3];
         // end else if (~coalescer_if.vmemdwen) begin
         end else begin
             casez (coalescer_state)
                 VL0: begin
-                    tag_match[0] = 1;
-                    tag_match[1] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
-                    tag_match[2] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)]);
-                    tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]);
+                    tag_match[0] = coalescer_if.vlane_mask[0];
+                    tag_match[1] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[1];
+                    tag_match[2] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[2];
+                    tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[3];
                 end
                 VL1: begin
-                    tag_match[1] = 1;
-                    tag_match[2] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)]);
-                    tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]);
+                    tag_match[1] =  coalescer_if.vlane_mask[1];
+                    tag_match[2] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[2];
+                    tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[3];
                 end
                 VL2: begin
-                    tag_match[2] = 1;
-                    tag_match[3] = coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)];
+                    tag_match[2] = coalescer_if.vlane_mask[2];
+                    tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == strided_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[3];
                 end
                 VL3: begin
-                    tag_match[3] = 1;
+                    tag_match[3] = coalescer_if.vlane_mask[3];
                 end
             endcase
         end
@@ -355,7 +355,7 @@ module rv32v_mem_coalescer (
         end else begin
             casez(coalescer_if.veew) // may need to REALLY reduce this logic. seems expensive
                 SEW8 : begin
-                    if (tag_match[0]) begin
+                    if (coalescer_if.ven_lanes[0]) begin
                         case(coalescer_if.vaddr_wide_lsc[0][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[0][7:0];
@@ -375,7 +375,7 @@ module rv32v_mem_coalescer (
                             end
                         endcase
                     end
-                    if (tag_match[1]) begin
+                    if (coalescer_if.ven_lanes[1]) begin
                         case(coalescer_if.vaddr_wide_lsc[1][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[1][7:0];
@@ -395,7 +395,7 @@ module rv32v_mem_coalescer (
                             end
                         endcase
                     end
-                    if (tag_match[2]) begin
+                    if (coalescer_if.ven_lanes[2]) begin
                         case(coalescer_if.vaddr_wide_lsc[2][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[2][7:0];
@@ -415,7 +415,7 @@ module rv32v_mem_coalescer (
                             end
                         endcase
                     end
-                    if (tag_match[3]) begin
+                    if (coalescer_if.ven_lanes[3]) begin
                         case(coalescer_if.vaddr_wide_lsc[3][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[3][7:0];
@@ -437,7 +437,7 @@ module rv32v_mem_coalescer (
                     end
                 end
                 SEW16: begin
-                    if (tag_match[0]) begin
+                    if (coalescer_if.ven_lanes[0]) begin
                         case(coalescer_if.vaddr_wide_lsc[0][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[0][15:0];
@@ -449,7 +449,7 @@ module rv32v_mem_coalescer (
                             end
                         endcase
                     end
-                    if (tag_match[1]) begin
+                    if (coalescer_if.ven_lanes[1]) begin
                         case(coalescer_if.vaddr_wide_lsc[1][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[1][15:0];
@@ -461,7 +461,7 @@ module rv32v_mem_coalescer (
                             end
                         endcase
                     end
-                    if (tag_match[2]) begin
+                    if (coalescer_if.ven_lanes[2]) begin
                         case(coalescer_if.vaddr_wide_lsc[2][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[0][15:0];
@@ -473,7 +473,7 @@ module rv32v_mem_coalescer (
                             end
                         endcase
                     end
-                    if (tag_match[3]) begin
+                    if (coalescer_if.ven_lanes[3]) begin
                         case(coalescer_if.vaddr_wide_lsc[3][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[3][15:0];
@@ -487,19 +487,19 @@ module rv32v_mem_coalescer (
                     end
                 end
                 SEW32: begin
-                    if (tag_match[0]) begin
+                    if (coalescer_if.ven_lanes[0]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[0];
                                 temp_vdata_store_en_wide[0] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
                     end
-                    if (tag_match[1]) begin
+                    if (coalescer_if.ven_lanes[1]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[1];
                                 temp_vdata_store_en_wide[1] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
                     end
-                    if (tag_match[2]) begin
+                    if (coalescer_if.ven_lanes[2]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[2];
                                 temp_vdata_store_en_wide[2] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
                     end
-                    if (tag_match[3]) begin
+                    if (coalescer_if.ven_lanes[3]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[3];
                                 temp_vdata_store_en_wide[3] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
                     end
