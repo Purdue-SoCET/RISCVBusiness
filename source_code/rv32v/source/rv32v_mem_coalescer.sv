@@ -464,11 +464,11 @@ module rv32v_mem_coalescer (
                     if (coalescer_if.ven_lanes[2]) begin
                         case(coalescer_if.vaddr_wide_lsc[2][1])
                             1'b0: begin
-                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[0][15:0];
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[2][15:0];
                                 temp_vdata_store_en_wide[2] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             1'b1: begin
-                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[0][15:0];
+                                coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[2][15:0];
                                 temp_vdata_store_en_wide[2] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 16);
                             end
                         endcase
