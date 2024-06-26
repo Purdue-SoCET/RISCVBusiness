@@ -55,13 +55,25 @@ package rv32b_pkg;
         ZEXTH,
         ROL,
         ROR,
+        RORI,
         ORC,
         REV8,
+        BREV8,
+        PACK,
+        PACKH,
+        ZIP,
+        UNZIP,
         // Zbs
         BCLR,
         BEXT,
         BINV,
-        BSET
+        BSET,
+        //Zbc
+        CLMUL,
+        CLMULH,
+        //Zbx
+        XPERM8,
+        XPERM4
     } rv32b_op_t /*verilator public*/;
 
     typedef struct packed {

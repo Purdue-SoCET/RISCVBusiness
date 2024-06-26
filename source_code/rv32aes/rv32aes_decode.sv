@@ -1,10 +1,10 @@
-module rv32b_decode(
+module rv32aes_decode(
     input [31:0] insn,
     output logic claim,
-    output rv32b_pkg::rv32b_decode_t rv32b_control
+    output rv32aes_pkg::rv32aes_decode_t rv32aes_control
 );
     import rv32i_types_pkg::*;
-    import rv32b_pkg::*;
+    import rv32aes_pkg::*;
 
     localparam RV32B_MINOR_SHIFTADD  = 7'b0010000;
     localparam RV32B_MINOR_LOGNEGATE = 7'b0100000;
@@ -47,7 +47,7 @@ module rv32b_decode(
                 8'b00010_001: operation = CPOP;
                 8'b00100_001: operation = SEXTB;
                 8'b00101_001: operation = SEXTH;
-                8'b?????_101: operation = RORI; // rori
+                8'b?????_101: operation = ROR; // rori
                 default: claim = 1'b0;
             endcase
         // rotate-reg
@@ -60,17 +60,9 @@ module rv32b_decode(
                 claim = 1'b0;
             end
         // zext
-        end else if((insn_split.opcode_major == REGREG || insn_split.opcode_major == IMMED) && insn_split.opcode_minor == RV32B_MINOR_ZEXT) begin
-            if(insn_split.opcode_major == REGREG && insn_split.rs2 == 5'b0 && insn_split.funct == 3'b100) begin
+        end else if(insn_split.opcode_major == REGREG && insn_split.opcode_minor == RV32B_MINOR_ZEXT) begin
+            if(insn_split.rs2 == 5'b0 && insn_split.funct == 3'b100) begin
                 operation = ZEXTH;
-            end else if(insn_split.opcode_major == REGREG && insn_split.funct == 3'b100) begin
-                operation = PACK;
-            end else if(insn_split.opcode_major == REGREG && insn_split.funct == 3'b111) begin
-                operation = PACKH;
-            end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b01111 && insn_split.funct == 3'b001) begin
-                operation = ZIP;
-            end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b01111 && insn_split.funct == 3'b101) begin
-                operation = UNZIP;
             end else begin
                 claim = 1'b0;
             end
@@ -81,8 +73,6 @@ module rv32b_decode(
                 3'b111: operation = MAXU;
                 3'b100: operation = MIN;
                 3'b101: operation = MINU;
-                3'b001: operation = CLMUL;
-                3'b011: operation = CLMULH;
                 default: claim = 1'b0;
             endcase
         end else if((insn_split.opcode_major == REGREG || insn_split.opcode_major == IMMED) && insn_split.opcode_minor == RV32B_MINOR_BCLR_BEXT) begin 
@@ -96,20 +86,14 @@ module rv32b_decode(
                 operation = BINV;
             end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b11000 && insn_split.funct == 3'b101) begin
                 operation = REV8;
-            end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b00111 && insn_split.funct == 3'b101) begin
-                operation = BREV8;
             end else begin
                 claim = 1'b0;
             end
         end else if((insn_split.opcode_major == REGREG || insn_split.opcode_major == IMMED) && insn_split.opcode_minor == RV32B_MINOR_BSET) begin 
-            if(insn_split.opcode_major == REGREG && insn_split.funct == 3'b001) begin
+            if(insn_split.funct == 3'b001) begin
                 operation = BSET;
             end else if(insn_split.opcode_major == IMMED && insn_split.rs2 == 5'b00111 && insn_split.funct == 3'b101) begin
                 operation = ORC;
-            end else if(insn_split.opcode_major == REGREG && insn_split.funct == 3'b100) begin
-                operation = XPERM8;
-            end else if(insn_split.opcode_major == REGREG && insn_split.funct == 3'b010) begin
-                operation = XPERM4;
             end else begin
                 claim = 1'b0;
             end

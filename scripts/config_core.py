@@ -83,7 +83,7 @@ NONSTANDARD_OPCODES = [ '0001011',
 def load_configuration(file_name):
   with open(file_name, 'r') as f:
     try:
-      config = yaml.full_load(f)
+      config = yaml.safe_load(f) #used to be .full_load
     except yaml.parser.ParserError:
       sys.exit('Parse of '+ file_name + ' failed. Please check yml syntax')
   return config
