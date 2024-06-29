@@ -8,12 +8,12 @@ interface decompressor_if();
   logic edit_rs1, edit_rs2, edit_rd, c_ena;
   
   modport dcpr (
-    input inst16,
-    output inst32, c_ena, edit_rs1, edit_rs2, edit_rd
+    input inst16, //16 bit instruction
+    output inst32, c_ena // 32 bit uncompressed instruction, instruction error (11 op code)
   );
 
   modport cu (
-    input edit_rs1, edit_rs2, edit_rd, c_ena
+    input c_ena
   );
 
 endinterface

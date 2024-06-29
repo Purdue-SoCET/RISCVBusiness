@@ -26,28 +26,49 @@
 module decompressor (
     decompressor_if.dcpr dcpr_if
 );
-    logic c0_format, c1_format, c2_format;
+    //Formatting of instruction
+    logic c0_format, c1_format, c2_format; 
+
     logic upper3_0, upper3_1, upper3_2, upper3_3, upper3_4, upper3_5, upper3_6, upper3_7;
+
+    //Logic signals for each instruction
     logic c_addi, c_addi16sp, c_addi14spn, c_slli, c_andi, c_srli, c_srai;
     logic c_mv, c_add, c_and, c_or, c_xor, c_sub;
     logic
-        c_lw, c_sw, c_lwsp, c_swsp, c_flw, c_fsw, c_flwsp, c_fswsp, c_fld, c_fsd, c_fldsp, c_fsdsp;
+        c_lw, c_sw, c_lwsp, c_swsp, c_flw, c_fsw, c_flwsp, c_fswsp;
     logic c_j, c_jal, c_jr, c_jalr, c_beqz, c_bnez;
     logic c_li, c_lui, c_nop, c_ebreak;
-    logic rtype, itype, stype, btype, utype, jtype;
+    logic c_push, c_pop, c_popretz, c_popret, c_mvsa01, c_mva01;
+
+    //Type of instruction
+    logic rtype, itype, stype, btype, utype, jtype, mtype; //mtype will represent multiple register moves.
+
+    //Function codes
     logic [ 2:0] funct3;
     logic [ 6:0] funct7;
+
+    //Immediates (comment in depth)
     logic [ 5:0] imm_i_c;
     logic [11:0] imm_i;
     logic [10:0] imm_j;
     logic [ 7:0] imm_b;
+
+    //Push/Pop variables
+    logic [3:0] rlist;
+    logic [5:0] sp_adjust; 
+    logic [2:0] r1s, r2s; 
+
+    //Registers
     logic [4:0] rd, rs2;
+
+    //Offsets
     logic [4:0] offset_c, offset_c_df;
     logic [5:0] offset_csp, offset_csp_df;
     logic [11:0] offset, offset_df;
     logic [20:0] jump_offset;
     logic [12:0] branch_offset;
 
+    //Format
     assign c0_format = dcpr_if.inst16[1:0] == 2'b00;
     assign c1_format = dcpr_if.inst16[1:0] == 2'b01;
     assign c2_format = dcpr_if.inst16[1:0] == 2'b10;
@@ -61,7 +82,9 @@ module decompressor (
     assign upper3_6 = dcpr_if.inst16[15:13] == 3'b110;
     assign upper3_7 = dcpr_if.inst16[15:13] == 3'b111;
 
-    // Immediate
+
+
+    // Immediate Instructions
     assign c_addi = upper3_0 & (dcpr_if.inst16[11:7] != 5'd0) & c1_format;
     assign c_addi16sp = upper3_3 & (dcpr_if.inst16[11:7] == 5'd2) & c1_format;
     assign c_addi14spn = upper3_0 & (dcpr_if.inst16[12:5] != 8'd0) & c0_format;
@@ -70,7 +93,7 @@ module decompressor (
     assign c_srli = upper3_4 & c1_format & (dcpr_if.inst16[11:10] == 2'd0);
     assign c_srai = upper3_4 & c1_format & (dcpr_if.inst16[11:10] == 2'd1);
 
-    // Register
+    // Register Instructions
     assign c_mv = upper3_4 & c2_format & dcpr_if.inst16[12] == 1'b0 & dcpr_if.inst16[6:2] != 5'd0;
     assign c_add = upper3_4 & c2_format & dcpr_if.inst16[12]
                    & dcpr_if.inst16[6:2] != 5'd0 & dcpr_if.inst16[11:7] != 5'd0;
@@ -83,21 +106,17 @@ module decompressor (
     assign c_sub = upper3_4 & c1_format & (dcpr_if.inst16[11:10] == 2'd3)
                    & (dcpr_if.inst16[6:5] == 2'd0);
 
-    // Load/Store
+    // Load/Store Instructions
     assign c_lw = upper3_2 & c0_format;
     assign c_sw = upper3_6 & c0_format;
     assign c_flw = upper3_3 & c0_format;
     assign c_fsw = upper3_7 & c0_format;
-    assign c_fld = upper3_1 & c0_format;
-    assign c_fsd = upper3_5 & c0_format;
     assign c_lwsp = upper3_2 & c2_format;
     assign c_swsp = upper3_6 & c2_format;
     assign c_flwsp = upper3_3 & c2_format;
     assign c_fswsp = upper3_7 & c2_format;
-    assign c_fldsp = upper3_1 & c2_format;
-    assign c_fsdsp = upper3_5 & c2_format;
 
-    // Control Transfer
+    // Control Transfer Instructions
     assign c_j = upper3_5 & c1_format;
     assign c_jal = upper3_1 & c1_format;
     assign c_jr = upper3_4 & dcpr_if.inst16[12] == 1'b0 & dcpr_if.inst16[6:2] == 5'd0 & c2_format;
@@ -106,17 +125,26 @@ module decompressor (
     assign c_beqz = upper3_6 & c1_format;
     assign c_bnez = upper3_7 & c1_format;
 
-    // Constant Generation
+    // Constant Generation Instructions
     assign c_li = upper3_2 & c1_format;
     assign c_lui = upper3_3 & (dcpr_if.inst16[11:7] != 5'd0)
                    & (dcpr_if.inst16[11:7] != 5'd2) & c1_format;
+
+    //Push/Pop Instructions
+    assign c_push = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11000);
+    assign c_pop = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11010);
+    assign c_popretz = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11100);
+    assign c_popret = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11110);
+    assign c_mvsa01 = upper3_5 & c2_format & (dcpr_if.inst16[12:10] == 3'b011) & (dcpr_if.inst16[6:5] == 3'b01);
+    assign c_mva01 = upper3_5 & c2_format & (dcpr_if.inst16[12:10] == 3'b011) & (dcpr_if.inst16[6:5] == 3'b11)
+    
 
     // Others
     //assign illegal = dcpr_if.inst16 == 16'd0;
     assign c_nop = upper3_0 & (dcpr_if.inst16[12:2] == 11'd0) & c1_format;
     assign c_ebreak = upper3_4 & c2_format & dcpr_if.inst16[12] & dcpr_if.inst16[11:2] == 10'd0;
 
-    // Inst type
+    // Instruction type
     assign rtype = c_mv | c_add | c_and | c_or | c_xor | c_sub;
     assign itype = c_addi | c_addi16sp | c_addi14spn | c_slli | c_andi | c_srli
                    | c_lw | c_flw | c_lwsp | c_flwsp | c_li | c_nop | c_srai | c_fld | c_fldsp;
@@ -124,8 +152,10 @@ module decompressor (
     assign btype = c_beqz | c_bnez;
     assign utype = c_lui;
     assign jtype = c_j | c_jal | c_jr | c_jalr;
+    assign mtype = c_push | c_pop | c_popretz | c_popret | c_mvsa01 | c_mva01;
 
-    assign imm_i_c = {dcpr_if.inst16[12], dcpr_if.inst16[6:2]};
+    //Immediate Generation
+    assign imm_i_c = {dcpr_if.inst16[12], dcpr_if.inst16[6:2]}; 
     assign imm_j = {
         dcpr_if.inst16[12],
         dcpr_if.inst16[8],
@@ -149,6 +179,12 @@ module decompressor (
     assign offset_c_df = {dcpr_if.inst16[6:5], dcpr_if.inst16[12:10]};
     assign offset_csp_df = c_fsdsp ? {dcpr_if.inst16[9:7], dcpr_if.inst16[12:10]}
                                      : {dcpr_if.inst16[4:2], dcpr_if.inst16[12], dcpr_if.inst16[6:5]};
+
+    //Push/Pop variable assignment
+    assign rlist = dcpr_if.inst16[7:4];
+    assign sp_adjust = {dcpr_if.inst16[3:2], 4'd0}; 
+    assign r1s = dcpr_if.inst16[9:7]; 
+    assign r2s = dcpr_if.inst16[4:2];
 
     // Sign Extend immediate
     always_comb begin
@@ -279,9 +315,6 @@ module decompressor (
         else dcpr_if.inst32 = 32'd0;
     end
 
-    //    assign dcpr_if.edit_rd = c_addi14spn | c_lw | c_and | c_sub | c_or | c_xor | c_srli | c_srai | c_andi;
-    //    assign dcpr_if.edit_rs1 = c_lw | c_sw | c_and | c_sub | c_or | c_xor | c_beqz | c_bnez | c_srli | c_srai | c_andi;
-    //    assign dcpr_if.edit_rs2 = c_sw | c_and | c_sub | c_or | c_xor;
     assign dcpr_if.c_ena = dcpr_if.inst16[1:0] != 2'b11;
 endmodule
 
