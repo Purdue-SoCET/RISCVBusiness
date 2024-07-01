@@ -3,6 +3,7 @@ import argparse
 import sys
 import subprocess
 import pathlib
+import shutil
 
 class Colors:
     RED = '\033[1;31;48m'
@@ -11,7 +12,7 @@ class Colors:
     END = '\033[1;37;0m'
 
 # RISCV ISA supported
-supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
+supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh', 'zc']
 
 # For now, only support 'p' environment. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
@@ -31,6 +32,13 @@ def apply_skips(test):
         return False
     
     return True
+
+def move_waveform(from_path, to_path):
+    try:
+        os.makedirs(os.path.dirname(to_path), exist_ok=True)
+        shutil.move(from_path, to_path)
+    except Exception as e:
+        print(f"Error in moving waveform: {e}")
 
 def get_hostaddress(fname):
     # Get binary name
@@ -97,6 +105,7 @@ def get_hostaddress(fname):
 
 def run_test(fname):
     tohost_address = get_hostaddress(fname)
+    print(verilator_binary, '--tohost-address', str(tohost_address), fname)
     res = subprocess.run([verilator_binary, '--tohost-address', str(tohost_address), fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ')
@@ -117,7 +126,9 @@ def run_selected_tests(isa, envs, machine_mode_tests):
         for ext in isa:
             print(f"ISA: RV32{ext.capitalize()}")
 
-            tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
+            waveform_path = f"rv32u{ext}-{env}-*.bin"
+            tests = test_base_dir.glob(waveform_path)
+
             for test in filter(apply_skips, tests):
                 total_count += 1
                 status = run_test(test)
@@ -126,10 +137,13 @@ def run_selected_tests(isa, envs, machine_mode_tests):
                 else:
                     print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
 
+                move_waveform("./waveform.fst", f"./waveforms/{waveform_path[:-4]}.fst")
+
         # machine-mode tests
         if machine_mode_tests:
             print(f"Machine Mode tests")
-            tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
+            waveform_path = f'rv32mi-{env}*.bin'
+            tests = test_base_dir.glob(waveform_path)
             for test in filter(apply_skips, tests):
                 total_count += 1
                 status = run_test(test)
@@ -137,7 +151,9 @@ def run_selected_tests(isa, envs, machine_mode_tests):
                     pass_count += 1
                 else:
                     print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
-        
+                
+                move_waveform("./waveform.fst", f"./waveforms/{waveform_path[:-4]}.fst") 
+                
     if pass_count == total_count:
         print(f"{Colors.GREEN}[All {pass_count} tests passed.]{Colors.END}")
     else:
