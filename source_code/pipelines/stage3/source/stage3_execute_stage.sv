@@ -135,6 +135,14 @@ module stage3_execute_stage (
         .rv32b_out(rv32b_out)
     );
 
+    rv32zc_wrapper RV32ZC_FU(
+        .rv32b_a(alu_if.port_a),
+        .rv32b_b(alu_if.port_b),
+        .operation(cu_if.rv32zc_control),
+        .rv32b_done(rv32b_done),
+        .rv32b_out(rv32b_out)
+    );
+
     // Forwarding
     // These rs*_post_fwd values should be used in place of rs1/rs2 anywhere they are used
     assign rs1_post_fwd = fw_if.fwd_rs1 ? fw_if.rd_mem_data : rf_if.rs1_data;
