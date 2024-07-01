@@ -44,6 +44,7 @@ module control_unit (
     import rv32m_pkg::*;
     import rv32b_pkg::*;
     import rv32a_pkg::*;
+    import rv32zc_pkg::*;
 
     stype_t  instr_s;
     itype_t  instr_i;
@@ -60,6 +61,7 @@ module control_unit (
     // A extension helpers
     // TODO: Add cu plumbing for AMO execution
     logic rv32a_lr, rv32a_sc, rv32a_amo;
+    logic rv32zc_claim; 
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -102,6 +104,7 @@ module control_unit (
     assign cu_if.jump = (cu_if.opcode == JAL || cu_if.opcode == JALR);
     assign cu_if.ex_pc_sel = (cu_if.opcode == JAL || cu_if.opcode == JALR);
     assign cu_if.j_sel = (cu_if.opcode == JAL);
+
     // Assign alu operands
     always_comb begin
         case (cu_if.opcode)
@@ -213,7 +216,7 @@ module control_unit (
     end
 
     assign cu_if.illegal_insn = maybe_illegal && !claimed;
-    assign claimed = rv32m_claim || rv32a_claim || rv32b_claim; // Add OR conditions for new extensions
+    assign claimed = rv32m_claim || rv32a_claim || rv32b_claim || rv32zc_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions
     always_comb begin
@@ -304,6 +307,17 @@ module control_unit (
     `else
     assign cu_if.rv32b_control = {1'b0, rv32b_op_t'(0)};
     assign rv32b_claim = 1'b0;
+    `endif
+
+    `ifdef RV32ZC_SUPPORTED
+    rv32zc_decode RV32ZC_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32zc_claim),
+        .rv32zc_control(cu_if.rv32zc_control)
+    );
+    `else
+    assign cu_if.rv32zc_control = {1'b0, rv32zc_op_t'(0)};
+    assign rv32zc_claim = 1'b0;
     `endif
 
 endmodule

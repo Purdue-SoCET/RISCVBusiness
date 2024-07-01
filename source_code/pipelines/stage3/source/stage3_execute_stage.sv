@@ -105,8 +105,10 @@ module stage3_execute_stage (
     *******************/
     logic rv32m_done;
     logic rv32b_done;
+    logic rv32zc_done;
     word_t rv32m_out;
     word_t rv32b_out;
+    word_t rv32zc_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
 
@@ -131,6 +133,14 @@ module stage3_execute_stage (
         .operation(cu_if.rv32b_control),
         .rv32b_done(rv32b_done),
         .rv32b_out(rv32b_out)
+    );
+
+    rv32zc_wrapper RV32ZC_FU(
+        .rv32zc_a(alu_if.port_a),
+        .rv32zc_b(alu_if.port_b),
+        .operation(cu_if.rv32zc_control),
+        .rv32zc_done(rv32zc_done),
+        .rv32zc_out(rv32zc_out)
     );
 
     // Forwarding
@@ -196,6 +206,8 @@ module stage3_execute_stage (
             ex_out = rv32m_out;
         end else if(cu_if.rv32b_control.select) begin
             ex_out = rv32b_out;
+        end else if(cu_if.rv32zc_control.select) begin
+            ex_out = rv32zc_out;
         end else begin
             ex_out = alu_if.port_out;
         end

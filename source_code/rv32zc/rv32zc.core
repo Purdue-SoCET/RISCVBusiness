@@ -1,0 +1,40 @@
+CAPI=2:
+name: socet:riscv:rv32zc:0.1.0
+description: RV32ZC Extension for RISCVBusiness
+
+filesets:
+    handler:
+        depend:
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:packages"
+        files:
+            - rv32zc_handler.sv
+            - test_rv32zc_handler.cc
+        file_type: systemVerilogSource
+
+    rtl:
+        depend:
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:packages"
+        files:
+            - rv32zc_handler.sv
+            - rv32zc_decode.sv
+            - rv32zc_disabled.sv
+            - rv32zc_enabled.sv
+            - rv32zc_wrapper.sv
+        file_type: systemVerilogSource
+    
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: rv32zc_wrapper
+    
+    handler_tb:
+        filesets:
+            - handler
+        toplevel: rv32zc_handler
+        tools:
+            verilator:
+                verilator_options: ["-Wno-SYMRSVDWORD", "-CFLAGS -std=c++20", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+
