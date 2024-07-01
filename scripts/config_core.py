@@ -255,4 +255,5 @@ if __name__ == '__main__':
 
   #TODO: Check for .yaml/.yml
   config = load_configuration(args.file_name)
-  create_include(config)
+  create_include(config)make verilate
+  
