@@ -33,12 +33,20 @@ TOP_ENTITY := RISCVBusiness
 
 HEADER_FILES := -I$(RISCV)/include
 
+# Default config
+CFG_FILE := example.yml
+CORE := RISCVBusiness
+
 
 define USAGE
 @echo "----------------------------------------------------------------------"
 @echo " Build Targets:"
 @echo "     config: config core with example.yml"
 @echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
+@echo "     verilate.%: Invoke 'FuseSoC run --build' to build specific"
+@echo "                 Verilator target:"
+@echo "                  - 's' for 3-stage scalar pipeline"
+@echo "                  - 'v' for 4-stage vector pipeline"
 @echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target"
 @echo "     lint: Invoke 'FuseSoC run --build' to run the Verilator lint target"
 @echo "     clean: Remove build directories"
@@ -52,11 +60,28 @@ endef
 default:
 	$(USAGE)
 
+##
+# Define config and core targets (varset.%) here
+varset.s:
+	$(eval CFG_FILE := example.yml)
+	$(eval CORE := RISCVBusiness)
+
+varset.v:
+	$(eval CFG_FILE := rvv.rvbcfg.yml)
+	$(eval CORE := RISCVBusiness-V)
+##
+
 config:
 	@echo "----------------------"
 	@echo " Running config_core"
 	@echo "----------------------"
 	@python3 scripts/config_core.py example.yml
+
+config.%: varset.%
+	@echo "----------------------"
+	@echo " Running config_core"
+	@echo "----------------------"
+	@python3 scripts/config_core.py $(CFG_FILE)
 
 test_asm_file:
 	python3 compile_asm_for_self.py -a RV32V verification/self-tests/RV32V/$(TEST_FILE_NAME).S
@@ -82,6 +107,13 @@ test_asm_file:
 
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
+	@echo "------------------------------------------------------------------"
+	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
+	@echo "to the build directory created by FuseSoC and using the Makefile there."
+	@echo "------------------------------------------------------------------"
+
+verilate.%: config.%
+	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:$(CORE) --make_options='-j'
 	@echo "------------------------------------------------------------------"
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."

@@ -22,7 +22,6 @@
 *   Description:  Two Stage In-Order Pipeline
 */
 
-// `include "stage3_fetch_execute_if.vh"
 `include "stage4_hazard_unit_if.vh"
 `include "predictor_pipeline_if.vh"
 `include "generic_bus_if.vh"
@@ -32,8 +31,6 @@
 `include "sparce_pipeline_if.vh"
 `include "rv32c_if.vh"
 `include "rv32v_shadow_csr_if.vh"
-
-//`include "stage3_types_pkg.sv"
 
 import stage4_types_pkg::*;
 
@@ -58,8 +55,6 @@ module stage4 #(
     uop_t ex_in; 
 
     //interface instantiations
-    //pipeline_stages_if stages_if();
-
     stage4_mem_stage_if mem_pipe_if();
     stage4_hazard_unit_if hazard_if();
     stage4_forwarding_unit_if fw_if();
@@ -79,7 +74,6 @@ module stage4 #(
     //module instantiations
     stage4_fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .fetch_out(fetch_out), .*);
 
-    //scalar_decode S_DECODE(.*, .stall_queue(hazard_if.stall_queue)); 
     stage4_decode_stage decode(
         .CLK(CLK), .nRST(nRST), 
         .hazard_if(hazard_if), 

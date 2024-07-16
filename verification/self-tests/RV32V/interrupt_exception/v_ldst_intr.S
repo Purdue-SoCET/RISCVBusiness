@@ -25,7 +25,7 @@ RVTEST_CODE_BEGIN
   # Use mtimecmp to trigger interrupt after some time (during vector load/store)
   lw t3, 0(t5)
   lw t4, 4(t5)
-  addi t3, t3, 240
+  addi t3, t3, 180
   sw t3, 0(t6)
   sw t4, 4(t6)
 

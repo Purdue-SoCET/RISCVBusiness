@@ -1,6 +1,6 @@
 CAPI=2:
-name: socet:riscv:RISCVBusiness:0.2.0
-description: RISC-V Core for AFTx series
+name: socet:riscv:RISCVBusiness-V:0.1.0
+description: RISC-V Core for AFTx series, 4-stage vector pipeline
 
 filesets:
     rtl:
@@ -9,7 +9,7 @@ filesets:
             - "socet:bus-components:ahb_if"
             - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
-            - "socet:riscv:stage3"
+            - "socet:riscv:stage4"
             - "socet:riscv:priv"
             - "socet:riscv:caches"
             #- "socet:riscv:risc_mgmt"

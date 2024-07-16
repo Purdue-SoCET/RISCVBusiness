@@ -43,7 +43,8 @@ RVTEST_CODE_BEGIN
 	la x3, sdat
   vle8.v v0, (x1)
   vle8.v v1, (x2)
-  # UNINTERRUPTIBLE
+  # TODO: UNINTERRUPTIBLE instruction next, align mtime interrupt
+  vor.vv v2, v0, v1
   vse8.v v2, (x3)
 
   lw x4, 0(x3)

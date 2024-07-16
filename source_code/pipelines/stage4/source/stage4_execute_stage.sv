@@ -22,7 +22,6 @@
 *   Description:  Execute Stage for the Two Stage Pipeline
 */
 
-// `include "stage4_fetch_execute_if.vh"
 `include "stage4_hazard_unit_if.vh"
 `include "stage4_mem_stage_if.vh"
 `include "stage4_forwarding_unit_if.vh"
@@ -41,7 +40,6 @@ module stage4_execute_stage (
     input CLK,
     input nRST,
 
-    // pipeline_stages_if.execute ex,
     input uop_t ex_in, 
     //input uop_t uop_out, 
     stage4_mem_stage_if.ex ex_mem_if,
@@ -71,9 +69,9 @@ module stage4_execute_stage (
     assign rf_if.rs1 = ex_in.ctrl_out.rs1.regidx; 
     assign rf_if.rs2 = ex_in.ctrl_out.rs2.regidx; 
 
-    /*******************
+    /*****************
     * Vector Datapath
-    ********************/
+    ******************/
     // feed signals to hazard unit in for RAW hazards
     always_comb begin
         hazard_if.vs1 = ex_in.vctrl_out.vs1_sel; 
@@ -128,7 +126,6 @@ module stage4_execute_stage (
             vstride = rs2_post_fwd; 
         end
     end
-
 
     // Vector CSR values (vl and vtype) logic
     assign hazard_if.vsetvl_ex = (ex_in.vctrl_out.vsetvl_type != NOT_CFG);
@@ -196,8 +193,9 @@ module stage4_execute_stage (
 
     end
 
+
     /**********************
-    * Decode/Register Read 
+    * Scalar Register File
     ***********************/
 
     // // RV32C inputs
@@ -206,22 +204,6 @@ module stage4_execute_stage (
     // assign rv32cif.ex_busy = hazard_if.ex_mem_stall; //cu_if.dren | cu_if.dwen | rm_if.risc_mgmt_start;
     // assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
     // //assign rm_if.insn = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
-
-    // // Control unit, inputs are post-decompression
-    // control_unit cu (
-    //     .cu_if(cu_if),
-    //     .rf_if(rf_if),
-    //     .rmgmt_rsel_s_0('0),
-    //     .rmgmt_rsel_s_1('0),
-    //     .rmgmt_rsel_d('0),
-    //     .rmgmt_req_reg_r('0),
-    //     .rmgmt_req_reg_w('0)
-    //     //.rmgmt_rsel_s_0(rm_if.rsel_s_0),
-    //     //.rmgmt_rsel_s_1(rm_if.rsel_s_1),
-    //     //.rmgmt_rsel_d(rm_if.rsel_d),
-    //     //.rmgmt_req_reg_r(rm_if.req_reg_r),
-    //     //.rmgmt_req_reg_w(rm_if.req_reg_w)
-    // );
 
     assign wfi = ex_in.ctrl_out.wfi;  //Added by rkannank
 
@@ -242,9 +224,9 @@ module stage4_execute_stage (
     endgenerate
 
 
-    /******************
-    * Functional Units
-    *******************/
+    /*************************
+    * Scalar Functional Units
+    **************************/
     logic rv32m_busy;
     word_t rv32m_out;
     word_t ex_out;
@@ -378,7 +360,6 @@ module stage4_execute_stage (
     assign hazard_if.keep_vstart_e = ex_in.vctrl_out.keep_vstart;
 
 
-    // TODO: NEW
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
             /*verilator lint_off ENUMVALUE*/
@@ -458,8 +439,8 @@ module stage4_execute_stage (
     end
 
     /*********************************************************
-  *** SparCE Module Logic
-  *********************************************************/
+    *** SparCE Module Logic
+    *********************************************************/
     /*assign sparce_if.wb_data = rf_if.w_data;
     assign sparce_if.wb_en = rf_if.wen;
     assign sparce_if.sasa_data = rf_if.rs2_data;

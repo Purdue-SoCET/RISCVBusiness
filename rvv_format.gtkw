@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.4.0 (w)1999-2022 BSI
-[*] Tue Apr 16 21:51:29 2024
+[*] Wed Apr 24 18:52:16 2024
 [*]
 [dumpfile] "waveform.vcd"
-[dumpfile_mtime] "Tue Apr 16 21:45:04 2024"
-[dumpfile_size] 36192446
+[dumpfile_mtime] "Wed Apr 24 18:48:48 2024"
+[dumpfile_size] 2474008
 [savefile] "rvv_format.gtkw"
-[timestart] 63
-[size] 1512 844
-[pos] -1 0
-*-5.730774 113 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+[timestart] 147
+[size] 1920 1080
+[pos] -1 -1
+*-5.730774 293 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -49,6 +49,7 @@
 [treeopen] TOP.top_core.CORE.pipeline.hazard_if.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.
 [treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.
+[treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.prv_pipe_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.
@@ -59,11 +60,13 @@
 [treeopen] TOP.top_core.CORE.pipeline.uop_out.vctrl_out.
 [treeopen] TOP.top_core.CORE.priv_wrapper_i.
 [treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_intern_if.
+[treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.prv_pipe_if.
 [treeopen] TOP.top_core.CORE.priv_wrapper_i.priv_block_i.vector.
 [sst_width] 253
-[signals_width] 285
+[signals_width] 289
 [sst_expanded] 1
-[sst_vpaned_height] 559
+[sst_vpaned_height] 748
 @28
 TOP.CLK
 TOP.nRST
@@ -172,14 +175,17 @@ TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.wen
 -Scalar RF
 @800200
 -Hazard unit
-@29
-TOP.top_core.CORE.pipeline.hazard_if.ex_busy
 @28
+TOP.top_core.CORE.pipeline.hazard_if.ex_busy
 TOP.top_core.CORE.pipeline.hazard_if.ex_mem_stall
 TOP.top_core.CORE.pipeline.hazard_if.ex_mem_flush
+TOP.top_core.CORE.pipeline.hazard_unit_i.ex_flush_hazard
 TOP.top_core.CORE.pipeline.hazard_unit_i.exception
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.serializer_stall
 TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.suppress_data
+TOP.top_core.CORE.pipeline.hazard_unit_i.wait_for_dmem
+@29
+TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.intr
 @1000200
 -Hazard unit
 @800200

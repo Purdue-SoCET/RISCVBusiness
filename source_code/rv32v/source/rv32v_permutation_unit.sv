@@ -43,8 +43,10 @@ module rv32v_permutation_unit (
     vrgather_vs2_t vrgtr_vs2;
     word_t vrgtr_vs2_element;
     word_t [3:0] vrgtr_index;
-    word_t vcomp_count, next_vcomp_count;
+    logic [$clog2(VLMAX)-1:0] vcomp_count, next_vcomp_count;
     logic use_vrgtr;
+    logic [1:0] vcomp_rem_lanes, next_vcomp_rem_lanes;
+    logic [127:0] vcomp_mask;
 
     int i;
 
@@ -52,12 +54,17 @@ module rv32v_permutation_unit (
         if (~nRST) begin
             vrgtr_state <= READ_VS1;
             vcomp_count <= '0;
+            vcomp_rem_lanes <= '0;
         end else if (flush) begin
             vrgtr_state <= READ_VS1;
             vcomp_count <= '0;
+            vcomp_rem_lanes <= '0;
         end else begin
             vrgtr_state <= next_vrgtr_state;
-            if (~stall) vcomp_count <= next_vcomp_count;
+            if (~stall) begin
+                vcomp_count <= next_vcomp_count;
+                vcomp_rem_lanes <= next_vcomp_rem_lanes;
+            end
         end
     end
 
@@ -65,16 +72,18 @@ module rv32v_permutation_unit (
     assign vrgtr_vs2_read = (vrgtr_state != READ_VS1);
     assign vrgtr_elem_num = vrgtr_state[1:0];
     assign slidedown_last_elems = vperm_in.vlmax - vperm_in.offset;
+    assign vcomp_mask = {vperm_in.vs1_data[3], vperm_in.vs1_data[2], vperm_in.vs1_data[1], vperm_in.vs1_data[0]};
 
     always_comb begin
         next_vrgtr_state = vrgtr_state;
         next_vcomp_count = vcomp_count;
+        next_vcomp_rem_lanes = vcomp_rem_lanes;
         use_vrgtr = 0;
         vperm_out.vd_sel_perm = vperm_in.vd_sel;
-        vperm_out.vbank_offset = vperm_in.vuop_num[1:0];
         vperm_out.vperm_mask = vperm_in.vlaneactive;
         vperm_out.vs2_to_scratch = 0;
         vperm_out.nkeep_scratch = '1;
+        vperm_out.velems_out = '{4{'0}};
 
         casez (vperm_in.vpermop)
             VPRM_SLU: begin
@@ -92,7 +101,7 @@ module rv32v_permutation_unit (
                                 end
                                 SEW16: begin
                                     vrgtr_vs2_sel[3].vs2_sel = vperm_in.vs2_sel - (vperm_in.offset >> 3);
-                                    vrgtr_vs2_sel[3].vbank_offset = vperm_in.offset[2] ^ vperm_in.vuop_num[0];
+                                    vrgtr_vs2_sel[3].vbank_offset = {1'b0, vperm_in.offset[2] ^ vperm_in.vuop_num[0]};
                                 end
                                 SEW8: begin
                                     vrgtr_vs2_sel[3].vs2_sel = vperm_in.vs2_sel - (vperm_in.offset >> 4);
@@ -119,12 +128,15 @@ module rv32v_permutation_unit (
                                 end
                                 SEW16: begin
                                     vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel - (vperm_in.offset >> 3) - 1;
-                                    vrgtr_vs2_sel[0].vbank_offset = vperm_in.offset[2] ^ vperm_in.vuop_num[0];
+                                    if (vperm_in.offset[2:0] > 3'd4)
+                                        vrgtr_vs2_sel[0].vbank_offset = {1'b0, vperm_in.vuop_num[0]};
+                                    else
+                                        vrgtr_vs2_sel[0].vbank_offset = {1'b0, ~vperm_in.vuop_num[0]};
                                     vrgtr_vs2_sel[3].vs2_sel = vrgtr_vs2_sel[0].vs2_sel + vrgtr_vs2_sel[0].vbank_offset;
-                                    vrgtr_vs2_sel[3].vbank_offset = ~vrgtr_vs2_sel[0].vbank_offset;
+                                    vrgtr_vs2_sel[3].vbank_offset = {1'b0, ~vrgtr_vs2_sel[0].vbank_offset[0]};
                                 end
                                 SEW8: begin
-                                    vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel - ((vperm_in.offset + (vperm_in.vuop_num[1:0] << 2)) >> 4) - 1;
+                                    vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel - ((vperm_in.offset - (vperm_in.vuop_num[1:0] << 2)) >> 4) - 1;
                                     vrgtr_vs2_sel[0].vbank_offset = vperm_in.offset[3:2] + vperm_in.vuop_num[1:0];
                                     vrgtr_vs2_sel[3].vs2_sel = vrgtr_vs2_sel[0].vs2_sel + (vrgtr_vs2_sel[0].vbank_offset == 2'd3);
                                     vrgtr_vs2_sel[3].vbank_offset = vrgtr_vs2_sel[0].vbank_offset + 1;
@@ -196,7 +208,7 @@ module rv32v_permutation_unit (
                                 end
                                 SEW16: begin
                                     vrgtr_vs2_sel[3].vs2_sel = vperm_in.vs2_sel + (vperm_in.offset >> 3);
-                                    vrgtr_vs2_sel[3].vbank_offset = vperm_in.offset[2] ^ vperm_in.vuop_num[0];
+                                    vrgtr_vs2_sel[3].vbank_offset = {1'b0, vperm_in.offset[2] ^ vperm_in.vuop_num[0]};
                                 end
                                 SEW8: begin
                                     vrgtr_vs2_sel[3].vs2_sel = vperm_in.vs2_sel + (vperm_in.offset >> 4);
@@ -223,9 +235,12 @@ module rv32v_permutation_unit (
                                 end
                                 SEW16: begin
                                     vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (vperm_in.offset >> 3);
-                                    vrgtr_vs2_sel[0].vbank_offset = vperm_in.offset[2] ^ vperm_in.vuop_num[0];
+                                    if (vperm_in.offset[2:0] > 3'd4)
+                                        vrgtr_vs2_sel[0].vbank_offset = {1'b0, ~vperm_in.vuop_num[0]};
+                                    else
+                                        vrgtr_vs2_sel[0].vbank_offset = {1'b0, vperm_in.vuop_num[0]};
                                     vrgtr_vs2_sel[3].vs2_sel = vrgtr_vs2_sel[0].vs2_sel + vrgtr_vs2_sel[0].vbank_offset;
-                                    vrgtr_vs2_sel[3].vbank_offset = ~vrgtr_vs2_sel[0].vbank_offset;
+                                    vrgtr_vs2_sel[3].vbank_offset = {1'b0, ~vrgtr_vs2_sel[0].vbank_offset[0]};
                                 end
                                 SEW8: begin
                                     vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + ((vperm_in.offset + (vperm_in.vuop_num[1:0] << 2)) >> 4);
@@ -392,19 +407,134 @@ module rv32v_permutation_unit (
                     end
                 endcase
             end
-            // VPRM_CPS: begin
-            //     if (vperm_in.vuop_last) begin
-            //         next_vcomp_count = '0;
-            //     end else begin
-            //         next_vcomp_count = vcomp_count + vperm_in.v0_mask[0] + vperm_in.v0_mask[1]
-            //                                        + vperm_in.v0_mask[2] + vperm_in.v0_mask[3];
-            //     end
-                
-            // end
+            VPRM_CPS: begin
+                use_vrgtr = 1;
+                casez (vrgtr_state)
+                    READ_VS1: begin
+                        if (~stall) begin
+                            if (vcomp_count >= vperm_in.vl) begin
+                                use_vrgtr = 0;
+                                vperm_out.vperm_mask = '0;
+                            end
+                            else next_vrgtr_state = READ_VS2_0;
+                        end
+                        if (vperm_in.vuop_num == '0) next_vcomp_count = '0;
+                        next_vcomp_rem_lanes = 2'd3;
+                        vrgtr_vs2_sel[0].zero_elem = 0;
+                        vrgtr_vs2_sel[0].vs2_src_lane = 0;
+                        casez (vperm_in.vsew)
+                            SEW32: begin
+                                vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (vcomp_count >> 2);
+                                vrgtr_vs2_sel[0].vbank_offset = '0;
+                            end
+                            SEW16: begin
+                                vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (vcomp_count >> 3);
+                                vrgtr_vs2_sel[0].vbank_offset = {1'b0, vcomp_count[2]};
+                            end
+                            SEW8: begin
+                                vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (vcomp_count >> 4);
+                                vrgtr_vs2_sel[0].vbank_offset = vcomp_count[3:2];
+                            end
+                            default: begin
+                                vrgtr_vs2_sel[0].vs2_sel = '0;
+                                vrgtr_vs2_sel[0].vbank_offset = '0;
+                            end
+                        endcase
+                        vperm_out.velems_out = {{3{32'b0}}, {22'b0, vrgtr_vs2_sel[0]}};
+                    end
+                    READ_VS2_0: begin
+                        if (vcomp_count == vperm_in.vl) begin
+                            next_vrgtr_state = READ_VS2_3;
+                        end else begin
+                            if (vcomp_mask[vcomp_count]) begin
+                                next_vcomp_rem_lanes = vcomp_rem_lanes - 1;
+                                casez (vcomp_rem_lanes)
+                                    2'd3: begin
+                                        vperm_out.nkeep_scratch[3:1] = 3'b001;
+                                        vperm_out.velems_out[1] = vperm_in.vs2_data[vcomp_count[1:0]];
+                                    end
+                                    2'd2: begin
+                                        vperm_out.nkeep_scratch[3:1] = 3'b010;
+                                        vperm_out.velems_out[2] = vperm_in.vs2_data[vcomp_count[1:0]];
+                                    end
+                                    2'd1: begin
+                                        vperm_out.nkeep_scratch[3:1] = 3'b100;
+                                        vperm_out.velems_out[3] = vperm_in.vs2_data[vcomp_count[1:0]];
+                                    end
+                                    2'd0: begin
+                                        vperm_out.nkeep_scratch[3:1] = 3'b111;
+                                        vperm_out.velems_out = {vperm_in.vscratchdata[0], vperm_in.vscratchdata[3:1]};
+                                        next_vrgtr_state = READ_VS2_3;
+                                    end
+                                endcase
+                            end else begin
+                                vperm_out.nkeep_scratch[3:1] = 3'b000;
+                            end
+
+                            if ((vcomp_count[1:0] == 2'd3)) begin
+                                if ((vcomp_rem_lanes == 2'd0) && (vcomp_mask[vcomp_count])) begin
+                                    vperm_out.nkeep_scratch[0] = 1;
+                                end else begin
+                                    next_vcomp_count = vcomp_count + 1;
+                                    vperm_out.nkeep_scratch[0] = 1;
+                                    vrgtr_vs2_sel[0].zero_elem = 0;
+                                    vrgtr_vs2_sel[0].vs2_src_lane = 0;
+                                    casez (vperm_in.vsew)
+                                        SEW32: begin
+                                            vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (next_vcomp_count >> 2);
+                                            vrgtr_vs2_sel[0].vbank_offset = '0;
+                                        end
+                                        SEW16: begin
+                                            vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (next_vcomp_count >> 3);
+                                            vrgtr_vs2_sel[0].vbank_offset = {1'b0, next_vcomp_count[2]};
+                                        end
+                                        SEW8: begin
+                                            vrgtr_vs2_sel[0].vs2_sel = vperm_in.vs2_sel + (next_vcomp_count >> 4);
+                                            vrgtr_vs2_sel[0].vbank_offset = next_vcomp_count[3:2];
+                                        end
+                                        default: begin
+                                            vrgtr_vs2_sel[0].vs2_sel = '0;
+                                            vrgtr_vs2_sel[0].vbank_offset = '0;
+                                        end
+                                    endcase
+                                    vperm_out.velems_out[0] = {22'b0, vrgtr_vs2_sel[0]};
+                                end
+                            end else begin
+                                if ((vcomp_rem_lanes == 2'd0) && (vcomp_mask[vcomp_count])) begin
+                                    vperm_out.nkeep_scratch[0] = 1;
+                                end else begin
+                                    next_vcomp_count = vcomp_count + 1;
+                                    vperm_out.nkeep_scratch[0] = 0;
+                                end
+                            end
+                        end
+                    end
+                    // READ_VS2_1:
+                    // READ_VS2_2:
+                    READ_VS2_3: begin
+                        vperm_out.nkeep_scratch = '0;
+                        if (~stall) begin
+                            next_vrgtr_state = READ_VS1;
+                            vperm_out.velems_out = {vperm_in.vs2_data[vcomp_count], vperm_in.vscratchdata[2:0]};
+                            if (vcomp_count == vperm_in.vl) begin
+                                casez (vcomp_rem_lanes)
+                                    2'd3: vperm_out.vperm_mask = 4'b0000;
+                                    2'd2: vperm_out.vperm_mask = 4'b0001;
+                                    2'd1: vperm_out.vperm_mask = 4'b0011;
+                                    2'd0: vperm_out.vperm_mask = 4'b0111;
+                                endcase
+                            end
+                            next_vcomp_count = vcomp_count + 1;
+                        end
+                    end
+                endcase
+            end
             default: begin
                 vperm_out.velems_out = '{4{'0}};
             end
         endcase
+
+        vperm_out.vscratchwdata = vperm_out.velems_out;
     end
 
 endmodule // rv32v_permutation_unit

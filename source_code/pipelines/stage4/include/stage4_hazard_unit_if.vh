@@ -42,6 +42,7 @@ interface stage4_hazard_unit_if();
   logic ifence;
   logic ex_busy;
   logic serializer_stall;
+  logic intr;
 
   // Control (outputs)
   logic pc_en, npc_sel;
@@ -123,7 +124,7 @@ interface stage4_hazard_unit_if();
             stall_queue, flush_queue, 
             stall_decode, flush_decode,
 
-            vmask_calc_stall
+            vmask_calc_stall, intr
 
   );
 
@@ -149,7 +150,7 @@ interface stage4_hazard_unit_if();
   );
 
   modport mem (
-    input   ex_mem_stall, ex_mem_flush, suppress_data,
+    input   ex_mem_stall, ex_mem_flush, suppress_data, intr,
     output  rd_m, reg_write, csr_read,
             d_mem_busy, dren, dwen, ret,
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,

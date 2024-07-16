@@ -41,6 +41,8 @@ vperm_output_t vperm_out;
 logic vrgtr_busy, vrgtr_vs2_read;
 vrgather_vs2_t vrgtr_vs2_sel;
 logic [1:0] vrgtr_elem_num;
+logic vcompress;
+vsew_t veew_src1;
 
 //mask set layer outputs
 logic is_vmskset_op; 
@@ -140,11 +142,16 @@ always_comb begin
 end 
 // assign vmem_in.vlane_mask = is_vmskset_op ?  : msku_lane_mask; 
 // mux data to write to scratch register
-assign vscratch_write_data = ((vctrls.vexec.vfu == VFU_PRM) & vperm_out.vs2_to_scratch) ? xbardat_src2 : vmem_in.vres;
+assign vscratch_write_data = (vctrls.vexec.vfu == VFU_PRM) ? ((vperm_out.vs2_to_scratch) ? xbardat_src2 : vperm_out.vscratchwdata) : vmem_in.vres;
 
 assign vd = {bankdat_src3[3], bankdat_src3[2], bankdat_src3[1], bankdat_src3[0]};
 
+assign vcompress = (vctrls.vexec.vfu == VFU_PRM) & (vctrls.vexec.vpermop == VPRM_CPS);
 assign vrgtr_vs2_sel = vrgather_vs2_t'(vscratchdata[vrgtr_elem_num][9:0]);
+
+// vcompress uses vs1 bits as a 'mask', so get all of them with SEW32
+assign veew_src1 = (vcompress) ? SEW32 : vctrls.veew_src1;
+
 assign vs2_sel = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vs2_sel : vctrls.vs2_sel;
 assign vs2_bank_offset = (vrgtr_vs2_read) ? vrgtr_vs2_sel.vbank_offset : vctrls.vbank_offset;
 
@@ -155,7 +162,7 @@ rv32v_vector_bank VBANK0 (
     .vw(vwb_ctrls.vd), .vwdata(vwb_ctrls.vwdata[0]), .byte_wen(vwb_ctrls.vbyte_wen[0]), 
     .vdat1(bankdat_src1[0]), .vdat2(bankdat_src2[0]), .vdat3(bankdat_src3[0]),
     .v0(v0[31:0])
-); 
+);
 
 rv32v_vector_bank VBANK1 (
     .CLK(CLK), .nRST(nRST), 
@@ -185,7 +192,7 @@ rv32v_vector_bank VBANK3 (
 // read xbars 
 rv32v_read_xbar VSRC1_XBAR(
     .bank_dat(bankdat_src1), 
-    .veew(vctrls.veew_src1),
+    .veew(veew_src1),
     .bank_offset(vctrls.vbank_offset),
     .sign_ext(vctrls.vsignext),
     .out_dat({xbardat_src1[3], xbardat_src1[2], xbardat_src1[1], xbardat_src1[0]})
@@ -371,8 +378,7 @@ assign vperm_in = '{
     vlaneactive: vctrls.vlaneactive,
     vd_sel: vctrls.vd_sel.regidx,
     vs2_sel: vctrls.vs2_sel,
-    use_rs1_data: (vctrls.vxin1_use_imm | vctrls.vxin1_use_rs1),
-    v0_mask: mask_bits
+    use_rs1_data: (vctrls.vxin1_use_imm | vctrls.vxin1_use_rs1)
 };
 
 // Maskings
@@ -435,8 +441,7 @@ assign vmem_in.vmv_s_x = vctrls.vmv_s_x;
 // Permutation instructions write to scratch register in EX & back to vector RF in MEM/WB
 assign vmem_in.vd_sel = (vctrls.vexec.vfu == VFU_PRM) ? '{regclass: RC_VECTOR, regidx: vctrls.vd_sel.regidx} : vctrls.vd_sel;
 //assign vmem_in.vbank_offset = vctrls.vbank_offset; 
-assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset :
-                              (vctrls.vexec.vfu == VFU_PRM) ? vperm_out.vbank_offset : vctrls.vbank_offset;
+assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset : vctrls.vbank_offset;
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1;
 assign vmem_in.vkeepvl = vctrls.vkeepvl;
 assign vmem_in.keep_vstart = vctrls.keep_vstart;

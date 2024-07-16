@@ -50,6 +50,7 @@ module stage4_mem_stage (
     logic vmemop, dmemwen, dmemren;
     word_t [NUM_LANES-1:0] vlane_data;
     logic [NUM_LANES-1:0] vlane_wen, velem_mask;
+    logic serializer_stall;
 
     // Interfaces
     rv32v_mem_serializer_if serial_if();
@@ -94,7 +95,7 @@ module stage4_mem_stage (
         .nRST,
         .flush(hazard_if.ex_mem_flush),
         .serial_if,
-        .serializer_stall(hazard_if.serializer_stall)
+        .serializer_stall
     );
 
     // Load-store controller
@@ -131,8 +132,6 @@ module stage4_mem_stage (
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
     assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
-    //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
-    //assign hazard_if.serializer_stall = (serial_if.vcurr_lane != (NUM_LANES-1)) & vmemop;
     // Vector-specific signals
     assign hazard_if.vd = ex_mem_if.vexmem.vd_sel;
     assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen;
@@ -142,6 +141,7 @@ module stage4_mem_stage (
     assign hazard_if.vuop_last = ex_mem_if.vexmem.vuop_last & ~hazard_if.serializer_stall;
     assign hazard_if.vmem_last_elem = (serial_if.vcurr_lane == 2'd3);
     assign hazard_if.keep_vstart_m = ex_mem_if.vexmem.keep_vstart;
+    assign hazard_if.serializer_stall = serializer_stall & ~(lsc_if.lsc_ready & hazard_if.intr);
     assign ex_mem_if.vmskset_fwd_bits = ex_mem_if.vexmem.vres[0][3:0]; 
 
     assign halt = ex_mem_if.ex_mem_reg.halt;
@@ -226,7 +226,7 @@ module stage4_mem_stage (
         endcase
     end
 
-    // Element mask considering vlane_mask and vstart:
+    // Element mask considering vlane_mask and vstart
     always_comb begin
         if (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart[$clog2(VLMAX)-1:2]) begin
             velem_mask = '0;
@@ -242,11 +242,10 @@ module stage4_mem_stage (
         end
 
         // segmented load/store instruction handling
-         if((ex_mem_if.vexmem.vseg_op) && (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart))
+        if ((ex_mem_if.vexmem.vseg_op) && (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart))
             velem_mask = '0; 
-         else if(ex_mem_if.vexmem.vseg_op)
+        else if (ex_mem_if.vexmem.vseg_op)
             velem_mask = ex_mem_if.vexmem.vlane_mask;
-
     end
 
     assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? {4{lsc_if.dload_ext}} :

@@ -142,7 +142,7 @@ end
 // Register select
 regsel_t vd_sel, vs1_sel, vs2_sel;
 regsel_t vd_sel_red, vs1_sel_red, vs2_sel_red;
-regsel_t vs2_sel_perm;
+regsel_t vs1_sel_perm, vs2_sel_perm;
 
 logic vmskst_instr; 
 assign vmskset_instr = vopi_valid && (
@@ -187,6 +187,9 @@ always_comb begin
     // Override vs2 in case of vrgather_i_x.v{i,x}
     if (vperminstr) begin
         vd_sel.regclass = RC_SCRATCH;
+        if (vcompress) begin
+            vs1_sel = vs1_sel_perm;
+        end
         if (vrgather_i_x) begin
             vs2_sel = vs2_sel_perm;
         end
@@ -411,7 +414,7 @@ always_comb begin
     vcu_if.vcontrol.vexec.vfu = VFU_PASS_VS1;
     vcu_if.vcontrol.vexec.valuop = VALU_ADD;
     vcu_if.vcontrol.vexec.vmaskop = VMSK_AND;
-    vcu_if.vcontrol.vexec.vpermop = VPRM_CPS;
+    vcu_if.vcontrol.vexec.vpermop = VPRM_SMV;
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
     vcu_if.vcontrol.vsignext = 1'b0; 
     vexecute_valid = 1'b0;
@@ -574,7 +577,6 @@ assign vug_if.veew_src2 = veew_src2;
 
 
 assign vug_if.vl = (vredinstr)        ? vl_red : 
-                   (vperm_var_offset) ? vl_perm : 
                    (wholereg_mv)      ? wholereg_mv_evl :
                                         mem_evl;
 
@@ -732,17 +734,15 @@ end
 /**********************************************************/
 /* PERMUTATION CONTROL LOGIC
 /**********************************************************/
-logic vopi_perm, vopm_perm, vperminstr, vperm_var_offset, vrgather_i_x;
-word_t vl_perm;
+logic vopi_perm, vopm_perm, vperminstr, vperm_var_offset, vrgather_i_x, vcompress;
 
 assign vopi_perm = (vopi_valid && vexec_opi.vfu == VFU_PRM);
 assign vopm_perm = (vopm_valid && vexec_opm.vfu == VFU_PRM);
 assign vperminstr = (vopi_perm || vopm_perm);
-// assign vperm_var_offset = (vopi_perm && ((vexec_opi.vpermop == VPRM_SLU) || (vexec_opi.vpermop == VPRM_SLD)));
-assign vperm_var_offset = 0;
 assign vrgather_i_x = vopi_perm && (vexec_opi.vpermop == VPRM_GTR) && ((vfunct3 == OPIVI) || (vfunct3 == OPIVX));
+assign vcompress = vopm_perm && (vexec_opm.vpermop == VPRM_CPS);
 
+assign vs1_sel_perm = '{regclass: RC_VECTOR, regidx: vs1};
 assign vs2_sel_perm = '{regclass: RC_VECTOR, regidx: vs2};
-assign vl_perm = vcu_if.vl + 4;  // need extra uOP for offset%4 != 0
 
 endmodule

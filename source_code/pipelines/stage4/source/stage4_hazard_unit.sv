@@ -99,8 +99,9 @@ module stage4_hazard_unit (
                       | hazard_if.env | prv_pipe_if.prot_fault_l | prv_pipe_if.prot_fault_s;
 
     assign intr = ~exception & prv_pipe_if.intr;
+    assign hazard_if.intr = intr;
 
-    assign prv_pipe_if.pipe_clear = 1'b1; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
+    assign prv_pipe_if.pipe_clear = !wait_for_dmem && !hazard_if.not_interruptible; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
     assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem && !hazard_if.not_interruptible) || exception || prv_pipe_if.ret || (hazard_if.ifence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
     // Micro-ops can be marked as 'not interruptable' while in execute, so wait until it advances to memory stage to flush and take interrupt
 
@@ -147,7 +148,7 @@ module stage4_hazard_unit (
     assign prv_pipe_if.set_vstart = hazard_if.vuop_last |
                                     ((exception | (prv_pipe_if.intr & !hazard_if.not_interruptible)) ?
                                       ((hazard_if.valid_m && (!intr || !hazard_if.vmem_last_elem)) ?
-                                        ~hazard_if.keep_vstart_m :
+                                        ~hazard_if.keep_vstart_m && !wait_for_dmem :
                                         (hazard_if.vvalid_e) ? ~hazard_if.keep_vstart_e : 0)
                                       : 0);
     assign prv_pipe_if.vuop_last = hazard_if.vuop_last;

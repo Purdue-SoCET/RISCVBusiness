@@ -1,11 +1,10 @@
 CAPI=2:
 name: socet:riscv:stage4:0.1.0
-description: Two-stage pipeline
+description: Four-stage pipeline
 
 filesets:
     rtl:
         files:
-            - include/stage4_mem_pipe_if.vh : {is_include_file: true}
             - include/stage4_mem_stage_if.vh : {is_include_file: true}
             - include/stage4_hazard_unit_if.vh : {is_include_file: true}
             - include/stage4_forwarding_unit_if.vh : {is_include_file: true}
