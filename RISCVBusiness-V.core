@@ -17,6 +17,7 @@ filesets:
             - "socet:riscv:riscv_include"
             - "socet:riscv:rv32c"
             - "socet:riscv:rv32m"
+            - "socet:riscv:rv32b"
             - "socet:riscv:rv32v"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
@@ -96,7 +97,7 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
                 #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
     no_mc:

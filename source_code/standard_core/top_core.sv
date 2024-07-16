@@ -57,7 +57,7 @@ module top_core #(
         .funct12(funct12),
         .rs1(ex_mem_if.ex_mem_reg.instr[19:15]),
         .rs2(ex_mem_if.ex_mem_reg.instr[24:20]),
-        .rd(ex_mem_if.ex_mem_reg.rd_m.regidx),
+        .rd(ex_mem_if.ex_mem_reg.rd_m),
         .imm_S(ex_mem_if.ex_mem_reg.tracker_signals.imm_S), // TODO: Extract constants. Maybe we could pass these in the pipeline and they'd be removed by synthesis?
         .imm_I(ex_mem_if.ex_mem_reg.tracker_signals.imm_I),
         .imm_U(ex_mem_if.ex_mem_reg.tracker_signals.imm_U),

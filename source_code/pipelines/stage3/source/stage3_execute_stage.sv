@@ -106,7 +106,9 @@ module stage3_execute_stage (
     * Functional Units
     *******************/
     logic rv32m_done;
+    logic rv32b_done;
     word_t rv32m_out;
+    word_t rv32b_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
 
@@ -117,12 +119,20 @@ module stage3_execute_stage (
     rv32m_wrapper RV32M_FU (
         .CLK,
         .nRST,
-        .rv32m_start(cu_if.rv32m_control.select),
+        .rv32m_start(cu_if.rv32m_control.select && !hazard_if.mem_use_stall),
         .operation(cu_if.rv32m_control.op), // TODO: Better way?
         .rv32m_a(rs1_post_fwd), // All RV32M are reg-reg, so just feed post-fwd regs
         .rv32m_b(rs2_post_fwd),
         .rv32m_done,
         .rv32m_out
+    );
+
+    rv32b_wrapper RV32B_FU(
+        .rv32b_a(alu_if.port_a),
+        .rv32b_b(alu_if.port_b),
+        .operation(cu_if.rv32b_control),
+        .rv32b_done(rv32b_done),
+        .rv32b_out(rv32b_out)
     );
 
     // Forwarding
@@ -184,8 +194,15 @@ module stage3_execute_stage (
 
     // FU output mux -- feeds into pipeline register
     // Add to this when more FUs are added
-    // TODO: Make this nicer, with enum for FU selection
-    assign ex_out = (cu_if.rv32m_control.select) ? rv32m_out : alu_if.port_out;
+    always_comb begin
+        if(cu_if.rv32m_control.select) begin
+            ex_out = rv32m_out;
+        end else if(cu_if.rv32b_control.select) begin
+            ex_out = rv32b_out;
+        end else begin
+            ex_out = alu_if.port_out;
+        end
+    end
 
     /*************************
     * Register File Writeback
@@ -233,6 +250,11 @@ module stage3_execute_stage (
     assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
 
+    // CSR Read-only determination
+    // No write occurs if CSRRS/C(I) with a statically-zero source operand
+    logic csr_read_only;
+    assign csr_read_only = (cu_if.csr_clr || cu_if.csr_set)
+                            && ((cu_if.csr_imm && cu_if.zimm == 5'b0) || rf_if.rs1 == 5'b0);
 
     // TODO: NEW
     always_ff @(posedge CLK, negedge nRST) begin
@@ -262,7 +284,7 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.csr_clr        <= cu_if.csr_clr;
                     ex_mem_if.ex_mem_reg.csr_set        <= cu_if.csr_set;
                     ex_mem_if.ex_mem_reg.csr_imm        <= cu_if.csr_imm;
-                    ex_mem_if.ex_mem_reg.csr_read_only  <= (rf_if.rs1 == '0) || (cu_if.zimm == '0);
+                    ex_mem_if.ex_mem_reg.csr_read_only  <= csr_read_only;
                     ex_mem_if.ex_mem_reg.breakpoint     <= cu_if.breakpoint;
                     ex_mem_if.ex_mem_reg.ecall_insn     <= cu_if.ecall_insn;
                     ex_mem_if.ex_mem_reg.ret_insn       <= cu_if.ret_insn;

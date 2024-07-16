@@ -60,7 +60,6 @@ module stage4_execute_stage (
     logic vex_stall;
 
     // Interface declarations
-    control_unit_if cu_if ();
     rv32i_reg_file_if rf_if ();
     alu_if alu_if ();
     jump_calc_if jump_if ();
@@ -227,8 +226,10 @@ module stage4_execute_stage (
     /*************************
     * Scalar Functional Units
     **************************/
-    logic rv32m_busy;
+    logic rv32m_done;
+    logic rv32b_done;
     word_t rv32m_out;
+    word_t rv32b_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
 
@@ -239,12 +240,20 @@ module stage4_execute_stage (
     rv32m_wrapper RV32M_FU (
         .CLK,
         .nRST,
-        .rv32m_start(ex_in.ctrl_out.rv32m_control.select),
+        .rv32m_start(ex_in.ctrl_out.rv32m_control.select && !hazard_if.mem_use_stall),
         .operation(ex_in.ctrl_out.rv32m_control.op), // TODO: Better way?
         .rv32m_a(rs1_post_fwd), // All RV32M are reg-reg, so just feed post-fwd regs
         .rv32m_b(rs2_post_fwd),
-        .rv32m_busy,
+        .rv32m_done,
         .rv32m_out
+    );
+
+    rv32b_wrapper RV32B_FU(
+        .rv32b_a(alu_if.port_a),
+        .rv32b_b(alu_if.port_b),
+        .operation(ex_in.ctrl_out.rv32b_control),
+        .rv32b_done(rv32b_done),
+        .rv32b_out(rv32b_out)
     );
 
     // Forwarding
@@ -306,8 +315,15 @@ module stage4_execute_stage (
 
     // FU output mux -- feeds into pipeline register
     // Add to this when more FUs are added
-    // TODO: Make this nicer, with enum for FU selection
-    assign ex_out = (ex_in.ctrl_out.rv32m_control.select) ? rv32m_out : alu_if.port_out;
+    always_comb begin
+        if(ex_in.ctrl_out.rv32m_control.select) begin
+            ex_out = rv32m_out;
+        end else if(ex_in.ctrl_out.rv32b_control.select) begin
+            ex_out = rv32b_out;
+        end else begin
+            ex_out = alu_if.port_out;
+        end
+    end
 
     /*************************
     * Register File Writeback
@@ -352,13 +368,18 @@ module stage4_execute_stage (
     assign fw_if.rs2_e = rf_if.rs2;
 
     assign hazard_if.pc_e = ex_in.if_out.pc;
-    assign hazard_if.ex_busy = (rv32m_busy && ex_in.ctrl_out.rv32m_control.select) | vex_stall; // Add & conditions here for other FUs that can stall
+    assign hazard_if.ex_busy = (!rv32m_done && ex_in.ctrl_out.rv32m_control.select) | vex_stall; // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = ex_in.if_out.valid;
     assign hazard_if.velem_num_e = ex_in.vctrl_out.vuop_num << 2;
     assign hazard_if.vvalid_e = ex_in.vctrl_out.vvalid;
     assign hazard_if.not_interruptible = ex_in.vctrl_out.not_interruptible;
     assign hazard_if.keep_vstart_e = ex_in.vctrl_out.keep_vstart;
 
+    // CSR Read-only determination
+    // No write occurs if CSRRS/C(I) with a statically-zero source operand
+    logic csr_read_only;
+    assign csr_read_only = (ex_in.ctrl_out.csr_clr || ex_in.ctrl_out.csr_set)
+                            && ((ex_in.ctrl_out.csr_imm && ex_in.ctrl_out.zimm == 5'b0) || rf_if.rs1 == 5'b0);
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
@@ -388,7 +409,7 @@ module stage4_execute_stage (
                     ex_mem_if.ex_mem_reg.csr_clr        <= ex_in.ctrl_out.csr_clr;
                     ex_mem_if.ex_mem_reg.csr_set        <= ex_in.ctrl_out.csr_set;
                     ex_mem_if.ex_mem_reg.csr_imm        <= ex_in.ctrl_out.csr_imm;
-                    ex_mem_if.ex_mem_reg.csr_read_only  <= (rf_if.rs1 == '0) || (ex_in.ctrl_out.zimm == '0);
+                    ex_mem_if.ex_mem_reg.csr_read_only  <= csr_read_only;
                     ex_mem_if.ex_mem_reg.breakpoint     <= ex_in.ctrl_out.breakpoint;
                     ex_mem_if.ex_mem_reg.ecall_insn     <= ex_in.ctrl_out.ecall_insn;
                     ex_mem_if.ex_mem_reg.ret_insn       <= ex_in.ctrl_out.ret_insn;

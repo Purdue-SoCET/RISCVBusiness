@@ -30,7 +30,7 @@ module rv32m_enabled (
     input rv32m_pkg::rv32m_op_t operation,
     input [31:0] rv32m_a,
     input [31:0] rv32m_b,
-    output logic rv32m_busy,
+    output logic rv32m_done,
     output logic [31:0] rv32m_out
 );
 
@@ -73,7 +73,7 @@ module rv32m_enabled (
             op_b_save      <= '0;
             //is_signed_save <= '0;
             operation_save <= MUL;
-        end else if (operand_diff) begin
+        end else if (rv32m_start && rv32m_done) begin
             op_a_save      <= rv32m_a;
             op_b_save      <= rv32m_b;
             //is_signed_save <= is_signed_curr;
@@ -151,38 +151,38 @@ module rv32m_enabled (
             // take at least 1 extra cycle if we aren't reusing a value.
             casez(operation)
                 MUL: begin
-                    rv32m_busy = operand_diff || !mul_finished;
+                    rv32m_done = !operand_diff || mul_finished;
                     rv32m_out  = product[WORD_SIZE-1:0];
                 end
 
                 MULH, MULHU, MULHSU: begin
-                    rv32m_busy = operand_diff || !mul_finished;
+                    rv32m_done = !operand_diff || mul_finished;
                     rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
                 end
 
                 // TODO: Is there a better way to decode this? Lots of repetition.
                 DIV: begin
-                    rv32m_busy = operand_diff || (!div_finished && !div_zero && !overflow);
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
                     rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
                 end
 
                 DIVU: begin
-                    rv32m_busy = operand_diff || (!div_finished && !div_zero && !overflow);
-                    rv32m_out  = div_zero ? 32'h7fff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
                 end
 
                 REM, REMU: begin
-                    rv32m_busy = operand_diff || (!div_finished && !div_zero && !overflow);
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
                     rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
                 end
 
                 default: begin
-                    rv32m_busy = 1'b0;
+                    rv32m_done = 1'b1;
                     rv32m_out = 32'b0; // TODO: Should this return BAD3?
                 end
             endcase
         end else begin
-            rv32m_busy = 1'b0;
+            rv32m_done = 1'b1;
             rv32m_out = 32'b0;
         end
     end

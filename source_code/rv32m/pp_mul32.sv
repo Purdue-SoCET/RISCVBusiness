@@ -275,7 +275,7 @@ module pp_mul32 (
     flex_counter_mul #(2) FC (
         .clk(CLK),
         .n_rst(nRST),
-        .clear(start),
+        .clear(start && state == IDLE),
         .count_enable(count_ena),
         .rollover_val(2'd2),
         .count_out(count),
@@ -309,19 +309,6 @@ module pp_mul32 (
     end
 
     always_comb begin
-        /*
-        next_state = state;
-        case (state)
-            IDLE: begin
-                if (start)
-                    next_state = START;
-            end
-            START: begin
-                if (finished)
-                    next_state = IDLE;
-            end
-        endcase
-        */
         next_state = state;
         if (state == IDLE && start) begin
             next_state = START;
@@ -333,15 +320,7 @@ module pp_mul32 (
     end
 
     always_comb begin
-        count_ena = 0;
-        case (state)
-            IDLE: begin
-                count_ena = 0;
-            end
-            START: begin
-                count_ena = ~finished;
-            end
-        endcase
+        count_ena = state == START && !finished;
     end
 
 endmodule

@@ -196,8 +196,8 @@ module stage4_mem_stage (
     * Writeback Muxing *
     *******************/
     assign ex_mem_if.brj_addr = ex_mem_if.ex_mem_reg.brj_addr;
-    assign ex_mem_if.reg_write = (ex_mem_if.ex_mem_reg.reg_write & (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_SCALAR))
-                                 | ex_mem_if.vexmem.sregwen;
+    assign ex_mem_if.reg_write = ((ex_mem_if.ex_mem_reg.reg_write & (ex_mem_if.ex_mem_reg.rd_m.regclass == RC_SCALAR))
+                                 | ex_mem_if.vexmem.sregwen) && !hazard_if.suppress_data; // suppress reg write if load suppressed
     assign ex_mem_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign ex_mem_if.vwb.vd = ex_mem_if.vexmem.vd_sel.regidx;
 

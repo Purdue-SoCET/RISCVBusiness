@@ -7,7 +7,8 @@ package stage4_types_pkg;
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
     import rv32m_pkg::*;
-    import rv32v_types_pkg::*; 
+    import rv32b_pkg::*;
+    import rv32v_types_pkg::*;
 
     typedef struct packed {
         logic valid;
@@ -119,6 +120,7 @@ package stage4_types_pkg;
 
         // Extension control signals
         rv32m_decode_t rv32m_control;
+        rv32b_decode_t rv32b_control;
 
         // RF interface signals
         regsel_t rs1;
