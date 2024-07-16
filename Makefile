@@ -61,14 +61,12 @@ default:
 	$(USAGE)
 
 ##
-# Define config and core targets (varset.%) here
+# Define config (varset.%) here
 varset.s:
 	$(eval CFG_FILE := example.yml)
-	$(eval CORE := RISCVBusiness)
 
 varset.v:
 	$(eval CFG_FILE := rvv.rvbcfg.yml)
-	$(eval CORE := RISCVBusiness-V)
 ##
 
 config:
