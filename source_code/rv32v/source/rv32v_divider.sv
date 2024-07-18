@@ -35,7 +35,7 @@ module rv32v_divider (
 );
 
     word_t quotient, remainder;
-    logic start, finished, busy;
+    logic start, finished, busy, prev_finished;
 
     radix4_divider VLANE_DIV (
         .CLK,
@@ -50,7 +50,7 @@ module rv32v_divider (
     );
 
     assign vdiv_out.vd_res = (vdiv_in.vdivremainder) ? remainder : quotient;
-    assign start = vdiv_in.vdiv_en & ~busy;
+    assign start = vdiv_in.vdiv_en & ~prev_finished;
     assign vdiv_out.vdiv_busy = start | (busy & ~finished);
 
     always_ff @(posedge CLK, negedge nRST) begin
@@ -60,6 +60,16 @@ module rv32v_divider (
             busy <= 1;
         end else if (finished) begin
             busy <= 0;
+        end
+    end
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (~nRST) begin
+            prev_finished <= 0;
+        end else if (vdiv_in.stall | vdiv_in.flush) begin
+            prev_finished <= 0;
+        end else begin
+            prev_finished <= finished;
         end
     end
 

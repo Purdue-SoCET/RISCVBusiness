@@ -168,7 +168,7 @@ module rv32m_enabled (
 
                 DIVU: begin
                     rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    rv32m_out  = div_zero ? 32'h7fff_ffff : (overflow ? 32'h8000_0000 : quotient);
                 end
 
                 REM, REMU: begin
