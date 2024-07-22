@@ -1,6 +1,7 @@
 # ISA Configurations
 isa_params:  
   xlen : 32
+  pmp_napot_gran : 16
 
 # Microarchitectural Configurations
 microarch_params:

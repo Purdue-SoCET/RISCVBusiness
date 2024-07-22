@@ -12,6 +12,7 @@
     #define EXT_ADDR_CLEAR  0xFFFFFFF8
     #define MAGIC_ADDR      0xFFFFFFFC
     
+    #define G 16
 
     void print(char *string);
     void put_uint32_hex(uint32_t hex);

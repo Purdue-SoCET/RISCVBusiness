@@ -4,7 +4,6 @@
 extern volatile int flag;
 
 #define BAD_PMP_ADDR 0x40000000 // This is a 32-bit address
-#define G 4
 volatile uint32_t *bad_pmp_addr = (uint32_t*) BAD_PMP_ADDR;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
@@ -54,10 +53,14 @@ int main() {
 
     // 3. Test PMP, NAPOT with L register
     asm volatile("csrc mstatus, %0" : : "r" (mstatus)); // clear mstatus.mprv
+    // print("clear mstatus.mprv\n");
     pmp_cfg = 0x00000098; // set pmpcfg0.pmp0cfg to (L, NAPOT, no RWX)
     asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
+    // print("set pmpcfg0.pmp0cfg to (L, NAPOT, no RWX)\n");
     *bad_pmp_addr = 0x0987FEDC; // should fail
+    // print("*bad_pmp_addr = 0x0987FEDC;\n");
     *(bad_pmp_addr + 4) = 0x0987FEDC; //should fail
+    // print("*(bad_pmp_addr + 4) = 0x0987FEDC;\n");
 
     return 0;
 }
