@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
     Verilated::traceEverOn(true);
     VerilatedFstC m_trace;
     dut.trace(&m_trace, 5);
-    m_trace.open("waveform.vcd");
+    m_trace.open("waveform.fst");
 
     mtimecmp = 0xFFFFFFFFFFFFFFFF; // Default to a massive value
 
