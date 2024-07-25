@@ -7,7 +7,8 @@ module rv32v_vfu(
     input word_t vopA, vopB, vopC,
     input logic mask_bit, 
     input vexec_t vop, 
-    input vsew_t vsew, 
+    input vsew_t vsew,
+    input logic vmem_use_stall,
 
     output word_t vres,
     output logic vfu_stall
@@ -44,8 +45,8 @@ assign vmul_in = '{
     sign: vop.vsigntype,
     vmul_widen: vop.vmulwiden,
     vmul_ret_high: vop.vmulrethigh,
-    stall: 0,  // TODO
-    flush: 0 // TODO
+    vmem_use_stall: vmem_use_stall,
+    flush: 0 // TODO?
 };
 
 // RV32V divider signals
@@ -56,8 +57,8 @@ assign vdiv_in = '{
     vsew: vsew,
     vdivremainder: vop.vdivremainder,
     vopunsigned: vop.vopunsigned,
-    stall: 0,  // TODO
-    flush: 0 // TODO
+    vmem_use_stall: vmem_use_stall,
+    flush: 0 // TODO?
 };
 
 assign vfu_stall = ((vop.vfu == VFU_MUL) & vmul_out.vmul_busy) | ((vop.vfu == VFU_DIV) & vdiv_out.vdiv_busy);

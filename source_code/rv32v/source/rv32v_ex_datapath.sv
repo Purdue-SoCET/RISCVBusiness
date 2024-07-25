@@ -8,7 +8,7 @@ module rv32v_ex_datapath(
     input vwb_t vwb_ctrls,
     input logic[3:0] vmskset_fwd_bits,
     input logic ex_mem_stall, ex_mem_flush, 
-    input logic queue_flush, mask_stall, 
+    input logic queue_flush, mask_stall, vmem_use_stall,
     input word_t vl, vlmax,
 
     output vexmem_t vmem_in,
@@ -332,6 +332,7 @@ generate
             .vopC(vopC[k]),
             .mask_bit(mask_bits[k]),
             .vsew(vctrls.veew_src2),
+            .vmem_use_stall,
             .vop(vctrls.vexec), 
             .vres(vfu_res[k]),
             .vfu_stall(vfu_stall[k])

@@ -106,7 +106,8 @@ module stage4_execute_stage (
         .ex_mem_stall(hazard_if.ex_mem_stall),
         .ex_mem_flush(hazard_if.ex_mem_flush),
         .vl(shadow_if.vl_shadow), .vlmax(vlmax), .queue_flush(hazard_if.flush_queue),
-        .mask_stall(hazard_if.vmask_calc_stall),  
+        .mask_stall(hazard_if.vmask_calc_stall),
+        .vmem_use_stall(hazard_if.vmem_use_stall),
         
         .vmem_in(vex_out),
         .vex_stall(vex_stall)

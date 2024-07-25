@@ -21,24 +21,17 @@ RVTEST_CODE_BEGIN
 	la x3, sdat
   vle32.v v1, (x1)
   vle32.v v2, (x2)
-  nop
   vmul.vv v3, v1, v2
-  nop
 	vse32.v v3, (x3)
-	nop
 	lw x4, 0(x3)
 	lw x5, 4(x3)
 	lw x6, 8(x3)
 	lw x7, 12(x3)
-	# lw x8, 16(x3)
-	# lw x9, 20(x3)
   TEST_CASE(1, x10, 4, NOP)
 	TEST_CASE(2, x4, 20, NOP)
 	TEST_CASE(3, x5, 33, NOP)
 	TEST_CASE(4, x6, 48, NOP)
 	TEST_CASE(5, x7, 65, NOP)
-	# TEST_CASE(6, x8, 84, NOP)
-	# TEST_CASE(7, x9, 105, NOP)
 
   TEST_PASSFAIL
 

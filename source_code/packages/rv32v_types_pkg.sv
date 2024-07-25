@@ -665,7 +665,7 @@ package rv32v_types_pkg;
     sign_type_t sign;
     logic vmul_widen;
     logic vmul_ret_high;
-    logic stall;
+    logic vmem_use_stall;
     logic flush;
   } vmul_input_t;
 
@@ -681,7 +681,7 @@ package rv32v_types_pkg;
     vsew_t vsew;
     logic vdivremainder;
     logic vopunsigned;
-    logic stall;
+    logic vmem_use_stall;
     logic flush;
   } vdiv_input_t;
 

@@ -51,13 +51,13 @@ module rv32v_multiplier (
     );
 
     assign multiplicand = ((vmul_in.vmulop == VMADD) | (vmul_in.vmulop == VNMSUB)) ? vmul_in.vd_data : vmul_in.vs2_data;
-    assign start = vmul_in.vmul_en & ~busy;
+    assign start = vmul_in.vmul_en & ~vmul_in.vmem_use_stall & ~busy;
     assign vmul_out.vmul_busy = start | (busy & ~finished);
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             busy <= 0;
-        end else if (vmul_in.vmul_en & ~busy) begin
+        end else if (start) begin
             busy <= 1;
         end else if (finished) begin
             busy <= 0;

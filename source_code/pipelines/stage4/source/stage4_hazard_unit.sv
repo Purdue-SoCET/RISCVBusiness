@@ -85,6 +85,7 @@ module stage4_hazard_unit (
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren && !hazard_if.rv32c_ready; // don't wait for imem when rv32c is done early
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
     assign hazard_if.mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
+    assign hazard_if.vmem_use_stall = vex_stall;
 
     assign hazard_if.npc_sel = branch_jump;
 

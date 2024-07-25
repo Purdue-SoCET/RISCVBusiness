@@ -79,7 +79,6 @@ interface stage4_hazard_unit_if();
   logic flush_queue; 
   logic stall_queue; 
   logic is_queue_full; 
-
   
   // RVV execute signals
   logic vsetvl_ex; 
@@ -99,6 +98,7 @@ interface stage4_hazard_unit_if();
   logic not_interruptible;
   logic keep_vstart_e, keep_vstart_m;
   logic vmem_last_elem;
+  logic vmem_use_stall;
 
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
@@ -126,7 +126,7 @@ interface stage4_hazard_unit_if();
             stall_queue, flush_queue, 
             stall_decode, flush_decode,
 
-            vmask_calc_stall, intr
+            vmask_calc_stall, vmem_use_stall, intr
 
   );
 
@@ -146,7 +146,7 @@ interface stage4_hazard_unit_if();
   ); 
 
   modport execute (
-    input  ex_mem_stall, ex_mem_flush, npc_sel, mem_use_stall, flush_queue, vmask_calc_stall, 
+    input  ex_mem_stall, ex_mem_flush, npc_sel, mem_use_stall, flush_queue, vmask_calc_stall, vmem_use_stall,
     output rs1_e, rs2_e, token_ex, pc_e, valid_e, ex_busy, vsetvl_ex,
            vs1, vs2, vd_ex, vs1_used, vs2_used, vd_used, ex_mask_dep, vvalid_e, velem_num_e, not_interruptible, keep_vstart_e
   );

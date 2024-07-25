@@ -34,29 +34,35 @@ module rv32v_divider (
     output vdiv_output_t vdiv_out
 );
 
-    word_t quotient, remainder;
-    logic start, finished, busy, prev_finished;
+    word_t divisor, dividend, quotient, remainder;
+    logic start, finished, busy, prev_finished, is_signed;
+    logic overflow, div_zero;
+
+    assign divisor = vdiv_in.vs2_data;
+    assign dividend = vdiv_in.vs1_data;
+    assign is_signed = ~vdiv_in.vopunsigned;
 
     radix4_divider VLANE_DIV (
         .CLK,
         .nRST,
-        .divisor(vdiv_in.vs2_data),
-        .dividend(vdiv_in.vs1_data),
-        .is_signed(~vdiv_in.vopunsigned),
+        .divisor,
+        .dividend,
+        .is_signed,
         .start,
         .remainder,
         .quotient,
         .finished
     );
 
-    assign vdiv_out.vd_res = (vdiv_in.vdivremainder) ? remainder : quotient;
-    assign start = vdiv_in.vdiv_en & ~prev_finished;
+    assign start = (vdiv_in.vdiv_en & ~vdiv_in.vmem_use_stall & ~prev_finished) & ~(div_zero | overflow);
     assign vdiv_out.vdiv_busy = start | (busy & ~finished);
+    assign overflow = (dividend == 32'h8000_0000) & (divisor == 32'hffff_ffff) & is_signed;
+    assign div_zero = (divisor == 32'h0);
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             busy <= 0;
-        end else if (vdiv_in.vdiv_en & ~busy) begin
+        end else if (start & ~busy) begin
             busy <= 1;
         end else if (finished) begin
             busy <= 0;
@@ -66,11 +72,22 @@ module rv32v_divider (
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
             prev_finished <= 0;
-        end else if (vdiv_in.stall | vdiv_in.flush) begin
+        end else if (vdiv_in.vmem_use_stall | vdiv_in.flush) begin
             prev_finished <= 0;
         end else begin
             prev_finished <= finished;
         end
+    end
+
+    // Result
+    always_comb begin
+        if (vdiv_in.vdivremainder)
+            vdiv_out.vd_res = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
+        else
+            if (is_signed)
+                vdiv_out.vd_res = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+            else
+                vdiv_out.vd_res = div_zero ? 32'h7fff_ffff : (overflow ? 32'h8000_0000 : quotient);
     end
 
 endmodule // rv32v_divider
