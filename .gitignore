@@ -1,6 +1,7 @@
 # ignore the build and run files
 build/
 sim_out/
+sim_build/
 obj_dir/
 rvb_out/
 # ignore memory files from test cases
