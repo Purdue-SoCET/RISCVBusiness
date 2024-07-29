@@ -125,17 +125,11 @@ module priv_1_12_pmp (
               if ((pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A != TOR) || // If not TOR, everything is good
                   (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L)) begin   // It was TOR, and is not locked
                 // If NA4 is allowed or if lower bits are all 1's
-                // if (PMP_NAPOT_GRAN == 0 || (priv_ext_if.value_in[(NAPOT_ADDR_BITS-1):0] == {32'hFFFFFFFF}[(NAPOT_ADDR_BITS-1):0]))
                 if (PMP_NAPOT_GRAN == 0 || (&priv_ext_if.value_in[(NAPOT_ADDR_BITS-1):0]))
                   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in; // keep address as is
                 else begin
                   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = (priv_ext_if.value_in & ~((32'b1 << NAPOT_ADDR_BITS) - 1)) | ((32'b1 << (NAPOT_ADDR_BITS - 1)) - 1); // change to lowest granularity
               end
-              // if ((pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A != TOR) || // If not TOR, everything is good
-              //     ~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L) begin     // It was TOR, and is not locked
-              //   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
-              // end else if (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L) begin 
-              //   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in;
               end
             end
           end
