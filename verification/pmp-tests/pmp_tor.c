@@ -4,7 +4,7 @@
 extern volatile int flag;
 
 #define BAD_PMP_BOT 0x40000000 // This is a 32-bit address
-#define BAD_PMP_TOP 0x40000020 // This is a 32-bit address
+#define BAD_PMP_TOP ((ADDR_G(0x40000020, G + 1) + 1) << 2)
 volatile uint32_t *bad_pmp_addr_top = (uint32_t*) BAD_PMP_TOP;
 volatile uint32_t *bad_pmp_addr_bot = (uint32_t*) BAD_PMP_BOT;
 
@@ -32,9 +32,9 @@ int main() {
     // 0. Setup the instruction/stack/MMIO regions
     uint32_t pmp_cfg = 0x1F1F0000;
     asm volatile("csrw pmpcfg0, %0" : : "r" (pmp_cfg));
-    uint32_t pmp_addr = (0x80000000 >> 2) & ~((1 << 14) - 1) | ((1 << (14 - 1)) - 1);
+    uint32_t pmp_addr = ADDR_G(0x80000000, 14);
     asm volatile("csrw pmpaddr2, %0" : : "r" (pmp_addr));
-    pmp_addr = (0xFFFFFFE0 >> 2) & ~((1 << 4) - 1) | ((1 << (4 - 1)) - 1);
+    pmp_addr = ADDR_G(0xFFFFFFE0, 4);
     asm volatile("csrw pmpaddr3, %0" : : "r" (pmp_addr));
 
     // 1. Test PMP, TOR in M Mode
@@ -49,13 +49,13 @@ int main() {
     *(bad_pmp_addr_top) = 0xDEADBEEF; // should succeed
     flag -= 1;
 
-    // 2. Test PMP, NAPOT with MPRV
+    // 2. Test PMP, TOR with MPRV
     uint32_t mstatus = 0x20000; // set mstatus.mprv, mpp should be 2'b00
     asm volatile("csrw mstatus, %0" : : "r" (mstatus));
     *(bad_pmp_addr_bot + 4) = 0xABCD1234; // should fail
     *(bad_pmp_addr_top) = 0xABCD1234; // should fail
 
-    // 3. Test PMP, NAPOT with L register
+    // 3. Test PMP, TOR with L register
     asm volatile("csrc mstatus, %0" : : "r" (mstatus)); // clear mstatus.mprv
     pmp_cfg = 0x00008000; // set pmpcfg0.pmp0cfg to (L, TOR, no RWX)
     asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
