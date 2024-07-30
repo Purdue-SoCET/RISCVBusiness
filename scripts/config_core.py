@@ -31,8 +31,7 @@ C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
 
 ISA_PARAMS = \
   {
-    'xlen' : [32],
-    'pmp_napot_gran' : [x for x in range(0, 33)]
+    'xlen' : [32]
   }
 
 UARCH_PARAMS = \
@@ -139,7 +138,7 @@ def create_include(config):
       else:
         line = 'localparam '
         # xlen will be an integer in include file, so no quotes needed
-        if 'xlen' == isa_param or 'pmp_napot_gran' == isa_param:
+        if 'xlen' == isa_param:
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
