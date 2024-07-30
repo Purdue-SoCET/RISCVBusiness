@@ -1,0 +1,31 @@
+CAPI=2:
+name: ::mul16:1.0.0
+description: mul16 test files
+
+filesets:
+  rtl:
+    files:
+      - vedic_mul16.sv
+      - mul8.sv
+      - carry_save_adder.sv
+      - full_adder.sv
+    file_type: systemVerilogSource
+  tb:
+    files:
+      - tb_mul16.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+        - rtl
+        - tb
+    toplevel: tb_mul16
+    tools:
+        verilator:
+            verilator_options:
+                - "--timing"
+                - "--main"
+                - "--trace-fst"
+
+
