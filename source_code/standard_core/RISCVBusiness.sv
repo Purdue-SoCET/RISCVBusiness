@@ -53,7 +53,7 @@ module RISCVBusiness #(
     risc_mgmt_if rm_if ();
     predictor_pipeline_if predict_if ();
     prv_pipeline_if prv_pipe_if ();
-    cache_control_if cc_if ();
+    cache_control_if control_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
 
@@ -74,7 +74,7 @@ module RISCVBusiness #(
         .dgen_bus_if(tspp_dcache_gen_bus_if),
         .prv_pipe_if(prv_pipe_if),
         .predict_if(predict_if),
-        .cc_if(cc_if),
+        .cc_if(control_if),
         .sparce_if(sparce_if),
         .rv32cif(rv32cif),
         .halt(halt),
@@ -122,6 +122,7 @@ module RISCVBusiness #(
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
+        .control_if(control_if),
         .i_cache_coherency_if(i_cache_coherency_if),
         .d_cache_coherency_if(d_cache_coherency_if),
         .abort_bus(abort_bus)
