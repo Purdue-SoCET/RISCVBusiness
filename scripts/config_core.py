@@ -25,6 +25,7 @@
 import yaml
 import argparse 
 import sys
+from math import log2
 
 VH_FILE = 'source_code/include/component_selection_defines.vh'
 C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
@@ -32,7 +33,7 @@ C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
 ISA_PARAMS = \
   {
     'xlen' : [32],
-    'pmp_napot_gran' : [x for x in range(0, 33)]
+    'pmp_minimum_granularity' : [(2 ** x) for x in range(2, 16)]
   }
 
 UARCH_PARAMS = \
@@ -136,9 +137,12 @@ def create_include(config):
         sys.exit(err)
       else:
         line = 'localparam '
-        # xlen & pmp_napot_gran will be an integer in include file, so no quotes needed
-        if 'xlen' == isa_param or 'pmp_napot_gran' == isa_param:
+        # xlen & pmp_minimum_granularity will be an integer in include file, so no quotes needed
+        if 'xlen' == isa_param:
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
+        elif 'pmp_minimum_granularity' == isa_param:
+          granularity = int(log2(isa_params[isa_param]) - 2) # log2(2 ** (G + 2)) - 2
+          line += isa_param.upper() + ' = ' + str(granularity)
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         line += ';\n'

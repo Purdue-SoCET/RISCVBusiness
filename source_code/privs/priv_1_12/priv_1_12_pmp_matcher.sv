@@ -35,7 +35,7 @@ module priv_1_12_pmp_matcher(
   output logic match               // did the config match?
 );
 
-  localparam NAPOT_ADDR_BITS = PMP_NAPOT_GRAN == 0 ? 1 : PMP_NAPOT_GRAN;
+  localparam NAPOT_ADDR_BITS = PMP_MINIMUM_GRANULARITY == 0 ? 1 : PMP_MINIMUM_GRANULARITY;
   localparam NAPOT_ADDR_GRAN = NAPOT_ADDR_BITS - 1;
   localparam NAPOT_MATCHES   = XLEN - NAPOT_ADDR_GRAN + 1; // 32 - (granularity) + 1 bit for all 1's
 

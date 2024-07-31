@@ -35,7 +35,7 @@ module priv_1_12_pmp (
   import machine_mode_types_1_12_pkg::*;
   import rv32i_types_pkg::*;
 
-  localparam NAPOT_ADDR_BITS = PMP_NAPOT_GRAN == 0 ? 1 : PMP_NAPOT_GRAN;
+  localparam NAPOT_ADDR_BITS = PMP_MINIMUM_GRANULARITY == 0 ? 1 : PMP_MINIMUM_GRANULARITY;
 
   pmpcfg_t [3:0] pmp_cfg_regs, nxt_pmp_cfg;
   pmpaddr_t [15:0] pmp_addr_regs, nxt_pmp_addr;
@@ -87,7 +87,7 @@ module priv_1_12_pmp (
           end
 
           // Remove NA4 with granularities > 0
-          if (PMP_NAPOT_GRAN != 0) begin
+          if (PMP_MINIMUM_GRANULARITY != 0) begin
             if (new_cfg[0].A == NA4)
               new_cfg[0].A = NAPOT;
             if (new_cfg[1].A == NA4)
@@ -125,7 +125,7 @@ module priv_1_12_pmp (
               if ((pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A != TOR) || // If not TOR, everything is good
                   (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L)) begin   // It was TOR, and is not locked
                 // If NA4 is allowed or if lower bits are all 1's
-                if (PMP_NAPOT_GRAN == 0 || (&priv_ext_if.value_in[(NAPOT_ADDR_BITS-1):0]))
+                if (PMP_MINIMUM_GRANULARITY == 0 || (&priv_ext_if.value_in[(NAPOT_ADDR_BITS-1):0]))
                   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in; // keep address as is
                 else begin
                   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = (priv_ext_if.value_in & ~((32'b1 << NAPOT_ADDR_BITS) - 1)) | ((32'b1 << (NAPOT_ADDR_BITS - 1)) - 1); // change to lowest granularity
