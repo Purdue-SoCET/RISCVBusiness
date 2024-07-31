@@ -15,7 +15,7 @@ module vedic_mul16(
     input logic [1:0] is_signed,
     input logic start,
     input logic is_simd,
-    input logic [5:0] simd_signed,
+    input logic [7:0] simd_signed,
     output logic finished,
     output logic [31:0] product,
     output logic [15:0] simd_product3,
@@ -74,10 +74,10 @@ always_comb begin
         end
     end
     else begin
-        vedic_is_signed[0] = is_signed;
-        vedic_is_signed[1] = simd_signed[1:0];
-        vedic_is_signed[2] = simd_signed[3:2];
-        vedic_is_signed[3] = simd_signed[5:4];
+        vedic_is_signed[0] = simd_signed[1:0];
+        vedic_is_signed[1] = simd_signed[3:2];
+        vedic_is_signed[2] = simd_signed[5:4];
+        vedic_is_signed[3] = simd_signed[7:6];
 
         multiplicands[0] = multiplicand[15:8];
         multipliers[0]   = multiplicand[7:0];

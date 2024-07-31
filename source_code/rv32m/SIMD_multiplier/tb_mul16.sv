@@ -7,7 +7,7 @@ logic CLK = 0;
 logic nRST;
 logic [15:0] multiplicand, multiplier;
 logic [1:0] is_signed;
-logic [5:0] simd_signed;
+logic [7:0] simd_signed;
 logic start;
 logic is_simd;
 logic finished;
@@ -124,7 +124,7 @@ reset_inputs();
 
 // Test SIMD
 is_simd = 1'b1;
-simd_signed = {2'b11, 2'b10, 2'b01};
+simd_signed = {2'b11, 2'b10, 2'b01, 2'b00};
 multiplicand = {8'd30, 8'd30};
 multiplier   = {8'd10, -8'd50};
 simd_multiplicand3 = -8'd50;
