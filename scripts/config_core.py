@@ -30,10 +30,45 @@ from math import log2
 VH_FILE = 'source_code/include/component_selection_defines.vh'
 C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
 
+PMP_MINIMUM_GRANULARITY = \
+  {
+    '4'    :  0,
+    '8'    :  1,
+    '16'   :  2,
+    '32'   :  3,
+    '64'   :  4,
+    '128'  :  5,
+    '256'  :  6,
+    '512'  :  7,
+    '1K'   :  8,
+    '2K'   :  9,
+    '4K'   : 10,
+    '8K'   : 11,
+    '16K'  : 12,
+    '32K'  : 13,
+    '64K'  : 14,
+    '128K' : 15,
+    '256K' : 16,
+    '512K' : 17,
+    '1M'   : 18,
+    '2M'   : 19,
+    '4M'   : 20,
+    '8M'   : 21,
+    '16M'  : 22,
+    '32M'  : 23,
+    '64M'  : 24,
+    '128M' : 25,
+    '256M' : 26,
+    '512M' : 27,
+    '1G'   : 28,
+    '2G'   : 29,
+    '4G'   : 30,
+  }
+
 ISA_PARAMS = \
   {
     'xlen' : [32],
-    'pmp_minimum_granularity' : [(2 ** x) for x in range(2, 16)]
+    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys())
   }
 
 UARCH_PARAMS = \
@@ -141,8 +176,7 @@ def create_include(config):
         if 'xlen' == isa_param:
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
         elif 'pmp_minimum_granularity' == isa_param:
-          granularity = int(log2(isa_params[isa_param]) - 2) # log2(2 ** (G + 2)) - 2
-          line += isa_param.upper() + ' = ' + str(granularity)
+          line += isa_param.upper() + ' = ' + str(PMP_MINIMUM_GRANULARITY[isa_params[isa_param]])
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         line += ';\n'
