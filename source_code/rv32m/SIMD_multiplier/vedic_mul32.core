@@ -1,0 +1,32 @@
+CAPI=2:
+name: ::mul32:1.0.0
+description: mul32 test files
+
+filesets:
+  rtl:
+    files:
+      - vedic_mul32.sv
+      - vedic_mul16.sv
+      - mul8.sv
+      - carry_save_adder.sv
+      - full_adder.sv
+    file_type: systemVerilogSource
+  tb:
+    files:
+      - tb_mul32.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+        - rtl
+        - tb
+    toplevel: tb_mul32
+    tools:
+        verilator:
+            verilator_options:
+                - "--timing"
+                - "--main"
+                - "--trace-fst"
+
+

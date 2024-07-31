@@ -14,11 +14,12 @@ module mul8 (
     logic [15:0] result, result2,
                  temp_product, temp_product2;
     logic [7:0] multiplicand_reg, multiplier_reg,
-                multiplicand_mod, multiplier_mod;
+                multiplicand_mod, multiplier_mod,
+                mul_plus2, mul_minus2, mul_minus1;
     logic [1:0] is_signed_reg;
     logic adjust_product;
     logic [15:0] partial_product[4], pp[4], pp0, pp1, pp2, pp3;
-    logic [8:0] modified_in, mul_plus2, mul_minus2, mul_minus1;
+    logic [8:0] modified_in;
     logic [15:0] sum0, sum1,
                  cout0, cout1;
     integer i, j;
@@ -47,9 +48,9 @@ module mul8 (
                             ^ (is_signed_reg[1] & multiplicand_reg[7]);
 
     // For bit pair recoding part
-    assign mul_plus2 = {multiplicand_mod, 1'b0};
+    assign mul_plus2 = multiplicand_mod << 1;
     assign mul_minus2 = ~mul_plus2 + 1;
-    assign mul_minus1 = ~{1'b0, multiplicand_mod} + 1;
+    assign mul_minus1 = ~multiplicand_mod + 1;
     assign modified_in = {multiplier_mod, 1'b0};
 
     // STAGE 1: BOOTH ENCODER
@@ -62,10 +63,10 @@ module mul8 (
                 3'b000: pp[i/2] = '0;  //0
                 3'b001: pp[i/2] = {8'd0, multiplicand_mod};  // +1M
                 3'b010: pp[i/2] = {8'd0, multiplicand_mod};  // +1M
-                3'b011: pp[i/2] = {7'd0, mul_plus2};  // +2M
-                3'b100: pp[i/2] = {{7{1'b1}}, mul_minus2};  // -2M
-                3'b101: pp[i/2] = {{7{1'b1}}, mul_minus1};  // -1M
-                3'b110: pp[i/2] = {{7{1'b1}}, mul_minus1};  // -1M
+                3'b011: pp[i/2] = {8'd0, mul_plus2};  // +2M
+                3'b100: pp[i/2] = {{8{1'b1}}, mul_minus2};  // -2M
+                3'b101: pp[i/2] = {{8{1'b1}}, mul_minus1};  // -1M
+                3'b110: pp[i/2] = {{8{1'b1}}, mul_minus1};  // -1M
                 3'b111: pp[i/2] = '0;
             endcase
         end
@@ -113,8 +114,8 @@ module mul8 (
     // STAGE 3: Result
     assign temp_product = cout1 + sum1;
     assign temp_product2 = is_signed_reg[0] == 0 && multiplier_reg[7] ?
-                                temp_product + ({multiplicand_mod, 8'd0}): temp_product; // plus extra 1M
-    // assign temp_product2 = temp_product;
+                                temp_product + ({8'd0,multiplicand_mod})
+                                : temp_product; // plus extra 1M
     assign result = adjust_product ? (~temp_product2) + 1 : temp_product2;
     assign result2 = state == FINISH ? result : '0;
     assign product = result2;

@@ -10,6 +10,7 @@ logic [1:0] is_signed;
 logic start;
 logic finished;
 logic [15:0] product;
+logic overflow;
 
 mul8 DUT(.CLK(CLK),
          .nRST(nRST),
@@ -18,7 +19,8 @@ mul8 DUT(.CLK(CLK),
          .is_signed(is_signed),
          .start(start),
          .finished(finished),
-         .product(product)); 
+         .product(product)
+         ); 
 
 // SOME TEST SIGNALS
 logic tb_expected_finished;
@@ -55,43 +57,54 @@ nRST = 1'b1;
 multiplicand = 8'b00000011; // 3
 multiplier   = 8'b00010000; // 16
 start        = 1'b1;
+tb_expected_product = multiplicand * multiplier;
 
 @(posedge CLK);
 @(posedge CLK);
 @(posedge CLK);
+$display("expected result = %d, result = %d", tb_expected_product, product);
 reset_inputs();
 
 // Test signed x unsigned
-multiplicand = 8'b11111101; // -3
-multiplier   = 8'b00010000; // 16
+multiplicand = -8'd3;
+multiplier   = 8'b10111011; // 16
 is_signed    = 2'b10;
 start        = 1'b1;
+tb_expected_product = $signed(multiplicand) * 187;
 
 @(posedge CLK);
 @(posedge CLK);
 @(posedge CLK);
+$display("expected result = %d, result = %d", $signed(tb_expected_product), $signed(product));
 reset_inputs();
 
 // Test unsigned x signed
-multiplicand = 8'b11111101; // 253
-multiplier   = 8'b10010000; // -112 
+multiplicand = 8'd148;
+multiplier   = 8'd11; 
 is_signed    = 2'b01;
 start        = 1'b1;
+tb_expected_product = $unsigned(multiplicand) * $signed(multiplier);
+
 
 @(posedge CLK);
 @(posedge CLK);
 @(posedge CLK);
+$display("%d, %d", $signed(multiplicand), $signed(multiplier));
+$display("expected result = %d, result = %d", $signed(tb_expected_product), $signed(product));
 reset_inputs();
 
 // Test signed x signed
-multiplicand = 8'b11111101; // -3
-multiplier   = 8'b10010000; // -112
+multiplicand = 8'b01111101; // 125
+multiplier   = 8'b10010000; // -112 144
 is_signed    = 2'b11;
 start        = 1'b1;
+tb_expected_product = $signed(multiplicand) * $signed(multiplier);
 
 @(posedge CLK);
 @(posedge CLK);
 @(posedge CLK);
+$display("%d, %d", $signed(multiplicand), $signed(multiplier));
+$display("expected result = %d, result = %d", $signed(tb_expected_product), $signed(product));
 reset_inputs();
 
 $finish;
