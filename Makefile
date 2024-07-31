@@ -31,6 +31,10 @@ TOP_ENTITY := RISCVBusiness
 
 HEADER_FILES := -I$(RISCV)/include
 
+ISA ?= 
+ARCH ?= 
+MARCH ?= 
+TEST_FOLDER ?= 
 
 define USAGE
 @echo "----------------------------------------------------------------------"
@@ -55,6 +59,8 @@ config:
 	@echo " Running config_core"
 	@echo "----------------------"
 	@python3 scripts/config_core.py example.yml
+	@mkdir -p waveforms
+	@chmod +x run_tests_verilator.sh
 
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
@@ -79,6 +85,17 @@ lint: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
 	@echo "Lint finished, no errors found"
 
+clean_riscv_tests: 
+	cd ./riscv-tests/isa && find . -maxdepth 1 -type f \( -name 'rv32*' -o -name 'rv64*' \) -exec rm -f {} +
+
+# You'll need to edit the run_riscv_tests.py file to add your EXT
+run_riscv_tests: clean_riscv_tests
+	./setup-riscv-tests.sh 
+	python run_riscv_tests.py --isa $(ISA)
+
+run_tests_verilator: 
+	./run_tests_verilator.sh $(TEST_FOLDER) $(ARCH) $(MARCH)
+
 clean:
 	rm -rf build
 	rm -rf rvb_out
@@ -86,3 +103,6 @@ clean:
 veryclean:
 	rm -rf fusesoc_libraries
 	rm fusesoc.conf
+
+# move_waveforms: 
+# 	scp -r ./waveforms/<waveforms_path> <username>@<server>:~/waveforms
