@@ -33,6 +33,8 @@ TOP_ENTITY := RISCVBusiness
 
 HEADER_FILES := -I$(RISCV)/include
 
+VERILOG_FILE := $(RISCV)/rv32m/mul8.sv
+VERILOG_TB_FILE := $(ROOT)/verification/self-tests/RV32M/tb_mul8.sv
 
 define USAGE
 @echo "----------------------------------------------------------------------"
@@ -64,20 +66,20 @@ test_asm_file:
 	./rvb_out/sim-verilator/Vtop_core sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
 
 
-# test_verilog_file: $(VERILOG_FILE) $(VERILOG_TB_FILE)
-# 	@echo "----------------------------------------------------------------"
-# 	@echo "Creating executable for source compilation ....."
-# 	@echo "----------------------------------------------------------------\n\n"
-# 	@mkdir -p ./sim_build/
-# 	@ iverilog -g2012 -gspecify -Tmax -v -o ./sim_build/sim_file.vvp $(VERILOG_FILE) $(VERILOG_TB_FILE)
-# 	@echo "\n\n"
-# 	@echo "Compilation complete\n\n"
+test_verilog_file: $(VERILOG_FILE) $(VERILOG_TB_FILE)
+	@echo "----------------------------------------------------------------"
+	@echo "Creating executable for source compilation ....."
+	@echo "----------------------------------------------------------------\n\n"
+	@mkdir -p ./sim_build/
+	@ iverilog -g2012 -gspecify -Tmax -v -o ./sim_build/sim_file.vvp $(VERILOG_FILE) $(VERILOG_TB_FILE)
+	@echo "\n\n"
+	@echo "Compilation complete\n\n"
 
-# 	@echo "----------------------------------------------------------------"
-# 	@echo "Simulating source ....."
-# 	@echo "----------------------------------------------------------------"
-# 	@vvp ./sim_build/sim_file.vvp
-# 	@ gtkwave dump.vcd
+	@echo "----------------------------------------------------------------"
+	@echo "Simulating source ....."
+	@echo "----------------------------------------------------------------"
+	@vvp ./sim_build/sim_file.vvp
+	@ gtkwave dump.vcd
 
 
 verilate: config
