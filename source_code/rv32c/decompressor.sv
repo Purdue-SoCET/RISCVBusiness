@@ -24,7 +24,8 @@
 
 `include "decompressor_if.vh"
 module decompressor (
-    decompressor_if.dcpr dcpr_if
+    decompressor_if.dcpr dcpr_if,
+    multi_instruction_handler_if.dcpr mih_if
 );
     //Formatting of instruction
     logic c0_format, c1_format, c2_format; 
@@ -38,7 +39,6 @@ module decompressor (
         c_lw, c_sw, c_lwsp, c_swsp, c_flw, c_fsw, c_flwsp, c_fswsp;
     logic c_j, c_jal, c_jr, c_jalr, c_beqz, c_bnez;
     logic c_li, c_lui, c_nop, c_ebreak;
-    logic c_push, c_pop, c_popretz, c_popret, c_mvsa01, c_mva01;
 
     //Type of instruction
     logic rtype, itype, stype, btype, utype, jtype, mtype; //mtype will represent multiple register moves.
@@ -52,22 +52,6 @@ module decompressor (
     logic [11:0] imm_i;
     logic [10:0] imm_j;
     logic [ 7:0] imm_b;
-
-    //Push/Pop variables
-    logic [3:0] rlist;
-    logic [5:0] sp_adjust; 
-    logic [2:0] r1s, r2s; 
-    logic [11:0] current_offset;
-    typedef enum logic[2:0] {IDLE, SENDING_HAZARD_ON, SENDING_HAZARD_OFF, ENDING, UNFREEZE, HAZARD_ACTIVE} State;
-
-    //Push/Pop ROM variables
-    logic [31:0] push_rom_inst32;
-    logic [31:0] pop_rom_inst32;
-    logic [31:0] mvsa0_rom_inst32;
-    logic [31:0] mvsa1_rom_inst32;
-    logic [31:0] mvas0_rom_inst32;
-    logic [31:0] mvas1_rom_inst32;
-
     //Registers
     logic [4:0] rd, rs2;
 
@@ -77,6 +61,7 @@ module decompressor (
     logic [11:0] offset, offset_df;
     logic [20:0] jump_offset;
     logic [12:0] branch_offset;
+
 
     //Format
     assign c0_format = dcpr_if.inst16[1:0] == 2'b00;
@@ -141,12 +126,12 @@ module decompressor (
                    & (dcpr_if.inst16[11:7] != 5'd2) & c1_format;
 
     //Push/Pop Instructions
-    assign c_push = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11000);
-    assign c_pop = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11010);
-    assign c_popretz = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11100);
-    assign c_popret = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11110);
-    assign c_mvsa01 = upper3_5 & c2_format & (dcpr_if.inst16[12:10] == 3'b011) & (dcpr_if.inst16[6:5] == 3'b01);
-    assign c_mva01 = upper3_5 & c2_format & (dcpr_if.inst16[12:10] == 3'b011) & (dcpr_if.inst16[6:5] == 3'b11)
+    assign mih_if.c_push = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11000);
+    assign mih_if.c_pop = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11010);
+    assign mih_if.c_popretz = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11100);
+    assign mih_if.c_popret = upper3_5 & c2_format & (dcpr_if.inst16[12:8] == 5'b11110);
+    assign mih_if.c_mvsa01 = upper3_5 & c2_format & (dcpr_if.inst16[12:10] == 3'b011) & (dcpr_if.inst16[6:5] == 3'b01);
+    assign mih_if.c_mva01s = upper3_5 & c2_format & (dcpr_if.inst16[12:10] == 3'b011) & (dcpr_if.inst16[6:5] == 3'b11)
     
 
     // Others
@@ -189,106 +174,6 @@ module decompressor (
     assign offset_c_df = {dcpr_if.inst16[6:5], dcpr_if.inst16[12:10]};
     assign offset_csp_df = c_fsdsp ? {dcpr_if.inst16[9:7], dcpr_if.inst16[12:10]}
                                      : {dcpr_if.inst16[4:2], dcpr_if.inst16[12], dcpr_if.inst16[6:5]};
-
-    //Push/Pop variable assignment
-    assign rlist = dcpr_if.inst16[7:4];
-    assign sp_adjust = {dcpr_if.inst16[3:2], 4'd0}; 
-    assign r1s = dcpr_if.inst16[9:7]; 
-    assign r2s = dcpr_if.inst16[4:2];
-
-    //Push/Pop State Machine
-    
-
-    //Push ROM (store)
-    always_comb begin
-        current_offset = -4; //Placeholder
-        case (rlist)
-            4'd4 : push_rom_inst32 = {current_offset[11:5], 5'd1, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //ra
-            4'd5 : push_rom_inst32 = {current_offset[11:5], 5'd8, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s0
-            4'd6 : push_rom_inst32 = {current_offset[11:5], 5'd9, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s1
-            4'd7 : push_rom_inst32 = {current_offset[11:5], 5'd18, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s2
-            4'd8 : push_rom_inst32 = {current_offset[11:5], 5'd19, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s3
-            4'd9 : push_rom_inst32 = {current_offset[11:5], 5'd20, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s4
-            4'd10 : push_rom_inst32 = {current_offset[11:5], 5'd21, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s5
-            4'd11 : push_rom_inst32 = {current_offset[11:5], 5'd22, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s6
-            4'd12 : push_rom_inst32 = {current_offset[11:5], 5'd23, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s7
-            4'd13 : push_rom_inst32 = {current_offset[11:5], 5'd24, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s8
-            4'd14 : push_rom_inst32 = {current_offset[11:5], 5'd25, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s9
-            4'd15 : push_rom_inst32 = {current_offset[11:5], 5'd26, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s10
-            default: push_rom_inst32 = {current_offset[11:5], 5'd27, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s11
-        endcase
-    end
-
-    //Pop ROM (load)
-    always_comb begin
-        case (rlist)
-            4'd4 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd1, 7'b0000011}; //ra
-            4'd5 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd8, 7'b0000011}; //s0
-            4'd6 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd9, 7'b0000011}; //s1
-            4'd7 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd18, 7'b0000011}; //s2
-            4'd8 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd19, 7'b0000011}; //s3
-            4'd9 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd20, 7'b0000011}; //s4
-            4'd10 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd21, 7'b0000011}; //s5
-            4'd11 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd22, 7'b0000011}; //s6
-            4'd12 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd23, 7'b0000011}; //s7
-            4'd13 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd24, 7'b0000011}; //s8
-            4'd14 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd25, 7'b0000011}; //s9
-            4'd15 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd26, 7'b0000011}; //s10
-            default: pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd27, 7'b0000011}; //s11
-        endcase
-    end
-
-    //MVSA ROM 0 and 1(mv into s from a)
-    always_comb begin
-        case (r1s)
-            3'd0 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd8, 7'b0110011}; //s0
-            3'd1 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd9, 7'b0110011}; //s1
-            3'd2 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd18, 7'b0110011}; //s2
-            3'd3 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd19, 7'b0110011}; //s3
-            3'd4 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd20, 7'b0110011}; //s4
-            3'd5 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd21, 7'b0110011}; //s5
-            3'd6 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd22, 7'b0110011}; //s6
-            3'd7 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd23, 7'b0110011}; //s7
-        endcase
-    end
-    always_comb begin
-        case (r2s)
-            3'd0 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd8, 7'b0110011}; //s0
-            3'd1 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd9, 7'b0110011}; //s1
-            3'd2 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd18, 7'b0110011}; //s2
-            3'd3 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd19, 7'b0110011}; //s3
-            3'd4 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd20, 7'b0110011}; //s4
-            3'd5 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd21, 7'b0110011}; //s5
-            3'd6 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd22, 7'b0110011}; //s6
-            3'd7 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd23, 7'b0110011}; //s7
-        endcase
-    end
-
-    //MVAS ROM 0 and 1(mv into a from s)
-    always_comb begin
-        case (r1s)
-            3'd0 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd8, 3'd0, 5'd10, 7'b0110011}; //s0
-            3'd1 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd9, 3'd0, 5'd10, 7'b0110011}; //s1
-            3'd2 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd18, 3'd0, 5'd10, 7'b0110011}; //s2
-            3'd3 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd19, 3'd0, 5'd10, 7'b0110011}; //s3
-            3'd4 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd20, 3'd0, 5'd10, 7'b0110011}; //s4
-            3'd5 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd21, 3'd0, 5'd10, 7'b0110011}; //s5
-            3'd6 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd22, 3'd0, 5'd10, 7'b0110011}; //s6
-            3'd7 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd23, 3'd0, 5'd10, 7'b0110011}; //s7
-        endcase
-    end
-    always_comb begin
-        case (r2s)
-            3'd0 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd8, 3'd0, 5'd11, 7'b0110011}; //s0
-            3'd1 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd9, 3'd0, 5'd11, 7'b0110011}; //s1
-            3'd2 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd18, 3'd0, 5'd11, 7'b0110011}; //s2
-            3'd3 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd19, 3'd0, 5'd11, 7'b0110011}; //s3
-            3'd4 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd20, 3'd0, 5'd11, 7'b0110011}; //s4
-            3'd5 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd21, 3'd0, 5'd11, 7'b0110011}; //s5
-            3'd6 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd22, 3'd0, 5'd11, 7'b0110011}; //s6
-            3'd7 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd23, 3'd0, 5'd11, 7'b0110011}; //s7
-        endcase
-    end
 
     
 

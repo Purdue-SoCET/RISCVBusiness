@@ -31,10 +31,14 @@ module rv32c_enabled (
 
     // Decompressor
     decompressor_if dcpr_if ();
-    decompressor DECOMPRESSOR (dcpr_if);
+    multi_instruction_handler_if mih_if ();
+    decompressor DECOMPRESSOR (.dcpr_if (dcpr_if), .mih_if(mih_if));
     assign dcpr_if.inst16 = rv32cif.inst16;
-    assign rv32cif.inst32 = dcpr_if.inst32;
     assign rv32cif.c_ena = dcpr_if.c_ena;
+
+    //Multi Instruction Handler
+    multi_instruction_handler HANDLER (.clk(clk), .n_rst(n_rst), .dcpr_if (dcpr_if), .mih_if(mih_if));
+    assign rv32cif.inst32 = mih_if.inst32;
 
     assign rv32cif.rv32c_ena = 1;
 
