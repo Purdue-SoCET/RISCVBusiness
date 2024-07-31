@@ -30,6 +30,8 @@ from math import log2
 VH_FILE = 'source_code/include/component_selection_defines.vh'
 C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
 
+# If running PMP tests, the macro G in verification/pmp-tests/utility.h will need to 
+# be updated to the corresponding value found in PMP_MINIMUM_GRANULARITY.
 PMP_MINIMUM_GRANULARITY = \
   {
     '4'    :  0,
