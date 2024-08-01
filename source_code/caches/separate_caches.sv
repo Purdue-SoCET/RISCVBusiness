@@ -36,8 +36,7 @@ module separate_caches (
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches control_if,
     cache_coherence_if.cache i_cache_coherency_if,
-    cache_coherence_if.cache d_cache_coherency_if,
-    output logic abort_bus
+    cache_coherence_if.cache d_cache_coherency_if
 );
     generate
         /* verilator lint_off width */
@@ -82,8 +81,7 @@ module separate_caches (
                 .exclusive(control_if.dcache_exclusive),
                 .flush_done(control_if.dflush_done),
                 .clear_done(control_if.dclear_done),
-                .ccif(d_cache_coherency_if),
-                .abort_bus()
+                .ccif(d_cache_coherency_if)
             );
         endcase
     endgenerate
@@ -123,7 +121,6 @@ module separate_caches (
             icache (
                 .CLK(CLK),
                 .nRST(nRST),
-                .abort_bus(abort_bus),
                 .mem_gen_bus_if(icache_mem_gen_bus_if),
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
                 .flush(control_if.icache_flush),

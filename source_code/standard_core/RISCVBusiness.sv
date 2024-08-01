@@ -40,7 +40,7 @@ module RISCVBusiness #(
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
-    output logic wfi, halt,
+    output logic wfi, halt, abort_bus,
     output cache_coherence_statistics_t dcache_statistics, icache_statistics,
     core_interrupt_if.core interrupt_if,
     bus_ctrl_if bus_ctrl_if
@@ -114,7 +114,6 @@ module RISCVBusiness #(
     );
     */
 
-    logic abort_bus;
     separate_caches sep_caches (
         .CLK(CLK),
         .nRST(nRST),
@@ -124,8 +123,7 @@ module RISCVBusiness #(
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
         .i_cache_coherency_if(i_cache_coherency_if),
-        .d_cache_coherency_if(d_cache_coherency_if),
-        .abort_bus(abort_bus)
+        .d_cache_coherency_if(d_cache_coherency_if)
     );
 
     coherency_unit #(

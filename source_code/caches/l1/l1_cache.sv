@@ -42,7 +42,7 @@ module l1_cache #(
 (
     input logic CLK, nRST,
     input logic clear, flush, reserve, exclusive,
-    output logic clear_done, flush_done, abort_bus,
+    output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
     cache_coherence_if.cache ccif //Coherency interface, connected to coherency unit
@@ -161,7 +161,7 @@ module l1_cache #(
             read_addr <= 0;
             decoded_req_addr <= 0;
             flush_req <= 0;
-            abort_bus <= 0;
+            ccif.abort_bus <= 0;
             reservation_set <= 0;
         end
         else begin
@@ -171,7 +171,7 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
-            abort_bus <= !proc_gen_bus_if.ren;
+            ccif.abort_bus <= !proc_gen_bus_if.ren && !proc_gen_bus_if.wen;
             reservation_set <= next_reservation_set;
         end
     end
@@ -376,7 +376,7 @@ module l1_cache #(
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
                 mem_gen_bus_if.wen = proc_gen_bus_if.wen;
-                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !abort_bus;
+                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !ccif.abort_bus;
                 mem_gen_bus_if.addr = read_addr;
                 sramWrite.frames[ridx].tag.valid = 0;
                 sramMask.frames[ridx].tag.valid = 0;
@@ -575,7 +575,7 @@ module l1_cache #(
                     next_state = HIT; 
                 else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
-                else if (!abort_bus && !proc_gen_bus_if.ren)
+                else if (!ccif.abort_bus && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
                     next_state = CANCEL_REQ;
             end
             WB: begin

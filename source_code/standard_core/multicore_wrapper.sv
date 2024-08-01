@@ -36,8 +36,7 @@ module multicore_wrapper #(
         .CLK(CLK),
         .nRST(nRST),
         .out_gen_bus_if(pipeline_trans_if),
-        .bcif(bus_ctrl_if),
-        .abort_bus(abort_bus)
+        .bcif(bus_ctrl_if)
     );
 
     logic [NUM_HARTS-1:0] pipeline_halts;
