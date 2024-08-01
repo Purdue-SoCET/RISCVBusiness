@@ -30,6 +30,7 @@ typedef struct {
 } cache_coherence_statistics_t;
 
 interface cache_coherence_if();
+    logic abort_bus;
     cc_end_state state_transfer;
     word_t addr;
     logic [32*BLOCK_SIZE-1:0] requested_data;
@@ -42,11 +43,11 @@ interface cache_coherence_if();
 
     modport cache(
         input  addr, state_transfer, snoop_req,
-        output valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN, snoop_busy
+        output valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN, snoop_busy, abort_bus
     );
     modport coherency_unit(
         output addr, state_transfer, snoop_req,
-        input  valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN, snoop_busy
+        input  valid, exclusive, dirty, requested_data, write_req, snoop_hit, dWEN, snoop_busy, abort_bus
     );
 endinterface
 `endif // CACHE_COHERENCE_IF_VH

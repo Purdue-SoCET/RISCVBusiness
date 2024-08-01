@@ -128,6 +128,7 @@ module coherency_unit #(
         next_coherence_statistics = coherence_statistics;
         gbif.rdata = 32'hBAD1BAD1;
         gbif.busy = 1'b1;
+        bcif.ccabort[CPUID] = ccif.abort_bus;
         bcif.ccdirty[CPUID] = 1'b0;
         bcif.ccsnoopdone[CPUID] = 1'b0;
         bcif.ccsnoophit[CPUID] = 1'b0;

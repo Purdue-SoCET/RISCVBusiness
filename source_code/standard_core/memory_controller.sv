@@ -34,14 +34,12 @@ module memory_controller #(
     input logic CLK,
     nRST,
     bus_ctrl_if.cc bcif,
-    generic_bus_if.cpu out_gen_bus_if,
-    input logic abort_bus
+    generic_bus_if.cpu out_gen_bus_if
 );
     bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2)) BUS_CTRL(
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(bcif),
-        .abort_bus(abort_bus)
+        .ccif(bcif)
     );
 
     always_comb begin

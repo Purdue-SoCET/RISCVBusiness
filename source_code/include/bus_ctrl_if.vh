@@ -89,6 +89,8 @@ interface bus_ctrl_if ();
     logic l2WEN, l2REN; 
     bus_word_t l2addr; 
     logic [3:0] l2_byte_en;
+    // Core outputs
+    logic               [CPUS-1:0] ccabort;
 
     // HACK: dstore becomes multidriven here. memory_controller expects to drive dstore but
     // this is also used when testbenching
@@ -107,7 +109,7 @@ interface bus_ctrl_if ();
     modport cc(
         input   dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state,
+                l2load, l2state, ccabort,
         output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
@@ -119,7 +121,7 @@ interface bus_ctrl_if ();
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en,
         output  dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state
+                l2load, l2state, ccabort
     ); 
 
 endinterface

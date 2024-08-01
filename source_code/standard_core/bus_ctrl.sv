@@ -30,8 +30,7 @@ module bus_ctrl #(
     parameter NONCACHE_START_ADDR = 32'hF000_0000
 )(
     input logic CLK, nRST,
-    bus_ctrl_if.cc ccif,
-    input logic abort_bus
+    bus_ctrl_if.cc ccif
 );
     // localparams/imports
     localparam CLEAR_LENGTH = $clog2(BLOCK_SIZE) + 2;
