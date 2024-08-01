@@ -585,11 +585,14 @@ module l1_cache #(
                     next_state = SNOOP;
             end
             SNOOP: begin
-                next_state = ccif.snoop_req ? SNOOP : HIT;
+                next_state = ccif.snoop_req ? SNOOP :
+                             flush_req      ? FLUSH_CACHE : HIT;
             end
             FLUSH_CACHE: begin
                 if (flush_done)
                     next_state = HIT;
+                else if (ccif.snoop_hit && !ccif.snoop_busy)
+                    next_state = SNOOP;
             end
             CANCEL_REQ: begin
                if (!mem_gen_bus_if.busy) begin
@@ -606,7 +609,7 @@ module l1_cache #(
         nflush_req = flush_req;
         if (flush)
             nflush_req = 1;
-        if (state == FLUSH_CACHE)
+        if (flush_done)
             nflush_req = 0;
     end
 
