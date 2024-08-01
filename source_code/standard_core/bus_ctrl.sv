@@ -116,7 +116,7 @@ module bus_ctrl #(
             INVALIDATE:         nstate = IDLE;
         endcase
         // handle exception
-        if (abort_bus)
+        if (ccif.ccabort[requester_cpu] && state_can_abort(state))
             nstate = IDLE;
     end
 
@@ -279,5 +279,20 @@ module bus_ctrl #(
             if (to_encode[i])
                 priorityEncode = i;
         end
+    endfunction
+
+    // Helper function to determine whether requester_cpu is properly set and
+    // can be used for abort purposes
+    function logic state_can_abort(bus_state_t state);
+    return state == SNOOP_R ||
+        state == SNOOP_RX ||
+        state == SNOOP_INV ||
+        state == TRANSFER_R ||
+        state == TRANSFER_RX ||
+        state == READ_L2 ||
+        state == BUS_TO_CACHE ||
+        state == WRITEBACK ||
+        state == WRITEBACK_MS ||
+        state == INVALIDATE;
     endfunction
 endmodule

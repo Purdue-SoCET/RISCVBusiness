@@ -122,6 +122,10 @@ module coherency_unit #(
             end
             default : next_state = IDLE; 
         endcase
+
+        if (ccif.abort_bus && state_can_abort(state)) begin
+            next_state = IDLE;
+        end
     end
 
     always_comb begin: OUTPUTLOGIC
@@ -213,5 +217,9 @@ module coherency_unit #(
     //Function to calculate the set index
     function logic [$clog2(N_SETS)-1:0] calculate_set_index(logic [31:0] address);
         return (address >> $clog2(BLOCK_SIZE)) & ((1 << $clog2(N_SETS)) - 1);;
+    endfunction
+
+    function logic state_can_abort(state_type state);
+        return state == WRITE_REQ || state == READ_REQ || state == WRITEBACK;
     endfunction
 endmodule
