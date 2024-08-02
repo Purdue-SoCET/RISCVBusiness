@@ -9,7 +9,7 @@ module rv32v_ex_datapath(
     input logic[3:0] vmskset_fwd_bits,
     input logic ex_mem_stall, ex_mem_flush, 
     input logic queue_flush, mask_stall, vmem_use_stall,
-    input word_t vl, vlmax,
+    input word_t vl, vlmax, vstride,
 
     output vexmem_t vmem_in,
     output logic vex_stall
@@ -311,6 +311,12 @@ always_comb begin
         vopA = {4{rdat2}}; 
     end
 
+    if ((vctrls.vstrided || vctrls.vunitstride) && (vctrls.vmemdren || vctrls.vmemdwen)) begin
+        vopA[0] = '0;
+        vopA[1] = vstride;
+        vopA[2] = vstride << 1;
+        vopA[3] = vstride + (vstride << 1);
+    end
 
     // override in case of segment load/store instructions indexed instructions. 
     vseg_idx_offset = vctrls.nf_counter; 
