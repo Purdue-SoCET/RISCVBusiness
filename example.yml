@@ -6,7 +6,7 @@ isa_params:
 microarch_params:
   # Branch/Jump Configurations
   br_predictor_type : "not_taken"
-  
+
   # Cache configurations
   cache_config  : "separate"
   dcache_type   : "l1"
@@ -18,7 +18,7 @@ microarch_params:
   icache_block_size : 2
   icache_assoc : 1
   noncache_start_addr : 32'hF000_0000
-  
+
   # Bus configurations
   bus_endianness      : "big"
   bus_interface_type  : "generic_bus_if"
@@ -30,8 +30,8 @@ microarch_params:
   rv32c_enabled : "disabled"
 
   # RV32V
-  rv32v_enabled : "disabled"
-  
+  rv32v_enabled : "enabled"
+
   # Halt
   infinite_loop_halts : "true"
 
@@ -41,5 +41,6 @@ microarch_params:
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:
+    - name: "rv32m"
   nonstandard_extensions:
 

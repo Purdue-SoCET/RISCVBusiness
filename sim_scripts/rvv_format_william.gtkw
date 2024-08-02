@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.118 (w)1999-2023 BSI
-[*] Wed Jun 19 15:28:00 2024
+[*] Fri Aug  2 16:33:47 2024
 [*]
-[dumpfile] "/home/asicfab/a/socet190/socet/RISCVBusiness/waveform.vcd"
-[dumpfile_mtime] "Wed Jun 19 15:25:09 2024"
-[dumpfile_size] 18048097
-[savefile] "/home/asicfab/a/socet190/socet/RISCVBusiness/rvv_format_william.gtkw"
-[timestart] 289
-[size] 1920 1020
+[dumpfile] "/home/asicfab/a/socet190/socet/RISCVBusiness/waveform.fst"
+[dumpfile_mtime] "Fri Aug  2 16:30:00 2024"
+[dumpfile_size] 2219302
+[savefile] "/home/asicfab/a/socet190/socet/RISCVBusiness/sim_scripts/rvv_format_william.gtkw"
+[timestart] 157
+[size] 1824 1080
 [pos] -1 -1
-*-5.730774 376 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+*-5.730774 309 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 [markername] AA
 [markername] BB
 [markername] CC
@@ -42,6 +42,12 @@
 [treeopen] TOP.top_core.CORE.pipeline.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.
 [treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.g_rfile_select.rf.rf_if.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[0].VFU.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[1].VFU.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[2].VFU.
+[treeopen] TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[3].VFU.
+[treeopen] TOP.top_core.CORE.pipeline.hazard_unit_i.
 [treeopen] TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[0].
 [treeopen] TOP.top_core.CORE.pipeline.mem_stage_i.LSC.genblk1[1].
@@ -52,11 +58,15 @@
 [sst_width] 229
 [signals_width] 390
 [sst_expanded] 1
-[sst_vpaned_height] 645
-@29
-TOP.CLK
+[sst_vpaned_height] 646
 @28
+TOP.CLK
 TOP.nRST
+TOP.top_core.CORE.pipeline.hazard_unit_i.exception
+TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.fault_insn
+TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.fault_l
+@29
+TOP.top_core.CORE.pipeline.hazard_unit_i.hazard_if.fault_s
 @800200
 -Fetch
 @22
@@ -95,6 +105,61 @@ TOP.top_core.CORE.pipeline.mem_pipe_if.ex_mem_reg.w_sel[2:0]
 @22
 TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vuop_num[4:0]
 TOP.top_core.CORE.pipeline.mem_pipe_if.vexmem.vlane_mask[3:0]
+@100000028
+TOP.top_core.CORE.pipeline.execute_stage_i.alu_if.aluop[3:0]
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.alu_if.port_a[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.alu_if.port_b[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.alu_if.port_out[31:0]
+@800200
+-Lane 0
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vstride[31:0]
+@28
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vctrls.vstrided
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.vctrls.vunitstride
+@100000028
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[0].VFU.vop.valuop[7:0]
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[0].VFU.vopA[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[0].VFU.vopB[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[0].VFU.vopC[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[0].VFU.vres[31:0]
+@1000200
+-Lane 0
+@800200
+-Lane 1
+@100000028
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[1].VFU.vop.valuop[7:0]
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[1].VFU.vopA[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[1].VFU.vopB[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[1].VFU.vopC[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[1].VFU.vres[31:0]
+@1000200
+-Lane 1
+@800200
+-Lane 2
+@100000028
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[2].VFU.vop.valuop[7:0]
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[2].VFU.vopA[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[2].VFU.vopB[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[2].VFU.vopC[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[2].VFU.vres[31:0]
+@1000200
+-Lane 2
+@800200
+-Lane 3
+@100000028
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[3].VFU.vop.valuop[7:0]
+@22
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[3].VFU.vopA[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[3].VFU.vopB[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[3].VFU.vopC[31:0]
+TOP.top_core.CORE.pipeline.execute_stage_i.RVV_DATAPATH.genblk1[3].VFU.vres[31:0]
+@1000200
+-Lane 3
 @800200
 -MCU
 @24
