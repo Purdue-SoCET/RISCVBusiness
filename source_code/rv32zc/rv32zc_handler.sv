@@ -9,24 +9,15 @@ module rv32zc_handler(
     logic [31:0] rd_temp;
 
     always_comb begin
-        rd_temp = 0;
         casez(aluop)
             NEZ: begin 
-                if (b != 0) begin 
-                    rd_temp = 0; 
-                end else begin 
-                    rd_temp = a;    
-                end
+                y = (b != 0) ? 0 : a;
             end 
             EQZ: begin 
-                if (b == 0) begin 
-                    rd_temp = 0; 
-                end else begin 
-                    rd_temp = a; 
-                end
+                y = (b == 0) ? 0 : a;
             end 
         endcase
-        y = rd_temp; 
     end
+
 
 endmodule

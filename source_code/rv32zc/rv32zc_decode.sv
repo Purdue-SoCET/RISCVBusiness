@@ -1,5 +1,5 @@
 module rv32zc_decode(
-    input [31:0] insn,
+    input logic [31:0] insn,
     output logic claim,
     output rv32zc_pkg::rv32zc_decode_t rv32zc_control
 );
