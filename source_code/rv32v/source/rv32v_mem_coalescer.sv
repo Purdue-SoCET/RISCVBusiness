@@ -176,7 +176,7 @@ module rv32v_mem_coalescer (
                     end else begin
                         coalescer_if.vaddr_lsc = next_addr;
                     end
-                    if (coalescer_if.lsc_ready | ~coalescer_if.vlane_mask[0]) begin
+                    if (coalescer_if.lsc_ready | ~(|tag_match[3:0])) begin
                         // next_next_addr = coalescer_if.vaddr_lsc + (coalescer_if.stride << 2);
                         casez (tag_match[3:1])
                             3'b??0:  begin
@@ -270,7 +270,7 @@ module rv32v_mem_coalescer (
                         coalescer_if.vaddr_lsc = next_addr;
                     end
 
-                    if (coalescer_if.lsc_ready | ~coalescer_if.vlane_mask[1]) begin
+                    if (coalescer_if.lsc_ready | ~(|tag_match[3:1])) begin
                         casez (tag_match[3:2])
                             2'b?0:  next_coalescer_state = VL2;
                             2'b01:  next_coalescer_state = VL3;
@@ -298,7 +298,7 @@ module rv32v_mem_coalescer (
                         coalescer_if.vaddr_lsc = next_addr;
                     end
 
-                    if (coalescer_if.lsc_ready | ~coalescer_if.vlane_mask[2]) begin
+                    if (coalescer_if.lsc_ready | ~(|tag_match[3:2])) begin
                         casez (tag_match[3])
                             1'b0:  next_coalescer_state = VL3;
                             default: next_coalescer_state = VL0;
@@ -325,7 +325,7 @@ module rv32v_mem_coalescer (
                         coalescer_if.vaddr_lsc = next_addr;
                     end
 
-                    if (coalescer_if.lsc_ready | ~coalescer_if.vlane_mask[3]) begin
+                    if (coalescer_if.lsc_ready | ~(tag_match[3])) begin
                         next_next_addr = next_addr + coalescer_if.stride;
                         next_coalescer_state = VL0;
                         coalescer_stall = 0; 
@@ -348,12 +348,31 @@ module rv32v_mem_coalescer (
     end
 
     always_comb begin
-        coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & coalescer_if.vlane_mask[coalescer_if.vcurr_lane];
-        coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & coalescer_if.vlane_mask[coalescer_if.vcurr_lane];
+        coalescer_if.vmemdwen_lsc = 0;
+        coalescer_if.vmemdren_lsc = 0;
         coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[coalescer_if.vcurr_lane];
         coalescer_if.vdata_store_wide_lsc = '0;
         coalescer_if.vdata_store_en_wide_lsc = '0;
         temp_vdata_store_en_wide = '0;
+
+        casez(coalescer_if.vcurr_lane)
+            2'd0 : begin
+                coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (|coalescer_if.ven_lanes);
+                coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & (|coalescer_if.ven_lanes);
+            end
+            2'd1 : begin
+                coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (|coalescer_if.ven_lanes[3:1]);
+                coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & (|coalescer_if.ven_lanes[3:1]);
+            end
+            2'd2 : begin
+                coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (|coalescer_if.ven_lanes[3:2]);
+                coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & (|coalescer_if.ven_lanes[3:2]);
+            end
+            2'd3 : begin
+                coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (|coalescer_if.ven_lanes[3]);
+                coalescer_if.vmemdren_lsc = coalescer_if.vmemdren & (|coalescer_if.ven_lanes[3]);
+            end
+        endcase
 
         if(coalescer_if.vseg_op) begin
             coalescer_if.vmemdwen_lsc = coalescer_if.vmemdwen & (coalescer_if.vlane_mask != 0); 
