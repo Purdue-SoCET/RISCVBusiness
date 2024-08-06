@@ -70,7 +70,7 @@ module stage4_mem_stage_coalescing (
     assign lsc_if.store_data = (vmemop) ? coalescer_if.vdata_store_lsc : ex_mem_if.ex_mem_reg.rs2_data;
     assign lsc_if.store_data_wide = coalescer_if.vdata_store_wide_lsc;
     assign lsc_if.store_en_wide = coalescer_if.vdata_store_en_wide_lsc;
-    assign lsc_if.wide_vstore = vmemop && (~ven_lanes_one_hot) && dmemwen;
+    assign lsc_if.wide_vstore = vmemop && dmemwen && ~ex_mem_if.vexmem.vseg_op;
     assign lsc_if.ven_lanes = coalescer_if.ven_lanes;
     // assign lsc_if.byte_en = 0;
     assign lsc_if.load_type = (vmemop) ? coalescer_if.vload_type : ex_mem_if.ex_mem_reg.load_type;
