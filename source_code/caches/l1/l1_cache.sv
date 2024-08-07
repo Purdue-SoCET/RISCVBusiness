@@ -210,9 +210,9 @@ module l1_cache #(
         enable_flush_count_nowb    = 0;
         clear_flush_count          = 0;
         clear_word_count           = 0;
-        flush_done 	               = 0;
+        flush_done                 = 0;
         idle_done                  = 0;
-        clear_done 	               = 0;
+        clear_done                 = 0;
         next_read_addr             = read_addr;
         next_decoded_req_addr      = decoded_req_addr;
         next_last_used             = last_used;
