@@ -31,7 +31,6 @@ interface rv32v_mem_coalescer_if;
     import rv32v_types_pkg::*;
 
     // Global latch signals
-    // logic vmemop;
     logic vmemdwen, vmemdren;
     logic [4:0] vuop_num;
     logic vindexed;

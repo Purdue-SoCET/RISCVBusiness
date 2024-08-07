@@ -72,7 +72,6 @@ module stage4_mem_stage_coalescing (
     assign lsc_if.store_en_wide = coalescer_if.vdata_store_en_wide_lsc;
     assign lsc_if.wide_vstore = vmemop && dmemwen && ~ex_mem_if.vexmem.vseg_op;
     assign lsc_if.ven_lanes = coalescer_if.ven_lanes;
-    // assign lsc_if.byte_en = 0;
     assign lsc_if.load_type = (vmemop) ? coalescer_if.vload_type : ex_mem_if.ex_mem_reg.load_type;
     assign lsc_if.ifence = ex_mem_if.ex_mem_reg.ifence;
 
@@ -141,8 +140,7 @@ module stage4_mem_stage_coalescing (
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
     assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
-    //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
-    //assign hazard_if.serializer_stall = (serial_if.vcurr_lane != (NUM_LANES-1)) & vmemop;
+    
     // Vector-specific signals
     assign hazard_if.vd = ex_mem_if.vexmem.vd_sel;
     assign hazard_if.vregwen = ex_mem_if.vexmem.vregwen;

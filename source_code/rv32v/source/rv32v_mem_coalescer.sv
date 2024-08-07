@@ -47,11 +47,6 @@ module rv32v_mem_coalescer (
     logic  [NUM_LANES-1:0][((DCACHE_BLOCK_SIZE*WORD_SIZE)-1):0] temp_vdata_store_en_wide;
     word_t [NUM_LANES-1:0] strided_addr, next_strided_addr;
 
-    /*
-    Scratch Pad:
-    - Make sure to update the vcurr_lane to the hazard_if. This will need to account for when each lane could be the last element
-    */
-
     // Initially: combine lanes that are going to the same cache block + address
     // Further optimization: skip over non-active lanes to save cycles (variable +k*stride)
 
@@ -116,7 +111,6 @@ module rv32v_mem_coalescer (
             tag_match[1] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[1][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[1];
             tag_match[2] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[2][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[2];
             tag_match[3] = (coalescer_if.vaddr_lsc[WORD_SIZE-1:(N_BLOCK_BITS + 2)] == coalescer_if.vlane_addr[3][WORD_SIZE-1:(N_BLOCK_BITS + 2)]) & coalescer_if.vlane_mask[3];
-        // end else if (~coalescer_if.vmemdwen) begin
         end else begin
             casez (coalescer_state)
                 VL0: begin
@@ -177,7 +171,6 @@ module rv32v_mem_coalescer (
                         coalescer_if.vaddr_lsc = next_addr;
                     end
                     if (coalescer_if.lsc_ready | ~(|tag_match[3:0])) begin
-                        // next_next_addr = coalescer_if.vaddr_lsc + (coalescer_if.stride << 2);
                         casez (tag_match[3:1])
                             3'b??0:  begin
                                 next_coalescer_state = VL1;
@@ -216,15 +209,7 @@ module rv32v_mem_coalescer (
                         coalescer_stall = 1'b1;
                         coalescer_if.ven_lanes = 4'b0001;
                         next_next_addr = next_addr; 
-                        next_seg_addr = seg_addr; 
-                        // // next_seg_addr logic 
-                        // if(coalescer_if.vnew_seg && (coalescer_if.vuop_num == 0)) begin
-                        //     next_seg_addr = coalescer_if.base; 
-                        // end
-                        // else if(coalescer_if.vnew_seg && coalescer_if.strided)
-                        //     next_seg_addr = seg_addr + coalescer_if.stride; 
-                        // else if(coalescer_if.vnew_seg && coalescer_if.unit_strided)
-                        //     next_seg_addr = next_addr;
+                        next_seg_addr = seg_addr;
                         
                         // coalescer_if.vaddr_lsc logic
                         if (coalescer_if.vindexed)

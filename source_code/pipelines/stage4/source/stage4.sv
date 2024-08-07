@@ -97,7 +97,6 @@ module stage4 #(
     // uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*);
      
     stage4_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if),.ex_in(ex_in), .shadow_if(shadow_if), .*);
-    // stage4_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
     stage4_mem_stage_coalescing mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
     stage4_hazard_unit hazard_unit_i(.*);
     stage4_forwarding_unit forward_unit_i(.*);
