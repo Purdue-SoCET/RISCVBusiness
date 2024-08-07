@@ -82,7 +82,8 @@ module rv32v_mem_coalescer (
     // Calculating stride addresses
     always_comb begin
         next_strided_addr = strided_addr;
-        if (coalescer_if.lsc_ready && next_coalescer_state == VL0) begin
+        if ((coalescer_if.lsc_ready && next_coalescer_state == VL0) ||
+            (coalescer_if.vlane_mask == 4'b0 && coalescer_if.last_lane)) begin
             if (coalescer_if.vuop_num == 0) begin
                 next_strided_addr[0] = coalescer_if.vlane_addr[0] + (coalescer_if.stride << 2);
                 next_strided_addr[1] = coalescer_if.vlane_addr[1] + (coalescer_if.stride << 2);
@@ -94,7 +95,6 @@ module rv32v_mem_coalescer (
                 next_strided_addr[2] = strided_addr[2] + (coalescer_if.stride << 2);
                 next_strided_addr[3] = strided_addr[3] + (coalescer_if.stride << 2);
             end
-            next_strided_addr[0] = strided_addr[0] + (coalescer_if.stride << 2);
         end else if (coalescer_if.vuop_num == '0 && coalescer_state == VL0) begin
             next_strided_addr[0] = coalescer_if.vlane_addr[0];
             next_strided_addr[1] = coalescer_if.vlane_addr[1];
@@ -536,6 +536,6 @@ module rv32v_mem_coalescer (
         coalescer_if.vdata_store_en_wide_lsc = ~(temp_vdata_store_en_wide[0] | temp_vdata_store_en_wide[1] | temp_vdata_store_en_wide[2] | temp_vdata_store_en_wide[3]); // inverted for sramMask in L1
     end
 
-    assign coalescer_if.last_lane = (next_coalescer_state == VL0) && coalescer_if.lsc_ready;
+    assign coalescer_if.last_lane = ((next_coalescer_state == VL0) && (coalescer_if.lsc_ready || coalescer_state == VL3));
 
 endmodule // rv32v_mem_coalescer
