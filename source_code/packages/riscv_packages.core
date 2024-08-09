@@ -11,6 +11,7 @@ filesets:
             - pma_types_1_12_pkg.sv
             - pmp_types_1_12_pkg.sv
             - rv32m_pkg.sv
+            - rv32a_pkg.sv
             - rv32b_pkg.sv
             - rv32v_types_pkg.sv
             - stage4_types_pkg.sv

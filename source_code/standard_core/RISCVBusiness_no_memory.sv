@@ -32,7 +32,9 @@
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
 
-module RISCVBusiness_no_memory (
+module RISCVBusiness_no_memory #(
+    parameter HART_ID
+) (
     input logic CLK,
     nRST,
     output logic wfi,
@@ -133,7 +135,7 @@ module RISCVBusiness_no_memory (
         .predict_if(predict_if)
     );
 
-    priv_wrapper priv_wrapper_i (
+    priv_wrapper #(.HART_ID(HART_ID)) priv_wrapper_i (
         .CLK(CLK),
         .nRST(nRST),
         .prv_pipe_if(prv_pipe_if),

@@ -25,6 +25,7 @@
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
 `include "component_selection_defines.vh"
+`include "bus_ctrl_if.vh"
 
 module separate_caches (
     input logic CLK,
@@ -33,7 +34,9 @@ module separate_caches (
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
-    cache_control_if.caches cc_if
+    cache_control_if.caches control_if,
+    cache_coherence_if.cache i_cache_coherency_if,
+    cache_coherence_if.cache d_cache_coherency_if
 );
     generate
         /* verilator lint_off width */
@@ -46,8 +49,8 @@ module separate_caches (
                     .mem_gen_bus_if(dcache_mem_gen_bus_if),
                     .proc_gen_bus_if(dcache_proc_gen_bus_if)
                 );
-                assign cc_if.dclear_done = 1'b1;
-                assign cc_if.dflush_done = 1'b1;
+                assign control_if.dclear_done = 1'b1;
+                assign control_if.dflush_done = 1'b1;
             end
             "direct_mapped_tpf":
             direct_mapped_tpf_cache dcache (
@@ -55,10 +58,10 @@ module separate_caches (
                 .nRST(nRST),
                 .mem_gen_bus_if(dcache_mem_gen_bus_if),
                 .proc_gen_bus_if(dcache_proc_gen_bus_if),
-                .flush(cc_if.dcache_flush),
-                .clear(cc_if.dcache_clear),
-                .flush_done(cc_if.dflush_done),
-                .clear_done(cc_if.dclear_done)
+                .flush(control_if.dcache_flush),
+                .clear(control_if.dcache_clear),
+                .flush_done(control_if.dflush_done),
+                .clear_done(control_if.dclear_done)
             );
             "l1":
             l1_cache #(
@@ -72,10 +75,13 @@ module separate_caches (
                 .nRST(nRST),
                 .mem_gen_bus_if(dcache_mem_gen_bus_if),
                 .proc_gen_bus_if(dcache_proc_gen_bus_if),
-                .flush(cc_if.dcache_flush),
-                .clear(cc_if.dcache_clear),
-                .flush_done(cc_if.dflush_done),
-                .clear_done(cc_if.dclear_done)
+                .flush(control_if.dcache_flush),
+                .clear(control_if.dcache_clear),
+                .reserve(control_if.dcache_reserve),
+                .exclusive(control_if.dcache_exclusive),
+                .flush_done(control_if.dflush_done),
+                .clear_done(control_if.dclear_done),
+                .ccif(d_cache_coherency_if)
             );
         endcase
     endgenerate
@@ -91,8 +97,8 @@ module separate_caches (
                     .mem_gen_bus_if(icache_mem_gen_bus_if),
                     .proc_gen_bus_if(icache_proc_gen_bus_if)
                 );
-                assign cc_if.iclear_done = 1'b1;
-                assign cc_if.iflush_done = 1'b1;
+                assign control_if.iclear_done = 1'b1;
+                assign control_if.iflush_done = 1'b1;
             end
             "direct_mapped_tpf":
             direct_mapped_tpf_cache icache (
@@ -100,10 +106,10 @@ module separate_caches (
                 .nRST(nRST),
                 .mem_gen_bus_if(icache_mem_gen_bus_if),
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
-                .flush(cc_if.icache_flush),
-                .clear(cc_if.icache_clear),
-                .flush_done(cc_if.iflush_done),
-                .clear_done(cc_if.iclear_done)
+                .flush(control_if.icache_flush),
+                .clear(control_if.icache_clear),
+                .flush_done(control_if.iflush_done),
+                .clear_done(control_if.iclear_done)
             );
             "l1":
             l1_cache #(
@@ -117,10 +123,13 @@ module separate_caches (
                 .nRST(nRST),
                 .mem_gen_bus_if(icache_mem_gen_bus_if),
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
-                .flush(cc_if.icache_flush),
-                .clear(cc_if.icache_clear),
-                .flush_done(cc_if.iflush_done),
-                .clear_done(cc_if.iclear_done)
+                .flush(control_if.icache_flush),
+                .clear(control_if.icache_clear),
+                .reserve(1'b0),
+                .exclusive(1'b0),
+                .flush_done(control_if.iflush_done),
+                .clear_done(control_if.iclear_done),
+                .ccif(i_cache_coherency_if)
             );
         endcase
     endgenerate

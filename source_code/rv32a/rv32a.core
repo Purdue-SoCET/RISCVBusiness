@@ -1,0 +1,21 @@
+CAPI=2:
+name: socet:riscv:rv32a:0.1.0
+description: RV32A Extension for RISCVBusiness
+
+filesets:
+    rtl:
+        depend:
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:packages"
+        files:
+            - rv32a_decode.sv
+            - rv32a_disabled.sv
+            - rv32a_enabled.sv
+            - rv32a_wrapper.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: rv32a_wrapper

@@ -181,12 +181,14 @@ def compile_asm(filepath: Type[pathlib.Path], outpath: Type[pathlib.Path],\
     # main compile arguments
     # notes: need to parameratize the .T, .I, abi, and march flags
     # also probably pass the filepath too
+    supporting_c_files_list = glob.glob(str(config.asm_env) + "/**/*.c", recursive=True)
+    supporting_c_files = " ".join(supporting_c_files_list)
     compile_cmd_arr = ["riscv64-unknown-elf-gcc", 
                 "-march=" + config.march, "-mabi=" + config.abi,
                 "-static", "-mcmodel=medany", "-fvisibility=hidden",
-                "-nostdlib", "-nostartfiles",
+                "-nostdlib", "-nostartfiles", "-Oz", "-g",
                 "-T"+str(config.link_file),
-                "-I"+str(config.asm_env), str(filepath), "-o",
+                "-I"+str(config.asm_env), str(filepath), supporting_c_files, "-o",
                 str(outpath)]
 
     log_header("riscv64-unknown-elf-gcc", logger)

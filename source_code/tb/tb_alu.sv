@@ -128,7 +128,7 @@ module tb_alu ();
   alu_if aluif();
 
   alu DUT (
-    .aluif(aluif)
+    .alu_if(aluif)
   );
  
   initial begin : MAIN

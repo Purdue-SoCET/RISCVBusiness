@@ -1,0 +1,43 @@
+CAPI=2:
+name: socet:tb:cache_coherence_stress:0.1.0
+description: A platform for stressing the coherence protocol of the caches
+
+filesets:
+    rtl:
+        depend:
+            - "socet:riscv:caches"
+            - "socet:riscv:riscv_standard"
+            - "socet:riscv:ram"
+            - "socet:riscv:riscv_include"
+
+    verilator_tb:
+        files:
+            - cache_stress_wrapper.sv
+            - tb_cache_stress_test.cc : { fileType: cppSource }
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: cache_stress_wrapper
+
+    sim:
+        <<: *default
+        description: Simulate w/TB
+        default_tool: verilator
+        filesets_append:
+            - "tool_verilator? (verilator_tb)"
+        toplevel:
+            - "tool_verilator? (cache_stress_wrapper)"
+        tools:
+            verilator:
+                verilator_options:
+                    - --trace
+                    - --trace-fst
+                    - --trace-structs
+                    - -Wno-WIDTH
+                    - --timing
+                    - --compiler clang
+                    - -CFLAGS -std=c++20
+                    - -CFLAGS -fno-exceptions

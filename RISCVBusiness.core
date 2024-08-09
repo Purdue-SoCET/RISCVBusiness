@@ -16,6 +16,7 @@ filesets:
             #- "socet:riscv:risc_mgmt"
             - "socet:riscv:riscv_standard"
             - "socet:riscv:riscv_include"
+            - "socet:riscv:rv32a"
             - "socet:riscv:rv32c"
             - "socet:riscv:rv32m"
             - "socet:riscv:rv32v"

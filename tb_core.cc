@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <sstream>
@@ -317,6 +318,7 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, signal_handler);
 
+    auto tstart = std::chrono::high_resolution_clock::now();
 
     reset(dut, m_trace);
     while(!dut.halt && !tohost_break && sim_time < 250000) {
@@ -370,6 +372,13 @@ int main(int argc, char **argv) {
             std::cout << "Test FAILED: Test " << ((dut.top_core->get_x28() - 1) / 2) << " in " << sim_time << " cycles" << std::endl;
         }
     }
+
+    auto tend = std::chrono::high_resolution_clock::now();
+
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart);
+
+    std::cout << "Simulated " << sim_time << " cycles in " << ms.count() << "ms" << ", rate of " << (float)sim_time / ((float)ms.count() / 1000.0) << " cycles per second." << std::endl;
+
     m_trace.close();
     memory.dump();
     dut.final();

@@ -19,7 +19,6 @@ module stage3_mem_stage(
     output logic halt,
     output logic wfi
 );
-
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
 
@@ -31,9 +30,6 @@ module stage3_mem_stage(
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
 
-
-
-
     /*************
     * Data Access
     **************/
@@ -42,8 +38,6 @@ module stage3_mem_stage(
     logic mal_addr;
     logic [1:0] byte_offset;
     logic [3:0] byte_en, byte_en_temp, byte_en_standard;
-
-
 
     // TODO: RISC-MGMT
     assign dgen_bus_if.ren = ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data;
@@ -128,7 +122,6 @@ module stage3_mem_stage(
         end
     endgenerate
 
-
     /******************
     * Cache management
     *******************/
@@ -153,6 +146,8 @@ module stage3_mem_stage(
     assign ifence_pulse  = ex_mem_if.ex_mem_reg.ifence & ~ifence_reg;
     assign cc_if.icache_flush = ifence_pulse;
     assign cc_if.dcache_flush = ifence_pulse;
+    assign cc_if.dcache_reserve = ex_mem_if.ex_mem_reg.reserve;
+    assign cc_if.dcache_exclusive = ex_mem_if.ex_mem_reg.exclusive;
     // holds iflushed/dflushed high when done, resets to 0 on a pulse
     always_comb begin
         iflushed_next = iflushed;
@@ -176,6 +171,7 @@ module stage3_mem_stage(
     assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
+    assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
     assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
@@ -190,7 +186,6 @@ module stage3_mem_stage(
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
     assign fw_if.reg_write = ex_mem_if.reg_write;
     assign fw_if.load = (ex_mem_if.ex_mem_reg.dren || ex_mem_if.ex_mem_reg.dwen);
-
 
     /******
     * CSRs
@@ -241,20 +236,20 @@ module stage3_mem_stage(
     always_comb begin
         // TODO: RISC-MGMT
         case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd0:    ex_mem_if.reg_wdata = dload_ext;
-            3'd1:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
-            3'd4:    ex_mem_if.reg_wdata = prv_pipe_if.rdata;
+            W_SEL_FROM_DLOAD     : ex_mem_if.reg_wdata = dload_ext;
+            W_SEL_FROM_PC        : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.pc4;
+            W_SEL_FROM_IMM_U     : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
+            W_SEL_FROM_ALU       : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
+            W_SEL_FROM_PRIV_PIPE : ex_mem_if.reg_wdata = prv_pipe_if.rdata;
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
         // Forwarding unit
         case (ex_mem_if.ex_mem_reg.w_sel)
-            3'd1:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
-            3'd2:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
-            3'd3:    fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
-            3'd4:    fw_if.rd_mem_data = prv_pipe_if.rdata;
+            W_SEL_FROM_PC        : fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.pc4;
+            W_SEL_FROM_IMM_U     : fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.imm_U;
+            W_SEL_FROM_ALU       : fw_if.rd_mem_data = ex_mem_if.ex_mem_reg.port_out;
+            W_SEL_FROM_PRIV_PIPE : fw_if.rd_mem_data = prv_pipe_if.rdata;
             default: fw_if.rd_mem_data = '0;
         endcase
     end
@@ -272,6 +267,4 @@ module stage3_mem_stage(
     assign funct12 = ex_mem_if.ex_mem_reg.instr[31:20];
     assign instr_30 = ex_mem_if.ex_mem_reg.instr[30];
     assign wb_stall = hazard_if.ex_mem_stall & ~hazard_if.jump & ~hazard_if.branch; // TODO: Is this right?
-
-
 endmodule
