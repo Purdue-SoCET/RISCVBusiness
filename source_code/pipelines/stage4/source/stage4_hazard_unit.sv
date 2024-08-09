@@ -37,14 +37,7 @@ module stage4_hazard_unit (
     prv_pipeline_if.hazard prv_pipe_if
     //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
-
-    //input logic is_queue_full, valid_decode, 
-    //input word_t pc_decode,
-    //output logic stall_queue, flush_queue
-
-
 );
-    
 
     // Pipeline hazard signals
     logic dmem_access;
@@ -78,7 +71,7 @@ module stage4_hazard_unit (
     assign rs2_match  = ((hazard_if.rs2_e.regidx == hazard_if.rd_m.regidx) && (hazard_if.rd_m.regidx != 0));
     // assign rs1_match = (hazard_if.rs1_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
     // assign rs2_match  = (hazard_if.rs2_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
-    assign cannot_forward = (hazard_if.dren || hazard_if.csr_read); // cannot forward outputs generated in mem stage
+    assign cannot_forward = (hazard_if.dren || (hazard_if.dwen && hazard_if.reserve) || hazard_if.csr_read); // cannot forward outputs generated in mem stage
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
     assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);

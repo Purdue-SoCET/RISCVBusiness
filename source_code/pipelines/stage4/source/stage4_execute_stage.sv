@@ -306,11 +306,12 @@ module stage4_execute_stage (
     end
 
     always_comb begin
-        case (ex_in.ctrl_out.alu_b_sel)
-            2'd0: alu_if.port_b = rs1_post_fwd;
-            2'd1: alu_if.port_b = rs2_post_fwd;
-            2'd2: alu_if.port_b = imm_or_shamt;
-            2'd3: alu_if.port_b = ex_in.ctrl_out.imm_U;
+        casez ({ex_in.ctrl_out.alu_b_sel, ex_in.ctrl_out.reserve})
+            {2'd?, 1'b1}: alu_if.port_b = '0;
+            {2'd0, 1'b0}: alu_if.port_b = rs1_post_fwd;
+            {2'd1, 1'b0}: alu_if.port_b = rs2_post_fwd;
+            {2'd2, 1'b0}: alu_if.port_b = imm_or_shamt;
+            {2'd3, 1'b0}: alu_if.port_b = ex_in.ctrl_out.imm_U;
         endcase
     end
 
@@ -417,6 +418,8 @@ module stage4_execute_stage (
                     ex_mem_if.ex_mem_reg.ret_insn       <= ex_in.ctrl_out.ret_insn;
                     ex_mem_if.ex_mem_reg.wfi_insn       <= ex_in.ctrl_out.wfi;
                     ex_mem_if.ex_mem_reg.was_compressed <= 1'b0; // TODO: RV32C support
+                    ex_mem_if.ex_mem_reg.reserve        <= ex_in.ctrl_out.reserve;
+                    ex_mem_if.ex_mem_reg.exclusive      <= ex_in.ctrl_out.exclusive;
                 end
                 ex_mem_if.ex_mem_reg.illegal_insn              <= ex_in.ctrl_out.illegal_insn;
                 ex_mem_if.ex_mem_reg.badaddr                   <= ex_in.if_out.badaddr;

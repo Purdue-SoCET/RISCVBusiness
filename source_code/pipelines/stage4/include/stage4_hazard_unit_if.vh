@@ -34,7 +34,7 @@ interface stage4_hazard_unit_if();
   regsel_t rs1_e, rs2_e;
   regsel_t rd_m;
   logic reg_write, csr_read;
-  logic i_mem_busy, d_mem_busy, dren, dwen, ret, suppress_data;
+  logic i_mem_busy, d_mem_busy, dren, dwen, reserve, ret, suppress_data;
   logic jump, branch, fence_stall;
   logic mispredict, halt;
   word_t pc_f, pc_e, pc_m;
@@ -104,7 +104,7 @@ interface stage4_hazard_unit_if();
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
             reg_write, csr_read,
-            i_mem_busy, d_mem_busy, dren, dwen, ret,
+            i_mem_busy, d_mem_busy, dren, dwen, reserve, ret,
             jump, branch, fence_stall, mispredict, halt, pc_f, pc_e, pc_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
             badaddr, ifence,
@@ -155,7 +155,7 @@ interface stage4_hazard_unit_if();
   modport mem (
     input   ex_mem_stall, ex_mem_flush, suppress_data, intr,
     output  rd_m, reg_write, csr_read,
-            d_mem_busy, dren, dwen, ret,
+            d_mem_busy, dren, dwen, reserve, ret,
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             badaddr, ifence, wfi,

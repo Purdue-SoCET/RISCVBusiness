@@ -83,9 +83,17 @@ module RISCVBusiness #(
     );
 `elsif PIPELINE_STAGE4
     stage4 #(.RESET_PC(RESET_PC)) pipeline(
+        .CLK(CLK),
+        .nRST(nRST),
         .igen_bus_if(tspp_icache_gen_bus_if),
         .dgen_bus_if(tspp_dcache_gen_bus_if),
-        .*
+        .prv_pipe_if(prv_pipe_if),
+        .predict_if(predict_if),
+        .cc_if(control_if),
+        .sparce_if(sparce_if),
+        .rv32cif(rv32cif),
+        .halt(halt),
+        .wfi(wfi)
     );
 `endif
 

@@ -64,9 +64,10 @@ module stage4_mem_stage (
     assign lsc_if.ren = dmemren && !hazard_if.suppress_data;
     assign lsc_if.addr = (vmemop) ? serial_if.vaddr_lsc : ex_mem_if.ex_mem_reg.port_out;
     assign lsc_if.store_data = (vmemop) ? serial_if.vdata_store_lsc : ex_mem_if.ex_mem_reg.rs2_data;
-    // assign lsc_if.byte_en = 0;
     assign lsc_if.load_type = (vmemop) ? serial_if.vload_type : ex_mem_if.ex_mem_reg.load_type;
     assign lsc_if.ifence = ex_mem_if.ex_mem_reg.ifence;
+    assign lsc_if.reserve = ex_mem_if.ex_mem_reg.reserve;
+    assign lsc_if.exclusive = ex_mem_if.ex_mem_reg.exclusive;
 
     // Serializer interface signals
     assign serial_if.vmemdwen = ex_mem_if.vexmem.vmemdwen; 
@@ -124,6 +125,7 @@ module stage4_mem_stage (
     assign hazard_if.fence_stall = lsc_if.fence_stall;
     assign hazard_if.dren = dmemren;
     assign hazard_if.dwen = dmemwen;
+    assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
     assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;

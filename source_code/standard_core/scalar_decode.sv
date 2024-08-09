@@ -78,6 +78,9 @@ assign control_out.wen =  cu_if.wen;
 assign control_out.ifence =  cu_if.ifence;
 assign control_out.wfi =  cu_if.wfi;
 
+assign control_out.reserve = cu_if.reserve;
+assign control_out.exclusive = cu_if.exclusive;
+
 assign control_out.alu_op = cu_if.alu_op;
 assign control_out.alu_a_sel =  cu_if.alu_a_sel;
 assign control_out.alu_b_sel = cu_if.alu_b_sel;

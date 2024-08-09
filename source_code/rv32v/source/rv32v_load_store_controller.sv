@@ -46,16 +46,16 @@ module rv32v_load_store_controller (
     word_t dload_ext;
     logic mal_addr;
     logic [1:0] byte_offset;
-    logic [3:0] byte_en, byte_en_temp, byte_en_standard;
+    logic [(WORD_SIZE*BLOCK_SIZE/8)-1:0] byte_en, byte_en_temp, byte_en_standard;
     logic [NUM_LANES-1:0] [3:0] byte_en_wide, byte_en_temp_wide, byte_en_standard_wide;
     word_t [NUM_LANES-1:0] word_select_wide, dload_ext_wide;
 
     assign dgen_bus_if.ren = lsc_if.ren;
     assign dgen_bus_if.wen = lsc_if.wen;
     assign dgen_bus_if.byte_en = byte_en;
-    assign dgen_bus_if.byte_en_wide = lsc_if.store_en_wide;
-    assign dgen_bus_if.wen_wide = lsc_if.wide_vstore;
-    assign dgen_bus_if.wdata_wide = lsc_if.store_data_wide;
+    // assign dgen_bus_if.byte_en_wide = lsc_if.store_en_wide;
+    // assign dgen_bus_if.wen_wide = lsc_if.wide_vstore;
+    // assign dgen_bus_if.wdata_wide = lsc_if.store_data_wide;
     assign dgen_bus_if.addr = lsc_if.addr;
     assign byte_offset = lsc_if.addr[1:0];
     assign lsc_if.dload_ext = dload_ext;
@@ -64,7 +64,6 @@ module rv32v_load_store_controller (
     assign lsc_if.mal_addr = mal_addr;
 
     assign byte_en_temp = byte_en_standard;
-    assign byte_en_temp_wide = byte_en_standard_wide;
 
     // Address alignment
     always_comb begin
@@ -104,7 +103,7 @@ module rv32v_load_store_controller (
     generate
         for (lane_num = 0; lane_num < NUM_LANES; lane_num = lane_num + 1) begin
             // word index == (lsc_if.addr_wide[lane_num])[(N_BLOCK_BITS - 1 + 2):(2)]
-            assign word_select_wide[lane_num] = lsc_if.ven_lanes[lane_num] ? dgen_bus_if.rdata_wide[lsc_if.addr_wide[lane_num][(N_BLOCK_BITS - 1 + 2):(2)]] :'0;
+            assign word_select_wide[lane_num] = lsc_if.ven_lanes[lane_num] ? dgen_bus_if.rdata[lsc_if.addr_wide[lane_num][(N_BLOCK_BITS - 1 + 2):(2)]] :'0;
         end
     endgenerate
 
@@ -246,6 +245,8 @@ module rv32v_load_store_controller (
     assign ifence_pulse  = lsc_if.ifence & ~ifence_reg;
     assign cc_if.icache_flush = ifence_pulse;
     assign cc_if.dcache_flush = ifence_pulse;
+    assign cc_if.dcache_reserve = lsc_if.reserve;
+    assign cc_if.dcache_exclusive = lsc_if.exclusive;
     // holds iflushed/dflushed high when done, resets to 0 on a pulse
     always_comb begin
         iflushed_next = iflushed;

@@ -19,7 +19,7 @@
 *   Created by:   John Skubic
 *   Email:        jskubic@purdue.edu
 *   Date Created: 06/01/2016
-*   Description:  Two Stage In-Order Pipeline
+*   Description:  Four stage pipeline with micro-op queue, contains vector unit(s)
 */
 
 `include "stage4_hazard_unit_if.vh"
@@ -64,7 +64,7 @@ module stage4 #(
     logic queue_wen; 
     uop_t uop_out;
     uop_t [0:0] ctrls; 
-    logic[4:0] num_uops; 
+    logic [4:0] num_uops; 
 
     assign ctrls[0] = uop_out; 
     assign num_uops = 1; 
@@ -94,12 +94,10 @@ module stage4 #(
         .queue_wen(queue_wen)
     );
 
-    // uop_queue #(.QUEUE_LEN(8), .DISPATCH_SIZE(1)) uop_stage(.*);
-     
     stage4_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if),.ex_in(ex_in), .shadow_if(shadow_if), .*);
-    stage4_mem_stage_coalescing mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
+    stage4_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
+    // stage4_mem_stage_coalescing mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
     stage4_hazard_unit hazard_unit_i(.*);
     stage4_forwarding_unit forward_unit_i(.*);
-
 
 endmodule
