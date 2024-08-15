@@ -203,9 +203,15 @@ module coherency_unit #(
                 end
             end
             WRITEBACK: begin
-                bcif.dWEN[CPUID] = 1'b1;
+                if (pass_through) begin
+                    bcif.dWEN[CPUID] = gbif.wen;
+                    bcif.dREN[CPUID] = gbif.ren;
+                end else begin
+                    bcif.dWEN[CPUID] = 1'b1;
+                end
                 bcif.daddr[CPUID] = gbif.addr;
                 bcif.dstore[CPUID] = gbif.wdata;
+                gbif.rdata = bcif.dload[CPUID];
                 gbif.busy = bcif.dwait[CPUID];
             end
             default : begin end
