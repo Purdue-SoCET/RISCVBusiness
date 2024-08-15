@@ -43,11 +43,11 @@ interface rv32v_mem_coalescer_if;
     word_t [NUM_LANES-1:0] vlane_store_data;
 
     // LSC control signals
-    logic vmemdwen_lsc, vmemdren_lsc;
+    logic vmemdwen_lsc, vmemdren_lsc, vblock_access_lsc;
     word_t vaddr_lsc, vdata_store_lsc;
     word_t [NUM_LANES-1:0] vaddr_wide_lsc;
     word_t [DCACHE_BLOCK_SIZE-1:0] vdata_store_wide_lsc;
-    logic [((DCACHE_BLOCK_SIZE*WORD_SIZE)-1):0] vdata_store_en_wide_lsc;
+    logic [(WORD_SIZE*BLOCK_SIZE/8)-1:0] vbyte_en_wide_lsc;
     logic [$clog2(NUM_LANES)-1:0] vcurr_lane;
     logic [NUM_LANES-1:0] ven_lanes;
     
@@ -64,7 +64,8 @@ interface rv32v_mem_coalescer_if;
     modport coalescer (
         input vmemdwen, vmemdren, vuop_num, vindexed, base, stride, veew, vlane_mask, vlane_addr, vlane_store_data, lsc_ready,
               strided, unit_strided, vnew_seg, vseg_op, vuop_last,
-        output vmemdwen_lsc, vmemdren_lsc, vaddr_lsc, vaddr_wide_lsc, vdata_store_lsc, vdata_store_wide_lsc, vdata_store_en_wide_lsc, vcurr_lane, ven_lanes, vload_type, last_lane
+        output vmemdwen_lsc, vmemdren_lsc, vblock_access_lsc, vaddr_lsc, vaddr_wide_lsc, vdata_store_lsc, vdata_store_wide_lsc,
+               vbyte_en_wide_lsc, vcurr_lane, ven_lanes, vload_type, last_lane
     );
 
 endinterface

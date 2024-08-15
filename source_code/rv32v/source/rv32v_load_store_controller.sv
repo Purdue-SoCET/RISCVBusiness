@@ -46,17 +46,14 @@ module rv32v_load_store_controller (
     word_t dload_ext;
     logic mal_addr;
     logic [1:0] byte_offset;
-    logic [(WORD_SIZE*BLOCK_SIZE/8)-1:0] byte_en, byte_en_temp, byte_en_standard;
+    logic [3:0] byte_en, byte_en_temp, byte_en_standard;
     logic [NUM_LANES-1:0] [3:0] byte_en_wide, byte_en_temp_wide, byte_en_standard_wide;
     word_t [NUM_LANES-1:0] word_select_wide, dload_ext_wide;
 
     assign dgen_bus_if.ren = lsc_if.ren;
     assign dgen_bus_if.wen = lsc_if.wen;
-    assign dgen_bus_if.byte_en = byte_en;
-    // assign dgen_bus_if.byte_en_wide = lsc_if.store_en_wide;
-    // assign dgen_bus_if.wen_wide = lsc_if.wide_vstore;
-    // assign dgen_bus_if.wdata_wide = lsc_if.store_data_wide;
-    assign dgen_bus_if.addr = lsc_if.addr;
+    assign dgen_bus_if.byte_en = (lsc_if.block_access) ? lsc_if.byte_en_wide : {'0, byte_en};
+    assign dgen_bus_if.addr = (lsc_if.block_access) ? {lsc_if.addr[31:N_BLOCK_BITS+2], (N_BLOCK_BITS+2)'(0)} : lsc_if.addr;
     assign byte_offset = lsc_if.addr[1:0];
     assign lsc_if.dload_ext = dload_ext;
     assign lsc_if.dload_ext_wide = dload_ext_wide;
@@ -64,6 +61,7 @@ module rv32v_load_store_controller (
     assign lsc_if.mal_addr = mal_addr;
 
     assign byte_en_temp = byte_en_standard;
+    assign byte_en_temp_wide = byte_en_standard_wide;
 
     // Address alignment
     always_comb begin
@@ -79,7 +77,7 @@ module rv32v_load_store_controller (
     );
 
     dmem_extender dmem_ext (
-        .dmem_in(dgen_bus_if.rdata),
+        .dmem_in(dgen_bus_if.rdata[31:0]),
         .load_type(lsc_if.load_type),
         .byte_en(byte_en),
         .ext_out(dload_ext)
@@ -97,13 +95,13 @@ module rv32v_load_store_controller (
             );
         end
     endgenerate
-    
+
     // Word Select for Wide Accesses
     genvar lane_num;
     generate
         for (lane_num = 0; lane_num < NUM_LANES; lane_num = lane_num + 1) begin
             // word index == (lsc_if.addr_wide[lane_num])[(N_BLOCK_BITS - 1 + 2):(2)]
-            assign word_select_wide[lane_num] = lsc_if.ven_lanes[lane_num] ? dgen_bus_if.rdata[lsc_if.addr_wide[lane_num][(N_BLOCK_BITS - 1 + 2):(2)]] :'0;
+            assign word_select_wide[lane_num] = lsc_if.ven_lanes[lane_num] ? dgen_bus_if.rdata[(lsc_if.addr_wide[lane_num][(N_BLOCK_BITS - 1 + 2):(2)] * 32)+:32] : '0;
         end
     endgenerate
 
@@ -189,12 +187,14 @@ module rv32v_load_store_controller (
     end : LOAD_TYPE
 
     always_comb begin : STORE_TYPE
-        case (lsc_if.load_type)
-            LB: dgen_bus_if.wdata = {4{lsc_if.store_data[7:0]}};
-            LH: dgen_bus_if.wdata = {2{lsc_if.store_data[15:0]}};
-            LW: dgen_bus_if.wdata = lsc_if.store_data;
-            default: dgen_bus_if.wdata = '0;
-        endcase
+        if (lsc_if.block_access) dgen_bus_if.wdata = lsc_if.store_data_wide;
+        else
+            case (lsc_if.load_type)
+                LB: dgen_bus_if.wdata = {'0, {4{lsc_if.store_data[7:0]}}};
+                LH: dgen_bus_if.wdata = {'0, {2{lsc_if.store_data[15:0]}}};
+                LW: dgen_bus_if.wdata = {'0, lsc_if.store_data};
+                default: dgen_bus_if.wdata = '0;
+            endcase
     end : STORE_TYPE
 
     // Endianness

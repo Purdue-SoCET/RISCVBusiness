@@ -44,8 +44,9 @@ module rv32v_mem_coalescer (
     coalescer_state_t coalescer_state, next_coalescer_state;
     word_t next_addr, next_next_addr, seg_addr, next_seg_addr, temp_tag_match_addr;
     logic  [NUM_LANES-1:0] tag_match;
-    logic  [NUM_LANES-1:0][((DCACHE_BLOCK_SIZE*WORD_SIZE)-1):0] temp_vdata_store_en_wide;
+    logic  [NUM_LANES-1:0][(WORD_SIZE*BLOCK_SIZE/8)-1:0] temp_vbyte_en_wide;
     word_t [NUM_LANES-1:0] strided_addr, next_strided_addr;
+    logic uncoalesceable;
 
     // Initially: combine lanes that are going to the same cache block + address
     // Further optimization: skip over non-active lanes to save cycles (variable +k*stride)
@@ -145,8 +146,14 @@ module rv32v_mem_coalescer (
             SEW16: element_stride = 2; 
             default: element_stride = 4; 
         endcase
-    end 
-    assign veew_bits = coalescer_if.veew; 
+    end
+
+    assign veew_bits = coalescer_if.veew;
+
+    // Cannot coalesce accesses to non-idempotent memory (at least without modifications)
+    assign uncoalesceable = (coalescer_if.vaddr_lsc >= NONCACHE_START_ADDR);
+    assign coalescer_if.vblock_access_lsc = ~(coalescer_if.vseg_op | uncoalesceable);
+
     always_comb begin
         next_coalescer_state = VL0;
         next_next_addr = next_addr;
@@ -154,9 +161,15 @@ module rv32v_mem_coalescer (
         coalescer_if.vcurr_lane = '0;
         coalescer_if.ven_lanes = '0;
         coalescer_if.vaddr_lsc = '0;
-        coalescer_stall = 0; 
+        coalescer_stall = 0;
         if (coalescer_if.vmemdwen | coalescer_if.vmemdren) begin
-            coalescer_if.ven_lanes = tag_match;
+            if (uncoalesceable) begin
+                // Accessess are serialized
+                coalescer_if.ven_lanes = (coalescer_if.vlane_mask[coalescer_state]) ? (4'h1 << coalescer_state) : '0;
+            end else begin
+                coalescer_if.ven_lanes = tag_match;
+            end
+
             casez (coalescer_state)
                 VL0: begin
                     //*** Normal Mem Operation ****// 
@@ -171,24 +184,29 @@ module rv32v_mem_coalescer (
                         coalescer_if.vaddr_lsc = next_addr;
                     end
                     if (coalescer_if.lsc_ready | ~(|tag_match[3:0])) begin
-                        casez (tag_match[3:1])
-                            3'b??0:  begin
-                                next_coalescer_state = VL1;
-                                next_next_addr = coalescer_if.vlane_addr[1];
-                            end
-                            3'b?01:  begin
-                                next_coalescer_state = VL2;
-                                next_next_addr = coalescer_if.vlane_addr[2];
-                            end
-                            3'b011:  begin
-                                next_coalescer_state = VL3;
-                                next_next_addr = coalescer_if.vlane_addr[3];
-                            end
-                            default: begin
-                                next_coalescer_state = VL0;
-                                next_next_addr = coalescer_if.base + (coalescer_if.stride << 2);
-                            end
-                        endcase
+                        if (uncoalesceable) begin
+                            next_coalescer_state = VL1;
+                            next_next_addr = coalescer_if.vlane_addr[1];
+                        end else begin
+                            casez (tag_match[3:1])
+                                3'b??0:  begin
+                                    next_coalescer_state = VL1;
+                                    next_next_addr = coalescer_if.vlane_addr[1];
+                                end
+                                3'b?01:  begin
+                                    next_coalescer_state = VL2;
+                                    next_next_addr = coalescer_if.vlane_addr[2];
+                                end
+                                3'b011:  begin
+                                    next_coalescer_state = VL3;
+                                    next_next_addr = coalescer_if.vlane_addr[3];
+                                end
+                                default: begin
+                                    next_coalescer_state = VL0;
+                                    next_next_addr = coalescer_if.base + (coalescer_if.stride << 2);
+                                end
+                            endcase
+                        end
 
                         if (coalescer_if.vuop_num != '0) begin
                             if (next_coalescer_state == VL0)
@@ -256,11 +274,15 @@ module rv32v_mem_coalescer (
                     end
 
                     if (coalescer_if.lsc_ready | ~(|tag_match[3:1])) begin
-                        casez (tag_match[3:2])
-                            2'b?0:  next_coalescer_state = VL2;
-                            2'b01:  next_coalescer_state = VL3;
-                            default: next_coalescer_state = VL0;
-                        endcase
+                        if (uncoalesceable) begin
+                            next_coalescer_state = VL2;
+                        end else begin
+                            casez (tag_match[3:2])
+                                2'b?0:  next_coalescer_state = VL2;
+                                2'b01:  next_coalescer_state = VL3;
+                                default: next_coalescer_state = VL0;
+                            endcase
+                        end
 
                         if (next_coalescer_state == VL0)
                             next_next_addr = strided_addr[3] + coalescer_if.stride;
@@ -284,10 +306,14 @@ module rv32v_mem_coalescer (
                     end
 
                     if (coalescer_if.lsc_ready | ~(|tag_match[3:2])) begin
-                        casez (tag_match[3])
-                            1'b0:  next_coalescer_state = VL3;
-                            default: next_coalescer_state = VL0;
-                        endcase
+                        if (uncoalesceable) begin
+                            next_coalescer_state = VL3;
+                        end else begin
+                            casez (tag_match[3])
+                                1'b0:  next_coalescer_state = VL3;
+                                default: next_coalescer_state = VL0;
+                            endcase
+                        end
 
                         if (next_coalescer_state == VL0)
                             next_next_addr = strided_addr[3] + coalescer_if.stride;
@@ -337,8 +363,8 @@ module rv32v_mem_coalescer (
         coalescer_if.vmemdren_lsc = 0;
         coalescer_if.vdata_store_lsc = coalescer_if.vlane_store_data[coalescer_if.vcurr_lane];
         coalescer_if.vdata_store_wide_lsc = '0;
-        coalescer_if.vdata_store_en_wide_lsc = '0;
-        temp_vdata_store_en_wide = '0;
+        coalescer_if.vbyte_en_wide_lsc = '0;
+        temp_vbyte_en_wide = '0;
 
         casez(coalescer_if.vcurr_lane)
             2'd0 : begin
@@ -371,19 +397,19 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[0][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[0][7:0];
-                                temp_vdata_store_en_wide[0] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[0] = 4'h1 << (4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             2'b01: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[0][7:0];
-                                temp_vdata_store_en_wide[0] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                                temp_vbyte_en_wide[0] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 1);
                             end
                             2'b10: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[0][7:0];
-                                temp_vdata_store_en_wide[0] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[0] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                             2'b11: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[0][7:0];
-                                temp_vdata_store_en_wide[0] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                                temp_vbyte_en_wide[0] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 3);
                             end
                         endcase
                     end
@@ -391,19 +417,19 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[1][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[1][7:0];
-                                temp_vdata_store_en_wide[1] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[1] = 4'h1 << (4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             2'b01: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[1][7:0];
-                                temp_vdata_store_en_wide[1] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                                temp_vbyte_en_wide[1] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 1);
                             end
                             2'b10: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[1][7:0];
-                                temp_vdata_store_en_wide[1] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[1] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                             2'b11: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[1][7:0];
-                                temp_vdata_store_en_wide[1] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                                temp_vbyte_en_wide[1] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 3);
                             end
                         endcase
                     end
@@ -411,19 +437,19 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[2][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[2][7:0];
-                                temp_vdata_store_en_wide[2] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[2] = 4'h1 << (4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             2'b01: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[2][7:0];
-                                temp_vdata_store_en_wide[2] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                                temp_vbyte_en_wide[2] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 1);
                             end
                             2'b10: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[2][7:0];
-                                temp_vdata_store_en_wide[2] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[2] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                             2'b11: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[2][7:0];
-                                temp_vdata_store_en_wide[2] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                                temp_vbyte_en_wide[2] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 3);
                             end
                         endcase
                     end
@@ -431,19 +457,19 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[3][1:0])
                             2'b00: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][ 7: 0] = coalescer_if.vlane_store_data[3][7:0];
-                                temp_vdata_store_en_wide[3] = 32'hFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[3] = 4'h1 << (4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             2'b01: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][15: 8] = coalescer_if.vlane_store_data[3][7:0];
-                                temp_vdata_store_en_wide[3] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 8);
+                                temp_vbyte_en_wide[3] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 1);
                             end
                             2'b10: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][23:16] = coalescer_if.vlane_store_data[3][7:0];
-                                temp_vdata_store_en_wide[3] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[3] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                             2'b11: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][31:24] = coalescer_if.vlane_store_data[3][7:0];
-                                temp_vdata_store_en_wide[3] = 32'hFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 24);
+                                temp_vbyte_en_wide[3] = 4'h1 << ((4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 3);
                             end
                         endcase
                     end
@@ -453,11 +479,11 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[0][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[0][15:0];
-                                temp_vdata_store_en_wide[0] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[0] = 4'h3 << (4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             1'b1: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[0][15:0];
-                                temp_vdata_store_en_wide[0] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[0] = 4'h3 << ((4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                         endcase
                     end
@@ -465,11 +491,11 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[1][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[1][15:0];
-                                temp_vdata_store_en_wide[1] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[1] = 4'h3 << (4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             1'b1: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[1][15:0];
-                                temp_vdata_store_en_wide[1] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[1] = 4'h3 << ((4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                         endcase
                     end
@@ -477,11 +503,11 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[2][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[2][15:0];
-                                temp_vdata_store_en_wide[2] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[2] = 4'h3 << (4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             1'b1: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[2][15:0];
-                                temp_vdata_store_en_wide[2] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[2] = 4'h3 << ((4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                         endcase
                     end
@@ -489,11 +515,11 @@ module rv32v_mem_coalescer (
                         case(coalescer_if.vaddr_wide_lsc[3][1])
                             1'b0: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][15: 0] = coalescer_if.vlane_store_data[3][15:0];
-                                temp_vdata_store_en_wide[3] = 32'hFFFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
+                                temp_vbyte_en_wide[3] = 4'h3 << (4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
                             end
                             1'b1: begin
                                 coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]][31:16] = coalescer_if.vlane_store_data[3][15:0];
-                                temp_vdata_store_en_wide[3] = 32'hFFFF << ((32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 16);
+                                temp_vbyte_en_wide[3] = 4'h3 << ((4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]) + 2);
                             end
                         endcase
                     end
@@ -501,24 +527,24 @@ module rv32v_mem_coalescer (
                 SEW32: begin
                     if (coalescer_if.ven_lanes[0]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[0];
-                                temp_vdata_store_en_wide[0] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
+                        temp_vbyte_en_wide[0] = 4'hF << (4 * coalescer_if.vaddr_wide_lsc[0][(N_BLOCK_BITS-1+2):(2)]);
                     end
                     if (coalescer_if.ven_lanes[1]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[1];
-                                temp_vdata_store_en_wide[1] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
+                        temp_vbyte_en_wide[1] = 4'hF << (4 * coalescer_if.vaddr_wide_lsc[1][(N_BLOCK_BITS-1+2):(2)]);
                     end
                     if (coalescer_if.ven_lanes[2]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[2];
-                                temp_vdata_store_en_wide[2] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
+                        temp_vbyte_en_wide[2] = 4'hF << (4 * coalescer_if.vaddr_wide_lsc[2][(N_BLOCK_BITS-1+2):(2)]);
                     end
                     if (coalescer_if.ven_lanes[3]) begin
                         coalescer_if.vdata_store_wide_lsc[coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]] = coalescer_if.vlane_store_data[3];
-                                temp_vdata_store_en_wide[3] = 32'hFFFFFFFF << (32 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
+                        temp_vbyte_en_wide[3] = 4'hF << (4 * coalescer_if.vaddr_wide_lsc[3][(N_BLOCK_BITS-1+2):(2)]);
                     end
                 end
             endcase
         end
-        coalescer_if.vdata_store_en_wide_lsc = ~(temp_vdata_store_en_wide[0] | temp_vdata_store_en_wide[1] | temp_vdata_store_en_wide[2] | temp_vdata_store_en_wide[3]); // inverted for sramMask in L1
+        coalescer_if.vbyte_en_wide_lsc = (temp_vbyte_en_wide[0] | temp_vbyte_en_wide[1] | temp_vbyte_en_wide[2] | temp_vbyte_en_wide[3]);
     end
 
     assign coalescer_if.last_lane = ((next_coalescer_state == VL0) && (coalescer_if.lsc_ready || coalescer_state == VL3));

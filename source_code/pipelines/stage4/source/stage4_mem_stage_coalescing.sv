@@ -69,11 +69,14 @@ module stage4_mem_stage_coalescing (
     assign lsc_if.addr_wide = coalescer_if.vaddr_wide_lsc;
     assign lsc_if.store_data = (vmemop) ? coalescer_if.vdata_store_lsc : ex_mem_if.ex_mem_reg.rs2_data;
     assign lsc_if.store_data_wide = coalescer_if.vdata_store_wide_lsc;
-    assign lsc_if.store_en_wide = coalescer_if.vdata_store_en_wide_lsc;
-    assign lsc_if.wide_vstore = vmemop && dmemwen && ~ex_mem_if.vexmem.vseg_op;
+    assign lsc_if.byte_en_wide = coalescer_if.vbyte_en_wide_lsc;
+    // assign lsc_if.block_access = vmemop && dmemwen && ~ex_mem_if.vexmem.vseg_op;
+    assign lsc_if.block_access = vmemop && coalescer_if.vblock_access_lsc;
     assign lsc_if.ven_lanes = coalescer_if.ven_lanes;
     assign lsc_if.load_type = (vmemop) ? coalescer_if.vload_type : ex_mem_if.ex_mem_reg.load_type;
     assign lsc_if.ifence = ex_mem_if.ex_mem_reg.ifence;
+    assign lsc_if.reserve = ex_mem_if.ex_mem_reg.reserve;
+    assign lsc_if.exclusive = ex_mem_if.ex_mem_reg.exclusive;
 
     // Coalescer interface signals
     assign coalescer_if.vmemdwen = ex_mem_if.vexmem.vmemdwen; 
@@ -132,6 +135,7 @@ module stage4_mem_stage_coalescing (
     assign hazard_if.fence_stall = lsc_if.fence_stall;
     assign hazard_if.dren = dmemren;
     assign hazard_if.dwen = dmemwen;
+    assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
     assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
@@ -150,6 +154,7 @@ module stage4_mem_stage_coalescing (
     assign hazard_if.vuop_last = ex_mem_if.vexmem.vuop_last & ~hazard_if.coalescer_stall;
     assign hazard_if.vmem_last_elem = (coalescer_if.last_lane); // will need to change. this is not always true. may need a signal directly from MCU
     assign hazard_if.keep_vstart_m = ex_mem_if.vexmem.keep_vstart;
+    assign hazard_if.serializer_stall = 0;  // coalescer used
     assign ex_mem_if.vmskset_fwd_bits = ex_mem_if.vexmem.vres[0][3:0]; 
 
     assign halt = ex_mem_if.ex_mem_reg.halt;
@@ -250,14 +255,14 @@ module stage4_mem_stage_coalescing (
         end
 
         // segmented load/store instruction handling
-         if((ex_mem_if.vexmem.vseg_op) && (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart))
+        if((ex_mem_if.vexmem.vseg_op) && (ex_mem_if.vexmem.vuop_num < prv_pipe_if.vstart))
             velem_mask = '0; 
-         else if(ex_mem_if.vexmem.vseg_op)
+        else if(ex_mem_if.vexmem.vseg_op)
             velem_mask = ex_mem_if.vexmem.vlane_mask;
-
     end
+
     assign ven_lanes_one_hot = (coalescer_if.ven_lanes == 4'b0001) || (coalescer_if.ven_lanes == 4'b0010) || (coalescer_if.ven_lanes == 4'b0100) || (coalescer_if.ven_lanes == 4'b1000);
-    assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? (ven_lanes_one_hot ? {4{lsc_if.dload_ext}} : lsc_if.dload_ext_wide) :
+    assign vlane_data = (ex_mem_if.vexmem.vmemdren) ? (lsc_if.block_access ? lsc_if.dload_ext_wide : {4{lsc_if.dload_ext}}) :
                         (ex_mem_if.vexmem.vmv_s_x) ? {4{ex_mem_if.ex_mem_reg.rs1_data}} : ex_mem_if.vexmem.vres;
 
     always_comb begin
@@ -280,7 +285,6 @@ module stage4_mem_stage_coalescing (
         if (ex_mem_if.vexmem.vd_sel.regclass != RC_VECTOR) begin
             vlane_wen = '0;
         end
-
     end
 
     // Write-back crossbar for each vector RF bank

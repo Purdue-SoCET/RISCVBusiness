@@ -68,6 +68,12 @@ module stage4_mem_stage (
     assign lsc_if.ifence = ex_mem_if.ex_mem_reg.ifence;
     assign lsc_if.reserve = ex_mem_if.ex_mem_reg.reserve;
     assign lsc_if.exclusive = ex_mem_if.ex_mem_reg.exclusive;
+    // Unused coalescing signals
+    assign lsc_if.addr_wide = '0;
+    assign lsc_if.store_data_wide = '0;
+    assign lsc_if.byte_en_wide = '0;
+    assign lsc_if.block_access = 0;
+    assign lsc_if.ven_lanes = '0;
 
     // Serializer interface signals
     assign serial_if.vmemdwen = ex_mem_if.vexmem.vmemdwen; 
