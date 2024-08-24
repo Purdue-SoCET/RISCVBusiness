@@ -153,10 +153,10 @@ def run_tests(config: Type[run_config]) -> List[str]:
             #waf_log_filepath = pathlib.Path(waf_logger.handlers[0].baseFilename)
             print(f"    - Checking Results...")
             if 'PASSED' in res:
-                print(GREEN + res + END_COLOR)
+                print(GREEN + '[PASSED]: ' + res + END_COLOR)
                 result = PASSED
             else:
-                print(RED + res + END_COLOR)
+                print(RED + '[FAILED]: ' + res + END_COLOR)
                 result = FAILED
             # check results - 
             #result = check_self_results(waf_log_filepath, build_logger)

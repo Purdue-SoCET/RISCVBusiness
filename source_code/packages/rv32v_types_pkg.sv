@@ -29,9 +29,9 @@
 
 package rv32v_types_pkg;
   parameter VLEN_WIDTH = 7; // 128 bit registers
-  parameter VL_WIDTH = VLEN_WIDTH; //width of largest vector = VLENB * 8 
+  parameter VL_WIDTH = VLEN_WIDTH; // width of largest vector = VLENB * 8 
   parameter VLEN = 1 << 7; 
-  parameter VLENB = VLEN / 8; //VLEN in bytes- TODO change to use csr val
+  parameter VLENB = VLEN / 8;
   parameter NUM_LANES = 4;
   parameter VLMAX = 128;
 
@@ -505,7 +505,6 @@ package rv32v_types_pkg;
     logic [4:0] rs1;
     vfunct3_t funct3;
     logic [4:0] rd;
-    // rv32i_types_pkg::opcode_t op;
   } vop_cfg;
 
   typedef enum logic [2:0] {
@@ -548,6 +547,8 @@ package rv32v_types_pkg;
     vpermop_t vpermop;
     sign_type_t vsigntype;
     logic vopunsigned;
+    logic vint_cmp_instr;
+    logic vmskset_op;
   } vexec_t;
 
   typedef struct packed {

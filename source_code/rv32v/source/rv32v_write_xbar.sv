@@ -40,7 +40,6 @@ module rv32v_write_xbar
     output logic[3:0] byte_wen
 );
 
-// typedef enum logic[1:0] {BYTE_4 = 2'd0, BYTE_2 = 2'd1, BYTE_1 = 2'd2} EEW_TYPE; // put this in a package
 logic[1:0] adj_bank_offset; 
 
 always_comb begin
@@ -77,7 +76,5 @@ always_comb begin
         end 
     end
 end
-
-
 
 endmodule

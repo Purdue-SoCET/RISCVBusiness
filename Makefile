@@ -86,23 +86,6 @@ test_asm_file:
 	riscv64-unknown-elf-objcopy -O binary sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).elf sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
 	./rvb_out/sim-verilator/Vtop_core sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
 
-
-# test_verilog_file: $(VERILOG_FILE) $(VERILOG_TB_FILE)
-# 	@echo "----------------------------------------------------------------"
-# 	@echo "Creating executable for source compilation ....."
-# 	@echo "----------------------------------------------------------------\n\n"
-# 	@mkdir -p ./sim_build/
-# 	@ iverilog -g2012 -gspecify -Tmax -v -o ./sim_build/sim_file.vvp $(VERILOG_FILE) $(VERILOG_TB_FILE)
-# 	@echo "\n\n"
-# 	@echo "Compilation complete\n\n"
-
-# 	@echo "----------------------------------------------------------------"
-# 	@echo "Simulating source ....."
-# 	@echo "----------------------------------------------------------------"
-# 	@vvp ./sim_build/sim_file.vvp
-# 	@ gtkwave dump.vcd
-
-
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
 	@echo "------------------------------------------------------------------"
@@ -133,18 +116,16 @@ lint: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
 	@echo "Lint finished, no errors found"
 
-clean:
-	rm -rf build
-	rm -rf rvb_out
-	rm *.vcd
-	rm *.wlf
+clean: clean_waveforms
+	-rm -rf build
+	-rm -rf rvb_out
 
 clean_waveforms:
-	rm *.wlf
-	rm *.vcd
+	-rm *.wlf
+	-rm *.vcd
 
-veryclean:
-	rm -rf fusesoc_libraries
-	rm fusesoc.conf
+veryclean: clean
+	-rm -rf fusesoc_libraries
+	-rm fusesoc.conf
 
-.PHONY: test_verilog_file clean_waveforms
+.PHONY: clean clean_waveforms veryclean

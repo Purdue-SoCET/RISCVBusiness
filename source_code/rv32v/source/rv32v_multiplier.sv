@@ -50,7 +50,7 @@ module rv32v_multiplier (
         .product(full_product)
     );
 
-    assign multiplicand = ((vmul_in.vmulop == VMADD) | (vmul_in.vmulop == VNMSUB)) ? vmul_in.vd_data : vmul_in.vs2_data;
+    assign multiplicand = ((vmul_in.vmulop == VMUL_MADD) | (vmul_in.vmulop == VMUL_NMSUB)) ? vmul_in.vd_data : vmul_in.vs2_data;
     assign start = vmul_in.vmul_en & ~vmul_in.vmem_use_stall & ~busy;
     assign vmul_out.vmul_busy = start | (busy & ~finished);
 

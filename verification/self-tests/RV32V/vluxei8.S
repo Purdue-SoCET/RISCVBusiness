@@ -21,10 +21,7 @@ RVTEST_CODE_BEGIN
   la x2, ldat
   la x3, sdat
   vluxei8.v v2, (x2), v1
-	NOP
   vse8.v v2, (x3)
-	NOP
-	NOP
 	lb x4, 0(x3)
 	lb x5, 1(x3)
 	lb x6, 2(x3)

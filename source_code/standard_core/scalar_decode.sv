@@ -21,18 +21,6 @@
 *   Date Created: 11/19/2023
 *   Description: scalar decode block for non-vector instructions
 */
-//'include "stage3_types_pkg.sv"
-
-// `include "stage4_fetch_execute_if.vh"
-// `include "stage4_hazard_unit_if.vh"
-// `include "stage4_forwarding_unit_if.vh"
-// `include "control_unit_if.vh"
-// `include "component_selection_defines.vh"
-// `include "rv32i_reg_file_if.vh"
-// `include "alu_if.vh"
-//`include "prv_pipeline_if.vh"
-//`include "risc_mgmt_if.vh"
-// `include "rv32c_if.vh"
 
 import stage4_types_pkg::*;
 import rv32i_types_pkg::*;
@@ -42,7 +30,6 @@ module scalar_decode
     input word_t instr,
     output control_t control_out
 );
-
 
 control_unit_if cu_if ();
 rv32i_reg_file_if rf_if ();
@@ -58,11 +45,6 @@ control_unit cu (
     .rmgmt_rsel_d('0),
     .rmgmt_req_reg_r('0),
     .rmgmt_req_reg_w('0)
-    //.rmgmt_rsel_s_0(rm_if.rsel_s_0),
-    //.rmgmt_rsel_s_1(rm_if.rsel_s_1),
-    //.rmgmt_rsel_d(rm_if.rsel_d),
-    //.rmgmt_req_reg_r(rm_if.req_reg_r),
-    //.rmgmt_req_reg_w(rm_if.req_reg_w)
 );
 
 // connect the ports between the interfaces and the struct type
@@ -91,7 +73,6 @@ assign control_out.imm_I = cu_if.imm_I;
 assign control_out.imm_S = cu_if.imm_S;
 assign control_out.imm_UJ =  cu_if.imm_UJ;
 assign control_out.imm_SB =  cu_if.imm_SB;
-// word_t instr;
 assign control_out.imm_U = cu_if.imm_U;
 assign control_out.load_type = cu_if.load_type;
 assign control_out.branch_type = cu_if.branch_type;

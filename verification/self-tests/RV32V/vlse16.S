@@ -20,9 +20,7 @@ RVTEST_CODE_BEGIN
 	la x1, ldat
 	la x2, sdat
   vlse16.v v1, (x1), x15
-	NOP
 	vsse16.v v1, (x2), x15
-	NOP
 	lw x3, 0(x2)
 	lw x4, 4(x2)
 	lw x5, 8(x2)

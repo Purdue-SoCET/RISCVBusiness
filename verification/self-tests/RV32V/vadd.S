@@ -24,7 +24,6 @@ RVTEST_CODE_BEGIN
   vadd.vv v0, v2, v1
 
     vse32.v v0, (x2)
-    NOP
     lw x3, 0(x2)
     lw x4, 4(x2)
     lw x5, 8(x2)

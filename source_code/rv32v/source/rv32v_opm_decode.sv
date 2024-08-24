@@ -58,6 +58,8 @@ always_comb begin
     vexec.vpermop = VPRM_SMV;
     vexec.vsigntype = SIGNED;
     vexec.vopunsigned = 1'b0;
+    vexec.vint_cmp_instr = 1'b0;
+    vexec.vmskset_op = 1'b0;
     disable_mask = 1'b0; 
     vuse_vd = 1'b0; 
 

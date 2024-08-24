@@ -41,11 +41,10 @@ module stage4_execute_stage (
     input nRST,
 
     input uop_t ex_in, 
-    //input uop_t uop_out, 
+
     stage4_mem_stage_if.ex ex_mem_if,
     stage4_hazard_unit_if.execute hazard_if,
     stage4_forwarding_unit_if.execute fw_if,
-    //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif, 
     rv32v_shadow_csr_if.execute shadow_if
@@ -94,7 +93,6 @@ module stage4_execute_stage (
             hazard_if.vs2_used = 0; 
             hazard_if.vd_used = 0;
         end
-
     end
 
     rv32v_ex_datapath RVV_DATAPATH(
@@ -109,7 +107,6 @@ module stage4_execute_stage (
         .mask_stall(hazard_if.vmask_calc_stall),
         .vmem_use_stall(hazard_if.vmem_use_stall),
         .vstride(vstride),
-        
         .vmem_in(vex_out),
         .vex_stall(vex_stall)
     );
@@ -191,9 +188,7 @@ module stage4_execute_stage (
             shadow_if.vtype_spec = vtype_t'(0); 
             shadow_if.vtype_spec.vill = 1'b1;
         end
-
     end
-
 
     /**********************
     * Scalar Register File

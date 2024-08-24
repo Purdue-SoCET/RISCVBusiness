@@ -22,8 +22,6 @@
 *   Description:  Arbitrate between scalar and vector decode and feed uops into the queue 
 */
 
-// `include "stage4_types_pkg.sv"
-//`include "stage4_fet_dec_ex_if.vh"
 `include "stage4_hazard_unit_if.vh" 
 `include "rv32v_control_unit_if.vh"
 `include "rv32v_shadow_csr_if.vh"
@@ -36,7 +34,6 @@ module stage4_decode_stage
 (
     input logic CLK,
     input logic nRST,
-    // input logic stall_decode,
 
     input fetch_out_t fetch_out,
     
@@ -46,43 +43,28 @@ module stage4_decode_stage
     stage4_hazard_unit_if.decode hazard_if, 
     rv32v_shadow_csr_if.shadow shadow_if,
 
-
-    // output word_t pc_decode,
-    // output logic valid_decode,
-
     rv32c_if rv32cif
 );
-
 
 word_t scalar_instr;
 control_t control;
 logic svalid;
 
-
 rv32v_control_unit_if vcu_if(); 
-// rv32v_shadow_csr_if vshadow_csr_if(); 
-
 
 // RV32C inputs
 assign rv32cif.inst16 = fetch_out.instr[15:0];
 assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
 assign rv32cif.ex_busy = hazard_if.stall_decode;
-assign scalar_instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_out.instr;  //if_stage_in.instr;
+assign scalar_instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_out.instr;
 
 // Instantiate scalar decode
-
 scalar_decode U_SCALAR_DECODE(
     .instr(scalar_instr),
     .control_out(control)
 );
 
 assign svalid = !control.fault_insn && !control.illegal_insn;
-
-
-// Instantiate vector decode
-// vcontrol_t vcontrol;
-// logic vvalid;
-// logic vbusy;
 
 assign vcu_if.vsew = shadow_if.vsew_shadow; 
 assign vcu_if.vlmul = shadow_if.vlmul_shadow; 
@@ -93,31 +75,11 @@ assign vcu_if.instr = fetch_out.instr;
 assign vcu_if.rs1 = control.rs1; 
 assign vcu_if.rd = control.rd; 
 
-// assign uop_out.vctrl_out = '{default:'0}; 
-
 rv32v_control_unit U_VECTOR_DECODE(CLK, nRST, vcu_if); 
 rv32v_shadow_csr RVV_SHADOW_CSR(
     .CLK(CLK), .nRST(nRST), 
     .shadow_if(shadow_if)
 ); 
-
-
-//rv32v_control_unit_if vcu_if();
-//rv32v_control_unit U_VECTOR_DECODE(vcu_if)
-
-//assign vcu_if.instr = fetch_out.instr;
-//assign vcu_if.stall = stall_decode;
-
-// assign vcu_if.vsew = vsew;
-// assign vcu_if.vlmul = vlmul;
-// assign vcu_if.vl = vl;
-
-// Vector CSR shadow copy
-// vsew_t vsew;
-// vlmul_t vlmul;
-// vl_t vl;
-
-// TODO
 
 // EPC signals for interrupts 
 assign hazard_if.valid_decode = fetch_out.valid; 
@@ -126,7 +88,6 @@ assign hazard_if.vsetvl_dec = uop_out.vctrl_out.vsetvl_type != NOT_CFG;
 assign hazard_if.vbusy = vcu_if.vbusy; 
 
 // Decode resolution
-//assign num_uops = fetch_out.valid ? DISPATCH_SIZE : 0; 
 assign queue_wen = (~hazard_if.stall_decode && (fetch_out.valid || vcu_if.vvalid));
 assign hazard_if.queue_wen = queue_wen; 
 
@@ -134,7 +95,6 @@ always_comb begin
     uop_out.if_out = fetch_out;
     uop_out.ctrl_out = control;
     uop_out.vctrl_out = vcu_if.vcontrol; 
-    //uop_out.vctrl_out = '{'0};
 
     // Resolve scalar signals if valid vector isn
     if (vcu_if.vvalid) begin
@@ -143,9 +103,7 @@ always_comb begin
         // Clear scalar decode detecting illegal isn
         uop_out.ctrl_out.illegal_insn = 0;
     end else begin
-        uop_out.vctrl_out = '{default: '0, vsetvl_type:NOT_CFG, veew_src1: SEW32, veew_src2: SEW32, veew_dest: SEW32}; 
-        // uop_out.vctrl_out.vmemdren = 0;
-        // uop_out.vctrl_out.vmemdwen = 0;
+        uop_out.vctrl_out = '{default: '0, vsetvl_type:NOT_CFG, veew_src1: SEW32, veew_src2: SEW32, veew_dest: SEW32};
     end
 end
 

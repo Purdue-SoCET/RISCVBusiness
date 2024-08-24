@@ -416,6 +416,8 @@ always_comb begin
     vcu_if.vcontrol.vexec.vmaskop = VMSK_AND;
     vcu_if.vcontrol.vexec.vpermop = VPRM_SMV;
     vcu_if.vcontrol.vexec.vopunsigned = 1'b0;
+    vcu_if.vcontrol.vexec.vint_cmp_instr = 1'b0;
+    vcu_if.vcontrol.vexec.vmskset_op = 1'b0;
     vcu_if.vcontrol.vsignext = 1'b0; 
     vexecute_valid = 1'b0;
     vcu_if.vcontrol.vmask_dep = vmask_en; 

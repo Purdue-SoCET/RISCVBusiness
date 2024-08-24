@@ -45,7 +45,6 @@ logic vcompress;
 vsew_t veew_src1;
 
 //mask set layer outputs
-logic is_vmskset_op; 
 logic[7:0] vmskset_res; 
 logic[3:0] vmskset_lane_mask;
 
@@ -54,28 +53,9 @@ word_t[3:0] vscratchdata;
 
 assign output_stall = ex_mem_stall || ex_mem_flush;
 
-logic vint_cmp_instr; 
+assign ext_imm = (vctrls.vsignext || vctrls.vexec.vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
 
-assign vint_cmp_instr = vctrls.vexec.valuop == VALU_SEQ || // MOVE THIS TO DECODE
-                        vctrls.vexec.valuop == VALU_SNE || 
-                        vctrls.vexec.valuop == VALU_SLT ||
-                        vctrls.vexec.valuop == VALU_SLE ||
-                        vctrls.vexec.valuop == VALU_SGT; 
-
-assign is_vmskset_op = vctrls.vexec.valuop == VALU_SEQ || // MOVE THIS TO DECODE
-                       vctrls.vexec.valuop == VALU_SNE ||
-                       vctrls.vexec.valuop == VALU_SLT ||
-                       vctrls.vexec.valuop == VALU_SLE ||
-                       vctrls.vexec.valuop == VALU_SGT ||
-                       vctrls.vexec.valuop == VALU_VMADC_NO_C ||
-                       vctrls.vexec.valuop == VALU_VMADC ||
-                       vctrls.vexec.valuop == VALU_VMSBC_NO_B ||
-                       vctrls.vexec.valuop == VALU_VMSBC;                 
-// assign is_vmskset_op = 0;         
-
-assign ext_imm = (vctrls.vsignext || vint_cmp_instr)  ? {{27{vctrls.vimm[4]}}, vctrls.vimm} : {27'b0, vctrls.vimm};
-
-// store data  
+// store data
 always_comb begin
     vmem_in.vs1 = xbardat_src1; 
 
@@ -104,7 +84,7 @@ always_comb begin
     vmem_in.vres[2] = vfu_res[2]; 
     vmem_in.vres[3] = vfu_res[3];
 
-    if(is_vmskset_op) begin
+    if(vctrls.vexec.vmskset_op) begin
         vmem_in.vres[0] = {4{vmskset_res}};
         vmem_in.vres[1] = {4{vmskset_res}};
         vmem_in.vres[2] = {4{vmskset_res}};
@@ -128,7 +108,7 @@ end
 // lane_mask muxing due to vmskset instructions
 always_comb begin
     vmem_in.vlane_mask = msku_lane_mask; 
-    if(is_vmskset_op)
+    if(vctrls.vexec.vmskset_op)
         vmem_in.vlane_mask = vmskset_lane_mask; 
     else if(is_mask_calc_instr) begin
         case(vctrls.vexec.vmaskop)
@@ -140,7 +120,7 @@ always_comb begin
 
 
 end 
-// assign vmem_in.vlane_mask = is_vmskset_op ?  : msku_lane_mask; 
+
 // mux data to write to scratch register
 assign vscratch_write_data = (vctrls.vexec.vfu == VFU_PRM) ? ((vperm_out.vs2_to_scratch) ? xbardat_src2 : vperm_out.vscratchwdata) : vmem_in.vres;
 
@@ -448,7 +428,7 @@ assign vmem_in.vmv_s_x = vctrls.vmv_s_x;
 // Permutation instructions write to scratch register in EX & back to vector RF in MEM/WB
 assign vmem_in.vd_sel = (vctrls.vexec.vfu == VFU_PRM) ? '{regclass: RC_VECTOR, regidx: vctrls.vd_sel.regidx} : vctrls.vd_sel;
 //assign vmem_in.vbank_offset = vctrls.vbank_offset; 
-assign vmem_in.vbank_offset = is_vmskset_op ? vmskset_bank_offset : vctrls.vbank_offset;
+assign vmem_in.vbank_offset = vctrls.vexec.vmskset_op ? vmskset_bank_offset : vctrls.vbank_offset;
 assign vmem_in.vsetvl = (vctrls.vsetvl_type == NOT_CFG) ? 1'b0 : 1'b1;
 assign vmem_in.vkeepvl = vctrls.vkeepvl;
 assign vmem_in.keep_vstart = vctrls.keep_vstart;

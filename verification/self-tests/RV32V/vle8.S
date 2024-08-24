@@ -19,9 +19,7 @@ RVTEST_CODE_BEGIN
 	la x1, ldat
 	la x2, sdat
   vle8.v v1, (x1)
-	NOP
 	vse8.v v1, (x2)
-	NOP
 	lw x3, 0(x2)
 	lw x4, 4(x2)
 	lw x5, 8(x2)

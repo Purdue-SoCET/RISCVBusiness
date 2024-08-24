@@ -22,15 +22,15 @@ RVTEST_CODE_BEGIN
   
   vwadd.vv v0, v1, v1
 
-    vse32.v v0, (x2)
-    lw x3, 0(x2)
-    
+	vse32.v v0, (x2)
+	lw x3, 0(x2)
+	
 
-    TEST_CASE(1, x3, 0xfffffffe, NOP)
-    vadd.vv v5, v1, v1
-    vse32.v v5, 0(x2)
-    lw x3, 0(x2)
-    TEST_CASE(2, x3, 0x0000fffe)
+	TEST_CASE(1, x3, 0xfffffffe, NOP)
+	vadd.vv v5, v1, v1
+	vse32.v v5, 0(x2)
+	lw x3, 0(x2)
+	TEST_CASE(2, x3, 0x0000fffe)
 
 
 	vsetivli x0, 8, e16 

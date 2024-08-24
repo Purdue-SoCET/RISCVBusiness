@@ -37,9 +37,6 @@ parameter VREG_COUNT = 32;
 parameter VLMUL_MAX = 8;
 parameter VLANE_COUNT = 4;
 
-// Required intermediate values
-// logic [2:0] eew_bytes;
-
 // Flags to indicate when to refresh or advance
 logic refresh;
 logic advance;
@@ -52,8 +49,6 @@ logic [7:0] elements_left;
 
 // Register to store current uop number
 logic [7:0] vuop_num_reg;
-
-// assign eew_bytes = (1 << vug_if.veew_dest);
 
 assign advance = (!vug_if.stall && vug_if.gen);
 
@@ -163,10 +158,9 @@ always_comb begin
     end
 
 end
-// assign vug_if.busy = (vug_if.gen && (vug_if.is_seg_op ? elements_left > 1 : elements_left > VLANE_COUNT) );
 
 // Set last uop flag if last uop is being issued
-assign vug_if.vuop_last = ~vug_if.gen || ~vug_if.busy; // (vug_if.is_seg_op ? elements_left <= 1 : elements_left <= VLANE_COUNT); //  (vug_if.gen && elements_left <= VLANE_COUNT);
+assign vug_if.vuop_last = ~vug_if.gen || ~vug_if.busy;
 
 // calculate bank offset 
 assign vug_if.vbank_offset = vug_if.is_seg_op ? {vug_if.vuop_num >> 2}[1:0] : vug_if.vuop_num[1:0];
@@ -202,12 +196,6 @@ always_comb begin
         rv32v_types_pkg::SEW32: vug_if.vreg_offset_src2 = vug_if.is_seg_op ? {vug_if.vuop_num >> 2}[2:0] : {vug_if.vuop_num >> 0}[2:0];
         default: vug_if.vreg_offset_src2 = '0;
     endcase
-
-    //** we don't the below operation since vs2 serves as the index vector 
-    // if(vug_if.is_seg_op) begin
-    //     vug_if.vreg_offset_src2 = (vug_if.vreg_offset_src2) + (vug_if.nf_counter << vug_if.emul_src2); 
-    // end
-
 end
 
 // Calculate lane actives
@@ -218,7 +206,6 @@ always_comb begin
         3: vug_if.vlane_active = 4'b0111;
         default: vug_if.vlane_active = '1;
     endcase
-
 
     // overwrite for segment instructions 
     if(vug_if.is_seg_op)

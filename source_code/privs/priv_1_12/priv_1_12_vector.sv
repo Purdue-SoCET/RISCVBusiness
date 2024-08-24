@@ -42,7 +42,6 @@ module priv_1_12_vector (
     // vcsr
     csr_reg_t         vl, vl_next;
     vtype_t           vtype, vtype_next;
-    // csr_reg_t         vlenb;  // VLENB = VLEN/8
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
