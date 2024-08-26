@@ -45,7 +45,6 @@ module stage4 #(
     generic_bus_if.cpu dgen_bus_if,
     prv_pipeline_if prv_pipe_if,
     predictor_pipeline_if predict_if,
-    //risc_mgmt_if rm_if,
     cache_control_if cc_if,
     sparce_pipeline_if sparce_if,
     rv32c_if rv32cif
@@ -95,7 +94,6 @@ module stage4 #(
     );
 
     stage4_execute_stage execute_stage_i(.ex_mem_if(mem_pipe_if),.ex_in(ex_in), .shadow_if(shadow_if), .*);
-    // stage4_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
     stage4_mem_stage_coalescing mem_stage_i(.ex_mem_if(mem_pipe_if), .shadow_if(shadow_if), .*);
     stage4_hazard_unit hazard_unit_i(.*);
     stage4_forwarding_unit forward_unit_i(.*);

@@ -69,7 +69,6 @@ package rv32v_types_pkg;
     WIDTH8  = 3'd0, 
     WIDTH16 = 3'b101, 
     WIDTH32 = 3'b110
-    // RES = 3'd1, 3'd2, 3'd3, 3'd4, 3'd7 
   } width_t;
 
   typedef enum logic [6:0] { 
