@@ -216,6 +216,10 @@ module coherency_unit #(
             end
             default : begin end
         endcase
+
+        if (ccif.abort_bus && state_can_abort(state)) begin
+            gbif.busy = 0;
+        end
     end
 
     assign bcif.ccIsPresent[CPUID] = bcif.ccsnoophit[CPUID];
