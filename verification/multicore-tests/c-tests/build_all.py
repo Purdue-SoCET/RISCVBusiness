@@ -7,7 +7,7 @@ import pathlib
 
 utility_files = ["start.S", "utility.c", "amo_emu.c", "mutex.c", "fast_amo_emu.c"]
 
-compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32imac_zicsr', '-mabi=ilp32', '-mcmodel=medany',
+compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32imac_zve32x_zicsr', '-mabi=ilp32', '-mcmodel=medany',
                 '-static', '-O2', '-Tlink.ld', '-std=c11', '-nostartfiles'] + utility_files
 
 cvt_cmd = ['riscv64-unknown-elf-objcopy', '-O', 'binary']
@@ -21,6 +21,7 @@ if not os.path.isfile("link.ld"):
     exit(1)
 
 for fname in (glob.glob('./*.c') + glob.glob('./*.S')):
+    print(fname)
     for utility_file in utility_files:
         print(f"{utility_file} {fname}")
         if utility_file in fname:
@@ -48,6 +49,33 @@ for fname in (glob.glob('./*.c') + glob.glob('./*.S')):
             print('stderr:\n\n{}'.format(rv.stderr))
             print('Exiting...')
             exit(1)
+
+# I am so sorry Devin, this is the only way I could make this work :(
+# Used clang 18.1.0 to make the vector code because riscv-gcc 13.2.0 did not vectorize (nor 14.2.0 which is odd) 
+compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32imac_zve32x_zicsr', '-mabi=ilp32', '-mcmodel=medany',
+                '-static', '-O2', '-Tlink.ld', '-std=c11', '-nostartfiles']
+fname = "./matmul_vector.s"
+print('Compiling {}'.format(fname))
+basename = pathlib.Path(fname).stem
+
+rv = subprocess.run(compile_cmd + [fname, '-o', basename + '.elf'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+if rv.returncode != 0:
+    print('Exited with error {}, printing command, stdout, stderr!'.format(rv.returncode))
+    print('Command: {}\n\n'.format(compile_cmd + [fname, '-o', basename + '.elf']))
+    print('stdout:\n\n{}'.format(rv.stdout))
+    print('stderr:\n\n{}'.format(rv.stderr))
+    print('Exiting...')
+    exit(1)
+
+print('Converting {} to binary'.format(fname))
+rv = subprocess.run(cvt_cmd + [basename + '.elf', basename + '.bin'])
+if rv.returncode != 0:
+    print('Exited with error {}, printing command, stdout, stderr!'.format(rv.returncode))
+    print('Command: {}\n\n'.format(compile_cmd + [fname, '-o', basename + '.elf']))
+    print('stdout:\n\n{}'.format(rv.stdout))
+    print('stderr:\n\n{}'.format(rv.stderr))
+    print('Exiting...')
+    exit(1)
 
 print(
 '''
