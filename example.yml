@@ -9,7 +9,7 @@ microarch_params:
   num_harts : 1
 
   # Branch/Jump Configurations
-  br_predictor_type : "not_taken"
+  br_predictor_type : "btb_2"
   
   # Cache configurations
   cache_config  : "separate"
