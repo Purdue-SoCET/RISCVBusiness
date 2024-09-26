@@ -327,15 +327,15 @@ package machine_mode_types_1_13_pkg;
     logic        reserved_0;
   } mstatus_t;
 
- typedef struct packed {
-   logic [25:0] reserved_1;
-   logic        mbe;          // M-Mode endianness control
-   logic        sbe;          // S-Mode endianness control
-   logic [3:0]  reserved_0;
- } mstatush_t;
+  typedef struct packed {
+    logic [25:0] reserved_1;
+    logic        mbe;          // M-Mode endianness control
+    logic        sbe;          // S-Mode endianness control
+    logic [3:0]  reserved_0;
+  } mstatush_t;
 
   /* mtvec types */
- typedef enum logic [1:0] {
+  typedef enum logic [1:0] {
     DIRECT   = 2'h0,
     VECTORED = 2'h1,
     RES_0    = 2'h2,
@@ -386,74 +386,74 @@ package machine_mode_types_1_13_pkg;
   } mie_t;
 
   /* mcounteren and mcountinhibit types */
- typedef struct packed {
-   logic hpm31;
-   logic hpm30;
-   logic hpm29;
-   logic hpm28;
-   logic hpm27;
-   logic hpm26;
-   logic hpm25;
-   logic hpm24;
-   logic hpm23;
-   logic hpm22;
-   logic hpm21;
-   logic hpm20;
-   logic hpm19;
-   logic hpm18;
-   logic hpm17;
-   logic hpm16;
-   logic hpm15;
-   logic hpm14;
-   logic hpm13;
-   logic hpm12;
-   logic hpm11;
-   logic hpm10;
-   logic hpm9;
-   logic hpm8;
-   logic hpm7;
-   logic hpm6;
-   logic hpm5;
-   logic hpm4;
-   logic hpm3;
-   logic ir;
-   logic tm;
-   logic cy;
+  typedef struct packed {
+    logic hpm31;
+    logic hpm30;
+    logic hpm29;
+    logic hpm28;
+    logic hpm27;
+    logic hpm26;
+    logic hpm25;
+    logic hpm24;
+    logic hpm23;
+    logic hpm22;
+    logic hpm21;
+    logic hpm20;
+    logic hpm19;
+    logic hpm18;
+    logic hpm17;
+    logic hpm16;
+    logic hpm15;
+    logic hpm14;
+    logic hpm13;
+    logic hpm12;
+    logic hpm11;
+    logic hpm10;
+    logic hpm9;
+    logic hpm8;
+    logic hpm7;
+    logic hpm6;
+    logic hpm5;
+    logic hpm4;
+    logic hpm3;
+    logic ir;
+    logic tm;
+    logic cy;
  } mcounteren_t;
 
   typedef struct packed {
-   logic hpm31;
-   logic hpm30;
-   logic hpm29;
-   logic hpm28;
-   logic hpm27;
-   logic hpm26;
-   logic hpm25;
-   logic hpm24;
-   logic hpm23;
-   logic hpm22;
-   logic hpm21;
-   logic hpm20;
-   logic hpm19;
-   logic hpm18;
-   logic hpm17;
-   logic hpm16;
-   logic hpm15;
-   logic hpm14;
-   logic hpm13;
-   logic hpm12;
-   logic hpm11;
-   logic hpm10;
-   logic hpm9;
-   logic hpm8;
-   logic hpm7;
-   logic hpm6;
-   logic hpm5;
-   logic hpm4;
-   logic hpm3;
-   logic ir;
-   logic reserved_0;
-   logic cy;
+    logic hpm31;
+    logic hpm30;
+    logic hpm29;
+    logic hpm28;
+    logic hpm27;
+    logic hpm26;
+    logic hpm25;
+    logic hpm24;
+    logic hpm23;
+    logic hpm22;
+    logic hpm21;
+    logic hpm20;
+    logic hpm19;
+    logic hpm18;
+    logic hpm17;
+    logic hpm16;
+    logic hpm15;
+    logic hpm14;
+    logic hpm13;
+    logic hpm12;
+    logic hpm11;
+    logic hpm10;
+    logic hpm9;
+    logic hpm8;
+    logic hpm7;
+    logic hpm6;
+    logic hpm5;
+    logic hpm4;
+    logic hpm3;
+    logic ir;
+    logic reserved_0;
+    logic cy;
   } mcountinhibit_t;
 
   /* mcause register variables */
