@@ -16,9 +16,9 @@
 *
 *   Filename:     pmp_types_1_13_pkg.sv
 *
-*   Created by:   Hadi Ahmed
-*   Email:        ahmed138@purdue.edu
-*   Date Created: 03/20/2022
+*   Created by:   William Cunningham
+*   Email:        wrcunnin@purdue.edu
+*   Date Created: 09/26/2024
 *   Description:  Types needed to implement physical memory protection
 */
 
