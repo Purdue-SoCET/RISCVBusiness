@@ -1,5 +1,4 @@
-/*
-*   Copyright 2024 Purdue University
+opyright 2024 Purdue University
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -32,35 +31,48 @@ module multi_instruction_handler (
     //General variables
     typedef enum logic[1:0] {IDLE, SENDING_HAZARD_ON, SENDING_HAZARD_OFF, FINAL_LINES} State;
     State state, next_state;
-    logic finished_base_lines;
-    logic finished_final_lines;
+    logic finished_base_lines; //finish assigning (push/pop instrs)
+    logic finished_final_lines; //finish assigning (pop instrs)
     logic [31:0] local_inst32;
-    logic multi_line_instr, atomic_instr;
+    logic multi_line_instr, atomic_instr; 
+
     assign multi_line_instr = mih_if.c_push | mih_if.c_pop | mih_if.c_popretz | mih_if.c_popret | mih_if.c_mvsa01 | mih_if.c_mva01s | mih_if.c_jt | mih_if.c_jalt;
     assign atomic_instr = mih_if.c_mvsa01 | mih_if.c_mva01s;
 
     //Push/Pop variables
     logic [3:0] rlist;
-    logic [5:0] sp_adjust; 
+    logic [11:0] sp_adjust, sp_adjust_neg; 
     logic [2:0] r1s, r2s; 
-    logic [11:0] current_offset;
+    logic [11:0] current_offset; //Assign
+    logic [5:0] stack_adj_base;
+    logic started_sending, started_final_lines;
+    logic [1:0] final_instr_index; //Finish assign (final)
     
-
     //Push/Pop ROM variables
+    logic [31:0] final_instr_inst32;
     logic [31:0] push_rom_inst32;
     logic [31:0] pop_rom_inst32;
     logic [31:0] mvsa0_rom_inst32;
     logic [31:0] mvsa1_rom_inst32;
     logic [31:0] mvas0_rom_inst32;
     logic [31:0] mvas1_rom_inst32;
+    logic [4:0] push_pop_index;
+
+    //Counter variables
+    logic counter_clear, counter_enable, counter_flag;
+    logic [3:0] counter_limit, counter_count; //USE 
 
     //Push/Pop variable assignment
     assign rlist = dcpr_if.inst16[7:4];
-    assign sp_adjust = {dcpr_if.inst16[3:2], 4'd0}; 
+    assign sp_adjust = {dcpr_if.inst16[3:2], 4'd0} + stack_adj_base; 
+    assign sp_adjust_neg = (!sp_adjust) + 1'b1;
     assign r1s = dcpr_if.inst16[9:7]; 
     assign r2s = dcpr_if.inst16[4:2];
 
-    //Push/Pop State Machine
+    multi_instr_counter mic (.clk(clk), .n_rst(n_rst), .clear(counter_clear), .count_enable(counter_enable),
+                            .rollover_val(counter_limit), .count_out(counter_count), .rollover_flag(counter_flag));
+
+    //Push/Pop State Machine + Logic
     always_ff @ (posedge clk, negedge n_rst) begin
         if (!n_rst) begin
             state = IDLE;
@@ -69,6 +81,7 @@ module multi_instruction_handler (
             state = next_state;
         end
     end
+
     always_comb begin: NEXT_STATE_LOGIC
         next_state = state
 
@@ -86,7 +99,7 @@ module multi_instruction_handler (
         end
     end
 
-    always_comb begin: COMBO LOGIC
+    always_comb begin: COMBO_LOGIC
         if (state == IDLE) begin
             mih_if.inst32 = dcpr_if.inst32;
             mih_if.hazard_dis = 1'b0;
@@ -109,48 +122,155 @@ module multi_instruction_handler (
         end
     end
 
+    //logic [11:0] current_offset; //Assign, tied to counter + logic
+    always_comb begin: INSTRUCTION_SELECTION
+        local_inst32 = 32'b0;
+        counter_clear = 0;
+        counter_enable = 0
+        counter_limit = 4'd2; //default
+        current_offset = 12'd0;
+        push_pop_index = {(rlist == 4'd15 && counter_count == 0), rlist - counter_count - (rlist == 4'd15)}; //flags rlist == 15 in bit 5, adjusts index if the flag needs to be dealt with. 
+        started_sending = (next_state != state) && (state == IDLE)
+        started_final_lines = (next_state != state) && (next_state == FINAL_LINES)
 
-    //Push ROM (store)
-    always_comb begin
-        current_offset = -4; //Placeholder
+        if (started_sending | started_final_lines) begin
+            counter_clear = 1;
+        end
+        
+        if (state != FINAL_LINES && state != IDLE) begin //Sending Lines State
+            finished_final_lines = 0;
+            finished_base_lines = 0;
+
+            if (counter_flag) begin 
+                finished_base_lines = 1; //End of push/pop
+            end
+
+            if (mih_if.c_push) begin
+                counter_enable = 1;
+                counter_limit = rlist - 4 + (rlist == 4'd15); 
+                local_inst32 = push_rom_inst32;   
+            end
+            else if (mih_if.c_pop | mih_if.c_popretz | mih_if.c_popret) begin
+                counter_enable = 1;
+                counter_limit = rlist - 4 + (rlist == 4'd15); 
+                local_inst32 = pop_rom_inst32;
+            end
+            else if (mih_if.c_mvsa01) begin
+                if (started_sending) begin
+                    local_inst32 = mvsa0_rom_inst32;
+                end
+                else begin
+                    local_inst32 = mvsa1_rom_inst32;
+                    finished_base_lines = 1;
+                    finished_final_lines = 1;
+                end
+            end
+            else if (mih_if.c_mva01s) begin
+                if (started_sending) begin
+                    local_inst32 = mvas0_rom_inst32;
+                end
+                else begin
+                    local_inst32 = mvas1_rom_inst32;
+                    finished_base_lines = 1;
+                    finished_final_lines = 1;
+                end
+            end
+        end
+
+        else begin //Final Lines State
+            finished_final_lines = 0;
+            finished_base_lines = 1;
+
+            if (mih_if.c_push) begin
+                final_instr_index = 0;
+                local_inst32 = final_instr_inst32;
+                finished_final_lines = 1;
+            end
+            else if (mih_if.c_pop) begin
+                final_instr_index = 2;
+                local_inst32 = final_instr_inst32;
+                finished_final_lines = 1;
+            end
+            else if (mih_if.c_popret | mih_if.popretz) begin 
+                counter_enable = 1;
+                local_inst32 = final_instr_inst32;
+
+                if (mih_if.c_popret) begin
+                    counter_limit = 4'd1;
+                    finished_final_lines = counter_flag ? 2'd3 : 2'd2;
+                end
+                else begin //popretz
+                    counter_limit = 4'd2;
+                    finished_final_lines = counter_flag ? 2'd3 : (counter_count == 4'd1) ? 2'd2 : 2'd1;
+                end
+
+                if (counter_flag) begin
+                    finished_final_lines = 1;
+                end
+            end
+        end
+    end
+
+
+    //ALL ROMS
+    always_comb begin: STACK_ADJ_BASE_ROM
         case (rlist)
-            4'd4 : push_rom_inst32 = {current_offset[11:5], 5'd1, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //ra
-            4'd5 : push_rom_inst32 = {current_offset[11:5], 5'd8, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s0
-            4'd6 : push_rom_inst32 = {current_offset[11:5], 5'd9, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s1
-            4'd7 : push_rom_inst32 = {current_offset[11:5], 5'd18, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s2
-            4'd8 : push_rom_inst32 = {current_offset[11:5], 5'd19, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s3
-            4'd9 : push_rom_inst32 = {current_offset[11:5], 5'd20, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s4
-            4'd10 : push_rom_inst32 = {current_offset[11:5], 5'd21, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s5
-            4'd11 : push_rom_inst32 = {current_offset[11:5], 5'd22, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s6
-            4'd12 : push_rom_inst32 = {current_offset[11:5], 5'd23, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s7
-            4'd13 : push_rom_inst32 = {current_offset[11:5], 5'd24, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s8
-            4'd14 : push_rom_inst32 = {current_offset[11:5], 5'd25, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s9
-            4'd15 : push_rom_inst32 = {current_offset[11:5], 5'd26, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s10
-            default: push_rom_inst32 = {current_offset[11:5], 5'd27, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s11
+            4'd8, 4'd9, 4'd10, 4'd11 : stack_adj_base = 6'd32; 
+            4'd12, 4'd13, 4'd14 : stack_adj_base = 6'd48; 
+            4'd15 : stack_adj_base = 6'd64; 
+            default : stack_adj_base = 16;
         endcase
     end
 
-    //Pop ROM (load)
-    always_comb begin
-        case (rlist)
-            4'd4 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd1, 7'b0000011}; //ra
-            4'd5 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd8, 7'b0000011}; //s0
-            4'd6 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd9, 7'b0000011}; //s1
-            4'd7 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd18, 7'b0000011}; //s2
-            4'd8 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd19, 7'b0000011}; //s3
-            4'd9 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd20, 7'b0000011}; //s4
-            4'd10 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd21, 7'b0000011}; //s5
-            4'd11 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd22, 7'b0000011}; //s6
-            4'd12 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd23, 7'b0000011}; //s7
-            4'd13 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd24, 7'b0000011}; //s8
-            4'd14 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd25, 7'b0000011}; //s9
-            4'd15 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd26, 7'b0000011}; //s10
-            default: pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd27, 7'b0000011}; //s11
+    always_comb begin: FINAL_LINES_ROM
+        case (final_instr_index)
+            2'd0 : final_instr_inst32 = {sp_adjust_neg, 5'd5, 3'd0, 5'd5, 7'b0010011} //push stack adjust (addi sp sp sp_adjust_neg)
+            2'd1 : final_instr_inst32 = {7'd0, 5'd0, 5'd0, 3'd0, 5'd1, 7'b0110011}; //popretz (addi ra zero zero)
+            2'd2 : final_instr_inst32 = {sp_adjust, 5'd5, 3'd0, 5'd5, 7'b0010011}; //pop stack adjust (addi sp sp sp_adjust)
+            2'd3 : final_instr_inst32 = {12'd0, 5'd1, 3'd0, 5'd0, 7'b1100111}; //popret (ret) 
         endcase
     end
 
-    //MVSA ROM 0 and 1(mv into s from a)
-    always_comb begin
+    always_comb begin: PUSH_ROM
+        case (push_pop_index)
+            5'd4 : push_rom_inst32 = {current_offset[11:5], 5'd1, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //ra
+            5'd5 : push_rom_inst32 = {current_offset[11:5], 5'd8, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s0
+            5'd6 : push_rom_inst32 = {current_offset[11:5], 5'd9, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s1
+            5'd7 : push_rom_inst32 = {current_offset[11:5], 5'd18, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s2
+            5'd8 : push_rom_inst32 = {current_offset[11:5], 5'd19, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s3
+            5'd9 : push_rom_inst32 = {current_offset[11:5], 5'd20, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s4
+            5'd10 : push_rom_inst32 = {current_offset[11:5], 5'd21, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s5
+            5'd11 : push_rom_inst32 = {current_offset[11:5], 5'd22, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s6
+            5'd12 : push_rom_inst32 = {current_offset[11:5], 5'd23, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s7
+            5'd13 : push_rom_inst32 = {current_offset[11:5], 5'd24, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s8
+            5'd14 : push_rom_inst32 = {current_offset[11:5], 5'd25, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s9
+            5'd15 : push_rom_inst32 = {current_offset[11:5], 5'd26, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s10
+            5'b1????: push_rom_inst32 = {current_offset[11:5], 5'd27, 5'd2, 3'b010, current_offset[4:0], 7'b0100011}; //s11
+            default: push_rom_inst32 = 32'b0;
+        endcase
+    end
+
+    always_comb begin: POP_ROM
+        case (push_pop_index)
+            5'd4 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd1, 7'b0000011}; //ra
+            5'd5 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd8, 7'b0000011}; //s0
+            5'd6 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd9, 7'b0000011}; //s1
+            5'd7 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd18, 7'b0000011}; //s2
+            5'd8 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd19, 7'b0000011}; //s3
+            5'd9 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd20, 7'b0000011}; //s4
+            5'd10 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd21, 7'b0000011}; //s5
+            5'd11 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd22, 7'b0000011}; //s6
+            5'd12 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd23, 7'b0000011}; //s7
+            5'd13 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd24, 7'b0000011}; //s8
+            5'd14 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd25, 7'b0000011}; //s9
+            5'd15 : pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd26, 7'b0000011}; //s10
+            5'b1????: pop_rom_inst32 = {current_offset, 5'd2, 3'b010, 5'd27, 7'b0000011}; //s11
+            default: pop_rom_inst32 = 32'b0;
+        endcase
+    end
+
+    //(mv into s from a)
+    always_comb begin: MVSA_0_ROM
         case (r1s)
             3'd0 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd8, 7'b0110011}; //s0
             3'd1 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd9, 7'b0110011}; //s1
@@ -162,7 +282,7 @@ module multi_instruction_handler (
             3'd7 : mvsa0_rom_inst32 = {7'd0, 5'd0, 5'd10, 3'd0, 5'd23, 7'b0110011}; //s7
         endcase
     end
-    always_comb begin
+    always_comb begin: MVSA_1_ROM
         case (r2s)
             3'd0 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd8, 7'b0110011}; //s0
             3'd1 : mvsa1_rom_inst32 = {7'd0, 5'd0, 5'd11, 3'd0, 5'd9, 7'b0110011}; //s1
@@ -175,8 +295,8 @@ module multi_instruction_handler (
         endcase
     end
 
-    //MVAS ROM 0 and 1(mv into a from s)
-    always_comb begin
+    //(mv into a from s)
+    always_comb begin: MVAS_0_ROM
         case (r1s)
             3'd0 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd8, 3'd0, 5'd10, 7'b0110011}; //s0
             3'd1 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd9, 3'd0, 5'd10, 7'b0110011}; //s1
@@ -188,7 +308,7 @@ module multi_instruction_handler (
             3'd7 : mvas0_rom_inst32 = {7'd0, 5'd0, 5'd23, 3'd0, 5'd10, 7'b0110011}; //s7
         endcase
     end
-    always_comb begin
+    always_comb begin: MVAS_1_ROM
         case (r2s)
             3'd0 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd8, 3'd0, 5'd11, 7'b0110011}; //s0
             3'd1 : mvas1_rom_inst32 = {7'd0, 5'd0, 5'd9, 3'd0, 5'd11, 7'b0110011}; //s1
@@ -202,3 +322,4 @@ module multi_instruction_handler (
     end
 
 endmodule 
+
