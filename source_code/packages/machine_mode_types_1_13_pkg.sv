@@ -26,6 +26,12 @@
 `define MACHINE_MODE_TYPES_1_13_PKG_SV
 
 package machine_mode_types_1_13_pkg;
+  parameter int MXLEN  = 32;
+  parameter int SXLEN  = 32;
+  parameter int UXLEN  = 32;
+  parameter int VSXLEN = 32;
+  parameter int HSXLEN = 32;
+
 
   /* Machine Mode Addresses */
   typedef enum logic [11:0] {
@@ -160,6 +166,41 @@ package machine_mode_types_1_13_pkg;
     MHPMEVENT30_ADDR   = 12'h33E,
     MHPMEVENT31_ADDR   = 12'h33F
   } maddr_t;
+
+  /* Supervisor Mode Addresses */
+  typedef enum logic [11:0] {
+    /* Supervisor Protection and Translation */
+    SATP_ADDR       = 12'h180,
+
+    /* Supervisor Debug/Trace Registers */
+    SCONTEXT_ADDR   = 12'h5A8,
+
+    /* Supervisor Protection and Translation */
+    SSTATEEN0_ADDR  = 12'h10C,
+    SSTATEEN1_ADDR  = 12'h10D,
+    SSTATEEN2_ADDR  = 12'h10E,
+    SSTATEEN3_ADDR  = 12'h10F,
+
+    /* Supervisor Trap Setup */
+    SSTATUS_ADDR    = 12'h100,
+    SIE_ADDR        = 12'h104,
+    STVEC_ADDR      = 12'h105,
+    SCOUNTEREN_ADDR = 12'h106,
+
+    /* Supervisor Trap Handling */
+    SSCRATCH_ADDR   = 12'h140,
+    SEPC_ADDR       = 12'h141,
+    SCAUSE_ADDR     = 12'h142,
+    STVAL_ADDR      = 12'h143,
+    SIP_ADDR        = 12'h144,
+    SCOUNTOVF_ADDR  = 12'hDA0,
+
+    /* Supervisor Configuration */
+    SENVCFG_ADDR    = 12'h10A,
+
+    /* Supervisor Counter Setup */
+    SCOUNTINHIBIT_ADDR = 12'h120
+  } saddr_t;
 
   /* User Mode Addresses */
   typedef enum logic [11:0] { 
@@ -354,34 +395,34 @@ package machine_mode_types_1_13_pkg;
   typedef struct packed {
     logic [15:0] impl_defined; // Implementation defined
     logic [3:0]  zero_6;
-    logic        meip;         // M-Mode external interrupt
+    logic        meip;         // M-Mode external interrupt pending
     logic        zero_5;
-    logic        seip;         // S-Mode external interrupt
+    logic        seip;         // S-Mode external interrupt pending
     logic        zero_4;
-    logic        mtip;         // M-Mode timer interrupt
+    logic        mtip;         // M-Mode timer interrupt pending
     logic        zero_3;
-    logic        stip;         // S-Mode timer interrupt
+    logic        stip;         // S-Mode timer interrupt pending
     logic        zero_2;
-    logic        msip;         // M-Mode software interrupt
+    logic        msip;         // M-Mode software interrupt pending
     logic        zero_1;
-    logic        ssip;         // S-Mode software interrupt
+    logic        ssip;         // S-Mode software interrupt pending
     logic        zero_0;
   } mip_t;
 
   typedef struct packed {
-    logic [15:0] impl_defined;
+    logic [15:0] impl_defined; // Implementation defined
     logic [3:0]  zero_6;
-    logic        meie;
+    logic        meie;         // M-Mode external interrupt enable
     logic        zero_5;
-    logic        seie;
+    logic        seie;         // S-Mode external interrupt enable
     logic        zero_4;
-    logic        mtie;
+    logic        mtie;         // M-Mode timer interrupt enable
     logic        zero_3;
-    logic        stie;
+    logic        stie;         // S-Mode timer interrupt enable
     logic        zero_2;
-    logic        msie;
+    logic        msie;         // M-Mode software interrupt enable
     logic        zero_1;
-    logic        ssie;
+    logic        ssie;         // S-Mode software interrupt enable
     logic        zero_0;
   } mie_t;
 
@@ -501,6 +542,154 @@ package machine_mode_types_1_13_pkg;
   //  part of priv 1.11
   typedef logic [31:0] mtohost_t;
   typedef logic [31:0] mfromhost_t;
+
+  /* Supervisor Mode Register Types */
+
+  /* sstatus types */
+
+  typedef struct packed {
+    logic        sd;            // Extension dirty signal (R/O)
+    logic [10:0] reserved_5;
+    logic        mxr;           // Make executable readable
+    logic        sum;           // Supervisor user memory access
+    logic        reserved_4;
+    xs_t         xs;            // User extensions state
+    fs_t         fs;            // FP extension state
+    logic        reserved_3;
+    vs_t         vs;            // Vector extension state
+    logic        spp;           // Supervisor previous privilege level
+    logic        reserved_2;
+    logic        ube;           // U-Mode endianness control
+    logic        spie;          // S-Mode previous enable
+    logic [2:0]  reserved_1;
+    logic        sie;           // S-Mode interrupt enable
+    logic        reserved_0;
+  } sstatus_t;
+
+  /* sip and sie types */
+
+  typedef struct packed {
+    logic [15:0] impl_defined; // Implementation defined
+    logic [1:0]  zero_4;
+    logic        lcofip;       // Local counter-overflow interrupt pending (No effect without Sscofpmf)
+    logic [2:0]  zero_3;
+    logic        seip;         // S-Mode external interrupt pending
+    logic [2:0]  zero_2;
+    logic        stip;         // S-Mode timer interrupt pending
+    logic [2:0]  zero_1;
+    logic        ssip;         // S-Mode software interrupt pending
+    logic        zero_0;
+  } sip_t;
+
+  typedef struct packed {
+    logic [15:0] impl_defined; // Implementation defined
+    logic [1:0]  zero_4;
+    logic        lcofip;       // Local counter-overflow interrupt enable (No effect without Sscofpmf)
+    logic [2:0]  zero_3;
+    logic        seie;         // S-Mode external interrupt enable
+    logic [2:0]  zero_2;
+    logic        stie;         // S-Mode timer interrupt enable
+    logic [2:0]  zero_1;
+    logic        ssie;         // S-Mode software interrupt enable
+    logic        zero_0;
+  } sie_t;
+
+  /* scounteren and scountinhibit types */
+
+  typedef struct packed {
+    logic hpm31;
+    logic hpm30;
+    logic hpm29;
+    logic hpm28;
+    logic hpm27;
+    logic hpm26;
+    logic hpm25;
+    logic hpm24;
+    logic hpm23;
+    logic hpm22;
+    logic hpm21;
+    logic hpm20;
+    logic hpm19;
+    logic hpm18;
+    logic hpm17;
+    logic hpm16;
+    logic hpm15;
+    logic hpm14;
+    logic hpm13;
+    logic hpm12;
+    logic hpm11;
+    logic hpm10;
+    logic hpm9;
+    logic hpm8;
+    logic hpm7;
+    logic hpm6;
+    logic hpm5;
+    logic hpm4;
+    logic hpm3;
+    logic ir;
+    logic tm;
+    logic cy;
+ } scounteren_t;
+
+ typedef struct packed {
+    logic hpm31;
+    logic hpm30;
+    logic hpm29;
+    logic hpm28;
+    logic hpm27;
+    logic hpm26;
+    logic hpm25;
+    logic hpm24;
+    logic hpm23;
+    logic hpm22;
+    logic hpm21;
+    logic hpm20;
+    logic hpm19;
+    logic hpm18;
+    logic hpm17;
+    logic hpm16;
+    logic hpm15;
+    logic hpm14;
+    logic hpm13;
+    logic hpm12;
+    logic hpm11;
+    logic hpm10;
+    logic hpm9;
+    logic hpm8;
+    logic hpm7;
+    logic hpm6;
+    logic hpm5;
+    logic hpm4;
+    logic hpm3;
+    logic ir;
+    logic reserved_0;
+    logic cy;
+  } scountinhibit_t;
+
+  /* scause types */
+
+  typedef struct packed {
+    logic               interrupt;
+    logic [(SXLEN-2):0] cause;
+  } scause_t;
+
+  /* senvcfg register types */
+  typedef struct packed {
+    logic [23:0] reserved_1;
+    logic        cbze;       // Zicboz extension, may change when ratified
+    logic        cbcfe;      // Zicbom extension, may change when ratified
+    logic        cbie;       // Zicbom extension, may change when ratified
+    logic [2:0]  reserved_0;
+    logic        fiom;       // Fence of I/O implies Memory
+  } senvcfg_t;
+
+  /* satp register types */
+
+  typedef struct packed {
+    logic        mode;
+    logic [8:0]  asid;
+    logic [21:0] ppn;
+  } satp_t;
 
 endpackage
 
