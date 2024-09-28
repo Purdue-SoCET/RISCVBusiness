@@ -47,7 +47,11 @@ module RISCVBusiness #(
 );
     // Interface instantiations
     generic_bus_if tspp_icache_gen_bus_if ();
+`ifdef PIPELINE_STAGE3
+    generic_bus_if tspp_dcache_gen_bus_if ();
+`elsif PIPELINE_STAGE4
     generic_bus_if #(.BLOCK_SIZE(DCACHE_BLOCK_SIZE)) tspp_dcache_gen_bus_if ();
+`endif
     generic_bus_if #(.BLOCK_SIZE(ICACHE_BLOCK_SIZE)) icache_mc_if ();
     generic_bus_if #(.BLOCK_SIZE(DCACHE_BLOCK_SIZE)) dcache_mc_if ();
     risc_mgmt_if rm_if ();
@@ -147,6 +151,7 @@ module RISCVBusiness #(
     ) i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
+        .halt(halt),
         .ccif(i_cache_coherency_if),
         .bcif(bus_ctrl_if),
         .gbif(icache_mc_if),
@@ -158,6 +163,7 @@ module RISCVBusiness #(
     ) d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
+        .halt(halt),
         .ccif(d_cache_coherency_if),
         .bcif(bus_ctrl_if),
         .gbif(dcache_mc_if),

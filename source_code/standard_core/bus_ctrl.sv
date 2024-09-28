@@ -49,7 +49,7 @@ module bus_ctrl #(
     logic [$clog2(BLOCK_SIZE):0] block_count, nblock_count;
     logic block_count_done, nblock_count_done;
     logic hit_delay;
-    logic pass_through;
+    logic pass_through, should_abort;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
@@ -80,18 +80,20 @@ module bus_ctrl #(
         end
     end
 
+    assign should_abort = ccif.ccabort[requester_cpu] && state_can_abort(state);
+
     // next state logic for bus FSM
     always_comb begin
         nstate = state;
         casez (state)
             IDLE:  begin
-                if (|ccif.dWEN)
+                if (|(ccif.dWEN & ~ccif.ccabort))
                     nstate = GRANT_EVICT;
-                else if (|(ccif.dREN & ccif.ccwrite))
+                else if (|(ccif.dREN & ccif.ccwrite & ~ccif.ccabort))
                     nstate = GRANT_RX;
-                else if (|ccif.dREN)
+                else if (|(ccif.dREN & ~ccif.ccabort))
                     nstate = GRANT_R;
-                else if (|ccif.ccwrite)
+                else if (|(ccif.ccwrite & ~ccif.ccabort))
                     nstate = GRANT_INV;
             end
             GRANT_R:            nstate = SNOOP_R;
@@ -116,7 +118,7 @@ module bus_ctrl #(
             INVALIDATE:         nstate = IDLE;
         endcase
         // handle exception
-        if (ccif.ccabort[requester_cpu] && state_can_abort(state))
+        if (should_abort)
             nstate = IDLE;
     end
 
@@ -141,14 +143,14 @@ module bus_ctrl #(
 
         casez(state)
             IDLE: begin // obtain the requester CPU id
-                if (|ccif.dWEN)
-                    nrequester_cpu = priorityEncode(ccif.dWEN);
-                else if (|(ccif.dREN & ccif.ccwrite))
-                    nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite));
-                else if (|ccif.dREN)
-                    nrequester_cpu = priorityEncode(ccif.dREN);
-                else if (|ccif.ccwrite)
-                    nrequester_cpu = priorityEncode(ccif.ccwrite);
+                if (|(ccif.dWEN & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode(ccif.dWEN & ~ccif.ccabort);
+                else if (|(ccif.dREN & ccif.ccwrite & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite & ~ccif.ccabort));
+                else if (|(ccif.dREN & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode(ccif.dREN & ~ccif.ccabort);
+                else if (|(ccif.ccwrite & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode(ccif.ccwrite & ~ccif.ccabort);
             end
             GRANT_R, GRANT_RX, GRANT_INV: begin // set the stimulus for snooping
                 for (int i = 0; i < CPUS; i++) begin
@@ -257,6 +259,16 @@ module bus_ctrl #(
         nblock_count_done = (nblock_count == BLOCK_SIZE) || (pass_through && ccif.l2state == L2_ACCESS);
 
         ccif.l2_byte_en = pass_through ? ccif.dbyte_en[requester_cpu] : 'hF;
+
+        // Handle bus controller aborting
+        if (should_abort) begin
+            ccif.dwait[requester_cpu] = 0;
+        end
+        // Handle non-bus controller aborting
+        for (int i = 0; i < CPUS; i++) begin
+            if (ccif.ccabort[i] && (requester_cpu != i))
+                ccif.dwait[i] = 0;
+        end
     end
 
     // function to obtain all non requesters
@@ -284,15 +296,9 @@ module bus_ctrl #(
     // Helper function to determine whether requester_cpu is properly set and
     // can be used for abort purposes
     function logic state_can_abort(bus_state_t state);
-    return state == SNOOP_R ||
-        state == SNOOP_RX ||
-        state == SNOOP_INV ||
-        state == TRANSFER_R ||
-        state == TRANSFER_RX ||
-        state == READ_L2 ||
-        state == BUS_TO_CACHE ||
-        state == WRITEBACK ||
-        state == WRITEBACK_MS ||
-        state == INVALIDATE;
+    return state == GRANT_R ||
+        state == GRANT_RX ||
+        state == SNOOP_R ||
+        state == SNOOP_RX;
     endfunction
 endmodule
