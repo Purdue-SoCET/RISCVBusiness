@@ -47,12 +47,11 @@ start:
     lw t0, 0(t0)
     jalr ra, t0
 
-.global done
 hart0_done:
     la a0, hart1_done
-wait_for_hart1_done:
+wait_for_hart1:
     lw a1, 0(a0)
-    beq a1, zero, wait_for_hart1_done
+    beq a1, zero, wait_for_hart1
     la x28, flag
     lw x28, 0(x28)
     j __inf_loop
@@ -61,10 +60,6 @@ hart1_done_end:
     lw x28, 0(x28)
 __inf_loop:
     j __inf_loop
-
-.global hart_wait_loop
-hart_wait_loop:
-    j hart_wait_loop
 
 .global hart0_main
 .global hart1_main
