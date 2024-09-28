@@ -1,6 +1,7 @@
 # ignore the build and run files
 build/
 sim_out/
+sim_build/
 obj_dir/
 rvb_out/
 # ignore memory files from test cases
@@ -39,6 +40,8 @@ run_tests_cache.json
 # Ignore log files and Verilator outputs
 *.log
 *.fst
+*.vcd
+*.wlf
 *.gtkw
 memsim.dump
 meminit.bin

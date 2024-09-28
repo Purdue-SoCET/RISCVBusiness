@@ -60,9 +60,9 @@ class Error(Exception):
         return self.error_string
 
 class run_config():
-    def __init__(self, config_json: dict, args: dict):
+    def __init__(self, config_json:dict, args:dict, arch:str=None, sub_dir:str=None):
         # top level info
-        self.arch = str(args.get("arch") or config_json["arch"])
+        self.arch = arch
         self.abi = str(config_json["abi"])
         self.test_type = str(args.get("test_type") or config_json["test_type"])
         self.march = str(args.get("march") or config_json["march"])
@@ -73,6 +73,8 @@ class run_config():
         self.asm_env = pathlib.Path(config_json["asm_env"])
         # directory of all where the test files are
         self.test_dir = self.verif_dir/self.test_type/self.arch
+        if sub_dir is not None:
+            self.test_dir /= sub_dir
 
         # output directories
         self.sim_dir = pathlib.Path(config_json["sim_dir"])
@@ -151,10 +153,10 @@ def run_tests(config: Type[run_config]) -> List[str]:
             #waf_log_filepath = pathlib.Path(waf_logger.handlers[0].baseFilename)
             print(f"    - Checking Results...")
             if 'PASSED' in res:
-                print(GREEN + '[PASSED]' + END_COLOR)
+                print(GREEN + '[PASSED]: ' + res + END_COLOR)
                 result = PASSED
             else:
-                print(RED + '[FAILED]' + END_COLOR)
+                print(RED + '[FAILED]: ' + res + END_COLOR)
                 result = FAILED
             # check results - 
             #result = check_self_results(waf_log_filepath, build_logger)
@@ -397,14 +399,17 @@ def parse_args()-> Type[run_config]:
         type=str, default=DEFAULT_CONFIG_FILE, 
         help="Specify the config file path")
     parser.add_argument("--arch", "-a", dest="arch",
-        type=str, default=None, 
+        type=str, default="RV32I", 
         help="Specify the architecture targeted. Option(s): RV32I Default: RV32I")
     parser.add_argument("--march", "-m", dest="march",
         type=str, default=None,
         help="Specify the compiler architecture to be built. Default: rv32i")
     parser.add_argument("--test_type", "-t", dest="test_type",
+        type=str, default="self-tests", 
+        help="Specify what type of tests to run. Option(s): asm,self-tests,c Default: self-tests")
+    parser.add_argument("--sub_dir", "-s", dest="sub_dir",
         type=str, default=None, 
-        help="Specify what type of tests to run. Option(s): asm, selfasm,c Default: selfasm")
+        help="Specify subdirectory to look for tests in")
     parser.add_argument("file_names", metavar="file_names",
         type=str, nargs="*", 
         help="Run all tests that begin with this string. Optional")
@@ -416,7 +421,11 @@ def parse_args()-> Type[run_config]:
     with open(args.config_file, "r") as conf_fp:
         conf_dict = json.load(conf_fp)
 
-    config = run_config(conf_dict, vars(args))
+    config = run_config(conf_dict, vars(args), args.arch, args.sub_dir)
+    if(args.arch):
+        config.arch = args.arch
+    if(args.test_type):
+        config.test_type = args.test_type
     if(args.file_names):
         # find all the files that match the pattern
         print(args.file_names)

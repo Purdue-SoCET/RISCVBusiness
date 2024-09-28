@@ -1,5 +1,5 @@
 CAPI=2:
-name: socet:riscv:RISCVBusiness:0.1.1
+name: socet:riscv:RISCVBusiness:0.2.0
 description: RISC-V Core for AFTx series
 
 filesets:
@@ -10,6 +10,7 @@ filesets:
             - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:stage3"
+            - "socet:riscv:stage4"
             - "socet:riscv:priv"
             - "socet:riscv:caches"
             #- "socet:riscv:risc_mgmt"
@@ -18,6 +19,7 @@ filesets:
             - "socet:riscv:rv32a"
             - "socet:riscv:rv32c"
             - "socet:riscv:rv32m"
+            - "socet:riscv:rv32v"
             - "socet:riscv:rv32b"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
@@ -111,7 +113,7 @@ targets:
             - "tool_verilator? (top_core)"
         tools:
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-structs"]
 
     fpga:
         <<: *default

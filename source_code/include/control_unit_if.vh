@@ -39,7 +39,7 @@ interface control_unit_if;
   logic [1:0] alu_a_sel, alu_b_sel;
   w_sel_t w_sel;
   logic [4:0] shamt;
-  logic [4:0] rd;
+  regsel_t rd;
   logic [11:0] imm_I, imm_S;
   logic [20:0] imm_UJ;
   logic [12:0] imm_SB;

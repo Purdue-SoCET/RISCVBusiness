@@ -31,6 +31,7 @@ interface priv_1_12_internal_if;
     import machine_mode_types_1_12_pkg::*;
     import pma_types_1_12_pkg::*;
     import rv32i_types_pkg::*;
+    import rv32v_types_pkg::*;
 
     // RISC-MGMT?
     //  not sure what these are for, part of priv 1.11
@@ -90,6 +91,16 @@ interface priv_1_12_internal_if;
     // PMP variables
     logic pmp_s_fault, pmp_l_fault, pmp_i_fault; // PMP store fault, load fault, instruction fault
 
+    // Vector extension variables
+    `ifdef RV32V_SUPPORTED
+        logic vsetvl, vkeepvl, set_vstart, vuop_last;
+        vtype_t new_vtype;  // for updating vtype
+        word_t vl, vstart;
+        vtype_t vtype;
+        logic [$clog2(VLMAX)-1:0] velem_num;
+    `endif // RV32V_SUPPORTED
+
+
     modport csr (
         input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, valid_write,
             inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
@@ -127,6 +138,13 @@ interface priv_1_12_internal_if;
         input mret, curr_mstatus, intr,
         output curr_privilege_level
     );
+
+    `ifdef RV32V_SUPPORTED
+      modport vect (
+        input vsetvl, vkeepvl, new_vtype, set_vstart, vuop_last, velem_num,
+        output vl, vtype, vstart
+      );
+    `endif // RV32V_SUPPORTED
 
 endinterface
 

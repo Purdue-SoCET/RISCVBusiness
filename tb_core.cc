@@ -321,7 +321,7 @@ int main(int argc, char **argv) {
     auto tstart = std::chrono::high_resolution_clock::now();
 
     reset(dut, m_trace);
-    while(!dut.halt && !tohost_break && sim_time < 100000) {
+    while(!dut.halt && !tohost_break && sim_time < 250000) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
@@ -357,12 +357,20 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 100000) {
+    if(sim_time >= 250000) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
-        std::cout << "Test PASSED" << std::endl;
+        if (use_tohost) {
+            std::cout << "Test PASSED" << std::endl;
+        } else {
+            std::cout << "Test PASSED in " << sim_time << " cycles" << std::endl;
+        }
     } else {
-        std::cout << "Test FAILED: Test " << memory.read(tohost_address) << std::endl;
+        if (use_tohost) {
+            std::cout << "Test FAILED: Test " << memory.read(tohost_address) << std::endl;
+        } else {
+            std::cout << "Test FAILED: Test " << ((dut.top_core->get_x28() - 1) / 2) << " in " << sim_time << " cycles" << std::endl;
+        }
     }
 
     auto tend = std::chrono::high_resolution_clock::now();

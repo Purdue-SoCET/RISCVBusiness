@@ -5,6 +5,7 @@ description: Standard core files for RISCVBusiness
 filesets:
     rtl:
         files:
+            - scalar_decode.sv
             - alu.sv
             - branch_res.sv
             - dmem_extender.sv

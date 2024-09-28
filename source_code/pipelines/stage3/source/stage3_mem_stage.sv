@@ -42,7 +42,7 @@ module stage3_mem_stage(
     // TODO: RISC-MGMT
     assign dgen_bus_if.ren = ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data;
     assign dgen_bus_if.wen = ex_mem_if.ex_mem_reg.dwen && !hazard_if.suppress_data;
-    assign dgen_bus_if.byte_en = byte_en;
+    assign dgen_bus_if.byte_en = {'0, byte_en};
     assign dgen_bus_if.addr = ex_mem_if.ex_mem_reg.port_out;
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
 
@@ -67,7 +67,7 @@ module stage3_mem_stage(
     );
 
     dmem_extender dmem_ext(
-        .dmem_in(dgen_bus_if.rdata),
+        .dmem_in(dgen_bus_if.rdata[31:0]),
         .load_type(ex_mem_if.ex_mem_reg.load_type),
         .byte_en(byte_en),
         .ext_out(dload_ext)
@@ -104,9 +104,9 @@ module stage3_mem_stage(
     // TODO: RISC-MGMT
     always_comb begin : STORE_TYPE
         case(ex_mem_if.ex_mem_reg.load_type)
-            LB: dgen_bus_if.wdata = {4{ex_mem_if.ex_mem_reg.rs2_data[7:0]}};
-            LH: dgen_bus_if.wdata = {2{ex_mem_if.ex_mem_reg.rs2_data[15:0]}};
-            LW: dgen_bus_if.wdata = ex_mem_if.ex_mem_reg.rs2_data;
+            LB: dgen_bus_if.wdata = {'0, {4{ex_mem_if.ex_mem_reg.rs2_data[7:0]}}};
+            LH: dgen_bus_if.wdata = {'0, {2{ex_mem_if.ex_mem_reg.rs2_data[15:0]}}};
+            LW: dgen_bus_if.wdata = {'0, ex_mem_if.ex_mem_reg.rs2_data};
             default: dgen_bus_if.wdata = '0;
         endcase
     end : STORE_TYPE

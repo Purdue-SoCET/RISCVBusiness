@@ -152,7 +152,7 @@ module priv_1_12_int_ex_handler (
     always_comb begin
         prv_intern_if.next_mstatus = prv_intern_if.curr_mstatus;
         // interrupt has truly been registered and it is time to go to the vector table
-        if (prv_intern_if.intr) begin
+        if (prv_intern_if.intr & prv_intern_if.pipe_clear) begin
             // when a trap is taken mpie is set to the current mie
             prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mie;
             prv_intern_if.next_mstatus.mie = 1'b0;

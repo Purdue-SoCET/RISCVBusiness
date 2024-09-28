@@ -31,6 +31,7 @@ interface prv_pipeline_if();
   import machine_mode_types_1_12_pkg::*;
   import rv32i_types_pkg::*;
   import pma_types_1_12_pkg::*;
+  import rv32v_types_pkg::*;
 
   // exception signals
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
@@ -63,17 +64,37 @@ interface prv_pipeline_if();
   pma_accwidth_t d_acc_width, i_acc_width;
   logic prot_fault_s, prot_fault_l, prot_fault_i;
 
+  // Vector vset{i}vi{i} signals
+  `ifdef RV32V_SUPPORTED
+    logic vsetvl, vkeepvl;
+    vtype_t new_vtype;  // for updating vtype
+    // avl on 'wdata'
+    word_t vl, vstart;
+    vtype_t vtype;
+    logic [6:0] velem_num;
+    logic set_vstart, vuop_last;
+  `endif // RV32V_SUPPORTED
+
   modport hazard (
     input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
     output pipe_clear, ret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
             breakpoint, env, wfi, badaddr, wb_enable,
             ex_rmgmt, ex_rmgmt_cause
+            `ifdef RV32V_SUPPORTED
+            , velem_num, set_vstart, vuop_last
+            `endif // RV32V_SUPPORTED
   );
 
   modport pipe (
     output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width,
+    `ifdef RV32V_SUPPORTED
+      vsetvl, vkeepvl, new_vtype,
+    `endif // RV32V_SUPPORTED
     input  rdata, invalid_priv_isn
+    `ifdef RV32V_SUPPORTED
+    , vl, vtype, vstart
+    `endif // RV32V_SUPPORTED
   );
 
   modport fetch (
@@ -89,8 +110,14 @@ interface prv_pipeline_if();
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,
           d_acc_width, i_acc_width,
+          `ifdef RV32V_SUPPORTED
+            vsetvl, vkeepvl, new_vtype, velem_num, set_vstart, vuop_last,
+          `endif // RV32V_SUPPORTED
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
             prot_fault_s, prot_fault_l, prot_fault_i
+            `ifdef RV32V_SUPPORTED
+            , vl, vtype, vstart
+            `endif // RV32V_SUPPORTED
   );
 
 endinterface

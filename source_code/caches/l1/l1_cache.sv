@@ -42,7 +42,7 @@ module l1_cache #(
 (
     input logic CLK, nRST,
     input logic clear, flush, reserve, exclusive,
-    output logic clear_done, flush_done,
+    output logic clear_done, flush_done, abort_bus,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
     cache_coherence_if.cache ccif //Coherency interface, connected to coherency unit
@@ -161,7 +161,7 @@ module l1_cache #(
             read_addr <= 0;
             decoded_req_addr <= 0;
             flush_req <= 0;
-            ccif.abort_bus <= 0;
+            abort_bus <= 0;
             reservation_set <= 0;
         end
         else begin
@@ -171,7 +171,7 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
-            ccif.abort_bus <= !proc_gen_bus_if.ren && !proc_gen_bus_if.wen;
+            abort_bus <= !proc_gen_bus_if.ren || next_state == CANCEL_REQ;
             reservation_set <= next_reservation_set;
         end
     end
@@ -310,7 +310,8 @@ module l1_cache #(
                 // cache hit on a processor read
                 if(proc_gen_bus_if.ren && hit && !flush) begin
                     proc_gen_bus_if.busy = 0;
-                    proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
+                    // If address is cache block aligned, return block, else return word
+                    proc_gen_bus_if.rdata = (decoded_addr.idx.block_bits == 0) ? hit_data : {'0, hit_data[decoded_addr.idx.block_bits]};
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                     // Delay so we can set the reservation set
                     if (reserve && !addr_is_reserved) begin
@@ -321,16 +322,24 @@ module l1_cache #(
                 else if(proc_gen_bus_if.wen && hit && (!reserve || (reserve && addr_is_reserved)) && !flush) begin
                     proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
-                    casez (proc_gen_bus_if.byte_en)
-                        4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
-                        4'b0010:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF00FF;
-                        4'b0100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFF00FFFF;
-                        4'b1000:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h00FFFFFF;
-                        4'b0011:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF0000;
-                        4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0000FFFF;
-                        default:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0;
-                    endcase
-                    sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
+                    // If address is cache block aligned, write can be to whole block, else write is only to a word
+                    if (decoded_addr.idx.block_bits == 0) begin
+                        for (int i = 0; i < (WORD_SIZE * BLOCK_SIZE / 8); i++) begin
+                            sramMask.frames[hit_idx].data[i/4][((i%4)*8)+:8] = (proc_gen_bus_if.byte_en[i]) ? 8'h00 : 8'hFF;
+                        end
+                        sramWrite.frames[hit_idx].data = proc_gen_bus_if.wdata;
+                    end else begin
+                        casez (proc_gen_bus_if.byte_en[3:0])
+                            4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
+                            4'b0010:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF00FF;
+                            4'b0100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFF00FFFF;
+                            4'b1000:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h00FFFFFF;
+                            4'b0011:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF0000;
+                            4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0000FFFF;
+                            default:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0;
+                        endcase
+                        sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata[31:0];
+                    end
                     sramWrite.frames[hit_idx].tag.dirty = 1;
                     sramWrite.frames[hit_idx].tag.exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
                     sramMask.frames[hit_idx].tag.dirty = 0;
@@ -376,7 +385,7 @@ module l1_cache #(
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
                 mem_gen_bus_if.wen = proc_gen_bus_if.wen;
-                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !ccif.abort_bus;
+                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !abort_bus;
                 mem_gen_bus_if.addr = read_addr;
                 sramWrite.frames[ridx].tag.valid = 0;
                 sramMask.frames[ridx].tag.valid = 0;
@@ -396,15 +405,24 @@ module l1_cache #(
                     sramMask.frames[ridx].tag.dirty = 0;
 
                     if (proc_gen_bus_if.wen) begin
-                        casez (proc_gen_bus_if.byte_en)
-                            4'b0001:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][7:0] = proc_gen_bus_if.wdata[7:0];
-                            4'b0010:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:8] = proc_gen_bus_if.wdata[15:8];
-                            4'b0100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][23:16] = proc_gen_bus_if.wdata[23:16];
-                            4'b1000:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:24] = proc_gen_bus_if.wdata[31:24];
-                            4'b0011:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:0] = proc_gen_bus_if.wdata[15:0];
-                            4'b1100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:16] = proc_gen_bus_if.wdata[31:16];
-                            default:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
-                        endcase
+                        // If address is cache block aligned, write can be to whole block, else write is only to a word
+                        if (decoded_addr.idx.block_bits == 0) begin
+                            for (int i = 0; i < (WORD_SIZE * BLOCK_SIZE / 8); i++) begin
+                                if (proc_gen_bus_if.byte_en[i]) begin
+                                    sramWrite.frames[ridx].data[i/4][((i%4)*8)+:8] = proc_gen_bus_if.wdata[(i*8)+:8];
+                                end
+                            end
+                        end else begin
+                            casez (proc_gen_bus_if.byte_en[3:0])
+                                4'b0001:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][7:0] = proc_gen_bus_if.wdata[7:0];
+                                4'b0010:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:8] = proc_gen_bus_if.wdata[15:8];
+                                4'b0100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][23:16] = proc_gen_bus_if.wdata[23:16];
+                                4'b1000:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:24] = proc_gen_bus_if.wdata[31:24];
+                                4'b0011:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:0] = proc_gen_bus_if.wdata[15:0];
+                                4'b1100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:16] = proc_gen_bus_if.wdata[31:16];
+                                default:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
+                            endcase
+                        end
                     end
                 end
             end
@@ -575,7 +593,7 @@ module l1_cache #(
                     next_state = HIT; 
                 else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
-                else if (!ccif.abort_bus && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
+                else if (!abort_bus && !proc_gen_bus_if.ren)
                     next_state = CANCEL_REQ;
             end
             WB: begin

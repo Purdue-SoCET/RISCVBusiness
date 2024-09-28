@@ -13,6 +13,8 @@ filesets:
             - rv32m_pkg.sv
             - rv32a_pkg.sv
             - rv32b_pkg.sv
+            - rv32v_types_pkg.sv
+            - stage4_types_pkg.sv
             #- risc_mgmt/crc32_pkg.sv
             #- risc_mgmt/template_pkg.sv
             #- risc_mgmt/test_pkg.sv

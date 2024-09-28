@@ -32,9 +32,61 @@
 
 #define __RISCVEL 1
 
+//-----------------------------------------------------------------------
+// Begin Macro
+//-----------------------------------------------------------------------
+
+#define RVTEST_RV64U                                                    \
+  .macro init;                                                          \
+  .endm
+
+#define RVTEST_RV64UF                                                   \
+  .macro init;                                                          \
+  RVTEST_FP_ENABLE;                                                     \
+  .endm
+
+#define RVTEST_RV64UV                                                   \
+  .macro init;                                                          \
+  RVTEST_VECTOR_ENABLE;                                                 \
+  .endm
+
 #define RVTEST_RV32U                                                    \
   .macro init;                                                          \
   .endm
+
+#define RVTEST_RV32UF                                                   \
+  .macro init;                                                          \
+  RVTEST_FP_ENABLE;                                                     \
+  .endm
+
+#define RVTEST_RV32UV                                                   \
+  .macro init;                                                          \
+  RVTEST_VECTOR_ENABLE;                                                 \
+  .endm
+
+#define RVTEST_RV64M                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_MACHINE;                                                \
+  .endm
+
+#define RVTEST_RV64S                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_SUPERVISOR;                                             \
+  .endm
+
+#define RVTEST_RV32M                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_MACHINE;                                                \
+  .endm
+
+#define RVTEST_RV32S                                                    \
+  .macro init;                                                          \
+  RVTEST_ENABLE_SUPERVISOR;                                             \
+  .endm
+
+// #define RVTEST_RV32U                                                    \
+//   .macro init;                                                          \
+//   .endm
 
 //-----------------------------------------------------------------------
 // Text Section Macro

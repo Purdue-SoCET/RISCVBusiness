@@ -40,7 +40,7 @@ interface generic_bus_if #(
   logic ren,wen;
   logic busy;
   logic error;
-  logic [3:0] byte_en;
+  logic [(WORD_SIZE*BLOCK_SIZE/8)-1:0] byte_en;
 
   modport generic_bus (
     input addr, ren, wen, wdata, byte_en,

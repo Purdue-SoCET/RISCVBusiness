@@ -26,11 +26,16 @@ make config
 # or python3 scripts/config_core.py <custom>.yml
 #   if you want to use a config other than example.yml
 
-make verilate # build with Verilator, or...
-make xcelium # build with Xcelium
+# Build the core
+make verilate # build default config with Verilator, or...
+make xcelium # build default config with Xcelium, or...
+make verilate.% # build '%' config with Verilator
+# % configs: 's' for 3-stage scalar, 'v' for 4-stage vector
 ```
 
-> Congrats! All dependencies are now set up.  Now you can run simulations/tests:
+> Congrats! All dependencies are now set up. Based on the configuration used (the extensions it supports), you may need to modify the `"march"` string in `run_tests_config.json` which is used by the compiler.
+>
+> Now you can run simulations/tests:
 
 
 ```bash

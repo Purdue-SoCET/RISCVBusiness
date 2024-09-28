@@ -1,0 +1,50 @@
+CAPI=2:
+name: socet:riscv:rv32v:0.1.0
+description: Two-stage pipeline
+
+filesets:
+    rtl:
+        files:
+            - include/rv32v_uop_gen_if.vh : {is_include_file: true}
+            - include/rv32v_mem_serializer_if.vh: {is_include_file: true}
+            - include/rv32v_mem_coalescer_if.vh: {is_include_file: true}
+            - include/rv32v_lsc_if.vh: {is_include_file: true}
+            - source/rv32v_load_store_controller.sv
+            - source/rv32v_mem_serializer.sv
+            - source/rv32v_mem_coalescer.sv
+            - source/rv32v_write_xbar.sv
+            - source/rv32v_shadow_csr.sv
+            - source/rv32v_control_unit.sv
+            - source/rv32v_opi_decode.sv
+            - source/rv32v_opm_decode.sv
+            - source/rv32v_uop_gen.sv
+            - source/rv32v_ex_datapath.sv
+            - source/rv32v_read_xbar.sv
+            - source/rv32v_vector_bank.sv
+            - source/rv32v_mask_unit.sv
+            - source/rv32v_vfu.sv
+            - source/rv32v_multiplier.sv
+            - source/rv32v_divider.sv
+            - source/rv32v_mask_set_layer.sv
+            - source/rv32v_scratch_reg.sv
+            - source/rv32v_reduction_unit.sv
+            - source/rv32v_mask_calc.sv
+            - source/rv32v_permutation_unit.sv
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: 
+
+    lint:
+        <<: *default
+        description: Linting
+        default_tool: veriblelint
+        toplevel: 
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search', '--waiver_files=stage4.waiver']
+

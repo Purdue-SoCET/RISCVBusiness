@@ -1,0 +1,37 @@
+CAPI=2:
+name: socet:riscv:stage4:0.1.0
+description: Four-stage pipeline
+
+filesets:
+    rtl:
+        files:
+            - include/stage4_mem_stage_if.vh : {is_include_file: true}
+            - include/stage4_hazard_unit_if.vh : {is_include_file: true}
+            - include/stage4_forwarding_unit_if.vh : {is_include_file: true}
+            - source/stage4_fetch_stage.sv
+            - source/stage4_execute_stage.sv
+            - source/stage4_mem_stage.sv
+            - source/stage4_mem_stage_coalescing.sv
+            - source/stage4_hazard_unit.sv
+            - source/stage4_forwarding_unit.sv
+            - source/stage4.sv
+            - source/stage4_queue.sv
+            - source/stage4_decode_stage.sv
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: stage4
+
+    lint:
+        <<: *default
+        description: Linting
+        default_tool: veriblelint
+        toplevel: stage4
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search', '--waiver_files=stage4.waiver']
+

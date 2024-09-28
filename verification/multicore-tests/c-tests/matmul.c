@@ -5,7 +5,7 @@
 #define ARRAY_SIZE 256
 #define DIM_SIZE 16
 
-#define MULTICORE 0
+#define MULTICORE 1
 
 #if MULTICORE
 #define NUM_CORES 2
@@ -46,19 +46,18 @@ static uint32_t verify_data[ARRAY_SIZE] = {
     35, 25, 29, 29, 34, 15, 25, 23, 34, 28, 44, 45, 41, 41, 37, 45, 45, 17, 34, 44, 46, 30, 43, 29,
     31, 36, 37, 50, 54, 44, 28, 40, 38, 22, 27, 28, 45, 32, 36, 22};
 
-uint32_t results[ARRAY_SIZE];
+__attribute__((section(".noinit"))) uint32_t results[ARRAY_SIZE];
 
 #pragma GCC optimize("unroll-loops")
 void matmul(const size_t coreid, const size_t ncores, const size_t lda, const uint32_t A[],
             const uint32_t B[], uint32_t C[]) {
-    size_t i, j, k;
     size_t block = lda / ncores;
     size_t start = block * coreid;
 
-    for (i = 0; i < lda; i++) {
-        for (j = start; j < (start + block); j++) {
+    for (size_t i = 0; i < lda; i++) {
+        for (size_t j = start; j < (start + block); j++) {
             uint32_t sum = 0;
-            for (k = 0; k < lda; k++)
+            for (size_t k = 0; k < lda; k++)
                 sum += A[j * lda + k] * B[k * lda + i];
             C[i + j * lda] = sum;
         }

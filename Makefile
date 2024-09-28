@@ -1,5 +1,8 @@
 ROOT := $(shell pwd)
 
+TEST_FILE_NAME ?= add
+
+
 RISCV := $(ROOT)/source_code
 RISCV_CORE := $(RISCV)/standard_core
 PIPELINE := $(RISCV)/pipelines
@@ -24,12 +27,15 @@ CACHE_FILES := $(CACHES)/caches_wrapper.sv $(CACHES)/pass_through/pass_through_c
 SPARCE_FILES := $(SPARCE)/sparce_wrapper.sv $(SPARCE)/sparce_disabled/sparce_disabled.sv $(SPARCE)/sparce_enabled/sparce_cfid.sv  $(SPARCE)/sparce_enabled/sparce_enabled.sv  $(SPARCE)/sparce_enabled/sparce_psru.sv  $(SPARCE)/sparce_enabled/sparce_sasa_table.sv  $(SPARCE)/sparce_enabled/sparce_sprf.sv  $(SPARCE)/sparce_enabled/sparce_svc.sv
 RISCV_BUS_FILES := $(RISCV_BUS)/generic_nonpipeline.sv $(RISCV_BUS)/ahb.sv
 TRACKER_FILES := $(RISCV)/trackers/cpu_tracker.sv $(RISCV)/trackers/branch_tracker.sv
-
 COMPONENT_FILES_SV := $(CORE_PKG_FILES) $(RISC_MGMT_FILES) $(RISC_EXT_FILES) $(CORE_FILES) $(RV32C_FILES) $(PIPELINE_FILES) $(SPARCE_FILES) $(PREDICTOR_FILES) $(PRIV_FILES) $(CACHE_FILES) $(RISCV_BUS_FILES) $(TRACKER_FILES)
 
 TOP_ENTITY := RISCVBusiness
 
 HEADER_FILES := -I$(RISCV)/include
+
+# Default config
+CFG_FILE := example.yml
+CORE := RISCVBusiness
 
 
 define USAGE
@@ -37,6 +43,10 @@ define USAGE
 @echo " Build Targets:"
 @echo "     config: config core with example.yml"
 @echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
+@echo "     verilate.%: Invoke 'FuseSoC run --build' to build specific"
+@echo "                 Verilator target:"
+@echo "                  - 's' for 3-stage scalar pipeline"
+@echo "                  - 'v' for 4-stage vector pipeline"
 @echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target"
 @echo "     lint: Invoke 'FuseSoC run --build' to run the Verilator lint target"
 @echo "     clean: Remove build directories"
@@ -50,14 +60,41 @@ endef
 default:
 	$(USAGE)
 
+##
+# Define config (varset.%) here
+varset.s:
+	$(eval CFG_FILE := example.yml)
+
+varset.v:
+	$(eval CFG_FILE := rvv.rvbcfg.yml)
+##
+
 config:
 	@echo "----------------------"
 	@echo " Running config_core"
 	@echo "----------------------"
 	@python3 scripts/config_core.py example.yml
 
+config.%: varset.%
+	@echo "----------------------"
+	@echo " Running config_core"
+	@echo "----------------------"
+	@python3 scripts/config_core.py $(CFG_FILE)
+
+test_asm_file:
+	python3 compile_asm_for_self.py -a RV32V verification/self-tests/RV32V/$(TEST_FILE_NAME).S
+	riscv64-unknown-elf-objcopy -O binary sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).elf sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
+	./rvb_out/sim-verilator/Vtop_core sim_out/RV32V/$(TEST_FILE_NAME)/$(TEST_FILE_NAME).bin
+
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
+	@echo "------------------------------------------------------------------"
+	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
+	@echo "to the build directory created by FuseSoC and using the Makefile there."
+	@echo "------------------------------------------------------------------"
+
+verilate.%: config.%
+	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:$(CORE) --make_options='-j'
 	@echo "------------------------------------------------------------------"
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
@@ -79,10 +116,16 @@ lint: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
 	@echo "Lint finished, no errors found"
 
-clean:
-	rm -rf build
-	rm -rf rvb_out
+clean: clean_waveforms
+	-rm -rf build
+	-rm -rf rvb_out
 
-veryclean:
-	rm -rf fusesoc_libraries
-	rm fusesoc.conf
+clean_waveforms:
+	-rm *.wlf
+	-rm *.vcd
+
+veryclean: clean
+	-rm -rf fusesoc_libraries
+	-rm fusesoc.conf
+
+.PHONY: clean clean_waveforms veryclean

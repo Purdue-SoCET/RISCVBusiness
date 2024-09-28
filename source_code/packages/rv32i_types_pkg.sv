@@ -203,13 +203,25 @@ package rv32i_types_pkg;
         word_t prediction;
     } fetch_ex_pipeline_reg_t;
 
-  typedef enum logic [2:0] {
-      W_SEL_FROM_DLOAD      = 3'b000,
-      W_SEL_FROM_PC         = 3'b001,
-      W_SEL_FROM_IMM_U      = 3'b010,
-      W_SEL_FROM_ALU        = 3'b011,
-      W_SEL_FROM_PRIV_PIPE  = 3'b100
-  } w_sel_t;
+    typedef enum logic [1:0] {
+        RC_SCALAR,
+        RC_VECTOR,
+        RC_FLOAT,
+        RC_SCRATCH
+    } regclass_t;
+
+    typedef struct packed {
+        regclass_t regclass;
+        logic [4:0] regidx;
+    } regsel_t;
+
+    typedef enum logic [2:0] {
+        W_SEL_FROM_DLOAD      = 3'b000,
+        W_SEL_FROM_PC         = 3'b001,
+        W_SEL_FROM_IMM_U      = 3'b010,
+        W_SEL_FROM_ALU        = 3'b011,
+        W_SEL_FROM_PRIV_PIPE  = 3'b100
+    } w_sel_t;
 
 endpackage
 `endif
