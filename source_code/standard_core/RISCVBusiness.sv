@@ -133,6 +133,7 @@ module RISCVBusiness #(
     ) i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
+        .halt(halt),
         .ccif(i_cache_coherency_if),
         .bcif(bus_ctrl_if),
         .gbif(icache_mc_if),
@@ -144,6 +145,7 @@ module RISCVBusiness #(
     ) d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
+        .halt(halt),
         .ccif(d_cache_coherency_if),
         .bcif(bus_ctrl_if),
         .gbif(dcache_mc_if),

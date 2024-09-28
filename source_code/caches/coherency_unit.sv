@@ -33,6 +33,7 @@ module coherency_unit #(
     parameter CPUID = 0
 ) (
     input logic CLK, nRST,
+    logic halt,
     bus_ctrl_if.tb bcif,            // Bus Controller Interface
     cache_coherence_if.coherency_unit ccif, // Cache Coherence Interface
     generic_bus_if.generic_bus gbif, //Bus from cache
@@ -48,7 +49,7 @@ module coherency_unit #(
     typedef enum logic [2:0] {IDLE, WRITE_REQ, READ_REQ, RESP_CHKTAG, RESP_SEND, RESP_FAIL, RESP_INV, WRITEBACK} state_type; //States for Coherency Unit
     state_type state, next_state;
     cache_coherence_statistics_t next_coherence_statistics;
-    logic pass_through;
+    logic pass_through, can_abort;
 
     typedef enum logic[1:0] {  
         MODIFIED,
@@ -66,6 +67,8 @@ module coherency_unit #(
             coherence_statistics <= next_coherence_statistics;
         end
     end
+
+    assign can_abort = ccif.abort_bus && state_can_abort(state);
 
     always_comb begin
         next_state = state;
@@ -123,7 +126,7 @@ module coherency_unit #(
             default : next_state = IDLE; 
         endcase
 
-        if (ccif.abort_bus && state_can_abort(state)) begin
+        if (can_abort) begin
             next_state = IDLE;
         end
     end
@@ -138,9 +141,9 @@ module coherency_unit #(
         bcif.ccsnoophit[CPUID] = 1'b0;
         bcif.ccwrite[CPUID] = 1'b0;
         bcif.dstore[CPUID] = {(BLOCK_SIZE*32){1'b0}};
-        bcif.daddr[CPUID] = 32'b0;
+        bcif.daddr[CPUID] = gbif.addr;
         bcif.dWEN[CPUID] = 1'b0;
-        bcif.dREN[CPUID] = 1'b0;
+        bcif.dREN[CPUID] = gbif.ren;
         bcif.dbyte_en[CPUID] = gbif.byte_en;
         ccif.addr = 32'hBAD1BAD1;
         ccif.state_transfer = cc_end_state'(INVALID);
@@ -179,7 +182,6 @@ module coherency_unit #(
                 bcif.ccsnoopdone[CPUID] = 1'b1;
             end
             WRITE_REQ: begin //handle S -> M, I -> M here
-                bcif.daddr[CPUID] = gbif.addr;
                 bcif.dREN[CPUID] = 1'b1;
                 bcif.ccwrite[CPUID] = 1'b1;
                 bcif.dstore[CPUID] = ccif.requested_data; //set dstore[supplier] to needed data
@@ -210,16 +212,30 @@ module coherency_unit #(
             end
             default : begin end
         endcase
+
+        if (can_abort) begin
+            gbif.busy = 0;
+        end
+
+        if (halt) begin
+            bcif.ccabort[CPUID] = 1'b0;
+        end
     end
 
     assign bcif.ccIsPresent[CPUID] = bcif.ccsnoophit[CPUID];
 
     //Function to calculate the set index
     function logic [$clog2(N_SETS)-1:0] calculate_set_index(logic [31:0] address);
-        return (address >> $clog2(BLOCK_SIZE)) & ((1 << $clog2(N_SETS)) - 1);;
+        return (address >> $clog2(BLOCK_SIZE)) & ((1 << $clog2(N_SETS)) - 1);
     endfunction
 
     function logic state_can_abort(state_type state);
-        return state == WRITE_REQ || state == READ_REQ || state == WRITEBACK;
+        case (state)
+            IDLE: return !bcif.dwait[CPUID];
+            RESP_FAIL: return !bcif.dwait[CPUID];
+            WRITE_REQ: return !bcif.dwait[CPUID];
+            READ_REQ: return !bcif.dwait[CPUID];
+            default: return 0;
+        endcase
     endfunction
 endmodule
