@@ -75,7 +75,7 @@ module branch_predictor_wrapper (
         end
         else begin
             predict_if.predict_taken = predict_temp1.predict_taken;
-            predict_if.target_addr = predict_temp2.target_addr;
+            predict_if.target_addr = predict_temp1.target_addr;
         end
     end
     generate

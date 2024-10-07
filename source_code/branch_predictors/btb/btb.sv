@@ -82,17 +82,17 @@ module btb #(
 	always_comb begin	:	update_logic
 		next_set = buffer[update_pc.idx_bits];
 		if(predict_if.update_predictor) begin
-			if(update_set.frames[1].tag == update_pc.tag_bits || update_set.frames[1].target == '0) begin
-				// frame 1 matches with the update_pc, or frame 1 is empty, replace frame 1
-				next_set.frames[1].tag = update_pc.tag_bits;
-				next_set.frames[1].taken = {next_set.frames[1].taken[PRED_BITS-1:0], predict_if.branch_result} [PRED_BITS-1:0];
-				next_set.frames[1].target = predict_if.update_addr;
-			end else begin
-				// otherwise, replace frame 0
+			if(update_set.frames[0].tag == update_pc.tag_bits || update_set.frames[0].target == '0) begin
+				// frame 0 matches with the update_pc, or frame 0 is empty, replace frame 0
 				next_set.frames[0].tag = update_pc.tag_bits;
 				next_set.frames[0].taken = {next_set.frames[0].taken[PRED_BITS-1:0], predict_if.branch_result} [PRED_BITS-1:0];
-				//next_set.frames[0].taken <<= predict_if.branch_result;
 				next_set.frames[0].target = predict_if.update_addr;
+			end else begin
+				// otherwise, replace frame 1
+				next_set.frames[1].tag = update_pc.tag_bits;
+				next_set.frames[1].taken = {next_set.frames[1].taken[PRED_BITS-1:0], predict_if.branch_result} [PRED_BITS-1:0];
+				//next_set.frames[1].taken <<= predict_if.branch_result;
+				next_set.frames[1].target = predict_if.update_addr;
 			end
 		end
 	end
