@@ -20,7 +20,7 @@ module stage3_mem_stage(
     output logic wfi
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_12_pkg::*;
+    import pma_types_1_13_pkg::*;
 
     /***************
     * Branch Update
