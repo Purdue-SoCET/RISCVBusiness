@@ -47,7 +47,7 @@ module cpu_tracker #(
     input cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0]
 );
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_12_pkg::*;
+    import machine_mode_types_1_13_pkg::*;
     import rv32m_pkg::*;
 
     integer fptr;

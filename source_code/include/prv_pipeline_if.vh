@@ -28,9 +28,9 @@
 `include "component_selection_defines.vh"
 
 interface prv_pipeline_if();
-  import machine_mode_types_1_12_pkg::*;
+  import machine_mode_types_1_13_pkg::*;
   import rv32i_types_pkg::*;
-  import pma_types_1_12_pkg::*;
+  import pma_types_1_13_pkg::*;
 
   // exception signals
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,

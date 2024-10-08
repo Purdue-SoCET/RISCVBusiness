@@ -45,7 +45,7 @@ module stage3_execute_stage (
     rv32c_if.execute rv32cif
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_12_pkg::*;
+    import pma_types_1_13_pkg::*;
     import stage3_types_pkg::*;
 
     // Interface declarations
