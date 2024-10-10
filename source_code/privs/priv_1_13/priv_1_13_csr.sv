@@ -76,8 +76,6 @@ module priv_1_13_csr #(
   long_csr_t        instret_full, if_next;
   /* Supervisor Protection and Translation */
   satp_t            satp, satp_next;
-  /* Supervisor Debug/Trace*/
-  csr_reg_t         scontext;
   /* Supervisor Trap Setup */
   sstatus_t         sstatus, sstatus_next;
   sie_t             sie, sie_next;
@@ -341,10 +339,18 @@ module priv_1_13_csr #(
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
             end
+            mstatus_next.sie = nxt_csr_val[1];
             mstatus_next.mie = nxt_csr_val[3];
+            mstatus_next.spie = nxt_csr_val[5];
             mstatus_next.mpie = nxt_csr_val[7];
+            mstatus_next.spp = nxt_csr_val[8];
             mstatus_next.mprv = nxt_csr_val[17];
             mstatus_next.tw = nxt_csr_val[21];
+            
+            // Update sstatus
+            sstatus_next.sie = mstatus_next.sie;
+            sstatus_next.spie = mstatus_next.spie;
+            sstatus_next.spp = mstatus_next.spp;
           end
 
           MTVEC_ADDR: begin
@@ -357,15 +363,31 @@ module priv_1_13_csr #(
           end
 
           MIE_ADDR: begin
+            mie_next.ssie = nxt_csr_val[1];
             mie_next.msie = nxt_csr_val[3];
+            mie_next.stie = nxt_csr_val[5];
             mie_next.mtie = nxt_csr_val[7];
+            mie_next.seie = nxt_csr_val[9];
             mie_next.meie = nxt_csr_val[11];
+
+            // Update sie
+            sie_next.ssie = mie_next.ssie;
+            sie_next.stie = mie_next.stie;
+            sie_next.seie = mie_next.seie;
           end
 
           MIP_ADDR: begin
+            mip_next.ssip = nxt_csr_val[1];
             mip_next.msip = nxt_csr_val[3];
+            mip_next.stip = nxt_csr_val[5];
             mip_next.mtip = nxt_csr_val[7];
+            mip_next.seip = nxt_csr_val[9];
             mip_next.meip = nxt_csr_val[11];
+
+            // Update sip
+            sip_next.ssip = mip_next.ssip;
+            sip_next.stip = mip_next.stip;
+            sip_next.seip = mip_next.seip;
           end
           MSCRATCH_ADDR: begin
             mscratch_next = nxt_csr_val;
@@ -396,6 +418,65 @@ module priv_1_13_csr #(
           end
           MINSTRETH_ADDR: begin
             inject_minstreth = 1'b1;
+          end
+          SATP_ADDR: begin
+            satp_next.ppn = nxt_csr_val[21:0];
+            satp_next.asid = nxt_csr_val[30:22];
+            satp_next.mode = nxt_csr_val[31]
+          end
+          SSTATUS_ADDR: begin
+            sstatus_next.sie = nxt_csr_val[1];
+            sstatus_next.spie = nxt_csr_val[5];
+            sstatus_next.spp = nxt_csr_val[8];
+            
+            // Update mstatus
+            mstatus_next.sie = sstatus_next.sie;
+            mstatus_next.spie = sstatus_next.spie;
+            mstatus_next.spp = sstatus_next.spp;
+          end
+          SIE_ADDR: begin
+            sie_next.ssie = nxt_csr_val[1];
+            sie_next.stie = nxt_csr_val[5];
+            sie_next.seie = nxt_csr_val[9];
+
+            // Update sie
+            mie_next.ssie = sie_next.ssie;
+            mie_next.stie = sie_next.stie;
+            mie_next.seie = sie_next.seie;
+          end
+          SIP_ADDR: begin
+            sip_next.ssip = nxt_csr_val[1];
+            sip_next.stip = nxt_csr_val[5];
+            sip_next.seip = nxt_csr_val[9];
+
+            // Update sip
+            mip_next.ssip = sip_next.ssip;
+            mip_next.stip = sip_next.stip;
+            mip_next.seip = sip_next.seip;
+          end
+          STVEC_ADDR: begin
+            if (prv_intern_if.new_csr_val[1:0] > 2'b01) begin
+              stvec_next.mode = DIRECT;
+            end else begin
+              stvec_next.mode = vector_modes_t'(nxt_csr_val[1:0]);
+            end
+            stvec_next.base = nxt_csr_val[31:2];
+          end
+          SSCRATCH_ADDR: begin
+            sscratch_next = nxt_csr_val;
+          end
+          SEPC_ADDR: begin
+            sepc_next = nxt_csr_val;
+          end
+          SCAUSE_ADDR: begin
+            scause_next.cause = nxt_csr_val[(SXLEN-2):0];
+            scause_next.interrupt = nxt_csr_val[SXLEN-1];
+          end
+          STVAL_ADDR: begin
+            stval_next = nxt_csr_val;
+          end
+          SCOUNTEREN_ADDR: begin
+            scounteren_next = nxt_csr_val;
           end
         endcase
       end
@@ -476,6 +557,17 @@ module priv_1_13_csr #(
       MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
       MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
       MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
+      /* Supervisor Mode Addresses */
+      SATP_ADDR: prv_intern_if.old_csr_val = satp;
+      SSTATUS_ADDR: prv_intern_if.old_csr_val = sstatus;
+      SIE_ADDR: prv_intern_if.old_csr_val = sie;
+      SIP_ADDR: prv_intern_if.old_csr_val = sip;
+      STVEC_ADDR: prv_intern_if.old_csr_val = stvec;
+      SSCRATCH_ADDR: prv_intern_if.old_csr_val = sscratch;
+      SEPC_ADDR: prv_intern_if.old_csr_val = sepc;
+      SCAUSE_ADDR: prv_intern_if.old_csr_val = scause;
+      STVAL_ADDR: prv_intern_if.old_csr_val = stavl;
+      SCOUNTEREN_ADDR: prv_intern_if.old_csr_val = scounteren;
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
         if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
