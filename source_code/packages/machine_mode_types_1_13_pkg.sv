@@ -175,7 +175,7 @@ package machine_mode_types_1_13_pkg;
     /* Supervisor Debug/Trace Registers */
     SCONTEXT_ADDR   = 12'h5A8,
 
-    /* Supervisor Protection and Translation */
+    /* Supervisor State Enable Registers */
     SSTATEEN0_ADDR  = 12'h10C,
     SSTATEEN1_ADDR  = 12'h10D,
     SSTATEEN2_ADDR  = 12'h10E,
@@ -545,7 +545,7 @@ package machine_mode_types_1_13_pkg;
 
   /* Supervisor Mode Register Types */
 
-  /* sstatus types */
+  /* sstatus and stvec types */
 
   typedef struct packed {
     logic        sd;            // Extension dirty signal (R/O)
@@ -565,6 +565,11 @@ package machine_mode_types_1_13_pkg;
     logic        sie;           // S-Mode interrupt enable
     logic        reserved_0;
   } sstatus_t;
+
+  typedef struct packed {
+    logic [29:0] base;
+    vector_modes_t mode;
+  } stvec_t;
 
   /* sip and sie types */
 
