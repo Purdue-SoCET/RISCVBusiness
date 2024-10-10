@@ -439,7 +439,7 @@ module priv_1_13_csr #(
             sie_next.stie = nxt_csr_val[5];
             sie_next.seie = nxt_csr_val[9];
 
-            // Update sie
+            // Update mie
             mie_next.ssie = sie_next.ssie;
             mie_next.stie = sie_next.stie;
             mie_next.seie = sie_next.seie;
@@ -449,7 +449,7 @@ module priv_1_13_csr #(
             sip_next.stip = nxt_csr_val[5];
             sip_next.seip = nxt_csr_val[9];
 
-            // Update sip
+            // Update mip
             mip_next.ssip = sip_next.ssip;
             mip_next.stip = sip_next.stip;
             mip_next.seip = sip_next.seip;
