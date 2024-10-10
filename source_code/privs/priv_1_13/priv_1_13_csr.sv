@@ -74,6 +74,24 @@ module priv_1_13_csr #(
   csr_reg_t         minstreth;
   long_csr_t        cycles_full, cf_next;
   long_csr_t        instret_full, if_next;
+  /* Supervisor Protection and Translation */
+  satp_t            satp, satp_next;
+  /* Supervisor Debug/Trace*/
+  csr_reg_t         scontext;
+  /* Supervisor Trap Setup */
+  sstatus_t         sstatus, sstatus_next;
+  sie_t             sie, sie_next;
+  stvec_t           stvec, stvec_next;
+  /* Supervisor Trap Handling */
+  csr_reg_t         sscratch, sscratch_next;
+  csr_reg_t         sepc, sepc_next;
+  scause_t          scause, scause_next;
+  csr_reg_t         stval, stval_next;
+  sip_t             sip, sip_next;
+  /* Supervisor Counters/Timers */
+  scounteren_t      scounteren, scounteren_next;
+  // scountinhibit_t   scountinhibit, scountinhibit_next; // No effect without Smcdeleg/Ssccfg
+
 
   csr_reg_t nxt_csr_val;
 
@@ -213,6 +231,48 @@ module priv_1_13_csr #(
       /* mcause reset */
       mcause <= '0;
 
+      /* satp reset */
+      satp <= '0;
+
+      /* sstatus reset */
+      sstatus.reserved_0 <= '0;
+      sstatus.reserved_1 <= '0;
+      sstatus.reserved_2 <= '0;
+      sstatus.reserved_3 <= '0;
+      sstatus.reserved_4 <= '0;
+      sstatus.reserved_5 <= '0;
+      sstatus.sie <= 1'b0;
+      sstatus.spie <= 1'b0;
+      sstatus.ube <= 1'b0;
+      sstatus.spp <= 1'b0;
+      sstatus.sum <= 1'b0;
+      sstatus.mxr <= 1'b0;
+      sstatus.sd <= 1'b0;
+      `ifdef RV32V_SUPPORTED
+        sstatus.vs <= VS_INITIAL;
+      `else
+        sstatus.vs <= VS_OFF;
+      `endif
+      `ifdef RV32F_SUPPORTED
+        sstatus.fs <= FS_INITIAL;
+      `else
+        sstatus.fs <= FS_OFF;
+      `endif
+      `ifdef CUSTOM_SUPPORTED
+        sstatus.xs <= XS_NONE_D;
+      `else
+        sstatus.xs <= XS_ALL_OFF;
+      `endif
+
+      sie <= sie_next;
+      stvec <= stvec_next;
+      sscratch <= sscratch_next;
+      sepc <= sepc_next;
+      scause <= scause_next;
+      stval <= stval_next;
+      sip <= sip_next;
+      scounteren <= scounteren_next;
+
     end else begin
       mstatus <= mstatus_next;
       mtvec <= mtvec_next;
@@ -226,6 +286,16 @@ module priv_1_13_csr #(
       mcause <= mcause_next;
       cycles_full <= cf_next;
       instret_full <= if_next;
+      satp <= satp_next;
+      sstatus <= sstatus_next;
+      sie <= sie_next;
+      stvec <= stvec_next;
+      sscratch <= sscratch_next;
+      sepc <= sepc_next;
+      scause <= scause_next;
+      stval <= stval_next;
+      sip <= sip_next;
+      scounteren <= scounteren_next;
     end
   end
 
@@ -266,7 +336,7 @@ module priv_1_13_csr #(
       if (prv_intern_if.valid_write) begin
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
-            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || prv_intern_if.new_csr_val[12:11] == S_MODE) begin
+            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE) begin
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
