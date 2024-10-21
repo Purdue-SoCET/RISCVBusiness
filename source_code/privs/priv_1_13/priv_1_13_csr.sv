@@ -422,7 +422,7 @@ module priv_1_13_csr #(
           SATP_ADDR: begin
             satp_next.ppn = nxt_csr_val[21:0];
             satp_next.asid = nxt_csr_val[30:22];
-            satp_next.mode = nxt_csr_val[31]
+            satp_next.mode = nxt_csr_val[31];
           end
           SSTATUS_ADDR: begin
             sstatus_next.sie = nxt_csr_val[1];
