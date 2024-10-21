@@ -227,10 +227,12 @@ module control_unit (
 
         if (cu_if.opcode == SYSTEM) begin
             if (rv32i_system_t'(instr_i.funct3) == PRIV) begin
+                if (priv_insn_t'(instr_i.imm11_00) == SRET) cu_if.ret_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == MRET) cu_if.ret_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == EBREAK) cu_if.breakpoint = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == ECALL) cu_if.ecall_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == WFI) cu_if.wfi = 1'b1;
+                if (priv_inst_t'(instr_r.funct7) == SFENCE_VMA) cu_if.fence = 1'b1;
             end
         end
     end

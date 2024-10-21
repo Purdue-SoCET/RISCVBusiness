@@ -51,7 +51,7 @@ interface control_unit_if;
   logic reserve, exclusive; // Used for reservation set management
 
   // Privilege control signals
-  logic fault_insn, illegal_insn, ret_insn, breakpoint, ecall_insn;
+  logic fault_insn, illegal_insn, ret_insn, breakpoint, ecall_insn, fence;
   logic csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid;
   csr_addr_t csr_addr;
   logic [4:0] zimm;
@@ -68,7 +68,7 @@ interface control_unit_if;
     alu_b_sel, w_sel, load_type, branch_type, shamt,
     imm_I, imm_S, imm_SB, imm_UJ, imm_U, imm_shamt_sel, alu_op,
     opcode, halt, wen, fault_insn, illegal_insn, ret_insn, breakpoint,
-    ecall_insn, csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid,
+    ecall_insn, fence, csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid,
     csr_addr, zimm, ifence, wfi, rd, rv32m_control, rv32a_control,
     rv32b_control, rv32zc_control, reserve, exclusive
   );
