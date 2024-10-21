@@ -569,7 +569,7 @@ module priv_1_13_csr #(
       SSCRATCH_ADDR: prv_intern_if.old_csr_val = sscratch;
       SEPC_ADDR: prv_intern_if.old_csr_val = sepc;
       SCAUSE_ADDR: prv_intern_if.old_csr_val = scause;
-      STVAL_ADDR: prv_intern_if.old_csr_val = stavl;
+      STVAL_ADDR: prv_intern_if.old_csr_val = stval;
       SCOUNTEREN_ADDR: prv_intern_if.old_csr_val = scounteren;
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
