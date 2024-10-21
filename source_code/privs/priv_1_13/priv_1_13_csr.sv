@@ -485,6 +485,7 @@ module priv_1_13_csr #(
     // inject values
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
+      sstatus_next = sstatus_t'(prv_intern_if.next_mstatus & SSTATUS_MASK);
     end
     if (prv_intern_if.inject_mtval) begin
       mtval_next = prv_intern_if.next_mtval;
@@ -497,9 +498,11 @@ module priv_1_13_csr #(
     end
     if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
+      sip_next = sip_t'(prv_intern_if.next_mip & SIE_MASK);
     end
 
     mstatus_next.sd = &(mstatus_next.vs) | &(mstatus_next.fs) | &(mstatus_next.xs);
+    sstatus_next.sd = mstatus_next.sd;
   end
 
   // hw perf mon

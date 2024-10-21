@@ -103,7 +103,7 @@ module priv_1_13_block #(
     assign prv_intern_if.curr_mtval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
     assign prv_intern_if.mret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == M_MODE);
-    assign prv_intern_if.sret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == M_MODE); // find references
+    assign prv_intern_if.sret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == S_MODE); // find references
 
     // RISC-MGMT?
     //  not sure what these are for, part of priv 1.11

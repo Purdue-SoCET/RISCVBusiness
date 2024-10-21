@@ -32,6 +32,10 @@ package machine_mode_types_1_13_pkg;
   parameter int VSXLEN = 32;
   parameter int HSXLEN = 32;
 
+  // Masks
+  parameter int SSTATUS_MASK = 32'h800DE762; // 32'b1000_0000_0000_1101_1110_0111_0110_0010
+  parameter int SIE_MASK     = 32'h00002222; // 32'b0000_0000_0000_0000_0010_0010_0010_0010
+
 
   /* Machine Mode Addresses */
   typedef enum logic [11:0] {
