@@ -66,17 +66,18 @@
             if(addr >= INSTR_START_ADDR_SPACE && addr <= INSTR_END_ADDR_SPACE) begin
                 iREN = ren;
                 iaddr = addr;
-                ierror = error;
-                i_req_stall = request_stall;
+                error =  ierror;
+                request_stall = i_req_stall;
+                rdata = instruction;
             end
             else if(addr >= DATA_START_ADDR_SPACE && addr <= DATA_END_ADDR_SPACE) begin 
                 dREN = ren;
                 dWEN = wen;
                 daddr = addr;
-                data_load = rdata;
                 data_store = wdata;
-                derror = error;
-                d_req_stall = request_stall;
+                rdata = data_load;
+                error = derror;
+                request_stall = d_req_stall;
             end    
         end
 
