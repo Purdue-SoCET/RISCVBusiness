@@ -483,6 +483,8 @@ module priv_1_13_csr #(
     end
 
     // inject values
+    // Note: injections to sstatus/sip inject mstatus/mip and vice versa
+    //       see priv_1_13_int_ex_handler for why
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
       sstatus_next = sstatus_t'(prv_intern_if.next_mstatus & SSTATUS_MASK);
@@ -499,6 +501,15 @@ module priv_1_13_csr #(
     if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
       sip_next = sip_t'(prv_intern_if.next_mip & SIE_MASK);
+    end
+    if (prv_intern_if.inject_scause) begin
+      scause_next = prv_intern_if.next_scause;
+    end
+    if (prv_intern_if.inject_stval) begin
+      stval_next = prv_intern_if.next_stval;
+    end
+    if (prv_intern_if.inject_sepc) begin
+      sepc_next = prv_intern_if.next_sepc;
     end
 
     mstatus_next.sd = &(mstatus_next.vs) | &(mstatus_next.fs) | &(mstatus_next.xs);
@@ -650,11 +661,14 @@ module priv_1_13_csr #(
   end
 
   /* Priv control return */
-  assign prv_intern_if.curr_mip = mip;
-  assign prv_intern_if.curr_mie = mie;
+  assign prv_intern_if.curr_mip = mip; // reflects sip
+  assign prv_intern_if.curr_mie = mie; // reflects sie
   assign prv_intern_if.curr_mcause = mcause;
   assign prv_intern_if.curr_mepc = mepc;
-  assign prv_intern_if.curr_mstatus = mstatus;
+  assign prv_intern_if.curr_mstatus = mstatus; // reflects sstatus
   assign prv_intern_if.curr_mtvec = mtvec;
+  assign prv_intern_if.curr_scause = scause;
+  assign prv_intern_if.curr_sepc = sepc;
+  assign prv_intern_if.curr_stvec = stvec;
 
 endmodule

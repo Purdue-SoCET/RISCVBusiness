@@ -101,6 +101,7 @@ module priv_1_13_block #(
     assign prv_intern_if.fault_load_page   = 1'b0;
     assign prv_intern_if.fault_store_page  = 1'b0;
     assign prv_intern_if.curr_mtval        = prv_pipe_if.badaddr;
+    assign prv_intern_if.curr_stval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
     assign prv_intern_if.mret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == M_MODE);
     assign prv_intern_if.sret              = prv_pipe_if.ret & (prv_intern_if.curr_privilege_level == S_MODE); // find references

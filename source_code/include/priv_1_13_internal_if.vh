@@ -69,7 +69,11 @@ interface priv_1_13_internal_if;
     mstatus_t curr_mstatus, next_mstatus;
     mtvec_t curr_mtvec;
     csr_reg_t curr_mtval, next_mtval;
-    logic inject_mip, inject_mcause, inject_mepc, inject_mstatus, inject_mtval;
+    scause_t curr_scause, next_scause;
+    csr_reg_t curr_sepc, next_sepc;
+    stvec_t curr_stvec;
+    csr_reg_t curr_stval, next_stval;
+    logic inject_mip, inject_mcause, inject_mepc, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval;
 
     // Things from the pipe we care about
     word_t epc; // pc of the instruction prior to the exception
@@ -78,6 +82,7 @@ interface priv_1_13_internal_if;
     logic insert_pc; // inform pipeline that we are changing the PC
     logic mret, sret; // returning from a trap instruction
     logic intr; // Did something trigger an interrupt or exception?
+    logic intr_to_s; // Is this trapping into s-mode?
 
     // Addresses and memory access info for memory protection
     logic [RAM_ADDR_SIZE-1:0] daddr, iaddr; // Address to check
@@ -92,24 +97,26 @@ interface priv_1_13_internal_if;
 
     modport csr (
         input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, valid_write,
-            inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
-            next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval,
+            inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
+            next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval,
         output old_csr_val, invalid_csr,
-            curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtvec
+            curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtvec, curr_scause, curr_sepc, curr_stvec
     );
 
     modport int_ex_handler (
         input timer_int_u, timer_int_s, timer_int_m, soft_int_u, soft_int_s, soft_int_m, ext_int_u, ext_int_s, ext_int_m,
             clear_timer_int_u, clear_timer_int_s, clear_timer_int_m, clear_soft_int_u, clear_soft_int_s, clear_soft_int_m,
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
-            env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtval,
-            mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level,
-        output inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
-            next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, intr
+            env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus,
+            curr_mtval, curr_scause, curr_sepc, curr_stval, mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level,
+        output inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
+            next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval, intr,
+            intr_to_s
     );
 
     modport pipe_ctrl (
-        input intr, pipe_clear, mret, sret, curr_mtvec, curr_mepc, next_mcause,
+        input intr, intr_to_s, pipe_clear, mret, sret, curr_mtvec, curr_mepc, next_mcause,
+            curr_stvec, curr_sepc, next_scause,
         output insert_pc, priv_pc
     );
 
@@ -124,7 +131,7 @@ interface priv_1_13_internal_if;
     );
 
     modport mode (
-        input mret, curr_mstatus, intr,
+        input mret, sret, curr_mstatus, intr, intr_to_s,
         output curr_privilege_level
     );
 
