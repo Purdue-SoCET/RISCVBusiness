@@ -1,13 +1,17 @@
+// --- SoCET Multicore F24 - UVM Data Agent --- //
 `ifndef DATA_AGENT_SVH
 `define DATA_AGENT_SVH
 
+// --- Include --- //
 import uvm_pkg::*;
+
 `include "uvm_macros.svh"
 `include "data_sequencer.svh"
 `include "data_driver.svh"
 `include "data_monitor.svh"
 `include "multicore_if.svh"
 
+// --- Data Sequencer --- //
 class data_agent extends uvm_agent;
     `uvm_component_utils(data_agent)
     

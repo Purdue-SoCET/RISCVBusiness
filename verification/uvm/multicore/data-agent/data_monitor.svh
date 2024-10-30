@@ -1,13 +1,13 @@
+// --- SoCET Multicore F24 - UVM Data Monitor --- //
 `ifndef DATA_MONITOR_SVH
 `define DATA_MONITOR_SVH
 
-import uvm_pkg::*;
-`include 'uvm_macros.svh'
-
 // --- Includes --- //
+import uvm_pkg::*;
+
+`include "uvm_macros.svh"
 `include "data_transaction.svh"
 `include "multicore_if.sv"
-// TODO: note new bus changes in if
 
 // --- Data Transaction --- //
 class data_monitor extends uvm_monitor;
@@ -37,7 +37,7 @@ class data_monitor extends uvm_monitor;
 		data_ap = new("data_ap", this);
 		
 		if(!uvm_config_db #(virtual multicore_if)::get(this, "", "mcif", mcif)) begin
-			`uvm_fatal("DATA_MONITOR", "No virtual interface for multicore_if)
+			`uvm_fatal("DATA_MONITOR", "No virtual interface for multicore_if")
 		end
 	endfunction : build_phase
 
