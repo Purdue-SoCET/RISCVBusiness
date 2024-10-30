@@ -1,16 +1,41 @@
 `ifndef INSTR_TRANSACTION_SVH
 `define INSTR_TRANSACTION_SVH
 
-    class instr_transaction extends uvm_sequence_item;
-        `uvm_object_utils(instr_transaction)
+`include "addr_space.sv"
 
-        // *********** DUT Inputs ***********
+class instr_transaction extends uvm_sequence_item;
 
-        // *********** DUT Outputs ***********
+    // Universal Reset
+    bit nRST;
 
-        function new(string name = "instr_transaction");
-            super.new(name);
-        endfunction
+    // *********** DUT Inputs ***********
+    // CPU Inputs to Instruction Agents
+    rand bit iREN;                                // Instruction read enable
+    rand bit [ADDR_WIDTH-1 : 0] iaddr;            // Instruction address
 
-    endclass
-`endif
+    // *********** DUT Outputs ***********
+    // Instruction Agent Outputs to CPU
+    bit ierror;                                   // Error signal
+    bit i_req_stall;                              // Request stall signal
+    bit [ADDR_WIDTH-1 : 0] instruction;           // Instruction data
+
+    `uvm_object_utils_begin(instr_transaction)
+        `uvm_field_int(nRST,          UVM_ALL_ON)
+        `uvm_field_int(iREN,          UVM_ALL_ON)
+        `uvm_field_int(iaddr,         UVM_ALL_ON)
+        `uvm_field_int(ierror,        UVM_ALL_ON)
+        `uvm_field_int(i_req_stall,   UVM_ALL_ON)
+        `uvm_field_int(instruction,   UVM_ALL_ON)
+    `uvm_object_utils_end
+
+    constraint iaddr_range {
+        iaddr >= INSTR_START_ADDR_SPACE;
+        iaddr <= INSTR_END_ADDR_SPACE;
+    }
+
+    function new(string name = "instr_transaction");
+        super.new(name);
+    endfunction
+
+endclass
+`endif 
