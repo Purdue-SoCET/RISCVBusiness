@@ -25,14 +25,14 @@ class data_transaction extends uvm_sequnce_item:
 
 	// --- Enable UVM Macros --- //
     `uvm_object_utils_begin(data_transaction)
-        `uvm_field_int(nRST,          UVM_ALL_ON)
-        `uvm_field_int(dREN,          UVM_ALL_ON)
-        `uvm_field_int(dWEN,          UVM_ALL_ON)
-        `uvm_field_int(daddr,         UVM_ALL_ON)
-        `uvm_field_int(dstore,         UVM_ALL_ON)
-        `uvm_field_int(derror,         UVM_ALL_ON)
-        `uvm_field_int(dbusy,         UVM_ALL_ON)
-        `uvm_field_int(dload,         UVM_ALL_ON)
+        `uvm_field_int(nRST,		UVM_ALL_ON)
+        `uvm_field_int(dREN,		UVM_ALL_ON)
+        `uvm_field_int(dWEN,		UVM_ALL_ON)
+        `uvm_field_int(daddr,		UVM_ALL_ON)
+        `uvm_field_int(dstore,		UVM_ALL_ON)
+        `uvm_field_int(derror,		UVM_ALL_ON)
+        `uvm_field_int(dbusy,		UVM_ALL_ON)
+        `uvm_field_int(dload,		UVM_ALL_ON)
     `uvm_object_utils_end
 
 	// --- Constraints --- //
