@@ -9,21 +9,19 @@
 class data_transaction extends uvm_sequnce_item:
 	`uvm_object_utils(data_transaction)
 
-	// --- Reset --- //
+	// --------- Reset --------------- //
 	logic nRST;
 
-	// --- DUT Inputs --- //
-	rand logic dREN;                           // -> gen_bus.ren
-	rand logic dWEN;                           // -> gen_bus.wen
-	
-	rand logic [ADDR_WIDTH-1 : 0]   daddr;     // -> gen_bus.addr
-	rand logic [DATA_WIDTH-1 : 0] 	dstore;    // -> gen_bus.wdata
+	// --------- DUT Inputs ---------- //
+	rand logic                    dREN;
+	rand logic                    dWEN;
+	rand logic [ADDR_WIDTH-1 : 0] daddr; 
+	rand logic [DATA_WIDTH-1 : 0] dstore;
 
-	// --- DUT Outputs --- //
-	logic derror;                              // -> gen_bus.error
-	logic dbusy;                               // -> gen_bus.busy
-
-	logic [DATA_WIDTH-1 : 0]   dload;	       // -> geb_bus.rdata
+	// --------- DUT Outputs --------- //
+	logic                         derror;
+	logic                         dbusy; 
+	logic      [DATA_WIDTH-1 : 0] dload;
 
 	// --- Enable UVM Macros --- //
     `uvm_object_utils_begin(data_transaction)
