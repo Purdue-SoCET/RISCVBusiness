@@ -54,21 +54,21 @@ class data_monitor extends uvm_monitor;
 
 			wait(mcvif.NRST);
 
-			// TODO: fill in sequence item
-
 			// --- Input Sample --- //
 			@(posedge mcvif.CLK);			
 			
-			// data_trans.SIG1 = mcvif.SIG1;
-			// data_trans.SIG2 = mcvif.SIG2;
+			data_trans.dREN   = mcvif.dREN;
+			data_trans.wREN   = mcvif.wREN;
+			data_trans.daddr  = mcvif.daddr;
+			data_trans.dstore = mcvif.dstore;
 
 			// --- Output Sample --- //
-
 			@(posedge mcvif.CLK);			
 
-			// data_trans.SIG3 = mcvif.SIG3;
-			// data_trans.SIG4 = mcvif.SIG4;
-		
+			data_trans.derror = mcvif.derror;
+			data_trans.dbusy  = mcvif.dbusy;
+			data_trans.dload  = mcvif.dload;
+
 			// --- Send to Scoreboard --- //
 			data_ap.write(data_trans);
 	
