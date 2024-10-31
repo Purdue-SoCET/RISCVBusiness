@@ -12,17 +12,16 @@ class data_transaction extends uvm_sequnce_item:
 	// --- Reset --- //
 	logic nRST;
 
-	// --- Stimulus --- //
-	rand logic 						dREN;
-	rand logic 						dWEN;
-	rand logic [ADDR_WIDTH-1 : 0] 	daddr;
-	// TODO: add rest
+	// --- DUT Inputs --- //
+	rand logic 						dREN;      // -> gen_bus.ren
+	rand logic 						dWEN;      // -> gen_bus.wen
+	rand logic [ADDR_WIDTH-1 : 0] 	daddr;     // -> gen_bus.addr
+	rand logic [DATA_WIDTH-1 : 0] 	dstore;    // -> gen_bus.wdata
 
 	// --- DUT Outputs --- //
-	logic 							derror;
-	logic 							d_req_stall;
-	logic [ADDR_WIDTH-1 : 0] 		data;
-	// TODO: add rest
+	logic 							derror;    // -> gen_bus.error
+	logic 							dbusy;     // -> gen_bus.busy
+	logic      [DATA_WIDTH-1 : 0]   dload;	   // -> geb_bus.rdata
 
 	// --- Enable UVM Macros --- //
     `uvm_object_utils_begin(data_transaction)
@@ -30,6 +29,10 @@ class data_transaction extends uvm_sequnce_item:
         `uvm_field_int(dREN,          UVM_ALL_ON)
         `uvm_field_int(dWEN,          UVM_ALL_ON)
         `uvm_field_int(daddr,         UVM_ALL_ON)
+        `uvm_field_int(dstore,         UVM_ALL_ON)
+        `uvm_field_int(derror,         UVM_ALL_ON)
+        `uvm_field_int(dbusy,         UVM_ALL_ON)
+        `uvm_field_int(dload,         UVM_ALL_ON)
     `uvm_object_utils_end
 
 	// --- Constraints --- //
