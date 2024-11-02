@@ -38,21 +38,11 @@ module priv_1_13_pipe_control (
         prv_intern_if.priv_pc = '0;
 
         if (prv_intern_if.intr) begin
-            // if interrupt into s mode else m mode
-            if (prv_intern_if.intr_to_s) begin
-                if (prv_intern_if.curr_stvec.mode == VECTORED & prv_intern_if.next_scause.interrupt) begin
-                    prv_intern_if.priv_pc = (prv_intern_if.curr_stvec.base << 2)
-                                                + (prv_intern_if.next_scause.cause << 2);
-                end else begin
-                    prv_intern_if.priv_pc = prv_intern_if.curr_mtvec.base << 2;
-                end
+            if (prv_intern_if.curr_mtvec.mode == VECTORED & prv_intern_if.next_mcause.interrupt) begin
+                prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2)
+                                            + (prv_intern_if.next_mcause.cause << 2);
             end else begin
-                if (prv_intern_if.curr_mtvec.mode == VECTORED & prv_intern_if.next_mcause.interrupt) begin
-                    prv_intern_if.priv_pc = (prv_intern_if.curr_mtvec.base << 2)
-                                                + (prv_intern_if.next_mcause.cause << 2);
-                end else begin
-                    prv_intern_if.priv_pc = prv_intern_if.curr_mtvec.base << 2;
-                end
+                prv_intern_if.priv_pc = prv_intern_if.curr_mtvec.base << 2;
             end
         end else if (prv_intern_if.mret) begin
             prv_intern_if.priv_pc = prv_intern_if.curr_mepc; // Leaving ISR

@@ -56,6 +56,8 @@ module priv_1_13_csr #(
   /* Machine Trap Setup */
   mstatus_t         mstatus, mstatus_next;
   misa_t            misa;
+  long_csr_t        medeleg, medeleg_next;
+  csr_reg_t         mideleg, mideleg_next;
   mie_t             mie, mie_next;
   mtvec_t           mtvec, mtvec_next;
   mstatush_t        mstatush;
@@ -262,18 +264,35 @@ module priv_1_13_csr #(
         sstatus.xs <= XS_ALL_OFF;
       `endif
 
-      sie <= sie_next;
-      stvec <= stvec_next;
-      sscratch <= sscratch_next;
-      sepc <= sepc_next;
-      scause <= scause_next;
-      stval <= stval_next;
-      sip <= sip_next;
-      scounteren <= scounteren_next;
+      /* sie reset */
+      sie <= '0;
 
+      /* stvec reset */
+      stvec.mode <= DIRECT;
+      stvec.base <= '0;
+      
+      /* sscratch reset */
+      sscratch <= '0;
+      
+      /* sepc reset */
+      sepc <= '0;
+      
+      /* scause reset */
+      scause <= '0;
+      
+      /* stval reset */
+      stval <= '0;
+      
+      /* sip reset */
+      sip <= '0;
+      
+      /* scounteren reset */
+      scounteren <= '0;
     end else begin
       mstatus <= mstatus_next;
       mtvec <= mtvec_next;
+      medeleg <= medeleg_next;
+      mideleg <= mideleg_next;
       mie <= mie_next;
       mip <= mip_next;
       mscratch <= mscratch_next;
@@ -345,12 +364,14 @@ module priv_1_13_csr #(
             mstatus_next.mpie = nxt_csr_val[7];
             mstatus_next.spp = nxt_csr_val[8];
             mstatus_next.mprv = nxt_csr_val[17];
+            mstatus_next.sum = nxt_csr_val[18];
             mstatus_next.tw = nxt_csr_val[21];
             
             // Update sstatus
             sstatus_next.sie = mstatus_next.sie;
             sstatus_next.spie = mstatus_next.spie;
             sstatus_next.spp = mstatus_next.spp;
+            sstatus_next.sum = mstatus_next.sum;
           end
 
           MTVEC_ADDR: begin
@@ -360,6 +381,24 @@ module priv_1_13_csr #(
               mtvec_next.mode = vector_modes_t'(nxt_csr_val[1:0]);
             end
             mtvec_next.base = nxt_csr_val[31:2];
+          end
+
+          MEDELEG_ADDR: begin
+            medeleg_next[31:0] = nxt_csr_val;
+          end
+
+          MEDELEGH_ADDR: begin
+            medeleg_next[63:32] = '0; // Grounded for now. No use for it at the moment.
+          end
+
+          MIDELEG_ADDR: begin
+            mideleg_next[1] = nxt_csr_val[1];
+            mideleg_next[3] = nxt_csr_val[3];
+            mideleg_next[5] = nxt_csr_val[5];
+            mideleg_next[7] = nxt_csr_val[7];
+            mideleg_next[9] = nxt_csr_val[9];
+            mideleg_next[11] = nxt_csr_val[11];
+            mideleg_next[13] = nxt_csr_val[13];
           end
 
           MIE_ADDR: begin
@@ -428,11 +467,13 @@ module priv_1_13_csr #(
             sstatus_next.sie = nxt_csr_val[1];
             sstatus_next.spie = nxt_csr_val[5];
             sstatus_next.spp = nxt_csr_val[8];
+            sstatus_next.sum = nxt_csr_val[18];
             
             // Update mstatus
             mstatus_next.sie = sstatus_next.sie;
             mstatus_next.spie = sstatus_next.spie;
             mstatus_next.spp = sstatus_next.spp;
+            mstatus_next.sum = sstatus_next.sum;
           end
           SIE_ADDR: begin
             sie_next.ssie = nxt_csr_val[1];
@@ -501,15 +542,6 @@ module priv_1_13_csr #(
     if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
       sip_next = sip_t'(prv_intern_if.next_mip & SIE_MASK);
-    end
-    if (prv_intern_if.inject_scause) begin
-      scause_next = prv_intern_if.next_scause;
-    end
-    if (prv_intern_if.inject_stval) begin
-      stval_next = prv_intern_if.next_stval;
-    end
-    if (prv_intern_if.inject_sepc) begin
-      sepc_next = prv_intern_if.next_sepc;
     end
 
     mstatus_next.sd = &(mstatus_next.vs) | &(mstatus_next.fs) | &(mstatus_next.xs);
@@ -667,8 +699,6 @@ module priv_1_13_csr #(
   assign prv_intern_if.curr_mepc = mepc;
   assign prv_intern_if.curr_mstatus = mstatus; // reflects sstatus
   assign prv_intern_if.curr_mtvec = mtvec;
-  assign prv_intern_if.curr_scause = scause;
   assign prv_intern_if.curr_sepc = sepc;
-  assign prv_intern_if.curr_stvec = stvec;
 
 endmodule
