@@ -296,7 +296,8 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.csr_read_only  <= csr_read_only;
                     ex_mem_if.ex_mem_reg.breakpoint     <= cu_if.breakpoint;
                     ex_mem_if.ex_mem_reg.ecall_insn     <= cu_if.ecall_insn;
-                    ex_mem_if.ex_mem_reg.ret_insn       <= cu_if.ret_insn;
+                    ex_mem_if.ex_mem_reg.mret_insn      <= cu_if.mret_insn;
+                    ex_mem_if.ex_mem_reg.sret_insn      <= cu_if.sret_insn;
                     ex_mem_if.ex_mem_reg.wfi_insn       <= cu_if.wfi;
                     ex_mem_if.ex_mem_reg.was_compressed <= 1'b0; // TODO: RV32C support
                     ex_mem_if.ex_mem_reg.reserve        <= cu_if.reserve;

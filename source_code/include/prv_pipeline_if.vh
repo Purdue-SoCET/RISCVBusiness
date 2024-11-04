@@ -34,7 +34,7 @@ interface prv_pipeline_if();
 
   // exception signals
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-        breakpoint, env, ret, wfi;
+        breakpoint, env, mret, sret, wfi;
 
   // interrupt signals
   logic timer_int, soft_int, ext_int;
@@ -67,7 +67,7 @@ interface prv_pipeline_if();
 
   modport hazard (
     input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
-    output pipe_clear, ret, epc, fault_insn, mal_insn,
+    output pipe_clear, mret, sret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
             breakpoint, env, wfi, badaddr, wb_enable,
             ex_rmgmt, ex_rmgmt_cause, ex_mem_stall
@@ -84,7 +84,7 @@ interface prv_pipeline_if();
   );
 
   modport priv_block (
-    input pipe_clear, ret, epc, fault_insn, mal_insn,
+    input pipe_clear, mret, sret, epc, fault_insn, mal_insn,
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
           breakpoint, env, badaddr, swap, clr, set, read_only, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,

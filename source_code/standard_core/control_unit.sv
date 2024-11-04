@@ -220,15 +220,16 @@ module control_unit (
 
     //Decoding of System Priv Instructions
     always_comb begin
-        cu_if.ret_insn = 1'b0;
+        cu_if.mret_insn = 1'b0;
+        cu_if.sret_insn = 1'b0;
         cu_if.breakpoint = 1'b0;
         cu_if.ecall_insn = 1'b0;
         cu_if.wfi = 1'b0;
 
         if (cu_if.opcode == SYSTEM) begin
             if (rv32i_system_t'(instr_i.funct3) == PRIV) begin
-                if (priv_insn_t'(instr_i.imm11_00) == SRET) cu_if.ret_insn = 1'b1;
-                if (priv_insn_t'(instr_i.imm11_00) == MRET) cu_if.ret_insn = 1'b1;
+                if (priv_insn_t'(instr_i.imm11_00) == SRET) cu_if.sret_insn = 1'b1;
+                if (priv_insn_t'(instr_i.imm11_00) == MRET) cu_if.mret_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == EBREAK) cu_if.breakpoint = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == ECALL) cu_if.ecall_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == WFI) cu_if.wfi = 1'b1;

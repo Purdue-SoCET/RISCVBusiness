@@ -209,7 +209,8 @@ module stage3_mem_stage(
     assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & mal_addr;
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
-    assign hazard_if.ret = ex_mem_if.ex_mem_reg.ret_insn;
+    assign hazard_if.mret = ex_mem_if.ex_mem_reg.mret_insn;
+    assign hazard_if.sret = ex_mem_if.ex_mem_reg.sret_insn;
     assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
     assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.badaddr : dgen_bus_if.addr;
 
