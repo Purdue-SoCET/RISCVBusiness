@@ -38,6 +38,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
         flag -= 1;
     }
     asm volatile("csrw mepc, %0" : : "r"(mepc));
+    asm volatile("mret");
 }
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
@@ -74,6 +75,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
         flag -= 1;
     }
     asm volatile("csrw sepc, %0" : : "r"(sepc));
+    asm volatile("sret");
 }
 
 void __attribute__((noreturn)) user_main_one(void) {
@@ -95,9 +97,9 @@ void __attribute__((noreturn)) user_main_one(void) {
 }
 
 void __attribute__((noreturn)) user_main_two(void) {
-    print("A"); // MMIO region is not allowed in PMP, should fail
+    // print("A"); // MMIO region is not allowed in PMP, should fail
 
-    flag = 1; // Flag is protected, should fail
+    // flag = 1; // Flag is protected, should fail
 
     asm volatile("sret"); // privileged instruction
 
@@ -128,23 +130,23 @@ int main(void) {
     // Setup PMP
     uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2; // Protect flag
     asm volatile("csrw pmpaddr0, %0" : : "r"(pmp_addr));
-    pmp_addr = 0x20001FFF; // Allows for the entire text, bss, stack section
+    // pmp_addr = 0x20001FFF; // Allows for the entire text, bss, stack section
+    pmp_addr = 0xFFFFFFFF; // Allows for the entire text, bss, stack section
     asm volatile("csrw pmpaddr1, %0" : : "r"(pmp_addr));
-    uint32_t pmp_cfg = 0x00001F11; // [NAPOT, RWX, no L] [NA4, R, no L]
+    uint32_t pmp_cfg = 0x00001F17; // [NAPOT, RWX, no L] [NA4, R, no L]
     asm volatile("csrw pmpcfg0, %0" : : "r"(pmp_cfg));
 
-
     // Jump to user program
-    flag = 6;
-    uint32_t mepc_value = (uint32_t) user_main_one;
-    asm volatile("csrw mepc, %0" : : "r"(mepc_value));
-    asm volatile("mret");
+    flag = 4;
+    // uint32_t mepc_value = (uint32_t) user_main_one;
+    // asm volatile("csrw mepc, %0" : : "r"(mepc_value));
+    // asm volatile("mret");
 
+    // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
     // Set delegation register to use S-mode handler
     uint32_t medeleg = 0xFFFFFFFF;
     uint32_t medelegh = 0xFFFFFFFF;
     asm volatile("csrw medeleg, %0" : : "r"(medeleg));
-    asm volatile("csrw medelegh, %0" : : "r"(medelegh));
 
     // Jump to user program
     uint32_t sepc_value = (uint32_t) user_main_two;

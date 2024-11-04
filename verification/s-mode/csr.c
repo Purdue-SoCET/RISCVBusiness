@@ -139,7 +139,7 @@ int main(void) {
     uint32_t medeleg = 0xFFFFFFFF;
     uint32_t medelegh = 0xFFFFFFFF;
     asm volatile("csrw medeleg, %0" : : "r"(medeleg));
-    asm volatile("csrw medelegh, %0" : : "r"(medelegh));
+    // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
 
     // Jump to user program by using sret to return from a S-mode trap
     uint32_t sepc_value = (uint32_t) user_main;
