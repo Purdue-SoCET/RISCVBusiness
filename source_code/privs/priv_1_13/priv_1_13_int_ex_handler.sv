@@ -115,13 +115,10 @@ module priv_1_13_int_ex_handler (
 
     // if not m-mode intr and (deleg ex or deleg int and has right conditions to go to S-Mode)
     assign prv_intern_if.intr_to_s = !interrupt_fired & 
-                                        (
-                                            (|{prv_intern_if.curr_medeleg[30:0] & ex_src} & exception) |
-                                            ((|{prv_intern_if.curr_mideleg[30:0] & int_src & SIE_MASK}) &
-                                                interrupt_fired_s &
-                                                ((prv_intern_if.curr_privilege_level == S_MODE & prv_intern_if.curr_mstatus.sie) | (prv_intern_if.curr_privilege_level < S_MODE))
-                                            )
-                                        );
+                                        ((|{prv_intern_if.curr_medeleg[30:0] & ex_src} & exception) |
+                                            ((|{prv_intern_if.curr_mideleg[30:0] & int_src & SIE_MASK}) & interrupt_fired_s &
+                                                ((prv_intern_if.curr_privilege_level == S_MODE & prv_intern_if.curr_mstatus.sie) |
+                                                 (prv_intern_if.curr_privilege_level < S_MODE))));
 
     // Only output an interrupt if said interrupt is enabled
     assign interrupt_fired = (prv_intern_if.curr_mstatus.mie &
@@ -186,10 +183,13 @@ module priv_1_13_int_ex_handler (
         // interrupt has truly been registered and it is time to go to the vector table
         if (prv_intern_if.intr) begin
             // when a trap is taken mpie is set to the current mie
-            prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mie;
-            prv_intern_if.next_mstatus.mie  = 1'b0;
-            prv_intern_if.next_mstatus.spie = prv_intern_if.curr_mstatus.sie;
-            prv_intern_if.next_mstatus.sie  = 1'b0;
+            if (prv_intern_if.intr_to_s) begin
+                prv_intern_if.next_mstatus.spie = prv_intern_if.curr_mstatus.sie;
+                prv_intern_if.next_mstatus.sie  = 1'b0;
+            end else begin
+                prv_intern_if.next_mstatus.mpie = prv_intern_if.curr_mstatus.mie;
+                prv_intern_if.next_mstatus.mie  = 1'b0;
+            end
         end else if (prv_intern_if.mret) begin
             prv_intern_if.next_mstatus.mpie = 1'b0; // leaving the vector table
             prv_intern_if.next_mstatus.mie  = prv_intern_if.curr_mstatus.mpie;
@@ -200,8 +200,11 @@ module priv_1_13_int_ex_handler (
 
         // We need to change mstatus bits for mode changes
         if (prv_intern_if.intr) begin // If we are receiving an exception or interrupt
-            prv_intern_if.next_mstatus.mpp = prv_intern_if.curr_privilege_level;
-            prv_intern_if.next_mstatus.spp = prv_intern_if.curr_privilege_level != U_MODE;
+            if (prv_intern_if.intr_to_s) begin
+                prv_intern_if.next_mstatus.spp = prv_intern_if.curr_privilege_level != U_MODE;
+            end else begin
+                prv_intern_if.next_mstatus.mpp = prv_intern_if.curr_privilege_level;
+            end
         end else if (prv_intern_if.mret) begin // If we are going back from a trap
             prv_intern_if.next_mstatus.mpp = U_MODE; // We must set mpp to the least privileged mode possible
             if (prv_intern_if.curr_mstatus.mpp != M_MODE) begin
