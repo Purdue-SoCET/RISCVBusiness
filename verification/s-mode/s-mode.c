@@ -5,6 +5,7 @@ extern volatile int flag;
 extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
+    // Trivial M-mode call to demonstrate that we can
     uint32_t mepc, mtval;
     mcause_t mcause;
     asm volatile("csrr %0, mepc" : "=r"(mepc));
@@ -27,17 +28,14 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
 
     print("-----\n");
 
-    if (~mcause.interrupt && mcause.ex_code == 8){
-        uint32_t mstatus = 0x1800; // set mpp back to M_MODE
-        asm volatile("csrs mstatus, %0" : : "r"(mstatus));
-        mepc = (uint32_t) &done;
-    }
-    else
-    {
-        mepc += 4;
-        flag -= 1;
-    }
-    asm volatile("csrw mepc, %0" : : "r"(mepc));
+    // Set up S-mode to go to done
+    uint32_t mstatus = 0x1800; // set mpp back to M_MODE
+    asm volatile("csrs sstatus, %0" : : "r"(mstatus));
+    uint32_t sepc = (uint32_t) &done;
+    asm volatile("csrw sepc, %0" : : "r"(sepc));
+
+    flag -= 1;
+    asm volatile("csrw mepc, %0" : : "r"(mepc+4));
     asm volatile("mret");
 }
 
@@ -64,47 +62,30 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
 
     print("-----\n");
 
+    // Call M-mode handler to demonstrate delegation
+    
     if (~scause.interrupt && scause.ex_code == 8){
-        uint32_t sstatus = 0x0100; // set spp back to S_MODE
-        asm volatile("csrs sstatus, %0" : : "r"(sstatus));
-        sepc = (uint32_t) &done;
+        asm volatile("ecall"); // use this to finish up
     }
     else
     {
         sepc += 4;
         flag -= 1;
+        asm volatile("csrw sepc, %0" : : "r"(sepc));
     }
-    asm volatile("csrw sepc, %0" : : "r"(sepc));
+
     asm volatile("sret");
 }
 
-void __attribute__((noreturn)) user_main_one(void) {
+void __attribute__((noreturn)) user_main(void) {
     print("A"); // MMIO region is not allowed in PMP, should fail
 
     flag = 0; // Flag is protected, should fail
 
-    asm volatile("mret"); // privileged instruction
-
-    uint32_t temp;
-    asm volatile("csrr %0, mstatus" : "=r"(temp)); // Machine mode CSR
-
-    asm volatile("wfi"); // No timeout wait enabled
-
-    asm volatile("ecall"); // ends user_main
-
-    __builtin_unreachable();
-
-}
-
-void __attribute__((noreturn)) user_main_two(void) {
-    // print("A"); // MMIO region is not allowed in PMP, should fail
-
-    // flag = 1; // Flag is protected, should fail
-
     asm volatile("sret"); // privileged instruction
 
     uint32_t temp;
-    asm volatile("csrr %0, sstatus" : "=r"(temp)); // Machine mode CSR
+    asm volatile("csrr %0, mstatus" : "=r"(temp)); // Machine mode CSR
 
     asm volatile("wfi"); // No timeout wait enabled
 
@@ -138,18 +119,15 @@ int main(void) {
 
     // Jump to user program
     flag = 4;
-    // uint32_t mepc_value = (uint32_t) user_main_one;
-    // asm volatile("csrw mepc, %0" : : "r"(mepc_value));
-    // asm volatile("mret");
 
-    // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
     // Set delegation register to use S-mode handler
+    // uint32_t medelegh = 0xFFFFFFFF;
+    // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
     uint32_t medeleg = 0xFFFFFFFF;
-    uint32_t medelegh = 0xFFFFFFFF;
     asm volatile("csrw medeleg, %0" : : "r"(medeleg));
 
     // Jump to user program
-    uint32_t sepc_value = (uint32_t) user_main_two;
+    uint32_t sepc_value = (uint32_t) user_main;
     asm volatile("csrw sepc, %0" : : "r"(sepc_value));
     asm volatile("sret");
 
