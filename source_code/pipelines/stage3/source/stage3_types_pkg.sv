@@ -58,8 +58,6 @@ package stage3_types_pkg;
         logic fault_insn;
         logic illegal_insn;
         load_t load_type;
-        satp_t satp;
-        priv_level_t curr_privilege_level;
         csr_addr_t csr_addr;
         word_t brj_addr;
         word_t port_out;

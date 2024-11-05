@@ -88,10 +88,6 @@ interface prv_pipeline_if();
     output iren, iaddr, i_acc_width
   );
 
-  modport execute (
-    input satp, curr_privilege_level
-  );
-
   modport priv_block (
     input pipe_clear, mret, sret, epc, fault_insn, mal_insn,
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
