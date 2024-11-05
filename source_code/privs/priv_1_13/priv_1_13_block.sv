@@ -96,11 +96,11 @@ module priv_1_13_block #(
     assign prv_intern_if.mal_s             = prv_pipe_if.mal_s;
     assign prv_intern_if.breakpoint        = prv_pipe_if.breakpoint;
     assign prv_intern_if.env_m             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == M_MODE);
-    assign prv_intern_if.env_s             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == S_MODE); // find references
+    assign prv_intern_if.env_s             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == S_MODE);
     assign prv_intern_if.env_u             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == U_MODE);
-    assign prv_intern_if.fault_insn_page   = 1'b0;
-    assign prv_intern_if.fault_load_page   = 1'b0;
-    assign prv_intern_if.fault_store_page  = 1'b0;
+    assign prv_intern_if.fault_insn_page   = prv_pipe_if.fault_insn_page;
+    assign prv_intern_if.fault_load_page   = prv_pipe_if.fault_load_page;
+    assign prv_intern_if.fault_store_page  = prv_pipe_if.fault_store_page;
     assign prv_intern_if.curr_mtval        = prv_pipe_if.badaddr;
     assign prv_intern_if.curr_stval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
@@ -113,9 +113,11 @@ module priv_1_13_block #(
     assign prv_intern_if.ex_rmgmt_cause = prv_pipe_if.ex_rmgmt_cause;
 
     // from priv unit to pipeline
-    assign prv_pipe_if.priv_pc     = prv_intern_if.priv_pc;
-    assign prv_pipe_if.insert_pc   = prv_intern_if.insert_pc;
-    assign prv_pipe_if.intr        = prv_intern_if.intr;
+    assign prv_pipe_if.priv_pc   = prv_intern_if.priv_pc;
+    assign prv_pipe_if.insert_pc = prv_intern_if.insert_pc;
+    assign prv_pipe_if.intr      = prv_intern_if.intr;
+    assign prv_pipe_if.satp      = prv_intern_if.curr_satp;
+    assign prv_pipe_if.curr_privilege_level = prv_intern_if.curr_privilege_level;
 
     // Memory protection signals
     assign prv_intern_if.daddr = prv_pipe_if.daddr;

@@ -29,7 +29,7 @@
 `include "component_selection_defines.vh"
 `include "rv32i_reg_file_if.vh"
 `include "alu_if.vh"
-//`include "prv_pipeline_if.vh"
+`include "prv_pipeline_if.vh"
 //`include "risc_mgmt_if.vh"
 `include "rv32c_if.vh"
 
@@ -42,7 +42,8 @@ module stage3_execute_stage (
     stage3_forwarding_unit_if.execute fw_if,
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
-    rv32c_if.execute rv32cif
+    rv32c_if.execute rv32cif,
+    prv_pipeline_if.execute prv_pipe_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_13_pkg::*;
@@ -307,6 +308,8 @@ module stage3_execute_stage (
                 ex_mem_if.ex_mem_reg.badaddr                   <= fetch_ex_if.fetch_ex_reg.badaddr;
                 ex_mem_if.ex_mem_reg.mal_insn                  <= fetch_ex_if.fetch_ex_reg.mal_insn;
                 ex_mem_if.ex_mem_reg.fault_insn                <= fetch_ex_if.fetch_ex_reg.fault_insn;
+                ex_mem_if.ex_mem_reg.satp                      <= prv_pipe_if.satp;
+                ex_mem_if.ex_mem_reg.curr_privilege_level      <= prv_pipe_if.curr_privilege_level;
 
                 // Bit vectors
                 ex_mem_if.ex_mem_reg.w_sel      <= cu_if.w_sel;

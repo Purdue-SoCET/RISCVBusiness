@@ -722,4 +722,5 @@ module priv_1_13_csr #(
   assign prv_intern_if.curr_scause = scause;
   assign prv_intern_if.curr_sepc = sepc;
   assign prv_intern_if.curr_stvec = stvec;
+  assign prv_intern_if.curr_satp = satp;
 endmodule

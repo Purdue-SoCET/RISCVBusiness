@@ -34,7 +34,7 @@ interface prv_pipeline_if();
 
   // exception signals
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-        breakpoint, env, mret, sret, wfi;
+        breakpoint, env, fault_insn_page, fault_load_page, fault_store_page, mret, sret, wfi;
 
   // interrupt signals
   logic timer_int, soft_int, ext_int;
@@ -49,6 +49,11 @@ interface prv_pipeline_if();
   logic       invalid_priv_isn, valid_write;
   csr_addr_t  csr_addr;
   word_t      rdata, wdata;
+
+  // tlb signals
+  // go directly to iTLB, go to ex stage into pipeline for dTLB
+  satp_t satp;
+  priv_level_t curr_privilege_level;
 
   // performance signals
   logic wb_enable, instr;
@@ -69,8 +74,8 @@ interface prv_pipeline_if();
     input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
     output pipe_clear, mret, sret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
-            breakpoint, env, wfi, badaddr, wb_enable,
-            ex_rmgmt, ex_rmgmt_cause, ex_mem_stall
+            breakpoint, env, fault_insn_page, fault_load_page, fault_store_page,
+            wfi, badaddr, wb_enable, ex_rmgmt, ex_rmgmt_cause, ex_mem_stall
   );
 
   modport pipe (
@@ -83,17 +88,23 @@ interface prv_pipeline_if();
     output iren, iaddr, i_acc_width
   );
 
+  modport execute (
+    input satp, curr_privilege_level
+  );
+
   modport priv_block (
     input pipe_clear, mret, sret, epc, fault_insn, mal_insn,
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
-          breakpoint, env, badaddr, swap, clr, set, read_only, wfi,
+          breakpoint, env, fault_insn_page, fault_load_page, fault_store_page,
+          badaddr, swap, clr, set, read_only, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,
           icache_miss, dcache_miss,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,
           d_acc_width, i_acc_width, ex_mem_stall,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
-            prot_fault_s, prot_fault_l, prot_fault_i
+            prot_fault_s, prot_fault_l, prot_fault_i,
+            satp, curr_privilege_level
   );
 
 endinterface

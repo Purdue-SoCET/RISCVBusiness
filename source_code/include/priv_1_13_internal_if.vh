@@ -75,6 +75,7 @@ interface priv_1_13_internal_if;
     csr_reg_t curr_sepc, next_sepc;
     stvec_t curr_stvec;
     csr_reg_t curr_stval, next_stval;
+    satp_t curr_satp;
     logic inject_mip, inject_mcause, inject_mepc, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval;
 
     // Things from the pipe we care about
@@ -102,7 +103,7 @@ interface priv_1_13_internal_if;
             inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval,
         output old_csr_val, invalid_csr,
-            curr_medeleg, curr_mideleg, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtvec, curr_scause, curr_sepc, curr_stvec
+            curr_medeleg, curr_mideleg, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtvec, curr_scause, curr_sepc, curr_stvec, curr_satp
     );
 
     modport int_ex_handler (
