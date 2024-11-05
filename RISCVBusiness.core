@@ -45,7 +45,7 @@ filesets:
             - "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
             - "!tool_verilator? (source_code/bus_bridges/apb.sv)"
             #- source_code/bus_bridges/apb.sv
-            #- source_code/bus_bridges/ahb.sv
+            - source_code/bus_bridges/ahb.sv
         file_type: systemVerilogSource
 
     fpga_wrapper:
@@ -57,7 +57,7 @@ filesets:
             
     verilator_tb:
         files:
-            - tb_core.cc : {fileType: cppSource} 
+            - tb_core.cc : {file_type: cppSource} 
         file_type: systemVerilogSource
 
     no_memory_tb:
