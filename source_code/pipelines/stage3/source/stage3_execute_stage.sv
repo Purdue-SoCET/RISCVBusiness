@@ -130,7 +130,7 @@ module stage3_execute_stage (
     rv32b_wrapper RV32B_FU(
         .rv32b_a(alu_if.port_a),
         .rv32b_b(alu_if.port_b),
-        .operation(cu_if.rv32b_control),
+        .operation(cu_if.rv32b_control.op),
         .rv32b_done(rv32b_done),
         .rv32b_out(rv32b_out)
     );

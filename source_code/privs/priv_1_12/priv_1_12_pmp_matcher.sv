@@ -46,7 +46,7 @@ module priv_1_12_pmp_matcher(
   // NAPOT configurable granularity matching -> area optimzied, yields lower area with lower granularity
   genvar i;
   generate
-    for (i = 0; i < (NAPOT_MATCHES - 2); i++) begin
+    for (i = 0; i < (NAPOT_MATCHES - 2); i++) begin : g_napot_match
       assign match_criteria[i] = {~(32'b1 << (i + NAPOT_ADDR_GRAN))};
       assign napot_match[i] = cfg_addr[(i + NAPOT_ADDR_GRAN):0] == match_criteria[i][(i + NAPOT_ADDR_GRAN):0] ?
                              phys_addr[31:(i + NAPOT_ADDR_BITS)] == cfg_addr[31:(i + NAPOT_ADDR_BITS)] : 0;
