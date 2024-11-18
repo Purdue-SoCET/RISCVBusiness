@@ -26,6 +26,7 @@
 `include "component_selection_defines.vh"
 
 import pmp_types_1_12_pkg::*;
+import rv32i_types_pkg::*;
 
 module priv_1_12_pmp_matcher(
   input logic[31:0] phys_addr,     // address to check
