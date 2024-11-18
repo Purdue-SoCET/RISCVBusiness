@@ -50,6 +50,12 @@ module pp_mul32 (
     logic done;
     logic count_ena;
     integer i, j;
+    //Small FSM to control flex counter
+    typedef enum logic {
+        IDLE,
+        START
+    } state_t;
+    state_t state, next_state;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (nRST == 0) begin
@@ -297,12 +303,6 @@ module pp_mul32 (
         end
     end
 
-    //Small FSM to control flex counter
-    typedef enum logic {
-        IDLE,
-        START
-    } state_t;
-    state_t state, next_state;
     always_ff @(posedge CLK, negedge nRST) begin
         if (nRST == 0) state <= IDLE;
         else state <= next_state;
