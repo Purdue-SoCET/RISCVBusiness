@@ -18,7 +18,7 @@
 *
 *   Created by:   William Milne
 *   Email:        milnew@purdue.edu
-*   Date Created: 
+*   Date Created: 10/13/2024
 *   Description: Translation Lookaside Buffer (TLB)
 */
 
@@ -33,14 +33,15 @@ module tlb #(
     parameter VIRTUAL_ADDR_WIDTH  = 32, // equal to SXLEN
     parameter PHYSICAL_ADDR_WIDTH = 34, // equal to MXLEN
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
-    parameter TLB_SIZE            = 64  // Number of entries in the TLB
-    parameter ASSOC               = 1,  // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
-) (
+    parameter TLB_SIZE            = 64,  // Number of entries in the TLB
+    parameter ASSOC               = 1  // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
+)
+(
     input logic CLK, nRST,
     input logic clear, flush,
     output logic clear_done, flush_done,
-    generic_bus_if.cpu pw_gen_bus_if,
-    generic_bus_if.generic_bus proc_gen_bus_if,
+    generic_bus_if.cpu mem_gen_bus_if,          // to page walker
+    generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
     prv_pipe_if.caches prv_pipe_if
 );
 
@@ -61,7 +62,7 @@ module tlb #(
     localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
     localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = VPN_LENGTH - N_SET_BITS;
-    localparam TOTAL_TAG_SIZE     = (N_TAG_BITS + ASID_LENGTH + 1) // +1 for valid
+    localparam TOTAL_TAG_SIZE     = (N_TAG_BITS + ASID_LENGTH + 1); // +1 for valid
     localparam FRAME_SIZE         = WORD_SIZE + TOTAL_TAG_SIZE; // in bits
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
 
@@ -130,6 +131,9 @@ module tlb #(
     // states
     cache_fsm_t state, next_state;
 
+    // page translation enabled
+    logic sv32;
+
     // lru
     logic [N_FRAME_BITS-1:0] ridx;
     logic [N_SETS-1:0] last_used;
@@ -137,6 +141,7 @@ module tlb #(
 
     // address
     word_t read_addr, next_read_addr;
+    decoded_tlb_addr_t decoded_req_addr, next_decoded_req_addr;
     decoded_tlb_addr_t decoded_addr;
 
     // Cache Hit
@@ -163,6 +168,9 @@ module tlb #(
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     
+    // enable page translation
+    assign sv32 = prv_pipe_if.satp.mode;
+
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
         if(~nRST) begin
@@ -170,6 +178,7 @@ module tlb #(
             flush_idx <= 0;
             last_used <= 0;
             read_addr <= 0;
+            decoded_req_addr <= 0;
             flush_req <= 0;
         end
         else begin
@@ -229,14 +238,165 @@ module tlb #(
                    sramRead.frames[i].tag.asid    == prv_pipe_if.satp.asid     &&
                    sramRead.frames[i].tag.valid) begin
                     //Read or write hit
-                    if((state == HIT && (proc_gen_bus_if.ren || (proc_gen_bus_if.wen && coherence_hit))) || state == SNOOP) begin
+                    if((state == HIT && (proc_gen_bus_if.ren || proc_gen_bus_if.wen))) begin
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].data;
                 	    hit_idx   = i;
+
+                        // Add permissions checking here
                     end
                 end
             end
         end
+    end
+
+    // TLB output logic
+    // Outputs: counter control signals, cache, signals to page walker, signals to processor
+    always_comb begin
+        sramWEN                 = 0;
+        sramWrite               = 0;
+        sramMask                = '1;
+        proc_gen_bus_if.busy    = 1;
+        proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
+        mem_gen_bus_if.ren      = 0;
+        mem_gen_bus_if.wen      = 0;
+        mem_gen_bus_if.addr     = 0; 
+        mem_gen_bus_if.wdata    = 0; 
+        mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
+        enable_flush_count      = 0;
+        enable_flush_count_nowb = 0;
+        clear_flush_count       = 0;
+        flush_done 	            = 0;
+        idle_done               = 0;
+        clear_done 	            = 0;
+        next_read_addr          = proc_gen_bus_if.addr;
+        next_decoded_req_addr   = decoded_req_addr;
+        next_last_used          = last_used;
+
+        // associativity, using NRU
+        if (ASSOC == 1 || (last_used[decoded_addr.vpn.idx_bits] == (ASSOC - 1)))
+            ridx = 0;
+        else
+            ridx = last_used[decoded_addr.vpn.idx_bits] + 1;
+
+        casez(state)
+            IDLE: begin
+                // clear out tlbs with flush
+                sramWEN = 1;
+    	        sramWrite.frames[flush_idx.frame_num] = '0;
+                sramMask.frames[flush_idx.frame_num] = '0;
+                enable_flush_count_nowb = 1;
+                // flag the completion of flush
+                if (flush_idx.finish) begin
+                    clear_flush_count  = 1;
+                    idle_done 	       = 1;
+                    flush_done = 1; //HACK: Remove if this causes bugs, used for testbench
+                end
+            end
+            HIT: begin
+                // tlb hit on a processor read/write
+                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !flush) begin
+                    proc_gen_bus_if.busy = 0;
+                    proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
+                    next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                end
+                // tlb miss on a clean block
+		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+                    next_decoded_req_addr = decoded_addr;
+			    end
+                // cache miss on a dirty block
+			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+                    next_decoded_req_addr = decoded_addr;
+                    next_read_addr        =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                end
+            end
+            FETCH: begin
+                // set tlb to be invalid before cache completes fetch
+                mem_gen_bus_if.wen = proc_gen_bus_if.wen;
+                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !ccif.abort_bus;
+                mem_gen_bus_if.addr = read_addr;
+                sramWrite.frames[ridx].tag.valid = 0;
+                sramMask.frames[ridx].tag.valid = 0;
+                // fill data
+                if(~mem_gen_bus_if.busy) begin
+                    sramWEN                            = 1'b1;
+                    sramWrite.frames[ridx].data        = mem_gen_bus_if.rdata;
+                    sramWrite.frames[ridx].tag.valid   = 1'b1;
+                    sramWrite.frames[ridx].tag.asid    = prv_pipe_if.satp.asid;
+                    sramWrite.frames[ridx].tag.vpn_tag = decoded_req_addr.vpn.tag_bits;
+                    sramMask.frames[ridx].data         = 1'b0;
+                    sramMask.frames[ridx].tag.valid    = 1'b0;
+                    sramMask.frames[ridx].tag.asid     = '0;
+                    sramMask.frames[ridx].tag.vpn_tag  = '0;
+                end
+            end
+            FLUSH_TLB: begin
+                // flush to memory if valid & dirty
+                if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].pte.perms.dirty) begin
+                    mem_gen_bus_if.wen    = 1'b1;
+                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].vpn.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
+                    mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].pte;
+                    // increment to next word when flush of word is done
+                    if (~mem_gen_bus_if.busy) begin
+                        enable_flush_count = 1;
+                        // clears entry when flushed
+                        sramWEN = 1;
+                        sramWrite.frames[flush_idx.frame_num] = 0;
+                        sramMask.frames[flush_idx.frame_num] = 0;
+                    end
+                end
+                // else clears entry, moves to next frame
+                else begin
+                    sramWEN = 1;
+	    	        sramWrite.frames[flush_idx.frame_num] = 0;
+                    sramMask.frames[flush_idx.frame_num] = 0;
+                    enable_flush_count_nowb = 1;
+                end
+                // flag the completion of flush
+                if (flush_idx.finish) begin
+                    clear_flush_count  = 1;
+                    flush_done 	       = 1;
+                end
+            end
+        endcase
+    end
+
+    // Next State Logic
+    always_comb begin
+        next_state = state;
+        casez(state)
+            IDLE: begin
+                if (idle_done) // Used for flushing cache
+                    next_state = HIT;
+            end
+            HIT: begin
+                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) // not sure what to do with pass through yet.
+                    next_state = FETCH;
+                if (flush)
+                    next_state = FLUSH_TLB;
+            end
+            FETCH: begin
+                if (!pw_gen_bus_if.busy || pw_gen_bus_if.error)
+                    next_state = HIT;
+            end
+            FLUSH_TLB: begin
+                if (flush_done)
+                    next_state = HIT;
+            end
+        endcase
+
+        // do nothing if not in sv32
+        if (~sv32)
+            next_state = IDLE;
+    end
+
+    // flush saver
+    always_comb begin
+        nflush_req = flush_req;
+        if (flush)
+            nflush_req = 1;
+        if (flush_done)
+            nflush_req = 0;
     end
 
 endmodule
