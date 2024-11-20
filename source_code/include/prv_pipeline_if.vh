@@ -53,7 +53,7 @@ interface prv_pipeline_if();
   // tlb signals
   // go directly to iTLB, go to ex stage into pipeline for dTLB
   satp_t satp;
-  sstatus_t sstatus;
+  mstatus_t mstatus;
   priv_level_t curr_privilege_level;
 
   // performance signals
@@ -90,7 +90,7 @@ interface prv_pipeline_if();
   );
 
   modport caches (
-    input satp, sstatus, curr_privilege_level,
+    input satp, mstatus, curr_privilege_level,
     output fault_insn_page, fault_load_page, fault_store_page
   );
 
@@ -106,7 +106,7 @@ interface prv_pipeline_if();
           d_acc_width, i_acc_width, ex_mem_stall,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
             prot_fault_s, prot_fault_l, prot_fault_i,
-            satp, sstatus, curr_privilege_level
+            satp, mstatus, curr_privilege_level
   );
 
 endinterface
