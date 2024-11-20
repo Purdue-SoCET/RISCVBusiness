@@ -117,6 +117,7 @@ module priv_1_13_block #(
     assign prv_pipe_if.insert_pc = prv_intern_if.insert_pc;
     assign prv_pipe_if.intr      = prv_intern_if.intr;
     assign prv_pipe_if.satp      = prv_intern_if.curr_satp;
+    assign prv_pipe_if.sstatus   = sstatus_t'(prv_intern_if.curr_mstatus & SSTATUS_MASK);
     assign prv_pipe_if.curr_privilege_level = prv_intern_if.curr_privilege_level;
 
     // Memory protection signals
