@@ -89,7 +89,7 @@ interface prv_pipeline_if();
     output iren, iaddr, i_acc_width
   );
 
-  modport caches (
+  modport cache (
     input satp, mstatus, curr_privilege_level,
     output fault_insn_page, fault_load_page, fault_store_page
   );

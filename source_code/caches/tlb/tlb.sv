@@ -16,8 +16,8 @@
 *
 *   Filename:    tlb.sv
 *
-*   Created by:   William Milne
-*   Email:        milnew@purdue.edu
+*   Created by:   William Cunningham
+*   Email:        wrcunnin@purdue.edu
 *   Date Created: 10/13/2024
 *   Description: Translation Lookaside Buffer (TLB)
 */
@@ -42,7 +42,7 @@ module tlb #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
     generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
-    prv_pipe_if.caches prv_pipe_if
+    prv_pipe_if.cache prv_pipe_if
 );
 
     import rv32i_types_pkg::*;
@@ -129,10 +129,10 @@ module tlb #(
     logic clear_flush_count, enable_flush_count, enable_flush_count_nowb;
 
     // states
-    cache_fsm_t state, next_state;
+    tlb_fsm_t state, next_state;
 
     // page translation enabled
-    logic sv32;
+    logic sv32, addr_trans_on;
 
     // lru
     logic [N_FRAME_BITS-1:0] ridx;
@@ -169,7 +169,8 @@ module tlb #(
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     
     // enable page translation
-    assign sv32 = prv_pipe_if.satp.mode;
+    assign sv32 = prv_pipe_if.satp.mode == 1;
+    assign addr_trans_on = sv32 && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -385,8 +386,8 @@ module tlb #(
             end
         endcase
 
-        // do nothing if not in sv32
-        if (~sv32)
+        // do nothing if not in address translation is not on
+        if (~addr_trans_on)
             next_state = IDLE;
     end
 

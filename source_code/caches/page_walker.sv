@@ -34,7 +34,7 @@ module page_walker #(
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus itlb_gen_bus_if,
     generic_bus_if.generic_bus dtlb_gen_bus_if,
-    prv_pipe_if.caches prv_pipe_if
+    prv_pipe_if.cache prv_pipe_if
 );
 
     import rv32i_types_pkg::*;
