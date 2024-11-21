@@ -5,6 +5,7 @@ description: include files
 filesets:
     rtl:
         files:
+            - address_translation_if.vh : {is_include_file: true}
             - bus_ctrl_if.vh : {is_include_file: true}
             - cache_control_if.vh : {is_include_file: true}
             - cache_coherence_if.vh : {is_include_file: true}

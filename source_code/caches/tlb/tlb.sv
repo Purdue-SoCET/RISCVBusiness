@@ -24,6 +24,7 @@
 
 `include "generic_bus_if.vh"
 `include "prv_pipeline_if.vh"
+`include "address_translation_if.vh"
 
 `ifdef XCELIUM
 `timescale 1ns/100ps
@@ -42,7 +43,8 @@ module tlb #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
     generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
-    prv_pipe_if.cache prv_pipe_if
+    prv_pipe_if.cache prv_pipe_if,
+    address_translation_if.cache at_if
 );
 
     import rv32i_types_pkg::*;
@@ -131,9 +133,6 @@ module tlb #(
     // states
     tlb_fsm_t state, next_state;
 
-    // page translation enabled
-    logic sv32, addr_trans_on;
-
     // lru
     logic [N_FRAME_BITS-1:0] ridx;
     logic [N_SETS-1:0] last_used;
@@ -167,10 +166,6 @@ module tlb #(
                    : decoded_addr.vpn.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
-    
-    // enable page translation
-    assign sv32 = prv_pipe_if.satp.mode == 1;
-    assign addr_trans_on = sv32 && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -387,7 +382,7 @@ module tlb #(
         endcase
 
         // do nothing if not in address translation is not on
-        if (~addr_trans_on)
+        if (~at_if.addr_trans_on)
             next_state = IDLE;
     end
 

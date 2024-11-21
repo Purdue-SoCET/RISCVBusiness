@@ -24,6 +24,10 @@
 *                Logic for RV64 paging not fully implemented, needs support.
 */
 
+`include "generic_bus_if.vh"
+`include "prv_pipeline_if.vh"
+`include "address_translation_if.vh"
+
 module page_walker #(
     parameter int PHYSICAL_ADDR_WIDTH = 32, // Can be 34 for Sv32, 56 for Sv39-57
     parameter int PGSIZE_BITS = 12 // Assuming a 4 KiB page size
@@ -34,7 +38,8 @@ module page_walker #(
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus itlb_gen_bus_if,
     generic_bus_if.generic_bus dtlb_gen_bus_if,
-    prv_pipe_if.cache prv_pipe_if
+    prv_pipe_if.cache prv_pipe_if,
+    address_translation_if.walker at_if
 );
 
     import rv32i_types_pkg::*;
@@ -80,10 +85,6 @@ module page_walker #(
         NONE, LOAD, STORE, INSTRUCTION
     } access_t;
 
-    // valid address translation checking
-    logic sv32, sv39, sv48, sv57, sv64; // need to add logic for sv39-64 if RV64 is implemented
-    logic addr_trans_on;
-
     // address signals
     logic [(PHYSICAL_ADDR_WIDTH-1):0] page_address, next_page_address;
     
@@ -103,12 +104,12 @@ module page_walker #(
     access_t access, next_access;
 
     // rtl (need to add logic for sv39-64 if RV64 is implemented)
-    assign sv32 = prv_pipe_if.satp.mode == 1;
-    assign sv39 = 0; // prv_pipe_if.satp.mode == 8
-    assign sv48 = 0; // prv_pipe_if.satp.mode == 9
-    assign sv57 = 0; // prv_pipe_if.satp.mode == 10
-    assign sv64 = 0; // prv_pipe_if.satp.mode == 11
-    assign addr_trans_on = (sv32 | sv39 | sv48 | sv57 | sv64) && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
+    assign at_if.sv32 = prv_pipe_if.satp.mode == 1;
+    assign at_if.sv39 = 0; // prv_pipe_if.satp.mode == 8
+    assign at_if.sv48 = 0; // prv_pipe_if.satp.mode == 9
+    assign at_if.sv57 = 0; // prv_pipe_if.satp.mode == 10
+    assign at_if.sv64 = 0; // prv_pipe_if.satp.mode == 11
+    assign at_if.addr_trans_on = (at_if.sv32 | at_if.sv39 | at_if.sv48 | at_if.sv57 | at_if.sv64) && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
 
     assign decoded_daddr_sv32 = va_sv32_t'(dtlb_gen_bus_if.addr);
     assign decoded_iaddr_sv32 = va_sv32_t'(itlb_gen_bus_if.addr);
@@ -138,7 +139,7 @@ module page_walker #(
 
         casez(state)
             IDLE, RETURN_PA: begin
-                casez({sv64, sv57, sv48, sv39, sv32})
+                casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                     5'b????1 :  next_level = SV32_LEVELS - 1;
                     5'b???10 :  next_level = SV39_LEVELS - 1;
                     5'b??100 :  next_level = SV48_LEVELS - 1;
@@ -205,7 +206,7 @@ module page_walker #(
                     // superpage checking
                     // need to add RV64 superpage checking for RV64 implementation
                     if (level != 0) begin
-                        if (sv32 & |pte_sv32.ppn[9:0]) begin
+                        if (at_if.sv32 & |pte_sv32.ppn[9:0]) begin
                             prv_pipe_if.fault_load_page  = access == LOAD;
                             prv_pipe_if.fault_store_page = access == STORE;
                             prv_pipe_if.fault_insn_page  = access == INSTRUCTION;
@@ -233,9 +234,9 @@ module page_walker #(
         casez(state)
             IDLE: begin
                 // if dtlb miss, service that first
-                if (addr_trans_on) begin
+                if (at_if.addr_trans_on) begin
                     if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
-                        casez({sv64, sv57, sv48, sv39, sv32})
+                        casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                             5'b????1: next_page_address = {prv_pipe_if.satp.ppn, decoded_addr_sv32.vpn[level], 2'b00};
                             5'b???10: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[level], 3'b00};
                             5'b??100: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv48.vpn[level], 3'b00};
@@ -261,7 +262,7 @@ module page_walker #(
                     if (leaf_pte) begin
                         dtlb_gen_bus_if.busy = ~(access == LOAD || access == STORE);
                         itlb_gen_bus_if.busy = ~(access == INSTRUCTION);
-                        casez({sv64, sv57, sv48, sv39, sv32})
+                        casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                             5'b????1: begin
                                 dtlb_gen_bus_if.rdata = level == 0 ? word_t'(pte_sv32) : word_t'(pte_sv32 | {12'b0, page_address[21:12], 10'b0});
                                 itlb_gen_bus_if.rdata = level == 0 ? word_t'(pte_sv32) : word_t'(pte_sv32 | {12'b0, page_address[21:12], 10'b0});
@@ -288,7 +289,7 @@ module page_walker #(
                             end
                         endcase
                     end else begin
-                        casez({sv64, sv57, sv48, sv39, sv32})
+                        casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                             5'b????1: next_page_address = {pte_sv32.ppn, decoded_addr_sv32.vpn[level-1], 2'b00};
                             5'b???10: next_page_address = '0; // {pte_sv39.ppn, decoded_addr_sv39.vpn[level-1], 3'b00};
                             5'b??100: next_page_address = '0; // {pte_sv48.ppn, decoded_addr_sv48.vpn[level-1], 3'b00};
