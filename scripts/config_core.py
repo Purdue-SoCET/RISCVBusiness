@@ -81,8 +81,8 @@ UARCH_PARAMS = \
     'br_predictor_type' : ['not_taken'],
     # Cache Configurations
     'cache_config' : ['separate'],
-    'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
-    'icache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
+    'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1', 'l1_tlb'],
+    'icache_type' : ['pass_through', 'direct_mapped_tpf', 'l1', 'l1_tlb'],
     # Cache Configurations (free_params)
     'noncache_start_addr' : [],
     # Cache Configurations (int_params)

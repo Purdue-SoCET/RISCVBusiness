@@ -234,7 +234,7 @@ module tlb #(
                     //Read or write hit
                     if((state == HIT && (proc_gen_bus_if.ren || proc_gen_bus_if.wen))) begin
 	                    hit       = 1'b1;
-        	            hit_data  = sramRead.frames[i].data;
+        	            hit_data  = sramRead.frames[i].pte;
                 	    hit_idx   = i;
 
                         // Add permissions checking here
@@ -292,20 +292,21 @@ module tlb #(
                 // tlb hit on a processor read/write
                 if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !flush) begin
                     proc_gen_bus_if.busy = 0;
-                    proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
-                    next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                    proc_gen_bus_if.rdata = hit_data;
+                    next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                 end
                 // tlb miss on a clean block
-		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+		        // else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) begin
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end
-                // cache miss on a dirty block
-			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
-                    tlb_miss = 1;
-                    next_decoded_req_addr = decoded_addr;
-                    next_read_addr        =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-                end
+                // tlb miss on a dirty block
+			    // else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+                //     tlb_miss = 1;
+                //     next_decoded_req_addr = decoded_addr;
+                //     next_read_addr        = {sramRead.frames[ridx].tag, decoded_addr.vpn.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                // end
             end
             FETCH: begin
                 // set tlb to be invalid before cache completes fetch
@@ -318,11 +319,11 @@ module tlb #(
                 // fill data
                 if(~mem_gen_bus_if.busy) begin
                     sramWEN                            = 1'b1;
-                    sramWrite.frames[ridx].data        = mem_gen_bus_if.rdata;
+                    sramWrite.frames[ridx].pte         = mem_gen_bus_if.rdata;
                     sramWrite.frames[ridx].tag.valid   = 1'b1;
                     sramWrite.frames[ridx].tag.asid    = prv_pipe_if.satp.asid;
                     sramWrite.frames[ridx].tag.vpn_tag = decoded_req_addr.vpn.tag_bits;
-                    sramMask.frames[ridx].data         = 1'b0;
+                    sramMask.frames[ridx].pte          = 1'b0;
                     sramMask.frames[ridx].tag.valid    = 1'b0;
                     sramMask.frames[ridx].tag.asid     = '0;
                     sramMask.frames[ridx].tag.vpn_tag  = '0;
@@ -332,7 +333,7 @@ module tlb #(
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].pte.perms.dirty) begin
                     mem_gen_bus_if.wen    = 1'b1;
-                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].vpn.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
+                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag.vpn_tag, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
                     mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].pte;
                     // increment to next word when flush of word is done
                     if (~mem_gen_bus_if.busy) begin

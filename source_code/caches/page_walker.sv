@@ -119,7 +119,7 @@ module page_walker #(
 
 
     // flip flops
-    always_ff begin
+    always_ff @ (posedge CLK, negedge nRST) begin
         if (~nRST) begin
             state <= IDLE;
             page_address <= '0;

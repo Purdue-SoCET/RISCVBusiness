@@ -43,6 +43,7 @@ module bus_ctrl #(
     // internal register next signals
     bus_word_t [CPUS-1:0] nccsnoopaddr, nl2_addr;
     logic [CPUS-1:0] nccwait, nccinv;
+    bus_word_t npload;
     transfer_width_t ndload, nl2_store;
     // stores whether we need to update requester to exclusive or if WRITEBACK is needed after transfer
     logic exclusiveUpdate, nexclusiveUpdate;
@@ -58,6 +59,7 @@ module bus_ctrl #(
             exclusiveUpdate <= 0;
             state <= IDLE;
             ccif.ccsnoopaddr <= '0;
+            ccif.pload <= '0;
             ccif.dload <= '0;
             ccif.l2store <= '0;
             ccif.l2addr <= '0;
@@ -71,6 +73,7 @@ module bus_ctrl #(
             state <= nstate;                        // current bus controller state
             exclusiveUpdate <= nexclusiveUpdate;    // whether to update to exclusive
             ccif.ccsnoopaddr <= nccsnoopaddr;       // snoopaddr to other l1 caches
+            ccif.pload[requester_cpu] <= npload;    // bus to requester page walker
             ccif.dload[requester_cpu] <= ndload;    // bus to requester
             ccif.l2store <= nl2_store;              // l2 store value
             ccif.l2addr <= nl2_addr;                // l2 addr to store at
@@ -85,7 +88,9 @@ module bus_ctrl #(
         nstate = state;
         casez (state)
             IDLE:  begin
-                if (|ccif.dWEN)
+                if (|ccif.pREN)
+                    nstate = GRANT_PW;
+                else if (|ccif.dWEN)
                     nstate = GRANT_EVICT;
                 else if (|(ccif.dREN & ccif.ccwrite))
                     nstate = GRANT_RX;
@@ -98,6 +103,7 @@ module bus_ctrl #(
             GRANT_RX:           nstate = SNOOP_RX;
             GRANT_EVICT:        nstate = WRITEBACK;
             GRANT_INV:          nstate = SNOOP_INV;
+            GRANT_PW:           nstate = READ_L2_PW;
             SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
             SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
             SNOOP_INV:          nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? INVALIDATE : state;
@@ -110,9 +116,11 @@ module bus_ctrl #(
             TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
             TRANSFER_RX:        nstate = BUS_TO_CACHE;
             READ_L2:            nstate = block_count_done ? BUS_TO_CACHE : state;
+            READ_L2_PW:         nstate = ccif.l2state == L2_ACCESS ? BUS_TO_PW : state;
             WRITEBACK_MS:       nstate = block_count_done ? IDLE : state;
             WRITEBACK:          nstate = block_count_done ? IDLE : state;
             BUS_TO_CACHE:       nstate = IDLE;
+            BUS_TO_PW:          nstate = IDLE;
             INVALIDATE:         nstate = IDLE;
         endcase
         // handle exception
@@ -124,6 +132,7 @@ module bus_ctrl #(
     always_comb begin
         // defaults
         nccsnoopaddr = ccif.ccsnoopaddr;
+        ccif.pwait = '1;
         ccif.dwait = '1;
         ccif.ccwait = '0;
         nl2_addr = ccif.l2addr;
@@ -141,7 +150,9 @@ module bus_ctrl #(
 
         casez(state)
             IDLE: begin // obtain the requester CPU id
-                if (|ccif.dWEN)
+                if (|ccif.pREN)
+                    nrequester_cpu = priorityEncodePW(ccif.pREN);
+                else if (|ccif.dWEN)
                     nrequester_cpu = priorityEncode(ccif.dWEN);
                 else if (|(ccif.dREN & ccif.ccwrite))
                     nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite));
@@ -155,6 +166,9 @@ module bus_ctrl #(
                     if (requester_cpu != i)
                         nccsnoopaddr[i] = ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
                 end
+            end
+            GRANT_PW: begin
+                nl2_addr = ccif.paddr[requester_cpu];
             end
             GRANT_EVICT: begin  // set the stimulus to WRITEBACK to L2
                 // nl2_store = ccif.dstore[requester_cpu];
@@ -197,6 +211,13 @@ module bus_ctrl #(
                     end
                 end
             end
+            READ_L2_PW: begin
+                ccif.l2REN = 1;
+                if (ccif.l2state == L2_ACCESS) begin
+                    ccif.l2REN = 0;
+                    npload = ccif.l2load;
+                end
+            end
             TRANSFER_R: begin // move data from cache to bus
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
 
@@ -217,6 +238,10 @@ module bus_ctrl #(
                 if(|ccif.ccwrite) begin
                     ccif.ccinv = nonRequesterEnable(requester_cpu);
                 end
+            end
+            BUS_TO_PW: begin
+                ccif.pwait[requester_cpu] = 0;
+                npload = ccif.pload[requester_cpu];
             end
             WRITEBACK_MS: begin // writeback using supplier while also doing cache to cache transfer
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
@@ -254,7 +279,7 @@ module bus_ctrl #(
 
         if (block_count_done)
             nblock_count = 0;
-        nblock_count_done = (nblock_count == BLOCK_SIZE) || (pass_through && ccif.l2state == L2_ACCESS);
+        nblock_count_done = (nblock_count == BLOCK_SIZE) || ((pass_through || state == READ_L2_PW) && ccif.l2state == L2_ACCESS);
 
         ccif.l2_byte_en = pass_through ? ccif.dbyte_en[requester_cpu] : 'hF;
     end
@@ -270,6 +295,15 @@ module bus_ctrl #(
         input logic [CPU_ID_LENGTH-1:0] requester_cpu;
         input logic [CPUS-1:0] snoopDone;
         snoopStatus = &((1'b1 << requester_cpu) | snoopDone);
+    endfunction
+
+    // function to do priority encoding to determine the requester or supplier
+    function logic [CPU_ID_LENGTH-1:0] priorityEncodePW;
+        input logic [CPUS-1:0] to_encode;
+        for (int i = 0; i < NUM_HARTS; i++) begin
+            if (to_encode[i])
+                priorityEncodePW = i;
+        end
     endfunction
 
     // function to do priority encoding to determine the requester or supplier
