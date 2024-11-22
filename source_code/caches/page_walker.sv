@@ -38,7 +38,7 @@ module page_walker #(
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus itlb_gen_bus_if,
     generic_bus_if.generic_bus dtlb_gen_bus_if,
-    prv_pipe_if.cache prv_pipe_if,
+    prv_pipeline_if.cache prv_pipe_if,
     address_translation_if.walker at_if
 );
 
@@ -196,7 +196,7 @@ module page_walker #(
                         prv_pipe_if.fault_store_page = 1;
                     end
                     // fault if U = 1 and is S-mode or U = 0 and is U-mode
-                    else if ((pte_perms.user & prv_pipe_if.curr_privilege_level == S_MODE & ~prv_pipe_if.sstatus.sum) |
+                    else if ((pte_perms.user & prv_pipe_if.curr_privilege_level == S_MODE & ~prv_pipe_if.mstatus.sum) |
                             (~pte_perms.user & prv_pipe_if.curr_privilege_level == U_MODE)) begin
                         prv_pipe_if.fault_load_page  = access == LOAD;
                         prv_pipe_if.fault_store_page = access == STORE;
@@ -319,7 +319,7 @@ module page_walker #(
                     (itlb_miss && (itlb_gen_bus_if.ren)))
                     next_state = WALK;
 
-                if (~addr_trans_on)
+                if (~at_if.addr_trans_on)
                     next_state = IDLE;
             end
             WALK: begin

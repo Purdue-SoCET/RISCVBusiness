@@ -31,19 +31,18 @@
 `endif
 
 module tlb #(
-    parameter VIRTUAL_ADDR_WIDTH  = 32, // equal to SXLEN
-    parameter PHYSICAL_ADDR_WIDTH = 34, // equal to MXLEN
+    parameter PPN_LEN             = SV32_PPNLEN, // For RV32
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
-    parameter TLB_SIZE            = 64,  // Number of entries in the TLB
-    parameter ASSOC               = 1  // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
+    parameter TLB_SIZE            = 64, // Number of entries in the TLB
+    parameter ASSOC               = 1   // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
 )
 (
     input logic CLK, nRST,
     input logic clear, flush,
-    output logic clear_done, flush_done,
+    output logic clear_done, flush_done, tlb_miss,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
     generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
-    prv_pipe_if.cache prv_pipe_if,
+    prv_pipeline_if.cache prv_pipe_if,
     address_translation_if.cache at_if
 );
 
@@ -57,8 +56,8 @@ module tlb #(
     // local parameters
     localparam BLOCK_SIZE         = 1;
     localparam ASID_LENGTH        = 9; // num bits for ASID
-    localparam VPN_LENGTH         = VIRTUAL_ADDR_WIDTH - PAGE_OFFSET_BITS;
-    localparam PPN_LENGTH         = PHYSICAL_ADDR_WIDTH - PAGE_OFFSET_BITS;
+    localparam VPN_LENGTH         = SXLEN - PAGE_OFFSET_BITS;
+    localparam PPN_LENGTH         = SV32_PPNLEN;
     localparam N_SETS             = TLB_SIZE / ASSOC;
     localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
     localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
@@ -162,8 +161,7 @@ module tlb #(
     assign decoded_addr = decoded_tlb_addr_t'(proc_gen_bus_if.addr);
 
     // sram instance
-    assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
-                   : decoded_addr.vpn.idx_bits;
+    assign sramSEL = (state == FLUSH_TLB || state == IDLE) ? flush_idx.set_num : decoded_addr.vpn.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
 
@@ -263,6 +261,7 @@ module tlb #(
         enable_flush_count_nowb = 0;
         clear_flush_count       = 0;
         flush_done 	            = 0;
+        tlb_miss                = 0;
         idle_done               = 0;
         clear_done 	            = 0;
         next_read_addr          = proc_gen_bus_if.addr;
@@ -298,18 +297,21 @@ module tlb #(
                 end
                 // tlb miss on a clean block
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+                    tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
+                    tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
                     next_read_addr        =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                 end
             end
             FETCH: begin
                 // set tlb to be invalid before cache completes fetch
+                tlb_miss = 1;
                 mem_gen_bus_if.wen = proc_gen_bus_if.wen;
-                mem_gen_bus_if.ren = proc_gen_bus_if.ren || !ccif.abort_bus;
+                mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                 mem_gen_bus_if.addr = read_addr;
                 sramWrite.frames[ridx].tag.valid = 0;
                 sramMask.frames[ridx].tag.valid = 0;
@@ -372,7 +374,7 @@ module tlb #(
                     next_state = FLUSH_TLB;
             end
             FETCH: begin
-                if (!pw_gen_bus_if.busy || pw_gen_bus_if.error)
+                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error)
                     next_state = HIT;
             end
             FLUSH_TLB: begin

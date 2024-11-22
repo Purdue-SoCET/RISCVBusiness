@@ -55,6 +55,7 @@ module l1_cache #(
     output logic cache_miss
 );
     import rv32i_types_pkg::*;
+    import machine_mode_types_1_13_pkg::*;
     
     // local parameters
     localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
@@ -91,7 +92,7 @@ module l1_cache #(
     } cache_set_t;      // cache set
 
     typedef struct packed {
-        logic [N_TAG_BITS-1:0] tag_bits;
+        logic [N_TAG_BITS_BARE-1:0] tag_bits;
         logic [N_SET_BITS-1:0] idx_bits;
         logic [N_BLOCK_BITS-1:0] block_bits;
     } decoded_cache_idx_t;
@@ -128,7 +129,7 @@ module l1_cache #(
     // address
     word_t read_addr, next_read_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
-    decoded_cache_addr_t decoded_addr, snoop_decoded_addr;
+    decoded_cache_addr_t decoded_addr, decoded_read_addr, snoop_decoded_addr;
     logic [N_TAG_BITS-1:0] fetch_physical_tag;
     //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
@@ -152,13 +153,16 @@ module l1_cache #(
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
 
     // determine physical tag for fetch if address translation is on
-    generate
-        if (BARE_PPN_TAG_DIFF == 0) begin
-            assign fetch_physical_tag = read_addr[N_PA_BITS-1:12];
-        end else begin
-            assign fetch_physical_tag = {read_addr[N_PA_BITS-1:12], decoded_addr.idx.idx_bits[BARE_PPN_TAG_DIFF-1:0]};
-        end
-    endgenerate
+    // generate
+    //     if (BARE_PPN_TAG_DIFF == 0) begin
+    //         assign fetch_physical_tag = read_addr[N_PA_BITS-1:12];
+    //     end else if (BARE_PPN_TAG_DIFF > N_SET_BITS) begin
+    //         assign fetch_physical_tag = {read_addr[N_PA_BITS-1:12], decoded_addr.idx.idx_bits, decoded_addr.idx.block_bits[N_BLOCK_BITS-1:BARE_PPN_TAG_DIFF-N_SET_BITS]};
+    //     end else begin
+    //         assign fetch_physical_tag = {read_addr[N_PA_BITS-1:12], decoded_addr.idx.idx_bits[N_SET_BITS-1:BARE_PPN_TAG_DIFF]};
+    //     end
+    // endgenerate
+    assign decoded_read_addr = decoded_cache_addr_t'(read_addr);
 
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
@@ -246,8 +250,8 @@ module l1_cache #(
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
-                if(((~at_if.addr_trans_on && (sramRead.frames[i].tag.tag_bits[N_TAG_BITS_BARE-1:0] == decoded_addr.idx.tag_bits)) ||
-                    (at_if.addr_trans_on && (sramRead.frames[i].tag.tag_bits[N_PPNTAG_BITS-1:0] == ppn_tag))) &&
+                if(((~at_if.addr_trans_on && (sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits)) ||
+                    (at_if.addr_trans_on && (sramRead.frames[i].tag.tag_bits[N_TAG_BITS-1:BARE_PPN_TAG_DIFF] == ppn_tag))) &&
                     sramRead.frames[i].tag.valid) begin
                     sc_valid_block = addr_is_reserved;
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
@@ -411,7 +415,7 @@ module l1_cache #(
                     sramWEN                             = 1'b1;
                     sramWrite.frames[ridx].data         = mem_gen_bus_if.rdata;
                     sramWrite.frames[ridx].tag.valid    = 1'b1;
-                    sramWrite.frames[ridx].tag.tag_bits = at_if.addr_trans_on ? fetch_physical_tag : decoded_req_addr.idx.tag_bits;
+                    sramWrite.frames[ridx].tag.tag_bits = at_if.addr_trans_on ? decoded_read_addr.idx.tag_bits : decoded_req_addr.idx.tag_bits;
                     sramMask.frames[ridx].data          = 1'b0;
                     sramMask.frames[ridx].tag.valid     = 1'b0;
                     sramMask.frames[ridx].tag.tag_bits  = 1'b0;

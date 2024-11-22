@@ -67,6 +67,10 @@ typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if ();
+    // Page walker generic control signals
+    logic          [NUM_HARTS-1:0] pREN, pwait;
+    bus_word_t     [NUM_HARTS-1:0] pload, paddr;
+    logic    [NUM_HARTS-1:0] [3:0] pbyte_en;
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
@@ -107,10 +111,10 @@ interface bus_ctrl_if ();
 
     // modports
     modport cc(
-        input   dREN, dWEN, daddr, dstore, dbyte_en,
+        input   pREN, paddr, pbyte_en, dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state, ccabort,
-        output  dwait, dload, 
+        output  pwait, pload, dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 

@@ -33,10 +33,10 @@ package machine_mode_types_1_13_pkg;
   parameter int HSXLEN = 32;
   
   // Address Translation Constants
-  parameter int SV32_PPNLEN = 34 - 12;
-  parameter int SV39_PPNLEN = 56 - 12;
-  parameter int SV48_PPNLEN = 56 - 12;
-  parameter int SV57_PPNLEN = 56 - 12;
+  parameter int SV32_PPNLEN = 22;
+  parameter int SV39_PPNLEN = 44;
+  parameter int SV48_PPNLEN = 44;
+  parameter int SV57_PPNLEN = 44;
 
   // Masks
   parameter int SSTATUS_MASK = 32'h800DE762; // 32'b1000_0000_0000_1101_1110_0111_0110_0010
