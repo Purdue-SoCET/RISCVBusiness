@@ -37,6 +37,8 @@ package machine_mode_types_1_13_pkg;
   parameter int SV39_PPNLEN = 44;
   parameter int SV48_PPNLEN = 44;
   parameter int SV57_PPNLEN = 44;
+  parameter int ASID_LENGTH = SXLEN == 32 ? 9 : 16;
+  parameter int PPNLEN      = SXLEN == 32 ? SV32_PPNLEN : SV39_PPNLEN;
 
   // Masks
   parameter int SSTATUS_MASK = 32'h800DE762; // 32'b1000_0000_0000_1101_1110_0111_0110_0010
@@ -702,8 +704,8 @@ package machine_mode_types_1_13_pkg;
 
   typedef struct packed {
     logic        mode;
-    logic [8:0]  asid;
-    logic [21:0] ppn;
+    logic [ASID_LENGTH:0]  asid;
+    logic [PPNLEN-1:0] ppn;
   } satp_t;
 
 endpackage
