@@ -53,22 +53,22 @@ class data_monitor extends uvm_monitor;
 		// --- Run Phase --- //
 		forever begin
 
-			wait(mcif.NRST);
+			wait(mcif.nRST);
 
 			// --- Input Sample --- //
 			@(posedge mcif.CLK);			
 			
-			data_trans.dREN   = mcif.dREN;
-			data_trans.wREN   = mcif.wREN;
-			data_trans.daddr  = mcif.daddr;
-			data_trans.dstore = mcif.dstore;
+			data_trans.dREN   = mcif.gen_bus_if.dREN;
+			data_trans.wREN   = mcif.gen_bus_if.wREN;
+			data_trans.daddr  = mcif.gen_bus_if.daddr;
+			data_trans.dstore = mcif.gen_bus_if.dstore;
 
 			// --- Output Sample --- //
 			@(posedge mcif.CLK);			
 
-			data_trans.derror = mcif.derror;
-			data_trans.dbusy  = mcif.dbusy;
-			data_trans.dload  = mcif.dload;
+			data_trans.derror = mcif.gen_bus_if.derror;
+			data_trans.dbusy  = mcif.gen_bus_if.dbusy;
+			data_trans.dload  = mcif.gen_bus_if.dload;
 
 			// --- Send to Scoreboard --- //
 			data_ap.write(data_trans);

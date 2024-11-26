@@ -86,6 +86,7 @@
             output rdata, error, request_stall
         );
 
+        // NOT USED IN MULTICORE (MIGHT DELETE LATER)
         modport protocol (
             input rdata, error, request_stall,
             output wen, ren, addr, wdata, strobe, // vital signals

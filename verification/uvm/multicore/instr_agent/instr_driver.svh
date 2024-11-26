@@ -29,7 +29,18 @@ class instr_driver extends uvm_driver;
             instr_transaction tx;
             @(posedge mcif.CLK);
             seq_item_port.get_next_item(tx);
+            // RESET
+            if(!tx.nrst) begin 
+                @(negedge mcif.CLK);
+                mcif.halt = 1'b0;
+                mcif.mtime = 1'b0;
+                mcif.gen_bus_if.instruction = '0;
+                mcif.gen_bus_if.ierror = '0;
+                mcif.gen_bus_if.i_req_stall = '0;
+                mcif.nRST = 1'b0;
 
+                repeat (2) @(posedge mcif.CLK);
+            end
             /*
                 Multicore specific Driver Code
             */

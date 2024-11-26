@@ -8,8 +8,15 @@ import uvm_pkg::*;
 
 class instr_transaction extends uvm_sequence_item;
 
-    // Universal Reset
+    // *********** DUT Inputs *********** (Just handled by instruction agent but arbitary decision)
+    // Universal accross both agents
     bit nRST;
+    logic [63:0] mtime;
+
+    // *********** DUT Output *********** (Just handled by instruction agent but arbitary decision)
+    bit halt;
+    bit wfi;
+
 
     // *********** DUT Inputs ***********
     // CPU Inputs to Instruction Agents

@@ -34,13 +34,26 @@ class instr_monitor extends uvm_monitor;
         instr_tx = instr_transaction::type_id::create("instr_tx");
 
         forever begin 
-            @(posedge mcif.CLK);
+            wait(mcif.nRST);
 
-            /*
-                Multicore Specific Monitor Code
-            */
+			// --- Input Sample --- //
+            @(posedge mcif.CLK);			
+            instr_tx.iREN = mcif.gen_bus_if.iREN;
+            instr_tx.iaddr = mcif.gen_bus_if.iaddr;
+
+	        // --- Output Sample --- //
+			@(posedge mcif.CLK);	      
+            instr_tx.nRST = mcif.nRST;
+            instr_tx.ierror = mcif.gen_bus_if.ierror;
+            instr_tx.i_req_stall = mcif.gen_bus_if.i_req_stall;
+            instr_tx.instruction = mcif.gen_bus_if.instruction;
+
+            instr_tx.halt = mcif.halt;
+            instr_tx.wfi = mcif.wfi;
+
+            // --- Send to Scoreboard --- //
+			instr_ap.write(instr_tx);
         end
-
     endtask
 endclass
 
