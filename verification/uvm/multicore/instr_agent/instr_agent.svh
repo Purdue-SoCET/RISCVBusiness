@@ -6,7 +6,8 @@ import uvm_pkg::*;
 `include "instr_sequencer.svh"
 `include "instr_driver.svh"
 `include "instr_monitor.svh"
-`include "multicore_if.svh"
+`include "multicore_if.vh"
+`include "dut_parameters.sv"
 
 class instr_agent extends uvm_agent;
     `uvm_component_utils(instr_agent)
@@ -17,7 +18,7 @@ class instr_agent extends uvm_agent;
     instr_driver instr_drv;
     instr_monitor instr_mon;
 
-    virtual multicore_if mcif;
+    virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif;
 
     function new (string name = "instr_agent", uvm_component parent = null);
         super.new(name, parent);
@@ -31,7 +32,7 @@ class instr_agent extends uvm_agent;
         instr_drv = instr_driver::type_id::create("instr_drv", this);
         instr_mon = instr_monitor::type_id::create("instr_mon", this);
 
-        if(!uvm_config_db#(virtual multicore_if)::get(this, "", "mcif", mcif)) begin
+        if(!uvm_config_db#(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::get(this, "", "mcif", mcif)) begin
             `uvm_fatal("INSTR_AGENT", "No virtual interface specified for multicore_if instance")
         end
     endfunction

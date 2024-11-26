@@ -1,7 +1,9 @@
+# SRC VARIABLES
 ROOT := $(shell pwd)
 
 RISCV := $(ROOT)/source_code
 RISCV_CORE := $(RISCV)/standard_core
+RISCV_INC := $(RISCV)/include
 PIPELINE := $(RISCV)/pipelines
 RISCV_PKGS := $(RISCV)/packages
 RISC_MGMT := $(RISCV)/risc_mgmt
@@ -25,64 +27,143 @@ SPARCE_FILES := $(SPARCE)/sparce_wrapper.sv $(SPARCE)/sparce_disabled/sparce_dis
 RISCV_BUS_FILES := $(RISCV_BUS)/generic_nonpipeline.sv $(RISCV_BUS)/ahb.sv
 TRACKER_FILES := $(RISCV)/trackers/cpu_tracker.sv $(RISCV)/trackers/branch_tracker.sv
 
-COMPONENT_FILES_SV := $(CORE_PKG_FILES) $(RISC_MGMT_FILES) $(RISC_EXT_FILES) $(CORE_FILES) $(RV32C_FILES) $(PIPELINE_FILES) $(SPARCE_FILES) $(PREDICTOR_FILES) $(PRIV_FILES) $(CACHE_FILES) $(RISCV_BUS_FILES) $(TRACKER_FILES)
-
-TOP_ENTITY := RISCVBusiness
-
-HEADER_FILES := -I$(RISCV)/include
-
-
-define USAGE
-@echo "----------------------------------------------------------------------"
-@echo " Build Targets:"
-@echo "     config: config core with example.yml"
-@echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
-@echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target"
-@echo "     lint: Invoke 'FuseSoC run --build' to run the Verilator lint target"
-@echo "     clean: Remove build directories"
-@echo "     veryclean: Remove fusesoc libraries & build directories"
-@echo "----------------------------------------------------------------------"
-endef
-
-.phony: default clean config verilate xcelium
+# MULTICORE_FILES:=$(RISCV_CORE)/multicore_wrapper.sv $(RISCV_INC)/core_interrupt.vh
+ 
+ALL_SOURCE_FILES := $(RV32M_FILES) \
+					$(RV32C_FILES) \
+					$(RISC_MGMT_FILES) \
+					$(RISC_EXT_FILES) \
+					$(CORE_PKG_FILES) \
+					$(CORE_FILES) \
+					$(PIPELINE_FILES) \
+					$(PREDICTOR_FILES) \
+					$(PRIV_FILES) \
+					$(CACHE_FILES) \
+					$(SPARCE_FILES) \
+					$(TRACKER_FILES) \
+					$(RISCV_BUS_FILES) \
 
 
-default:
-	$(USAGE)
+# UVM Variables
+TBTOP:=testbench_top
+VERIFICATION:=$(ROOT)/verification
+UVM:=$(VERIFICATION)/uvm/multicore
+DATA_AGT:=$(UVM)/data_agent
+ENV:=$(UVM)/env
+INSTR_AGT:=$(UVM)/instr_agent
+INTERFACE:=$(UVM)/interfaces
+PROGRAMMER:=$(UVM)/programmer
+PARAMS:=$(UVM)/params
+SEQ:=$(UVM)/sequences
+TESTS:=$(UVM)/tests
 
-config:
-	@echo "----------------------"
-	@echo " Running config_core"
-	@echo "----------------------"
-	@python3 scripts/config_core.py example.yml
+# Name of UVM test to be run
+TESTNAME?=reset_test
+VERBOSITY?=UVM_HIGH
+SEED?=$(shell echo $$RANDOM)
 
-verilate: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
-	@echo "------------------------------------------------------------------"
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
-	@echo "------------------------------------------------------------------"
+QUESTA_HOME?=/package/eda/mg/questa10.6b/questasim
 
-no_mem: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target no_mc --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
-	@echo "------------------------------------------------------------------"
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
-	@echo "------------------------------------------------------------------"
+# Output directories
+COVERAGE_DIR=verification/uvm/multicore/reports
+WAVE_SCRIPT=verification/uvm/multicore/waves/multicore.do
 
-xcelium: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool xcelium socet:riscv:RISCVBusiness
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
+# Makefile Targets
+all: build run_gui
+build:
+	@echo "Building testbench and DUT..."
+	@echo ""
+	vlog +incdir+$(RISCV) \
+		+incdir+$(RISCV_INC) \
+		+incdir+$(RISCV_CORE) \
+		+incdir+$(PIPELINE) \
+		+incdir+$(RISC_MGMT) \
+		+incdir+$(SPARCE) \
+		+incdir+$(PRIVS) \
+		+incdir+$(BRANCH_PREDICT) \
+		+incdir+$(RISCV_PKGS) \
+		+incdir+$(CACHES) \
+		+incdir+$(RV32C) \
+		+incdir+$(RISCV_BUS) \
+		+incdir+$(INTERFACE) \
+		+incdir+$(PROGRAMMER) \
+		+incdir+$(PARAMS) \
+		+incdir+$(ENV) \
+		+incdir+$(DATA_AGT) \
+		+incdir+$(INSTR_AGT) \
+		+incdir+$(SEQ) \
+		+incdir+$(TESTS) \
+		+acc \
+		+cover \
+		-L $(QUESTA_HOME)/uvm-1.2 \
+		$(UVM)/$(TBTOP).sv \
+		-logfile tb_compile.log \
+		-printinfilenames=file_search.log
 
-lint: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
-	@echo "Lint finished, no errors found"
+run: build
+	@echo "Running simulation..."
+	vsim -c $(TBTOP) \
+		-L $$QUESTA_HOME//uvm-1.2 \
+		-novopt \
+		-voptargs=+acc \
+		-coverage \
+		-sv_seed $(SEED) \
+		+UVM_TESTNAME="$(TESTNAME)" \
+		+UVM_VERBOSITY=$(VERBOSITY) \
+		-do "coverage save -onexit $(COVERAGE_DIR)/coverage_$(SEED).ucdb" \
+		-do "run -all"
+
+run_gui: build
+	@echo "Running simulation in GUI mode..."
+	vsim -coverage -i $(TBTOP) \
+		-L $(QUESTA_HOME)/uvm-1.2 \
+		-novopt \
+		-voptargs=+acc \
+		-sv_seed $(SEED) \
+		+UVM_TESTNAME="$(TESTNAME)" \
+		+UVM_VERBOSITY=$(VERBOSITY) \
+		-do "coverage save -onexit $(COVERAGE_DIR)/coverage_$(SEED).ucdb" \
+		-do "do $(WAVE_SCRIPT)" \
+		-do "run -all"
+
+merge: 
+	@echo "Merging coverage reports..."
+	vcover merge -out $(COVERAGE_DIR)/merged.ucdb $(COVERAGE_DIR)/coverage_*.ucdb -suppress 6820
+	@echo "Generating HTML coverage report..."
+	vcover report -html -htmldir $(COVERAGE_DIR)/covhtmlreport -source -details -assert -directive -cvg -code bcefst $(COVERAGE_DIR)/merged.ucdb
+
+report:
+	@echo "Opening HTML coverage report..."
+	firefox $(COVERAGE_DIR)/covhtmlreport/index.html &
 
 clean:
-	rm -rf build
-	rm -rf rvb_out
+	@echo "Cleaning up..."
+	rm -rf work
+	rm -f transcript
+	rm -f *.log
+	rm -f *.vstf
+	rm -f *.wlf
 
-veryclean:
-	rm -rf fusesoc_libraries
-	rm fusesoc.conf
+delete_coverage:
+	@echo "Deleting Coverage..."
+	rm -rf $(COVERAGE_DIR)/*.ucdb
+	rm -rf $(COVERAGE_DIR)/covhtmlreport
+
+help:
+	@echo "Available targets:"
+	@echo "  all                - Build testbench and DUT, and run GUI simulation."
+	@echo "  build              - Build the testbench and DUT."
+	@echo "  run                - Run the simulation with coverage."
+	@echo "  run_gui            - Run the simulation in GUI mode with coverage."
+	@echo "  merge              - Merge coverage reports and generate HTML and text coverage reports."
+	@echo "  report             - Open the HTML coverage report in Firefox."
+	@echo "  clean              - Clean up build and log files."
+	@echo "  delete_coverage    - Delete all coverage files and reports."
+	@echo "  help               - Display this help message."
+
+# Error handler for undefined targets
+%:
+	@echo "Error: '$@' is not a recognized target."
+	@echo "Run 'make help' to see the list of available targets."
+
+.PHONY: build run run_gui clean report all delete_coverage merge help

@@ -7,14 +7,15 @@ import uvm_pkg::*;
 
 `include "uvm_macros.svh"
 `include "data_transaction.svh"
-`include "multicore_if.sv"
+`include "multicore_if.vh"
+`include "dut_parameters.sv"
 
 // --- Data Transaction --- //
 class data_monitor extends uvm_monitor;
 	`uvm_component_utils(data_monitor)
 
 	// --- Virtual Interface --- //
-	virtual multicore_if mcvif;
+	virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif;
 
 	// --- Transaction --- //
 	data_transaction data_trans;
@@ -36,7 +37,7 @@ class data_monitor extends uvm_monitor;
 		// --- Build Monitor Port --- //
 		data_ap = new("data_ap", this);
 		
-		if(!uvm_config_db #(virtual multicore_if)::get(this, "", "mcif", mcif)) begin
+		if(!uvm_config_db #(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::get(this, "", "mcif", mcif)) begin
 			`uvm_fatal("DATA_MONITOR", "No virtual interface for multicore_if")
 		end
 	endfunction : build_phase
@@ -52,22 +53,22 @@ class data_monitor extends uvm_monitor;
 		// --- Run Phase --- //
 		forever begin
 
-			wait(mcvif.NRST);
+			wait(mcif.NRST);
 
 			// --- Input Sample --- //
-			@(posedge mcvif.CLK);			
+			@(posedge mcif.CLK);			
 			
-			data_trans.dREN   = mcvif.dREN;
-			data_trans.wREN   = mcvif.wREN;
-			data_trans.daddr  = mcvif.daddr;
-			data_trans.dstore = mcvif.dstore;
+			data_trans.dREN   = mcif.dREN;
+			data_trans.wREN   = mcif.wREN;
+			data_trans.daddr  = mcif.daddr;
+			data_trans.dstore = mcif.dstore;
 
 			// --- Output Sample --- //
-			@(posedge mcvif.CLK);			
+			@(posedge mcif.CLK);			
 
-			data_trans.derror = mcvif.derror;
-			data_trans.dbusy  = mcvif.dbusy;
-			data_trans.dload  = mcvif.dload;
+			data_trans.derror = mcif.derror;
+			data_trans.dbusy  = mcif.dbusy;
+			data_trans.dload  = mcif.dload;
 
 			// --- Send to Scoreboard --- //
 			data_ap.write(data_trans);

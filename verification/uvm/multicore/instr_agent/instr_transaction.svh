@@ -1,7 +1,10 @@
 `ifndef INSTR_TRANSACTION_SVH
 `define INSTR_TRANSACTION_SVH
 
+import uvm_pkg::*;
+`include "uvm_macros.svh"
 `include "addr_space.sv"
+`include "dut_parameters.sv"
 
 class instr_transaction extends uvm_sequence_item;
 
@@ -11,13 +14,13 @@ class instr_transaction extends uvm_sequence_item;
     // *********** DUT Inputs ***********
     // CPU Inputs to Instruction Agents
     rand bit iREN;                                // Instruction read enable
-    rand bit [ADDR_WIDTH-1 : 0] iaddr;            // Instruction address
+    rand bit [A_WIDTH-1 : 0] iaddr;            // Instruction address
 
     // *********** DUT Outputs ***********
     // Instruction Agent Outputs to CPU
     bit ierror;                                   // Error signal
     bit i_req_stall;                              // Request stall signal
-    bit [ADDR_WIDTH-1 : 0] instruction;           // Instruction data
+    bit [A_WIDTH-1 : 0] instruction;           // Instruction data
 
     `uvm_object_utils_begin(instr_transaction)
         `uvm_field_int(nRST,          UVM_ALL_ON)

@@ -25,6 +25,14 @@
 `ifndef BUS_CTRL_IF_VH
 `define BUS_CTRL_IF_VH
 
+
+
+// modified from coherence_ctrl_if.vh
+interface bus_ctrl_if #(
+    parameter CPU,
+    parameter BLOCK_SIZE
+)();
+
 // parameters
 parameter CPUS = NUM_HARTS * 2;
 //parameter BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
@@ -65,8 +73,6 @@ typedef logic [DATA_WIDTH-1:0] transfer_width_t;
 typedef logic [CPUS-1:0] cpus_bitvec_t;
 typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
-// modified from coherence_ctrl_if.vh
-interface bus_ctrl_if ();
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;

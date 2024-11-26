@@ -7,13 +7,14 @@ import uvm_pkg::*;
 
 `include "uvm_macros.svh"
 `include "data_transaction.svh"
-`include "multicore_if.sv"
+`include "multicore_if.vh"
+`include "dut_parameters.sv"
 
 class data_driver extends uvm_driver;
     `uvm_component_utils (data_driver)
 
 	// --- Virtual Interface --- //
-    virtual multicore_if mcvif;
+    virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif;
 
 	// --- Constructor --- //
     function new (string name="data_driver", uvm_component parent = null);
@@ -24,7 +25,7 @@ class data_driver extends uvm_driver;
     virtual function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        if(!uvm_config_db #(virtual multicore_if)::get(this, "", "mcvif", mcvif)) begin
+        if(!uvm_config_db #(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::get(this, "", "mcif", mcif)) begin
             `uvm_fatal("data_DRIVER", "No virtual interface for multicore_if")
         end
     endfunction
@@ -32,7 +33,7 @@ class data_driver extends uvm_driver;
     task run_phase (uvm_phase phase);
         forever begin 
             data_transaction tx;
-            @(posedge mcvif.CLK);
+            @(posedge mcif.CLK);
             seq_item_port.get_next_item(tx);
 
             /*
@@ -44,3 +45,5 @@ class data_driver extends uvm_driver;
         end
     endtask
 endclass
+
+`endif

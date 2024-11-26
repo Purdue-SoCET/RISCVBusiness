@@ -1,9 +1,9 @@
-`ifndef GENERIC_BUS_IF
-`define GENERIC_BUS_IF
+`ifndef BUS_IF_VH
+`define BUS_IF_VH
 
 `include "addr_space.sv"
     
-    interface generic_bus_if #(
+    interface bus_if #(
         parameter ADDR_WIDTH = 32, 
         parameter DATA_WIDTH = 32
     )(/* No I/O */);

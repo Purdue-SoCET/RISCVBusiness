@@ -1,5 +1,5 @@
-`ifndef CORE_INTERRUPT_IF
-`define CORE_INTERRUPT_IF
+`ifndef CORE_INTERRUPT_IF_VH
+`define CORE_INTERRUPT_IF_VH
 
 `include "component_selection_defines.vh"
 

@@ -2,26 +2,28 @@
 `ifndef DATA_TRANSACTION_SVH
 `define DATA_TRANSACTION_SVH
 
+import uvm_pkg::*;
+
 // --- Include --- //
 `include "addr_space.sv"
+`include "dut_parameters.sv"
+`include "uvm_macros.svh"
 
 // --- Data Transaction --- //
-class data_transaction extends uvm_sequnce_item:
-	`uvm_object_utils(data_transaction)
-
+class data_transaction extends uvm_sequence_item;
 	// --------- Reset --------------- //
 	logic nRST;
 
 	// --------- DUT Inputs ---------- //
 	rand logic                    dREN;
 	rand logic                    dWEN;
-	rand logic [ADDR_WIDTH-1 : 0] daddr; 
-	rand logic [DATA_WIDTH-1 : 0] dstore;
+	rand logic [A_WIDTH-1 : 0] daddr; 
+	rand logic [D_WIDTH-1 : 0] dstore;
 
 	// --------- DUT Outputs --------- //
 	logic                         derror;
 	logic                         dbusy; 
-	logic      [DATA_WIDTH-1 : 0] dload;
+	logic      [D_WIDTH-1 : 0] dload;
 
 	// --- Enable UVM Macros --- //
     `uvm_object_utils_begin(data_transaction)

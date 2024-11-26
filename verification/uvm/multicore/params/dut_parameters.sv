@@ -1,0 +1,7 @@
+`ifndef DUT_PARAMETERS_SV
+`define DUT_PARAMETERS_SV
+    parameter HARTS = 1;
+    parameter RST_PC  = 32'h80000000;
+    parameter D_WIDTH = 32;
+    parameter A_WIDTH = 32;
+`endif

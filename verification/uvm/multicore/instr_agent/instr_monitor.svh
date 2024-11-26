@@ -5,12 +5,13 @@ import uvm_pkg::*;
 `include "uvm_macros.svh"
 
 `include "instr_transaction.svh"
-`include "multicore_if.sv"
+`include "multicore_if.vh"
+`include "dut_parameters.sv"
 
 class instr_monitor extends uvm_monitor;
     `uvm_component_utils (instr_monitor)
 
-    virtual multicore_if mcif;
+    virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif;
     instr_transaction instr_tx;
 
     uvm_analysis_port#(instr_transaction) instr_ap;
@@ -23,7 +24,7 @@ class instr_monitor extends uvm_monitor;
 
     virtual function void build_phase (uvm_phase phase);
         super.build_phase(phase);
-        if(!uvm_config_db #(virtual multicore_if)::get(this, "", "mcif", mcif)) begin
+        if(!uvm_config_db #(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::get(this, "", "mcif", mcif)) begin
             `uvm_fatal("INSTR_MONITOR", "No virtual interface specified for multicore_if instance")
         end
     endfunction

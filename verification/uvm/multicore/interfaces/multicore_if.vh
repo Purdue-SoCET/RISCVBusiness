@@ -1,25 +1,17 @@
-`ifndef MULTICORE_IF_SV
-`define MULTICORE_IF_SV
+`ifndef MULTICORE_IF_VH
+`define MULTICORE_IF_VH
 
-`include "generic_bus_if.vh"
-`include "cache_coherence_if.vh"
-`include "component_selection_defines.vh"
-`include "risc_mgmt_if.vh"
-`include "cache_control_if.vh"
-`include "sparce_pipeline_if.vh"
-`include "tspp_fetch_execute_if.vh"
-`include "tspp_hazard_unit_if.vh"
+`include "bus_if.vh"
 `include "core_interrupt_if.vh"
-`include "rv32c_if.vh"
-`include "bus_ctrl_if.vh"
 
 interface multicore_if #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter NUM_HARTS = 1
+    parameter NUM_HARTS = 1,
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 32
 );
 
     // Clock and reset signals
-    logic        CLK;
     logic        nRST;
 
     // mtime input
@@ -33,7 +25,10 @@ interface multicore_if #(
     core_interrupt_if interrupt_if;
 
     // Bus interface based on compilation directives
-    generic_bus_if gen_bus_if;
+    bus_if #(
+        .DATA_WIDTH(DATA_WIDTH), 
+        .ADDR_WIDTH(ADDR_WIDTH)
+    ) gen_bus_if();
     
     modport dut_mp (
         input  CLK, nRST, mtime,

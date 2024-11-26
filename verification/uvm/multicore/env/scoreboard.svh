@@ -1,10 +1,12 @@
+`ifndef SCOREBOARD_SVH
+`define SCOREBOARD_SVH
+
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 `include "instr_transaction.svh"
 
 class scoreboard extends uvm_scoreboard;
     `uvm_component_utils(scoreboard)
-
 
     // *** Analysis Ports ***
     uvm_analysis_port #(instr_transaction) imp_bus;
@@ -29,3 +31,5 @@ class scoreboard extends uvm_scoreboard;
         */
     endtask 
 endclass
+
+`endif

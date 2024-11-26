@@ -4,12 +4,13 @@ import uvm_pkg::*;
 
 `include "uvm_macros.svh"
 `include "instr_transaction.svh"
-`include "multicore_if.sv"
+`include "multicore_if.vh"
+`include "dut_parameters.sv"
 
 class instr_driver extends uvm_driver;
     `uvm_component_utils (instr_driver)
 
-    virtual multicore_if mcif;
+    virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif;
 
     function new (string name="instr_driver", uvm_component parent = null);
         super.new(name, parent);
@@ -18,7 +19,7 @@ class instr_driver extends uvm_driver;
     virtual function void build_phase (uvm_phase phase);
         super.build_phase(phase);
 
-        if(!uvm_config_db #(virtual multicore_if)::get(this, "", "mcif", mcif)) begin
+        if(!uvm_config_db #(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::get(this, "", "mcif", mcif)) begin
             `uvm_fatal("INSTR_DRIVER", "No virtual interface specified for multicore_if instance")
         end
     endfunction
@@ -39,3 +40,4 @@ class instr_driver extends uvm_driver;
     endtask
 endclass
 
+`endif

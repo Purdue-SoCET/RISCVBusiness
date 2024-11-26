@@ -9,7 +9,8 @@ import uvm_pkg::*;
 `include "data_sequencer.svh"
 `include "data_driver.svh"
 `include "data_monitor.svh"
-`include "multicore_if.svh"
+`include "multicore_if.vh"
+`include "dut_parameters.sv"
 
 // --- Data Sequencer --- //
 class data_agent extends uvm_agent;
@@ -21,7 +22,7 @@ class data_agent extends uvm_agent;
     data_driver data_drv;
     data_monitor data_mon;
 
-    virtual multicore_if mcif;
+    virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif;
 
     function new (string name = "data_agent", uvm_component parent = null);
         super.new(name, parent);
@@ -35,7 +36,7 @@ class data_agent extends uvm_agent;
         data_drv = data_driver::type_id::create("data_drv", this);
         data_mon = data_monitor::type_id::create("data_mon", this);
 
-        if(!uvm_config_db#(virtual multicore_if)::get(this, "", "mcif", mcif)) begin
+        if(!uvm_config_db#(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::get(this, "", "mcif", mcif)) begin
             `uvm_fatal("DATA_AGENT", "No virtual interface specified for multicore_if instance")
         end
     endfunction

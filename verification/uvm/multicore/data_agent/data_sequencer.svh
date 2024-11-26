@@ -11,7 +11,7 @@ import uvm_pkg::*;
 // --- Data Sequencer --- //
 class data_sequencer extends uvm_sequencer#(data_transaction);
   `uvm_component_utils(data_sequencer)
-  
+
   // --- Constructor --- //
   function new(string name = "data_sequencer", uvm_component parent);
     super.new(name, parent);
