@@ -10,6 +10,8 @@ import uvm_pkg::*;
 `include "multicore_if.vh"
 `include "dut_parameters.sv"
 
+import dut_parameters::*;
+
 // --- Data Transaction --- //
 class data_monitor extends uvm_monitor;
 	`uvm_component_utils(data_monitor)
@@ -63,7 +65,7 @@ class data_monitor extends uvm_monitor;
 			data_trans.dstore = mcif.gen_bus_if.dstore;
 			`uvm_info("MONITOR_INPUT",
 				$sformatf("dREN: %0b, wREN: %0b, daddr: %0h, dstore: %0h",
-				data_trans.dREN, data_trans.wREN, data_trans.daddr, data_trans.dstore),
+				data_trans.dREN, data_trans.dWEN, data_trans.daddr, data_trans.dstore),
 			UVM_HIGH);
 
 			// --- Output Sample --- //

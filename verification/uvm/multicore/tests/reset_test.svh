@@ -10,6 +10,9 @@ import uvm_pkg::*;
 `include "dut_parameters.sv"
 `include "multicore_if.vh"
 
+// --- DUT Params PKG --- //
+import dut_parameters::*;
+
 class reset_test extends uvm_test;
     `uvm_component_utils(reset_test)
     
@@ -48,7 +51,7 @@ class reset_test extends uvm_test;
 
         // Start the reset sequence
         fork 
-            multicore_rst_seq.start(e.instr_agent.instr_sqr);        
+            multicore_rst_seq.start(e.instr_agent_inst.instr_sqr);        
         join
         #100ns;
         phase.drop_objection(this, "Finished reset sequence");

@@ -5,14 +5,14 @@
 `timescale 1ns/100ps
 `endif
 
-typedef enum logic[1:0] {  
-    MODIFIED,
-    EXCLUSIVE,
-    SHARED,
-    INVALID
-} cc_end_state;
+// typedef enum logic[1:0] {  
+//     MODIFIED,
+//     EXCLUSIVE,
+//     SHARED,
+//     INVALID
+// } cc_end_state;
 
-localparam BLOCK_SIZE = 2; //Need a way to overwrite this when instansiating module
+localparam BLOCK_SIZE = 2; //Need a way to overwrite this when instansiating module (added in line 33)
 localparam CACHE_SIZE         = 1024;
 localparam ASSOC              = 1;
 localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
@@ -20,7 +20,7 @@ localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
 localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
 localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
 //localparam N_TAG_BITS         = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2; //Will add later for tag IO
-typedef logic [31:0] word_t;
+// typedef logic [31:0] word_t;
 
 typedef struct {
     integer invalidated_blocks; // How many times we were invalidated
@@ -29,7 +29,19 @@ typedef struct {
     integer to_e_transitions;   // How many times we get exclusive access
 } cache_coherence_statistics_t;
 
-interface cache_coherence_if();
+interface cache_coherence_if #(
+    parameter BLOCK_SIZE = 2
+)
+();
+    typedef logic [31:0] word_t;
+
+    typedef enum logic[1:0] {  
+        MODIFIED,
+        EXCLUSIVE,
+        SHARED,
+        INVALID
+    } cc_end_state;
+
     logic abort_bus;
     cc_end_state state_transfer;
     word_t addr;

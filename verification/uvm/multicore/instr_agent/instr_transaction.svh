@@ -6,7 +6,9 @@ import uvm_pkg::*;
 `include "addr_space.sv"
 `include "dut_parameters.sv"
 
+// --- DUT Packages ---/
 import addr_space::*;
+import dut_parameters::*;
 
 class instr_transaction extends uvm_sequence_item;
 

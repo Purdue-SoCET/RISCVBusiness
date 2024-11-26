@@ -8,6 +8,8 @@ import uvm_pkg::*;
 `include "multicore_if.vh"
 `include "dut_parameters.sv"
 
+import dut_parameters::*;
+
 class instr_monitor extends uvm_monitor;
     `uvm_component_utils (instr_monitor)
 

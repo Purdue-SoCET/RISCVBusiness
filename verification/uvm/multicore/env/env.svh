@@ -23,8 +23,8 @@ class env extends uvm_env;
     endfunction
 
     function void connect_phase(uvm_phase phase);
-        instr_agent_inst.instr_agent_ap.connect(scoreboard_inst.imp_plic);     // Connects Analysis Ports between instruction agent and scoreboard
-        data_agent_inst.data_agent_ap.connect(scoreboard_inst.imp_plic);       // Connects Analysis Ports between data acess agent and scoreboard
+        instr_agent_inst.instr_agent_ap.connect(scoreboard_inst.imp_bus);     // Connects Analysis Ports between instruction agent and scoreboard
+        data_agent_inst.data_agent_ap.connect(scoreboard_inst.imp_bus);       // Connects Analysis Ports between data acess agent and scoreboard
     endfunction
 endclass
 

@@ -25,7 +25,8 @@ module testbench_top();
     import uvm_pkg::*;
     logic clk;
 
-    // import dut_parameters::*;
+    // --- DUT Params PKG --- //
+    import dut_parameters::*;
 
     initial begin
         clk = 0;

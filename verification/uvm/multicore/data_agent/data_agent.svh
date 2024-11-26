@@ -12,6 +12,8 @@ import uvm_pkg::*;
 `include "multicore_if.vh"
 `include "dut_parameters.sv"
 
+import dut_parameters::*;
+
 // --- Data Sequencer --- //
 class data_agent extends uvm_agent;
     `uvm_component_utils(data_agent)

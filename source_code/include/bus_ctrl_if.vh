@@ -25,7 +25,7 @@
 `ifndef BUS_CTRL_IF_VH
 `define BUS_CTRL_IF_VH
 
-
+// `include "component_selection_defines.vh" // NEW
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if #(

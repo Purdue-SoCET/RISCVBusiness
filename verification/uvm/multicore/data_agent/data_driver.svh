@@ -10,6 +10,8 @@ import uvm_pkg::*;
 `include "multicore_if.vh"
 `include "dut_parameters.sv"
 
+import dut_parameters::*;
+
 class data_driver extends uvm_driver;
     `uvm_component_utils (data_driver)
 

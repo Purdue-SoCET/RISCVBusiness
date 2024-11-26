@@ -9,6 +9,7 @@ import uvm_pkg::*;
 `include "dut_parameters.sv"
 `include "uvm_macros.svh"
 
+import dut_parameters::*;
 import addr_space::*;
 
 // --- Data Transaction --- //
