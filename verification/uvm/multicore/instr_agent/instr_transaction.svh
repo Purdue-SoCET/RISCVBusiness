@@ -31,6 +31,9 @@ class instr_transaction extends uvm_sequence_item;
 
     `uvm_object_utils_begin(instr_transaction)
         `uvm_field_int(nRST,          UVM_ALL_ON)
+        `uvm_field_int(mtime,          UVM_ALL_ON)
+        `uvm_field_int(halt,          UVM_ALL_ON)
+        `uvm_field_int(wfi,          UVM_ALL_ON)
         `uvm_field_int(iREN,          UVM_ALL_ON)
         `uvm_field_int(iaddr,         UVM_ALL_ON)
         `uvm_field_int(ierror,        UVM_ALL_ON)

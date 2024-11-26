@@ -9,7 +9,7 @@ interface multicore_if #(
     parameter NUM_HARTS = 1,
     parameter DATA_WIDTH = 32,
     parameter ADDR_WIDTH = 32
-);
+)(input CLK);
 
     // Clock and reset signals
     logic        nRST;
@@ -31,14 +31,14 @@ interface multicore_if #(
     ) gen_bus_if();
     
     modport dut_mp (
-        input  CLK, nRST, mtime,
+        input mtime,
         output wfi, halt,
         ref interrupt_if,
         ref gen_bus_if
     );
 
     modport tb_mp (
-        output CLK, nRST, mtime,
+        output mtime,
         input  wfi,  halt,
         ref interrupt_if,
         ref gen_bus_if

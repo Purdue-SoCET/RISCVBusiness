@@ -52,7 +52,6 @@ class data_monitor extends uvm_monitor;
 
 		// --- Run Phase --- //
 		forever begin
-
 			wait(mcif.nRST);
 
 			// --- Input Sample --- //
@@ -62,6 +61,10 @@ class data_monitor extends uvm_monitor;
 			data_trans.wREN   = mcif.gen_bus_if.wREN;
 			data_trans.daddr  = mcif.gen_bus_if.daddr;
 			data_trans.dstore = mcif.gen_bus_if.dstore;
+			`uvm_info("MONITOR_INPUT",
+				$sformatf("dREN: %0b, wREN: %0b, daddr: %0h, dstore: %0h",
+				data_trans.dREN, data_trans.wREN, data_trans.daddr, data_trans.dstore),
+			UVM_HIGH);
 
 			// --- Output Sample --- //
 			@(posedge mcif.CLK);			
@@ -69,6 +72,11 @@ class data_monitor extends uvm_monitor;
 			data_trans.derror = mcif.gen_bus_if.derror;
 			data_trans.dbusy  = mcif.gen_bus_if.dbusy;
 			data_trans.dload  = mcif.gen_bus_if.dload;
+			
+			`uvm_info("MONITOR_OUTPUT",
+				$sformatf("derror: %0b, dbusy: %0b, dload: %0h",
+				data_trans.derror, data_trans.dbusy, data_trans.dload),
+			UVM_HIGH);
 
 			// --- Send to Scoreboard --- //
 			data_ap.write(data_trans);

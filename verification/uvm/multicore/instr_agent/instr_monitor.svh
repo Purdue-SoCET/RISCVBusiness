@@ -40,16 +40,25 @@ class instr_monitor extends uvm_monitor;
             @(posedge mcif.CLK);			
             instr_tx.iREN = mcif.gen_bus_if.iREN;
             instr_tx.iaddr = mcif.gen_bus_if.iaddr;
-
+            instr_tx.mtime = mcif.mtime;
+            instr_tx.nRST = mcif.nRST;
+            `uvm_info("MONITOR_INPUT",
+                $sformatf("iREN: %0b, iaddr: %0h, mtime: %0d, nRST: %0b",
+                instr_tx.iREN, instr_tx.iaddr, instr_tx.mtime, instr_tx.nRST),
+            UVM_HIGH);
+            
 	        // --- Output Sample --- //
 			@(posedge mcif.CLK);	      
-            instr_tx.nRST = mcif.nRST;
             instr_tx.ierror = mcif.gen_bus_if.ierror;
             instr_tx.i_req_stall = mcif.gen_bus_if.i_req_stall;
             instr_tx.instruction = mcif.gen_bus_if.instruction;
-
             instr_tx.halt = mcif.halt;
             instr_tx.wfi = mcif.wfi;
+
+            `uvm_info("MONITOR_OUTPUT",
+                $sformatf("ierror: %0b, i_req_stall: %0b, instruction: %0h, halt: %0b, wfi: %0b",
+                instr_tx.ierror, instr_tx.i_req_stall, instr_tx.instruction, instr_tx.halt, instr_tx.wfi),
+            UVM_HIGH);
 
             // --- Send to Scoreboard --- //
 			instr_ap.write(instr_tx);

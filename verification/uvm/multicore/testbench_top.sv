@@ -35,7 +35,7 @@ module testbench_top();
         .RESET_PC(RST_PC),
         .DATA_WIDTH(D_WIDTH),
         .ADDR_WIDTH(A_WIDTH)
-    ) mcif();
+    ) mcif(clk);
 
     multicore_wrapper # (
         .NUM_HARTS(HARTS), 
