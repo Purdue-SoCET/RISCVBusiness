@@ -30,7 +30,7 @@ class instr_driver extends uvm_driver;
             @(posedge mcif.CLK);
             seq_item_port.get_next_item(tx);
             // RESET
-            if(!tx.nrst) begin 
+            if(!tx.nRST) begin 
                 @(negedge mcif.CLK);
                 mcif.halt = 1'b0;
                 mcif.wfi = '0;

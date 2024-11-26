@@ -22,7 +22,7 @@ interface multicore_if #(
     logic        halt;
 
     // Core interrupt interface
-    core_interrupt_if interrupt_if;
+    core_interrupt_if interrupt_if ();
 
     // Bus interface based on compilation directives
     bus_if #(

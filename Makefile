@@ -68,9 +68,15 @@ QUESTA_HOME?=/package/eda/mg/questa10.6b/questasim
 COVERAGE_DIR=verification/uvm/multicore/reports
 WAVE_SCRIPT=verification/uvm/multicore/waves/multicore.do
 
+config:
+	@echo "----------------------"
+	@echo " Running config_core"
+	@echo "----------------------"
+	@python3 scripts/config_core.py example.yml
+
 # Makefile Targets
 all: build run_gui
-build:
+build: config
 	@echo "Building testbench and DUT..."
 	@echo ""
 	vlog +incdir+$(RISCV) \
@@ -85,9 +91,9 @@ build:
 		+incdir+$(CACHES) \
 		+incdir+$(RV32C) \
 		+incdir+$(RISCV_BUS) \
+		+incdir+$(PARAMS) \
 		+incdir+$(INTERFACE) \
 		+incdir+$(PROGRAMMER) \
-		+incdir+$(PARAMS) \
 		+incdir+$(ENV) \
 		+incdir+$(DATA_AGT) \
 		+incdir+$(INSTR_AGT) \

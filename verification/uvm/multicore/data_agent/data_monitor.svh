@@ -58,7 +58,7 @@ class data_monitor extends uvm_monitor;
 			@(posedge mcif.CLK);			
 			
 			data_trans.dREN   = mcif.gen_bus_if.dREN;
-			data_trans.wREN   = mcif.gen_bus_if.wREN;
+			data_trans.dWEN   = mcif.gen_bus_if.dWEN;
 			data_trans.daddr  = mcif.gen_bus_if.daddr;
 			data_trans.dstore = mcif.gen_bus_if.dstore;
 			`uvm_info("MONITOR_INPUT",

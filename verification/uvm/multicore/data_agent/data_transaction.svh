@@ -9,8 +9,11 @@ import uvm_pkg::*;
 `include "dut_parameters.sv"
 `include "uvm_macros.svh"
 
+import addr_space::*;
+
 // --- Data Transaction --- //
 class data_transaction extends uvm_sequence_item;
+
 	// --------- Reset --------------- //
 	logic nRST;
 

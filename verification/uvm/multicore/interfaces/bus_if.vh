@@ -8,6 +8,8 @@
         parameter DATA_WIDTH = 32
     )(/* No I/O */);
 
+        import addr_space::*;
+
         // Vital signals
         logic wen; // request is a data write
         logic ren; // request is a data read

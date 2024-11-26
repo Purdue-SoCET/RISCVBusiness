@@ -29,6 +29,7 @@
 `define RISC_MGMT_IF_VH
 
 `include "component_selection_defines.vh"
+`include "rv32i_types_pkg.sv"
 
 interface risc_mgmt_if ();
 
