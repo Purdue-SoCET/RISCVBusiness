@@ -109,8 +109,7 @@ build: config
 run: build
 	@echo "Running simulation..."
 	vsim -c $(TBTOP) \
-		-L $$QUESTA_HOME//uvm-1.2 \
-		-novopt \
+		-L $(QUESTA_HOME)/uvm-1.2 \
 		-voptargs=+acc \
 		-coverage \
 		-sv_seed $(SEED) \

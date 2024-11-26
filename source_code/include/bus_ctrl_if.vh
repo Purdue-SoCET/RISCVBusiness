@@ -27,19 +27,6 @@
 
 // `include "component_selection_defines.vh" // NEW
 
-// modified from coherence_ctrl_if.vh
-interface bus_ctrl_if #(
-    parameter CPU,
-    parameter BLOCK_SIZE
-)();
-
-// parameters
-parameter CPUS = NUM_HARTS * 2;
-//parameter BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
-localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
-localparam CPU_ID_LENGTH = $clog2(CPUS);
-
-
 // coherence bus controller states
 typedef enum {
     GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV, 
@@ -66,6 +53,19 @@ typedef enum {
 typedef enum logic [1:0] {
     L2_FREE, L2_BUSY, L2_ACCESS, L2_ERROR
 } l2_state_t;
+
+
+// modified from coherence_ctrl_if.vh
+interface bus_ctrl_if #(
+    parameter CPU,
+    parameter BLOCK_SIZE
+)();
+
+// parameters
+parameter CPUS = NUM_HARTS * 2;
+//parameter BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
+localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
+localparam CPU_ID_LENGTH = $clog2(CPUS);
 
 // taken from coherence_ctrl_if.vh
 typedef logic [31:0] bus_word_t;

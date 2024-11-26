@@ -13,6 +13,8 @@
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
 `include "multicore_if.vh"
+`include "generic_bus_if.vh"
+`include "multicore_wrapper.sv"
 
 `include "dut_parameters.sv"
 `include "addr_space.sv"
@@ -46,7 +48,7 @@ module testbench_top();
     ) dut(
         .CLK(clk),
         .nRST(mcif.nRST),
-        .multicore_if(mcif)
+        .mcif(mcif)
     );
 
     initial begin        
