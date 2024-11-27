@@ -33,6 +33,8 @@
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
+`include "predictor_pipeline_if.vh"
+`include "prv_pipeline_if.vh"
 
 module RISCVBusiness #(
     parameter logic [31:0] RESET_PC = 32'h80000000,

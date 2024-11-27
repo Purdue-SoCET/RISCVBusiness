@@ -26,6 +26,9 @@
 `define PRV_PIPELINE_IF_VH
 
 `include "component_selection_defines.vh"
+`include "machine_mode_types_1_12_pkg.sv"
+`include "rv32i_types_pkg.sv"
+`include "pma_types_1_12_pkg.sv"
 
 interface prv_pipeline_if();
   import machine_mode_types_1_12_pkg::*;
