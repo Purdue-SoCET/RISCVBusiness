@@ -14,6 +14,7 @@ package stage3_types_pkg;
         word_t instr;
         word_t prediction;
         word_t badaddr;
+	word_t predicted_address; //MF:adding signal to pass predicted address from fetch stage 
     } fetch_ex_t;
 
     typedef struct packed {
@@ -31,6 +32,7 @@ package stage3_types_pkg;
         logic branch;
         logic prediction;
         logic branch_taken;
+	word_t predicted_address; //MF:added signal
         logic dren;
         logic dwen;
         logic reg_write;
