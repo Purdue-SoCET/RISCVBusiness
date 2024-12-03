@@ -140,7 +140,7 @@ module stage3_fetch_stage (
             fetch_ex_if.fetch_ex_reg.pc         <= pc;
             fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
             fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
-	    fetch_ex_if.fetch_ex_reg.predicted_address<=predict.if.target_addr; //MF:btb address to if predicted_address
+	    fetch_ex_if.fetch_ex_reg.predicted_address<=predict_if.target_addr; //MF:btb address to if predicted_address
         end
     end
 
