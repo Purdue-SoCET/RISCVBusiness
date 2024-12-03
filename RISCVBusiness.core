@@ -53,7 +53,7 @@ filesets:
             
     verilator_tb:
         files:
-            - tb_core.cc : {fileType: cppSource} 
+            - tb_core.cc : {file_type: cppSource}
         file_type: systemVerilogSource
 
     no_memory_tb:

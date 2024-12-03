@@ -13,7 +13,7 @@ filesets:
     verilator_tb:
         files:
             - cache_stress_wrapper.sv
-            - tb_cache_stress_test.cc : { fileType: cppSource }
+            - tb_cache_stress_test.cc : { file_type: cppSource }
         file_type: systemVerilogSource
 
 targets:
