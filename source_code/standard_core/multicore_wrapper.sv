@@ -14,10 +14,6 @@
 `include "bus_ctrl_if.vh"
 `include "multicore_if.vh"
 
-`include "RISCVBusiness.sv"
-`include "memory_controller.sv"
-`include "generic_nonpipeline.sv"
-
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
     parameter NUM_HARTS = 1

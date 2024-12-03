@@ -1,25 +1,6 @@
 `ifndef TESTBENCH_TOP_SV
 `define TESTBENCH_TOP_SV
 
-`include "bus_if.vh"
-`include "cache_coherence_if.vh"
-`include "component_selection_defines.vh"
-`include "risc_mgmt_if.vh"
-`include "cache_control_if.vh"
-`include "sparce_pipeline_if.vh"
-`include "tspp_fetch_execute_if.vh"
-`include "tspp_hazard_unit_if.vh"
-`include "core_interrupt_if.vh"
-`include "rv32c_if.vh"
-`include "bus_ctrl_if.vh"
-`include "multicore_if.vh"
-`include "generic_bus_if.vh"
-`include "multicore_wrapper.sv"
-
-`include "dut_parameters.sv"
-`include "addr_space.sv"
-`include "reset_test.svh"
-
 `timescale 1ns/1ps
 `include "uvm_macros.svh"
 
