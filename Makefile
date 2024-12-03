@@ -35,6 +35,7 @@ TRACKER_FILES := $(RISCV)/trackers/cpu_tracker.sv $(RISCV)/trackers/branch_track
 TBTOP=testbench_top
 VERIFICATION=$(ROOT)/verification
 UVM=$(VERIFICATION)/uvm/multicore
+TOP=$(UVM)/tb_tops
 DATA_AGT=$(UVM)/data_agent
 ENV=$(UVM)/env
 INSTR_AGT=$(UVM)/instr_agent
@@ -107,6 +108,7 @@ build: config
 	+incdir+$(CACHES) \
 	+incdir+$(RV32C) \
 	+incdir+$(RISCV_BUS) \
+	+incdir+$(TOP) \
 	+incdir+$(PARAMS) \
 	+incdir+$(INTERFACE) \
 	+incdir+$(PROGRAMMER) \
@@ -124,7 +126,7 @@ build: config
 	$(TB_PKGS) \
 	$(SRC_MODULES) \
 	$(MC_MODULES) \
-	$(UVM)/$(TBTOP).sv \
+	$(TOP)/$(TBTOP).sv \
 	-logfile tb_compile.log \
 	-printinfilenames=file_search.log
 

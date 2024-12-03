@@ -37,7 +37,13 @@ class data_driver extends uvm_driver;
             data_transaction tx;
             @(posedge mcif.CLK);
             seq_item_port.get_next_item(tx);
-
+            // RESET
+            if(!tx.nRST) begin 
+                @(negedge mcif.CLK);
+                mcif.gen_bus_if.data_load = 0;
+                mcif.gen_bus_if.derror = 0;
+                mcif.gen_bus_if.d_req_stall = '0;
+            end
             /*
                 Multicore specific Driver Code
             */

@@ -14,24 +14,24 @@ class instr_transaction extends uvm_sequence_item;
 
     // *********** DUT Inputs *********** (Just handled by instruction agent but arbitary decision)
     // Universal accross both agents
-    bit nRST;
+    logic nRST;
     logic [63:0] mtime;
 
     // *********** DUT Output *********** (Just handled by instruction agent but arbitary decision)
-    bit halt;
-    bit wfi;
+    logic halt;
+    logic wfi;
 
 
     // *********** DUT Inputs ***********
     // CPU Inputs to Instruction Agents
-    rand bit iREN;                                // Instruction read enable
-    rand bit [A_WIDTH-1 : 0] iaddr;            // Instruction address
+    rand logic iREN;                                // Instruction read enable
+    rand logic [A_WIDTH-1 : 0] iaddr;            // Instruction address
 
     // *********** DUT Outputs ***********
     // Instruction Agent Outputs to CPU
-    bit ierror;                                   // Error signal
-    bit i_req_stall;                              // Request stall signal
-    bit [A_WIDTH-1 : 0] instruction;           // Instruction data
+    logic ierror;                                   // Error signal
+    logic i_req_stall;                              // Request stall signal
+    logic [A_WIDTH-1 : 0] instruction;           // Instruction data
 
     `uvm_object_utils_begin(instr_transaction)
         `uvm_field_int(nRST,          UVM_ALL_ON)

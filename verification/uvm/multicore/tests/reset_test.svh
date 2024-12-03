@@ -6,7 +6,8 @@ import uvm_pkg::*;
 `include "instr_agent.svh"
 `include "data_agent.svh"
 `include "env.svh"
-`include "reset_seq.svh"
+`include "instr_reset_seq.svh"
+`include "data_reset_seq.svh"
 `include "dut_parameters.sv"
 `include "multicore_if.vh"
 
@@ -17,7 +18,8 @@ class reset_test extends uvm_test;
     `uvm_component_utils(reset_test)
     
     env e; 
-    reset_seq multicore_rst_seq; 
+    instr_reset_seq multicore_instr_rst_seq; 
+    data_reset_seq multicore_data_rst_seq; 
 
     virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif; 
 
@@ -39,7 +41,8 @@ class reset_test extends uvm_test;
         uvm_config_db#(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::set(this, "*", "mcif", mcif);
 
         // Create the reset sequence
-        multicore_rst_seq = reset_seq::type_id::create("multicore_rst_seq", this);
+        multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
+        multicore_data_rst_seq = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
     endfunction
 
     // Run phase
@@ -51,9 +54,10 @@ class reset_test extends uvm_test;
 
         // Start the reset sequence
         fork 
-            multicore_rst_seq.start(e.instr_agent_inst.instr_sqr);        
+            multicore_instr_rst_seq.start(e.instr_agent_inst.instr_sqr);   
+            multicore_data_rst_seq.start(e.data_agent_inst.data_sqr);       
         join
-        #100ns;
+        #1000ns;
         phase.drop_objection(this, "Finished reset sequence");
     endtask
 endclass

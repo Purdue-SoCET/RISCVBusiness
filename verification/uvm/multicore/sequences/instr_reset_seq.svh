@@ -1,12 +1,12 @@
-`ifndef RESET_SEQ_SVH
-`define RESET_SEQ_SVH
+`ifndef INSTR_RESET_SEQ_SVH
+`define INSTR_RESET_SEQ_SVH
 
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 `include "instr_transaction.svh"
 
-class reset_seq extends uvm_sequence #(instr_transaction);
-    `uvm_object_utils(reset_seq)
+class instr_reset_seq extends uvm_sequence #(instr_transaction);
+    `uvm_object_utils(instr_reset_seq)
 
     // Transaction variables
     instr_transaction tx1;
