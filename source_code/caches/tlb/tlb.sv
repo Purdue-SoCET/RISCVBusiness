@@ -31,15 +31,14 @@
 `endif
 
 module tlb #(
-    parameter PPN_LEN             = SV32_PPNLEN, // For RV32
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
     parameter TLB_SIZE            = 64, // Number of entries in the TLB
     parameter ASSOC               = 1   // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
 )
 (
     input logic CLK, nRST,
-    input logic clear, flush,
-    output logic clear_done, flush_done, tlb_miss,
+    input logic clear, fence,
+    output logic clear_done, fence_done, tlb_miss,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
     generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
     prv_pipeline_if.cache prv_pipe_if,
@@ -57,7 +56,7 @@ module tlb #(
     localparam BLOCK_SIZE         = 1;
     localparam ASID_LENGTH        = 9; // num bits for ASID
     localparam VPN_LENGTH         = SXLEN - PAGE_OFFSET_BITS;
-    localparam PPN_LENGTH         = SV32_PPNLEN;
+    localparam PPN_LENGTH         = PPNLEN;
     localparam N_SETS             = TLB_SIZE / ASSOC;
     localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
     localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
@@ -118,16 +117,16 @@ module tlb #(
         logic                    finish;
         logic [N_SET_BITS-1:0]   set_num;
         logic [N_FRAME_BITS-1:0] frame_num; // assoc
-    } flush_idx_t;             // flush counter type
+    } fence_idx_t;             // fence counter type
 
     typedef enum {
-       IDLE, HIT, FETCH, WB, FLUSH_TLB, SNOOP, CANCEL_REQ
+       IDLE, HIT, FETCH, FENCE_TLB
     } tlb_fsm_t;            // tlb state machine
 
     // Signals Declarations
     // counter signals
-    flush_idx_t flush_idx, next_flush_idx;
-    logic clear_flush_count, enable_flush_count, enable_flush_count_nowb;
+    fence_idx_t fence_idx, next_fence_idx;
+    logic clear_fence_count, enable_fence_count, enable_fence_count_nowb;
 
     // states
     tlb_fsm_t state, next_state;
@@ -152,16 +151,24 @@ module tlb #(
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL;
 
-    // flush reg
-    logic flush_req, nflush_req;
+    // fence reg
+    logic fence_req, nfence_req;
     logic idle_done;
+
+    // fence va and asid
+    decoded_tlb_addr_t decoded_fence_va;
+    logic [ASID_LENGTH-1:0] fence_asid;
 
     // RTL
     // decoded address conversion
     assign decoded_addr = decoded_tlb_addr_t'(proc_gen_bus_if.addr);
 
+    // fence assigns
+    assign decoded_fence_va = decoded_tlb_addr_t'(prv_pipe_if.fence_va);
+    assign fence_asid = prv_pipe_if.fence_asid;
+
     // sram instance
-    assign sramSEL = (state == FLUSH_TLB || state == IDLE) ? flush_idx.set_num : decoded_addr.vpn.idx_bits;
+    assign sramSEL = (state == FENCE_TLB || state == IDLE) ? fence_idx.set_num : decoded_addr.vpn.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
 
@@ -169,50 +176,50 @@ module tlb #(
     always_ff @ (posedge CLK, negedge nRST) begin
         if(~nRST) begin
             state <= IDLE;
-            flush_idx <= 0;
+            fence_idx <= 0;
             last_used <= 0;
             read_addr <= 0;
             decoded_req_addr <= 0;
-            flush_req <= 0;
+            fence_req <= 0;
         end
         else begin
             state <= next_state;                        // cache state machine
-            flush_idx <= next_flush_idx;                // index for flushing the cache entries
+            fence_idx <= next_fence_idx;                // index for fenceing the cache entries
             last_used <= next_last_used;                // MRU index
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
-            flush_req <= nflush_req;                    // flush requested by core
+            fence_req <= nfence_req;                    // fence requested by core
         end
     end
 
     // counters
     always_comb begin
-        next_flush_idx = flush_idx;
+        next_fence_idx = fence_idx;
 
-        // flush counter logic
-        if (clear_flush_count)
-            next_flush_idx = 0;
-        else if (enable_flush_count_nowb && BLOCK_SIZE != 1)
-            next_flush_idx = flush_idx + 1;
-        else if (enable_flush_count || enable_flush_count_nowb)
-            next_flush_idx = flush_idx + 1;
+        // fence counter logic
+        if (clear_fence_count)
+            next_fence_idx = 0;
+        else if (enable_fence_count_nowb && BLOCK_SIZE != 1)
+            next_fence_idx = fence_idx + 1;
+        else if (enable_fence_count || enable_fence_count_nowb)
+            next_fence_idx = fence_idx + 1;
 
         // correction for non-powers of 2
-        if (next_flush_idx.set_num == N_SETS) begin
-            next_flush_idx.finish = 1;
-            next_flush_idx.set_num = 0;
-            next_flush_idx.frame_num = 0;
+        if (next_fence_idx.set_num == N_SETS) begin
+            next_fence_idx.finish = 1;
+            next_fence_idx.set_num = 0;
+            next_fence_idx.frame_num = 0;
         end
-        else if (next_flush_idx.frame_num == ASSOC) begin
-            next_flush_idx.set_num = flush_idx.set_num + 1;
-            next_flush_idx.frame_num = 0;
+        else if (next_fence_idx.frame_num == ASSOC) begin
+            next_fence_idx.set_num = fence_idx.set_num + 1;
+            next_fence_idx.frame_num = 0;
         end
 
         // FOR ASSOC == 1 FINISH FLAG
-        if (next_flush_idx.set_num == 0 && flush_idx.set_num == N_SETS - 1) begin
-            next_flush_idx.finish = 1;
-            next_flush_idx.set_num = 0;
-            next_flush_idx.frame_num = 0;
+        if (next_fence_idx.set_num == 0 && fence_idx.set_num == N_SETS - 1) begin
+            next_fence_idx.finish = 1;
+            next_fence_idx.set_num = 0;
+            next_fence_idx.frame_num = 0;
         end
     end
 
@@ -257,10 +264,10 @@ module tlb #(
         mem_gen_bus_if.addr     = 0; 
         mem_gen_bus_if.wdata    = 0; 
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
-        enable_flush_count      = 0;
-        enable_flush_count_nowb = 0;
-        clear_flush_count       = 0;
-        flush_done 	            = 0;
+        enable_fence_count      = 0;
+        enable_fence_count_nowb = 0;
+        clear_fence_count       = 0;
+        fence_done 	            = 0;
         tlb_miss                = 0;
         idle_done               = 0;
         clear_done 	            = 0;
@@ -276,21 +283,21 @@ module tlb #(
 
         casez(state)
             IDLE: begin
-                // clear out tlbs with flush
+                // clear out tlbs with fence
                 sramWEN = 1;
-    	        sramWrite.frames[flush_idx.frame_num] = '0;
-                sramMask.frames[flush_idx.frame_num] = '0;
-                enable_flush_count_nowb = 1;
-                // flag the completion of flush
-                if (flush_idx.finish) begin
-                    clear_flush_count  = 1;
+    	        sramWrite.frames[fence_idx.frame_num] = '0;
+                sramMask.frames[fence_idx.frame_num] = '0;
+                enable_fence_count_nowb = 1;
+                // flag the completion of fence
+                if (fence_idx.finish) begin
+                    clear_fence_count  = 1;
                     idle_done 	       = 1;
-                    flush_done = 1; //HACK: Remove if this causes bugs, used for testbench
+                    fence_done = 1; //HACK: Remove if this causes bugs, used for testbench
                 end
             end
             HIT: begin
                 // tlb hit on a processor read/write
-                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !flush) begin
+                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = hit_data;
                     next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
@@ -329,32 +336,23 @@ module tlb #(
                     sramMask.frames[ridx].tag.vpn_tag  = '0;
                 end
             end
-            FLUSH_TLB: begin
-                // flush to memory if valid & dirty
-                if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].pte.perms.dirty) begin
-                    mem_gen_bus_if.wen    = 1'b1;
-                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag.vpn_tag, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
-                    mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].pte;
-                    // increment to next word when flush of word is done
-                    if (~mem_gen_bus_if.busy) begin
-                        enable_flush_count = 1;
-                        // clears entry when flushed
-                        sramWEN = 1;
-                        sramWrite.frames[flush_idx.frame_num] = 0;
-                        sramMask.frames[flush_idx.frame_num] = 0;
-                    end
-                end
-                // else clears entry, moves to next frame
-                else begin
+            FENCE_TLB: begin
+                // fence if valid and
+                // rs1 == 0 or sram.vpn == fence_va.vpn and
+                // rs2 == 0 or (sram.asid == fence_asid and is not a global page)
+                if (sramRead.frames[fence_idx.frame_num].tag.valid &&
+                    (~|decoded_fence_va | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, fence_idx.frame_num} == decoded_fence_va.vpn)) && 
+                    (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == decoded_fence_va.vpn && ~sramRead.frames[fence_idx.frame_num].pte.perms.global))) begin
+                    // clears entry when fenceed
                     sramWEN = 1;
-	    	        sramWrite.frames[flush_idx.frame_num] = 0;
-                    sramMask.frames[flush_idx.frame_num] = 0;
-                    enable_flush_count_nowb = 1;
+                    sramWrite.frames[fence_idx.frame_num] = 0;
+                    sramMask.frames[fence_idx.frame_num] = 0;
                 end
-                // flag the completion of flush
-                if (flush_idx.finish) begin
-                    clear_flush_count  = 1;
-                    flush_done 	       = 1;
+
+                // flag the completion of fence
+                if (fence_idx.finish) begin
+                    clear_fence_count  = 1;
+                    fence_done 	       = 1;
                 end
             end
         endcase
@@ -365,37 +363,37 @@ module tlb #(
         next_state = state;
         casez(state)
             IDLE: begin
-                if (idle_done) // Used for flushing cache
+                if (idle_done) // Used for fencing cache
                     next_state = HIT;
             end
             HIT: begin
                 if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) // not sure what to do with pass through yet.
                     next_state = FETCH;
-                if (flush)
-                    next_state = FLUSH_TLB;
+                if (fence)
+                    next_state = FENCE_TLB;
             end
             FETCH: begin
                 if (!mem_gen_bus_if.busy || mem_gen_bus_if.error)
                     next_state = HIT;
             end
-            FLUSH_TLB: begin
-                if (flush_done)
-                    next_state = HIT;
+            FENCE_TLB: begin
+                if (fence_done)
+                    next_state = at_if.addr_trans_on ? HIT : IDLE;
             end
         endcase
 
-        // do nothing if not in address translation is not on
-        if (~at_if.addr_trans_on)
+        // do nothing if not in address translation is not on (and if we're not actively fencing the tlb)
+        if (~at_if.addr_trans_on && state != FENCE_TLB)
             next_state = IDLE;
     end
 
-    // flush saver
+    // fence saver
     always_comb begin
-        nflush_req = flush_req;
-        if (flush)
-            nflush_req = 1;
-        if (flush_done)
-            nflush_req = 0;
+        nfence_req = fence_req;
+        if (fence)
+            nfence_req = 1;
+        if (fence_done)
+            nfence_req = 0;
     end
 
 endmodule

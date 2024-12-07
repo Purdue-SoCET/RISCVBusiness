@@ -20,6 +20,7 @@ module stage3_mem_stage(
     output logic wfi
 );
     import rv32i_types_pkg::*;
+    import machine_mode_types_1_13_pkg::*;
     import pma_types_1_13_pkg::*;
 
     /***************
@@ -162,13 +163,54 @@ module stage3_mem_stage(
             dflushed_next = 1;
     end
 
+    /******************
+    * TLB management
+    *******************/
+    logic itlb_fence_reg;
+    logic itlb_fence_pulse;
+    logic itlb_fenced, itlb_fenced_next;
+    logic dtlb_fenced, dtlb_fenced_next;
+    logic itlb_fence_done_reg, dtlb_fence_done_reg;
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if(!nRST) begin
+            itlb_fence_reg <= 1'b0;
+            itlb_fenced <= 1'b1;
+            dtlb_fenced <= 1'b1;
+        end else begin
+            itlb_fence_reg <= ex_mem_if.ex_mem_reg.sfence;
+            itlb_fenced <= itlb_fenced_next;
+            dtlb_fenced <= dtlb_fenced_next;
+        end
+    end
+
+    assign itlb_fence_pulse  = ex_mem_if.ex_mem_reg.sfence & ~itlb_fence_reg;
+    assign cc_if.itlb_fence = itlb_fence_pulse;
+    assign cc_if.dtlb_fence = itlb_fence_pulse;
+    assign prv_pipe_if.fence_asid = ex_mem_if.ex_mem_reg.rs2_data[ASID_LENGTH-1:0];
+    assign prv_pipe_if.fence_va = ex_mem_if.ex_mem_reg.rs1_data;
+    // holds itlb_fenced/dtlb_fenced high when done, resets to 0 on a pulse
+    always_comb begin
+        itlb_fenced_next = itlb_fenced;
+        dtlb_fenced_next = dtlb_fenced;
+        if (itlb_fence_pulse) begin
+            itlb_fenced_next = 0;
+            dtlb_fenced_next = 0;
+        end
+        if (cc_if.itlb_fence_done)
+            itlb_fenced_next = 1;
+        if (cc_if.dtlb_fence_done)
+            dtlb_fenced_next = 1;
+    end
+
     /************************
     * Hazard/Forwarding Unit
     *************************/
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
+    assign hazard_if.sfence = ex_mem_if.ex_mem_reg.sfence;
+    assign hazard_if.fence_stall = (ifence_reg && !(iflushed && dflushed)) || (itlb_fence_reg && !(itlb_fenced && dtlb_fenced));
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;

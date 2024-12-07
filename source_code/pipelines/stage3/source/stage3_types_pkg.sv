@@ -35,6 +35,7 @@ package stage3_types_pkg;
         logic dwen;
         logic reg_write;
         logic ifence;
+        logic sfence;
         logic jump;
         logic halt;
         logic csr_swap;

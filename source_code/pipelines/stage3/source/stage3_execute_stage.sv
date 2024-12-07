@@ -287,6 +287,7 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.dwen           <= cu_if.dwen;
                     ex_mem_if.ex_mem_reg.reg_write      <= cu_if.wen;
                     ex_mem_if.ex_mem_reg.ifence         <= cu_if.ifence;
+                    ex_mem_if.ex_mem_reg.sfence         <= cu_if.sfence;
                     ex_mem_if.ex_mem_reg.jump           <= cu_if.jump;
                     ex_mem_if.ex_mem_reg.halt           <= cu_if.halt;
                     ex_mem_if.ex_mem_reg.csr_swap       <= cu_if.csr_swap;

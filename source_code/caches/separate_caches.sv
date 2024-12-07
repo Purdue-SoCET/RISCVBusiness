@@ -44,8 +44,7 @@ module separate_caches (
     output logic icache_miss,
     output logic dcache_miss
 );
-    // localparam PPN_LEN = SXLEN == 32 ? SV32_PPNLEN : SV57_PPNLEN;
-    localparam PPN_LEN = 20;
+    import machine_mode_types_1_13_pkg::*;
 
     // TLB signals
     logic itlb_miss, dtlb_miss;
@@ -89,8 +88,7 @@ module separate_caches (
                 .CACHE_SIZE(DCACHE_SIZE),
                 .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
                 .ASSOC(DCACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
-                .PPN_LEN(PPN_LEN)
+                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
             )
             dcache (
                 .CLK(CLK),
@@ -115,8 +113,7 @@ module separate_caches (
                     .CACHE_SIZE(DCACHE_SIZE),
                     .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
                     .ASSOC(DCACHE_ASSOC),
-                    .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
-                    .PPN_LEN(PPN_LEN)
+                    .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
                 )
                 dcache (
                     .CLK(CLK),
@@ -133,15 +130,16 @@ module separate_caches (
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
                     .tlb_miss(dtlb_miss),
-                    .ppn_tag(dtlb_gen_bus_if.rdata[PPN_LEN:10])
+                    .ppn_tag(dtlb_gen_bus_if.rdata[PPNLEN:10])
                 );
                 tlb dtlb (
                     .CLK(CLK),
                     .nRST(nRST),
                     .mem_gen_bus_if(dtlb_gen_bus_if),
                     .proc_gen_bus_if(dcache_proc_gen_bus_if),
-                    .flush(1'b0),
+                    .fence(control_if.dtlb_fence),
                     .clear(1'b0),
+                    .fence_done(control_if.dtlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
                     .tlb_miss(dtlb_miss)
@@ -183,8 +181,7 @@ module separate_caches (
                 .CACHE_SIZE(ICACHE_SIZE),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
                 .ASSOC(ICACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
-                .PPN_LEN(PPN_LEN)
+                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
             )
             icache (
                 .CLK(CLK),
@@ -209,8 +206,7 @@ module separate_caches (
                     .CACHE_SIZE(ICACHE_SIZE),
                     .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
                     .ASSOC(ICACHE_ASSOC),
-                    .NONCACHE_START_ADDR(NONCACHE_START_ADDR),
-                    .PPN_LEN(PPN_LEN)
+                    .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
                 )
                 icache (
                     .CLK(CLK),
@@ -227,15 +223,16 @@ module separate_caches (
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
                     .tlb_miss(itlb_miss),
-                    .ppn_tag(itlb_gen_bus_if.rdata[PPN_LEN:10])
+                    .ppn_tag(itlb_gen_bus_if.rdata[PPNLEN:10])
                 );
                 tlb itlb (
                     .CLK(CLK),
                     .nRST(nRST),
                     .mem_gen_bus_if(itlb_gen_bus_if),
                     .proc_gen_bus_if(icache_proc_gen_bus_if),
-                    .flush(1'b0),
+                    .fence(control_if.itlb_fence),
                     .clear(1'b0),
+                    .fence_done(control_if.itlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
                     .tlb_miss(itlb_miss)

@@ -39,13 +39,12 @@ module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
     parameter ASSOC               = 1, // dont set this to 0
-    parameter NONCACHE_START_ADDR = 32'hF000_0000, // sh/sb still have issues when uncached; not sure whats up with that still tbh
-    parameter PPN_LEN             = SV32_PPNLEN
+    parameter NONCACHE_START_ADDR = 32'hF000_0000 // sh/sb still have issues when uncached; not sure whats up with that still tbh
 )
 (
     input logic CLK, nRST,
     input logic clear, flush, reserve, exclusive, tlb_miss,
-    input logic [PPN_LEN-1:0] ppn_tag,
+    input logic [PPNLEN-1:0] ppn_tag,
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
@@ -66,7 +65,7 @@ module l1_cache #(
     localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
     localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS_BARE    = WORD_SIZE - N_SET_BITS - N_BLOCK_BITS - 2;
-    localparam N_PPNTAG_BITS      = PPN_LEN;
+    localparam N_PPNTAG_BITS      = PPNLEN;
     localparam N_PA_BITS          = N_PPNTAG_BITS + 12;
     localparam N_TAG_BITS         = N_PPNTAG_BITS > N_TAG_BITS_BARE ? N_PPNTAG_BITS : N_TAG_BITS_BARE;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2 + 1; // in bits (+1 for exclusive bit)

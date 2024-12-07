@@ -35,7 +35,7 @@ interface control_unit_if;
   import rv32b_pkg::*;
   import rv32zc_pkg::*;
 
-  logic dwen, dren, j_sel, branch, jump, ex_pc_sel, imm_shamt_sel, halt, wen, ifence, wfi;
+  logic dwen, dren, j_sel, branch, jump, ex_pc_sel, imm_shamt_sel, halt, wen, ifence, sfence, wfi;
   aluop_t alu_op;
   logic [1:0] alu_a_sel, alu_b_sel;
   w_sel_t w_sel;
@@ -69,7 +69,7 @@ interface control_unit_if;
     imm_I, imm_S, imm_SB, imm_UJ, imm_U, imm_shamt_sel, alu_op,
     opcode, halt, wen, fault_insn, illegal_insn, mret_insn, sret_insn, breakpoint,
     ecall_insn, fence, csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid,
-    csr_addr, zimm, ifence, wfi, rd, rv32m_control, rv32a_control,
+    csr_addr, zimm, ifence, sfence, wfi, rd, rv32m_control, rv32a_control,
     rv32b_control, rv32zc_control, reserve, exclusive
   );
 endinterface

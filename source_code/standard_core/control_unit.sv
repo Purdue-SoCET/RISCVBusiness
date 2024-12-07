@@ -30,8 +30,8 @@
 `include "component_selection_defines.vh"
 
 module control_unit (
-          control_unit_if.control_unit       cu_if,
-          rv32i_reg_file_if.cu               rf_if,
+    control_unit_if.control_unit       cu_if,
+    rv32i_reg_file_if.cu               rf_if,
     input logic                        [4:0] rmgmt_rsel_s_0,
     rmgmt_rsel_s_1,
     rmgmt_rsel_d,
@@ -225,6 +225,7 @@ module control_unit (
         cu_if.breakpoint = 1'b0;
         cu_if.ecall_insn = 1'b0;
         cu_if.wfi = 1'b0;
+        cu_if.sfence = 1'b0;
 
         if (cu_if.opcode == SYSTEM) begin
             if (rv32i_system_t'(instr_i.funct3) == PRIV) begin
@@ -233,7 +234,7 @@ module control_unit (
                 if (priv_insn_t'(instr_i.imm11_00) == EBREAK) cu_if.breakpoint = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == ECALL) cu_if.ecall_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == WFI) cu_if.wfi = 1'b1;
-                if (memmgmt_t'(instr_r.funct7) == SFENCE_VMA) cu_if.fence = 1'b1;
+                if (memmgmt_t'(instr_r.funct7) == SFENCE_VMA) cu_if.sfence = 1'b1;
             end
         end
     end

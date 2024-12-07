@@ -55,6 +55,8 @@ interface prv_pipeline_if();
   satp_t satp;
   mstatus_t mstatus;
   priv_level_t curr_privilege_level;
+  word_t fence_va;
+  logic [ASID_LENGTH-1:0] fence_asid;
 
   // performance signals
   logic wb_enable, instr;
@@ -80,7 +82,7 @@ interface prv_pipeline_if();
   );
 
   modport pipe (
-    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width,
+    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid,
     input  rdata, invalid_priv_isn
   );
 
@@ -90,7 +92,7 @@ interface prv_pipeline_if();
   );
 
   modport cache (
-    input satp, mstatus, curr_privilege_level,
+    input satp, mstatus, curr_privilege_level, fence_va, fence_asid,
     output fault_insn_page, fault_load_page, fault_store_page
   );
 

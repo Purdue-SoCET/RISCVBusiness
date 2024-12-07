@@ -37,7 +37,7 @@ interface stage3_hazard_unit_if();
   logic mispredict, halt;
   word_t pc_f, pc_e, pc_m;
   logic valid_e, valid_m; // f always valid since it's the PC
-  logic ifence;
+  logic ifence, sfence;
   logic ex_busy;
 
   // Control (outputs)
@@ -70,7 +70,7 @@ interface stage3_hazard_unit_if();
             i_mem_busy, d_mem_busy, dren, dwen, reserve, mret, sret,
             jump, branch, fence_stall, mispredict, halt, pc_f, pc_e, pc_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
-            badaddr, ifence,
+            badaddr, ifence, sfence,
             token_ex, token_mem, rv32c_ready,
             valid_e, valid_m, ex_busy,
     output  pc_en, npc_sel,
@@ -96,7 +96,7 @@ interface stage3_hazard_unit_if();
             d_mem_busy, dren, dwen, reserve, mret, sret,
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
-            badaddr, ifence, wfi,
+            badaddr, ifence, sfence, wfi,
             token_mem
   );
 
