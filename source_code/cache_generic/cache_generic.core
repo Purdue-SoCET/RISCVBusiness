@@ -1,0 +1,45 @@
+CAPI=2:
+name: socet:riscv:cache_generic:0.1.0
+description: cache_generic
+
+filesets:
+    rtl_cache_generic:
+        depend:
+            - "socet:riscv:packages"
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:ram"
+        files:
+            - cache_control_downstream.sv
+            - cache_control_snoop.sv
+            - cache_control_sram.sv
+            - cache_control_upstream.sv
+            - cache_flush_counter_handler.sv
+            - cache_generic.sv
+            - cache_hit_logic.sv
+            - cache_sm.sv
+            - sram.sv
+        file_type: systemVerilogSource  
+    tb:
+        files:
+            - tb_cache_generic/tb_cache_generic.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl_cache_generic
+            - tb
+        toplevel: tb_cache_generic
+    
+    sim:
+        <<: *default
+        description: Simulate w/SV TB
+        default_tool: verilator
+        toplevel: tb_cache_generic
+        tools:
+            verilator:
+                verilator_options:
+                - --binary
+                - --coverage
+                - --trace-fst
+                - --trace-structs
