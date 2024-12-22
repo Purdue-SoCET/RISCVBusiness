@@ -35,8 +35,7 @@ module separate_caches (
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches control_if,
-    cache_coherence_if.cache i_cache_coherency_if,
-    cache_coherence_if.cache d_cache_coherency_if,
+    bus_ctrl_if.cache bus_ctrl_if
     output logic icache_miss,
     output logic dcache_miss
 );
@@ -79,16 +78,13 @@ module separate_caches (
             dcache (
                 .CLK(CLK),
                 .nRST(nRST),
-                .mem_gen_bus_if(dcache_mem_gen_bus_if),
                 .proc_gen_bus_if(dcache_proc_gen_bus_if),
+                .bus_ctrl_if(bus_ctrl_if),
                 .flush(control_if.dcache_flush),
                 .clear(control_if.dcache_clear),
                 .reserve(control_if.dcache_reserve),
-                .exclusive(control_if.dcache_exclusive),
                 .flush_done(control_if.dflush_done),
                 .abort_bus(),
-                .clear_done(control_if.dclear_done),
-                .ccif(d_cache_coherency_if),
                 .cache_miss(dcache_miss)
             );
         endcase
@@ -131,16 +127,13 @@ module separate_caches (
             icache (
                 .CLK(CLK),
                 .nRST(nRST),
-                .mem_gen_bus_if(icache_mem_gen_bus_if),
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
+                .bus_ctrl_if(bus_ctrl_if),
                 .flush(control_if.icache_flush),
                 .clear(control_if.icache_clear),
                 .reserve(1'b0),
-                .exclusive(1'b0),
                 .flush_done(control_if.iflush_done),
                 .abort_bus(i_cache_coherency_if.abort_bus),
-                .clear_done(control_if.iclear_done),
-                .ccif(i_cache_coherency_if),
                 .cache_miss(icache_miss)
             );
         endcase

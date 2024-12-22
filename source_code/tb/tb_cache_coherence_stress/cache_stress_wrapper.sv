@@ -35,10 +35,6 @@ module cache_stress_wrapper (
     generic_bus_if cache1_proc_gen_bus_if();
     cache_control_if c0c_if();
     cache_control_if c1c_if();
-    generic_bus_if #(.BLOCK_SIZE(2)) cache0_mem_gen_bus_if();
-    generic_bus_if #(.BLOCK_SIZE(2)) cache1_mem_gen_bus_if();
-    cache_coherence_if cache0_coherency_if();
-    cache_coherence_if cache1_coherency_if();
     bus_ctrl_if bus_ctrl_if();
 
     cache_coherence_statistics_t cache0_stats, cache1_stats;
@@ -99,27 +95,14 @@ module cache_stress_wrapper (
     ) cache0 (
         .CLK(CLK),
         .nRST(nRST),
-        .mem_gen_bus_if(cache0_mem_gen_bus_if),
         .proc_gen_bus_if(cache0_proc_gen_bus_if),
+        .bus_ctrl_if(bus_ctrl_if),
         .flush(c0c_if.dcache_flush),
         .clear(c0c_if.dcache_clear),
         .reserve(c0c_if.dcache_reserve),
-        .exclusive(c0c_if.dcache_exclusive),
         .flush_done(c0c_if.dflush_done),
         .clear_done(c0c_if.dclear_done),
-        .ccif(cache0_coherency_if),
         .abort_bus()
-    );
-
-    coherency_unit #(
-        .CPUID(0)
-    ) cache0_coherency (
-        .CLK(CLK),
-        .nRST(nRST),
-        .ccif(cache0_coherency_if),
-        .bcif(bus_ctrl_if),
-        .gbif(cache0_mem_gen_bus_if),
-        .coherence_statistics(cache0_stats)
     );
 
     l1_cache #(
@@ -129,27 +112,14 @@ module cache_stress_wrapper (
     ) cache1 (
         .CLK(CLK),
         .nRST(nRST),
-        .mem_gen_bus_if(cache1_mem_gen_bus_if),
         .proc_gen_bus_if(cache1_proc_gen_bus_if),
+        .bus_ctrl_if(bus_ctrl_if),
         .flush(c1c_if.dcache_flush),
         .clear(c1c_if.dcache_clear),
         .reserve(c1c_if.dcache_reserve),
-        .exclusive(c1c_if.dcache_exclusive),
         .flush_done(c1c_if.dflush_done),
         .clear_done(c1c_if.dclear_done),
-        .ccif(cache1_coherency_if),
         .abort_bus()
-    );
-
-    coherency_unit #(
-        .CPUID(1)
-    ) cache1_coherency (
-        .CLK(CLK),
-        .nRST(nRST),
-        .ccif(cache1_coherency_if),
-        .bcif(bus_ctrl_if),
-        .gbif(cache1_mem_gen_bus_if),
-        .coherence_statistics(cache1_stats)
     );
 
     bus_ctrl #(
@@ -157,8 +127,7 @@ module cache_stress_wrapper (
     ) bus (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(bus_ctrl_if),
-        .abort_bus(1'b0)
+        .ccif(bus_ctrl_if)
     );
 
     generic_bus_if out_gen_bus_if();
