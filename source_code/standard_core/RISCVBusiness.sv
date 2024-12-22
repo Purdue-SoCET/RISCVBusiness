@@ -114,7 +114,9 @@ module RISCVBusiness #(
     );
     */
 
-    separate_caches sep_caches (
+    separate_caches #(
+        .HART_ID(HART_ID)
+    ) sep_caches (
         .CLK(CLK),
         .nRST(nRST),
         .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
