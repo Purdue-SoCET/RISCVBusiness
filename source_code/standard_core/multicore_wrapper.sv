@@ -81,7 +81,8 @@ module multicore_wrapper #(
                 .icache_statistics(cache_statistics[HART_ID * 2]),
                 .dcache_statistics(cache_statistics[HART_ID * 2 + 1]),
                 .interrupt_if(interrupt_if),
-                .bus_ctrl_if(bus_ctrl_if)
+                .bus_ctrl_if(bus_ctrl_if),
+                .abort_bus()
             );
 
             always_comb begin

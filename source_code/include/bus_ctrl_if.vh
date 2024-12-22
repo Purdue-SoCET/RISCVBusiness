@@ -115,6 +115,11 @@ interface bus_ctrl_if ();
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 
 
+    modport cache(
+        input dwait, dload, ccwait, ccinv, ccsnoopaddr, ccexclusive,
+        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty
+    );
+
     modport tb(
         input   dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
