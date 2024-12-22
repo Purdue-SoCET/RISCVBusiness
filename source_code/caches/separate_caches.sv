@@ -27,7 +27,9 @@
 `include "component_selection_defines.vh"
 `include "bus_ctrl_if.vh"
 
-module separate_caches (
+module separate_caches#(
+    parameter HART_ID
+) (
     input logic CLK,
     nRST,
     generic_bus_if.cpu icache_mem_gen_bus_if,
@@ -73,7 +75,8 @@ module separate_caches (
             l1_cache #(
                 .CACHE_SIZE(DCACHE_SIZE),
                 .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
-                .ASSOC(DCACHE_ASSOC)
+                .ASSOC(DCACHE_ASSOC),
+                .HART_ID(HART_ID*2+1)
             )
             dcache (
                 .CLK(CLK),
@@ -122,7 +125,8 @@ module separate_caches (
             l1_cache #(
                 .CACHE_SIZE(ICACHE_SIZE),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
-                .ASSOC(ICACHE_ASSOC)
+                .ASSOC(ICACHE_ASSOC),
+                .HART_ID(HART_ID*2)
             )
             icache (
                 .CLK(CLK),

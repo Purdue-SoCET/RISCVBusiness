@@ -37,7 +37,8 @@
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
-    parameter ASSOC               = 1  // dont set this to 0
+    parameter ASSOC               = 1, // dont set this to 0
+    parameter HART_ID
 )
 (
     input logic CLK, nRST,

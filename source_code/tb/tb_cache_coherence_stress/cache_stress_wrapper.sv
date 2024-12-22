@@ -91,7 +91,8 @@ module cache_stress_wrapper (
     l1_cache #(
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
-        .ASSOC(1)
+        .ASSOC(1),
+        .HART_ID(0)
     ) cache0 (
         .CLK(CLK),
         .nRST(nRST),
@@ -108,7 +109,8 @@ module cache_stress_wrapper (
     l1_cache #(
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
-        .ASSOC(1)
+        .ASSOC(1),
+        .HART_ID(1)
     ) cache1 (
         .CLK(CLK),
         .nRST(nRST),
