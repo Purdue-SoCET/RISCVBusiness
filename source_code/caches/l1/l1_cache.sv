@@ -140,7 +140,7 @@ module l1_cache #(
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
 
-    assign snoop_decoded_addr = decoded_cache_addr_t'(bus_ctrl_if.ccsnoopaddr);
+    assign snoop_decoded_addr = decoded_cache_addr_t'(bus_ctrl_if.ccsnoopaddr[HART_ID]);
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
@@ -250,7 +250,7 @@ module l1_cache #(
 
         for(int i = 0; i < ASSOC; i++) begin
             if (read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid) begin
-                snoop_hit = 1'b1;
+                snoop_hit = bus_ctrl_if.ccwait[HART_ID];
                 valid = read_tag_bits[i].valid;
                 dirty = read_tag_bits[i].dirty;
                 exclusive = read_tag_bits[i].exclusive;
@@ -277,11 +277,17 @@ module l1_cache #(
         // found in multiple places in the below `casez` statement, however,
         // it wouldn't execute correctly. For example, 0x80000510 would become
         // 0x80000500 for a block size of 2.
-        next_read_addr          = proc_gen_bus_if.addr & ~{CLEAR_LENGTH{1'b1}};
-        next_decoded_req_addr   = decoded_req_addr;
-        next_last_used          = last_used;
-        bus_ctrl_if.dWEN             = 1'b0;
-        // ccif.requested_data     = {BLOCK_SIZE{32'hBAD1BAD1}};
+        next_read_addr                   = proc_gen_bus_if.addr & ~{CLEAR_LENGTH{1'b1}};
+        next_decoded_req_addr            = decoded_req_addr;
+        next_last_used                   = last_used;
+        bus_ctrl_if.dREN[HART_ID]        = 1'b0;
+        bus_ctrl_if.dWEN[HART_ID]        = 1'b0;
+        bus_ctrl_if.daddr[HART_ID]       = 32'hBAD1BAD1;
+        bus_ctrl_if.dstore[HART_ID]      = 32'hBAD1BAD1;
+        bus_ctrl_if.ccwrite[HART_ID]     = 1'b0;
+        bus_ctrl_if.ccsnoophit[HART_ID]  = 1'b0;
+        bus_ctrl_if.ccdirty[HART_ID]     = 1'b0;
+        bus_ctrl_if.ccsnoopdone[HART_ID] = 1'b0;
 
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx.idx_bits] == (ASSOC - 1)))
@@ -317,7 +323,20 @@ module l1_cache #(
                 end
                 // cache hit on a processor write
                 else if(proc_gen_bus_if.wen && hit && (!reserve || (reserve && addr_is_reserved)) && !flush) begin
-                    proc_gen_bus_if.busy = 0;
+                    // TODO: handle this nasty case better
+                    // On SNOOP->HIT transition when cache hit transaction started
+                    // during SNOOP, this will bring busy low before it's actually
+                    // written to the sram. For testing, use seed 1734995039
+                    // and 999914 transactions on the stress testbench
+                    casez (proc_gen_bus_if.byte_en)
+                        4'b0001:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][0+:8] != proc_gen_bus_if.wdata[0+:8];
+                        4'b0010:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][8+:8] != proc_gen_bus_if.wdata[8+:8];
+                        4'b0100:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][16+:8] != proc_gen_bus_if.wdata[16+:8];
+                        4'b1000:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][24+:8] != proc_gen_bus_if.wdata[24+:8];
+                        4'b0011:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][0+:16] != proc_gen_bus_if.wdata[0+:16];
+                        4'b1100:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][16+:16] != proc_gen_bus_if.wdata[16+:16];
+                        default:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits] != proc_gen_bus_if.wdata;
+                    endcase
                     sramWEN = 1;
                     casez (proc_gen_bus_if.byte_en)
                         4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
@@ -338,24 +357,23 @@ module l1_cache #(
                 end
                 // passthrough
                 else if(pass_through) begin
-                    // TODO:
-                    // mem_gen_bus_if.wen      = proc_gen_bus_if.wen;
-                    // mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
-                    // mem_gen_bus_if.addr     = proc_gen_bus_if.addr;
-                    // mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en;
-                    // proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
-                    // proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;
-                    // if(proc_gen_bus_if.wen) begin
-                    //     casez (proc_gen_bus_if.byte_en)
-                    //         4'b0001:    mem_gen_bus_if.wdata  = {24'd0, proc_gen_bus_if.wdata[7:0]};
-                    //         4'b0010:    mem_gen_bus_if.wdata  = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
-                    //         4'b0100:    mem_gen_bus_if.wdata  = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
-                    //         4'b1000:    mem_gen_bus_if.wdata  = {proc_gen_bus_if.wdata[31:24], 24'd0};
-                    //         4'b0011:    mem_gen_bus_if.wdata  = {16'd0, proc_gen_bus_if.wdata[15:0]};
-                    //         4'b1100:    mem_gen_bus_if.wdata  = {proc_gen_bus_if.wdata[31:16],16'd0};
-                    //         default:    mem_gen_bus_if.wdata  = proc_gen_bus_if.wdata;
-                    //     endcase
-                    // end
+                    bus_ctrl_if.dWEN[HART_ID]     = proc_gen_bus_if.wen;
+                    bus_ctrl_if.dREN[HART_ID]     = proc_gen_bus_if.ren;
+                    bus_ctrl_if.daddr[HART_ID]    = proc_gen_bus_if.addr;
+                    bus_ctrl_if.dbyte_en[HART_ID] = proc_gen_bus_if.byte_en;
+                    proc_gen_bus_if.busy          = bus_ctrl_if.dwait[HART_ID];
+                    proc_gen_bus_if.rdata         = bus_ctrl_if.dload[HART_ID];
+                    if(proc_gen_bus_if.wen) begin
+                        casez (proc_gen_bus_if.byte_en)
+                            4'b0001: bus_ctrl_if.dstore[HART_ID] = {24'd0, proc_gen_bus_if.wdata[7:0]};
+                            4'b0010: bus_ctrl_if.dstore[HART_ID] = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
+                            4'b0100: bus_ctrl_if.dstore[HART_ID] = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
+                            4'b1000: bus_ctrl_if.dstore[HART_ID] = {proc_gen_bus_if.wdata[31:24], 24'd0};
+                            4'b0011: bus_ctrl_if.dstore[HART_ID] = {16'd0, proc_gen_bus_if.wdata[15:0]};
+                            4'b1100: bus_ctrl_if.dstore[HART_ID] = {proc_gen_bus_if.wdata[31:16],16'd0};
+                            default: bus_ctrl_if.dstore[HART_ID] = proc_gen_bus_if.wdata;
+                        endcase
+                    end
                 end
                 // Cache miss of sc
                 else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) begin
@@ -368,127 +386,79 @@ module l1_cache #(
 			    end
                 // cache miss on a dirty block
 			    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
-                        next_decoded_req_addr = decoded_addr;
-                        next_read_addr        =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-                    end
+                    next_decoded_req_addr = decoded_addr;
+                    next_read_addr        =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                end
             end
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-                // TODO:
-                // mem_gen_bus_if.wen = proc_gen_bus_if.wen;
-                // mem_gen_bus_if.ren = proc_gen_bus_if.ren || !abort_bus;
-                // mem_gen_bus_if.addr = read_addr;
+                bus_ctrl_if.ccwrite[HART_ID] = proc_gen_bus_if.wen;
+                bus_ctrl_if.dREN[HART_ID] = proc_gen_bus_if.ren || proc_gen_bus_if.wen || !abort_bus;
+                bus_ctrl_if.daddr[HART_ID] = read_addr;
                 sramWrite.frames[ridx].tag.valid = 0;
                 sramMask.frames[ridx].tag.valid = 0;
                 // fill data
-                // TODO:
-                // if(~mem_gen_bus_if.busy) begin
-                //     sramWEN                             = 1'b1;
-                //     sramWrite.frames[ridx].data         = mem_gen_bus_if.rdata;
-                //     sramWrite.frames[ridx].tag.valid    = 1'b1;
-                //     sramWrite.frames[ridx].tag.tag_bits = decoded_req_addr.idx.tag_bits;
-                //     sramMask.frames[ridx].data          = 1'b0;
-                //     sramMask.frames[ridx].tag.valid     = 1'b0;
-                //     sramMask.frames[ridx].tag.tag_bits  = 1'b0;
+                if (!bus_ctrl_if.dwait[HART_ID]) begin
+                    sramWEN                             = 1'b1;
+                    sramWrite.frames[ridx].data         = bus_ctrl_if.dload[HART_ID];
+                    sramWrite.frames[ridx].tag.valid    = 1'b1;
+                    sramWrite.frames[ridx].tag.tag_bits = decoded_req_addr.idx.tag_bits;
+                    sramMask.frames[ridx].data          = 0;
+                    sramMask.frames[ridx].tag.valid     = 0;
+                    sramMask.frames[ridx].tag.tag_bits  = 0;
 
-                //     sramWrite.frames[ridx].tag.exclusive = (ccif.state_transfer == EXCLUSIVE);
-                //     sramWrite.frames[ridx].tag.dirty = (ccif.state_transfer == MODIFIED);
-                //     sramMask.frames[ridx].tag.exclusive = 0;
-                //     sramMask.frames[ridx].tag.dirty = 0;
-
-                //     if (proc_gen_bus_if.wen) begin
-                //         casez (proc_gen_bus_if.byte_en)
-                //             4'b0001:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][7:0] = proc_gen_bus_if.wdata[7:0];
-                //             4'b0010:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:8] = proc_gen_bus_if.wdata[15:8];
-                //             4'b0100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][23:16] = proc_gen_bus_if.wdata[23:16];
-                //             4'b1000:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:24] = proc_gen_bus_if.wdata[31:24];
-                //             4'b0011:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:0] = proc_gen_bus_if.wdata[15:0];
-                //             4'b1100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:16] = proc_gen_bus_if.wdata[31:16];
-                //             default:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
-                //         endcase
-                //     end
-                // end
+                    sramWrite.frames[ridx].tag.exclusive = !proc_gen_bus_if.wen && bus_ctrl_if.ccexclusive[HART_ID];
+                    sramWrite.frames[ridx].tag.dirty = proc_gen_bus_if.wen;
+                    sramMask.frames[ridx].tag.exclusive = 0;
+                    sramMask.frames[ridx].tag.dirty = 0;
+                end
             end
             WB: begin
                 // set stim for eviction
-                // TODO:
-                // ccif.dWEN = 1'b1;
-                // TODO
-                // mem_gen_bus_if.wen = 1'b1;
-                // mem_gen_bus_if.addr = read_addr;
-                // mem_gen_bus_if.wdata = sramRead.frames[ridx].data;
+                bus_ctrl_if.dWEN[HART_ID] = 1'b1;
+                bus_ctrl_if.daddr[HART_ID] = read_addr;
+                bus_ctrl_if.dstore[HART_ID] = sramRead.frames[ridx].data;
                 next_read_addr =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                 // increment eviction word counter
-                // TODO
-                // if(!mem_gen_bus_if.busy) begin
-                //     // invalidate when eviction is complete
-                //     sramWEN = 1;
-                //     sramWrite.frames[ridx].tag.dirty = 0;
-                //     sramWrite.frames[ridx].tag.valid = 0;
-                //     sramMask.frames[ridx].tag.dirty  = 0;
-                //     sramMask.frames[ridx].tag.valid  = 0;
-                // end
+                if(!bus_ctrl_if.dwait[HART_ID]) begin
+                    // invalidate when eviction is complete
+                    sramWEN = 1;
+                    sramWrite.frames[ridx].tag.dirty = 0;
+                    sramWrite.frames[ridx].tag.valid = 0;
+                    sramWrite.frames[ridx].tag.exclusive = 0;
+                    sramMask.frames[ridx].tag.dirty  = 0;
+                    sramMask.frames[ridx].tag.valid  = 0;
+                    sramMask.frames[ridx].tag.exclusive  = 0;
+                end
             end
             SNOOP: begin
-                // TODO
-                // ccif.requested_data = sramRead.frames[hit_idx].data;
-                // TODO
-                // if (!mem_gen_bus_if.busy) begin
-                //     sramWEN = 1;
-                //     case(ccif.state_transfer)
-                //         INVALID: begin
-                //             sramWrite.frames[hit_idx].tag.dirty     = 0;
-                //             sramWrite.frames[hit_idx].tag.valid     = 0;
-                //             sramWrite.frames[hit_idx].tag.exclusive = 0;
-                //             sramMask.frames[hit_idx].tag.dirty         = 0;
-                //             sramMask.frames[hit_idx].tag.valid         = 0;
-                //             sramMask.frames[hit_idx].tag.exclusive     = 0;
-                //         end
-                //         SHARED: begin
-                //             sramWrite.frames[hit_idx].tag.dirty     = 0;
-                //             sramWrite.frames[hit_idx].tag.valid     = 1;
-                //             sramWrite.frames[hit_idx].tag.exclusive = 0;
-                //             sramMask.frames[hit_idx].tag.dirty      = 0;
-                //             sramMask.frames[hit_idx].tag.valid      = 0;
-                //             sramMask.frames[hit_idx].tag.exclusive  = 0;
-                //         end
-                //         EXCLUSIVE: begin
-                //             sramWrite.frames[hit_idx].tag.dirty     = 0;
-                //             sramWrite.frames[hit_idx].tag.valid     = 1;
-                //             sramWrite.frames[hit_idx].tag.exclusive = 1;
-                //             sramMask.frames[hit_idx].tag.dirty      = 0;
-                //             sramMask.frames[hit_idx].tag.valid      = 0;
-                //             sramMask.frames[hit_idx].tag.exclusive  = 0;
-                //         end
-                //         MODIFIED: begin
-                //             sramWrite.frames[hit_idx].tag.dirty     = 1;
-                //             sramWrite.frames[hit_idx].tag.valid     = 1;
-                //             sramWrite.frames[hit_idx].tag.exclusive = 0;
-                //             sramMask.frames[hit_idx].tag.dirty      = 0;
-                //             sramMask.frames[hit_idx].tag.valid      = 0;
-                //             sramMask.frames[hit_idx].tag.exclusive  = 0;
-                //         end
-                //     endcase
-                // end
+                bus_ctrl_if.dstore[HART_ID]      = sramRead.frames[hit_idx].data;
+                bus_ctrl_if.ccsnoopdone[HART_ID] = 1'b1;
+                bus_ctrl_if.ccsnoophit[HART_ID]  = 1'b1;
+                bus_ctrl_if.ccdirty[HART_ID]     = sramRead.frames[hit_idx].tag.dirty;
+                if (!bus_ctrl_if.ccwait[HART_ID]) begin
+                    sramWEN = 1;
+                    sramWrite.frames[hit_idx].tag.dirty     = 0;
+                    sramWrite.frames[hit_idx].tag.valid     = !bus_ctrl_if.ccinv[HART_ID];
+                    sramWrite.frames[hit_idx].tag.exclusive = 0;
+                    sramMask.frames[hit_idx].tag.dirty      = 0;
+                    sramMask.frames[hit_idx].tag.valid      = 0;
+                    sramMask.frames[hit_idx].tag.exclusive  = 0;
+                end
             end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].tag.dirty) begin
-                    // TODO
-                    // ccif.dWEN             = 1'b1;
-                    // TODO
-                    // mem_gen_bus_if.wen    = 1'b1;
-                    // mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
-                    // mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].data;
-                    // increment to next word when flush of word is done
-                    // TODO:
-                    // if (~mem_gen_bus_if.busy) begin
-                    //     enable_flush_count = 1;
-                    //     // clears entry when flushed
-                    //     sramWEN = 1;
-                    //     sramWrite.frames[flush_idx.frame_num] = 0;
-                    //     sramMask.frames[flush_idx.frame_num] = 0;
-                    // end
+                    bus_ctrl_if.dWEN[HART_ID]    = 1'b1;
+                    bus_ctrl_if.daddr[HART_ID]   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
+                    bus_ctrl_if.dstore[HART_ID]  = sramRead.frames[flush_idx.frame_num].data;
+                    if (!bus_ctrl_if.dwait[HART_ID]) begin
+                        enable_flush_count = 1;
+                        // clears entry when flushed
+                        sramWEN = 1;
+                        sramWrite.frames[flush_idx.frame_num] = 0;
+                        sramMask.frames[flush_idx.frame_num] = 0;
+                    end
                 end
                 // else clears entry, moves to next frame
                 else begin
@@ -505,21 +475,25 @@ module l1_cache #(
             end
             CANCEL_REQ: begin
                 // TODO:
-                // mem_gen_bus_if.wen     = 0;
-                // mem_gen_bus_if.ren     = 1;
-                // mem_gen_bus_if.addr    = decoded_addr;
-                // mem_gen_bus_if.byte_en = 0;
-                proc_gen_bus_if.busy   = 1;
+                bus_ctrl_if.dWEN[HART_ID]     = 0;
+                bus_ctrl_if.dREN[HART_ID]     = 1;
+                bus_ctrl_if.daddr[HART_ID]    = decoded_addr;
+                bus_ctrl_if.dbyte_en[HART_ID] = 0;
+                proc_gen_bus_if.busy = 1;
             end
         endcase
+
+        // Handle failed snoops
+        if (bus_ctrl_if.ccwait[HART_ID] && !snoop_hit) begin
+            bus_ctrl_if.ccsnoopdone[HART_ID] = 1'b1;
+            bus_ctrl_if.ccsnoophit[HART_ID]  = 1'b0;
+        end
 
         // Same as sramSEL except try to lookup the snoop addr when there's
         // a request
         sramSNOOPSEL    = sramWEN ? sramSEL
-                        /* TODO: : ccif.snoop_req ? snoop_decoded_addr.idx.idx_bits */
+                        : bus_ctrl_if.ccwait[HART_ID] ? snoop_decoded_addr.idx.idx_bits
                         : sramSEL;
-        // TODO:
-        // ccif.snoop_busy = sramWEN || !ccif.snoop_req;
 
         for (int i = 0; i < ASSOC; i++) begin
             sramTags[i] = sramWrite.frames[i].tag;
@@ -571,10 +545,9 @@ module l1_cache #(
                     next_state = HIT;
 	        end
 	        HIT: begin
-                // TODO
-                /*if (ccif.snoop_hit && !ccif.snoop_busy)
+                if (snoop_hit && !sramWEN)
                     next_state = SNOOP;
-                else*/ if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) // Don't transition on a failed sc
+                else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) // Don't transition on a failed sc
                     next_state = state;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through)
                     next_state = WB;
@@ -584,40 +557,36 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                // TODO
-                // if (!mem_gen_bus_if.busy || mem_gen_bus_if.error) begin
-                //     cache_miss = 1;
-                //     next_state = HIT;
-                // end else if (ccif.snoop_hit && !ccif.snoop_busy)
-                //     next_state = SNOOP;
-                // else if (!abort_bus && !proc_gen_bus_if.ren)
-                //     next_state = CANCEL_REQ;
+                if (!bus_ctrl_if.dwait[HART_ID]) begin
+                    cache_miss = 1;
+                    next_state = HIT;
+                end else if (snoop_hit && !sramWEN)
+                    next_state = SNOOP;
+                else if (!abort_bus && !proc_gen_bus_if.ren)
+                    next_state = CANCEL_REQ;
             end
             WB: begin
-                // TODO
-                // if (!mem_gen_bus_if.busy)
-                //     next_state = HIT;
-                // else if (ccif.snoop_hit && !ccif.snoop_busy)
-                //     next_state = SNOOP;
+                if (!bus_ctrl_if.dwait[HART_ID])
+                    next_state = HIT;
+                else if (snoop_hit && !sramWEN)
+                    next_state = SNOOP;
             end
             SNOOP: begin
-                next_state = /* TODO: ccif.snoop_req ? SNOOP : */
-                             flush_req      ? FLUSH_CACHE : HIT;
+                next_state = bus_ctrl_if.ccwait[HART_ID] ? SNOOP :
+                             flush_req                   ? FLUSH_CACHE : HIT;
             end
             FLUSH_CACHE: begin
                 if (flush_done)
                     next_state = HIT;
-                // TODO
-                // else if (ccif.snoop_hit && !ccif.snoop_busy)
-                //     next_state = SNOOP;
+                else if (snoop_hit && !sramWEN)
+                    next_state = SNOOP;
             end
             CANCEL_REQ: begin
-                // TODO
-                // if (!mem_gen_bus_if.busy) begin
-                //     next_state = HIT;
-                // end else if (ccif.snoop_hit && !ccif.snoop_busy) begin
-                //     next_state = SNOOP;
-                // end
+                if (!bus_ctrl_if.dwait[HART_ID]) begin
+                    next_state = HIT;
+                end else if (snoop_hit && !sramWEN) begin
+                    next_state = SNOOP;
+                end
             end
 	    endcase
     end

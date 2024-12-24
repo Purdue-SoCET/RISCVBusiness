@@ -168,13 +168,13 @@ module bus_ctrl #(
                 nl2_store = ccif.dstore[requester_cpu][31:0];
             end
             SNOOP_R: begin  // determine what to do on busRD
-                nexclusiveUpdate = !(|ccif.ccIsPresent);
+                nexclusiveUpdate = !(|ccif.ccsnoophit);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
                 nl2_addr = pass_through ? ccif.daddr[requester_cpu] : ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
             end
             SNOOP_RX: begin // determine what to do on busRDX
-                nexclusiveUpdate = !(|ccif.ccIsPresent);
+                nexclusiveUpdate = !(|ccif.ccsnoophit);
                 ccif.ccinv = nonRequesterEnable(requester_cpu);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
