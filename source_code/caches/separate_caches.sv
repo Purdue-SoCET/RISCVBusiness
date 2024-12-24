@@ -38,6 +38,7 @@ module separate_caches#(
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches control_if,
     bus_ctrl_if.cache bus_ctrl_if,
+    output logic abort_bus,
     output logic icache_miss,
     output logic dcache_miss
 );
@@ -86,6 +87,7 @@ module separate_caches#(
                 .reserve(control_if.dcache_reserve),
                 .flush_done(control_if.dflush_done),
                 .abort_bus(),
+                .clear_done(control_if.dclear_done),
                 .cache_miss(dcache_miss)
             );
         endcase
@@ -135,8 +137,9 @@ module separate_caches#(
                 .clear(control_if.icache_clear),
                 .reserve(1'b0),
                 .flush_done(control_if.iflush_done),
-                .abort_bus(),
-                .cache_miss(icache_miss)
+                .abort_bus(abort_bus),
+                .cache_miss(icache_miss),
+                .clear_done(control_if.iclear_done)
             );
         endcase
     endgenerate

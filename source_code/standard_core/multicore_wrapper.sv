@@ -54,6 +54,9 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [11:0] imm_I;
     logic [NUM_HARTS-1:0] [20:0] imm_UJ;
     logic [NUM_HARTS-1:0] [31:0] imm_U;
+    logic [NUM_HARTS-1:0] abort_bus;
+
+    assign bus_ctrl_if.ccabort = abort_bus;
 
     // This requires that all x28s are 1 in order to pass tests
     logic [31:0] x28;
@@ -78,7 +81,7 @@ module multicore_wrapper #(
                 .halt(pipeline_halts[HART_ID]),
                 .interrupt_if(interrupt_if),
                 .bus_ctrl_if(bus_ctrl_if),
-                .abort_bus()
+                .abort_bus(abort_bus)
             );
 
             always_comb begin
