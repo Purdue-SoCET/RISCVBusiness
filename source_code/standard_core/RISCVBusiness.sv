@@ -129,30 +129,6 @@ module RISCVBusiness #(
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
 
-    coherency_unit #(
-        .CPUID(HART_ID * 2)
-    ) i_coherence_unit (
-        .CLK(CLK),
-        .nRST(nRST),
-        .halt(halt),
-        .ccif(i_cache_coherency_if),
-        .bcif(bus_ctrl_if),
-        .gbif(icache_mc_if),
-        .coherence_statistics(icache_statistics)
-    );
-
-    coherency_unit #(
-        .CPUID(HART_ID * 2 + 1)
-    ) d_coherence_unit (
-        .CLK(CLK),
-        .nRST(nRST),
-        .halt(halt),
-        .ccif(d_cache_coherency_if),
-        .bcif(bus_ctrl_if),
-        .gbif(dcache_mc_if),
-        .coherence_statistics(dcache_statistics)
-    );
-
     /*
     sparce_wrapper sparce_wrapper_i (
         .CLK(CLK),

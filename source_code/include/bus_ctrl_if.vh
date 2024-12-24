@@ -117,7 +117,7 @@ interface bus_ctrl_if ();
 
     modport cache(
         input dwait, dload, ccwait, ccinv, ccsnoopaddr, ccexclusive,
-        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty
+        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
     );
 
     modport tb(

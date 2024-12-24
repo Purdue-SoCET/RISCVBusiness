@@ -37,6 +37,7 @@ targets:
                     - --trace-fst
                     - --trace-structs
                     - -Wno-WIDTH
+                    - -Wno-SYMRSVDWORD
                     - --timing
                     - --compiler clang
                     - -CFLAGS -std=c++20
