@@ -57,8 +57,7 @@ module top_core #(
         .imm_U(imm_U),
         .imm_UJ(imm_UJ),
         .imm_SB(imm_UJ),
-        .instr_30(instr_30),
-        .cache_statistics(cache_statistics)
+        .instr_30(instr_30)
     );
 
     bind branch_predictor_wrapper branch_tracker branch_track1 (
