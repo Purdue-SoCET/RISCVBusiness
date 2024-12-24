@@ -28,7 +28,6 @@
 
 `include "component_selection_defines.vh"
 `include "generic_bus_if.vh"
-`include "cache_coherence_if.vh"
 
 `ifdef XCELIUM
 `timescale 1ns/100ps

@@ -23,7 +23,6 @@
 */
 
 `include "generic_bus_if.vh"
-`include "cache_coherence_if.vh"
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
@@ -41,7 +40,6 @@ module RISCVBusiness #(
     input logic CLK, nRST,
     input logic [63:0] mtime,
     output logic wfi, halt, abort_bus,
-    output cache_coherence_statistics_t dcache_statistics, icache_statistics,
     core_interrupt_if.core interrupt_if,
     bus_ctrl_if bus_ctrl_if
 );
@@ -56,10 +54,6 @@ module RISCVBusiness #(
     cache_control_if control_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
-
-    //Added for coherency
-    cache_coherence_if i_cache_coherency_if ();
-    cache_coherence_if d_cache_coherency_if ();
 
     //interface instantiations
     tspp_fetch_execute_if fetch_ex_if ();
@@ -124,7 +118,7 @@ module RISCVBusiness #(
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
-        .bus_ctrl_if(bus_ctrl_if)
+        .bus_ctrl_if(bus_ctrl_if),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
