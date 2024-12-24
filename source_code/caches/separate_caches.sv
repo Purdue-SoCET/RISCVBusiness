@@ -37,12 +37,10 @@ module separate_caches#(
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches control_if,
-    bus_ctrl_if.cache bus_ctrl_if
+    bus_ctrl_if.cache bus_ctrl_if,
     output logic icache_miss,
     output logic dcache_miss
 );
-    assign d_cache_coherency_if.abort_bus = 1'b0;
-
     generate
         /* verilator lint_off width */
         case (DCACHE_TYPE)
@@ -137,7 +135,7 @@ module separate_caches#(
                 .clear(control_if.icache_clear),
                 .reserve(1'b0),
                 .flush_done(control_if.iflush_done),
-                .abort_bus(i_cache_coherency_if.abort_bus),
+                .abort_bus(),
                 .cache_miss(icache_miss)
             );
         endcase

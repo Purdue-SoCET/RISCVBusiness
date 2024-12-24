@@ -27,7 +27,7 @@
 
 // parameters
 parameter CPUS = NUM_HARTS * 2;
-//parameter BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
+parameter BLOCK_SIZE = 2;
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
 localparam CPU_ID_LENGTH = $clog2(CPUS);
 
@@ -76,7 +76,6 @@ interface bus_ctrl_if ();
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
     logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
     logic               [CPUS-1:0] ccsnoopdone; // indicates that the responder has the data
-    logic               [CPUS-1:0] ccIsPresent; // indicates that nonrequesters have the data valid
     logic               [CPUS-1:0] ccdirty;     // indicates that we have [I -> S, M -> S]
     // L1 coherence OUTPUTS
     logic               [CPUS-1:0] ccwait;      // indicates a potential snoophit wait request
@@ -108,7 +107,7 @@ interface bus_ctrl_if ();
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, dbyte_en,
-                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                ccwrite, ccsnoophit, ccdirty, ccsnoopdone,
                 l2load, l2state, ccabort,
         output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
@@ -125,7 +124,7 @@ interface bus_ctrl_if ();
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en,
         output  dREN, dWEN, daddr, dstore, dbyte_en,
-                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                ccwrite, ccsnoophit, ccdirty, ccsnoopdone,
                 l2load, l2state, ccabort
     ); 
 
