@@ -29,9 +29,9 @@ wait_for_bss_cleared:
     beqz t0, wait_for_bss_cleared
 
 start:
-    # Get a 2kB stack starting at 0x8000F000
-    li sp, 0x8000F000
-    slli t0, s0, 11
+    # Get a 16kB stack
+    la sp, __stack_top
+    slli t0, s0, 14
     add sp, sp, t0
     # Calculate which main to call
     # IMPORTANT: hart1_main *must* set hart1_done to 1
