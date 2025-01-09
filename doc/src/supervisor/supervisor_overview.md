@@ -36,7 +36,7 @@ A hardware page walker is used to walk pages without the extra bits software pag
 
 ## Status
 
-As of December 2024, the TLB, PW, VIPT L1$, and CSRs + interrupt/exception handling have all been implemented into the processor. WE feel the core at its current state needs to undergo extensive verification before we can consider proceeding with adding the hypervisor extension, which is why we are deciding not to move forward with implementing the hypervisor for Spring 2025.
+As of December 2024, the TLB, PW, VIPT L1$, and CSRs + interrupt/exception handling have all been implemented into the processor. We feel the core at its current state needs to undergo extensive verification before we can consider proceeding with adding the hypervisor extension, which is why we are deciding not to move forward with implementing the hypervisor for Spring 2025.
 
 ## Future Work
 
