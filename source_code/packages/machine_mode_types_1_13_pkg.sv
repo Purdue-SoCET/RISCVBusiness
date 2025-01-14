@@ -704,9 +704,19 @@ package machine_mode_types_1_13_pkg;
 
   typedef struct packed {
     logic        mode;
-    logic [ASID_LENGTH:0]  asid;
+    logic [ASID_LENGTH-1:0]  asid;
     logic [PPNLEN-1:0] ppn;
   } satp_t;
+
+  
+  localparam PAGE_PERM_DIRTY    = 1 << 7;
+  localparam PAGE_PERM_ACCESSED = 1 << 6;
+  localparam PAGE_PERM_GLOBAL   = 1 << 5;
+  localparam PAGE_PERM_USER     = 1 << 4;
+  localparam PAGE_PERM_EXECUTE  = 1 << 3;
+  localparam PAGE_PERM_WRITE    = 1 << 2;
+  localparam PAGE_PERM_READ     = 1 << 1;
+  localparam PAGE_PERM_VALID    = 1 << 0;
 
 endpackage
 

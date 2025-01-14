@@ -3,7 +3,7 @@
 ## Hardware Tests
 
 ### 1. TLB (Direct Mapped)
-  - Compulsary TLB Miss
+  - Compulsory TLB Miss
   - TLB Hit
   - TLB Eviction
   - Mismatch ASID miss
@@ -17,7 +17,7 @@
 <br></br>
 
 ### 2. TLB (2-Way Set Associative, only used in this test)
-  - Compulsary TLB Miss (empty set)
+  - Compulsory TLB Miss (empty set)
   - Half-full set, TLB Hit
   - Half-full set, TLB miss
   - Full set, TLB hit
@@ -68,7 +68,7 @@
 <br></br>
 
 ### 6. I$/ITLB + D$/DTLB + Page Walker
-  - Compulsary misses, Data walk, instruction walk, data memory access, instruction memory access
+  - Compulsory misses, Data walk, instruction walk, data memory access, instruction memory access
   - I/D $ misses, no page walk, data memory access, instruction memory access
   - Full hits, no page walk, no memory access 
 <br></br>
