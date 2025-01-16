@@ -47,7 +47,8 @@ module separate_caches (
     import machine_mode_types_1_13_pkg::*;
 
     // TLB signals
-    logic itlb_miss, dtlb_miss;
+    logic itlb_miss, itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
+    logic dtlb_miss, dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
     
 
     generic_bus_if itlb_gen_bus_if ();
@@ -132,7 +133,7 @@ module separate_caches (
                     .tlb_miss(dtlb_miss),
                     .ppn_tag(dtlb_gen_bus_if.rdata[PPNLEN:10])
                 );
-                tlb dtlb (
+                tlb #(.IS_ITLB(0)) dtlb (
                     .CLK(CLK),
                     .nRST(nRST),
                     .mem_gen_bus_if(dtlb_gen_bus_if),
@@ -142,7 +143,10 @@ module separate_caches (
                     .fence_done(control_if.dtlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
-                    .tlb_miss(dtlb_miss)
+                    .tlb_miss(dtlb_miss),
+                    .fault_load_page(dtlb_fault_load_page),
+                    .fault_store_page(dtlb_fault_store_page),
+                    .fault_insn_page(dtlb_fault_insn_page)
                 );
             end
         endcase
@@ -225,7 +229,7 @@ module separate_caches (
                     .tlb_miss(itlb_miss),
                     .ppn_tag(itlb_gen_bus_if.rdata[PPNLEN:10])
                 );
-                tlb itlb (
+                tlb #(.IS_ITLB(1)) itlb (
                     .CLK(CLK),
                     .nRST(nRST),
                     .mem_gen_bus_if(itlb_gen_bus_if),
@@ -235,7 +239,10 @@ module separate_caches (
                     .fence_done(control_if.itlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
-                    .tlb_miss(itlb_miss)
+                    .tlb_miss(itlb_miss),
+                    .fault_load_page(itlb_fault_load_page),
+                    .fault_store_page(itlb_fault_store_page),
+                    .fault_insn_page(itlb_fault_insn_page)
                 );
             end
         endcase
@@ -248,12 +255,52 @@ module separate_caches (
                 .nRST(nRST),
                 .itlb_miss(itlb_miss),
                 .dtlb_miss(dtlb_miss),
+                .fault_load_page(pw_fault_load_page),
+                .fault_store_page(pw_fault_store_page),
+                .fault_insn_page(pw_fault_insn_page),
                 .mem_gen_bus_if(pw_mem_gen_bus_if),
                 .itlb_gen_bus_if(itlb_gen_bus_if),
                 .dtlb_gen_bus_if(dtlb_gen_bus_if),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(at_if)
             );
+
+            // arbitrate between pw, dtlb, or itlb for page faults
+            always_comb begin
+                prv_pipe_if.fault_load_page  = 0;
+                prv_pipe_if.fault_store_page = 0;
+                prv_pipe_if.fault_insn_page  = 0;
+
+                // Order goes
+                // 1. PW data access fault
+                // 2. dtlb access fault
+                // 3. PW insn access fault
+                // 4. itlb access fault
+                if (dtlb_miss) begin
+                    prv_pipe_if.fault_load_page  = pw_fault_load_page;
+                    prv_pipe_if.fault_store_page = pw_fault_store_page;
+                    prv_pipe_if.fault_insn_page  = pw_fault_insn_page;
+                end
+                else if (dtlb_fault_load_page  | 
+                         dtlb_fault_store_page | 
+                         dtlb_fault_insn_page) begin
+                    prv_pipe_if.fault_load_page  = dtlb_fault_load_page;
+                    prv_pipe_if.fault_store_page = dtlb_fault_store_page;
+                    prv_pipe_if.fault_insn_page  = dtlb_fault_insn_page;
+                end
+                else if (itlb_miss) begin
+                    prv_pipe_if.fault_load_page  = pw_fault_load_page;
+                    prv_pipe_if.fault_store_page = pw_fault_store_page;
+                    prv_pipe_if.fault_insn_page  = pw_fault_insn_page;
+                end
+                else if (itlb_fault_load_page  | 
+                             itlb_fault_store_page | 
+                             itlb_fault_insn_page) begin
+                    prv_pipe_if.fault_load_page  = itlb_fault_load_page;
+                    prv_pipe_if.fault_store_page = itlb_fault_store_page;
+                    prv_pipe_if.fault_insn_page  = itlb_fault_insn_page;
+                end
+            end
         end else begin
             assign at_if.addr_trans_on = '0;
         end

@@ -33,12 +33,14 @@
 module tlb #(
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
     parameter TLB_SIZE            = 64, // Number of entries in the TLB
-    parameter ASSOC               = 1   // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
+    parameter TLB_ASSOC           = 1,  // dont set this to 0, TLB_SIZE / TLB_ASSOC must be power of 2
+    parameter IS_ITLB             = 1   // denotes special behavior for permission checking
 )
 (
     input logic CLK, nRST,
     input logic clear, fence,
     output logic clear_done, fence_done, tlb_miss,
+    output logic fault_load_page, fault_store_page, fault_insn_page,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
     generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
     prv_pipeline_if.cache prv_pipe_if,
@@ -57,17 +59,17 @@ module tlb #(
     localparam ASID_LENGTH        = 9; // num bits for ASID
     localparam VPN_LENGTH         = SXLEN - PAGE_OFFSET_BITS;
     localparam PPN_LENGTH         = PPNLEN;
-    localparam N_SETS             = TLB_SIZE / ASSOC;
-    localparam N_FRAME_BITS       = $clog2(ASSOC) + (ASSOC == 1);
+    localparam N_SETS             = TLB_SIZE / TLB_ASSOC;
+    localparam N_FRAME_BITS       = $clog2(TLB_ASSOC) + (TLB_ASSOC == 1);
     localparam N_SET_BITS         = $clog2(N_SETS) + (N_SETS == 1);
     localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = VPN_LENGTH - N_SET_BITS;
     localparam TOTAL_TAG_SIZE     = (N_TAG_BITS + ASID_LENGTH + 1); // +1 for valid
     localparam FRAME_SIZE         = WORD_SIZE + TOTAL_TAG_SIZE; // in bits
-    localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
+    localparam SRAM_W             = FRAME_SIZE * TLB_ASSOC;                      // sram parameters
 
     // coherence params, not sure if needed
-    localparam SRAM_TAG_W         = TOTAL_TAG_SIZE * ASSOC; // +1 for valid
+    localparam SRAM_TAG_W         = TOTAL_TAG_SIZE * TLB_ASSOC; // +1 for valid
     localparam CLEAR_LENGTH       = $clog2(BLOCK_SIZE) + 2;
 
     // Define the TLB entry structure
@@ -100,7 +102,7 @@ module tlb #(
     } tlb_frame_t;
 
     typedef struct packed {
-        tlb_frame_t [ASSOC - 1:0] frames;
+        tlb_frame_t [TLB_ASSOC - 1:0] frames;
     } tlb_set_t;
 
     typedef struct packed {
@@ -116,7 +118,7 @@ module tlb #(
     typedef struct packed {
         logic                    finish;
         logic [N_SET_BITS-1:0]   set_num;
-        logic [N_FRAME_BITS-1:0] frame_num; // assoc
+        logic [N_FRAME_BITS-1:0] frame_num; // TLB_ASSOC
     } fence_idx_t;             // fence counter type
 
     typedef enum {
@@ -142,7 +144,7 @@ module tlb #(
     decoded_tlb_addr_t decoded_addr;
 
     // Cache Hit
-    logic hit, pass_through;
+    logic hit, pass_through, activate_hit;
     word_t [BLOCK_SIZE-1:0] hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
 
@@ -159,6 +161,10 @@ module tlb #(
     decoded_tlb_addr_t decoded_fence_va;
     logic [ASID_LENGTH-1:0] fence_asid;
 
+    // permissions
+    access_t access;
+    pte_sv32_t pte_sv32;
+
     // RTL
     // decoded address conversion
     assign decoded_addr = decoded_tlb_addr_t'(proc_gen_bus_if.addr);
@@ -167,10 +173,37 @@ module tlb #(
     assign decoded_fence_va = decoded_tlb_addr_t'(prv_pipe_if.fence_va);
     assign fence_asid = prv_pipe_if.fence_asid;
 
+    // turning on or off hit logic
+    assign activate_hit = ~pass_through && at_if.addr_trans_on;
+
     // sram instance
     assign sramSEL = (state == FENCE_TLB || state == IDLE) ? fence_idx.set_num : decoded_addr.vpn.idx_bits;
     sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
+
+    // setting permissions signals
+    assign pte_sv32 = pte_sv32_t'(hit_data);
+    
+    generate
+        if (IS_ITLB) begin
+            assign access = proc_gen_bus_if.ren ? INSTRUCTION : NONE;
+        end else begin
+            assign access = proc_gen_bus_if.wen ? STORE : proc_gen_bus_if.ren ? LOAD : NONE;
+        end
+    endgenerate
+
+    // permission checking for TLB accesses
+    page_perm_check TLB_PERM_CHECK (
+        .check(hit),
+        .level(1),
+        .access(access),
+        .pte_sv32(pte_sv32),
+        .fault_load_page(fault_load_page),
+        .fault_store_page(fault_store_page),
+        .fault_insn_page(fault_insn_page),
+        .prv_pipe_if(prv_pipe_if),
+        .at_if(at_if)
+    );
 
     // flip flops
     always_ff @ (posedge CLK, negedge nRST) begin
@@ -210,12 +243,12 @@ module tlb #(
             next_fence_idx.set_num = 0;
             next_fence_idx.frame_num = 0;
         end
-        else if (next_fence_idx.frame_num == ASSOC) begin
+        else if (next_fence_idx.frame_num == TLB_ASSOC) begin
             next_fence_idx.set_num = fence_idx.set_num + 1;
             next_fence_idx.frame_num = 0;
         end
 
-        // FOR ASSOC == 1 FINISH FLAG
+        // FOR TLB_ASSOC == 1 FINISH FLAG
         if (next_fence_idx.set_num == 0 && fence_idx.set_num == N_SETS - 1) begin
             next_fence_idx.finish = 1;
             next_fence_idx.set_num = 0;
@@ -233,8 +266,8 @@ module tlb #(
         // pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
         pass_through    = 0;
 
-        if (!pass_through) begin
-            for(int i = 0; i < ASSOC; i++) begin
+        if (activate_hit) begin
+            for(int i = 0; i < TLB_ASSOC; i++) begin
                 if(sramRead.frames[i].tag.vpn_tag == decoded_addr.vpn.tag_bits &&
                    sramRead.frames[i].tag.asid    == prv_pipe_if.satp.asid     &&
                    sramRead.frames[i].tag.valid) begin
@@ -243,8 +276,6 @@ module tlb #(
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].pte;
                 	    hit_idx   = i;
-
-                        // Add permissions checking here
                     end
                 end
             end
@@ -275,8 +306,8 @@ module tlb #(
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
 
-        // associativity, using NRU
-        if (ASSOC == 1 || (last_used[decoded_addr.vpn.idx_bits] == (ASSOC - 1)))
+        // TLB_ASSOCiativity, using NRU
+        if (TLB_ASSOC == 1 || (last_used[decoded_addr.vpn.idx_bits] == (TLB_ASSOC - 1)))
             ridx = 0;
         else
             ridx = last_used[decoded_addr.vpn.idx_bits] + 1;
@@ -304,7 +335,7 @@ module tlb #(
                 end
                 // tlb miss on a clean block
 		        // else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
-		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) begin
+		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end
@@ -378,13 +409,14 @@ module tlb #(
             end
             FENCE_TLB: begin
                 if (fence_done)
-                    next_state = at_if.addr_trans_on ? HIT : IDLE;
+                    next_state = HIT;
+                    // next_state = at_if.addr_trans_on ? HIT : IDLE;
             end
         endcase
 
         // do nothing if not in address translation is not on (and if we're not actively fencing the tlb)
-        if (~at_if.addr_trans_on && state != FENCE_TLB)
-            next_state = IDLE;
+        // if (~at_if.addr_trans_on && state != FENCE_TLB)
+        //     next_state = IDLE;
     end
 
     // fence saver

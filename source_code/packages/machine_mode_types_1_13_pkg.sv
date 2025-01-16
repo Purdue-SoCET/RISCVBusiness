@@ -33,16 +33,60 @@ package machine_mode_types_1_13_pkg;
   parameter int HSXLEN = 32;
   
   // Address Translation Constants
+  parameter int SV32_MODE   = 1;
+  parameter int SV39_MODE   = 8;
+  parameter int SV48_MODE   = 9;
+  parameter int SV57_MODE   = 10;
+  parameter int SV64_MODE   = 11;
   parameter int SV32_PPNLEN = 22;
   parameter int SV39_PPNLEN = 44;
   parameter int SV48_PPNLEN = 44;
   parameter int SV57_PPNLEN = 44;
   parameter int ASID_LENGTH = SXLEN == 32 ? 9 : 16;
   parameter int PPNLEN      = SXLEN == 32 ? SV32_PPNLEN : SV39_PPNLEN;
+  parameter int PGSIZE_BITS = 12;
+
+  // Page permission bits
+  localparam PAGE_PERM_DIRTY    = 1 << 7;
+  localparam PAGE_PERM_ACCESSED = 1 << 6;
+  localparam PAGE_PERM_GLOBAL   = 1 << 5;
+  localparam PAGE_PERM_USER     = 1 << 4;
+  localparam PAGE_PERM_EXECUTE  = 1 << 3;
+  localparam PAGE_PERM_WRITE    = 1 << 2;
+  localparam PAGE_PERM_READ     = 1 << 1;
+  localparam PAGE_PERM_VALID    = 1 << 0;
 
   // Masks
   parameter int SSTATUS_MASK = 32'h800DE762; // 32'b1000_0000_0000_1101_1110_0111_0110_0010
   parameter int SIE_MASK     = 32'h00002222; // 32'b0000_0000_0000_0000_0010_0010_0010_0010
+
+  // Page Permission Types
+  typedef enum {
+    NONE, LOAD, STORE, INSTRUCTION
+  } access_t;
+
+  typedef struct packed {
+    logic [1:0] reserved_0;
+    logic       dirty;
+    logic       accessed;
+    logic       global;
+    logic       user;
+    logic       executable;
+    logic       writable;
+    logic       readable;
+    logic       valid;
+  } pte_perms_t;
+
+  // sv32 types
+  typedef struct packed {
+    logic [SV32_PPNLEN-1:0] ppn;   // Physical Page Number
+    pte_perms_t             perms; // Page permissions
+  } pte_sv32_t;
+
+  typedef struct packed {
+    logic [1:0] [9:0]         vpn; // vpn[0] and vpn[1]
+    logic [(PGSIZE_BITS-1):0] offset;
+  } va_sv32_t;
 
   /* Machine Mode Addresses */
   typedef enum logic [11:0] {
@@ -707,16 +751,6 @@ package machine_mode_types_1_13_pkg;
     logic [ASID_LENGTH-1:0]  asid;
     logic [PPNLEN-1:0] ppn;
   } satp_t;
-
-  
-  localparam PAGE_PERM_DIRTY    = 1 << 7;
-  localparam PAGE_PERM_ACCESSED = 1 << 6;
-  localparam PAGE_PERM_GLOBAL   = 1 << 5;
-  localparam PAGE_PERM_USER     = 1 << 4;
-  localparam PAGE_PERM_EXECUTE  = 1 << 3;
-  localparam PAGE_PERM_WRITE    = 1 << 2;
-  localparam PAGE_PERM_READ     = 1 << 1;
-  localparam PAGE_PERM_VALID    = 1 << 0;
 
 endpackage
 
