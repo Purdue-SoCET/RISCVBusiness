@@ -122,6 +122,7 @@ module stage3_fetch_stage (
     //Fetch Execute Pipeline Signals
     word_t instr_to_ex;
     assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
+    logic predict_taken_buffer;
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) fetch_ex_if.fetch_ex_reg <= '0;
         else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_ex_if.fetch_ex_reg <= '0;
@@ -140,7 +141,8 @@ module stage3_fetch_stage (
             fetch_ex_if.fetch_ex_reg.badaddr    <= badaddr;
             fetch_ex_if.fetch_ex_reg.pc         <= pc;
             fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
-            fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
+	    predict_taken_buffer 		<= predict_if.predict_taken; //Really bad buffer setup - should work?
+            fetch_ex_if.fetch_ex_reg.prediction <= predict_taken_buffer; // TODO: This is just wrong...
 	    fetch_ex_if.fetch_ex_reg.predicted_address<=predict_if.target_addr; //MF:btb address to if predicted_address
         end
     end
