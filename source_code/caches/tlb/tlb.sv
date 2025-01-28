@@ -27,7 +27,7 @@
 `include "address_translation_if.vh"
 
 `ifdef XCELIUM
-`timescale 1ns/100ps
+`timescale 1ns/10ps
 `endif
 
 module tlb #(
@@ -334,17 +334,10 @@ module tlb #(
                     next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                 end
                 // tlb miss on a clean block
-		        // else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through) begin
 		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end
-                // tlb miss on a dirty block
-			    // else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].tag.dirty && ~pass_through) begin
-                //     tlb_miss = 1;
-                //     next_decoded_req_addr = decoded_addr;
-                //     next_read_addr        = {sramRead.frames[ridx].tag, decoded_addr.vpn.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-                // end
             end
             FETCH: begin
                 // set tlb to be invalid before cache completes fetch
@@ -368,12 +361,14 @@ module tlb #(
                 end
             end
             FENCE_TLB: begin
+                enable_fence_count_nowb = 1;
                 // fence if valid and
                 // rs1 == 0 or sram.vpn == fence_va.vpn and
                 // rs2 == 0 or (sram.asid == fence_asid and is not a global page)
-                if (sramRead.frames[fence_idx.frame_num].tag.valid &&
-                    (~|decoded_fence_va | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, fence_idx.frame_num} == decoded_fence_va.vpn)) && 
-                    (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == decoded_fence_va.vpn && ~sramRead.frames[fence_idx.frame_num].pte.perms.global))) begin
+                // if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
+                if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
+                    (~|decoded_fence_va | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, sramSEL} == decoded_fence_va.vpn)) && 
+                    (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid && ~sramRead.frames[fence_idx.frame_num].pte.perms.global))) begin
                     // clears entry when fenceed
                     sramWEN = 1;
                     sramWrite.frames[fence_idx.frame_num] = 0;
