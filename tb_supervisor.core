@@ -31,7 +31,7 @@ targets:
     tools:
       verilator:
         verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-TIMESCALEMOD", "-Wno-lint", "--binary", "--trace", "--trace-fst", "--trace-structs"]
-        # verilator_options: ["-Wno-lint", "--binary", "--trace", "--trace-fst", "--trace-structs"]
+        # verilator_options: ["-Wno-TIMESCALEMOD", "-Wno-lint", "--binary", "--trace-fst", "--trace-structs"]
 
   sim:
     <<: *default

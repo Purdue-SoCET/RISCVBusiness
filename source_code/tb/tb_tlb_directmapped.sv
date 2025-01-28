@@ -42,7 +42,16 @@
 import rv32i_types_pkg::*;
 import machine_mode_types_1_13_pkg::*;
 
-`timescale 1ns/100ps
+`timescale 1ns/10ps
+
+parameter PAGE_OFFSET_BITS = 12;  // For 4KB pages
+parameter TLB_SIZE      = 64;     // Number of entries in the TLB
+parameter TLB_ASSOC     = 1;      // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
+parameter TLB_SIZE_LOG2 = $clog2(TLB_SIZE);
+parameter TLB_TAG_BITS  = PPNLEN - TLB_SIZE_LOG2;
+parameter TLB_TAG_MAX   = 1 << TLB_TAG_BITS;
+parameter ASID_MAX      = 1 << ASID_LENGTH;
+parameter PPN_MAX       = 1 << PPNLEN;
 
 parameter NUM_TESTS = 1000;
 parameter NUM_ADDRS = 20;
@@ -51,11 +60,19 @@ parameter DELAY = 5;
 
 parameter SEED = 11;
 parameter VERBOSE = 0;
+parameter STDOUT = 32'h0000_0000;
+
+// permissions
+parameter FULL_PERMS = PAGE_PERM_READ |
+                       PAGE_PERM_WRITE |
+                       PAGE_PERM_EXECUTE |
+                       PAGE_PERM_VALID;
 
 module tb_tlb_directmapped();
 
   logic CLK = 0, nRST;
   logic clear, fence, clear_done, fence_done, tlb_miss;
+  logic fault_load_page, fault_store_page, fault_insn_page;
   
   // clock
   always #(PERIOD/2) CLK++; 
@@ -69,6 +86,7 @@ module tb_tlb_directmapped();
   // test program
   test PROG (CLK, nRST,
     clear_done, fence_done, tlb_miss,
+    fault_load_page, fault_store_page, fault_insn_page,
     clear, fence,
     proc_gen_bus_if,
     mem_gen_bus_if,
@@ -77,9 +95,11 @@ module tb_tlb_directmapped();
   );
 
   // DUT
-  tlb DUT (CLK, nRST,
+  tlb #(.PAGE_OFFSET_BITS(PAGE_OFFSET_BITS), .TLB_SIZE(TLB_SIZE), .TLB_ASSOC(ASSOC)) DUT
+  (CLK, nRST,
     clear, fence,
     clear_done, fence_done, tlb_miss,
+    fault_load_page, fault_store_page, fault_insn_page,
     mem_gen_bus_if,
     proc_gen_bus_if,
     prv_pipe_if,
@@ -99,26 +119,37 @@ endmodule
 
 program test
 (
-  input CLK, output logic nRST,
-  input clear_done, fence_done, tlb_miss,
-  output clear, fence,
+  input logic CLK, output logic nRST,
+  input logic clear_done, fence_done, tlb_miss,
+  input logic fault_load_page, fault_store_page, fault_insn_page,
+  output logic clear, fence,
   generic_bus_if.cpu gbif,        // Processor to TLB
   generic_bus_if.generic_bus mbif,                // TLB to page walker/cache
-  prv_pipeline_if.priv_block prv_pipe_if, // priv to TLB
+  prv_pipeline_if prv_pipe_if, // priv to TLB
   address_translation_if.cache at_if      // to TLB
 );
 
 integer seed;
 integer error_cnt;
 
-logic                   mode;
-logic [ASID_LENGTH-1:0] asid;
-logic [PPNLEN-1:0]      ppn;
+string test_case;
+
+// current TLB entry entries used by the fill_* tasks
+logic [ASID_LENGTH-1:0] tlb_asid [TLB_SIZE];
+logic [SXLEN-1:0]      tlb_rdata [TLB_SIZE];
+logic [PPNLEN-1:0]       tlb_ppn [TLB_SIZE];
+
+logic                    test_mode;
+logic [ASID_LENGTH-1:0]  test_asid;
+logic [PPNLEN-1:0]       test_ppn;
+logic [TLB_TAG_BITS-1:0] test_tag;
+logic [SXLEN-1:0]        test_rdata, test_va;
+logic [TLB_SIZE_LOG2-1:0] test_index;
 
 initial begin : MAIN
 
   $dumpfile("waveform.fst");
-  $dumpvars(0, tb_register_file_1r1w);
+  $dumpvars(0, tb_tlb_directmapped);
 
   // Initial reset
   nRST = 0;
@@ -131,7 +162,14 @@ initial begin : MAIN
   // Setup seed
   error_cnt = 0;
   seed = SEED;
-  $urandom(seed);
+  $random(seed);
+
+  // I may be going crazy, but the first time I call $random it returns all 1's...
+  // warming up $random
+  generate_rdata(test_rdata);
+  generate_asid(test_asid);
+  generate_tlb_tag(test_tag);
+  generate_ppn(test_ppn);
 
   // Assert nRST
   #(DELAY);
@@ -144,21 +182,193 @@ initial begin : MAIN
     @(posedge CLK);
   @(posedge CLK);
 
-  // Begin testing!
-  $info("\n---------- Beginning Basic Test Cases ---------\n");
+  /**************************
+  
+  Begin testing!
+  
+  **************************/
+  $display("\n---------- Beginning Basic Test Cases ---------\n");
 
-  // Compulsory TLB miss
-  $info("\n---------- Compulsory TLB miss ---------\n");
+  /**************************
+  
+  Address translation off (M-mode)
+  
+  **************************/
+  begin_test("Address translation off (M-mode)");
+  complete_test();
+
+
+  /**************************
+  
+  Compulsory TLB miss
+  
+  **************************/
+  begin_test("Compulsory TLB miss");
   set_priv_level(S_MODE);
   set_satp(1, 9'h1FF, 22'hFFFF);
   complete_read_check(32'h10001000, 32'hFFFFFC00);
+  complete_test();
 
-  $info("\n---------- Testing Completed Successfully---------\n", error_cnt);
+
+  /**************************
+  
+  TLB Hit
+  
+  **************************/
+  begin_test("TLB Hit");
+  complete_read_check(32'h10001000, 32'hFFFFFC00);
+  complete_test();
+
+
+  /**************************
+  
+  TLB Eviction
+  
+  **************************/
+  begin_test("TLB Eviction");
+  complete_read_check(32'h80001000, 32'hAAAAAC00);
+  complete_test();
+
+
+  /**************************
+  
+  Mismatch ASID miss
+  
+  **************************/
+  begin_test("Mismatch ASID miss");
+  set_satp(1, 9'h100, 22'hFFFF); // new asid 0x100
+  complete_read_check(32'h80001000, 32'hAAAAAC00);
+  complete_test();
+
+
+  /**************************
+  
+  Invalidate TLB entry, by VA & ASID
+  
+  **************************/
+  begin_test("Invalidate TLB entry, by VA & ASID");
+  // generate a random tag and asid to fill cache with
+  generate_tlb_tag(test_tag);
+  generate_asid(test_asid);
+  fill_tlb_fixed_asid_tag(test_asid, test_tag);
+
+  if (VERBOSE) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+    end
+  end
+
+  // generate an index to fence with and assign tag and index to test_ppn
+  generate_index(test_index);
+  test_ppn = {test_tag, test_index};
+  test_va = {test_ppn, 12'h000};
+
+  // fence asid and va
+  fence_tlb_asid_va(test_asid, test_va);
+  
+  // read through each frame, check at the fenced address frame that there's a tlb miss
+  for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+    // set asid to the one in the tlb
+    set_satp(1, tlb_asid[i], 1);
+
+    // start the read transaction
+    initiate_read({tlb_ppn[i], 12'h000});
+
+    // check for TLB miss
+    if (tlb_miss) begin
+      $display("\nTLB miss for \ntlb_ppn[%0d]: 0x%0h\ntlb_asid[%0d]: 0x%0h\n", i, tlb_ppn[i], i, tlb_asid[i]); 
+      // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
+      if ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0)) begin
+        $display("Invalid fence, data mismatch \ntlb_ppn[%0d]: 0x%0h\ntest_ppn: 0x%0h\ntlb_asid[%0d]: 0x%0h\ntest_asid: 0x%0h\n", 
+          i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
+        error_cnt = error_cnt + 1;
+      end else begin
+        $display("Valid fence\n");
+      end
+    end
+
+    // finish the read
+    complete_read(tlb_rdata[i], test_rdata);
+  end
+
+  complete_test();
+
+
+  /**************************
+  
+  Invalid TLB entry miss
+  
+  **************************/
+
+
+
+  /**************************
+  
+  User/Supervisor read permissions
+  
+  **************************/
+
+
+
+  /**************************
+  
+  User/Supervisor write permissions
+  
+  **************************/
+
+
+
+  /**************************
+  
+  User/Supervisor execute permissions
+  
+  **************************/
+
+
+
+  /**************************
+  
+  User/Supervisor other permissions
+  
+  **************************/
+
+
+
+  /**************************
+  
+  Address translation off (again)
+  
+  **************************/
+
+
+  /**************************
+  
+  Testing Completed
+  
+  **************************/
+  $display("\n---------- Testing Completed ---------\n");
+
+  if (error_cnt == 0) begin
+    $display("\nAll tests passed!\n");
+  end else begin
+    $display("\nTests Failed: %0d\n", error_cnt);
+  end
 
   $finish;
 end
 
 // --- Helper Tasks and Functions --- //
+
+task begin_test;
+  input string test_name;
+  test_case = test_name;
+  $display("\n---------- %s ---------\n", test_case);
+endtask
+
+task complete_test;
+  // $display("--------------------------------------------------\n");
+  // $fflush(); // unfortunately does not work with v-rilator
+endtask
 
 // set_ren
 // sets the read enable from processor to the TLB to new_ren
@@ -271,11 +481,14 @@ task reset_priv;
 endtask
 
 // fence_tlb
-// sets the fence signal the TLB
+// sets the fence signal the TLB and waits until done
 task fence_tlb;
   fence = 1'b1;
   @(posedge CLK);
   fence = 1'b0;
+
+  @(posedge fence_done);
+  @(posedge CLK); // let TLB go back to HIT state
 endtask
 
 // initiate_read
@@ -329,7 +542,7 @@ task complete_read_check;
   complete_read(expected_rdata, actual_rdata);
 
   if (expected_rdata !== actual_rdata) begin
-    $info("\nData Mismatch \nAddr: 0x%0h\nExpected: 0x%0h\nReceived: 0x%0h\n", 
+    $display("\nData Mismatch \nAddr: 0x%0h\nExpected: 0x%0h\nReceived: 0x%0h\n", 
       read_addr, expected_rdata, actual_rdata); 
     error_cnt = error_cnt + 1;
     #(DELAY);
@@ -339,6 +552,7 @@ task complete_read_check;
 endtask
 
 // handle_tlb_miss
+// handles a miss from the tlb if there is one
 task handle_tlb_miss;
   input logic [WORD_SIZE-1:0] new_rdata;
 
@@ -352,7 +566,8 @@ task handle_tlb_miss;
 
     begin : SERVICE_MISS
       if (tlb_miss) begin
-        $info("Handled TLB miss for rdata: 0x%h\n", new_rdata);
+        if (VERBOSE)
+          $display("Handled TLB miss for rdata: 0x%h\n", new_rdata);
         // assert busy
         set_busy(1'b1);
 
@@ -369,6 +584,221 @@ task handle_tlb_miss;
       end
     end
   join
+endtask
+
+// generate_asid
+task generate_asid;
+  output logic [ASID_LENGTH-1:0] random_asid;
+
+  random_asid = {$random % ASID_MAX};
+endtask
+
+task generate_tlb_tag;
+  output logic [TLB_TAG_BITS-1:0] random_tag;
+
+  random_tag = $random % TLB_TAG_MAX;
+endtask
+
+task generate_ppn;
+  output logic [PPNLEN-1:0] random_ppn;
+
+  random_ppn = $random % PPN_MAX;
+endtask
+
+task generate_perms;
+  output logic [9:0] random_perms;
+
+  random_perms = $random % (1 << 8);
+endtask
+
+task generate_rdata;
+  output logic [SXLEN-1:0] random_rdata;
+
+  random_rdata = $random;
+endtask
+
+task generate_index;
+  output logic [TLB_SIZE_LOG2-1:0] random_index;
+
+  random_index = $random % TLB_SIZE;
+endtask
+
+task reset_tlb_test_metadata;
+  for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+    tlb_asid[i]  = '0;
+    tlb_ppn[i]   = '0;
+    tlb_rdata[i] = '0;
+  end
+endtask
+
+task set_tlb_test_metadata;
+  input logic [ASID_LENGTH-1:0] asid;
+  input logic [TLB_TAG_BITS-1:0] tag;
+  input logic [SXLEN-1:0] rdata;
+  input logic [TLB_SIZE_LOG2-1:0] index;
+
+  tlb_asid[index]  = asid;
+  tlb_ppn[index]   = {tag, index};
+  tlb_rdata[index] = rdata;
+endtask
+
+task fill_tlb_random;
+  logic [ASID_LENGTH-1:0] asid;
+  logic [TLB_TAG_BITS-1:0] tag;
+  logic [TLB_SIZE_LOG2-1:0] index;
+  logic [SXLEN-1:0] rdata, rdata_out;
+
+  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      index = i;
+      // generate the random values for filling
+      generate_asid(asid);
+      generate_tlb_tag(tag);
+      generate_rdata(rdata);
+
+      // set asid (don't care about satp.ppn)
+      set_satp(1, asid, '1);
+
+      // read the value into tlb
+      if (VERBOSE)
+        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
+      initiate_read({tag, index, 12'h000});
+      complete_read(rdata, rdata_out);
+
+      set_tlb_test_metadata(asid, tag, rdata_out, index);
+    end
+  end
+endtask
+
+task fill_tlb_fixed_asid;
+  input logic [ASID_LENGTH-1:0] asid;
+  logic [TLB_TAG_BITS-1:0] tag;
+  logic [TLB_SIZE_LOG2-1:0] index;
+  logic [SXLEN-1:0] rdata, rdata_out;
+
+  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      index = i;
+      // generate the random values for filling
+      generate_tlb_tag(tag);
+      generate_rdata(rdata);
+
+      // set asid (don't care about satp.ppn)
+      set_satp(1, asid, '1);
+
+      // read the value into tlb
+      if (VERBOSE)
+        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
+      initiate_read({tag, index, 12'h000});
+      complete_read(rdata, rdata_out);
+
+      set_tlb_test_metadata(asid, tag, rdata_out, index);
+    end
+  end
+endtask
+
+task fill_tlb_fixed_asid_tag;
+  input logic [ASID_LENGTH-1:0] asid;
+  input logic [TLB_TAG_BITS-1:0] tag;
+  logic [TLB_SIZE_LOG2-1:0] index;
+  logic [SXLEN-1:0] rdata, rdata_out;
+
+  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      index = i;
+      // generate the random values for filling
+      generate_rdata(rdata);
+
+      // set asid (don't care about satp.ppn)
+      set_satp(1, asid, '1);
+
+      // read the value into tlb
+      if (VERBOSE)
+        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
+      initiate_read({tag, index, 12'h000});
+      complete_read(rdata, rdata_out);
+
+      set_tlb_test_metadata(asid, tag, rdata_out, index);
+    end
+  end
+endtask
+
+task fence_tlb_asid_va;
+  input logic [ASID_LENGTH-1:0] asid;
+  input logic [SXLEN-1:0] va;
+
+  // set fence values in prv_pipe_if
+  prv_pipe_if.fence_asid = asid;
+  prv_pipe_if.fence_va   = va;
+
+  // begin fence
+  fence_tlb();
+
+  prv_pipe_if.fence_asid = '0;
+  prv_pipe_if.fence_va   = '0;
+endtask
+
+task fence_tlb_va;
+  input logic [SXLEN-1:0] va;
+  logic [ASID_LENGTH-1:0] asid;
+
+  // set asid to 0 since we only care about va
+  asid = '0;
+
+  // fence tlb
+  fence_tlb_asid_va(asid, va);
+endtask
+
+task fence_tlb_asid;
+  input logic [ASID_LENGTH-1:0] asid;
+  logic [SXLEN-1:0] va;
+
+  // set va to 0 since we only care about asid
+  va = '0;
+
+  // fence tlb
+  fence_tlb_asid_va(asid, va);
+endtask
+
+task fence_tlb_all;
+  logic [ASID_LENGTH-1:0] asid;
+  logic [SXLEN-1:0] va;
+
+  // set asid and va to 0 to fence every entry
+  asid = '0;
+  va   = '0;
+
+  // fence tlb
+  fence_tlb_asid_va(asid, va);
+endtask
+
+task verify_tlb_fence;
+
+  // read through each set, check at the fenced address set that there's a tlb miss
+  for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+    // set asid to the one in the tlb
+    set_satp(1, tlb_asid[i], 1);
+
+    // start the read transaction
+    initiate_read({tlb_ppn[i], 12'h000});
+
+    // check for TLB miss
+    if (tlb_miss) begin
+      $display("\nTLB miss for \ntlb_ppn[%0d]: 0x%0h\ntlb_asid[%0d]: 0x%0h\n", i, tlb_ppn[i], i, tlb_asid[i]); 
+      // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
+      if ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0)) begin
+        $display("Invalid fence, data mismatch \ntlb_ppn[%0d]: 0x%0h\ntest_ppn: 0x%0h\ntlb_asid[%0d]: 0x%0h\ntest_asid: 0x%0h\n", 
+          i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
+        error_cnt = error_cnt + 1;
+      end else begin
+        $display("Valid fence\n");
+      end
+    end
+
+    // finish the read
+    complete_read(tlb_rdata[i], test_rdata);
+  end
+
 endtask
 
 endprogram
