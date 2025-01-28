@@ -26,8 +26,10 @@
 *                   - TLB Hit
 *                   - TLB Eviction
 *                   - Mismatch ASID miss
-*                   - Invalidate TLB entry
-*                   - Invalid TLB entry miss
+*                   - Invalidate TLB entries, by VA & ASID
+*                   - Invalidate TLB entries, by VA
+*                   - Invalidate TLB entries, by ASID
+*                   - Invalidate TLB entries, all entries
 *                   - User/Supervisor read permissions
 *                   - User/Supervisor write permissions
 *                   - User/Supervisor execute permissions
@@ -263,33 +265,94 @@ initial begin : MAIN
   test_ppn = {test_tag, test_index};
   test_va = {test_ppn, 12'h000};
 
-  // fence asid and va
+  // fence asid and va and verify the tlb fence
   fence_tlb_asid_va(test_asid, test_va);
+  verify_tlb_fence();
+
+  complete_test();
+
+
+  /**************************
   
-  // read through each frame, check at the fenced address frame that there's a tlb miss
-  for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-    // set asid to the one in the tlb
-    set_satp(1, tlb_asid[i], 1);
+  Invalidate TLB entry, by VA
+  
+  **************************/
+  begin_test("Invalidate TLB entry, by VA");
+  // generate a random tag and set test_asid = 0 to fill cache with
+  generate_tlb_tag(test_tag);
+  test_asid = '0;
+  fill_tlb_fixed_tag(test_tag);
 
-    // start the read transaction
-    initiate_read({tlb_ppn[i], 12'h000});
-
-    // check for TLB miss
-    if (tlb_miss) begin
-      $display("\nTLB miss for \ntlb_ppn[%0d]: 0x%0h\ntlb_asid[%0d]: 0x%0h\n", i, tlb_ppn[i], i, tlb_asid[i]); 
-      // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
-      if ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0)) begin
-        $display("Invalid fence, data mismatch \ntlb_ppn[%0d]: 0x%0h\ntest_ppn: 0x%0h\ntlb_asid[%0d]: 0x%0h\ntest_asid: 0x%0h\n", 
-          i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
-        error_cnt = error_cnt + 1;
-      end else begin
-        $display("Valid fence\n");
-      end
+  if (VERBOSE) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
     end
-
-    // finish the read
-    complete_read(tlb_rdata[i], test_rdata);
   end
+
+  // generate an index to fence with and assign tag and index to test_ppn
+  generate_index(test_index);
+  test_ppn = {test_tag, test_index};
+  test_va = {test_ppn, 12'h000};
+
+  // fence asid and va and verify the tlb fence
+  fence_tlb_asid_va(test_asid, test_va);
+  verify_tlb_fence();
+
+  complete_test();
+
+
+  /**************************
+  
+  Invalidate TLB entry, by ASID
+  
+  **************************/
+  begin_test("Invalidate TLB entry, by ASID");
+  // generate a random asid and set test_tag = 0 to fill cache with
+  test_tag = '0;
+  generate_asid(test_asid);
+  fill_tlb_fixed_asid(test_asid);
+
+  if (1) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+    end
+  end
+
+  // set test_ppn and test_va to '0;
+  test_ppn = '0;
+  test_va = '0;
+
+  // fence asid and va and verify the tlb fence
+  fence_tlb_asid_va(test_asid, test_va);
+  verify_tlb_fence();
+
+  complete_test();
+
+
+  /**************************
+  
+  Invalidate TLB entry, all entries
+  
+  **************************/
+  begin_test("Invalidate TLB entry, all entries");
+  // set test_tag and test_asid = 0 to fill cache with
+  test_tag = '0;
+  test_asid = '0;
+  fill_tlb_random();
+
+  if (VERBOSE) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+    end
+  end
+
+  // set test_ppn and test_va to '0;
+  test_ppn = '0;
+  test_va = '0;
+
+  // fence asid and va and verify the tlb fence
+  fence_tlb_asid_va(test_asid, test_va);
+  verify_tlb_fence();
 
   complete_test();
 
@@ -697,6 +760,33 @@ task fill_tlb_fixed_asid;
   end
 endtask
 
+task fill_tlb_fixed_tag;
+  input logic [TLB_TAG_BITS-1:0] tag;
+  logic [ASID_LENGTH-1:0] asid;
+  logic [TLB_SIZE_LOG2-1:0] index;
+  logic [SXLEN-1:0] rdata, rdata_out;
+
+  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
+    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
+      index = i;
+      // generate the random values for filling
+      generate_asid(asid);
+      generate_rdata(rdata);
+
+      // set asid (don't care about satp.ppn)
+      set_satp(1, asid, '1);
+
+      // read the value into tlb
+      if (VERBOSE)
+        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
+      initiate_read({tag, index, 12'h000});
+      complete_read(rdata, rdata_out);
+
+      set_tlb_test_metadata(asid, tag, rdata_out, index);
+    end
+  end
+endtask
+
 task fill_tlb_fixed_asid_tag;
   input logic [ASID_LENGTH-1:0] asid;
   input logic [TLB_TAG_BITS-1:0] tag;
@@ -786,7 +876,7 @@ task verify_tlb_fence;
     if (tlb_miss) begin
       $display("\nTLB miss for \ntlb_ppn[%0d]: 0x%0h\ntlb_asid[%0d]: 0x%0h\n", i, tlb_ppn[i], i, tlb_asid[i]); 
       // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
-      if ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0)) begin
+      if (!(tlb_rdata[i] & PAGE_PERM_GLOBAL) && ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0))) begin
         $display("Invalid fence, data mismatch \ntlb_ppn[%0d]: 0x%0h\ntest_ppn: 0x%0h\ntlb_asid[%0d]: 0x%0h\ntest_asid: 0x%0h\n", 
           i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
         error_cnt = error_cnt + 1;
