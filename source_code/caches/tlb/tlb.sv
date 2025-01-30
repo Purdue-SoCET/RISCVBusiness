@@ -328,13 +328,13 @@ module tlb #(
             end
             HIT: begin
                 // tlb hit on a processor read/write
-                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
+                if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = hit_data;
                     next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                 end
                 // tlb miss on a clean block
-		        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
+		        else if(at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end
@@ -393,7 +393,7 @@ module tlb #(
                     next_state = HIT;
             end
             HIT: begin
-                if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) // not sure what to do with pass through yet.
+                if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) // not sure what to do with pass through yet.
                     next_state = FETCH;
                 if (fence)
                     next_state = FENCE_TLB;
