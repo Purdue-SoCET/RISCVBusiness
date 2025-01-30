@@ -55,8 +55,8 @@ always_comb begin
   if (check) begin
     // may need to add pma and pmp checks here
 
-    // fault if pte.v = 0 or if pte.r = 0 and pte.w = 1
-    if (~pte_perms.valid | (~pte_perms.readable & pte_perms.writable)) begin
+    // fault if pte.v = 0 or if pte.r = 0 and pte.w = 1 or if any reserved bits are set
+    if (~pte_perms.valid | (~pte_perms.readable & pte_perms.writable) | (|pte_perms.reserved_0)) begin
       fault_load_page  = access == LOAD;
       fault_store_page = access == STORE;
       fault_insn_page  = access == INSTRUCTION;

@@ -195,7 +195,7 @@ module tlb #(
     // permission checking for TLB accesses
     page_perm_check TLB_PERM_CHECK (
         .check(hit),
-        .level(1),
+        .level(0),
         .access(access),
         .pte_sv32(pte_sv32),
         .fault_load_page(fault_load_page),
