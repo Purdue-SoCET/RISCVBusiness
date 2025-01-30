@@ -20,8 +20,12 @@
 *   Email:        wrcunnin@purdue.edu
 *   Date Created: 12/24/2024
 *   Description:  Testbench for a direct mapped TLB design.
+*                 If changing for RV64, please remember to update the
+*                 format codes for the print statements.
+*                 They are w.r.t. RV32.
+*
 *                 Test cases include:
-*                   - Address translation off (M-mode)
+*                   - Address translation off (M-mode and S-Mode Bare addressing)
 *                   - Compulsory TLB Misses
 *                   - TLB Hit
 *                   - TLB Eviction
@@ -30,11 +34,7 @@
 *                   - Invalidate TLB entries, by VA
 *                   - Invalidate TLB entries, by ASID
 *                   - Invalidate TLB entries, all entries
-*                   - User/Supervisor read permissions
-*                   - User/Supervisor write permissions
-*                   - User/Supervisor execute permissions
-*                   - User/Supervisor other permissions
-*                   - Machine mode no operation
+*                   - Address translation off (Again)
 */
 
 `include "generic_bus_if.vh"
@@ -191,12 +191,44 @@ initial begin : MAIN
   **************************/
   $display("\n---------- Beginning Basic Test Cases ---------\n");
 
+
   /**************************
   
-  Address translation off (M-mode)
+  Address translation off (M-mode and S-Mode Bare addressing)
   
   **************************/
-  begin_test("Address translation off (M-mode)");
+  begin_test("Address translation off (M-mode and S-Mode Bare addressing)");
+
+  // attempt a read in M-mode
+  set_satp(1, '1, '1); // give Sv32 translation for S-mode
+  set_priv_level(M_MODE); // ensure M_MODE
+  @(posedge CLK);
+
+  initiate_read(32'h10001000);
+  if (tlb_miss || gbif.rdata) begin
+    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in M-mode\n", test_case);
+    error_cnt += 1;
+  end
+  else begin
+    $display("Valid TLB response in M-mode");
+  end
+  reset_gbif();
+
+  // attempt a read in S-mode, with bare address translation
+  set_satp(0, '1, '1); // give Bare translation for S-mode
+  set_priv_level(S_MODE); // ensure M_MODE
+  @(posedge CLK);
+
+  initiate_read(32'h10001000);
+  if (tlb_miss || gbif.rdata) begin
+    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in Bare S-mode\n", test_case);
+    error_cnt += 1;
+  end
+  else begin
+    $display("Valid TLB response in Bare S-mode");
+  end
+  reset_gbif();
+
   complete_test();
 
 
@@ -256,7 +288,7 @@ initial begin : MAIN
 
   if (VERBOSE) begin
     for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%08h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
     end
   end
 
@@ -285,7 +317,7 @@ initial begin : MAIN
 
   if (VERBOSE) begin
     for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%08h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
     end
   end
 
@@ -312,9 +344,9 @@ initial begin : MAIN
   generate_asid(test_asid);
   fill_tlb_fixed_asid(test_asid);
 
-  if (1) begin
+  if (VERBOSE) begin
     for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%06h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
     end
   end
 
@@ -342,7 +374,7 @@ initial begin : MAIN
 
   if (VERBOSE) begin
     for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%0h PPN: 0x%0h RDATA: 0x%0h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
+      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%08h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
     end
   end
 
@@ -359,49 +391,41 @@ initial begin : MAIN
 
   /**************************
   
-  Invalid TLB entry miss
-  
-  **************************/
-
-
-
-  /**************************
-  
-  User/Supervisor read permissions
-  
-  **************************/
-
-
-
-  /**************************
-  
-  User/Supervisor write permissions
-  
-  **************************/
-
-
-
-  /**************************
-  
-  User/Supervisor execute permissions
-  
-  **************************/
-
-
-
-  /**************************
-  
-  User/Supervisor other permissions
-  
-  **************************/
-
-
-
-  /**************************
-  
   Address translation off (again)
   
   **************************/
+  begin_test("Address translation off (again)");
+  // attempt a read in M-mode
+  set_satp(1, '1, '1); // give Sv32 translation for S-mode
+  set_priv_level(M_MODE); // ensure M_MODE
+  @(posedge CLK);
+
+  initiate_read(32'h10001000);
+  if (tlb_miss || gbif.rdata) begin
+    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in M-mode\n", test_case);
+    error_cnt += 1;
+  end
+  else begin
+    $display("Valid TLB response in M-mode");
+  end
+  reset_gbif();
+
+  // attempt a read in S-mode, with bare address translation
+  set_satp(0, '1, '1); // give Bare translation for S-mode
+  set_priv_level(S_MODE); // ensure M_MODE
+  @(posedge CLK);
+
+  initiate_read(32'h10001000);
+  if (tlb_miss || gbif.rdata) begin
+    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in Bare S-mode\n", test_case);
+    error_cnt += 1;
+  end
+  else begin
+    $display("Valid TLB response in Bare S-mode");
+  end
+  reset_gbif();
+
+  complete_test();
 
 
   /**************************
@@ -605,7 +629,7 @@ task complete_read_check;
   complete_read(expected_rdata, actual_rdata);
 
   if (expected_rdata !== actual_rdata) begin
-    $display("\nData Mismatch \nAddr: 0x%0h\nExpected: 0x%0h\nReceived: 0x%0h\n", 
+    $display("\nData Mismatch \nAddr: 0x%08h\nExpected: 0x%08h\nReceived: 0x%08h\n", 
       read_addr, expected_rdata, actual_rdata); 
     error_cnt = error_cnt + 1;
     #(DELAY);
@@ -671,13 +695,21 @@ endtask
 task generate_perms;
   output logic [9:0] random_perms;
 
-  random_perms = $random % (1 << 8);
+  random_perms = (($random % (1 << 8)) | FULL_PERMS) & (~PAGE_PERM_USER);
 endtask
 
 task generate_rdata;
   output logic [SXLEN-1:0] random_rdata;
 
   random_rdata = $random;
+endtask
+
+task generate_pte;
+  output logic [SXLEN-1:0] random_pte;
+
+  generate_ppn(random_pte[SXLEN-1:10]);
+  generate_perms(random_pte[9:0]);
+  random_pte[9:8] = '0;
 endtask
 
 task generate_index;
@@ -717,7 +749,7 @@ task fill_tlb_random;
       // generate the random values for filling
       generate_asid(asid);
       generate_tlb_tag(tag);
-      generate_rdata(rdata);
+      generate_pte(rdata);
 
       // set asid (don't care about satp.ppn)
       set_satp(1, asid, '1);
@@ -744,7 +776,7 @@ task fill_tlb_fixed_asid;
       index = i;
       // generate the random values for filling
       generate_tlb_tag(tag);
-      generate_rdata(rdata);
+      generate_pte(rdata);
 
       // set asid (don't care about satp.ppn)
       set_satp(1, asid, '1);
@@ -771,7 +803,7 @@ task fill_tlb_fixed_tag;
       index = i;
       // generate the random values for filling
       generate_asid(asid);
-      generate_rdata(rdata);
+      generate_pte(rdata);
 
       // set asid (don't care about satp.ppn)
       set_satp(1, asid, '1);
@@ -797,7 +829,7 @@ task fill_tlb_fixed_asid_tag;
     for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
       index = i;
       // generate the random values for filling
-      generate_rdata(rdata);
+      generate_pte(rdata);
 
       // set asid (don't care about satp.ppn)
       set_satp(1, asid, '1);
@@ -867,21 +899,20 @@ task verify_tlb_fence;
   // read through each set, check at the fenced address set that there's a tlb miss
   for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
     // set asid to the one in the tlb
-    set_satp(1, tlb_asid[i], 1);
+    set_satp(1, tlb_asid[i], '1);
 
     // start the read transaction
     initiate_read({tlb_ppn[i], 12'h000});
 
     // check for TLB miss
-    if (tlb_miss) begin
-      $display("\nTLB miss for \ntlb_ppn[%0d]: 0x%0h\ntlb_asid[%0d]: 0x%0h\n", i, tlb_ppn[i], i, tlb_asid[i]); 
+    if (tlb_miss) begin 
       // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
       if (!(tlb_rdata[i] & PAGE_PERM_GLOBAL) && ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0))) begin
-        $display("Invalid fence, data mismatch \ntlb_ppn[%0d]: 0x%0h\ntest_ppn: 0x%0h\ntlb_asid[%0d]: 0x%0h\ntest_asid: 0x%0h\n", 
+        $display("Invalid fence, data mismatch - tlb_ppn[%3d]: 0x%06h, test_ppn: 0x%06h - tlb_asid[%3d]: 0x%03h, test_asid: 0x%03h\n", 
           i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
         error_cnt = error_cnt + 1;
       end else begin
-        $display("Valid fence\n");
+        $display("Valid fence - tlb_ppn[%3d]: 0x%06h - tlb_asid[%3d]: 0x%03h\n", i, tlb_ppn[i], i, tlb_asid[i]);
       end
     end
 
