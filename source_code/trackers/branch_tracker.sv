@@ -27,7 +27,6 @@ module branch_tracker (
     nRST,
     input logic update_predictor,
     input logic direction,
-    input logic[12:0] imm_sb,
     input logic prediction,
     input logic branch_result,
     //input logic is_jump

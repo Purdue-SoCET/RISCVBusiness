@@ -30,9 +30,7 @@
 module branch_predictor_wrapper (
     input logic CLK,
     nRST,
-    predictor_pipeline_if.predictor predict_if,
-    tspp_fetch_execute_if.fetch fetch_ex_if
-    //fetch_buffer_if.fb fb_if
+    predictor_pipeline_if.predictor predict_if
     //predictor_pipeline_if.access access_if
 );
     // Predictor used based on the BR_PREDICTOR_TYPE definition
@@ -93,6 +91,7 @@ module branch_predictor_wrapper (
 		        "btfnt"	   : btfnt_predictor predictor (CLK, nRST, predict_temp1);	// static backward taken/forward not taken predictor
 		        "btb_1"	   : btb predictor (CLK, nRST, predict_temp1);				// branch target buffer with 1 bit predictor
 		        "btb_2"	   : btb #(.PRED_BITS(2)) predictor (CLK, nRST, predict_temp1); // BTB with 2-bit predictor
+			    "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);	// BTB with global history and prediction history
             endcase
     endgenerate
     return_predictor #(.entries(4)) predictor (CLK, nRST, predict_temp2);
