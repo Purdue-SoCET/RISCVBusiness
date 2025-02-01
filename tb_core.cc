@@ -1,5 +1,6 @@
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <sstream>
@@ -29,6 +30,9 @@
 vluint64_t sim_time = 0;
 Vtop_core *dut_ptr;
 VerilatedFstC *trace_ptr;
+bool use_tohost = false;
+uint32_t tohost_address = 0;
+bool tohost_break = false;
 
 /*
  *  Emulate memory-mapped CSRs
@@ -155,6 +159,7 @@ public:
     }
 
     void write(uint32_t addr, uint32_t value, uint8_t mask) {
+
         // NOTE: For now, assuming that all memory is legally acessible.
         auto it = mmap.find(addr);
         if(it != mmap.end()) {
@@ -162,6 +167,10 @@ public:
             it->second = (value & mask_exp) | (it->second & ~mask_exp);
         } else {
             mmap.insert(std::make_pair(addr, value));
+        }
+        
+        if(use_tohost && addr == tohost_address) {
+            tohost_break = true;
         }
     }
 
@@ -250,17 +259,47 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
     tick(dut, trace);
 }
 
+void print_help() {
+    std::cout << "Usage: ./Vtop_core <filename> [--tohost-addr <unsigned int>]" << std::endl;
+    std::cout << "\tfilename: An executable .bin file to run" << std::endl;
+    std::cout << "\ttohost-addr <addr>: address for tohost checking functionality. A write to this address will end the program." << std::endl;
+    std::cout << "\t--help: print this" << std::endl;
+}
+
 
 int main(int argc, char **argv) {
 
-    const char *fname;
+    const char *fname = "meminit.bin";
 
-    if(argc < 2) {
-        std::cout << "Warning: No bin file name provided, assuming './meminit.bin' as file location!" << std::endl;
-        fname = "meminit.bin";
-    } else {
-        fname = argv[1];
+    int i = 0;
+    while(i < argc) {
+        if(strcmp(argv[i], "--tohost-address") == 0) {
+            use_tohost = true;
+            if(i+1 < argc) {
+                try {
+                    tohost_address = std::stoul(argv[i+1], nullptr, 0);
+                } catch (const std::exception& e) {
+                    std::cerr << "Could not convert " << argv[i+1] << " to U32" << std::endl;
+                    return 1;
+                }
+
+                i += 1;
+            } else {
+                std::cerr << "Not enough args" << std::endl;
+                print_help();
+            }
+        } else if(strcmp(argv[i], "--help") == 0) {
+            print_help();
+            return 1;
+        } else {
+            fname = argv[i];
+        }
+
+        i += 1;
     }
+
+    std::cout << "Filename: " << fname << std::endl;
+    std::cout << "tohost: " << use_tohost << " addr: " << tohost_address << std::endl;
 
     MemoryMap memory(fname);
 
@@ -279,9 +318,10 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, signal_handler);
 
+    auto tstart = std::chrono::high_resolution_clock::now();
 
     reset(dut, m_trace);
-    while(!dut.halt && sim_time < 100000) {
+    while(!dut.halt && !tohost_break && sim_time < 100000) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
@@ -319,11 +359,18 @@ int main(int argc, char **argv) {
 
     if(sim_time >= 100000) {
         std::cout << "Test TIMED OUT" << std::endl;
-    } else if(dut.top_core->get_x28() == 1) {
+    } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else {
-        std::cout << "Test FAILED: Test " << dut.top_core->get_x28() << std::endl;
+        std::cout << "Test FAILED: Test " << memory.read(tohost_address) << std::endl;
     }
+
+    auto tend = std::chrono::high_resolution_clock::now();
+
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart);
+
+    std::cout << "Simulated " << sim_time << " cycles in " << ms.count() << "ms" << ", rate of " << (float)sim_time / ((float)ms.count() / 1000.0) << " cycles per second." << std::endl;
+
     m_trace.close();
     memory.dump();
     dut.final();

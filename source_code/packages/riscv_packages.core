@@ -11,10 +11,9 @@ filesets:
             - pma_types_1_12_pkg.sv
             - pmp_types_1_12_pkg.sv
             - rv32m_pkg.sv
-            #- risc_mgmt/crc32_pkg.sv
-            #- risc_mgmt/template_pkg.sv
-            #- risc_mgmt/test_pkg.sv
-            #- risc_mgmt/rv32m_pkg.sv
+            - rv32a_pkg.sv
+            - rv32b_pkg.sv
+            - rv32zc_pkg.sv
         file_type: systemVerilogSource
 
 targets:

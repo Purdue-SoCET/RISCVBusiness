@@ -44,7 +44,6 @@ module stage3_execute_stage (
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif
 );
-
     import rv32i_types_pkg::*;
     import pma_types_1_12_pkg::*;
     import stage3_types_pkg::*;
@@ -101,12 +100,15 @@ module stage3_execute_stage (
         end
     endgenerate
 
-
     /******************
     * Functional Units
     *******************/
     logic rv32m_done;
+    logic rv32b_done;
+    logic rv32zc_done;
     word_t rv32m_out;
+    word_t rv32b_out;
+    word_t rv32zc_out;
     word_t ex_out;
     word_t rs1_post_fwd, rs2_post_fwd;
 
@@ -125,11 +127,26 @@ module stage3_execute_stage (
         .rv32m_out
     );
 
+    rv32b_wrapper RV32B_FU(
+        .rv32b_a(alu_if.port_a),
+        .rv32b_b(alu_if.port_b),
+        .operation(cu_if.rv32b_control),
+        .rv32b_done(rv32b_done),
+        .rv32b_out(rv32b_out)
+    );
+
+    rv32zc_wrapper RV32ZC_FU(
+        .rv32zc_a(alu_if.port_a),
+        .rv32zc_b(alu_if.port_b),
+        .operation(cu_if.rv32zc_control),
+        .rv32zc_done(rv32zc_done),
+        .rv32zc_out(rv32zc_out)
+    );
+
     // Forwarding
     // These rs*_post_fwd values should be used in place of rs1/rs2 anywhere they are used
     assign rs1_post_fwd = fw_if.fwd_rs1 ? fw_if.rd_mem_data : rf_if.rs1_data;
     assign rs2_post_fwd = fw_if.fwd_rs2 ? fw_if.rd_mem_data : rf_if.rs2_data;
-
 
     /******************
     * Sign Extensions
@@ -173,19 +190,28 @@ module stage3_execute_stage (
     end
 
     always_comb begin
-        case (cu_if.alu_b_sel)
-            2'd0: alu_if.port_b = rs1_post_fwd;
-            2'd1: alu_if.port_b = rs2_post_fwd;
-            2'd2: alu_if.port_b = imm_or_shamt;
-            2'd3: alu_if.port_b = cu_if.imm_U;
+        casez ({cu_if.alu_b_sel, cu_if.reserve})
+            {2'd?, 1'b1}: alu_if.port_b = '0;
+            {2'd0, 1'b0}: alu_if.port_b = rs1_post_fwd;
+            {2'd1, 1'b0}: alu_if.port_b = rs2_post_fwd;
+            {2'd2, 1'b0}: alu_if.port_b = imm_or_shamt;
+            {2'd3, 1'b0}: alu_if.port_b = cu_if.imm_U;
         endcase
     end
 
-
     // FU output mux -- feeds into pipeline register
     // Add to this when more FUs are added
-    // TODO: Make this nicer, with enum for FU selection
-    assign ex_out = (cu_if.rv32m_control.select) ? rv32m_out : alu_if.port_out;
+    always_comb begin
+        if(cu_if.rv32m_control.select) begin
+            ex_out = rv32m_out;
+        end else if(cu_if.rv32b_control.select) begin
+            ex_out = rv32b_out;
+        end else if(cu_if.rv32zc_control.select) begin
+            ex_out = rv32zc_out;
+        end else begin
+            ex_out = alu_if.port_out;
+        end
+    end
 
     /*************************
     * Register File Writeback
@@ -233,6 +259,11 @@ module stage3_execute_stage (
     assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
 
+    // CSR Read-only determination
+    // No write occurs if CSRRS/C(I) with a statically-zero source operand
+    logic csr_read_only;
+    assign csr_read_only = (cu_if.csr_clr || cu_if.csr_set)
+                            && ((cu_if.csr_imm && cu_if.zimm == 5'b0) || rf_if.rs1 == 5'b0);
 
     // TODO: NEW
     always_ff @(posedge CLK, negedge nRST) begin
@@ -262,12 +293,14 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.csr_clr        <= cu_if.csr_clr;
                     ex_mem_if.ex_mem_reg.csr_set        <= cu_if.csr_set;
                     ex_mem_if.ex_mem_reg.csr_imm        <= cu_if.csr_imm;
-                    ex_mem_if.ex_mem_reg.csr_read_only  <= (rf_if.rs1 == '0) || (cu_if.zimm == '0);
+                    ex_mem_if.ex_mem_reg.csr_read_only  <= csr_read_only;
                     ex_mem_if.ex_mem_reg.breakpoint     <= cu_if.breakpoint;
                     ex_mem_if.ex_mem_reg.ecall_insn     <= cu_if.ecall_insn;
                     ex_mem_if.ex_mem_reg.ret_insn       <= cu_if.ret_insn;
                     ex_mem_if.ex_mem_reg.wfi_insn       <= cu_if.wfi;
                     ex_mem_if.ex_mem_reg.was_compressed <= 1'b0; // TODO: RV32C support
+                    ex_mem_if.ex_mem_reg.reserve        <= cu_if.reserve;
+                    ex_mem_if.ex_mem_reg.exclusive      <= cu_if.exclusive;
                 end
                 ex_mem_if.ex_mem_reg.illegal_insn              <= cu_if.illegal_insn;
                 ex_mem_if.ex_mem_reg.badaddr                   <= fetch_ex_if.fetch_ex_reg.badaddr;
@@ -318,5 +351,4 @@ module stage3_execute_stage (
     assign sparce_if.sasa_addr = alu_if.port_out;
     assign sparce_if.sasa_wen = cu_if.dwen;
     assign sparce_if.rd = rf_if.rd;*/
-
 endmodule

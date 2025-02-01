@@ -91,8 +91,7 @@ module branch_predictor_wrapper (
 		        "btfnt"	   : btfnt_predictor predictor (CLK, nRST, predict_temp1);	// static backward taken/forward not taken predictor
 		        "btb_1"	   : btb predictor (CLK, nRST, predict_temp1);				// branch target buffer with 1 bit predictor
 		        "btb_2"	   : btb #(.PRED_BITS(2)) predictor (CLK, nRST, predict_temp1); // BTB with 2-bit predictor
-			"btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);	// BTB with global history and prediction history
-
+			    "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);	// BTB with global history and prediction history
             endcase
     endgenerate
     return_predictor #(.entries(4)) predictor (CLK, nRST, predict_temp2);

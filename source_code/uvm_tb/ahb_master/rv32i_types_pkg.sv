@@ -53,6 +53,7 @@ package rv32i_types_pkg;
     REGREG    = 7'b0110011,
     // All system instructions share an opcode
     SYSTEM    = 7'b1110011,
+    // FENCE/FENCE.I instructions share an opcode
     MISCMEM  = 7'b0001111
   } opcode_t;
 

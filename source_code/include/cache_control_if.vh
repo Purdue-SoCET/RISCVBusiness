@@ -29,18 +29,24 @@
 `ifndef CACHE_CONTROL_IF_VH
 `define CACHE_CONTROL_IF_VH
 
-interface cache_control_if;
+`include "bus_ctrl_if.vh"
 
+interface cache_control_if;
   logic icache_clear, icache_flush, iclear_done, iflush_done;
   logic dcache_clear, dcache_flush, dclear_done, dflush_done;
+  // Used to signal that instruction depends on state of reservation set.
+  // Reservation should always be lost after this goes high.
+  logic dcache_reserve;
+  // Used to signal that cache line should be locked.
+  logic dcache_exclusive;
 
   modport pipeline (
-    output icache_clear, icache_flush, dcache_clear, dcache_flush,
+    output icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
     input iclear_done, iflush_done, dclear_done, dflush_done
   );
 
   modport caches (
-    input icache_clear, icache_flush, dcache_clear, dcache_flush,
+    input icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
     output iclear_done, iflush_done, dclear_done, dflush_done
   );
   
@@ -50,7 +56,7 @@ interface cache_control_if;
   );
 
   modport dcache ( 
-    input dcache_clear, dcache_flush,
+    input dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
     output dclear_done, dflush_done
   );
 

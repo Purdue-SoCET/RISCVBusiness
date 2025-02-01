@@ -30,12 +30,15 @@ interface control_unit_if;
   import alu_types_pkg::*;
   import rv32i_types_pkg::*;
   import machine_mode_types_1_12_pkg::*;
+  import rv32a_pkg::*;
   import rv32m_pkg::*;
+  import rv32b_pkg::*;
+  import rv32zc_pkg::*;
 
   logic dwen, dren, j_sel, branch, jump, ex_pc_sel, imm_shamt_sel, halt, wen, ifence, wfi;
   aluop_t alu_op;
   logic [1:0] alu_a_sel, alu_b_sel;
-  logic [2:0] w_sel;
+  w_sel_t w_sel;
   logic [4:0] shamt;
   logic [4:0] rd;
   logic [11:0] imm_I, imm_S;
@@ -45,6 +48,7 @@ interface control_unit_if;
   load_t load_type;
   branch_t branch_type;
   opcode_t opcode;
+  logic reserve, exclusive; // Used for reservation set management
 
   // Privilege control signals
   logic fault_insn, illegal_insn, ret_insn, breakpoint, ecall_insn;
@@ -54,6 +58,9 @@ interface control_unit_if;
 
   // Extension control signals
   rv32m_decode_t rv32m_control;
+  rv32b_decode_t rv32b_control;
+  rv32a_decode_t rv32a_control;
+  rv32zc_decode_t rv32zc_control;
 
   modport control_unit(
     input instr,
@@ -62,8 +69,8 @@ interface control_unit_if;
     imm_I, imm_S, imm_SB, imm_UJ, imm_U, imm_shamt_sel, alu_op,
     opcode, halt, wen, fault_insn, illegal_insn, ret_insn, breakpoint,
     ecall_insn, csr_swap, csr_set, csr_clr, csr_imm, csr_rw_valid,
-    csr_addr, zimm, ifence, wfi, rd, rv32m_control
+    csr_addr, zimm, ifence, wfi, rd, rv32m_control, rv32a_control,
+    rv32b_control, rv32zc_control, reserve, exclusive
   );
-
 endinterface
 `endif

@@ -9,7 +9,9 @@ filesets:
             - branch_res.sv
             - dmem_extender.sv
             - endian_swapper.sv
+            - bus_ctrl.sv
             - memory_controller.sv
+            - multicore_wrapper.sv
             - control_unit.sv
             - jump_calc.sv
             - rv32i_reg_file.sv

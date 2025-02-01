@@ -118,7 +118,6 @@ module stage3_fetch_stage (
     assign hazard_if.pc_f = pc;
     assign hazard_if.rv32c_ready = rv32cif.done_earlier && rv32cif.rv32c_ena; // TODO: Is rv32cif.done needed? Seems like it coincides with busy = 0
 
-
     //Fetch Execute Pipeline Signals
     word_t instr_to_ex;
     assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
@@ -147,7 +146,6 @@ module stage3_fetch_stage (
         end
     end
 
-
     // Send memory protection signals
     assign prv_pipe_if.iren = hazard_if.iren;
     assign prv_pipe_if.iaddr = igen_bus_if.addr;
@@ -170,5 +168,3 @@ module stage3_fetch_stage (
     assign sparce_if.pc = pc;
     assign sparce_if.rdata = igen_bus_if.rdata;
 endmodule
-
-

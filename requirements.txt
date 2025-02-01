@@ -1,0 +1,4 @@
+pyyaml
+fusesoc==2.0
+edalize==0.4.1
+pycrc

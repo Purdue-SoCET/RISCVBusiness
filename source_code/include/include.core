@@ -5,7 +5,9 @@ description: include files
 filesets:
     rtl:
         files:
+            - bus_ctrl_if.vh : {is_include_file: true}
             - cache_control_if.vh : {is_include_file: true}
+            - cache_coherence_if.vh : {is_include_file: true}
             - component_selection_defines.vh : {is_include_file: true}
             - risc_mgmt_if.vh : {is_include_file: true}
             - generic_bus_if.vh : {is_include_file: true}

@@ -25,12 +25,18 @@
 `ifndef GENERIC_BUS_IF_VH
 `define GENERIC_BUS_IF_VH
 
-interface generic_bus_if ();
+`ifdef XCELIUM
+`timescale 1ns/100ps
+`endif
+
+interface generic_bus_if #(
+    parameter BLOCK_SIZE = 1
+) ();
   import rv32i_types_pkg::*;
 
   logic [RAM_ADDR_SIZE-1:0] addr;
-  word_t wdata;
-  word_t rdata;
+  logic [(WORD_SIZE*BLOCK_SIZE)-1:0] wdata;
+  logic [(WORD_SIZE*BLOCK_SIZE)-1:0] rdata;
   logic ren,wen;
   logic busy;
   logic error;
