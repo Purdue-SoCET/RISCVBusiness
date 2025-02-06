@@ -57,43 +57,46 @@ always_comb begin
 
     // fault if pte.v = 0 or if pte.r = 0 and pte.w = 1 or if any reserved bits are set
     if (~pte_perms.valid | (~pte_perms.readable & pte_perms.writable) | (|pte_perms.reserved_0)) begin
-      fault_load_page  = access == LOAD;
-      fault_store_page = access == STORE;
-      fault_insn_page  = access == INSTRUCTION;
+      fault_load_page  = access == ACCESS_LOAD;
+      fault_store_page = access == ACCESS_STORE;
+      fault_insn_page  = access == ACCESS_INSN;
     end
     // fault if level == 0 and r/w/x are NOT set (means leaf pte is marked as a pointer to page level)
     else if (level == '0 & ~(pte_perms.readable | pte_perms.writable | pte_perms.executable)) begin
-      fault_load_page  = access == LOAD;
-      fault_store_page = access == STORE;
-      fault_insn_page  = access == INSTRUCTION;
+      fault_load_page  = access == ACCESS_LOAD;
+      fault_store_page = access == ACCESS_STORE;
+      fault_insn_page  = access == ACCESS_INSN;
     end
     // check if pte.r = 1 or pte.x = 1, means this is a leaf node
     else if (pte_perms.readable | pte_perms.executable) begin
       leaf_pte = 1;
 
-      // fault if instruction access and pte.r = 0
-      if (access == INSTRUCTION & ~pte_perms.readable) begin
+      // fault if load access and pte.r = 0
+      if (access == ACCESS_LOAD & ~pte_perms.readable & ~prv_pipe_if.mstatus.mxr) begin
+        fault_load_page = 1;
+      end
+      // fault if instruction access and pte.x = 0
+      else if (access == ACCESS_INSN & ~pte_perms.executable) begin
         fault_insn_page = 1;
       end
       // fault if store access and pte.w = 0
-      else if (access == STORE & ~pte_perms.writable) begin
+      else if (access == ACCESS_STORE & ~pte_perms.writable) begin
         fault_store_page = 1;
       end
       // fault if U = 1 and is S-mode or U = 0 and is U-mode
       else if ((pte_perms.user & prv_pipe_if.curr_privilege_level == S_MODE & ~prv_pipe_if.mstatus.sum) |
               (~pte_perms.user & prv_pipe_if.curr_privilege_level == U_MODE)) begin
-        fault_load_page  = access == LOAD;
-        fault_store_page = access == STORE;
-        fault_insn_page  = access == INSTRUCTION;
+        fault_load_page  = access == ACCESS_LOAD;
+        fault_store_page = access == ACCESS_STORE;
+        fault_insn_page  = access == ACCESS_INSN;
       end
-
       // superpage checking
       // need to add RV64 superpage checking for RV64 implementation
-      if (level != 0) begin
+      else if (level != 0) begin
         if (at_if.sv32 & |pte_sv32.ppn[9:0]) begin
-          fault_load_page  = access == LOAD;
-          fault_store_page = access == STORE;
-          fault_insn_page  = access == INSTRUCTION;
+          fault_load_page  = access == ACCESS_LOAD;
+          fault_store_page = access == ACCESS_STORE;
+          fault_insn_page  = access == ACCESS_INSN;
         end
       end
     end
