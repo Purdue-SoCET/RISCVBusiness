@@ -186,7 +186,7 @@ def compile_asm(filepath: Type[pathlib.Path], outpath: Type[pathlib.Path],\
     compile_cmd_arr = ["riscv64-unknown-elf-gcc",
                 #"-march=" + config.xlen + "_zicsr_zifencei", "-mabi=" + config.abi,
                 #"-march=" + config.march, "-mabi=" + config.abi,
-                "-march=" + config.march + "mac_zicsr_zifencei", "-mabi=" + config.abi,
+                "-march=" + config.march + "_zicsr_zifencei", "-mabi=" + config.abi,
                 "-static", "-mcmodel=medany", "-fvisibility=hidden",
                 "-nostdlib", "-nostartfiles", "-Oz", "-g",
                 "-T"+str(config.link_file),

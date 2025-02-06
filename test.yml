@@ -1,9 +1,12 @@
 # ISA Configurations
 isa_params:  
   xlen : 32
+  pmp_minimum_granularity : "64K"
 
 # Microarchitectural Configurations
 microarch_params:
+  # Multicore configurations
+  num_harts : 1
   # Branch/Jump Configurations
   br_predictor_type : "btb_2"
   
@@ -38,6 +41,5 @@ microarch_params:
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
   standard_extensions:
-        - name: "a"
   nonstandard_extensions:
 
