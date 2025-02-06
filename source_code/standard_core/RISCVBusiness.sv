@@ -87,9 +87,9 @@ module RISCVBusiness #(
     branch_predictor_wrapper branch_predictor_i (
         .CLK(CLK),
         .nRST(nRST),
-        .predict_if(predict_if)
+        .predict_if(predict_if),
 
-        //.fetch_ex_if(fetch_ex_if)
+        .fetch_ex_if(fetch_ex_if)//,
         //.fb_if(fb_if)
     );
 

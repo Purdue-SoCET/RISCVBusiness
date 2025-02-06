@@ -7,6 +7,10 @@ isa_params:
 microarch_params:
   # Multicore configurations
   num_harts : 1
+<<<<<<< Updated upstream
+=======
+  
+>>>>>>> Stashed changes
   # Branch/Jump Configurations
   br_predictor_type : "btb_2"
   
