@@ -47,6 +47,8 @@ package machine_mode_types_1_13_pkg;
   parameter int PGSIZE_BITS = 12;
 
   // Page permission bits
+  localparam PAGE_PERM_RSW_1    = 1 << 9;
+  localparam PAGE_PERM_RSW_0    = 1 << 8;
   localparam PAGE_PERM_DIRTY    = 1 << 7;
   localparam PAGE_PERM_ACCESSED = 1 << 6;
   localparam PAGE_PERM_GLOBAL   = 1 << 5;
@@ -61,8 +63,11 @@ package machine_mode_types_1_13_pkg;
   parameter int SIE_MASK     = 32'h00002222; // 32'b0000_0000_0000_0000_0010_0010_0010_0010
 
   // Page Permission Types
-  typedef enum {
-    NONE, LOAD, STORE, INSTRUCTION
+  typedef enum logic [1:0] {
+    ACCESS_LOAD  = 2'b11,
+    ACCESS_STORE = 2'b10,
+    ACCESS_INSN  = 2'b01,
+    ACCESS_NONE  = 2'b00
   } access_t;
 
   typedef struct packed {

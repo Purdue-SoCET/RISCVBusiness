@@ -19,6 +19,7 @@ filesets:
     files:
       - source_code/tb/tb_supervisor.sv
       - source_code/tb/tb_tlb_directmapped.sv
+      - source_code/tb/tb_page_perm_check.sv
     file_type: systemVerilogSource
 
 targets:
@@ -42,4 +43,9 @@ targets:
     <<: *default
     toplevel: tb_tlb_directmapped
     description: Simulate direct mapped TLB
+
+  sim_page_perm_check:
+    <<: *default
+    toplevel: tb_page_perm_check
+    description: Simulate page permission checking
 

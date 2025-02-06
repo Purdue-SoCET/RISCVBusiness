@@ -46,29 +46,29 @@ import machine_mode_types_1_13_pkg::*;
 
 `timescale 1ns/10ps
 
-parameter PAGE_OFFSET_BITS = 12;  // For 4KB pages
-parameter TLB_SIZE      = 64;     // Number of entries in the TLB
-parameter TLB_ASSOC     = 1;      // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
-parameter TLB_SIZE_LOG2 = $clog2(TLB_SIZE);
-parameter TLB_TAG_BITS  = PPNLEN - TLB_SIZE_LOG2;
-parameter TLB_TAG_MAX   = 1 << TLB_TAG_BITS;
-parameter ASID_MAX      = 1 << ASID_LENGTH;
-parameter PPN_MAX       = 1 << PPNLEN;
+// parameter PAGE_OFFSET_BITS = 12;  // For 4KB pages
+// parameter TLB_SIZE      = 64;     // Number of entries in the TLB
+// parameter TLB_ASSOC     = 1;      // dont set this to 0, TLB_SIZE / ASSOC must be power of 2
+// parameter TLB_SIZE_LOG2 = $clog2(TLB_SIZE);
+// parameter TLB_TAG_BITS  = PPNLEN - TLB_SIZE_LOG2;
+// parameter TLB_TAG_MAX   = 1 << TLB_TAG_BITS;
+// parameter ASID_MAX      = 1 << ASID_LENGTH;
+// parameter PPN_MAX       = 1 << PPNLEN;
 
-parameter NUM_TESTS = 1000;
-parameter NUM_ADDRS = 20;
-parameter PERIOD = 20;
-parameter DELAY = 5;
+// parameter NUM_TESTS = 1000;
+// parameter NUM_ADDRS = 20;
+// parameter PERIOD = 20;
+// parameter DELAY = 5;
 
-parameter SEED = 11;
-parameter VERBOSE = 0;
-parameter STDOUT = 32'h0000_0000;
+// parameter SEED = 11;
+// parameter VERBOSE = 0;
+// parameter STDOUT = 32'h0000_0000;
 
-// permissions
-parameter FULL_PERMS = PAGE_PERM_READ |
-                       PAGE_PERM_WRITE |
-                       PAGE_PERM_EXECUTE |
-                       PAGE_PERM_VALID;
+// // permissions
+// parameter RWXV_PERMS = PAGE_PERM_READ |
+//                        PAGE_PERM_WRITE |
+//                        PAGE_PERM_EXECUTE |
+//                        PAGE_PERM_VALID;
 
 module tb_tlb_directmapped();
 
@@ -86,7 +86,7 @@ module tb_tlb_directmapped();
   address_translation_if at_if ();          // Cache to TLB
 
   // test program
-  test PROG (CLK, nRST,
+  test_tlb_directmapped PROG (CLK, nRST,
     clear_done, fence_done, tlb_miss,
     fault_load_page, fault_store_page, fault_insn_page,
     clear, fence,
@@ -119,7 +119,7 @@ module tb_tlb_directmapped();
 
 endmodule
 
-program test
+program test_tlb_directmapped
 (
   input logic CLK, output logic nRST,
   input logic clear_done, fence_done, tlb_miss,
@@ -695,7 +695,7 @@ endtask
 task generate_perms;
   output logic [9:0] random_perms;
 
-  random_perms = (($random % (1 << 8)) | FULL_PERMS) & (~PAGE_PERM_USER);
+  random_perms = (($random % (1 << 8)) | RWXV_PERMS) & (~PAGE_PERM_USER);
 endtask
 
 task generate_rdata;
