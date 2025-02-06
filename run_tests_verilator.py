@@ -184,9 +184,9 @@ def compile_asm(filepath: Type[pathlib.Path], outpath: Type[pathlib.Path],\
     supporting_c_files_list = glob.glob(str(config.asm_env) + "/**/*.c", recursive=True)
     supporting_c_files = " ".join(supporting_c_files_list)
     compile_cmd_arr = ["riscv64-unknown-elf-gcc",
-                "-march=" + config.march + "_zicsr_zifencei", "-mabi=" + config.abi, 
                 #"-march=" + config.xlen + "_zicsr_zifencei", "-mabi=" + config.abi,
                 #"-march=" + config.march, "-mabi=" + config.abi,
+                "-march=" + config.march + "_zicsr_zifencei", "-mabi=" + config.abi,
                 "-static", "-mcmodel=medany", "-fvisibility=hidden",
                 "-nostdlib", "-nostartfiles", "-Oz", "-g",
                 "-T"+str(config.link_file),
@@ -446,7 +446,6 @@ def parse_args()-> Type[run_config]:
 if __name__ == "__main__":
     print("Running Main...")
     # setup the logfile
-    #logging.basicConfig(filename=log_filepath, mode="w", level=logging.DEBUG)
     print(parse_args)
     config = parse_args()
     run_tests(config)

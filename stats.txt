@@ -1887,3 +1887,28 @@ Backward branches predicted as not taken:  2
 Backward branches predicted as not taken, incorrect:  2
 Backward branches predicted as not taken, correct:  0
 
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
+add.S:
