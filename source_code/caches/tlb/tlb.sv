@@ -186,9 +186,9 @@ module tlb #(
     
     generate
         if (IS_ITLB) begin
-            assign access = proc_gen_bus_if.ren ? INSTRUCTION : NONE;
+            assign access = proc_gen_bus_if.ren ? ACCESS_INSN : ACCESS_NONE;
         end else begin
-            assign access = proc_gen_bus_if.wen ? STORE : proc_gen_bus_if.ren ? LOAD : NONE;
+            assign access = proc_gen_bus_if.wen ? ACCESS_STORE : proc_gen_bus_if.ren ? ACCESS_LOAD : ACCESS_NONE;
         end
     endgenerate
 
