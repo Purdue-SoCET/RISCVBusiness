@@ -51,6 +51,8 @@ module tb_supervisor ();
 
   tb_tlb_directmapped TLB_DIRECT_MAPPED ();
 
+  tb_tlb_associative TLB_ASSOCIATIVE ();
+
   tb_page_perm_check PAGE_PERM_CHECK ();
 
 endmodule

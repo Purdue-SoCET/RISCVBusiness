@@ -19,6 +19,7 @@ filesets:
     files:
       - source_code/tb/tb_supervisor.sv
       - source_code/tb/tb_tlb_directmapped.sv
+      - source_code/tb/tb_tlb_associative.sv
       - source_code/tb/tb_page_perm_check.sv
     file_type: systemVerilogSource
 
@@ -43,6 +44,11 @@ targets:
     <<: *default
     toplevel: tb_tlb_directmapped
     description: Simulate direct mapped TLB
+
+  sim_tlb_associative:
+    <<: *default
+    toplevel: tb_tlb_associative
+    description: Simulate two-way associative TLB
 
   sim_page_perm_check:
     <<: *default
