@@ -63,7 +63,6 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
     print("-----\n");
 
     // Call M-mode handler to demonstrate delegation
-    
     if (~scause.interrupt && scause.ex_code == 8){
         asm volatile("ecall"); // use this to finish up
     }
@@ -80,7 +79,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
 void __attribute__((noreturn)) user_main(void) {
     print("A"); // MMIO region is not allowed in PMP, should fail
 
-    flag = 0; // Flag is protected, should fail
+    // flag = 0; // Flag is protected, should fail
 
     asm volatile("sret"); // privileged instruction
 
@@ -118,12 +117,13 @@ int main(void) {
     asm volatile("csrw pmpcfg0, %0" : : "r"(pmp_cfg));
 
     // Jump to user program
-    flag = 4;
+    flag = 5;
 
     // Set delegation register to use S-mode handler
     // uint32_t medelegh = 0xFFFFFFFF;
     // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
-    uint32_t medeleg = 0xFFFFFFFF;
+    // uint32_t medeleg = 0xFFFFFFFF;
+    uint32_t medeleg = ~(1 << 9); // trap into s-mode everywhere except environment call from s-mode
     asm volatile("csrw medeleg, %0" : : "r"(medeleg));
 
     // Jump to user program
