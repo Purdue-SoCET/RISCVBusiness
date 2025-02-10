@@ -185,10 +185,16 @@ module tlb #(
     assign pte_sv32 = pte_sv32_t'(hit_data);
     
     generate
+        // if (IS_ITLB) begin
+        //     assign access = proc_gen_bus_if.ren ? ACCESS_INSN : ACCESS_NONE;
+        // end else begin
+        //     assign access = proc_gen_bus_if.wen ? ACCESS_STORE : proc_gen_bus_if.ren ? ACCESS_LOAD : ACCESS_NONE;
+        // end
+
         if (IS_ITLB) begin
-            assign access = proc_gen_bus_if.ren ? ACCESS_INSN : ACCESS_NONE;
+            assign access = ACCESS_INSN;
         end else begin
-            assign access = proc_gen_bus_if.wen ? ACCESS_STORE : proc_gen_bus_if.ren ? ACCESS_LOAD : ACCESS_NONE;
+            assign access = proc_gen_bus_if.wen ? ACCESS_STORE : ACCESS_LOAD;
         end
     endgenerate
 
@@ -272,7 +278,8 @@ module tlb #(
                    sramRead.frames[i].tag.asid    == prv_pipe_if.satp.asid     &&
                    sramRead.frames[i].tag.valid) begin
                     //Read or write hit
-                    if((state == HIT && (proc_gen_bus_if.ren || proc_gen_bus_if.wen))) begin
+                    // if((state == HIT && (proc_gen_bus_if.ren || proc_gen_bus_if.wen))) begin
+                    if(state == HIT) begin
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].pte;
                 	    hit_idx   = i;
@@ -328,13 +335,15 @@ module tlb #(
             end
             HIT: begin
                 // tlb hit on a processor read/write
-                if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
+                // if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
+                if (at_if.addr_trans_on && hit && !fence) begin
                     proc_gen_bus_if.busy = 0;
                     proc_gen_bus_if.rdata = hit_data;
                     next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                 end
                 // tlb miss on a clean block
-		        else if(at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
+		        else if(at_if.addr_trans_on && ~hit && activate_hit) begin
+		        // else if(at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end
