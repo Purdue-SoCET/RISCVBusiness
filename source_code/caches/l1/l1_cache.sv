@@ -126,7 +126,7 @@ module l1_cache #(
     logic [N_SETS-1:0] last_used;
     logic [N_SETS-1:0] next_last_used;
     // address
-    word_t read_addr, next_read_addr;
+    word_t read_addr, next_read_addr, sv32_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
     decoded_cache_addr_t decoded_addr, decoded_read_addr, snoop_decoded_addr;
     logic [N_TAG_BITS-1:0] fetch_physical_tag;
@@ -165,6 +165,7 @@ module l1_cache #(
 
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
+    assign sv32_addr = |ppn_tag[9:0] ? {ppn_tag[19:0], proc_gen_bus_if.addr[11:0]} : {ppn_tag[19:10], proc_gen_bus_if.addr[21:0]}; // superpaging support
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
                    : (state == SNOOP) ? snoop_decoded_addr.idx.idx_bits
@@ -305,7 +306,7 @@ module l1_cache #(
         // found in multiple places in the below `casez` statement, however,
         // it wouldn't execute correctly. For example, 0x80000510 would become
         // 0x80000500 for a block size of 2.
-        next_read_addr          = (at_if.addr_trans_on ? {ppn_tag[19:0], proc_gen_bus_if.addr[11:0]} : proc_gen_bus_if.addr) & ~{CLEAR_LENGTH{1'b1}};
+        next_read_addr          = (at_if.addr_trans_on ? sv32_addr : proc_gen_bus_if.addr) & ~{CLEAR_LENGTH{1'b1}};
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
         ccif.dWEN               = 1'b0;
