@@ -33,9 +33,11 @@ module priv_1_13_int_ex_handler (
     import rv32i_types_pkg::*;
 
     ex_code_t ex_src;
+    logic [30:0] ex_src_bit;
     logic exception;
 
     int_code_t int_src;
+    logic [30:0] int_src_bit;
     logic interrupt, clear_interrupt;
     logic interrupt_fired, interrupt_fired_s;
 
@@ -43,24 +45,31 @@ module priv_1_13_int_ex_handler (
     always_comb begin
         interrupt = 1'b1;
         int_src = SOFT_INT_S;
+        int_src_bit = '0;
 
         if (prv_intern_if.ext_int_m) begin
             int_src = EXT_INT_M;
+            int_src_bit = 1 << EXT_INT_M;
         end
         else if (prv_intern_if.soft_int_m) begin
             int_src = SOFT_INT_M;
+            int_src_bit = 1 << SOFT_INT_M;
         end
         else if (prv_intern_if.timer_int_m) begin
             int_src = TIMER_INT_M;
+            int_src_bit = 1 << TIMER_INT_M;
         end
         else if (prv_intern_if.ext_int_s) begin
             int_src = EXT_INT_S;
+            int_src_bit = 1 << EXT_INT_S;
         end
         else if (prv_intern_if.soft_int_s) begin
             int_src = SOFT_INT_S;
+            int_src_bit = 1 << SOFT_INT_S;
         end
         else if (prv_intern_if.timer_int_s) begin
             int_src = TIMER_INT_S;
+            int_src_bit = 1 << TIMER_INT_S;
         end
         else begin
             interrupt = 1'b0;
@@ -75,38 +84,54 @@ module priv_1_13_int_ex_handler (
     always_comb begin
         exception = 1'b1;
         ex_src = INSN_MAL;
+        ex_src_bit = '0;
 
-        if (prv_intern_if.breakpoint)
+        if (prv_intern_if.breakpoint) begin
             ex_src = BREAKPOINT;
-        else if (prv_intern_if.fault_insn_page)
+            ex_src_bit = 1 << BREAKPOINT;
+        end else if (prv_intern_if.fault_insn_page) begin
             ex_src = INSN_PAGE;
-        else if (prv_intern_if.fault_insn_access)
+            ex_src_bit = 1 << INSN_PAGE;
+        end else if (prv_intern_if.fault_insn_access) begin
             ex_src = INSN_ACCESS;
-        else if (prv_intern_if.illegal_insn)
+            ex_src_bit = 1 << INSN_ACCESS;
+        end else if (prv_intern_if.illegal_insn) begin
             ex_src = ILLEGAL_INSN;
-        else if (prv_intern_if.mal_insn)
+            ex_src_bit = 1 << ILLEGAL_INSN;
+        end else if (prv_intern_if.mal_insn) begin
             ex_src = INSN_MAL;
-        else if (prv_intern_if.env_u)
+            ex_src_bit = 1 << INSN_MAL;
+        end else if (prv_intern_if.env_u) begin
             ex_src = ENV_CALL_U;
-        else if (prv_intern_if.env_s)
+            ex_src_bit = 1 << ENV_CALL_U;
+        end else if (prv_intern_if.env_s) begin
             ex_src = ENV_CALL_S;
-        else if (prv_intern_if.env_m)
+            ex_src_bit = 1 << ENV_CALL_S;
+        end else if (prv_intern_if.env_m) begin
             ex_src = ENV_CALL_M;
-        else if (prv_intern_if.mal_s)
+            ex_src_bit = 1 << ENV_CALL_M;
+        end else if (prv_intern_if.mal_s) begin
             ex_src = S_ADDR_MAL;
-        else if (prv_intern_if.mal_l)
+            ex_src_bit = 1 << S_ADDR_MAL;
+        end else if (prv_intern_if.mal_l) begin
             ex_src = L_ADDR_MAL;
-        else if (prv_intern_if.fault_store_page)
+            ex_src_bit = 1 << L_ADDR_MAL;
+        end else if (prv_intern_if.fault_store_page) begin
             ex_src = STORE_PAGE;
-        else if (prv_intern_if.fault_load_page)
+            ex_src_bit = 1 << STORE_PAGE;
+        end else if (prv_intern_if.fault_load_page) begin
             ex_src = LOAD_PAGE;
-        else if (prv_intern_if.fault_s)
+            ex_src_bit = 1 << LOAD_PAGE;
+        end else if (prv_intern_if.fault_s) begin
             ex_src = S_FAULT;
-        else if (prv_intern_if.fault_l)
+            ex_src_bit = 1 << S_FAULT;
+        end else if (prv_intern_if.fault_l) begin
             ex_src = L_FAULT;
-        else if (prv_intern_if.ex_rmgmt)
+            ex_src_bit = 1 << L_FAULT;
+        end else if (prv_intern_if.ex_rmgmt) begin
             ex_src = ex_code_t'(prv_intern_if.ex_rmgmt_cause);
-        else
+            ex_src_bit = 1 << ex_src;
+        end else
             exception = 1'b0;
     end
 
@@ -115,8 +140,8 @@ module priv_1_13_int_ex_handler (
 
     // if not m-mode intr and (deleg ex or deleg int and has right conditions to go to S-Mode)
     assign prv_intern_if.intr_to_s = !interrupt_fired & 
-                                        ((|{prv_intern_if.curr_medeleg[30:0] & ex_src} & exception) |
-                                            ((|{prv_intern_if.curr_mideleg[30:0] & int_src & SIE_MASK}) & interrupt_fired_s &
+                                        ((|{prv_intern_if.curr_medeleg[30:0] & ex_src_bit} & exception) |
+                                            ((|{prv_intern_if.curr_mideleg[30:0] & int_src_bit & SIE_MASK}) & interrupt_fired_s &
                                                 ((prv_intern_if.curr_privilege_level == S_MODE & prv_intern_if.curr_mstatus.sie) |
                                                  (prv_intern_if.curr_privilege_level < S_MODE))));
 
