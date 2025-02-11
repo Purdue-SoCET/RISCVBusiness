@@ -40,7 +40,7 @@ module page_walker #(
     generic_bus_if.generic_bus itlb_gen_bus_if,
     generic_bus_if.generic_bus dtlb_gen_bus_if,
     prv_pipeline_if.cache prv_pipe_if,
-    address_translation_if.walker at_if
+    address_translation_if at_if
 );
 
     import rv32i_types_pkg::*;
@@ -127,7 +127,7 @@ module page_walker #(
             state <= IDLE;
             page_address <= '0;
             level <= '0;
-            access <= NONE;
+            access <= ACCESS_NONE;
         end else begin
             state <= next_state;
             page_address <= next_page_address;
@@ -250,11 +250,11 @@ module page_walker #(
                     end
 
                     if (dtlb_miss && dtlb_gen_bus_if.ren) begin
-                        next_access = LOAD;
+                        next_access = ACCESS_LOAD;
                     end else if (dtlb_miss && dtlb_gen_bus_if.wen) begin
-                        next_access = STORE;
+                        next_access = ACCESS_STORE;
                     end else if (itlb_miss && itlb_gen_bus_if.ren) begin
-                        next_access = INSTRUCTION;
+                        next_access = ACCESS_INSN;
                     end
                 end
             end
@@ -263,8 +263,8 @@ module page_walker #(
                 mem_gen_bus_if.addr = page_address;
                 if (~mem_gen_bus_if.busy) begin
                     if (leaf_pte) begin
-                        dtlb_gen_bus_if.busy = ~(access == LOAD || access == STORE);
-                        itlb_gen_bus_if.busy = ~(access == INSTRUCTION);
+                        dtlb_gen_bus_if.busy = ~(access == ACCESS_LOAD || access == ACCESS_STORE);
+                        itlb_gen_bus_if.busy = ~(access == ACCESS_INSN);
                         casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                             5'b????1: begin
                                 dtlb_gen_bus_if.rdata = level == 0 ? word_t'(pte_sv32) : word_t'(pte_sv32 | {12'b0, page_address[21:12], 10'b0});
