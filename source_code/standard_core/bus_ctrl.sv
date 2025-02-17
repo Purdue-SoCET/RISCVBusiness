@@ -141,6 +141,7 @@ module bus_ctrl #(
         ccif.l2WEN = '0;
         ccif.ccexclusive = '0;
         ccif.ccinv = '0;
+        npload = ccif.pload[requester_cpu];
         ndload = ccif.dload[requester_cpu];
         nexclusiveUpdate = exclusiveUpdate;
         nrequester_cpu = requester_cpu;
