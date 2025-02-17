@@ -233,7 +233,7 @@ module l1_cache #(
     end
 
     // decoded address conversion
-    assign decoded_addr = state == SNOOP ? snoop_decoded_addr : decoded_cache_addr_t'(proc_gen_bus_if.addr);
+    assign decoded_addr = state == SNOOP ? snoop_decoded_addr : at_if.addr_trans_on ? decoded_cache_addr_t'(sv32_addr) : decoded_cache_addr_t'(proc_gen_bus_if.addr);
 
     logic coherence_hit, sc_valid_block;
 
@@ -244,15 +244,13 @@ module l1_cache #(
         hit 	        = 0;
         hit_idx         = 0;
         hit_data        = 0;
-        pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
+        pass_through    = (at_if.addr_trans_on ? sv32_addr : proc_gen_bus_if.addr) >= NONCACHE_START_ADDR;
         coherence_hit   = 0;
         sc_valid_block  = 0;
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
-                if(((~at_if.addr_trans_on && (sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits)) ||
-                    (at_if.addr_trans_on && (sramRead.frames[i].tag.tag_bits[N_TAG_BITS-1:BARE_PPN_TAG_DIFF] == ppn_tag))) &&
-                    sramRead.frames[i].tag.valid) begin
+                if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
                     sc_valid_block = addr_is_reserved;
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
                     //Read or write hit
@@ -292,7 +290,7 @@ module l1_cache #(
         proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
-        mem_gen_bus_if.addr     = 0; 
+        mem_gen_bus_if.addr     = 0;
         mem_gen_bus_if.wdata    = 0; 
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         enable_flush_count      = 0;
@@ -336,6 +334,7 @@ module l1_cache #(
             HIT: begin
                 // Hit logic only when no TLB miss
                 if (~tlb_miss) begin
+                    mem_gen_bus_if.addr = (at_if.addr_trans_on ? sv32_addr : proc_gen_bus_if.addr) & ~{CLEAR_LENGTH{1'b1}};
                     // cache hit on a processor read
                     if(proc_gen_bus_if.ren && hit && !flush) begin
                         proc_gen_bus_if.busy = 0;
@@ -371,7 +370,7 @@ module l1_cache #(
                     else if(pass_through) begin
                         mem_gen_bus_if.wen      = proc_gen_bus_if.wen;
                         mem_gen_bus_if.ren      = proc_gen_bus_if.ren;
-                        mem_gen_bus_if.addr     = at_if.addr_trans_on ? {ppn_tag[N_PPNTAG_BITS-1:0], proc_gen_bus_if.addr[11:0]} : proc_gen_bus_if.addr;
+                        // mem_gen_bus_if.addr     = at_if.addr_trans_on ? {ppn_tag[N_PPNTAG_BITS-1:0], proc_gen_bus_if.addr[11:0]} : proc_gen_bus_if.addr;
                         mem_gen_bus_if.byte_en  = proc_gen_bus_if.byte_en;
                         proc_gen_bus_if.busy    = mem_gen_bus_if.busy;
                         proc_gen_bus_if.rdata   = mem_gen_bus_if.rdata;

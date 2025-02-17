@@ -30,8 +30,7 @@
 `include "address_translation_if.vh"
 
 module separate_caches (
-    input logic CLK,
-    nRST,
+    input logic CLK, nRST,
     generic_bus_if.cpu icache_mem_gen_bus_if,
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.cpu pw_mem_gen_bus_if,
@@ -50,6 +49,7 @@ module separate_caches (
     logic itlb_miss, itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
     logic dtlb_miss, dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
     
+    word_t itlb_hit_data, dtlb_hit_data;
 
     generic_bus_if itlb_gen_bus_if ();
     generic_bus_if dtlb_gen_bus_if ();
@@ -131,15 +131,17 @@ module separate_caches (
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
                     .tlb_miss(dtlb_miss),
-                    .ppn_tag(dtlb_gen_bus_if.rdata[PPNLEN:10])
+                    .ppn_tag(dtlb_hit_data[PPNLEN + 10 - 1:10])
                 );
                 tlb #(.IS_ITLB(0)) dtlb (
                     .CLK(CLK),
                     .nRST(nRST),
                     .mem_gen_bus_if(dtlb_gen_bus_if),
                     .proc_gen_bus_if(dcache_proc_gen_bus_if),
+                    .tlb_hit_data(dtlb_hit_data),
                     .fence(control_if.dtlb_fence),
                     .clear(1'b0),
+                    .page_fault(prv_pipe_if.fault_load_page | prv_pipe_if.fault_store_page | prv_pipe_if.fault_insn_page),
                     .fence_done(control_if.dtlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
@@ -227,15 +229,17 @@ module separate_caches (
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
                     .tlb_miss(itlb_miss),
-                    .ppn_tag(itlb_gen_bus_if.rdata[PPNLEN:10])
+                    .ppn_tag(itlb_hit_data[PPNLEN + 10 - 1:10])
                 );
                 tlb #(.IS_ITLB(1)) itlb (
                     .CLK(CLK),
                     .nRST(nRST),
                     .mem_gen_bus_if(itlb_gen_bus_if),
                     .proc_gen_bus_if(icache_proc_gen_bus_if),
+                    .tlb_hit_data(itlb_hit_data),
                     .fence(control_if.itlb_fence),
                     .clear(1'b0),
+                    .page_fault(prv_pipe_if.fault_load_page | prv_pipe_if.fault_store_page | prv_pipe_if.fault_insn_page),
                     .fence_done(control_if.itlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
                     .at_if(at_if),
@@ -264,6 +268,9 @@ module separate_caches (
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(at_if)
             );
+
+            assign prv_pipe_if.itlb_miss = itlb_miss;
+            assign prv_pipe_if.dtlb_miss = dtlb_miss;
 
             // arbitrate between pw, dtlb, or itlb for page faults
             always_comb begin

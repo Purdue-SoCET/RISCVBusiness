@@ -34,13 +34,15 @@ module tlb #(
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
     parameter TLB_SIZE            = 64, // Number of entries in the TLB
     parameter TLB_ASSOC           = 1,  // dont set this to 0, TLB_SIZE / TLB_ASSOC must be power of 2
-    parameter IS_ITLB             = 1   // denotes special behavior for permission checking
+    parameter IS_ITLB             = 1,   // denotes special behavior for permission checking
+    parameter BLOCK_SIZE          = 1
 )
 (
     input logic CLK, nRST,
-    input logic clear, fence,
+    input logic clear, fence, page_fault,
     output logic clear_done, fence_done, tlb_miss,
     output logic fault_load_page, fault_store_page, fault_insn_page,
+    output word_t tlb_hit_data,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
     generic_bus_if.generic_bus proc_gen_bus_if, // from pipeline
     prv_pipeline_if.cache prv_pipe_if,
@@ -55,7 +57,6 @@ module tlb #(
     // VA -> [VPN (20)][OFFSET (12)]
 
     // local parameters
-    localparam BLOCK_SIZE         = 1;
     localparam ASID_LENGTH        = 9; // num bits for ASID
     localparam VPN_LENGTH         = SXLEN - PAGE_OFFSET_BITS;
     localparam PPN_LENGTH         = PPNLEN;
@@ -185,16 +186,10 @@ module tlb #(
     assign pte_sv32 = pte_sv32_t'(hit_data);
     
     generate
-        // if (IS_ITLB) begin
-        //     assign access = proc_gen_bus_if.ren ? ACCESS_INSN : ACCESS_NONE;
-        // end else begin
-        //     assign access = proc_gen_bus_if.wen ? ACCESS_STORE : proc_gen_bus_if.ren ? ACCESS_LOAD : ACCESS_NONE;
-        // end
-
         if (IS_ITLB) begin
             assign access = ACCESS_INSN;
         end else begin
-            assign access = proc_gen_bus_if.wen ? ACCESS_STORE : ACCESS_LOAD;
+            assign access = prv_pipe_if.ex_mem_wen ? ACCESS_STORE : ACCESS_LOAD;
         end
     endgenerate
 
@@ -302,6 +297,7 @@ module tlb #(
         mem_gen_bus_if.addr     = 0; 
         mem_gen_bus_if.wdata    = 0; 
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
+        tlb_hit_data            = '0;
         enable_fence_count      = 0;
         enable_fence_count_nowb = 0;
         clear_fence_count       = 0;
@@ -338,7 +334,7 @@ module tlb #(
                 // if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
                 if (at_if.addr_trans_on && hit && !fence) begin
                     proc_gen_bus_if.busy = 0;
-                    proc_gen_bus_if.rdata = hit_data;
+                    tlb_hit_data = hit_data;
                     next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                 end
                 // tlb miss on a clean block
@@ -367,6 +363,7 @@ module tlb #(
                     sramMask.frames[ridx].tag.valid    = 1'b0;
                     sramMask.frames[ridx].tag.asid     = '0;
                     sramMask.frames[ridx].tag.vpn_tag  = '0;
+                    tlb_hit_data = mem_gen_bus_if.rdata;
                 end
             end
             FENCE_TLB: begin
@@ -408,7 +405,7 @@ module tlb #(
                     next_state = FENCE_TLB;
             end
             FETCH: begin
-                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error)
+                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error || page_fault)
                     next_state = HIT;
             end
             FENCE_TLB: begin
