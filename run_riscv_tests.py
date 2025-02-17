@@ -108,7 +108,7 @@ def run_test(fname):
 
     return ('PASSED' in res.stdout)
 
-def run_selected_tests(isa, envs, machine_mode_tests):
+def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
     pass_count = 0
     total_count = 0
 
@@ -137,6 +137,18 @@ def run_selected_tests(isa, envs, machine_mode_tests):
                     pass_count += 1
                 else:
                     print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+
+        # supervisor-mode tests
+        if supervisor_mode_tests:
+            print(f"Supervisor Mode tests")
+            tests = test_base_dir.glob(f'rv32si-{env}*.bin')
+            for test in filter(apply_skips, tests):
+                total_count += 1
+                status = run_test(test)
+                if status:
+                    pass_count += 1
+                else:
+                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
         
     if pass_count == total_count:
         print(f"{Colors.GREEN}[All {pass_count} tests passed.]{Colors.END}")
@@ -156,7 +168,7 @@ def main():
         print("Must supply at least one of --isa, --machine, or --supervisor")
         exit(1)
 
-    if 'v' in args.environment or 'pm' in args.environment or 'pt' in args.environment:
+    if 'pm' in args.environment or 'pt' in args.environment:
         print("Environments 'pt', 'pm' and 'v' are not yet supported.")
         exit(1)
     
@@ -164,11 +176,11 @@ def main():
     #     print("M-mode tests are not currently supported.")
     #     exit(1)
     
-    if args.supervisor:
-        print("S-mode not currently supported on RISCVBusiness.")
-        exit(1)
+    # if args.supervisor:
+    #     print("S-mode not currently supported on RISCVBusiness.")
+    #     exit(1)
     
-    run_selected_tests(args.isa, args.environment, args.machine)
+    run_selected_tests(args.isa, args.environment, args.machine, args.supervisor)
 
 if __name__ == "__main__":
     main()
