@@ -56,6 +56,10 @@ module separate_caches (
 
     address_translation_if at_if ();
 
+    // assign physical addresses to pmp
+    assign prv_pipe_if.ipaddr = icache_mc_if.addr;
+    assign prv_pipe_if.dpaddr = dcache_mc_if.addr;
+
     generate
         /* verilator lint_off width */
         case (DCACHE_TYPE)

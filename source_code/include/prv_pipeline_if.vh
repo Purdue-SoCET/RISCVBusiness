@@ -99,7 +99,7 @@ interface prv_pipeline_if();
 
   modport cache (
     input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_wen,
-    output fault_insn_page, fault_load_page, fault_store_page, itlb_miss, dtlb_miss
+    output fault_insn_page, fault_load_page, fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
   );
 
   modport priv_block (
