@@ -268,6 +268,9 @@ module priv_1_13_int_ex_handler (
                                         | prv_intern_if.mal_s | prv_intern_if.fault_s
                                         | prv_intern_if.illegal_insn
                                         | prv_intern_if.fault_insn_access
+                                        | prv_intern_if.fault_load_page
+                                        | prv_intern_if.fault_store_page
+                                        | prv_intern_if.fault_insn_page
                                         | prv_intern_if.mal_insn
                                         | prv_intern_if.breakpoint
                                         | prv_intern_if.ex_rmgmt)
@@ -278,6 +281,9 @@ module priv_1_13_int_ex_handler (
                                         | prv_intern_if.mal_s | prv_intern_if.fault_s
                                         | prv_intern_if.illegal_insn
                                         | prv_intern_if.fault_insn_access
+                                        | prv_intern_if.fault_load_page
+                                        | prv_intern_if.fault_store_page
+                                        | prv_intern_if.fault_insn_page
                                         | prv_intern_if.mal_insn
                                         | prv_intern_if.breakpoint
                                         | prv_intern_if.ex_rmgmt)

@@ -54,8 +54,8 @@ interface stage3_hazard_unit_if();
 
   //Pipeline Exceptions (inputs)
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
-        breakpoint, env, wfi;
-  word_t badaddr;
+        breakpoint, env, wfi, fault_load_page, fault_store_page, fault_insn_page;
+  word_t badaddr, fetch_badaddr;
 
   // Pipeline Tokens
   logic token_ex;
@@ -70,7 +70,7 @@ interface stage3_hazard_unit_if();
             i_mem_busy, d_mem_busy, dren, dwen, reserve, mret, sret,
             jump, branch, fence_stall, mispredict, halt, pc_f, pc_e, pc_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
-            badaddr, ifence, sfence,
+            badaddr, ifence, sfence, fault_load_page, fault_store_page, fault_insn_page,
             token_ex, token_mem, rv32c_ready,
             valid_e, valid_m, ex_busy,
     output  pc_en, npc_sel,
@@ -82,7 +82,7 @@ interface stage3_hazard_unit_if();
 
   modport fetch (
     input   pc_en, npc_sel, if_ex_stall, if_ex_flush, priv_pc, insert_priv_pc, iren, suppress_iren, rollback,
-    output  i_mem_busy, rv32c_ready, pc_f
+    output  i_mem_busy, rv32c_ready, pc_f, fetch_badaddr
   );
 
   modport execute (
@@ -91,12 +91,12 @@ interface stage3_hazard_unit_if();
   );
 
   modport mem (
-    input   ex_mem_stall, ex_mem_flush, suppress_data,
+    input   ex_mem_stall, ex_mem_flush, suppress_data, fetch_badaddr,
     output  rd_m, reg_write, csr_read,
             d_mem_busy, dren, dwen, reserve, mret, sret,
             jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
-            badaddr, ifence, sfence, wfi,
+            badaddr, ifence, sfence, wfi, fault_load_page, fault_store_page, fault_insn_page,
             token_mem
   );
 

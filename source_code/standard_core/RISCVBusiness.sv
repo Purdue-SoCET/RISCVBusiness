@@ -160,6 +160,9 @@ module RISCVBusiness #(
     assign pw_mc_if.busy  = bus_ctrl_if.pwait[HART_ID];
     assign pw_mc_if.rdata = bus_ctrl_if.pload[HART_ID];
 
+    // assign physical addresses to pmp
+    assign prv_pipe_if.ipaddr = icache_mc_if.addr;
+    assign prv_pipe_if.dpaddr = dcache_mc_if.addr;
     /*
     sparce_wrapper sparce_wrapper_i (
         .CLK(CLK),
