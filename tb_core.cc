@@ -28,6 +28,8 @@
 #define MMIO_RANGE_BEGIN (MTIME_ADDR)
 #define MMIO_RANGE_END   (MAGIC_ADDR)
 
+#define TIMEOUT 1000000
+
 // doubles as mtime counter
 vluint64_t sim_time = 0;
 Vtop_core *dut_ptr;
@@ -353,7 +355,7 @@ int main(int argc, char **argv) {
     auto tstart = std::chrono::high_resolution_clock::now();
 
     reset(dut, m_trace);
-    while(!dut.halt && !tohost_break && sim_time < max_sim_time) {
+    while(!dut.halt && !tohost_break && sim_time < TIMEOUT) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
@@ -389,7 +391,7 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= max_sim_time) {
+    if(sim_time >= TIMEOUT) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
