@@ -2,13 +2,10 @@
 isa_params:  
   xlen : 32
   pmp_minimum_granularity : "64K"
-
 # Microarchitectural Configurations
 microarch_params:
-  # Multicore configurations
+  #Multicore configurations
   num_harts : 1
-
-
   # Branch/Jump Configurations
   br_predictor_type : "btb_2"
   
@@ -42,6 +39,9 @@ microarch_params:
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
-  standard_extensions: ""
+  standard_extensions:
+      - name: "rv32m"
+      - name: "rv32a"
+
   nonstandard_extensions:
 
