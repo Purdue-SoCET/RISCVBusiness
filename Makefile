@@ -63,18 +63,18 @@ DESIGN_FILES := $(BRANCH_FILES) \
                 $(TOP_LEVEL_SRC)
 
 # Verification Team Files
-TBTOP 		 := testbench_top
-VERIFICATION := $(ROOT)/verification
-UVM 		 := $(VERIFICATION)/uvm/multicore
-TOP 		 := $(UVM)/tb_tops
-DATA_AGT 	 := $(UVM)/data_agent
-ENV 		 := $(UVM)/env
-INSTR_AGT 	 := $(UVM)/instr_agent
-INTERFACE 	 := $(UVM)/interfaces
-PROGRAMMER 	 := $(UVM)/programmer
-PARAMS 	 	 := $(UVM)/params
-SEQ 		 := $(UVM)/sequences
-TESTS 		 := $(UVM)/tests
+TBTOP			:= testbench_top
+VERIFICATION 	:= $(ROOT)/verification
+UVM				:= $(VERIFICATION)/uvm/multicore
+TOP				:= $(UVM)/tb_tops
+DATA_AGT		:= $(UVM)/data_agent
+ENV				:= $(UVM)/env
+INSTR_AGT		:= $(UVM)/instr_agent
+INTERFACE		:= $(UVM)/interfaces
+PROGRAMMER		:= $(UVM)/programmer
+PARAMS			:= $(UVM)/params
+SEQ				:= $(UVM)/sequences
+TESTS			:= $(UVM)/tests
 
 # UVM Test - Override via CL args later on
 TESTNAME  ?= reset_test
