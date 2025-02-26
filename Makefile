@@ -1,88 +1,158 @@
+# ************************************************** #
+# Description: Multicore UVM Makefile				 #
+# Author: Adam Keith								 #
+# Date: 2/18/25										 #
+# ************************************************** #
+
+# Shell
 ROOT := $(shell pwd)
 
-RISCV := $(ROOT)/source_code
-RISCV_CORE := $(RISCV)/standard_core
-PIPELINE := $(RISCV)/pipelines
-RISCV_PKGS := $(RISCV)/packages
-RISC_MGMT := $(RISCV)/risc_mgmt
-SPARCE := $(RISCV)/sparce
-PRIVS := $(RISCV)/privs
-BRANCH_PREDICT := $(RISCV)/branch_predictors
-CACHES := $(RISCV)/caches
-RISCV_BUS := $(RISCV)/bus_bridges
-RV32C := $(RISCV)/rv32c
-RV32M_FILES := $(RISC_MGMT)/extensions/rv32m/carry_save_adder.sv $(RISC_MGMT)/extensions/rv32m/flex_counter_mul.sv $(RISC_MGMT)/extensions/rv32m/full_adder.sv $(RISC_MGMT)/extensions/rv32m/pp_mul32.sv $(RISC_MGMT)/extensions/rv32m/radix4_divider.sv $(RISC_MGMT)/extensions/rv32m/rv32m_decode.sv $(RISC_MGMT)/extensions/rv32m/rv32m_execute.sv $(RISC_MGMT)/extensions/rv32m/rv32m_memory.sv
-RV32C_FILES := $(RV32C)/decompressor.sv $(RV32C)/fetch_buffer.sv $(RV32C)/rv32c_disabled.sv $(RV32C)/rv32c_enabled.sv $(RV32C)/rv32c_wrapper.sv
-RISC_MGMT_FILES := $(RISC_MGMT)/risc_mgmt_wrapper.sv $(RISC_MGMT)/tspp/tspp_risc_mgmt.sv $(RV32M_FILES)
-RISC_EXT_FILES := $(RISC_MGMT)/extensions/template/template_decode.sv $(RISC_MGMT)/extensions/template/template_execute.sv $(RISC_MGMT)/extensions/template/template_memory.sv
-CORE_PKG_FILES := $(RISCV_PKGS)/rv32i_types_pkg.sv $(RISCV_PKGS)/alu_types_pkg.sv $(RISCV_PKGS)/risc_mgmt/template_pkg.sv $(RISCV_PKGS)/risc_mgmt/crc32_pkg.sv $(RISCV_PKGS)/risc_mgmt/rv32m_pkg.sv $(RISCV_PKGS)/risc_mgmt/test_pkg.sv $(RISCV_PKGS)/machine_mode_types_pkg.sv $(RISCV_PKGS)/machine_mode_types_1_12_pkg.sv $(RISCV_PKGS)/pma_types_1_12_pkg.sv
-CORE_FILES := $(RISCV_CORE)/alu.sv  $(RISCV_CORE)/branch_res.sv  $(RISCV_CORE)/control_unit.sv  $(RISCV_CORE)/dmem_extender.sv  $(RISCV_CORE)/endian_swapper.sv  $(RISCV_CORE)/jump_calc.sv  $(RISCV_CORE)/memory_controller.sv  $(RISCV_CORE)/RISCVBusiness.sv  $(RISCV_CORE)/rv32i_reg_file.sv $(RISCV_CORE)/top_core.sv
-PIPELINE_FILES :=  $(PIPELINE)/tspp/tspp_execute_stage.sv  $(PIPELINE)/tspp/tspp_fetch_stage.sv  $(PIPELINE)/tspp/tspp_hazard_unit.sv  #$(PIPELINE)/tspp/tspp.sv
-PREDICTOR_FILES := $(BRANCH_PREDICT)/branch_predictor_wrapper.sv $(BRANCH_PREDICT)/nottaken_predictor/nottaken_predictor.sv
-PRIV_FILES := $(PRIVS)/priv_wrapper.sv  $(PRIVS)/priv_1_12/priv_1_12_block.sv  $(PRIVS)/priv_1_12/priv_1_12_int_ex_handler.sv  $(PRIVS)/priv_1_12/priv_1_12_csr.sv  $(PRIVS)/priv_1_12/priv_1_12_pipe_control.sv $(PRIVS)/priv_1_12/priv_1_12_pma.sv
-CACHE_FILES := $(CACHES)/caches_wrapper.sv $(CACHES)/pass_through/pass_through_cache.sv $(CACHES)/direct_mapped_tpf/direct_mapped_tpf_cache.sv $(CACHES)/separate_caches.sv
-SPARCE_FILES := $(SPARCE)/sparce_wrapper.sv $(SPARCE)/sparce_disabled/sparce_disabled.sv $(SPARCE)/sparce_enabled/sparce_cfid.sv  $(SPARCE)/sparce_enabled/sparce_enabled.sv  $(SPARCE)/sparce_enabled/sparce_psru.sv  $(SPARCE)/sparce_enabled/sparce_sasa_table.sv  $(SPARCE)/sparce_enabled/sparce_sprf.sv  $(SPARCE)/sparce_enabled/sparce_svc.sv
-RISCV_BUS_FILES := $(RISCV_BUS)/generic_nonpipeline.sv $(RISCV_BUS)/ahb.sv
-TRACKER_FILES := $(RISCV)/trackers/cpu_tracker.sv $(RISCV)/trackers/branch_tracker.sv
+# Directories
+DIR_FUSESOC_LIBS := fusesoc_libraries
+DIR_SOURCE_CODE  := source_code
 
-COMPONENT_FILES_SV := $(CORE_PKG_FILES) $(RISC_MGMT_FILES) $(RISC_EXT_FILES) $(CORE_FILES) $(RV32C_FILES) $(PIPELINE_FILES) $(SPARCE_FILES) $(PREDICTOR_FILES) $(PRIV_FILES) $(CACHE_FILES) $(RISCV_BUS_FILES) $(TRACKER_FILES)
+# Dependencies - via RISCVBusiness.core
+FUSE_BUS_PRO := $(DIR_FUSESOC_LIBS)/bus-components/generic/bus_protocol_if
+FUSE_BUS_AHB := $(DIR_FUSESOC_LIBS)/bus-components/generic/ahb/ahb_if
+FUSE_BUS_APB := $(DIR_FUSESOC_LIBS)/bus-components/generic/apb/apb_if
+SRC_PKGS     := $(DIR_SOURCE_CODE)/packages
+SRC_STAGE_3  := $(DIR_SOURCE_CODE)/pipelines/stage3
+SRC_PRIVS    := $(DIR_SOURCE_CODE)/privs
+SRC_CACHES   := $(DIR_SOURCE_CODE)/caches
+SRC_STANDARD := $(DIR_SOURCE_CODE)/standard_core
+SRC_INCLUDE  := $(DIR_SOURCE_CODE)/include
+SRC_RV32A    := $(DIR_SOURCE_CODE)/rv32a
+SRC_RV32B    := $(DIR_SOURCE_CODE)/rv32b
+SRC_RV32C    := $(DIR_SOURCE_CODE)/rv32c
+SRC_RV32M    := $(DIR_SOURCE_CODE)/rv32m
+SRC_RV32ZC   := $(DIR_SOURCE_CODE)/rv32zc
+# NEW - Not explicitly included in .core file
+SRC_BRANCH := $(DIR_SOURCE_CODE)/branch_predictors
 
-TOP_ENTITY := RISCVBusiness
+# Files - via RISCVBusiness.core
+# Branch Predictors
+BRANCH_FILES     := $(DIR_SOURCE_CODE)/branch_predictors/branch_predictor_wrapper.sv \
+                    $(DIR_SOURCE_CODE)/branch_predictors/nottaken_predictor/nottaken_predictor.sv
+# Bus
+BUS_FILES        := $(DIR_SOURCE_CODE)/bus_bridges/generic_nonpipeline.sv
+# Pipelines
+PIPELINE_FILES   := $(DIR_SOURCE_CODE)/pipelines/tspp/tspp_hazard_unit.sv \
+                    $(DIR_SOURCE_CODE)/pipelines/tspp/tspp_fetch_stage.sv \
+                    $(DIR_SOURCE_CODE)/pipelines/tspp/tspp_execute.sv
+# Sparce
+SPARCE_FILES     := $(DIR_SOURCE_CODE)/sparce/sparce_disabled/sparce_disabled.sv
+# RV32E
+RV32E_FILES      := $(DIR_SOURCE_CODE)/RV32E/rv32e_reg_file.sv \
+                    $(DIR_SOURCE_CODE)/RV32E/rv32e_wrapper.sv
+# Trackers
+TRACKER_FILES    := $(DIR_SOURCE_CODE)/trackers/branch_tracker.sv \
+                    $(DIR_SOURCE_CODE)/trackers/cpu_tracker.sv
 
-HEADER_FILES := -I$(RISCV)/include
+# Bus Files
+BUS_BRIDGE_FILES := $(DIR_SOURCE_CODE)/bus_bridges/ahb.sv \
+                    $(DIR_SOURCE_CODE)/bus_bridges/apb.sv
+# Core
+TOP_LEVEL_SRC   := $(DIR_SOURCE_CODE)/standard_core/top_core.sv
+# All Design Files
+DESIGN_FILES := $(BRANCH_FILES) \
+                $(BUS_FILES) \
+                $(PIPELINE_FILES) \
+                $(SPARCE_FILES) \
+                $(RV32E_FILES) \
+                $(TRACKER_FILES) \
+                $(BUS_BRIDGE_FILES) \
+                $(TOP_LEVEL_SRC)
 
+# Verification Team Files
+TBTOP 		 := testbench_top
+VERIFICATION := $(ROOT)/verification
+UVM 		 := $(VERIFICATION)/uvm/multicore
+TOP 		 := $(UVM)/tb_tops
+DATA_AGT 	 := $(UVM)/data_agent
+ENV 		 := $(UVM)/env
+INSTR_AGT 	 := $(UVM)/instr_agent
+INTERFACE 	 := $(UVM)/interfaces
+PROGRAMMER 	 := $(UVM)/programmer
+PARAMS 	 	 := $(UVM)/params
+SEQ 		 := $(UVM)/sequences
+TESTS 		 := $(UVM)/tests
 
-define USAGE
-@echo "----------------------------------------------------------------------"
-@echo " Build Targets:"
-@echo "     config: config core with example.yml"
-@echo "     verilate: Invoke 'FuseSoC run --build' to build Verilator target"
-@echo "     xcelium: Invoke 'FuseSoC run --build' to build Xcelium target"
-@echo "     lint: Invoke 'FuseSoC run --build' to run the Verilator lint target"
-@echo "     clean: Remove build directories"
-@echo "     veryclean: Remove fusesoc libraries & build directories"
-@echo "----------------------------------------------------------------------"
+# UVM Test - Override via CL args later on
+TESTNAME  ?= reset_test
+VERBOSITY ?= UVM_HIGH
+SEED      ?= $(shell echo $$RANDOM)
+# QuestaSim Path
+QUESTA_HOME:=/package/eda/mg/questa10.6b/questasim
+
+# Artifacts - will add a lot more later
+COVERAGE_DIR := $(UVM)/reports
+WAVE_SCRIPT  := $(UVM)/waves/multicore.do
+
+# Help Text
+define helpText
+
+PLACEHOLDER HELP TEXT
+
 endef
+export helpText
 
-.phony: default clean config verilate xcelium
+
+.PHONY: help
+help:
+	@echo "$$(helpText)"
 
 
-default:
-	$(USAGE)
-
+.PHONY: config
 config:
 	@echo "----------------------"
 	@echo " Running config_core"
 	@echo "----------------------"
 	@python3 scripts/config_core.py example.yml
 
-verilate: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
-	@echo "------------------------------------------------------------------"
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
-	@echo "------------------------------------------------------------------"
 
-no_mem: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target no_mc --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
-	@echo "------------------------------------------------------------------"
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
-	@echo "------------------------------------------------------------------"
+.PHONY: build
+build: config
+	@echo "Building testbench and DUT..."
+	@echo ""
+	vlog -mfcu \
+	+incdir+$(FUSE_BUS_PRO) \
+	+incdir+$(FUSE_BUS_AHB) \
+	+incdir+$(FUSE_BUS_APB) \
+	+incdir+$(SRC_PKGS) \
+	+incdir+$(SRC_STAGE_3) \
+	+incdir+$(SRC_PRIVS) \
+	+incdir+$(SRC_CACHES) \
+	+incdir+$(SRC_STANDARD) \
+	+incdir+$(SRC_INCLUDE) \
+	+incdir+$(SRC_RV32A) \
+	+incdir+$(SRC_RV32B) \
+	+incdir+$(SRC_RV32C) \
+	+incdir+$(SRC_RV32M) \
+	+incdir+$(SRC_RV32ZC) \
+	+incdir+$(TOP) \
+	+incdir+$(PARAMS) \
+	+incdir+$(INTERFACE) \
+	+incdir+$(PROGRAMMER) \
+	+incdir+$(ENV) \
+	+incdir+$(DATA_AGT) \
+	+incdir+$(INSTR_AGT) \
+	+incdir+$(SEQ) \
+	+incdir+$(TESTS) \
+	+incdir+$(SRC_BRANCH) \
+	+acc \
+	+cover \
+	-L $(QUESTA_HOME)/uvm-1.2 \
+	-sv $(DESIGN_FILES) \
+	$(TOP)/$(TBTOP).sv \
+	-logfile tb_compile.log \
+	-printinfilenames=file_search.log \
+	> build.log 2>&1
 
-xcelium: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool xcelium socet:riscv:RISCVBusiness
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
-
-lint: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
-	@echo "Lint finished, no errors found"
-
+.PHONY: clean
 clean:
-	rm -rf build
-	rm -rf rvb_out
-
-veryclean:
-	rm -rf fusesoc_libraries
-	rm fusesoc.conf
+	@echo "Removing QSim Artifacts..."
+	rm -rf work
+	rm -f transcript
+	rm -f *.log
+	rm -f *.vstf
+	rm -f *.wlf
