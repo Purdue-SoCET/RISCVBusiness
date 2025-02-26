@@ -1,7 +1,7 @@
 # ************************************************** #
-# Description: Multicore UVM Makefile				 #
-# Author: Adam Keith								 #
-# Date: 2/18/25										 #
+# Description: Multicore UVM Makefile                #
+# Author: Adam Keith                                 #
+# Date: 2/18/25                                      #
 # ************************************************** #
 # Shell
 ROOT := $(shell pwd)
