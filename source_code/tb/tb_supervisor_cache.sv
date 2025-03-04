@@ -41,12 +41,8 @@
 *                 Instruction + Data Requests:
 *                 - I/D L1 + TLB Miss -> 2 Page Walks -> 2 Memory Accesses
 *                 - I/D L1 Miss, TLB Hit -> No Page Walks -> 2 Memory Accesses
-*                 - I/D L1 + TLB Hit -> No Page Walks -> 2 Memory Accesses
+*                 - I/D L1 + TLB Hit -> No Page Walks -> No Memory Accesses
 *                 - I/D L1 + TLB Miss -> 2 Page Walks -> No Memory Access
-*                 - DTLB Miss, Faulty Data Address -> Page Walk Fault -> No Memory Access
-*                 - DTLB Miss + ITLB Miss, Faulty Instruction Address -> 1 Page Walk, 1 Fault -> No Memory Access
-*                 - DTLB Hit, ITLB Miss, Bad Data Permissions -> No Page Walk -> No Memory Access
-*                 - DTLB Miss, ITLB Hit, Bad Instruction Permissions -> 1 Page Walk -> No Memory Access
 */
 
 `include "generic_bus_if.vh"
@@ -588,30 +584,9 @@ initial begin : MAIN
 
   set_priv_level(U_MODE);
 
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-  // @(posedge CLK);
-
   initiate_read(32'h80200040, DCACHE);
   
-  // instruction page fault
-  // no load page fault
+  // load page fault
   if (prv_pipe_if.fault_load_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
     error_cnt += 1;
@@ -620,11 +595,163 @@ initial begin : MAIN
   // initiate the write
   initiate_write(32'h80200040, 32'hBEADBEAD, DCACHE);
 
-  // no store page fault
+  // store page fault
   if (prv_pipe_if.fault_store_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_store_page);
     error_cnt += 1;
   end
+
+  complete_test();
+
+
+  /**************************
+  
+  Instruction + Data: I/D L1 + TLB Miss -> 2 Page Walks -> 2 Memory Accesses
+  
+  **************************/
+  begin_test("Instruction + Data", "I/D L1 + TLB Miss -> 2 Page Walks -> 2 Memory Accesses");
+
+  // fence tlb at page
+  fence_tlb_all();
+  @(posedge CLK); // without this stupid thing, the simulation breaks. And so do I. :(
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the reads
+  initiate_write(32'h40200030, 32'hBEEFDEAD, DCACHE);
+  initiate_read(32'h30200020, ICACHE);
+
+  // first level page walk, DCACHE
+  complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk, DCACHE
+  complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  
+  // first level page walk, ICACHE
+  complete_read(('h80030000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk, ICACHE
+  complete_read(('h80040000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+  
+  // instruction read from cache, DCACHE
+  complete_write('h98765432, DCACHE);
+
+  // silly hack, hangs forever without it.
+  // this doesn't happen when full core is synthesized?
+  // could issue with endless loop in full core virtualized sim be caused by this?
+  @(posedge CLK);
+  set_wen(0, DCACHE);
+
+  // instruction read from cache, ICACHE
+  complete_read_check('h12345678, 1, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Instruction + Data: I/D L1 Miss, TLB Hit -> No Page Walks -> 2 Memory Accesses
+  
+  **************************/
+  begin_test("Instruction + Data", "I/D L1 Miss, TLB Hit -> No Page Walks -> 2 Memory Accesses");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the reads
+  initiate_write(32'h40200050, 32'hBEEFDEAD, DCACHE);
+  initiate_read(32'h30200030, ICACHE);
+
+  // instruction read from cache, DCACHE
+  complete_write('h98765432, DCACHE);
+
+  // silly hack, hangs forever without it.
+  // this doesn't happen when full core is synthesized?
+  // could issue with endless loop in full core virtualized sim be caused by this?
+  @(posedge CLK);
+  set_wen(0, DCACHE);
+
+  // instruction read from cache, ICACHE
+  complete_read_check('h12345678, 1, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Instruction + Data: I/D L1 + TLB Hit -> No Page Walks -> No Memory Accesses
+  
+  **************************/
+  begin_test("Instruction + Data", "I/D L1 + TLB Hit -> No Page Walks -> No Memory Accesses");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the reads
+  initiate_write(32'h40200050, 32'hBEEFDEAD, DCACHE);
+  initiate_read(32'h30200030, ICACHE);
+  
+  // instruction read from cache, DCACHE
+  @(posedge CLK);
+
+  // silly hack, hangs forever without it.
+  // this doesn't happen when full core is synthesized?
+  // could issue with endless loop in full core virtualized sim be caused by this?
+  @(posedge CLK);
+  set_wen(0, DCACHE);
+
+  // instruction read from cache, ICACHE
+  complete_read_check('h12345678, 0, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Instruction + Data: I/D L1 + TLB Miss -> 2 Page Walks -> No Memory Access
+  
+  **************************/
+  begin_test("Instruction + Data", "I/D L1 + TLB Miss -> 2 Page Walks -> No Memory Access");
+
+  // fence tlb at page
+  fence_tlb_va('h40200050);
+  @(posedge CLK); // without this stupid thing, the simulation breaks. And so do I. :(
+  fence_tlb_va('h30200030);
+  @(posedge CLK);
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the reads
+  initiate_write(32'h40200050, 32'hBEEFDEAD, DCACHE);
+  initiate_read(32'h30200030, ICACHE);
+  
+  // first level page walk, DCACHE
+  complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk, DCACHE
+  complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  
+  // first level page walk, ICACHE
+  complete_read(('h80030000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk, ICACHE
+  complete_read(('h80040000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  // instruction read from cache, DCACHE
+  @(posedge CLK);
+
+  // silly hack, hangs forever without it.
+  // this doesn't happen when full core is synthesized?
+  // could issue with endless loop in full core virtualized sim be caused by this?
+  @(posedge CLK);
+  set_wen(0, DCACHE);
+
+  // instruction read from cache, ICACHE
+  complete_read_check('h12345678, 0, ICACHE);
 
   complete_test();
 
