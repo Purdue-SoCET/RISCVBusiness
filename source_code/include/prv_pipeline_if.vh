@@ -40,7 +40,7 @@ interface prv_pipeline_if();
   logic itlb_miss, dtlb_miss;
 
   // from ex_mem reg to tlb, will cause comb loop if this value is not used
-  logic ex_mem_wen;
+  logic ex_mem_ren, ex_mem_wen;
 
   // interrupt signals
   logic timer_int, soft_int, ext_int;
@@ -88,7 +88,7 @@ interface prv_pipeline_if();
   );
 
   modport pipe (
-    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid, ex_mem_wen,
+    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
     input  rdata, invalid_priv_isn, fault_insn_page, fault_load_page, fault_store_page, dtlb_miss
   );
 
@@ -98,7 +98,7 @@ interface prv_pipeline_if();
   );
 
   modport cache (
-    input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_wen,
+    input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
     output fault_insn_page, fault_load_page, fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
   );
 

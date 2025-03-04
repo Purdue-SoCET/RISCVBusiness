@@ -340,6 +340,8 @@ module tlb #(
                 // tlb miss on a clean block
 		        else if(at_if.addr_trans_on && ~hit && activate_hit) begin
 		        // else if(at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
+                    mem_gen_bus_if.wen = proc_gen_bus_if.wen;
+                    mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
 			    end

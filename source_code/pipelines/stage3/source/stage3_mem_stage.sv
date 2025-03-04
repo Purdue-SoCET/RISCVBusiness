@@ -46,6 +46,7 @@ module stage3_mem_stage(
     assign dgen_bus_if.byte_en = byte_en;
     assign dgen_bus_if.addr = ex_mem_if.ex_mem_reg.port_out;
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
+    assign prv_pipe_if.ex_mem_ren = ex_mem_if.ex_mem_reg.dren;
     assign prv_pipe_if.ex_mem_wen = ex_mem_if.ex_mem_reg.dwen;
 
     // TODO: RISC-MGMT

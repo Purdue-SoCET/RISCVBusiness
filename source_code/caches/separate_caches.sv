@@ -57,8 +57,8 @@ module separate_caches (
     address_translation_if at_if ();
 
     // assign physical addresses to pmp
-    assign prv_pipe_if.ipaddr = icache_mc_if.addr;
-    assign prv_pipe_if.dpaddr = dcache_mc_if.addr;
+    assign prv_pipe_if.ipaddr = icache_mem_gen_bus_if.addr;
+    assign prv_pipe_if.dpaddr = dcache_mem_gen_bus_if.addr;
 
     generate
         /* verilator lint_off width */
@@ -287,7 +287,7 @@ module separate_caches (
                 // 2. dtlb access fault
                 // 3. PW insn access fault
                 // 4. itlb access fault
-                if (dtlb_miss) begin
+                if (dtlb_miss && (prv_pipe_if.ex_mem_ren || prv_pipe_if.ex_mem_wen)) begin
                     prv_pipe_if.fault_load_page  = pw_fault_load_page;
                     prv_pipe_if.fault_store_page = pw_fault_store_page;
                     prv_pipe_if.fault_insn_page  = pw_fault_insn_page;
