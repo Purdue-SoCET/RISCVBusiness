@@ -371,7 +371,8 @@ initial begin : MAIN
   set_satp(1, 1, 'h80000);
   set_priv_level(S_MODE);
 
-  initiate_read(32'h00200000, ICACHE);
+  // begin write 
+  initiate_write(32'h00200100, 32'h98765432, DCACHE);
 
   // first level page walk
   complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
@@ -379,8 +380,17 @@ initial begin : MAIN
   // second level page walk
   complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
 
+  // complete read
+  complete_write('h12345678, DCACHE);
+
+  // evict cache block
+  initiate_read(32'h00200000, DCACHE);
+
+  // complete writeback
+  complete_writeback_check({32'h0, 32'h98765432}, DCACHE);
+
   // instruction read from bus
-  complete_read_check('hDEADBEEF, 1, ICACHE);
+  complete_read_check('hDEADBEEF, 1, DCACHE);
 
   complete_test();
 
@@ -395,10 +405,20 @@ initial begin : MAIN
   set_satp(1, 1, 'h80000);
   set_priv_level(S_MODE);
 
-  initiate_read(32'h00200010, ICACHE);
+  // replace current block in cache
+  initiate_write(32'h00200100, 32'h98765432, DCACHE);
 
-  // data read from bus
-  complete_read_check('h12345678, 1, ICACHE);
+  // complete write
+  complete_write('h12345678, DCACHE);
+
+  // evict cache block
+  initiate_read(32'h00200000, DCACHE);
+
+  // complete writeback
+  complete_writeback_check({32'h0, 32'h98765432}, DCACHE);
+
+  // instruction read from bus
+  complete_read_check('hDEADBEEF, 1, DCACHE);
 
   complete_test();
 
@@ -413,13 +433,20 @@ initial begin : MAIN
   set_satp(1, 1, 'h80000);
   set_priv_level(S_MODE);
 
-  // instruction read from cache
-  initiate_read(32'h00200000, ICACHE);
-  complete_read_check('hDEADBEEF, 0, ICACHE);
+  // evict cache block
+  initiate_read(32'h00200000, DCACHE);
 
-  // instruction read from cache
-  initiate_read(32'h00200010, ICACHE);
-  complete_read_check('h12345678, 0, ICACHE);
+  // instruction read from bus
+  complete_read_check('hDEADBEEF, 0, DCACHE);
+
+  // replace current block in cache
+  initiate_write(32'h00200000, 32'h98765432, DCACHE);
+
+  // go for a couple clock cycles
+  @(posedge CLK);
+
+  // complete write
+  complete_read_check('0, 0, DCACHE);
 
   complete_test();
 
@@ -439,7 +466,7 @@ initial begin : MAIN
   @(posedge CLK); // without this stupid thing, the simulation breaks. And so do I. :(
 
   // initiate the read
-  initiate_read(32'h00200000, ICACHE);
+  initiate_read(32'h00200000, DCACHE);
 
   // first level page walk
   complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
@@ -448,11 +475,7 @@ initial begin : MAIN
   complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
 
   // instruction read from cache
-  complete_read_check('hDEADBEEF, 0, ICACHE);
-
-  // instruction read from cache
-  initiate_read(32'h00200010, ICACHE);
-  complete_read_check('h12345678, 0, ICACHE);
+  complete_read_check('h98765432, 0, DCACHE);
 
   complete_test();
 
@@ -475,7 +498,19 @@ initial begin : MAIN
 
   // instruction page fault
   if (prv_pipe_if.fault_load_page != 1) begin
-    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
+    error_cnt += 1;
+  end
+
+  // initiate the write
+  initiate_write(32'hF0200000, 32'hBEADBEAD, DCACHE);
+
+  // first level page walk, faulty address, causes page fault.
+  complete_read(0, PAGEWALK);
+
+  // instruction page fault
+  if (prv_pipe_if.fault_store_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_store_page);
     error_cnt += 1;
   end
 
@@ -493,14 +528,26 @@ initial begin : MAIN
   set_priv_level(S_MODE);
 
   // initiate the read
-  initiate_read(32'hF0200000, ICACHE);
+  initiate_read(32'hF0200000, DCACHE);
 
   // invalid page! how can a page be valid if it doesn't have a valid bit set>?>>>>>????
   complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
 
-  // check exception, and instruction page fault
-  if (prv_pipe_if.fault_insn_page != 1) begin
-    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+  // check exception, and load page fault
+  if (prv_pipe_if.fault_load_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
+    error_cnt += 1;
+  end
+
+  // initiate the write
+  initiate_write(32'hF0200000, 32'hBEADBEAD, DCACHE);
+
+  // invalid page! how can a page be valid if it doesn't have a valid bit set>?>>>>>????
+  complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
+
+  // check exception, and store page fault
+  if (prv_pipe_if.fault_store_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_store_page);
     error_cnt += 1;
   end
 
@@ -514,31 +561,68 @@ initial begin : MAIN
   **************************/
   begin_test("Data", "L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access");
 
+  @(posedge CLK);
   set_satp(1, 1, 'h80000);
   set_priv_level(S_MODE);
 
   // initiate the read
-  initiate_read(32'h80200000, ICACHE);
+  initiate_read(32'h80200040, DCACHE);
 
   // valid page in S-Mode
   complete_read(('h10000000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
 
   // put data in cache
-  complete_read_check('hDEADBEEF, 1, ICACHE);
+  complete_read_check('hDEADBEEF, 1, DCACHE);
 
-  // no instruction page fault
-  if (prv_pipe_if.fault_insn_page != 0) begin
-    $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_insn_page);
+  // no load page fault
+  if (prv_pipe_if.fault_load_page != 0) begin
+    $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_load_page);
+    error_cnt += 1;
+  end
+
+  // no store page fault
+  if (prv_pipe_if.fault_store_page != 0) begin
+    $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_store_page);
     error_cnt += 1;
   end
 
   set_priv_level(U_MODE);
 
-  initiate_read(32'h80200000, ICACHE);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+  // @(posedge CLK);
+
+  initiate_read(32'h80200040, DCACHE);
   
   // instruction page fault
-  if (prv_pipe_if.fault_insn_page != 1) begin
-    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+  // no load page fault
+  if (prv_pipe_if.fault_load_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
+    error_cnt += 1;
+  end
+
+  // initiate the write
+  initiate_write(32'h80200040, 32'hBEADBEAD, DCACHE);
+
+  // no store page fault
+  if (prv_pipe_if.fault_store_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_store_page);
     error_cnt += 1;
   end
 
@@ -875,6 +959,15 @@ task complete_writeback_check;
     error_cnt = error_cnt + 1;
   end
 endtask
+
+// complete_write
+task complete_write;
+  input logic [SXLEN-1:0] wdata;
+  input tb_access_t access;
+  complete_read(wdata, access);
+  @(posedge CLK);
+  @(posedge CLK);
+endtask;
 
 // generate_asid
 task generate_asid;
