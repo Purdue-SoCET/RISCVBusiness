@@ -46,6 +46,8 @@ parameter RWXV_PERMS = PAGE_PERM_READ |
                        PAGE_PERM_WRITE |
                        PAGE_PERM_EXECUTE |
                        PAGE_PERM_VALID;
+parameter AD_PERMS = PAGE_PERM_ACCESSED |
+                     PAGE_PERM_DIRTY;
 
 module tb_supervisor ();
 

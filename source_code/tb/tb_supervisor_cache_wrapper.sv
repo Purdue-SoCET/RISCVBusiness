@@ -43,8 +43,8 @@ module supervisor_cache_wrapper(
   generic_bus_if icache_proc_gen_bus_if,
   generic_bus_if dcache_proc_gen_bus_if,
   prv_pipeline_if prv_pipe_if,
-  cache_coherence_if control_if,
-  bus_ctrl_if bus_ctrl
+  cache_control_if control_if,
+  generic_bus_if out_gen_bus_if
 );
 
   logic clear, fence, clear_done, fence_done, tlb_miss;
@@ -57,6 +57,8 @@ module supervisor_cache_wrapper(
 
   cache_coherence_if     i_cache_coherency_if();
   cache_coherence_if     d_cache_coherency_if();
+
+  bus_ctrl_if            bus_ctrl_if();
 
   cache_coherence_statistics_t icoherence_statistics, dcoherence_statistics;
 
@@ -80,7 +82,7 @@ module supervisor_cache_wrapper(
   ) INSN_COH (
     .CLK(CLK),
     .nRST(nRST),
-    .bcif(bus_ctrl),
+    .bcif(bus_ctrl_if),
     .ccif(i_cache_coherency_if),
     .gbif(icache_mem_gen_bus_if),
     .coherence_statistics(icoherence_statistics)
@@ -91,16 +93,32 @@ module supervisor_cache_wrapper(
   ) DATA_COH (
     .CLK(CLK),
     .nRST(nRST),
-    .bcif(bus_ctrl),
+    .bcif(bus_ctrl_if),
     .ccif(d_cache_coherency_if),
     .gbif(dcache_mem_gen_bus_if),
     .coherence_statistics(dcoherence_statistics)
   );
 
-  bus_ctrl BUS (
-    .CLK(CLK),
-    .nRST(nRST),
-    .ccif(bus_ctrl)
+  // bus_ctrl BUS (
+  //   .CLK(CLK),
+  //   .nRST(nRST),
+  //   .ccif(bus_ctrl_if)
+  // );
+
+  // Assign Page Walker signals to bus_ctrl & vice versa
+  assign bus_ctrl_if.pREN[0]     = pw_mem_gen_bus_if.ren;
+  assign bus_ctrl_if.paddr[0]    = pw_mem_gen_bus_if.addr;
+  assign bus_ctrl_if.pbyte_en[0] = '1;
+  assign pw_mem_gen_bus_if.busy  = bus_ctrl_if.pwait[0];
+  assign pw_mem_gen_bus_if.rdata = bus_ctrl_if.pload[0];
+
+  memory_controller #(
+    .NUM_HARTS(1)
+  ) MC (
+      .CLK(CLK),
+      .nRST(nRST),
+      .out_gen_bus_if(out_gen_bus_if),
+      .bcif(bus_ctrl_if)
   );
   
 endmodule

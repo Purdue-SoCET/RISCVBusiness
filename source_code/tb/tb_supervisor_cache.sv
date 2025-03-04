@@ -50,9 +50,11 @@
 */
 
 `include "generic_bus_if.vh"
+`include "cache_control_if.vh"
+`include "component_selection_defines.vh"
+`include "bus_ctrl_if.vh"
 `include "prv_pipeline_if.vh"
 `include "address_translation_if.vh"
-`include "component_selection_defines.vh"
 
 import rv32i_types_pkg::*;
 import machine_mode_types_1_13_pkg::*;
@@ -71,9 +73,9 @@ module tb_supervisor_cache();
   // test signals
   generic_bus_if         icache_proc_gen_bus_if (); // Fetch to I$/iTLB
   generic_bus_if         dcache_proc_gen_bus_if (); // Fetch to D$/dTLB
+  generic_bus_if         out_gen_bus_if         (); // Bus Controller to Memory
   prv_pipeline_if        prv_pipe_if            (); // Priv to TLB
-  cache_coherence_if     control_if             (); // coherence bus to caches
-  bus_ctrl_if            bus_ctrl               (); // Mem to bus controller
+  cache_control_if       control_if             (); // coherence bus to caches
 
   // test program
   test_id_tlb_vipt_pw PROG (
@@ -83,7 +85,7 @@ module tb_supervisor_cache();
     .dcache_proc_gen_bus_if(dcache_proc_gen_bus_if),
     .prv_pipe_if(prv_pipe_if),
     .control_if(control_if),
-    .bus_ctrl_if(bus_ctrl)
+    .out_gen_bus_if(out_gen_bus_if)
   );
 
   // DUT
@@ -94,7 +96,7 @@ module tb_supervisor_cache();
     .dcache_proc_gen_bus_if(dcache_proc_gen_bus_if),
     .prv_pipe_if(prv_pipe_if),
     .control_if(control_if),
-    .bus_ctrl_if(bus_ctrl)
+    .out_gen_bus_if(out_gen_bus_if)
   );
   
 endmodule
@@ -105,18 +107,19 @@ program test_id_tlb_vipt_pw
   generic_bus_if icache_proc_gen_bus_if,
   generic_bus_if dcache_proc_gen_bus_if,
   prv_pipeline_if prv_pipe_if,
-  control_if control_if,
-  bus_ctrl_if bus_ctrl,
+  cache_control_if control_if,
+  generic_bus_if out_gen_bus_if,
   output logic nRST
 );
 
 integer seed;
 integer error_cnt;
 
+string test_type;
 string test_case;
 
 typedef enum logic [1:0] {
-  ICACHE, DCACHE, BUSCTRL
+  ICACHE, DCACHE, PAGEWALK
 } tb_access_t;
 
 // current TLB entry entries used by the fill_* tasks
@@ -134,16 +137,15 @@ logic [TLB_SIZE_LOG2-1:0] test_index;
 initial begin : MAIN
 
   $dumpfile("waveform.fst");
-  $dumpvars(0, tb_tlb_directmapped);
+  $dumpvars(0, tb_supervisor_cache);
 
   // Initial reset
   nRST = 0;
-  clear = 0;
-  fence = 0;
-  reset_gbif();
-  reset_mbif();
+  // clear = 0;
+  // fence = 0;
+  reset_all();
   reset_priv();
-  
+
   // Setup seed
   error_cnt = 0;
   seed = SEED;
@@ -162,8 +164,8 @@ initial begin : MAIN
   nRST = 1;
   @(posedge CLK);
 
-  // wait for TLB startup to finish
-  while (fence_done == 1'b0)
+  // wait for L1 + TLB startup to finish
+  while (control_if.dtlb_fence_done == 1'b0 || control_if.itlb_fence_done == 1'b0)
     @(posedge CLK);
   @(posedge CLK);
 
@@ -177,236 +179,368 @@ initial begin : MAIN
 
   /**************************
   
-  Address translation off (M-mode and S-Mode Bare addressing)
+  Instruction: L1 + TLB Miss -> Page Walk -> Memory Access
   
   **************************/
-  begin_test("Address translation off (M-mode and S-Mode Bare addressing)");
+  begin_test("Instruction", "L1 + TLB Miss -> Page Walk -> Memory Access");
 
-  // attempt a read in M-mode
-  set_satp(1, '1, '1); // give Sv32 translation for S-mode
-  set_priv_level(M_MODE); // ensure M_MODE
-  @(posedge CLK);
-
-  initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
-    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in M-mode\n", test_case);
-    error_cnt += 1;
-  end
-  else begin
-    $display("Valid TLB response in M-mode");
-  end
-  reset_gbif();
-
-  // attempt a read in S-mode, with bare address translation
-  set_satp(0, '1, '1); // give Bare translation for S-mode
-  set_priv_level(S_MODE); // ensure M_MODE
-  @(posedge CLK);
-
-  initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
-    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in Bare S-mode\n", test_case);
-    error_cnt += 1;
-  end
-  else begin
-    $display("Valid TLB response in Bare S-mode");
-  end
-  reset_gbif();
-
-  complete_test();
-
-
-  /**************************
-  
-  Compulsory TLB miss
-  
-  **************************/
-  begin_test("Compulsory TLB miss");
+  set_satp(1, 1, 'h80000);
   set_priv_level(S_MODE);
-  set_satp(1, 9'h1FF, 22'hFFFF);
-  complete_read_check(32'h10001000, 32'hFFFFFC00);
-  complete_test();
 
+  initiate_read(32'h00200000, ICACHE);
 
-  /**************************
-  
-  TLB Hit
-  
-  **************************/
-  begin_test("TLB Hit");
-  complete_read_check(32'h10001000, 32'hFFFFFC00);
-  complete_test();
+  // first level page walk
+  complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
 
+  // second level page walk
+  complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
 
-  /**************************
-  
-  TLB Eviction
-  
-  **************************/
-  begin_test("TLB Eviction");
-  complete_read_check(32'h80001000, 32'hAAAAAC00);
-  complete_test();
-
-
-  /**************************
-  
-  Mismatch ASID miss
-  
-  **************************/
-  begin_test("Mismatch ASID miss");
-  set_satp(1, 9'h100, 22'hFFFF); // new asid 0x100
-  complete_read_check(32'h80001000, 32'hAAAAAC00);
-  complete_test();
-
-
-  /**************************
-  
-  Invalidate TLB entry, by VA & ASID
-  
-  **************************/
-  begin_test("Invalidate TLB entry, by VA & ASID");
-  // generate a random tag and asid to fill cache with
-  generate_tlb_tag(test_tag);
-  generate_asid(test_asid);
-  fill_tlb_fixed_asid_tag(test_asid, test_tag);
-
-  if (VERBOSE) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%08h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
-    end
-  end
-
-  // generate an index to fence with and assign tag and index to test_ppn
-  generate_index(test_index);
-  test_ppn = {test_tag, test_index};
-  test_va = {test_ppn, 12'h000};
-
-  // fence asid and va and verify the tlb fence
-  fence_tlb_asid_va(test_asid, test_va);
-  verify_tlb_fence();
+  // instruction read from bus
+  complete_read_check('hDEADBEEF, 1, ICACHE);
 
   complete_test();
 
 
   /**************************
   
-  Invalidate TLB entry, by VA
+  Instruction: L1 Miss, TLB Hit -> No Page Walk -> Memory Access
   
   **************************/
-  begin_test("Invalidate TLB entry, by VA");
-  // generate a random tag and set test_asid = 0 to fill cache with
-  generate_tlb_tag(test_tag);
-  test_asid = '0;
-  fill_tlb_fixed_tag(test_tag);
+  begin_test("Instruction", "L1 Miss, TLB Hit -> No Page Walk -> Memory Access");
 
-  if (VERBOSE) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%08h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
-    end
-  end
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
 
-  // generate an index to fence with and assign tag and index to test_ppn
-  generate_index(test_index);
-  test_ppn = {test_tag, test_index};
-  test_va = {test_ppn, 12'h000};
+  initiate_read(32'h00200010, ICACHE);
 
-  // fence asid and va and verify the tlb fence
-  fence_tlb_asid_va(test_asid, test_va);
-  verify_tlb_fence();
+  // instruction read from bus
+  complete_read_check('h12345678, 1, ICACHE);
 
   complete_test();
 
 
   /**************************
   
-  Invalidate TLB entry, by ASID
+  Instruction: L1 + TLB Hit -> No Page Walk -> No Memory Access
   
   **************************/
-  begin_test("Invalidate TLB entry, by ASID");
-  // generate a random asid and set test_tag = 0 to fill cache with
-  test_tag = '0;
-  generate_asid(test_asid);
-  fill_tlb_fixed_asid(test_asid);
+  begin_test("Instruction", "L1 + TLB Hit -> No Page Walk -> No Memory Access");
 
-  if (VERBOSE) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%06h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
-    end
-  end
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
 
-  // set test_ppn and test_va to '0;
-  test_ppn = '0;
-  test_va = '0;
+  // instruction read from cache
+  initiate_read(32'h00200000, ICACHE);
+  complete_read_check('hDEADBEEF, 0, ICACHE);
 
-  // fence asid and va and verify the tlb fence
-  fence_tlb_asid_va(test_asid, test_va);
-  verify_tlb_fence();
+  // instruction read from cache
+  initiate_read(32'h00200010, ICACHE);
+  complete_read_check('h12345678, 0, ICACHE);
 
   complete_test();
 
 
   /**************************
   
-  Invalidate TLB entry, all entries
+  Instruction: L1 Hit, TLB Miss -> Page Walk -> No Memory Access
   
   **************************/
-  begin_test("Invalidate TLB entry, all entries");
-  // set test_tag and test_asid = 0 to fill cache with
-  test_tag = '0;
-  test_asid = '0;
-  fill_tlb_random();
+  begin_test("Instruction", "L1 Hit, TLB Miss -> Page Walk -> No Memory Access");
 
-  if (VERBOSE) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      $display("Index %2d - ASID: 0x%03h PPN: 0x%06h RDATA: 0x%08h\n", i, tlb_asid[i], tlb_ppn[i], tlb_rdata[i]);
-    end
-  end
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
 
-  // set test_ppn and test_va to '0;
-  test_ppn = '0;
-  test_va = '0;
+  // fence tlb at page
+  fence_tlb_va('h00200000);
+  @(posedge CLK); // without this stupid thing, the simulation breaks. And so do I. :(
 
-  // fence asid and va and verify the tlb fence
-  fence_tlb_asid_va(test_asid, test_va);
-  verify_tlb_fence();
+  // initiate the read
+  initiate_read(32'h00200000, ICACHE);
+
+  // first level page walk
+  complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk
+  complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  // instruction read from cache
+  complete_read_check('hDEADBEEF, 0, ICACHE);
+
+  // instruction read from cache
+  initiate_read(32'h00200010, ICACHE);
+  complete_read_check('h12345678, 0, ICACHE);
 
   complete_test();
 
 
   /**************************
   
-  Address translation off (again)
+  Instruction: L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access
   
   **************************/
-  begin_test("Address translation off (again)");
-  // attempt a read in M-mode
-  set_satp(1, '1, '1); // give Sv32 translation for S-mode
-  set_priv_level(M_MODE); // ensure M_MODE
-  @(posedge CLK);
+  begin_test("Instruction", "L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access");
 
-  initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
-    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in M-mode\n", test_case);
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the read
+  initiate_read(32'hF0200000, ICACHE);
+
+  // first level page walk, faulty address, causes page fault.
+  complete_read(0, PAGEWALK);
+
+  // instruction page fault
+  if (prv_pipe_if.fault_insn_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
     error_cnt += 1;
   end
-  else begin
-    $display("Valid TLB response in M-mode");
-  end
-  reset_gbif();
 
-  // attempt a read in S-mode, with bare address translation
-  set_satp(0, '1, '1); // give Bare translation for S-mode
-  set_priv_level(S_MODE); // ensure M_MODE
-  @(posedge CLK);
+  complete_test();
 
-  initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
-    $display("Error in test [%s]: tlb_miss or non-zero rdata received when in Bare S-mode\n", test_case);
+
+  /**************************
+  
+  Instruction: L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access
+  
+  **************************/
+  begin_test("Instruction", "L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the read
+  initiate_read(32'hF0200000, ICACHE);
+
+  // invalid page! how can a page be valid if it doesn't have a valid bit set>?>>>>>????
+  complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
+
+  // check exception, and instruction page fault
+  if (prv_pipe_if.fault_insn_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
     error_cnt += 1;
   end
-  else begin
-    $display("Valid TLB response in Bare S-mode");
+
+  complete_test();
+
+
+  /**************************
+  
+  Instruction: L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access
+  
+  **************************/
+  begin_test("Instruction", "L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the read
+  initiate_read(32'h80200000, ICACHE);
+
+  // valid page in S-Mode
+  complete_read(('h10000000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  // put data in cache
+  complete_read_check('hDEADBEEF, 1, ICACHE);
+
+  // no instruction page fault
+  if (prv_pipe_if.fault_insn_page != 0) begin
+    $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_insn_page);
+    error_cnt += 1;
   end
-  reset_gbif();
+
+  set_priv_level(U_MODE);
+
+  initiate_read(32'h80200000, ICACHE);
+  
+  // instruction page fault
+  if (prv_pipe_if.fault_insn_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+    error_cnt += 1;
+  end
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 + TLB Miss -> Page Walk -> Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 + TLB Miss -> Page Walk -> Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  initiate_read(32'h00200000, ICACHE);
+
+  // first level page walk
+  complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk
+  complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  // instruction read from bus
+  complete_read_check('hDEADBEEF, 1, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 Miss, TLB Hit -> No Page Walk -> Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 Miss, TLB Hit -> No Page Walk -> Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  initiate_read(32'h00200010, ICACHE);
+
+  // data read from bus
+  complete_read_check('h12345678, 1, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 + TLB Hit -> No Page Walk -> No Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 + TLB Hit -> No Page Walk -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // instruction read from cache
+  initiate_read(32'h00200000, ICACHE);
+  complete_read_check('hDEADBEEF, 0, ICACHE);
+
+  // instruction read from cache
+  initiate_read(32'h00200010, ICACHE);
+  complete_read_check('h12345678, 0, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 Hit, TLB Miss -> Page Walk -> No Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 Hit, TLB Miss -> Page Walk -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // fence tlb at page
+  fence_tlb_va('h00200000);
+  @(posedge CLK); // without this stupid thing, the simulation breaks. And so do I. :(
+
+  // initiate the read
+  initiate_read(32'h00200000, ICACHE);
+
+  // first level page walk
+  complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
+
+  // second level page walk
+  complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  // instruction read from cache
+  complete_read_check('hDEADBEEF, 0, ICACHE);
+
+  // instruction read from cache
+  initiate_read(32'h00200010, ICACHE);
+  complete_read_check('h12345678, 0, ICACHE);
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the read
+  initiate_read(32'hF0200000, DCACHE);
+
+  // first level page walk, faulty address, causes page fault.
+  complete_read(0, PAGEWALK);
+
+  // instruction page fault
+  if (prv_pipe_if.fault_load_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+    error_cnt += 1;
+  end
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the read
+  initiate_read(32'hF0200000, ICACHE);
+
+  // invalid page! how can a page be valid if it doesn't have a valid bit set>?>>>>>????
+  complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
+
+  // check exception, and instruction page fault
+  if (prv_pipe_if.fault_insn_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+    error_cnt += 1;
+  end
+
+  complete_test();
+
+
+  /**************************
+  
+  Data: L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access
+  
+  **************************/
+  begin_test("Data", "L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access");
+
+  set_satp(1, 1, 'h80000);
+  set_priv_level(S_MODE);
+
+  // initiate the read
+  initiate_read(32'h80200000, ICACHE);
+
+  // valid page in S-Mode
+  complete_read(('h10000000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
+
+  // put data in cache
+  complete_read_check('hDEADBEEF, 1, ICACHE);
+
+  // no instruction page fault
+  if (prv_pipe_if.fault_insn_page != 0) begin
+    $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_insn_page);
+    error_cnt += 1;
+  end
+
+  set_priv_level(U_MODE);
+
+  initiate_read(32'h80200000, ICACHE);
+  
+  // instruction page fault
+  if (prv_pipe_if.fault_insn_page != 1) begin
+    $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
+    error_cnt += 1;
+  end
 
   complete_test();
 
@@ -430,9 +564,13 @@ end
 // --- Helper Tasks and Functions --- //
 
 task begin_test;
+  input string test_main;
   input string test_name;
+
+  reset_all();
+  test_type = test_main;
   test_case = test_name;
-  $display("\n---------- %s ---------\n", test_case);
+  $display("\n---------- %s: %s ---------\n", test_type, test_case);
 endtask
 
 task complete_test;
@@ -448,7 +586,10 @@ task set_ren;
 
   case (access)
     ICACHE: icache_proc_gen_bus_if.ren = new_ren;
-    DCACHE: icache_proc_gen_bus_if.ren = new_ren;
+    DCACHE: begin
+      prv_pipe_if.ex_mem_ren = new_ren;
+      dcache_proc_gen_bus_if.ren = new_ren;
+    end
   endcase
 endtask
 
@@ -460,7 +601,10 @@ task set_wen;
 
   case (access)
     ICACHE: icache_proc_gen_bus_if.wen = 0;
-    DCACHE: icache_proc_gen_bus_if.wen = new_wen;
+    DCACHE: begin
+      prv_pipe_if.ex_mem_wen = new_wen;
+      dcache_proc_gen_bus_if.wen = new_wen;
+    end
   endcase
 endtask
 
@@ -472,7 +616,7 @@ task set_byte_en;
 
   case (access)
     ICACHE: icache_proc_gen_bus_if.byte_en = new_byte_en;
-    DCACHE: icache_proc_gen_bus_if.byte_en = new_byte_en;
+    DCACHE: dcache_proc_gen_bus_if.byte_en = new_byte_en;
   endcase
 endtask
 
@@ -484,7 +628,7 @@ task set_addr;
 
   case (access)
     ICACHE: icache_proc_gen_bus_if.addr = new_addr;
-    DCACHE: icache_proc_gen_bus_if.addr = new_addr;
+    DCACHE: dcache_proc_gen_bus_if.addr = new_addr;
   endcase
 endtask
 
@@ -496,10 +640,8 @@ task set_wdata;
 
   case (access)
     ICACHE: icache_proc_gen_bus_if.wdata = '0;
-    DCACHE: icache_proc_gen_bus_if.wdata = new_wdata;
+    DCACHE: dcache_proc_gen_bus_if.wdata = new_wdata;
   endcase
-
-  gbif.wdata = new_wdata;
 endtask
 
 // set_rdata;
@@ -507,7 +649,7 @@ endtask
 task set_rdata;
   input logic [WORD_SIZE-1:0] new_rdata;
 
-  mbif.rdata = new_rdata;
+  out_gen_bus_if.rdata = new_rdata;
 endtask
 
 // set_busy;
@@ -515,7 +657,7 @@ endtask
 task set_busy;
   input logic new_busy;
 
-  mbif.busy = new_busy;
+  out_gen_bus_if.busy = new_busy;
 endtask
 
 // set_error;
@@ -523,7 +665,7 @@ endtask
 task set_error;
   input logic new_error;
 
-  mbif.error = new_error;
+  out_gen_bus_if.error = new_error;
 endtask
 
 // set_priv_level
@@ -546,27 +688,34 @@ task set_satp;
   prv_pipe_if.satp.ppn  = new_ppn;
 endtask
 
-// reset_gbif
-// resets gbif
-task reset_gbif;
-  set_ren(1'b0);
-  set_wen(1'b0);
-  set_addr('0);
-  set_wdata('0);
-  set_byte_en('0);
+task reset_all;
+  reset_icache_proc();
+  reset_dcache_proc();
+  reset_out_gen();
+  // reset_priv();
 endtask
 
 task reset_icache_proc;
-  set_ren(0, 0); // 
-
-
+  set_ren(0, ICACHE);
+  set_wen(0, ICACHE);
+  set_addr('0, ICACHE);
+  set_wdata('0, ICACHE);
+  set_byte_en('0, ICACHE);
 endtask
 
-// reset_mbif
-// resets mbif
-task reset_mbif;
+task reset_dcache_proc;
+  set_ren(0, DCACHE);
+  set_wen(0, DCACHE);
+  set_addr('0, DCACHE);
+  set_wdata('0, DCACHE);
+  set_byte_en('0, DCACHE);
+endtask
+
+// reset_out_gen
+// resets out_gen_bus_if
+task reset_out_gen;
   set_rdata('0);
-  set_busy(1'b0);
+  set_busy(1'b1);
   set_error(1'b0);
 endtask
 
@@ -581,107 +730,150 @@ endtask
 // fence_tlb
 // sets the fence signal the TLB and waits until done
 task fence_tlb;
-  fence = 1'b1;
+  control_if.itlb_fence = 1'b1;
+  control_if.dtlb_fence = 1'b1;
   @(posedge CLK);
-  fence = 1'b0;
+  control_if.itlb_fence = 1'b0;
+  control_if.dtlb_fence = 1'b0;
 
-  @(posedge fence_done);
+  @(posedge control_if.itlb_fence_done);
+  if (control_if.dtlb_fence_done == 1'b0)
+    @(posedge control_if.dtlb_fence_done)
   @(posedge CLK); // let TLB go back to HIT state
 endtask
 
 // initiate_read
-// initiates a read transaction to the tlb
+// initiates a read transaction to the cache
 task initiate_read;
   input logic [RAM_ADDR_SIZE-1:0] read_addr;
+  input tb_access_t access;
 
-  set_ren(1'b1);
-  set_wen(1'b0);
-  set_addr(read_addr);
-  set_wdata('0);
-  set_byte_en(4'hf);
+  set_ren(1'b1, access);
+  set_wen(1'b0, access);
+  set_addr(read_addr, access);
+  set_wdata('0, access);
+  set_byte_en(4'hf, access);
 
   @(posedge CLK);
 endtask
 
 // complete_read
-// completes a read transaction to the tlb
+// completes a read transaction from the mem bus
 task complete_read;
-  input  logic [SXLEN-1:0] expected_rdata;
-  output logic [SXLEN-1:0] actual_rdata;
+  input logic [SXLEN-1:0] rdata;
+  input tb_access_t access;
 
-  // will manage a TLB miss if it happens
-  handle_tlb_miss(expected_rdata);
-  
-  // go a clock cycle, definitely in a hit at this point
+  @(posedge out_gen_bus_if.ren);
+  set_busy(1);
   @(posedge CLK);
-
-  // assert that we don't have a miss and the TLB returned something
-  assert(tlb_miss == 1'b0);
-  assert(gbif.rdata != '0);
-
-  // read the data from the TLB
-  actual_rdata = gbif.rdata;
-
-  // finish the read
+  set_busy(0);
+  set_rdata(rdata);
   @(posedge CLK);
-  reset_gbif();
-  @(posedge CLK);
+  set_busy(1);
+
+  if (access != PAGEWALK) begin
+    @(posedge CLK);
+    set_busy(0);
+    set_rdata(rdata);
+    @(posedge CLK);
+    set_busy(1);
+  end
 endtask
 
 // complete_read_check
-// completes and verifies a read transaction to the tlb
+// completes and verifies a read transaction from mem to the processor
 task complete_read_check;
-  input logic [RAM_ADDR_SIZE-1:0] read_addr;
   input logic [SXLEN-1:0] expected_rdata;
+  input logic read_mem;
+  input tb_access_t access;
 
   logic [SXLEN-1:0] actual_rdata;
 
-  initiate_read(read_addr);
-  complete_read(expected_rdata, actual_rdata);
+  if (read_mem)
+    complete_read(expected_rdata, access);
 
+  case(access)
+    ICACHE : begin
+      if (read_mem)
+        @(negedge icache_proc_gen_bus_if.busy);
+      else
+        @(posedge CLK);
+      actual_rdata = icache_proc_gen_bus_if.rdata;
+    end
+    DCACHE : begin
+      if (read_mem)
+        @(negedge dcache_proc_gen_bus_if.busy);
+      else
+        @(posedge CLK);
+      actual_rdata = dcache_proc_gen_bus_if.rdata;
+    end
+  endcase
+
+  @(posedge CLK);
   if (expected_rdata !== actual_rdata) begin
-    $display("\nData Mismatch \nAddr: 0x%08h\nExpected: 0x%08h\nReceived: 0x%08h\n", 
-      read_addr, expected_rdata, actual_rdata); 
+    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
+      expected_rdata, actual_rdata); 
     error_cnt = error_cnt + 1;
-    #(DELAY);
-    $finish;
   end
-
 endtask
 
-// handle_tlb_miss
-// handles a miss from the tlb if there is one
-task handle_tlb_miss;
-  input logic [WORD_SIZE-1:0] new_rdata;
+// initiate_write
+// initiates a write transaction to the cache
+task initiate_write;
+  input logic [RAM_ADDR_SIZE-1:0] write_addr;
+  input logic [SXLEN-1:0] write_data;
+  input tb_access_t access;
 
-  // fork between waiting and servicing a tlb miss
-  fork
-    begin : WAIT_FOR_SERVICE // does nothing atm but might be important in the future
-      while (tlb_miss) begin
-        @(posedge CLK);
-      end
-    end
+  set_ren(1'b0, access);
+  set_wen(1'b1, access);
+  set_addr(write_addr, access);
+  set_wdata(write_data, access);
+  set_byte_en(4'hf, access);
 
-    begin : SERVICE_MISS
-      if (tlb_miss) begin
-        if (VERBOSE)
-          $display("Handled TLB miss for rdata: 0x%h\n", new_rdata);
-        // assert busy
-        set_busy(1'b1);
+  @(posedge CLK);
+endtask
 
-        // be busy for a couple cycles
-        @(posedge CLK);
-        @(posedge CLK);
+// complete_writeback
+// completes a bus writeback transaction from the mem bus due to cache block eviction
+task complete_writeback;
+  input tb_access_t access;
+  output logic [1:0][SXLEN-1:0] out_wdata;
 
-        // set the data to fill in the TLB
-        set_rdata(new_rdata);
-        set_busy(1'b0);
+  @(posedge out_gen_bus_if.wen);
+  set_busy(1);
+  @(posedge CLK);
+  set_busy(0);
+  out_wdata[0] = out_gen_bus_if.wdata;
+  @(posedge CLK);
+  set_busy(1);
+  @(posedge CLK);
+  set_busy(0);
+  out_wdata[1] = out_gen_bus_if.wdata;
+  @(posedge CLK);
+  set_busy(1);
+endtask
 
-        // miss should be serviced
-        @(posedge CLK);
-      end
-    end
-  join
+// complete_writeback_check
+// completes a bus writeback transaction from the mem bus due to cache block eviction
+task complete_writeback_check;
+  input logic [1:0][SXLEN-1:0] expected_wdata;
+  input tb_access_t access;
+
+  logic [1:0][SXLEN-1:0] out_wdata;
+
+  complete_writeback(access, out_wdata);
+
+  if (expected_wdata[0] !== out_wdata[0]) begin
+    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
+      expected_wdata[0], out_wdata[0]); 
+    error_cnt = error_cnt + 1;
+  end
+
+  if (expected_wdata[1] !== out_wdata[1]) begin
+    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
+      expected_wdata[1], out_wdata[1]); 
+    error_cnt = error_cnt + 1;
+  end
 endtask
 
 // generate_asid
@@ -748,6 +940,7 @@ task set_tlb_test_metadata;
   tlb_rdata[index] = rdata;
 endtask
 
+/*
 task fill_tlb_random;
   logic [ASID_LENGTH-1:0] asid;
   logic [TLB_TAG_BITS-1:0] tag;
@@ -855,6 +1048,7 @@ task fill_tlb_fixed_asid_tag;
     end
   end
 endtask
+*/
 
 task fence_tlb_asid_va;
   input logic [ASID_LENGTH-1:0] asid;
@@ -869,6 +1063,8 @@ task fence_tlb_asid_va;
 
   prv_pipe_if.fence_asid = '0;
   prv_pipe_if.fence_va   = '0;
+
+  @(posedge CLK);
 endtask
 
 task fence_tlb_va;
@@ -905,6 +1101,7 @@ task fence_tlb_all;
   fence_tlb_asid_va(asid, va);
 endtask
 
+/*
 task verify_tlb_fence;
 
   // read through each set, check at the fenced address set that there's a tlb miss
@@ -930,7 +1127,7 @@ task verify_tlb_fence;
     // finish the read
     complete_read(tlb_rdata[i], test_rdata);
   end
-
 endtask
+*/
 
 endprogram
