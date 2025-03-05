@@ -103,7 +103,8 @@ module page_walker #(
 
     assign decoded_daddr_sv32 = va_sv32_t'(dtlb_gen_bus_if.addr);
     assign decoded_iaddr_sv32 = va_sv32_t'(itlb_gen_bus_if.addr);
-    assign decoded_addr_sv32  = itlb_miss && itlb_gen_bus_if.ren ? decoded_iaddr_sv32 : decoded_daddr_sv32;
+    // assign decoded_addr_sv32  = itlb_miss && itlb_gen_bus_if.ren ? decoded_iaddr_sv32 : decoded_daddr_sv32;
+    assign decoded_addr_sv32  = dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen) ? decoded_daddr_sv32 : decoded_iaddr_sv32;
     assign pte_sv32           = pte_sv32_t'(mem_gen_bus_if.rdata);
     assign pte_perms          = pte_perms_t'(mem_gen_bus_if.rdata[9:0]);
 
@@ -141,7 +142,7 @@ module page_walker #(
         next_level = level;
 
         casez(state)
-            IDLE, RETURN_PA: begin
+            IDLE, RETURN_PA, FAULT: begin
                 casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                     5'b????1 :  next_level = SV32_LEVELS - 1;
                     5'b???10 :  next_level = SV39_LEVELS - 1;
@@ -156,9 +157,6 @@ module page_walker #(
                     next_level = level - 1;
                 end
             end
-            // FAULT: begin
-            //     next_level = level;
-            // end
         endcase
     end
 
@@ -240,7 +238,7 @@ module page_walker #(
                 if (at_if.addr_trans_on) begin
                     if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
                         casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
-                            5'b????1: next_page_address = {prv_pipe_if.satp.ppn, decoded_addr_sv32.vpn[level], 2'b00};
+                            5'b????1: next_page_address = {prv_pipe_if.satp.ppn[19:0], decoded_addr_sv32.vpn[level], 2'b00};
                             5'b???10: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[level], 3'b00};
                             5'b??100: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv48.vpn[level], 3'b00};
                             5'b?1000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv57.vpn[level], 3'b00};
@@ -263,12 +261,14 @@ module page_walker #(
                 mem_gen_bus_if.addr = page_address;
                 if (~mem_gen_bus_if.busy) begin
                     if (leaf_pte) begin
+                        next_page_address = '0;
+                        next_access = ACCESS_NONE;
                         dtlb_gen_bus_if.busy = ~(access == ACCESS_LOAD || access == ACCESS_STORE);
                         itlb_gen_bus_if.busy = ~(access == ACCESS_INSN);
                         casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                             5'b????1: begin
-                                dtlb_gen_bus_if.rdata = level == 0 ? word_t'(pte_sv32) : word_t'(pte_sv32 | {12'b0, page_address[21:12], 10'b0});
-                                itlb_gen_bus_if.rdata = level == 0 ? word_t'(pte_sv32) : word_t'(pte_sv32 | {12'b0, page_address[21:12], 10'b0});
+                                dtlb_gen_bus_if.rdata = word_t'(pte_sv32);
+                                itlb_gen_bus_if.rdata = word_t'(pte_sv32);
                             end
                             5'b???10: begin
                                 dtlb_gen_bus_if.rdata = '0;
@@ -293,7 +293,7 @@ module page_walker #(
                         endcase
                     end else begin
                         casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
-                            5'b????1: next_page_address = {pte_sv32.ppn, decoded_addr_sv32.vpn[level-1], 2'b00};
+                            5'b????1: next_page_address = {pte_sv32.ppn[19:0], decoded_addr_sv32.vpn[level-1], 2'b00};
                             5'b???10: next_page_address = '0; // {pte_sv39.ppn, decoded_addr_sv39.vpn[level-1], 3'b00};
                             5'b??100: next_page_address = '0; // {pte_sv48.ppn, decoded_addr_sv48.vpn[level-1], 3'b00};
                             5'b?1000: next_page_address = '0; // {pte_sv57.ppn, decoded_addr_sv57.vpn[level-1], 3'b00};
@@ -326,14 +326,14 @@ module page_walker #(
                     next_state = IDLE;
             end
             WALK: begin
-                next_state = leaf_pte ? IDLE : WALK;
+                next_state = fault_insn_page | fault_load_page | fault_store_page ? FAULT : leaf_pte ? IDLE : WALK;
             end
             // RETURN_PA: begin
             //     next_state = IDLE; // may need to update
             // end
-            // FAULT: begin
-
-            // end
+            FAULT: begin
+                next_state = IDLE;
+            end
         endcase
     end
 
