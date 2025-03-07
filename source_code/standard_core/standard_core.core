@@ -14,7 +14,7 @@ filesets:
             - jump_calc.sv
             - rv32i_reg_file.sv
             - RISCVBusiness.sv
-            - top_core.sv
+            #- top_core.sv
         file_type: systemVerilogSource
 
 targets:
