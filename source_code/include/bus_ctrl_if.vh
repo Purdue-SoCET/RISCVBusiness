@@ -25,6 +25,10 @@
 `ifndef BUS_CTRL_IF_VH
 `define BUS_CTRL_IF_VH
 
+// TODO: I DON"T LIKE THIS BUT I AM TRYING IT
+`include "component_selection_defines.vh"
+`include "cache_coherence_if.vh"
+
 // parameters
 parameter CPUS = NUM_HARTS * 2;
 //parameter BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
