@@ -119,6 +119,7 @@ module stage3_hazard_unit (
     assign prv_pipe_if.env = hazard_if.env;
     assign prv_pipe_if.wfi = hazard_if.wfi;
     assign prv_pipe_if.ex_rmgmt = 1'b0;//rm_if.exception;
+    assign prv_pipe_if.ex_mem_stall = hazard_if.ex_mem_stall;
 
     assign prv_pipe_if.ex_rmgmt_cause = '0;//rm_if.ex_cause;
     assign prv_pipe_if.epc = epc;

@@ -124,5 +124,6 @@ module priv_1_12_block (
     assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault | prv_intern_if.pmp_i_fault;
     assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault | prv_intern_if.pmp_l_fault;
     assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault | prv_intern_if.pmp_s_fault;
+    assign prv_intern_if.ex_mem_stall = prv_pipe_if.ex_mem_stall;
 
 endmodule
