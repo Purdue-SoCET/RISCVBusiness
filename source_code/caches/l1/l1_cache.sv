@@ -196,7 +196,7 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
-            ccif.abort_bus <= !proc_gen_bus_if.ren && !proc_gen_bus_if.wen;
+            ccif.abort_bus <= !proc_gen_bus_if.ren && !proc_gen_bus_if.wen && state != FLUSH_CACHE; // no flush cache check will cause fence.i to stall processor
             reservation_set <= next_reservation_set;
         end
     end

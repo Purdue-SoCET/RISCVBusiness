@@ -129,6 +129,7 @@ module stage3_mem_stage(
     * Cache management
     *******************/
     logic ifence_reg;
+    logic ifence_reg_next;
     logic ifence_pulse;
     logic iflushed, iflushed_next;
     logic dflushed, dflushed_next;
@@ -140,7 +141,7 @@ module stage3_mem_stage(
             iflushed <= 1'b1;
             dflushed <= 1'b1;
         end else begin
-            ifence_reg <= ex_mem_if.ex_mem_reg.ifence;
+            ifence_reg <= ifence_reg_next;
             iflushed <= iflushed_next;
             dflushed <= dflushed_next;
         end
@@ -156,6 +157,7 @@ module stage3_mem_stage(
         iflushed_next = iflushed;
         dflushed_next = dflushed;
         if (ifence_pulse) begin
+            ifence_reg_next = 1;
             iflushed_next = 0;
             dflushed_next = 0;
         end
@@ -163,6 +165,8 @@ module stage3_mem_stage(
             iflushed_next = 1;
         if (cc_if.dflush_done)
             dflushed_next = 1;
+        if (iflushed_next && dflushed_next)
+            ifence_reg_next = 0;
     end
 
     /******************
