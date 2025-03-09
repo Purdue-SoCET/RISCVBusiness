@@ -21,6 +21,8 @@ filesets:
       - source_code/tb/tb_tlb_directmapped.sv
       - source_code/tb/tb_tlb_associative.sv
       - source_code/tb/tb_page_perm_check.sv
+      - source_code/tb/tb_supervisor_cache.sv
+      - source_code/tb/tb_supervisor_cache_wrapper.sv
     file_type: systemVerilogSource
 
 targets:
@@ -54,4 +56,9 @@ targets:
     <<: *default
     toplevel: tb_page_perm_check
     description: Simulate page permission checking
+
+  sim_supervisor_cache:
+    <<: *default
+    toplevel: tb_supervisor_cache
+    description: Simulate instruction and data L1/TLB + Pagewalker interactions
 
