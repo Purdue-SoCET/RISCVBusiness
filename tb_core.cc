@@ -322,6 +322,7 @@ int main(int argc, char **argv) {
             require_trace = false;
         } else {
             fname = argv[i];
+            virtual_test = fname[23] == 'v'; // hack, there may be a better solution
         }
 
         i += 1;
