@@ -53,8 +53,9 @@ parameter TEST_ASSOC = 2;
 module tb_tlb_associative();
 
   logic CLK = 0, nRST;
-  logic clear, fence, clear_done, fence_done, tlb_miss;
+  logic clear, fence, page_fault, clear_done, fence_done, tlb_miss;
   logic fault_load_page, fault_store_page, fault_insn_page;
+  word_t tlb_hit_data;
   
   // clock
   always #(PERIOD/2) CLK++; 
@@ -69,7 +70,8 @@ module tb_tlb_associative();
   test_tlb_associative PROG (CLK, nRST,
     clear_done, fence_done, tlb_miss,
     fault_load_page, fault_store_page, fault_insn_page,
-    clear, fence,
+    tlb_hit_data,
+    clear, fence, page_fault,
     proc_gen_bus_if,
     mem_gen_bus_if,
     prv_pipe_if,
@@ -78,14 +80,23 @@ module tb_tlb_associative();
 
   // DUT
   tlb #(.PAGE_OFFSET_BITS(PAGE_OFFSET_BITS), .TLB_SIZE(TLB_SIZE), .TLB_ASSOC(TEST_ASSOC)) DUT
-  (CLK, nRST,
-    clear, fence,
-    clear_done, fence_done, tlb_miss,
-    fault_load_page, fault_store_page, fault_insn_page,
-    mem_gen_bus_if,
-    proc_gen_bus_if,
-    prv_pipe_if,
-    at_if
+  (
+    .CLK(CLK),
+    .nRST(nRST),
+    .clear(clear),
+    .fence(fence),
+    .page_fault(page_fault),
+    .clear_done(clear_done),
+    .fence_done(fence_done),
+    .tlb_miss(tlb_miss),
+    .fault_load_page(fault_load_page), 
+    .fault_store_page(fault_store_page), 
+    .fault_insn_page(fault_insn_page),
+    .tlb_hit_data(tlb_hit_data),
+    .mem_gen_bus_if(mem_gen_bus_if),
+    .proc_gen_bus_if(proc_gen_bus_if),
+    .prv_pipe_if(prv_pipe_if),
+    .at_if(at_if)
   );
 
   // connect address translation signals
@@ -104,7 +115,8 @@ program test_tlb_associative
   input logic CLK, output logic nRST,
   input logic clear_done, fence_done, tlb_miss,
   input logic fault_load_page, fault_store_page, fault_insn_page,
-  output logic clear, fence,
+  input word_t tlb_hit_data,
+  output logic clear, fence, page_fault,
   generic_bus_if.cpu gbif,        // Processor to TLB
   generic_bus_if.generic_bus mbif,                // TLB to page walker/cache
   prv_pipeline_if prv_pipe_if, // priv to TLB
@@ -185,7 +197,7 @@ initial begin : MAIN
   @(posedge CLK);
 
   initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
+  if (tlb_miss || tlb_hit_data) begin
     $display("Error in test [%s]: tlb_miss or non-zero rdata received when in M-mode\n", test_case);
     error_cnt += 1;
   end
@@ -200,7 +212,7 @@ initial begin : MAIN
   @(posedge CLK);
 
   initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
+  if (tlb_miss || tlb_hit_data) begin
     $display("Error in test [%s]: tlb_miss or non-zero rdata received when in Bare S-mode\n", test_case);
     error_cnt += 1;
   end
@@ -220,6 +232,8 @@ initial begin : MAIN
   begin_test("Compulsory TLB miss (empty set)");
   set_priv_level(S_MODE);
   set_satp(1, 9'h1FF, 22'hFFFF);
+  @(posedge CLK);
+
   complete_read_check(32'h10001000, 32'hFFFFFC00);
   complete_test();
 
@@ -405,7 +419,7 @@ initial begin : MAIN
   @(posedge CLK);
 
   initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
+  if (tlb_miss || tlb_hit_data) begin
     $display("Error in test [%s]: tlb_miss or non-zero rdata received when in M-mode\n", test_case);
     error_cnt += 1;
   end
@@ -420,7 +434,7 @@ initial begin : MAIN
   @(posedge CLK);
 
   initiate_read(32'h10001000);
-  if (tlb_miss || gbif.rdata) begin
+  if (tlb_miss || tlb_hit_data) begin
     $display("Error in test [%s]: tlb_miss or non-zero rdata received when in Bare S-mode\n", test_case);
     error_cnt += 1;
   end
@@ -610,10 +624,10 @@ task complete_read;
 
   // assert that we don't have a miss and the TLB returned something
   assert(tlb_miss == 1'b0);
-  assert(gbif.rdata != '0);
+  assert(tlb_hit_data != '0);
 
   // read the data from the TLB
-  actual_rdata = gbif.rdata;
+  actual_rdata = tlb_hit_data;
 
   // finish the read
   @(posedge CLK);
