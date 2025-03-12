@@ -1,7 +1,7 @@
 `ifndef MULTICORE_WRAPPER_SV
 `define MULTICORE_WRAPPER_SV
 
-`include "bus_if.vh"
+// `include "bus_if.vh"
 `include "cache_coherence_if.vh"
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
@@ -12,7 +12,7 @@
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
-`include "multicore_if.vh"
+// `include "multicore_if.vh"
 
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,

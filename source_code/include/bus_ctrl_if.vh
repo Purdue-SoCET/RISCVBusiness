@@ -129,4 +129,158 @@ interface bus_ctrl_if ();
     ); 
 
 endinterface
+
+// `include "addr_space.sv"
+
+
+package addr_space;
+    // INSTRUCTION AND DATA AGENT ADDRESS MAP
+    parameter INSTR_START_ADDR_SPACE = 32'h0000_0000;
+    parameter INSTR_END_ADDR_SPACE   = 32'h0FFF_FFFF;  // 256 MB for instructions
+
+    // Calculate the midpoint to split the address range for each core
+    localparam INSTR_MID_ADDR_SPACE  = (INSTR_START_ADDR_SPACE + INSTR_END_ADDR_SPACE) >> 1;
+
+    // Instruction address space for each core
+    parameter CORE1_INSTR_START_ADDR = INSTR_START_ADDR_SPACE;
+    parameter CORE1_INSTR_END_ADDR   = INSTR_MID_ADDR_SPACE;  // Core 1: First half of the range
+
+    parameter CORE2_INSTR_START_ADDR = INSTR_MID_ADDR_SPACE + 1;
+    parameter CORE2_INSTR_END_ADDR   = INSTR_END_ADDR_SPACE;  // Core 2: Second half of the range
+
+    // DATA IS A SHARED SPACE BETWEEN CORES
+    parameter DATA_START_ADDR_SPACE  = 32'h1000_0000;
+    parameter DATA_END_ADDR_SPACE    = 32'h1FFF_FFFF;  // 256 MB for data
+endpackage
+
+import addr_space::*;
+
+interface bus_if #(
+    parameter ADDR_WIDTH = 32, 
+    parameter DATA_WIDTH = 32
+)();
+
+    // Vital signals
+    logic wen; // request is a data write
+    logic ren; // request is a data read
+    logic request_stall; // High when protocol should insert wait states in transaction
+    logic [ADDR_WIDTH-1 : 0] addr; // *offset* address of request
+    logic error; // Indicate error condition to bus
+    logic [(DATA_WIDTH/8)-1 : 0] strobe; // byte enable for writes
+    logic [DATA_WIDTH-1 : 0] wdata, rdata; // data lines -- from perspective of bus master
+
+    // Hint signals
+    logic is_burst;
+    logic [1:0] burst_type; // WRAP, INCR
+    logic [7:0] burst_length; // up to 256
+    logic secure_transfer;
+
+    // UVM signals
+    logic iREN;
+    logic [ADDR_WIDTH-1 : 0] iaddr;
+    logic ierror, i_req_stall;
+    logic [DATA_WIDTH-1 : 0] instruction;
+
+    logic dREN, dWEN;
+    logic [ADDR_WIDTH-1 : 0] daddr;
+    logic [DATA_WIDTH-1 : 0] data_store, data_load;
+    logic derror, d_req_stall;
+
+    // Modports
+    modport uvm (
+        input iREN, iaddr, 
+        output instruction, ierror, i_req_stall,
+        input dREN, dWEN, daddr, data_store, 
+        output data_load, derror, d_req_stall
+    );
+
+    modport cpu (
+        input wen, ren, addr, wdata, strobe,
+        output rdata, error, request_stall
+    );
+
+    modport protocol (
+        input rdata, error, request_stall,
+        output wen, ren, addr, wdata, strobe, 
+        output is_burst, burst_type, burst_length, secure_transfer
+    );
+
+    // Behavior
+    always_comb begin
+        iREN = '0;
+        iaddr = '0;
+        ierror = '0;
+        i_req_stall = '0;
+        dREN = '0;
+        dWEN = '0;
+        daddr = '0;
+        data_load = '0;
+        data_store = '0;
+        derror = '0;
+        d_req_stall = '0;
+
+        if (addr >= INSTR_START_ADDR_SPACE && addr <= INSTR_END_ADDR_SPACE) begin
+            iREN = ren;
+            iaddr = addr;
+            error = ierror;
+            request_stall = i_req_stall;
+            rdata = instruction;
+        end else if (addr >= DATA_START_ADDR_SPACE && addr <= DATA_END_ADDR_SPACE) begin 
+            dREN = ren;
+            dWEN = wen;
+            daddr = addr;
+            data_store = wdata;
+            rdata = data_load;
+            error = derror;
+            request_stall = d_req_stall;
+        end    
+    end
+
+endinterface
+
+// `include "bus_if.vh"
+`include "core_interrupt_if.vh"
+
+interface multicore_if #(
+    parameter logic [31:0] RESET_PC = 32'h80000000,
+    parameter NUM_HARTS = 1,
+    parameter DATA_WIDTH = 32,
+    parameter ADDR_WIDTH = 32
+)(input CLK);
+
+    // Clock and reset signals
+    logic        nRST;
+
+    // mtime input
+    logic [63:0] mtime;
+
+    // Output signals from DUT
+    logic        wfi;
+    logic        halt;
+
+    // Core interrupt interface
+    core_interrupt_if interrupt_if ();
+
+    // Bus interface based on compilation directives
+    bus_if #(
+        .DATA_WIDTH(DATA_WIDTH), 
+        .ADDR_WIDTH(ADDR_WIDTH)
+    ) gen_bus_if();
+    
+    modport dut_mp (
+        input mtime,
+        output wfi, halt,
+        ref interrupt_if,
+        ref gen_bus_if
+    );
+
+    modport tb_mp (
+        output mtime,
+        input  wfi,  halt,
+        ref interrupt_if,
+        ref gen_bus_if
+    );
+
+endinterface
+
 `endif // BUS_CTRL_IF_VH
