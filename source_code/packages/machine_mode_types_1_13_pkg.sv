@@ -74,7 +74,7 @@ package machine_mode_types_1_13_pkg;
     logic [1:0] reserved_0;
     logic       dirty;
     logic       accessed;
-    logic       global;
+    logic       global_page;
     logic       user;
     logic       executable;
     logic       writable;

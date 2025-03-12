@@ -44,6 +44,7 @@ module separate_caches (
     output logic dcache_miss
 );
     import machine_mode_types_1_13_pkg::*;
+    import rv32i_types_pkg::*;
 
     // TLB signals
     logic itlb_miss, itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;

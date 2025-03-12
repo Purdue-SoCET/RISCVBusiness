@@ -30,6 +30,9 @@
 `timescale 1ns/10ps
 `endif
 
+import rv32i_types_pkg::*;
+import machine_mode_types_1_13_pkg::*;
+
 module tlb #(
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
     parameter TLB_SIZE            = 64, // Number of entries in the TLB
@@ -48,10 +51,6 @@ module tlb #(
     prv_pipeline_if.cache prv_pipe_if,
     address_translation_if.cache at_if
 );
-
-    import rv32i_types_pkg::*;
-    import machine_mode_types_1_13_pkg::*;
-
     // VA (32) = N_TAG_BITS(14) + N_SET_BITS (6) + PAGE_OFFSET_BITS (12)
 
     // VA -> [VPN (20)][OFFSET (12)]
@@ -84,7 +83,7 @@ module tlb #(
         logic [1:0] reserved_0;
         logic       dirty;
         logic       accessed;
-        logic       global;
+        logic       global_page;
         logic       user;
         logic       executable;
         logic       writable;
@@ -377,7 +376,7 @@ module tlb #(
                 // if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
                 if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
                     (~|decoded_fence_va | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, sramSEL} == decoded_fence_va.vpn)) && 
-                    (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid && ~sramRead.frames[fence_idx.frame_num].pte.perms.global))) begin
+                    (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid && ~sramRead.frames[fence_idx.frame_num].pte.perms.global_page))) begin
                     // clears entry when fenceed
                     sramWEN = 1;
                     sramWrite.frames[fence_idx.frame_num] = 0;

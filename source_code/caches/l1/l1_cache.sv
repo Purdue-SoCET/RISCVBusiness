@@ -35,6 +35,9 @@
 `timescale 1ns/100ps
 `endif
 
+import rv32i_types_pkg::*;
+import machine_mode_types_1_13_pkg::*;
+
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
@@ -53,8 +56,6 @@ module l1_cache #(
     address_translation_if.cache at_if,
     output logic cache_miss
 );
-    import rv32i_types_pkg::*;
-    import machine_mode_types_1_13_pkg::*;
     
     // local parameters
     localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
@@ -545,6 +546,7 @@ module l1_cache #(
         end
     end
 
+    /*
     always_comb begin
         // To properly catch this case, set epoch size to 10k and range to
         // be % 512 in cache stress testbench
@@ -578,6 +580,7 @@ module l1_cache #(
             end
         end
     end
+    */
 
     // next state logic
     always_comb begin
