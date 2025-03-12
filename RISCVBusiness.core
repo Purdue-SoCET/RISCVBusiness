@@ -24,6 +24,8 @@ filesets:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
+            - source_code/bus_bridges/ahb.sv
+            - source_code/trackers/cpu_tracker.sv
             #- source_code/pipelines/tspp/tspp_hazard_unit.sv
             #- source_code/pipelines/tspp/tspp_fetch_stage.sv
             #- source_code/pipelines/tspp/tspp_execute_stage.sv
