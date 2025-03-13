@@ -29,20 +29,19 @@ filesets:
             - source_code/branch_predictors/ghr_pht/ghr_pht.sv
             - source_code/branch_predictors/btb_ghr_pht/btb_ghr_pht.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
-            - source_code/bus_bridges/ahb.sv
-            - source_code/trackers/cpu_tracker.sv
             #- source_code/pipelines/tspp/tspp_hazard_unit.sv
             #- source_code/pipelines/tspp/tspp_fetch_stage.sv
             #- source_code/pipelines/tspp/tspp_execute_stage.sv
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
+            - source_code/trackers/cpu_tracker.sv
+
         file_type: systemVerilogSource
 
     trackers:
         files:
             - source_code/trackers/branch_tracker.sv
-            - source_code/trackers/cpu_tracker.sv
         file_type: systemVerilogSource
 
     buses:
