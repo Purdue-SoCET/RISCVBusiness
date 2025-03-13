@@ -89,7 +89,7 @@ module top_core #(
     assign addr = gen_bus_if.addr;
     assign wdata = gen_bus_if.wdata;
 `elsif BUS_INTERFACE_AHB
-    ahb_if ahb_master ();
+    ahb_if ahb_manager ();
     // TODO
 
 `elsif BUS_INTERFACE_APB
