@@ -35,12 +35,12 @@ filesets:
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
-            - source_code/trackers/cpu_tracker.sv
 
         file_type: systemVerilogSource
 
     trackers:
         files:
+            - source_code/trackers/cpu_tracker.sv
             - source_code/trackers/branch_tracker.sv
         file_type: systemVerilogSource
 
