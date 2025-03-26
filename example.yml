@@ -13,11 +13,11 @@ microarch_params:
   
   # Cache configurations
   cache_config  : "separate"
-  dcache_type   : "l1"
+  dcache_type   : "l1_tlb"
   dcache_size : 1024
   dcache_block_size : 2
   dcache_assoc : 1
-  icache_type   : "l1"
+  icache_type   : "l1_tlb"
   icache_size : 1024
   icache_block_size : 2
   icache_assoc : 1
@@ -31,7 +31,7 @@ microarch_params:
   sparce_enabled : "disabled"
 
   # RV32C
-  rv32c_enabled : "disabled"
+  rv32c_enabled : "enabled"
   
   # Halt
   infinite_loop_halts : "true"
