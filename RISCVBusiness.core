@@ -18,6 +18,7 @@ filesets:
             - "socet:riscv:rv32c"
             - "socet:riscv:rv32m"
             - "socet:riscv:rv32b"
+            - "socet:riscv:rv32zc"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
@@ -51,7 +52,7 @@ filesets:
             
     verilator_tb:
         files:
-            - tb_core.cc : {fileType: cppSource} 
+            - tb_core.cc : {file_type: cppSource}
         file_type: systemVerilogSource
 
     no_memory_tb:

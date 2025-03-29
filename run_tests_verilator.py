@@ -217,7 +217,7 @@ def compile_asm(filepath: Type[pathlib.Path], outpath: Type[pathlib.Path],\
 def run_sim(top_level: str, logger: Type[logging.Logger]) -> None:
 
     # TODO: Assuming simulator already built
-    cmd_arr = ['./rvb_out/sim-verilator/Vtop_core', 'meminit.bin']
+    cmd_arr = ['./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core', 'meminit.bin']
     res = subprocess.run(cmd_arr, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
     #config_cmd_arr = ["waf", "configure", "--top_level=" + top_level]
