@@ -17,6 +17,8 @@ filesets:
             - rv32i_reg_file.sv
             - RISCVBusiness.sv
             - top_core.sv
+            - ../../verification/uvm/multicore/interfaces/bus_if.vh
+            - ../../verification/uvm/multicore/interfaces/multicore_if.vh
         file_type: systemVerilogSource
 
 targets:

@@ -31,6 +31,31 @@ filesets:
             - decompressor_if.vh : {is_include_file: true}
             - fetch_buffer_if.vh : {is_include_file: true}
             - sparce_pipeline_if.vh : {is_include_file: true}
+            #- ../../verification/uvm/multicore/interfaces/bus_if.vh : {is_include_file: true}
+            #- ../../verification/uvm/multicore/interfaces/multicore_if.vh : {is_include_file: true}
+            #- ../../verification/uvm/multicore/params/addr_space.sv : {is_include_file: true}
+            #- ../../verification/uvm/multicore/params/dut_parameters.sv : {is_include_file: true}
+            - ../../verification/uvm/multicore/data_agent/data_agent.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/data_agent/data_driver.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/data_agent/data_monitor.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/data_agent/data_sequencer.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/data_agent/data_transaction.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/env/env.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/env/scoreboard.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/instr_agent/instr_agent.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/instr_agent/instr_driver.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/instr_agent/instr_monitor.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/instr_agent/instr_sequencer.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/instr_agent/instr_transaction.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/interfaces/bus_if.vh : {is_include_file: true}
+            - ../../verification/uvm/multicore/interfaces/multicore_if.vh : {is_include_file: true}
+            - ../../verification/uvm/multicore/params/addr_space.sv : {is_include_file: true}
+            - ../../verification/uvm/multicore/params/dut_parameters.sv : {is_include_file: true}
+            - ../../verification/uvm/multicore/programmer/riscv_programmer.sv : {is_include_file: true}
+            - ../../verification/uvm/multicore/sequences/data_reset_seq.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/sequences/instr_reset_seq.svh : {is_include_file: true}
+            - ../../verification/uvm/multicore/tb_tops/testbench_top.sv : {is_include_file: true}
+            - ../../verification/uvm/multicore/tests/reset_test.svh : {is_include_file: true}
         file_type: systemVerilogSource
 
 targets:

@@ -6,7 +6,6 @@ filesets:
     components:
         files:
             - source_code/include/component_selection_defines.vh : {file_type: systemVerilogSource}
-
     rtl:
         depend:
             - "socet:bus-components:ahb_if"
@@ -30,6 +29,8 @@ filesets:
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
             - verification/uvm/multicore/params/addr_space.sv
+            - verification/uvm/multicore/interfaces/bus_if.vh
+            - verification/uvm/multicore/interfaces/multicore_if.vh
         file_type: systemVerilogSource
 
     trackers:

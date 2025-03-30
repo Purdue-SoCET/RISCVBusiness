@@ -25,7 +25,7 @@ class riscv_programmer;
                 return {immediate[12], immediate[10:5], rs2[4:0], rs1[4:0], 3'b000, immediate[4:1], immediate[11], 7'b1100011}; 
             end
             default: begin
-                `uvm_error("RISC-V Programmer", $sformatf("Unknown instruction mnemonic: %s", mnemonic));
+                // `uvm_error("RISC-V Programmer", $sformatf("Unknown instruction mnemonic: %s", mnemonic));
                 return 32'h0; 
             end
         endcase
