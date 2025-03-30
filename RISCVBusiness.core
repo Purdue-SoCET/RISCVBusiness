@@ -1,7 +1,7 @@
 CAPI=2:
 name: socet:riscv:RISCVBusiness:0.1.1
 description: RISC-V Core for AFTx series
-
+ 
 filesets:
     components:
         files:
