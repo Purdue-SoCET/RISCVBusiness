@@ -99,6 +99,18 @@ always_comb begin
           fault_insn_page  = access == ACCESS_INSN;
         end
       end
+      // Svade
+      // fault if accessed bit not set
+      else if (~pte_perms.accessed) begin
+        fault_load_page  = access == ACCESS_LOAD;
+        fault_store_page = access == ACCESS_STORE;
+        fault_insn_page  = access == ACCESS_INSN;
+      end
+      // Svade
+      // fault if a store and dirty bit not set
+      else if (access == ACCESS_STORE && ~pte_perms.dirty) begin
+        fault_store_page = 1;
+      end
     end
   end
 end

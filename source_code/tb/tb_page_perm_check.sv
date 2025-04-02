@@ -31,6 +31,7 @@
 *                 - Fault    -> U = 0, in U-Mode
 *                 - No Fault -> Level != 0, sv32 = 0, should NEVER EVER happen in RV32
 *                 - Fault    -> Level != 0, sv32 = 1, pte_sv32.ppn[9:0] != 0
+*                 - Fault    -> Access bit not set
 *                 - No Fault -> U = 1, in S-Mode, and mstatus.sum = 1
 *                 - No Fault -> U = 1, in U-Mode
 *                 - No Fault -> Level != 0, sv32 = 1, pte_sv32.ppn[9:0] == 0
@@ -56,6 +57,7 @@
 *                 - Fault    -> R = 1, W = 0, X = 1
 *                 - No Fault -> R = 1, W = 1, X = 0
 *                 - No Fault -> R = 1, W = 1, X = 1
+*                 - Fault    -> Dirty bit not set
 *                 Instructions:
 *                 - Fault    -> R = 0, W = 0, X = 0
 *                 - No Fault -> R = 0, W = 0, X = 1
@@ -319,6 +321,25 @@ initial begin : MAIN
   // test related inputs
   set_level(1);
   set_pte('1, RWXV_PERMS);
+
+  // check outputs
+  check_all_fault();
+
+  complete_test();
+
+
+  /**************************
+  * Fault -> Access bit not set
+  **************************/
+  begin_test("All", "Fault -> Access bit not set");
+
+  // non test related inputs
+  set_level('0);
+  set_satp(1, '1, '1);
+  set_priv_level(S_MODE);
+
+  // test related inputs
+  set_pte('1, RWXV_PERMS, 0, 1);
 
   // check outputs
   check_all_fault();
@@ -775,6 +796,25 @@ initial begin : MAIN
 
 
   /**************************
+  * Fault -> Dirty bit not set
+  **************************/
+  begin_test("Stores", "Fault -> Dirty bit not set");
+
+  // non test related inputs
+  set_priv_level(S_MODE);
+  set_level(0);
+  set_satp(1, '1, '1);
+
+  // test related inputs
+  set_pte('1, PAGE_PERM_VALID | PAGE_PERM_READ | PAGE_PERM_WRITE | PAGE_PERM_EXECUTE, 1, 0);
+
+  // check outputs
+  check_store_fault();
+
+  complete_test();
+
+
+  /**************************
   * Instructions:
   * Fault -> R = 0, W = 0, X = 0
   **************************/
@@ -968,11 +1008,15 @@ task set_access;
   access = new_access;
 endtask
 
-task set_pte;
-  input logic [SV32_PPNLEN-1:0] new_ppn;
-  input logic [9:0]             new_perms;
+task set_pte (
+  input logic [SV32_PPNLEN-1:0] new_ppn,
+  input logic [9:0]             new_perms,
+  input logic set_accessed = 1,
+  input logic set_dirty = 1
+);
+  
   pte_sv32.ppn = new_ppn;
-  pte_sv32.perms = pte_perms_t'(new_perms);
+  pte_sv32.perms = pte_perms_t'(new_perms | (set_accessed ? PAGE_PERM_ACCESSED : 0) | (set_dirty ? PAGE_PERM_DIRTY : 0));
 endtask
 
 task set_priv_level;

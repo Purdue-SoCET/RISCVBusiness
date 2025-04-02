@@ -188,7 +188,7 @@ module tlb #(
         if (IS_ITLB) begin
             assign access = ACCESS_INSN;
         end else begin
-            assign access = prv_pipe_if.ex_mem_wen ? ACCESS_STORE : ACCESS_LOAD;
+            assign access = prv_pipe_if.ex_mem_wen ? ACCESS_STORE : prv_pipe_if.ex_mem_ren ? ACCESS_LOAD : ACCESS_NONE;
         end
     endgenerate
 
