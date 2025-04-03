@@ -95,8 +95,11 @@ def get_hostaddress(fname):
                 tohost_address = st_value
     return tohost_address
 
-def run_test(fname):
+def run_test(fname, env):
     tohost_address = get_hostaddress(fname)
+    run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), fname]
+    if env == 'v':
+        run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--virtual', fname]
     res = subprocess.run([verilator_binary, '--tohost-address', str(tohost_address), fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ')
@@ -169,7 +172,7 @@ def main():
         exit(1)
 
     if 'pm' in args.environment or 'pt' in args.environment:
-        print("Environments 'pt', 'pm' and 'v' are not yet supported.")
+        print("Environments 'pt' and 'pm' are not yet supported.")
         exit(1)
     
     # if args.machine:
