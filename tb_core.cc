@@ -12,6 +12,8 @@
 #include "Vtop_core.h"
 #include "Vtop_core_top_core.h"
 
+#define BASE_SIM_TIME    100000
+
 #define MTIME_ADDR      0xFFFFFFE0
 #define MTIMEH_ADDR     0xFFFFFFE4
 #define MTIMECMP_ADDR   0xFFFFFFE8
@@ -32,7 +34,10 @@ Vtop_core *dut_ptr;
 VerilatedFstC *trace_ptr;
 bool use_tohost = false;
 uint32_t tohost_address = 0;
+uint64_t max_sim_time = BASE_SIM_TIME;
 bool tohost_break = false;
+bool virtual_test = false;
+bool require_trace = false;
 
 /*
  *  Emulate memory-mapped CSRs
@@ -168,9 +173,12 @@ public:
         } else {
             mmap.insert(std::make_pair(addr, value));
         }
-        
+
         if(use_tohost && addr == tohost_address) {
-            tohost_break = true;
+            if (virtual_test)
+                std::cout << static_cast<char>(value);
+            else
+                tohost_break = true;
         }
     }
 
@@ -260,10 +268,13 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
 }
 
 void print_help() {
-    std::cout << "Usage: ./Vtop_core <filename> [--tohost-addr <unsigned int>]" << std::endl;
-    std::cout << "\tfilename: An executable .bin file to run" << std::endl;
-    std::cout << "\ttohost-addr <addr>: address for tohost checking functionality. A write to this address will end the program." << std::endl;
-    std::cout << "\t--help: print this" << std::endl;
+    std::cout << "Usage: ./Vtop_core [--tohost-address <unsigned int> --max-sim-time <unsigned long> --virtual --notrace] <filename>" << std::endl;
+    std::cout << "\t--help   : Print this" << std::endl;
+    std::cout << "\t--tohost-address <address>: address for tohost checking functionality. A write to this address will end the program if --virtual is not set." << std::endl;
+    std::cout << "\t--max-sim-time <sim-time> : Maximum time to run simulation. Defaults to 100,000." << std::endl;
+    std::cout << "\t--virtual: Indicate virtualized address space will be run. Changes tohost-address functionality" << std::endl;
+    std::cout << "\t--notrace: Indicate to not generate a waveform file. Speeds up simulation incredibly." << std::endl;
+    std::cout << "\tfilename : An executable .bin file to run" << std::endl;
 }
 
 
@@ -285,12 +296,30 @@ int main(int argc, char **argv) {
 
                 i += 1;
             } else {
-                std::cerr << "Not enough args" << std::endl;
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
+                print_help();
+            }
+        } else if(strcmp(argv[i], "--max-sim-time") == 0) {
+            if(i+1 < argc) {
+                try {
+                    max_sim_time = std::stoul(argv[i+1], nullptr, 0);
+                } catch (const std::exception& e) {
+                    std::cerr << "Could not convert " << argv[i+1] << " to U64" << std::endl;
+                    return 1;
+                }
+
+                i += 1;
+            } else {
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
                 print_help();
             }
         } else if(strcmp(argv[i], "--help") == 0) {
             print_help();
             return 1;
+        } else if(strcmp(argv[i], "--virtual") == 0) {
+            virtual_test = true;
+        } else if(strcmp(argv[i], "--notrace") == 0) {
+            require_trace = false;
         } else {
             fname = argv[i];
         }
@@ -305,10 +334,13 @@ int main(int argc, char **argv) {
 
     Vtop_core dut;
 
-    Verilated::traceEverOn(true);
     VerilatedFstC m_trace;
-    dut.trace(&m_trace, 5);
-    m_trace.open("waveform.fst");
+
+    if (require_trace) {
+        Verilated::traceEverOn(true);
+        dut.trace(&m_trace, 5);
+        m_trace.open("waveform.fst");
+    }
 
     mtimecmp = 0xFFFFFFFFFFFFFFFF; // Default to a massive value
 
@@ -321,7 +353,7 @@ int main(int argc, char **argv) {
     auto tstart = std::chrono::high_resolution_clock::now();
 
     reset(dut, m_trace);
-    while(!dut.halt && !tohost_break && sim_time < 100000) {
+    while(!dut.halt && !tohost_break && sim_time < max_sim_time) {
         dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
@@ -357,7 +389,7 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 100000) {
+    if(sim_time >= max_sim_time) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
@@ -371,7 +403,8 @@ int main(int argc, char **argv) {
 
     std::cout << "Simulated " << sim_time << " cycles in " << ms.count() << "ms" << ", rate of " << (float)sim_time / ((float)ms.count() / 1000.0) << " cycles per second." << std::endl;
 
-    m_trace.close();
+    if (require_trace)
+        m_trace.close();
     memory.dump();
     dut.final();
 
