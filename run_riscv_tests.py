@@ -101,7 +101,7 @@ def run_test(fname, env):
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), fname]
     if env == 'v':
         run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--max-sim-time', '10000000', '--virtual', fname]
-    res = subprocess.run([verilator_binary, '--tohost-address', str(tohost_address), fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ')
         print(res.stderr)
@@ -124,7 +124,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             for test in filter(apply_skips, tests):
                 total_count += 1
-                status = run_test(test)
+                status = run_test(test, env)
                 if status:
                     pass_count += 1
                 else:
@@ -136,7 +136,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
             tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
             for test in filter(apply_skips, tests):
                 total_count += 1
-                status = run_test(test)
+                status = run_test(test, env)
                 if status:
                     pass_count += 1
                 else:
@@ -148,7 +148,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
             tests = test_base_dir.glob(f'rv32si-{env}*.bin')
             for test in filter(apply_skips, tests):
                 total_count += 1
-                status = run_test(test)
+                status = run_test(test, env)
                 if status:
                     pass_count += 1
                 else:
