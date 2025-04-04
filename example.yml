@@ -22,6 +22,7 @@ microarch_params:
   icache_block_size : 2
   icache_assoc : 1
   noncache_start_addr : 32'hF000_0000
+  tlb_entries: 1
   
   # Bus configurations
   bus_endianness      : "big"

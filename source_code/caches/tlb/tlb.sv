@@ -35,7 +35,7 @@ import machine_mode_types_1_13_pkg::*;
 
 module tlb #(
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
-    parameter TLB_SIZE            = 64, // Number of entries in the TLB
+    parameter TLB_SIZE            = TLB_ENTRIES, // Number of entries in the TLB
     parameter TLB_ASSOC           = 1,  // dont set this to 0, TLB_SIZE / TLB_ASSOC must be power of 2
     parameter IS_ITLB             = 1,   // denotes special behavior for permission checking
     parameter BLOCK_SIZE          = 1

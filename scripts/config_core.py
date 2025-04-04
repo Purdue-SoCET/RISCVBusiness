@@ -92,6 +92,7 @@ UARCH_PARAMS = \
     'icache_size' : [],
     'icache_block_size' : [],
     'icache_assoc' : [],
+    'tlb_entries' : [],
     # Bus Configurations
     'bus_endianness' : ['big', 'little'],
     'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
@@ -166,7 +167,7 @@ def create_include(config):
   # Handle localparam configurations
   isa_params = config['isa_params']
   free_params = ['num_harts', 'noncache_start_addr']
-  int_params = ['num_harts', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc']
+  int_params = ['num_harts', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
   include_file.write('// ISA Params:\n') 
   for isa_param in isa_params:
     try:
@@ -200,6 +201,9 @@ def create_include(config):
         sys.exit(err)
       if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
         err = 'Invalid icache_size. Not divisible by block_size * assoc.'
+        sys.exit(err)
+      if uarch_params['tlb_entries'] not in [1, 2, 4, 8, 16, 32, 64]:
+        err = 'Invalid tlb_entries. Not a multiple of two and/or less than or equal to 64.'
         sys.exit(err)
     elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
       err = 'Illegal configuration. ' + uarch_params[uarch_param]
