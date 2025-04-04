@@ -23,6 +23,7 @@ skip_list = [
     'rv32mi-p-illegal.bin', # requires RV32C illegal instruction detection, which we have not implemented
     'rv32mi-p-breakpoint.bin', # requires some parts of debug spec implemented.
     'rv32mi-p-shamt.bin', # requires full detection of illegal instructions (including RV32 SLL with shamt[5] set)
+    'rv32ui-v-ma_data.bin', # requires misaligned load/store, which is optional.
 ]
 
 def apply_skips(test):
