@@ -37,7 +37,7 @@ uint32_t tohost_address = 0;
 uint64_t max_sim_time = BASE_SIM_TIME;
 bool tohost_break = false;
 bool virtual_test = false;
-bool require_trace = false;
+bool require_trace = true;
 
 /*
  *  Emulate memory-mapped CSRs
