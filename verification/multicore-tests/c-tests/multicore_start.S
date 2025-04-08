@@ -2,12 +2,12 @@
 WANT_AMO_EMU_SUPPORT
 
 #ifndef NUM_CORE
-#define NUM_CORE 8   
+#define NUM_CORE 8 
 #endif
 
 .global _start
 _start:
-    # hart id
+    # Get the hart ID
     csrr s0, mhartid
 
     .option push
@@ -15,7 +15,6 @@ _start:
     la gp, __global_pointer$
     .option pop
 
-    # clear bss on hart 0
     la s1, bss_cleared
     bnez s0, wait_for_bss_cleared
 
@@ -36,24 +35,20 @@ set_bss_cleared:
 wait_for_bss_cleared:
     lw t0, 0(s1)
     beqz t0, wait_for_bss_cleared
-
-    # set up 16KB stack per hart
     la sp, __stack_top
-    slli t0, s0, 14
+    slli t0, s0, 14    
     add sp, sp, t0
 
-    # only run task if hart ID < NUM_CORE
     li t2, NUM_CORE
     bge s0, t2, hart_wait_loop
 
-    # Call hartX_main
-    slli t0, s0, 2
+  
+    slli t0, s0, 2    
     la t1, main_array
     add t0, t0, t1
     lw t0, 0(t0)
     jalr ra, t0
 
-    # Call hartX_done_end
     slli t0, s0, 2
     la t1, done_array
     add t0, t0, t1
@@ -62,12 +57,12 @@ wait_for_bss_cleared:
 
 .global done
 hart0_done:
-    la t1, done_flags
-    li t2, 1  #start with hart 1
+    la t1, done_flags   
+    li t2, 1        
 
 wait_all_harts:
     li t3, NUM_CORE
-    bge t2, t3, all_done
+    bge t2, t3, all_done 
     slli t4, t2, 2
     add t5, t1, t4
     lw t6, 0(t5)
@@ -80,14 +75,47 @@ all_done:
     lw x28, 0(x28)
     j __inf_loop
 
-done func:
-hart1_done_end: li t0, 1; sw t0, done_flags+4; j __inf_loop
-hart2_done_end: li t0, 1; sw t0, done_flags+8; j __inf_loop
-hart3_done_end: li t0, 1; sw t0, done_flags+12; j __inf_loop
-hart4_done_end: li t0, 1; sw t0, done_flags+16; j __inf_loop
-hart5_done_end: li t0, 1; sw t0, done_flags+20; j __inf_loop
-hart6_done_end: li t0, 1; sw t0, done_flags+24; j __inf_loop
-hart7_done_end: li t0, 1; sw t0, done_flags+28; j __inf_loop
+hart1_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 4(t1)
+    j __inf_loop
+
+hart2_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 8(t1)
+    j __inf_loop
+
+hart3_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 12(t1)
+    j __inf_loop
+
+hart4_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 16(t1)
+    j __inf_loop
+
+hart5_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 20(t1)
+    j __inf_loop
+
+hart6_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 24(t1)
+    j __inf_loop
+
+hart7_done_end:
+    li t0, 1
+    la t1, done_flags
+    sw t0, 28(t1)
+    j __inf_loop
 
 __inf_loop:
     j __inf_loop
@@ -96,7 +124,6 @@ __inf_loop:
 hart_wait_loop:
     j hart_wait_loop
 
-main functions:
 .global hart0_main
 .global hart1_main
 .global hart2_main
@@ -145,4 +172,3 @@ done_array:
     .int hart5_done_end
     .int hart6_done_end
     .int hart7_done_end
-
