@@ -171,3 +171,9 @@ void wait_for_hart1_done() {
         __asm__ volatile("");
     }
 }
+
+void wait_for_all_harts_done() {
+    while (harts_done != 256) {
+        __asm__ volatile("");
+    }
+}

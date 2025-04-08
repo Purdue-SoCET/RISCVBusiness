@@ -5,7 +5,7 @@ import glob
 import os
 import pathlib
 
-utility_files = ["start.S", "utility.c", "amo_emu.c", "mutex.c", "fast_amo_emu.c"]
+utility_files = ["multicore_start.S", "utility.c", "amo_emu.c", "mutex.c", "fast_amo_emu.c"]
 
 compile_cmd = ['riscv64-unknown-elf-gcc', '-march=rv32imac_zicsr', '-mabi=ilp32', '-mcmodel=medany',
                 '-static', '-O2', '-Tlink.ld', '-std=c11', '-nostartfiles'] + utility_files
