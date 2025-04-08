@@ -13,6 +13,9 @@
 #define NUM_CORES 1
 #endif
 
+#define NUM_HART = 4
+#define MAX_HART = 8
+
 static uint32_t input1_data[ARRAY_SIZE] = {
     0, 3, 2, 0, 3, 1, 0, 3, 2, 3, 2, 0, 3, 3, 1, 2, 3, 0, 0, 1, 1, 1, 2, 3, 1, 2, 3, 1, 1, 3, 2, 2,
     0, 1, 3, 2, 2, 2, 0, 0, 1, 0, 1, 3, 3, 0, 3, 3, 3, 3, 0, 3, 2, 1, 2, 2, 0, 0, 3, 0, 1, 1, 0, 3,
@@ -63,6 +66,28 @@ void matmul(const size_t coreid, const size_t ncores, const size_t lda, const ui
             C[i + j * lda] = sum;
         }
     }
+}
+
+void main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
 }
 
 void hart0_main() {
