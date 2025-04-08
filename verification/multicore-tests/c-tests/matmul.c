@@ -90,21 +90,197 @@ void main() {
     return;
 }
 
+// void hart0_main() {
+//     matmul(0, NUM_CORES, DIM_SIZE, input1_data, input2_data, results);
+//     wait_for_hart1_done();
+//     flag = 1;
+//     for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+//         if (results[i] != verify_data[i]) {
+//             flag = 0;
+//             return;
+//         }
+//     }
+// }
+
+// void hart1_main() {
+// #if MULTICORE
+//     matmul(1, 2, DIM_SIZE, input1_data, input2_data, results);
+// #endif
+//     hart1_done = 1;
+// }
+
 void hart0_main() {
-    matmul(0, NUM_CORES, DIM_SIZE, input1_data, input2_data, results);
-    wait_for_hart1_done();
-    flag = 1;
-    for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
-        if (results[i] != verify_data[i]) {
-            flag = 0;
-            return;
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
         }
     }
+    wait_for_all_harts_done();
+
+    return;
 }
 
 void hart1_main() {
-#if MULTICORE
-    matmul(1, 2, DIM_SIZE, input1_data, input2_data, results);
-#endif
-    hart1_done = 1;
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
+}
+
+void hart2_main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
+}
+
+void hart3_main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
+}
+
+void hart4_main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
+}
+
+void hart5_main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
+}
+
+void hart6_main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
+}
+
+void hart7_main() {
+    mhartid = get_mhartid();
+    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
+    
+    // Mark completion
+    harts_done |= (uint8_t) (1 << mhartid);
+
+    // Verify result
+    if(mhartid == 0) {
+        for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
+            if (results[i] != verify_data[i]) {
+                flag = 0;
+                return;
+            }
+        }
+    }
+    wait_for_all_harts_done();
+
+    return;
 }

@@ -5,6 +5,7 @@
 
 extern int32_t flag;
 extern volatile int32_t hart1_done;
+extern volatile int8_t harts_done;
 #define MTIME_ADDR 0xFFFFFFE0
 #define MTIMEH_ADDR 0xFFFFFFE4
 #define MTIMECMP_ADDR 0xFFFFFFE8
