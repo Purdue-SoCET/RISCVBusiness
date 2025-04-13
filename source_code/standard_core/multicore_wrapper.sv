@@ -23,6 +23,8 @@ module multicore_wrapper #(
 );
     bus_ctrl_if bus_ctrl_if();
     generic_bus_if pipeline_trans_if ();
+    core_interrupt_if interrupt_if();
+    generic_bus_if gen_bus_if(); // NEW
 
     memory_controller #(
         .NUM_HARTS(NUM_HARTS)
@@ -106,7 +108,10 @@ module multicore_wrapper #(
         .CLK(CLK),
         .nRST(nRST),
         .pipeline_trans_if(pipeline_trans_if),
-        .out_gen_bus_if(mcif.gen_bus_if)
+        // TODO: problem area
+        // .out_gen_bus_if(mcif.bus_if)
+        .out_gen_bus_if(gen_bus_if)
+        // .out_gen_bus_if(gen_bus_if)
     );
 
 endmodule
