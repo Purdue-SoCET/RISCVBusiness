@@ -51,7 +51,7 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [11:0] imm_I;
     logic [NUM_HARTS-1:0] [20:0] imm_UJ;
     logic [NUM_HARTS-1:0] [31:0] imm_U;
-    cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0];
+    // cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0];
 
     // This requires that all x28s are 1 in order to pass tests
     logic [31:0] x28;
@@ -75,8 +75,8 @@ module multicore_wrapper #(
                 .mtime(mcif.mtime),
                 .wfi(pipeline_wfi),
                 .halt(pipeline_halts[HART_ID]),
-                .icache_statistics(cache_statistics[HART_ID * 2]),
-                .dcache_statistics(cache_statistics[HART_ID * 2 + 1]),
+                // .icache_statistics(cache_statistics[HART_ID * 2]),
+                // .dcache_statistics(cache_statistics[HART_ID * 2 + 1]),
                 .interrupt_if(interrupt_if),
                 .bus_ctrl_if(bus_ctrl_if)
             );

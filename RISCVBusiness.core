@@ -103,3 +103,5 @@ targets:
                     - -vopt
                     - -voptargs='+acc'
                     - -t ps
+                    - -suppress 3999
+                    - -suppress 8386

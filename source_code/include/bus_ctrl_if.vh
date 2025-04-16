@@ -100,12 +100,12 @@ interface bus_ctrl_if ();
     // this is also used when testbenching
     `ifndef VERILATOR
     `ifndef XCELIUM
-    always_comb begin
-        for(int i = 0; i < CPUS; i++) begin
-            if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
-            else dstore[i] = driver_dstore[i];
-        end
-    end
+    // always_comb begin
+    //     for(int i = 0; i < CPUS; i++) begin
+    //         if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
+    //         else dstore[i] = driver_dstore[i];
+    //     end
+    // end
     `endif
     `endif
 
