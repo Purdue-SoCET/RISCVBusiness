@@ -11,7 +11,8 @@
 
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter NUM_HARTS
+    parameter NUM_HARTS,
+    parameter NONCACHE_START_ADDR = 32'hF0000000
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
@@ -30,7 +31,8 @@ module multicore_wrapper #(
     generic_bus_if pipeline_trans_if ();
 
     memory_controller #(
-        .NUM_HARTS(NUM_HARTS)
+        .NUM_HARTS(NUM_HARTS),
+        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
     ) mc (
         .CLK(CLK),
         .nRST(nRST),
