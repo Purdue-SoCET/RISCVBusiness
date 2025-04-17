@@ -160,64 +160,6 @@ module page_walker #(
         endcase
     end
 
-    // // leaf page permission checking
-    // always_comb begin    
-    //     prv_pipe_if.fault_load_page  = 0;
-    //     prv_pipe_if.fault_store_page = 0;
-    //     prv_pipe_if.fault_insn_page  = 0;
-    //     leaf_pte                     = 0;
-
-    //     // need to check for normal/super pages as well as r/w/x
-    //     if (state == WALK) begin
-    //         if (~mem_gen_bus_if.busy) begin
-    //             // may need to add pma and pmp checks here
-
-    //             // fault if pte.v = 0 or if pte.r = 0 and pte.w = 1
-    //             if (~pte_perms.valid | (~pte_perms.readable & pte_perms.writable)) begin
-    //                 prv_pipe_if.fault_load_page  = access == LOAD;
-    //                 prv_pipe_if.fault_store_page = access == STORE;
-    //                 prv_pipe_if.fault_insn_page  = access == INSTRUCTION;
-    //             end
-    //             // fault if level == 0 and r/w/x are NOT set (means leaf pte is marked as a pointer to page level)
-    //             else if (level == '0 & ~(pte_perms.readable | pte_perms.writable | pte_perms.executable)) begin
-    //                 prv_pipe_if.fault_load_page  = access == LOAD;
-    //                 prv_pipe_if.fault_store_page = access == STORE;
-    //                 prv_pipe_if.fault_insn_page  = access == INSTRUCTION;
-    //             end
-    //             // check if pte.r = 1 or pte.x = 1, means this is a leaf node
-    //             else if (pte_perms.readable | pte_perms.executable) begin
-    //                 leaf_pte = 1;
-
-    //                 // fault if instruction access and pte.r = 0
-    //                 if (access == INSTRUCTION & ~pte_perms.readable) begin
-    //                     prv_pipe_if.fault_insn_page = 1;
-    //                 end
-    //                 // fault if store access and pte.w = 0
-    //                 else if (access == STORE & ~pte_perms.writable) begin
-    //                     prv_pipe_if.fault_store_page = 1;
-    //                 end
-    //                 // fault if U = 1 and is S-mode or U = 0 and is U-mode
-    //                 else if ((pte_perms.user & prv_pipe_if.curr_privilege_level == S_MODE & ~prv_pipe_if.mstatus.sum) |
-    //                         (~pte_perms.user & prv_pipe_if.curr_privilege_level == U_MODE)) begin
-    //                     prv_pipe_if.fault_load_page  = access == LOAD;
-    //                     prv_pipe_if.fault_store_page = access == STORE;
-    //                     prv_pipe_if.fault_insn_page  = access == INSTRUCTION;
-    //                 end
-
-    //                 // superpage checking
-    //                 // need to add RV64 superpage checking for RV64 implementation
-    //                 if (level != 0) begin
-    //                     if (at_if.sv32 & |pte_sv32.ppn[9:0]) begin
-    //                         prv_pipe_if.fault_load_page  = access == LOAD;
-    //                         prv_pipe_if.fault_store_page = access == STORE;
-    //                         prv_pipe_if.fault_insn_page  = access == INSTRUCTION;
-    //                     end
-    //                 end
-    //             end
-    //         end
-    //     end
-    // end
-
     // output logic
     always_comb begin
         dtlb_gen_bus_if.busy    = 1;
