@@ -41,23 +41,34 @@ class reset_test extends uvm_test;
         uvm_config_db#(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::set(this, "*", "mcif", mcif);
 
         // Create the reset sequence
-        multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
-        multicore_data_rst_seq = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
+        // multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
+        // multicore_data_rst_seq = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
     endfunction
 
     // Run phase
     task run_phase(uvm_phase phase);
         super.run_phase(phase);
+        `uvm_info("TEST_CLASS", "Run Phase", UVM_HIGH)
 
         phase.raise_objection(this, "Starting reset sequence");
         $display("%t Starting reset sequence run_phase", $time);
 
+        // multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
+        // multicore_data_rst_seq = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
+
         // Start the reset sequence
-        fork 
+        repeat (10) begin
+            multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
+            multicore_data_rst_seq = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
             multicore_instr_rst_seq.start(e.instr_agent_inst.instr_sqr);   
-            multicore_data_rst_seq.start(e.data_agent_inst.data_sqr);       
-        join
-        #1000ns;
+            multicore_data_rst_seq.start(e.data_agent_inst.data_sqr);  
+        end
+        // fork 
+        //     multicore_instr_rst_seq.start(e.instr_agent_inst.instr_sqr);   
+        //     multicore_data_rst_seq.start(e.data_agent_inst.data_sqr);       
+        // join
+        // #100ns;
+        // #1000ns;
         phase.drop_objection(this, "Finished reset sequence");
     endtask
 endclass

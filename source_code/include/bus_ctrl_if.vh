@@ -158,7 +158,8 @@ import addr_space::*;
 interface bus_if #(
     parameter ADDR_WIDTH = 32, 
     parameter DATA_WIDTH = 32
-)();
+)(input CLK);
+    import addr_space::*;
 
     // Vital signals
     logic wen; // request is a data write
@@ -183,15 +184,16 @@ interface bus_if #(
 
     logic dREN, dWEN;
     logic [ADDR_WIDTH-1 : 0] daddr;
-    logic [DATA_WIDTH-1 : 0] data_store, data_load;
+    logic [DATA_WIDTH-1 : 0] dstore; 
+    logic [DATA_WIDTH-1 : 0] dload;
     logic derror, d_req_stall;
 
     // Modports
     modport uvm (
         input iREN, iaddr, 
         output instruction, ierror, i_req_stall,
-        input dREN, dWEN, daddr, data_store, 
-        output data_load, derror, d_req_stall
+        input dREN, dWEN, daddr, dstore, 
+        output dload, derror, d_req_stall
     );
 
     modport cpu (
@@ -214,8 +216,8 @@ interface bus_if #(
         dREN = '0;
         dWEN = '0;
         daddr = '0;
-        data_load = '0;
-        data_store = '0;
+        dload = '0;
+        dstore = '0;
         derror = '0;
         d_req_stall = '0;
 
@@ -229,8 +231,8 @@ interface bus_if #(
             dREN = ren;
             dWEN = wen;
             daddr = addr;
-            data_store = wdata;
-            rdata = data_load;
+            dstore = wdata;
+            rdata = dload;
             error = derror;
             request_stall = d_req_stall;
         end    

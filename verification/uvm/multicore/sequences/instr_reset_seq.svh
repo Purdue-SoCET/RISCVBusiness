@@ -8,10 +8,6 @@ import uvm_pkg::*;
 class instr_reset_seq extends uvm_sequence #(instr_transaction);
     `uvm_object_utils(instr_reset_seq)
 
-    // Transaction variables
-    instr_transaction tx1;
-    instr_transaction tx2;
-
     // Constructor
     function new(string name = "");
         super.new(name);
@@ -32,7 +28,9 @@ class instr_reset_seq extends uvm_sequence #(instr_transaction);
     endtask: body
 
     task provide_stimulus();
-        tx2 = instr_transaction::type_id::create("tx2", this);
+        instr_transaction tx2;
+        tx2 = instr_transaction::type_id::create("tx2", null, get_full_name());
+
         `uvm_info(get_type_name(), "Generating Garbage Stimulus", UVM_HIGH)
         
         // Randomize all inputs to create garbage outputs
@@ -46,7 +44,9 @@ class instr_reset_seq extends uvm_sequence #(instr_transaction);
     endtask: provide_stimulus
 
     task reset_dut();
-        tx1 = instr_transaction::type_id::create("tx1", this);
+        instr_transaction tx1;
+        tx1 = instr_transaction::type_id::create("tx1", null, get_full_name());
+
         `uvm_info(get_type_name(), "Asserting Reset (nRST=0)", UVM_HIGH)
         
         start_item(tx1);
@@ -61,4 +61,4 @@ class instr_reset_seq extends uvm_sequence #(instr_transaction);
 
 endclass
 
-`endif 
+`endif

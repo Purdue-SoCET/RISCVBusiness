@@ -3,6 +3,7 @@
 
 `timescale 1ns/1ps
 `include "uvm_macros.svh"
+`include "reset_test.svh"
 
 module testbench_top();
     import uvm_pkg::*;
@@ -10,6 +11,8 @@ module testbench_top();
 
     // --- DUT Params PKG --- //
     import dut_parameters::*;
+
+    reset_test reset_test;
 
     initial begin
         clk = 0;
@@ -23,6 +26,15 @@ module testbench_top();
         .ADDR_WIDTH(A_WIDTH)
     ) mcif(clk);
 
+    // TODO: param with same clk?
+    // bus_if # (
+    //     .DATA_WIDTH(D_WIDTH),
+    //     .ADDR_WIDTH(A_WIDTH)
+    // ) busif(
+    //     .CLK(clk),
+
+    // );
+
     multicore_wrapper # (
         .NUM_HARTS(HARTS), 
         .RESET_PC(RST_PC)
@@ -34,6 +46,7 @@ module testbench_top();
 
     initial begin        
         uvm_config_db#(virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH))::set(null, "uvm_test_top", "mcif", mcif);
+        // uvm_config_db#(virtual bus_if #(A_WIDTH, D_WIDTH))::set(null, "uvm_test_top", "busif", busif);
         run_test("reset_test");
     end
 endmodule
