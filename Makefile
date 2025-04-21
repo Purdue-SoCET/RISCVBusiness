@@ -86,7 +86,7 @@ build: config
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
 	@echo "------------------------------------------------------------------"
 
-run: build
+run: config
 	@fusesoc --cores-root . run --build-root rvb_out --target sim --tool modelsim socet:riscv:RISCVBusiness
 
 clean:
