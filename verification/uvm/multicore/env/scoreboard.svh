@@ -60,7 +60,11 @@ class scoreboard extends uvm_scoreboard;
 
         forever begin
             instr_fifo.get(i_tx);
+            `uvm_info("SCB", $sformatf("Instruction Transaction:\n%s", i_tx.sprint()), UVM_HIGH)
+
             data_fifo.get(d_tx);
+            `uvm_info("SCB", $sformatf("Data Transaction:\n%s", d_tx.sprint()), UVM_HIGH)
+
             compare_instr(i_tx);
             compare_data(d_tx);
         end

@@ -1,5 +1,15 @@
+/*
+  Project       : SoCET RISCVBusiness UVM
+  UVM Component : RISCV Instr Programmer
+*/
 `ifndef RISCV_PROGRAMMER_SV
 `define RISCV_PROGRAMMER_SV
+
+// --- Include --- //
+`include "uvm_macros.svh"
+
+// --- Import --- //
+import uvm_pkg::*;
 
 class riscv_programmer;
     static function logic [31:0] encode_instruction(string mnemonic, int immediate, int rs1 = 0, int rs2 = 0, int rd = 0);
@@ -25,7 +35,7 @@ class riscv_programmer;
                 return {immediate[12], immediate[10:5], rs2[4:0], rs1[4:0], 3'b000, immediate[4:1], immediate[11], 7'b1100011}; 
             end
             default: begin
-                // `uvm_error("RISC-V Programmer", $sformatf("Unknown instruction mnemonic: %s", mnemonic));
+                `uvm_error("RISC-V Programmer", $sformatf("Unknown instruction mnemonic: %s", mnemonic))
                 return 32'h0; 
             end
         endcase

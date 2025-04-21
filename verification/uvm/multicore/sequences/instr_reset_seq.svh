@@ -1,64 +1,69 @@
+/*
+  Project       : SoCET RISCVBusiness UVM
+  UVM Component : Reset Sequence - Instr
+*/
 `ifndef INSTR_RESET_SEQ_SVH
 `define INSTR_RESET_SEQ_SVH
 
-import uvm_pkg::*;
+// --- Include --- //
 `include "uvm_macros.svh"
 `include "instr_transaction.svh"
 
+// --- Import --- //
+import uvm_pkg::*;
+
+// --- Instr Reset Seq --- //
 class instr_reset_seq extends uvm_sequence #(instr_transaction);
     `uvm_object_utils(instr_reset_seq)
 
-    // Constructor
+    // --- Constructor --- //
     function new(string name = "");
         super.new(name);
-    endfunction: new
+    endfunction
 
-    // ******* Reset Sequence *******
+    // --- Reset Sequence --- //
     task body();
-        `uvm_info(get_type_name(), "Starting Reset Sequence", UVM_HIGH)
+        `uvm_info(get_type_name(), "Initiating Reset Sequence", UVM_HIGH)
         
-        // Provide garbage stimulus to the DUT
         provide_stimulus();
         #50ns;
-        
-        // Apply reset to clear the DUT
         reset_dut();
         
         `uvm_info(get_type_name(), "Completed Reset Sequence", UVM_HIGH)
-    endtask: body
+    endtask
 
+    // --- Drive Garbage --- //
     task provide_stimulus();
-        instr_transaction tx2;
-        tx2 = instr_transaction::type_id::create("tx2", null, get_full_name());
+        instr_transaction garbage_tx;
+        garbage_tx = instr_transaction::type_id::create("garbage_tx", null, get_full_name());
 
-        `uvm_info(get_type_name(), "Generating Garbage Stimulus", UVM_HIGH)
+        `uvm_info(get_type_name(), "Generating garbage stimulus", UVM_HIGH)
         
-        // Randomize all inputs to create garbage outputs
-        start_item(tx2);
-        assert(tx2.randomize()) else `uvm_error(get_type_name(), "Randomization failed for tx2");
+        start_item(garbage_tx);
+        assert(garbage_tx.randomize()) else `uvm_error(get_type_name(), "Randomization failed garbage_tx");
         
-        tx2.nRST = 1; 
-        finish_item(tx2);
+        garbage_tx.nRST = 1'b1; 
+        finish_item(garbage_tx);
         
-        `uvm_info(get_type_name(), "Completed Garbage Stimulus (nRST=1)", UVM_HIGH)
-    endtask: provide_stimulus
+        `uvm_info(get_type_name(), "Completed garbage stimulus", UVM_HIGH)
+    endtask
 
+    // --- Reset Sequence --- //
     task reset_dut();
-        instr_transaction tx1;
-        tx1 = instr_transaction::type_id::create("tx1", null, get_full_name());
+        instr_transaction reset_tx;
+        reset_tx = instr_transaction::type_id::create("reset_tx", null, get_full_name());
 
-        `uvm_info(get_type_name(), "Asserting Reset (nRST=0)", UVM_HIGH)
+        `uvm_info(get_type_name(), "Asserting reset sequence", UVM_HIGH)
         
-        start_item(tx1);
-        assert(tx1.randomize()) else `uvm_error(get_type_name(), "Randomization failed for tx1");
+        start_item(reset_tx);
+        assert(reset_tx.randomize()) else `uvm_error(get_type_name(), "Randomization failed for reset_tx");
         
         // Set reset low to reset the DUT
-        tx1.nRST = 1'b0;
-        finish_item(tx1);
+        reset_tx.nRST = 1'b0;
+        finish_item(reset_tx);
         
-        `uvm_info(get_type_name(), "Completed Reset (nRST=0)", UVM_HIGH)
-    endtask: reset_dut
-
+        `uvm_info(get_type_name(), "Completed reset sequence", UVM_HIGH)
+    endtask
 endclass
 
 `endif

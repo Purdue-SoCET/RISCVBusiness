@@ -1,3 +1,7 @@
+/*
+  Project       : SoCET RISCVBusiness UVM
+  UVM Component : Addr Space Params
+*/
 `ifndef ADDR_SPACE_SV
 `define ADDR_SPACE_SV
 
@@ -20,6 +24,5 @@ package addr_space;
     parameter DATA_START_ADDR_SPACE  = 32'h1000_0000;
     parameter DATA_END_ADDR_SPACE    = 32'h1FFF_FFFF;  // 256 MB for data
 endpackage
-
 
 `endif
