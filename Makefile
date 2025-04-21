@@ -1,5 +1,6 @@
 ROOT := $(shell pwd)
 
+# Design Files
 RISCV 			:= $(ROOT)/source_code
 RISCV_CORE 		:= $(RISCV)/standard_core
 PIPELINE 		:= $(RISCV)/pipelines
@@ -25,13 +26,13 @@ SPARCE_FILES 	:= $(SPARCE)/sparce_wrapper.sv $(SPARCE)/sparce_disabled/sparce_di
 RISCV_BUS_FILES := $(RISCV_BUS)/generic_nonpipeline.sv $(RISCV_BUS)/ahb.sv
 TRACKER_FILES 	:= $(RISCV)/trackers/cpu_tracker.sv $(RISCV)/trackers/branch_tracker.sv
 
+# Dependencies
 COMPONENT_FILES_SV := $(CORE_PKG_FILES) $(RISC_MGMT_FILES) $(RISC_EXT_FILES) $(CORE_FILES) $(RV32C_FILES) $(PIPELINE_FILES) $(SPARCE_FILES) $(PREDICTOR_FILES) $(PRIV_FILES) $(CACHE_FILES) $(RISCV_BUS_FILES) $(TRACKER_FILES)
 
-TOP_ENTITY := RISCVBusiness
-
+TOP_ENTITY   := RISCVBusiness
 HEADER_FILES := -I$(RISCV)/include
 
-# Verification Team Files
+# UVM Files
 TBTOP			:= testbench_top
 VERIFICATION 	:= $(ROOT)/verification
 UVM				:= $(VERIFICATION)/uvm/multicore
@@ -45,32 +46,31 @@ PARAMS			:= $(UVM)/params
 SEQ				:= $(UVM)/sequences
 TESTS			:= $(UVM)/tests
 
-# UVM Test - Override via CL args later on
+# UVM Test - Core file makes these tricky
 TESTNAME  ?= reset_test
 VERBOSITY ?= UVM_HIGH
 SEED      ?= $(shell echo $$RANDOM)
 # QuestaSim Path
 QUESTA_HOME:=/package/eda/mg/questa10.6b/questasim
 
-# Artifacts - will add a lot more later
+# Simulation Artifacts
 COVERAGE_DIR := $(UVM)/reports
 WAVE_SCRIPT  := $(UVM)/waves/multicore.do
 
 define USAGE
 @echo "----------------------------------------------------------------------"
 @echo " Build Targets:"
-@echo "     config: config core with example.yml"
-@echo "     build: build the design and testbench with ModelSim"
-@echo "     run: execute the simulation with ModelSim"
-@echo "     clean: Remove build directories"
+@echo "     config:    config core with example.yml"
+@echo "     build:     build the design and testbench with ModelSim"
+@echo "     run:       execute the simulation with ModelSim"
+@echo "     clean:     Remove build directories"
 @echo "     veryclean: Remove fusesoc libraries & build directories"
 @echo "----------------------------------------------------------------------"
 endef
 
-.phony: default clean config verilate xcelium
+.phony: help clean config verilate xcelium
 
-
-default:
+help:
 	$(USAGE)
 
 config:
@@ -82,8 +82,7 @@ config:
 build: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool modelsim socet:riscv:RISCVBusiness
 	@echo "------------------------------------------------------------------"
-	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
-	@echo "to the build directory created by FuseSoC and using the Makefile there."
+	@echo "Build finished, you can run with 'make run'
 	@echo "------------------------------------------------------------------"
 
 run: config
