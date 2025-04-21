@@ -52,6 +52,7 @@ interface prv_pipeline_if();
 
   // performance signals
   logic wb_enable, instr;
+  logic icache_miss, dcache_miss;
 
   // RISC-MGMT
   logic ex_rmgmt;
@@ -86,6 +87,7 @@ interface prv_pipeline_if();
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
           breakpoint, env, badaddr, swap, clr, set, read_only, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,
+          icache_miss, dcache_miss,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,
           d_acc_width, i_acc_width,

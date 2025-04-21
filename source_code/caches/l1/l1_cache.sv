@@ -45,7 +45,8 @@ module l1_cache #(
     output logic clear_done, flush_done,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus proc_gen_bus_if,
-    cache_coherence_if.cache ccif //Coherency interface, connected to coherency unit
+    cache_coherence_if.cache ccif, //Coherency interface, connected to coherency unit
+    output logic cache_miss
 );
     import rv32i_types_pkg::*;
     
@@ -553,6 +554,7 @@ module l1_cache #(
     // next state logic
     always_comb begin
 	    next_state = state;
+        cache_miss = 0;
 	    casez(state)
             IDLE: begin
                 if (idle_done) //Used when flushing
@@ -571,9 +573,10 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error)
+                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error) begin
+                    cache_miss = 1;
                     next_state = HIT; 
-                else if (ccif.snoop_hit && !ccif.snoop_busy)
+                end else if (ccif.snoop_hit && !ccif.snoop_busy)
                     next_state = SNOOP;
                 else if (!ccif.abort_bus && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
                     next_state = CANCEL_REQ;
