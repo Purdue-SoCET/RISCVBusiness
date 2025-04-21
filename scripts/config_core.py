@@ -201,6 +201,9 @@ def create_include(config):
       if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
         err = 'Invalid icache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
+      if(uarch_params['rv32c_enabled'] == 'enabled') & (uarch_params['br_predictor_type'] != 'not_taken'):
+        err = 'RV32C and advanced branch prediction cannot be enabled simultaneously.'
+        sys.exit(err)
     elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
       err = 'Illegal configuration. ' + uarch_params[uarch_param]
       err += ' is not a valid configuration for ' + uarch_param
