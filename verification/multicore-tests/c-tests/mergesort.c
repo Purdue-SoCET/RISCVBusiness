@@ -9,8 +9,8 @@
 #define N 20
 #include "merge.h"
 
-#define NUM_HART = 4
-#define MAX_HART = 8
+#define NUM_HART 4
+#define MAX_HART 8
 
 uint32_t arr[2048] = {
     1157, 4050, 3787, 2591, 2747, 1917, 4068, 1552, 967,  2724, 2987, 2097, 2097, 4603, 2762, 3992,
@@ -144,11 +144,11 @@ uint32_t arr[2048] = {
 __attribute__((section(".noinit"))) uint32_t out_arr[2048];
 
 void main() {
-    mhartid = get_mhartid();
+    int mhartid = 0;
 
     for(int i = 1; i <= NUM_HART; i *= 2) {
         // Fill n bits from the right for completion check
-        harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1)
+        harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
         // Merge sort
         if(mhartid % i == 0) {
             mergeSort(&arr[N / NUM_HART * mhartid], N / NUM_HART * i);
