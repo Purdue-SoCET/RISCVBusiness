@@ -140,6 +140,13 @@ flag: .word 0x00
 .global bss_cleared
 bss_cleared: .word 0x00
 
+.global harts_done
+harts_done: .word 0x00
+
+.global hart1_done
+hart1_done: .word 0x00
+
+
 .global done_flags
 done_flags:
     .word 0x00  # hart0
