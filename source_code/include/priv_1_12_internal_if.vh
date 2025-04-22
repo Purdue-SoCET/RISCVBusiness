@@ -78,6 +78,7 @@ interface priv_1_12_internal_if;
     logic insert_pc; // inform pipeline that we are changing the PC
     logic mret, sret; // returning from a trap instruction
     logic intr; // Did something trigger an interrupt or exception?
+    logic ex_mem_stall; // Is the pipe stalled?
 
     // Addresses and memory access info for memory protection
     logic [RAM_ADDR_SIZE-1:0] daddr, iaddr; // Address to check
@@ -103,7 +104,7 @@ interface priv_1_12_internal_if;
             clear_timer_int_u, clear_timer_int_s, clear_timer_int_m, clear_soft_int_u, clear_soft_int_s, clear_soft_int_m,
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
             env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtval,
-            mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level,
+            mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level, ex_mem_stall,
         output inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, intr
     );
