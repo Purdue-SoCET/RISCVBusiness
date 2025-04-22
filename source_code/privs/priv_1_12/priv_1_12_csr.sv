@@ -31,13 +31,13 @@
         ``name``_next = name + prv_intern_if.``name``_inc;  \
     end
 
-`define READ_HPM_COUNTER(num)                                                   \
-  HPMCOUNTER``num``_ADDR : begin \
+`define READ_HPM_COUNTER(num)                                                           \
+  HPMCOUNTER``num``_ADDR : begin                                                        \
     if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.hpm``num``) begin    \
-      invalid_csr_addr = 1'b1;  \
-    end else begin \
-      prv_intern_if.old_csr_val = hpm``num``; \
-    end     \
+      invalid_csr_addr = 1'b1;                                                          \
+    end else begin                                                                      \
+      prv_intern_if.old_csr_val = hpm``num``;                                           \
+    end                                                                                 \
   end
 
 module priv_1_12_csr #(
