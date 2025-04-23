@@ -365,7 +365,7 @@ module tlb #(
                     sramMask.frames[ridx].tag.valid    = 1'b0;
                     sramMask.frames[ridx].tag.asid     = '0;
                     sramMask.frames[ridx].tag.vpn_tag  = '0;
-                    tlb_hit_data = mem_gen_bus_if.rdata;
+                    // tlb_hit_data = mem_gen_bus_if.rdata;
                 end
             end
             FENCE_TLB: begin

@@ -67,7 +67,7 @@ module page_walker #(
 
     // state logic
     typedef enum {
-        IDLE, WALK, RETURN_PA, FAULT
+        IDLE, WALK, FAULT
     } pw_fsm_t;
 
     // // preserving which is currently serviced
@@ -104,7 +104,7 @@ module page_walker #(
     assign decoded_daddr_sv32 = va_sv32_t'(dtlb_gen_bus_if.addr);
     assign decoded_iaddr_sv32 = va_sv32_t'(itlb_gen_bus_if.addr);
     // assign decoded_addr_sv32  = itlb_miss && itlb_gen_bus_if.ren ? decoded_iaddr_sv32 : decoded_daddr_sv32;
-    assign decoded_addr_sv32  = dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen) ? decoded_daddr_sv32 : decoded_iaddr_sv32;
+    // assign decoded_addr_sv32  = dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen) ? decoded_daddr_sv32 : decoded_iaddr_sv32;
     assign pte_sv32           = pte_sv32_t'(mem_gen_bus_if.rdata);
     assign pte_perms          = pte_perms_t'(mem_gen_bus_if.rdata[9:0]);
 
@@ -142,7 +142,7 @@ module page_walker #(
         next_level = level;
 
         casez(state)
-            IDLE, RETURN_PA, FAULT: begin
+            IDLE, FAULT: begin
                 casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                     5'b????1 :  next_level = SV32_LEVELS - 1;
                     5'b???10 :  next_level = SV39_LEVELS - 1;
@@ -153,9 +153,10 @@ module page_walker #(
                 endcase
             end
             WALK: begin
-                if (~mem_gen_bus_if.busy) begin // might be a problem if this takes more than a cycle...
+                if (~mem_gen_bus_if.busy) // might be a problem if this takes more than a cycle...
                     next_level = level - 1;
-                end
+                if (next_state == FAULT)
+                    next_level = 0;
             end
         endcase
     end
@@ -173,28 +174,32 @@ module page_walker #(
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         next_page_address       = page_address;
         next_access             = access;
+        decoded_addr_sv32       = access == ACCESS_LOAD || access == ACCESS_STORE ? decoded_daddr_sv32 : access == ACCESS_INSN ? decoded_iaddr_sv32 : '0;
 
         casez(state)
             IDLE: begin
                 // if dtlb miss, service that first
                 if (at_if.addr_trans_on) begin
-                    if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
-                        casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
-                            5'b????1: next_page_address = {prv_pipe_if.satp.ppn[19:0], decoded_addr_sv32.vpn[level], 2'b00};
-                            5'b???10: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[level], 3'b00};
-                            5'b??100: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv48.vpn[level], 3'b00};
-                            5'b?1000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv57.vpn[level], 3'b00};
-                            5'b10000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv64.vpn[level], 3'b00};
-                            default : next_page_address = '0;
-                        endcase
-                    end
-
                     if (dtlb_miss && dtlb_gen_bus_if.ren) begin
                         next_access = ACCESS_LOAD;
+                        decoded_addr_sv32 = decoded_daddr_sv32;
                     end else if (dtlb_miss && dtlb_gen_bus_if.wen) begin
                         next_access = ACCESS_STORE;
+                        decoded_addr_sv32 = decoded_daddr_sv32;
                     end else if (itlb_miss && itlb_gen_bus_if.ren) begin
                         next_access = ACCESS_INSN;
+                        decoded_addr_sv32 = decoded_iaddr_sv32;
+                    end
+
+                    if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
+                        casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
+                            5'b????1: next_page_address = {prv_pipe_if.satp.ppn[19:0], decoded_addr_sv32.vpn[1], 2'b00};
+                            5'b???10: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[2], 3'b00};
+                            5'b??100: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv48.vpn[3], 3'b00};
+                            5'b?1000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv57.vpn[4], 3'b00};
+                            5'b10000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv64.vpn[5], 3'b00};
+                            default : next_page_address = '0;
+                        endcase
                     end
                 end
             end
@@ -209,8 +214,8 @@ module page_walker #(
                         itlb_gen_bus_if.busy = ~(access == ACCESS_INSN);
                         casez({at_if.sv64, at_if.sv57, at_if.sv48, at_if.sv39, at_if.sv32})
                             5'b????1: begin
-                                dtlb_gen_bus_if.rdata = word_t'(pte_sv32);
-                                itlb_gen_bus_if.rdata = word_t'(pte_sv32);
+                                dtlb_gen_bus_if.rdata = access == ACCESS_STORE || access ==  ACCESS_LOAD ? word_t'(pte_sv32) : '0;
+                                itlb_gen_bus_if.rdata = access == ACCESS_INSN ? word_t'(pte_sv32) : '0;
                             end
                             5'b???10: begin
                                 dtlb_gen_bus_if.rdata = '0;
@@ -245,12 +250,11 @@ module page_walker #(
                     end
                 end
             end
-            // RETURN_PA: begin
-            //     next_access = NONE; // return back to no access
-            // end
-            // FAULT: begin
-
-            // end
+            FAULT: begin
+                decoded_addr_sv32 = '0;
+                next_page_address = '0;
+                next_access = ACCESS_NONE;
+            end
         endcase
     end
 
@@ -270,9 +274,6 @@ module page_walker #(
             WALK: begin
                 next_state = fault_insn_page | fault_load_page | fault_store_page ? FAULT : leaf_pte ? IDLE : WALK;
             end
-            // RETURN_PA: begin
-            //     next_state = IDLE; // may need to update
-            // end
             FAULT: begin
                 next_state = IDLE;
             end

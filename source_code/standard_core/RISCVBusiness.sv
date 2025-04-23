@@ -50,7 +50,6 @@ module RISCVBusiness #(
     generic_bus_if tspp_dcache_gen_bus_if ();
     generic_bus_if #(.BLOCK_SIZE(ICACHE_BLOCK_SIZE)) icache_mc_if ();
     generic_bus_if #(.BLOCK_SIZE(DCACHE_BLOCK_SIZE)) dcache_mc_if ();
-    generic_bus_if pw_mc_if ();
     risc_mgmt_if rm_if ();
     predictor_pipeline_if predict_if ();
     prv_pipeline_if prv_pipe_if ();
@@ -122,7 +121,7 @@ module RISCVBusiness #(
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
-        .pw_mem_gen_bus_if(pw_mc_if),
+        // .pw_mem_gen_bus_if(pw_mc_if),
         .control_if(control_if),
         .i_cache_coherency_if(i_cache_coherency_if),
         .d_cache_coherency_if(d_cache_coherency_if),
@@ -154,11 +153,11 @@ module RISCVBusiness #(
     );
 
     // Assign Page Walker signals to bus_ctrl & vice versa
-    assign bus_ctrl_if.pREN[HART_ID]     = pw_mc_if.ren;
-    assign bus_ctrl_if.paddr[HART_ID]    = pw_mc_if.addr;
-    assign bus_ctrl_if.pbyte_en[HART_ID] = '1;
-    assign pw_mc_if.busy  = bus_ctrl_if.pwait[HART_ID];
-    assign pw_mc_if.rdata = bus_ctrl_if.pload[HART_ID];
+    // assign bus_ctrl_if.pREN[HART_ID]     = pw_mc_if.ren;
+    // assign bus_ctrl_if.paddr[HART_ID]    = pw_mc_if.addr;
+    // assign bus_ctrl_if.pbyte_en[HART_ID] = '1;
+    // assign pw_mc_if.busy  = bus_ctrl_if.pwait[HART_ID];
+    // assign pw_mc_if.rdata = bus_ctrl_if.pload[HART_ID];
 
     /*
     sparce_wrapper sparce_wrapper_i (
