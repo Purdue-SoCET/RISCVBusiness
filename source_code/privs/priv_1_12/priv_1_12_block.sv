@@ -50,6 +50,8 @@ module priv_1_12_block #(
     priv_1_12_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
     // Assign CSR values
+    assign prv_intern_if.hpm3_inc = prv_pipe_if.icache_miss;
+    assign prv_intern_if.hpm4_inc = prv_pipe_if.dcache_miss;
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.csr_addr;
     assign prv_intern_if.csr_write = prv_pipe_if.swap;
@@ -126,5 +128,6 @@ module priv_1_12_block #(
     assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault | prv_intern_if.pmp_i_fault;
     assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault | prv_intern_if.pmp_l_fault;
     assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault | prv_intern_if.pmp_s_fault;
+    assign prv_intern_if.ex_mem_stall = prv_pipe_if.ex_mem_stall;
 
 endmodule

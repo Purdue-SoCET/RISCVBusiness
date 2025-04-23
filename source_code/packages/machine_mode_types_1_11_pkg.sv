@@ -51,7 +51,38 @@ package machine_mode_types_1_11_pkg;
         MCYCLE_ADDR    = 12'hB00,
         MINSTRET_ADDR  = 12'hB02,
         MCYCLEH_ADDR   = 12'hB80,
-        MINSTRETH_ADDR = 12'hB82
+        MINSTRETH_ADDR = 12'hB82,
+
+        /* User Mode Addresses */
+        HPMCOUNTER3_ADDR  = 12'hC03,
+        HPMCOUNTER4_ADDR  = 12'hC04,
+        HPMCOUNTER5_ADDR  = 12'hC05,
+        HPMCOUNTER6_ADDR  = 12'hC06,
+        HPMCOUNTER7_ADDR  = 12'hC07,
+        HPMCOUNTER8_ADDR  = 12'hC08,
+        HPMCOUNTER9_ADDR  = 12'hC09,
+        HPMCOUNTER10_ADDR = 12'hC0A,
+        HPMCOUNTER11_ADDR = 12'hC0B,
+        HPMCOUNTER12_ADDR = 12'hC0C,
+        HPMCOUNTER13_ADDR = 12'hC0D,
+        HPMCOUNTER14_ADDR = 12'hC0E,
+        HPMCOUNTER15_ADDR = 12'hC0F,
+        HPMCOUNTER16_ADDR = 12'hC10,
+        HPMCOUNTER17_ADDR = 12'hC11,
+        HPMCOUNTER18_ADDR = 12'hC12,
+        HPMCOUNTER19_ADDR = 12'hC13,
+        HPMCOUNTER20_ADDR = 12'hC14,
+        HPMCOUNTER21_ADDR = 12'hC15,
+        HPMCOUNTER22_ADDR = 12'hC16,
+        HPMCOUNTER23_ADDR = 12'hC17,
+        HPMCOUNTER24_ADDR = 12'hC18,
+        HPMCOUNTER25_ADDR = 12'hC19,
+        HPMCOUNTER26_ADDR = 12'hC1A,
+        HPMCOUNTER27_ADDR = 12'hC1B,
+        HPMCOUNTER28_ADDR = 12'hC1C,
+        HPMCOUNTER29_ADDR = 12'hC1D,
+        HPMCOUNTER30_ADDR = 12'hC1E,
+        HPMCOUNTER31_ADDR = 12'hC1F
     } csr_addr_t;
 
     /* Machine Mode Register Types */
