@@ -100,7 +100,7 @@ def run_test(fname, env):
     tohost_address = get_hostaddress(fname)
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), fname]
     if env == 'v':
-        run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--max-sim-time', '10000000', '--virtual', fname]
+        run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--max-sim-time', '10000000', '--virtual', fname, '--notrace']
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ')
