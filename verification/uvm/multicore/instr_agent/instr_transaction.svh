@@ -18,8 +18,8 @@ import uvm_pkg::*;
 class instr_transaction extends uvm_sequence_item;
     // *********** DUT Inputs *********** (Just handled by instruction agent but arbitary decision)
     // Universal accross both agents
-    logic nRST;
-    logic [63:0] mtime;
+    randc logic nRST;
+    randc logic [63:0] mtime;
 
     // *********** DUT Output *********** (Just handled by instruction agent but arbitary decision)
     logic halt;

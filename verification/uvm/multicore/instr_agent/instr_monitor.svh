@@ -64,10 +64,10 @@ class instr_monitor extends uvm_monitor;
             instr_tx.iREN  = mcif.gen_bus_if.iREN;
             
             // Debug
-            `uvm_info("MONITOR_INPUT",
-                $sformatf("iREN: %0b, iaddr: %0h, mtime: %0d, nRST: %0b",
-                instr_tx.iREN, instr_tx.iaddr, instr_tx.mtime, instr_tx.nRST),
-            UVM_HIGH);
+            // `uvm_info("MONITOR_INPUT",
+            //     $sformatf("iREN: %0b, iaddr: %0h, mtime: %0d, nRST: %0b",
+            //     instr_tx.iREN, instr_tx.iaddr, instr_tx.mtime, instr_tx.nRST),
+            // UVM_HIGH);
             
 	        // Output Sample
 			@(posedge mcif.CLK);	      
@@ -79,12 +79,14 @@ class instr_monitor extends uvm_monitor;
             instr_tx.instruction = mcif.gen_bus_if.instruction;
 
             // Debug
-            `uvm_info("MONITOR_OUTPUT",
-                $sformatf("ierror: %0b, i_req_stall: %0b, instruction: %0h, halt: %0b, wfi: %0b",
-                instr_tx.ierror, instr_tx.i_req_stall, instr_tx.instruction, instr_tx.halt, instr_tx.wfi),
-            UVM_HIGH);
+            // `uvm_info("MONITOR_OUTPUT",
+            //     $sformatf("ierror: %0b, i_req_stall: %0b, instruction: %0h, halt: %0b, wfi: %0b",
+            //     instr_tx.ierror, instr_tx.i_req_stall, instr_tx.instruction, instr_tx.halt, instr_tx.wfi),
+            // UVM_HIGH);
 
             // Send to Scoreboard/Predictor
+            `uvm_info("INSTR_MON", $sformatf("Instr Transaction:\n%s", instr_tx.sprint()), UVM_HIGH)
+            
 			instr_ap.write(instr_tx);
         end
     endtask

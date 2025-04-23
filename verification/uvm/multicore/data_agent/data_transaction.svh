@@ -20,7 +20,7 @@ import addr_space::*;
 // --- Data Transaction --- //
 class data_transaction extends uvm_sequence_item;
 	// --------- Reset --------------- //
-	logic nRST;
+	randc logic nRST;
 
 	// --------- DUT Inputs ---------- //
 	rand logic                 	  dREN;

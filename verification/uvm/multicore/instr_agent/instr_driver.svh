@@ -55,19 +55,25 @@ class instr_driver extends uvm_driver#(instr_transaction);
 
     // --- Drive Task --- //
     task drive (instr_transaction tx);
-            @(posedge mcif.CLK);
+            // @(posedge mcif.CLK);
             // RESET
-            if(~tx.nRST) begin 
-                @(negedge mcif.CLK);
-                mcif.halt                   = '0;
-                mcif.wfi                    = '0;
-                mcif.gen_bus_if.instruction = '0;
-                mcif.gen_bus_if.ierror      = '0;
-                mcif.gen_bus_if.i_req_stall = '0;
-                mcif.nRST                   = '0;
-            end else begin
+            // if(~tx.nRST) begin 
+            //     @(negedge mcif.CLK);
+            //     mcif.halt                   = '0;
+            //     mcif.wfi                    = '0;
+            //     mcif.gen_bus_if.instruction = '0;
+            //     mcif.gen_bus_if.ierror      = '0;
+            //     mcif.gen_bus_if.i_req_stall = '0;
+            //     mcif.nRST                   = '0;
+            // end else begin
                 // TODO: multicore instr driver code
-            end
+            mcif.nRST             = tx.nRST;
+            @(negedge mcif.CLK);
+            mcif.wfi              = tx.wfi;
+            mcif.gen_bus_if.iREN  = tx.iREN;
+            mcif.gen_bus_if.iaddr = tx.iaddr;
+
+            // end
             // @(posedge mcif.CLK);    
     endtask
 endclass

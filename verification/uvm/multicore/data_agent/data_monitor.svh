@@ -87,6 +87,7 @@ class data_monitor extends uvm_monitor;
 			UVM_DEBUG);
 
 			// Send to Scoreboard/Predictor
+            `uvm_info("DATA_MON", $sformatf("Data Transaction:\n%s", data_tx.sprint()), UVM_HIGH)
 			data_ap.write(data_tx);
 		end
 	endtask

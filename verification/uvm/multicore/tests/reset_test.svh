@@ -57,6 +57,7 @@ class reset_test extends uvm_test;
         multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
         multicore_data_rst_seq  = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
 
+        // FIXME: new test procedure
         // Execute Threads
         fork
             multicore_instr_rst_seq.start(e.instr_agent_inst.instr_sqr);   
