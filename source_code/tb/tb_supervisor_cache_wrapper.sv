@@ -51,9 +51,9 @@ module supervisor_cache_wrapper(
   logic fault_load_page, fault_store_page, fault_insn_page;
 
   // test signals
-  generic_bus_if         icache_mem_gen_bus_if();
-  generic_bus_if         dcache_mem_gen_bus_if();
-  generic_bus_if         pw_mem_gen_bus_if();
+  generic_bus_if #(.BLOCK_SIZE(2)) icache_mem_gen_bus_if();
+  generic_bus_if #(.BLOCK_SIZE(2)) dcache_mem_gen_bus_if();
+  // generic_bus_if         pw_mem_gen_bus_if();
 
   cache_coherence_if     i_cache_coherency_if();
   cache_coherence_if     d_cache_coherency_if();
@@ -68,7 +68,7 @@ module supervisor_cache_wrapper(
     .nRST(nRST),
     .icache_mem_gen_bus_if(icache_mem_gen_bus_if),
     .dcache_mem_gen_bus_if(dcache_mem_gen_bus_if),
-    .pw_mem_gen_bus_if(pw_mem_gen_bus_if),
+    // .pw_mem_gen_bus_if(pw_mem_gen_bus_if),
     .icache_proc_gen_bus_if(icache_proc_gen_bus_if),
     .dcache_proc_gen_bus_if(dcache_proc_gen_bus_if),
     .control_if(control_if),
@@ -98,19 +98,6 @@ module supervisor_cache_wrapper(
     .gbif(dcache_mem_gen_bus_if),
     .coherence_statistics(dcoherence_statistics)
   );
-
-  // bus_ctrl BUS (
-  //   .CLK(CLK),
-  //   .nRST(nRST),
-  //   .ccif(bus_ctrl_if)
-  // );
-
-  // Assign Page Walker signals to bus_ctrl & vice versa
-  assign bus_ctrl_if.pREN[0]     = pw_mem_gen_bus_if.ren;
-  assign bus_ctrl_if.paddr[0]    = pw_mem_gen_bus_if.addr;
-  assign bus_ctrl_if.pbyte_en[0] = '1;
-  assign pw_mem_gen_bus_if.busy  = bus_ctrl_if.pwait[0];
-  assign pw_mem_gen_bus_if.rdata = bus_ctrl_if.pload[0];
 
   memory_controller #(
     .NUM_HARTS(1)

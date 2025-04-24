@@ -69,7 +69,7 @@ module tb_supervisor_cache();
   // test signals
   generic_bus_if         icache_proc_gen_bus_if (); // Fetch to I$/iTLB
   generic_bus_if         dcache_proc_gen_bus_if (); // Fetch to D$/dTLB
-  generic_bus_if         out_gen_bus_if         (); // Bus Controller to Memory
+  generic_bus_if #(.BLOCK_SIZE(2)) out_gen_bus_if         (); // Bus Controller to Memory
   prv_pipeline_if        prv_pipe_if            (); // Priv to TLB
   cache_control_if       control_if             (); // coherence bus to caches
 
@@ -110,6 +110,7 @@ program test_id_tlb_vipt_pw
 
 integer seed;
 integer error_cnt;
+integer test_num;
 
 string test_type;
 string test_case;
@@ -130,6 +131,8 @@ logic [TLB_TAG_BITS-1:0] test_tag;
 logic [SXLEN-1:0]        test_rdata, test_va;
 logic [TLB_SIZE_LOG2-1:0] test_index;
 
+logic check;
+
 initial begin : MAIN
 
   $dumpfile("waveform.fst");
@@ -137,12 +140,14 @@ initial begin : MAIN
 
   // Initial reset
   nRST = 0;
+  check = 0;
   // clear = 0;
   // fence = 0;
   reset_all();
   reset_priv();
 
   // Setup seed
+  test_num = -1;
   error_cnt = 0;
   seed = SEED;
   $random(seed);
@@ -196,7 +201,7 @@ initial begin : MAIN
 
   complete_test();
 
-
+  
   /**************************
   
   Instruction: L1 Miss, TLB Hit -> No Page Walk -> Memory Access
@@ -286,6 +291,7 @@ initial begin : MAIN
   complete_read(0, PAGEWALK);
 
   // instruction page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_insn_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
     error_cnt += 1;
@@ -311,6 +317,7 @@ initial begin : MAIN
   complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
 
   // check exception, and instruction page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_insn_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
     error_cnt += 1;
@@ -339,6 +346,7 @@ initial begin : MAIN
   complete_read_check('hDEADBEEF, 1, ICACHE);
 
   // no instruction page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_insn_page != 0) begin
     $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_insn_page);
     error_cnt += 1;
@@ -349,6 +357,7 @@ initial begin : MAIN
   initiate_read(32'h80200000, ICACHE);
   
   // instruction page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_insn_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_insn_page);
     error_cnt += 1;
@@ -383,7 +392,7 @@ initial begin : MAIN
   initiate_read(32'h00200000, DCACHE);
 
   // complete writeback
-  complete_writeback_check({32'h0, 32'h98765432}, DCACHE);
+  complete_writeback_check({32'h12345678, 32'h98765432}, DCACHE);
 
   // instruction read from bus
   complete_read_check('hDEADBEEF, 1, DCACHE);
@@ -411,7 +420,7 @@ initial begin : MAIN
   initiate_read(32'h00200000, DCACHE);
 
   // complete writeback
-  complete_writeback_check({32'h0, 32'h98765432}, DCACHE);
+  complete_writeback_check({32'h12345678, 32'h98765432}, DCACHE);
 
   // instruction read from bus
   complete_read_check('hDEADBEEF, 1, DCACHE);
@@ -493,6 +502,7 @@ initial begin : MAIN
   complete_read(0, PAGEWALK);
 
   // instruction page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_load_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
     error_cnt += 1;
@@ -505,6 +515,7 @@ initial begin : MAIN
   complete_read(0, PAGEWALK);
 
   // instruction page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_store_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_store_page);
     error_cnt += 1;
@@ -530,6 +541,7 @@ initial begin : MAIN
   complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
 
   // check exception, and load page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_load_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
     error_cnt += 1;
@@ -542,6 +554,7 @@ initial begin : MAIN
   complete_read(('h80010000 >> 2) | AD_PERMS, PAGEWALK);
 
   // check exception, and store page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_store_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_store_page);
     error_cnt += 1;
@@ -571,6 +584,7 @@ initial begin : MAIN
   complete_read_check('hDEADBEEF, 1, DCACHE);
 
   // no load page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_load_page != 0) begin
     $display("Error, fault value expected %d, got %d\n", 0, prv_pipe_if.fault_load_page);
     error_cnt += 1;
@@ -587,6 +601,7 @@ initial begin : MAIN
   initiate_read(32'h80200040, DCACHE);
   
   // load page fault
+  @(posedge CLK);
   if (prv_pipe_if.fault_load_page != 1) begin
     $display("Error, fault value expected %d, got %d\n", 1, prv_pipe_if.fault_load_page);
     error_cnt += 1;
@@ -781,6 +796,7 @@ task begin_test;
   reset_all();
   test_type = test_main;
   test_case = test_name;
+  test_num += 1;
   $display("\n---------- %s: %s ---------\n", test_type, test_case);
 endtask
 
@@ -860,7 +876,7 @@ endtask
 task set_rdata;
   input logic [WORD_SIZE-1:0] new_rdata;
 
-  out_gen_bus_if.rdata = new_rdata;
+  out_gen_bus_if.rdata = {new_rdata, new_rdata};
 endtask
 
 // set_busy;
@@ -982,13 +998,19 @@ task complete_read;
   @(posedge CLK);
   set_busy(1);
 
-  if (access != PAGEWALK) begin
-    @(posedge CLK);
-    set_busy(0);
-    set_rdata(rdata);
-    @(posedge CLK);
-    set_busy(1);
-  end
+  @(posedge CLK);
+  set_busy(0);
+  set_rdata(rdata);
+  @(posedge CLK);
+  set_busy(1);
+
+  // if (access != PAGEWALK) begin
+  //   @(posedge CLK);
+  //   set_busy(0);
+  //   set_rdata(rdata);
+  //   @(posedge CLK);
+  //   set_busy(1);
+  // end
 endtask
 
 // complete_read_check
@@ -1003,22 +1025,28 @@ task complete_read_check;
   if (read_mem)
     complete_read(expected_rdata, access);
 
+  check = 1;
   case(access)
     ICACHE : begin
       if (read_mem)
         @(negedge icache_proc_gen_bus_if.busy);
-      else
+      else begin
         @(posedge CLK);
+        @(posedge CLK);
+      end
       actual_rdata = icache_proc_gen_bus_if.rdata;
     end
     DCACHE : begin
       if (read_mem)
         @(negedge dcache_proc_gen_bus_if.busy);
-      else
+      else begin
         @(posedge CLK);
+        @(posedge CLK);
+      end
       actual_rdata = dcache_proc_gen_bus_if.rdata;
     end
   endcase
+  check = 0;
 
   @(posedge CLK);
   if (expected_rdata !== actual_rdata) begin
@@ -1072,7 +1100,9 @@ task complete_writeback_check;
 
   logic [1:0][SXLEN-1:0] out_wdata;
 
+  check = 1;
   complete_writeback(access, out_wdata);
+  check = 0;
 
   if (expected_wdata[0] !== out_wdata[0]) begin
     $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
@@ -1160,116 +1190,6 @@ task set_tlb_test_metadata;
   tlb_rdata[index] = rdata;
 endtask
 
-/*
-task fill_tlb_random;
-  logic [ASID_LENGTH-1:0] asid;
-  logic [TLB_TAG_BITS-1:0] tag;
-  logic [TLB_SIZE_LOG2-1:0] index;
-  logic [SXLEN-1:0] rdata, rdata_out;
-
-  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      index = i;
-      // generate the random values for filling
-      generate_asid(asid);
-      generate_tlb_tag(tag);
-      generate_pte(rdata);
-
-      // set asid (don't care about satp.ppn)
-      set_satp(1, asid, '1);
-
-      // read the value into tlb
-      if (VERBOSE)
-        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
-      initiate_read({tag, index, 12'h000});
-      complete_read(rdata, rdata_out);
-
-      set_tlb_test_metadata(asid, tag, rdata_out, index);
-    end
-  end
-endtask
-
-task fill_tlb_fixed_asid;
-  input logic [ASID_LENGTH-1:0] asid;
-  logic [TLB_TAG_BITS-1:0] tag;
-  logic [TLB_SIZE_LOG2-1:0] index;
-  logic [SXLEN-1:0] rdata, rdata_out;
-
-  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      index = i;
-      // generate the random values for filling
-      generate_tlb_tag(tag);
-      generate_pte(rdata);
-
-      // set asid (don't care about satp.ppn)
-      set_satp(1, asid, '1);
-
-      // read the value into tlb
-      if (VERBOSE)
-        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
-      initiate_read({tag, index, 12'h000});
-      complete_read(rdata, rdata_out);
-
-      set_tlb_test_metadata(asid, tag, rdata_out, index);
-    end
-  end
-endtask
-
-task fill_tlb_fixed_tag;
-  input logic [TLB_TAG_BITS-1:0] tag;
-  logic [ASID_LENGTH-1:0] asid;
-  logic [TLB_SIZE_LOG2-1:0] index;
-  logic [SXLEN-1:0] rdata, rdata_out;
-
-  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      index = i;
-      // generate the random values for filling
-      generate_asid(asid);
-      generate_pte(rdata);
-
-      // set asid (don't care about satp.ppn)
-      set_satp(1, asid, '1);
-
-      // read the value into tlb
-      if (VERBOSE)
-        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
-      initiate_read({tag, index, 12'h000});
-      complete_read(rdata, rdata_out);
-
-      set_tlb_test_metadata(asid, tag, rdata_out, index);
-    end
-  end
-endtask
-
-task fill_tlb_fixed_asid_tag;
-  input logic [ASID_LENGTH-1:0] asid;
-  input logic [TLB_TAG_BITS-1:0] tag;
-  logic [TLB_SIZE_LOG2-1:0] index;
-  logic [SXLEN-1:0] rdata, rdata_out;
-
-  for (integer a = 0; a < TLB_ASSOC; a = a + 1) begin
-    for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-      index = i;
-      // generate the random values for filling
-      generate_pte(rdata);
-
-      // set asid (don't care about satp.ppn)
-      set_satp(1, asid, '1);
-
-      // read the value into tlb
-      if (VERBOSE)
-        $display("Filling row %d with tag 0x%h and asid 0x%h\n", index, tag, asid);
-      initiate_read({tag, index, 12'h000});
-      complete_read(rdata, rdata_out);
-
-      set_tlb_test_metadata(asid, tag, rdata_out, index);
-    end
-  end
-endtask
-*/
-
 task fence_tlb_asid_va;
   input logic [ASID_LENGTH-1:0] asid;
   input logic [SXLEN-1:0] va;
@@ -1320,34 +1240,5 @@ task fence_tlb_all;
   // fence tlb
   fence_tlb_asid_va(asid, va);
 endtask
-
-/*
-task verify_tlb_fence;
-
-  // read through each set, check at the fenced address set that there's a tlb miss
-  for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
-    // set asid to the one in the tlb
-    set_satp(1, tlb_asid[i], '1);
-
-    // start the read transaction
-    initiate_read({tlb_ppn[i], 12'h000});
-
-    // check for TLB miss
-    if (tlb_miss) begin 
-      // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
-      if (!(tlb_rdata[i] & PAGE_PERM_GLOBAL) && ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0))) begin
-        $display("Invalid fence, data mismatch - tlb_ppn[%3d]: 0x%06h, test_ppn: 0x%06h - tlb_asid[%3d]: 0x%03h, test_asid: 0x%03h\n", 
-          i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
-        error_cnt = error_cnt + 1;
-      end else begin
-        $display("Valid fence - tlb_ppn[%3d]: 0x%06h - tlb_asid[%3d]: 0x%03h\n", i, tlb_ppn[i], i, tlb_asid[i]);
-      end
-    end
-
-    // finish the read
-    complete_read(tlb_rdata[i], test_rdata);
-  end
-endtask
-*/
 
 endprogram
