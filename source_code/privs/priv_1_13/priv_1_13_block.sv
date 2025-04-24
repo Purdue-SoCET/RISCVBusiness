@@ -106,6 +106,7 @@ module priv_1_13_block #(
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
     assign prv_intern_if.mret              = prv_pipe_if.mret & (prv_intern_if.curr_privilege_level == M_MODE);
     assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.curr_privilege_level == S_MODE | prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.ex_mem_stall      = prv_pipe_if.ex_mem_stall;
 
     // RISC-MGMT?
     //  not sure what these are for, part of priv 1.11

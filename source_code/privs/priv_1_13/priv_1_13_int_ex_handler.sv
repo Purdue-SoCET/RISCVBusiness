@@ -166,11 +166,11 @@ module priv_1_13_int_ex_handler (
 
         // set cause for trap into X-mode
         if (prv_intern_if.intr_to_s) begin
-            prv_intern_if.inject_scause         = exception | interrupt_fired_s;
+            prv_intern_if.inject_scause         = (exception | interrupt_fired_s) && !prv_intern_if.ex_mem_stall;
             prv_intern_if.next_scause.interrupt = ~exception;
             prv_intern_if.next_scause.cause     = exception ? ex_src : int_src;
         end else begin
-            prv_intern_if.inject_mcause         = exception | interrupt_fired;
+            prv_intern_if.inject_mcause         = (exception | interrupt_fired) && !prv_intern_if.ex_mem_stall;
             prv_intern_if.next_mcause.interrupt = ~exception;
             prv_intern_if.next_mcause.cause     = exception ? ex_src : int_src;
         end
@@ -200,7 +200,7 @@ module priv_1_13_int_ex_handler (
         else if (prv_intern_if.clear_timer_int_s) prv_intern_if.next_mip.stip = 1'b0;
     end
 
-    assign prv_intern_if.inject_mstatus = prv_intern_if.intr | prv_intern_if.mret | prv_intern_if.sret;
+    assign prv_intern_if.inject_mstatus = (prv_intern_if.intr | prv_intern_if.mret | prv_intern_if.sret) && !prv_intern_if.ex_mem_stall;
 
     // xstatus injections
     always_comb begin
@@ -248,10 +248,10 @@ module priv_1_13_int_ex_handler (
         prv_intern_if.next_sepc   = '0;
 
         if (prv_intern_if.intr_to_s) begin
-            prv_intern_if.inject_sepc = exception | interrupt_fired_s;
+            prv_intern_if.inject_sepc = (exception | interrupt_fired_s) && !prv_intern_if.ex_mem_stall;
             prv_intern_if.next_sepc   = prv_intern_if.epc;
         end else begin
-            prv_intern_if.inject_mepc = exception | interrupt_fired;
+            prv_intern_if.inject_mepc = (exception | interrupt_fired) && !prv_intern_if.ex_mem_stall;
             prv_intern_if.next_mepc   = prv_intern_if.epc;
         end
     end
