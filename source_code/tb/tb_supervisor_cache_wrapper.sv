@@ -53,7 +53,6 @@ module supervisor_cache_wrapper(
   // test signals
   generic_bus_if #(.BLOCK_SIZE(2)) icache_mem_gen_bus_if();
   generic_bus_if #(.BLOCK_SIZE(2)) dcache_mem_gen_bus_if();
-  // generic_bus_if         pw_mem_gen_bus_if();
 
   cache_coherence_if     i_cache_coherency_if();
   cache_coherence_if     d_cache_coherency_if();
@@ -68,7 +67,6 @@ module supervisor_cache_wrapper(
     .nRST(nRST),
     .icache_mem_gen_bus_if(icache_mem_gen_bus_if),
     .dcache_mem_gen_bus_if(dcache_mem_gen_bus_if),
-    // .pw_mem_gen_bus_if(pw_mem_gen_bus_if),
     .icache_proc_gen_bus_if(icache_proc_gen_bus_if),
     .dcache_proc_gen_bus_if(dcache_proc_gen_bus_if),
     .control_if(control_if),

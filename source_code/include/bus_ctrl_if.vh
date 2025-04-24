@@ -36,7 +36,7 @@ localparam CPU_ID_LENGTH = $clog2(CPUS);
 
 // coherence bus controller states
 typedef enum {
-    GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV, GRANT_PW,
+    GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV,
     IDLE,               // determines if a request is going on
     SNOOP_R,            // sends a snoop based on busRD
     SNOOP_RX,           // sends a snoop based on busRDX
@@ -44,9 +44,7 @@ typedef enum {
     TRANSFER_R,         // provides cache to bus transfer
     TRANSFER_RX,        // provides cache to bus transfer, only when promoting to modified
     READ_L2,            // reads from l2 to bus
-    READ_L2_PW,         // reads from l2 to page walker
     BUS_TO_CACHE,       // finishes transaction by providing from bus to cache
-    BUS_TO_PW,          // finishes transaction by providing from bus to page walker
     WRITEBACK,          // evicts cache entry to L2
     WRITEBACK_MS,       // evicts cache entry to L2 and sets some signals for L1
     INVALIDATE          // invalidates non requester entries and updates requester S -> M
@@ -71,10 +69,6 @@ typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if ();
-    // Page walker generic control signals
-    logic          [NUM_HARTS-1:0] pREN, pwait;
-    bus_word_t     [NUM_HARTS-1:0] pload, paddr;
-    logic    [NUM_HARTS-1:0] [3:0] pbyte_en;
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait; 
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
@@ -115,10 +109,10 @@ interface bus_ctrl_if ();
 
     // modports
     modport cc(
-        input   pREN, paddr, pbyte_en, dREN, dWEN, daddr, dstore, dbyte_en,
+        input   dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
                 l2load, l2state, ccabort,
-        output  pwait, pload, dwait, dload, 
+        output  dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 

@@ -121,7 +121,6 @@ module RISCVBusiness #(
         .icache_mem_gen_bus_if(icache_mc_if),
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
-        // .pw_mem_gen_bus_if(pw_mc_if),
         .control_if(control_if),
         .i_cache_coherency_if(i_cache_coherency_if),
         .d_cache_coherency_if(d_cache_coherency_if),
@@ -151,20 +150,6 @@ module RISCVBusiness #(
         .gbif(dcache_mc_if),
         .coherence_statistics(dcache_statistics)
     );
-
-    // Assign Page Walker signals to bus_ctrl & vice versa
-    // assign bus_ctrl_if.pREN[HART_ID]     = pw_mc_if.ren;
-    // assign bus_ctrl_if.paddr[HART_ID]    = pw_mc_if.addr;
-    // assign bus_ctrl_if.pbyte_en[HART_ID] = '1;
-    // assign pw_mc_if.busy  = bus_ctrl_if.pwait[HART_ID];
-    // assign pw_mc_if.rdata = bus_ctrl_if.pload[HART_ID];
-
-    /*
-    sparce_wrapper sparce_wrapper_i (
-        .CLK(CLK),
-        .nRST(nRST),
-        .sparce_if(sparce_if)
-    );*/
 
     sparce_disabled sparce_disabled_i (
         .CLK(CLK),

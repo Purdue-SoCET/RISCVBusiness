@@ -2,10 +2,10 @@
 
 module memory_arbiter (
     input CLK, nRST,
-    generic_bus_if.generic_bus icache_if, dcache_if, pagewalker_if,
+    generic_bus_if.generic_bus icache_if, dcache_if,
     generic_bus_if.cpu mem_arb_if
 );
-    typedef enum logic[1:0] {IDLE, IREQUEST, DREQUEST, PWREQUEST} state_t;
+    typedef enum logic[1:0] {IDLE, IREQUEST, DREQUEST} state_t;
     state_t state, next_state;
     
     always_comb begin : OUTPUT_LOGIC
@@ -21,21 +21,9 @@ module memory_arbiter (
 		dcache_if.busy 	  	= '1;
 		dcache_if.rdata   	= '0;
 
-		pagewalker_if.busy 	= '1;
-		pagewalker_if.rdata = '0;
-
 		case(state)
 			IDLE: begin
-				if (pagewalker_if.ren) begin
-					mem_arb_if.ren 	  	= pagewalker_if.ren;
-					mem_arb_if.wen 	  	= pagewalker_if.wen;
-					mem_arb_if.addr   	= pagewalker_if.addr;
-					mem_arb_if.wdata  	= pagewalker_if.wdata;
-					mem_arb_if.byte_en	= pagewalker_if.byte_en;
-					pagewalker_if.busy 	= mem_arb_if.busy;
-					pagewalker_if.rdata = mem_arb_if.rdata;
-				end
-				else if(dcache_if.wen || dcache_if.ren) begin
+				if(dcache_if.wen || dcache_if.ren) begin
 					mem_arb_if.ren 	  	= dcache_if.ren;
 					mem_arb_if.wen 	  	= dcache_if.wen;
 					mem_arb_if.addr   	= dcache_if.addr;
@@ -72,15 +60,6 @@ module memory_arbiter (
 				dcache_if.busy 	  	= mem_arb_if.busy;
 				dcache_if.rdata 	= mem_arb_if.rdata;
 			end
-			PWREQUEST: begin
-				mem_arb_if.ren 	  	= pagewalker_if.ren;
-				mem_arb_if.wen 	  	= pagewalker_if.wen;
-				mem_arb_if.addr   	= pagewalker_if.addr;
-				mem_arb_if.wdata  	= pagewalker_if.wdata;
-				mem_arb_if.byte_en	= pagewalker_if.byte_en;
-				pagewalker_if.busy 	= mem_arb_if.busy;
-				pagewalker_if.rdata = mem_arb_if.rdata;
-			end
 		endcase
 	end
 
@@ -89,19 +68,11 @@ module memory_arbiter (
 
        	case(state)
 					IDLE: begin
-						if (pagewalker_if.ren && mem_arb_if.busy) begin
-							next_state = PWREQUEST;
-						end
-						else if((dcache_if.wen || dcache_if.ren) && mem_arb_if.busy) begin
+						if((dcache_if.wen || dcache_if.ren) && mem_arb_if.busy) begin
 							next_state  = DREQUEST;
 						end
 						else if((icache_if.wen || icache_if.ren) && mem_arb_if.busy) begin
 							next_state  = IREQUEST;
-						end
-					end
-					PWREQUEST: begin
-						if(~mem_arb_if.busy) begin // hopefully, busy will always be high until fetch, so no problem
-							next_state  = IDLE;
 						end
 					end
 					DREQUEST: begin

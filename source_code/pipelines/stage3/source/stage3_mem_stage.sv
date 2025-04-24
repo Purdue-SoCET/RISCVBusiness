@@ -133,7 +133,6 @@ module stage3_mem_stage(
     logic ifence_pulse;
     logic iflushed, iflushed_next;
     logic dflushed, dflushed_next;
-    // logic iflush_done_reg, dflush_done_reg;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
@@ -177,7 +176,6 @@ module stage3_mem_stage(
     logic itlb_fence_pulse;
     logic itlb_fenced, itlb_fenced_next;
     logic dtlb_fenced, dtlb_fenced_next;
-    // logic itlb_fence_done_reg, dtlb_fence_done_reg;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
@@ -276,8 +274,6 @@ module stage3_mem_stage(
     assign ex_mem_if.pc4 = ex_mem_if.ex_mem_reg.pc4;
 
     // Memory protection (doesn't consider RISC-MGMT)
-    // assign prv_pipe_if.dren  = ex_mem_if.ex_mem_reg.dren;
-    // assign prv_pipe_if.dwen  = ex_mem_if.ex_mem_reg.dwen;
     assign prv_pipe_if.dren  = ~prv_pipe_if.dtlb_miss & ex_mem_if.ex_mem_reg.dren;
     assign prv_pipe_if.dwen  = ~prv_pipe_if.dtlb_miss & ex_mem_if.ex_mem_reg.dwen;
     assign prv_pipe_if.daddr = dgen_bus_if.addr; // physical address

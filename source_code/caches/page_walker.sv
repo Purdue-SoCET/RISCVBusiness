@@ -30,7 +30,6 @@
 
 module page_walker #(
     parameter int PHYSICAL_ADDR_WIDTH = 32 // Can be 34 for Sv32, 56 for Sv39-57
-    // parameter int PGSIZE_BITS = 12 // Assuming a 4 KiB page size
 )
 (
     input logic CLK, nRST,
@@ -53,27 +52,10 @@ module page_walker #(
     localparam SV57_LEVELS = 5;
     localparam SV64_LEVELS = 6;
 
-    // typedef struct packed {
-    //     logic [1:0] reserved_0;
-    //     logic       dirty;
-    //     logic       accessed;
-    //     logic       global;
-    //     logic       user;
-    //     logic       executable;
-    //     logic       writable;
-    //     logic       readable;
-    //     logic       valid;
-    // } pte_perms_t;
-
     // state logic
     typedef enum {
         IDLE, WALK, FAULT
     } pw_fsm_t;
-
-    // // preserving which is currently serviced
-    // typedef enum {
-    //     NONE, LOAD, STORE, INSTRUCTION
-    // } access_t;
 
     // address signals
     logic [(PHYSICAL_ADDR_WIDTH-1):0] page_address, next_page_address;
@@ -103,8 +85,6 @@ module page_walker #(
 
     assign decoded_daddr_sv32 = va_sv32_t'(dtlb_gen_bus_if.addr);
     assign decoded_iaddr_sv32 = va_sv32_t'(itlb_gen_bus_if.addr);
-    // assign decoded_addr_sv32  = itlb_miss && itlb_gen_bus_if.ren ? decoded_iaddr_sv32 : decoded_daddr_sv32;
-    // assign decoded_addr_sv32  = dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen) ? decoded_daddr_sv32 : decoded_iaddr_sv32;
     assign pte_sv32           = pte_sv32_t'(mem_gen_bus_if.rdata);
     assign pte_perms          = pte_perms_t'(mem_gen_bus_if.rdata[9:0]);
 

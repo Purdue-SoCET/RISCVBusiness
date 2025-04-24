@@ -272,7 +272,6 @@ module tlb #(
                    sramRead.frames[i].tag.asid    == prv_pipe_if.satp.asid     &&
                    sramRead.frames[i].tag.valid) begin
                     //Read or write hit
-                    // if((state == HIT && (proc_gen_bus_if.ren || proc_gen_bus_if.wen))) begin
                     if(state == HIT) begin
 	                    hit       = 1'b1;
         	            hit_data  = sramRead.frames[i].pte;
@@ -330,7 +329,6 @@ module tlb #(
             end
             HIT: begin
                 // tlb hit on a processor read/write
-                // if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && hit && !fence) begin
                 if (at_if.addr_trans_on && hit && !fence) begin
                     proc_gen_bus_if.busy = 0;
                     tlb_hit_data = hit_data;
@@ -338,7 +336,6 @@ module tlb #(
                 end
                 // tlb miss on a clean block
 		        else if(at_if.addr_trans_on && ~hit && activate_hit) begin
-		        // else if(at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && activate_hit) begin
                     mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                     mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                     mem_gen_bus_if.addr = proc_gen_bus_if.addr;
@@ -365,7 +362,6 @@ module tlb #(
                     sramMask.frames[ridx].tag.valid    = 1'b0;
                     sramMask.frames[ridx].tag.asid     = '0;
                     sramMask.frames[ridx].tag.vpn_tag  = '0;
-                    // tlb_hit_data = mem_gen_bus_if.rdata;
                 end
             end
             FENCE_TLB: begin
@@ -373,7 +369,6 @@ module tlb #(
                 // fence if valid and
                 // rs1 == 0 or sram.vpn == fence_va.vpn and
                 // rs2 == 0 or (sram.asid == fence_asid and is not a global page)
-                // if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
                 if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
                     (~|decoded_fence_va | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, sramSEL} == decoded_fence_va.vpn)) && 
                     (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid && ~sramRead.frames[fence_idx.frame_num].pte.perms.global_page))) begin
@@ -413,13 +408,8 @@ module tlb #(
             FENCE_TLB: begin
                 if (fence_done)
                     next_state = HIT;
-                    // next_state = at_if.addr_trans_on ? HIT : IDLE;
             end
         endcase
-
-        // do nothing if not in address translation is not on (and if we're not actively fencing the tlb)
-        // if (~at_if.addr_trans_on && state != FENCE_TLB)
-        //     next_state = IDLE;
     end
 
     // fence saver

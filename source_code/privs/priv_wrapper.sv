@@ -34,7 +34,6 @@ module priv_wrapper #(
     core_interrupt_if.core interrupt_if
 );
 
-    // priv_1_12_block #(.HART_ID(HART_ID)) priv_block_i(.*);
     priv_1_13_block #(.HART_ID(HART_ID)) priv_block_i(.*);
 
 endmodule
