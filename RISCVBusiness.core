@@ -77,6 +77,7 @@ targets:
             - buses
         toplevel: RISCVBusiness
 
+
     sim:
         <<: *default
         description: Simulate w/TB
@@ -99,8 +100,10 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs", "--threads 4"]
                 #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                make_options:
+                    - -j 48
 
     no_mc:
         <<: *default

@@ -57,7 +57,7 @@ wait_for_bss_cleared:
 
 .global done
 hart0_done:
-    la t1, done_flags   
+    la t1, harts_done   
     li t2, 1        
 
 wait_all_harts:
@@ -77,44 +77,44 @@ all_done:
 
 hart1_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 4(t1)
+    la t1, hart1_done
+    sw x28, 4(t1)
     j __inf_loop
 
 hart2_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 8(t1)
+    la t1, hart2_done
+    sw x28, 8(t1)
     j __inf_loop
 
 hart3_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 12(t1)
+    la t1, hart3_done
+    sw x28, 12(t1)
     j __inf_loop
 
 hart4_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 16(t1)
+    la t1, hart4_done
+    sw x28, 16(t1)
     j __inf_loop
 
 hart5_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 20(t1)
+    la t1, hart5_done
+    sw x28, 20(t1)
     j __inf_loop
 
 hart6_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 24(t1)
+    la t1, hart6_done
+    sw x28, 24(t1)
     j __inf_loop
 
 hart7_done_end:
     li t0, 1
-    la t1, done_flags
-    sw t0, 28(t1)
+    la t1, hart7_done
+    sw x28, 28(t1)
     j __inf_loop
 
 __inf_loop:
@@ -145,6 +145,25 @@ harts_done: .word 0x00
 
 .global hart1_done
 hart1_done: .word 0x00
+
+.global hart2_done
+hart2_done: .word 0x00
+
+.global hart3_done
+hart3_done: .word 0x00
+
+.global hart4_done
+hart4_done: .word 0x00
+
+.global hart5_done
+hart5_done: .word 0x00
+
+.global hart6_done
+hart6_done: .word 0x00
+
+.global hart7_done
+hart7_done: .word 0x00
+
 
 
 .global done_flags
