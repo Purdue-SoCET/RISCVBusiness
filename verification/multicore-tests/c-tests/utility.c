@@ -173,7 +173,11 @@ void wait_for_hart1_done() {
 }
 
 void wait_for_all_harts_done() {
-    while (harts_done != 256) {
+    // hart1_done == 0 || hart2_done == 0 || hart3_done == 0 || hart4_done == 0 || hart5_done == 0 || hart6_done == 0 || hart7_done == 0
+    while (hart1_done == 0 || hart2_done == 0 || hart3_done == 0) {
         __asm__ volatile("");
+        print("hart1_done = %d\n", hart1_done);
+        print("hart2_done = %d\n", hart2_done);
+        print("hart3_done = %d\n", hart3_done);
     }
 }

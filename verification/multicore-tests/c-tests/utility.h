@@ -4,7 +4,15 @@
 #include <stdint.h>
 
 extern int32_t flag;
+
 extern volatile int32_t hart1_done;
+extern volatile int32_t hart2_done;
+extern volatile int32_t hart3_done;
+extern volatile int32_t hart4_done;
+extern volatile int32_t hart5_done;
+extern volatile int32_t hart6_done;
+extern volatile int32_t hart7_done;
+
 extern volatile int8_t harts_done;
 #define MTIME_ADDR 0xFFFFFFE0
 #define MTIMEH_ADDR 0xFFFFFFE4
