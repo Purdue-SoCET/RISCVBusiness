@@ -111,11 +111,11 @@ void matmul(const size_t coreid, const size_t ncores, const size_t lda, const ui
 
 void hart0_main() {
     int mhartid = 0;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
+    print("hello from hart0\n");
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
-    // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    print("hart0 waiting for other harts\n");
+    wait_for_all_harts_done();
 
     for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
         if (results[i] != verify_data[i]) {
@@ -123,98 +123,84 @@ void hart0_main() {
             return;
         }
     }
-    wait_for_all_harts_done();
-
+    flag = 1;
+    print("hart0 done\n");
     return;
 }
 
 void hart1_main() {
     int mhartid = 1;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart1_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart1 done\n");
     return;
 }
 
 void hart2_main() {
     int mhartid = 2;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart2_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart2 done\n");
     return;
 }
 
 void hart3_main() {
     int mhartid = 3;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart3_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart3 done\n");
     return;
 }
 
 void hart4_main() {
     int mhartid = 4;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart4_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart4 done\n");
     return;
 }
 
 void hart5_main() {
     int mhartid = 5;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart5_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart5 done\n");
     return;
 }
 
 void hart6_main() {
     int mhartid = 6;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart6_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart6 done\n");
     return;
 }
 
 void hart7_main() {
     int mhartid = 7;
-    harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     
     // Mark completion
-    harts_done |= (uint8_t) (1 << mhartid);
+    hart7_done = 1;
 
-    wait_for_all_harts_done();
-
+    print("hart7 done\n");
     return;
 }
