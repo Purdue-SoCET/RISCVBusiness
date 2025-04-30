@@ -29,7 +29,7 @@
 `include "component_selection_defines.vh"
 `include "rv32i_reg_file_if.vh"
 `include "alu_if.vh"
-//`include "prv_pipeline_if.vh"
+// `include "prv_pipeline_if.vh"
 //`include "risc_mgmt_if.vh"
 `include "rv32c_if.vh"
 
@@ -45,7 +45,7 @@ module stage3_execute_stage (
     rv32c_if.execute rv32cif
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_12_pkg::*;
+    import pma_types_1_13_pkg::*;
     import stage3_types_pkg::*;
 
     // Interface declarations
@@ -287,6 +287,7 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.dwen           <= cu_if.dwen;
                     ex_mem_if.ex_mem_reg.reg_write      <= cu_if.wen;
                     ex_mem_if.ex_mem_reg.ifence         <= cu_if.ifence;
+                    ex_mem_if.ex_mem_reg.sfence         <= cu_if.sfence;
                     ex_mem_if.ex_mem_reg.jump           <= cu_if.jump;
                     ex_mem_if.ex_mem_reg.halt           <= cu_if.halt;
                     ex_mem_if.ex_mem_reg.csr_swap       <= cu_if.csr_swap;
@@ -296,7 +297,8 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.csr_read_only  <= csr_read_only;
                     ex_mem_if.ex_mem_reg.breakpoint     <= cu_if.breakpoint;
                     ex_mem_if.ex_mem_reg.ecall_insn     <= cu_if.ecall_insn;
-                    ex_mem_if.ex_mem_reg.ret_insn       <= cu_if.ret_insn;
+                    ex_mem_if.ex_mem_reg.mret_insn      <= cu_if.mret_insn;
+                    ex_mem_if.ex_mem_reg.sret_insn      <= cu_if.sret_insn;
                     ex_mem_if.ex_mem_reg.wfi_insn       <= cu_if.wfi;
                     ex_mem_if.ex_mem_reg.was_compressed <= 1'b0; // TODO: RV32C support
                     ex_mem_if.ex_mem_reg.reserve        <= cu_if.reserve;

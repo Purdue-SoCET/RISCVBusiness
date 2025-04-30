@@ -10,9 +10,12 @@ filesets:
             - caches_wrapper.sv
             - separate_caches.sv
             - coherency_unit.sv
+            - page_walker.sv
+            - page_perm_check.sv
             - direct_mapped_tpf/direct_mapped_tpf_cache.sv
             - pass_through/pass_through_cache.sv
             - l1/l1_cache.sv
+            - tlb/tlb.sv
             - sram/sram.sv
         file_type: systemVerilogSource
 

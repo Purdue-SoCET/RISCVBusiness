@@ -124,12 +124,14 @@ module RISCVBusiness #(
         .control_if(control_if),
         .i_cache_coherency_if(i_cache_coherency_if),
         .d_cache_coherency_if(d_cache_coherency_if),
+        .prv_pipe_if(prv_pipe_if),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
 
     coherency_unit #(
-        .CPUID(HART_ID * 2)
+        .CPUID(HART_ID * 2),
+        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
     ) i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
@@ -140,7 +142,8 @@ module RISCVBusiness #(
     );
 
     coherency_unit #(
-        .CPUID(HART_ID * 2 + 1)
+        .CPUID(HART_ID * 2 + 1),
+        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
     ) d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
@@ -149,13 +152,6 @@ module RISCVBusiness #(
         .gbif(dcache_mc_if),
         .coherence_statistics(dcache_statistics)
     );
-
-    /*
-    sparce_wrapper sparce_wrapper_i (
-        .CLK(CLK),
-        .nRST(nRST),
-        .sparce_if(sparce_if)
-    );*/
 
     sparce_disabled sparce_disabled_i (
         .CLK(CLK),

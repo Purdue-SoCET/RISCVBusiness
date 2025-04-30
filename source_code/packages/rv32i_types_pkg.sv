@@ -130,6 +130,28 @@ package rv32i_types_pkg;
         WFI    = 12'b0001000_00101
     } priv_insn_t;
 
+    typedef enum logic [6:0] {
+        SFENCE_VMA  = 7'b0001001,
+        HFENCE_VVMA = 7'b0010001,
+        HFENCE_GVMA = 7'b0110001
+    } memmgmt_t;
+
+    typedef enum logic [11:0] {
+        HLV_B   = 12'b0110000_00000,
+        HLV_BU  = 12'b0110000_00001,
+        HLV_H   = 12'b0110010_00000,
+        HLV_HU  = 12'b0110010_00001,
+        HLV_W   = 12'b0110100_00000,
+        HLVX_HU = 12'b0110010_00011,
+        HLVX_WU = 12'b0110100_00011
+    } hvmload_t;
+
+    typedef enum logic [6:0] {
+        HSV_B = 7'b0110001,
+        HSV_H = 7'b0110011,
+        HSV_W = 7'b0110101
+    } hvmstore_t;
+
     typedef enum logic [2:0] {
         FENCE  = 3'b000,
         FENCEI = 3'b001

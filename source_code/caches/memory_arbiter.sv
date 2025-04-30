@@ -59,7 +59,7 @@ module memory_arbiter (
 				mem_arb_if.byte_en	= dcache_if.byte_en;
 				dcache_if.busy 	  	= mem_arb_if.busy;
 				dcache_if.rdata 	= mem_arb_if.rdata;
-			end 
+			end
 		endcase
 	end
 
@@ -67,34 +67,34 @@ module memory_arbiter (
        	next_state  = state;
 
        	case(state)
-			IDLE: begin
-				if((dcache_if.wen || dcache_if.ren) && mem_arb_if.busy) begin
-					next_state  = DREQUEST;
-				end
-				else if((icache_if.wen || icache_if.ren) && mem_arb_if.busy) begin
-					next_state  = IREQUEST;
-				end
-			end
-			DREQUEST: begin
-				if(~mem_arb_if.busy) begin // hopefully, busy will always be high until fetch, so no problem
-					next_state  = IDLE;
-				end
-			end
-			IREQUEST: begin
-				if(~mem_arb_if.busy) begin
-					next_state  = IDLE;
-				end
-			end
+					IDLE: begin
+						if((dcache_if.wen || dcache_if.ren) && mem_arb_if.busy) begin
+							next_state  = DREQUEST;
+						end
+						else if((icache_if.wen || icache_if.ren) && mem_arb_if.busy) begin
+							next_state  = IREQUEST;
+						end
+					end
+					DREQUEST: begin
+						if(~mem_arb_if.busy) begin // hopefully, busy will always be high until fetch, so no problem
+							next_state  = IDLE;
+						end
+					end
+					IREQUEST: begin
+						if(~mem_arb_if.busy) begin
+							next_state  = IDLE;
+						end
+					end
       	endcase
    	end
     
    	always_ff @ (posedge CLK, negedge nRST) begin
-       	if(~nRST) begin
+			if(~nRST) begin
 	   		state <= IDLE;
-       	end 
-		else begin
+			end 
+			else begin
 	   		state <= next_state;
-       	end
+			end
    	end
     
 endmodule

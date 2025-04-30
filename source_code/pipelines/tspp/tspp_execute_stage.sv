@@ -52,7 +52,7 @@ module tspp_execute_stage (
 );
 
     import rv32i_types_pkg::*;
-    import pma_types_1_12_pkg::*;
+    import pma_types_1_13_pkg::*;
 
     // Interface declarations
     control_unit_if cu_if ();
