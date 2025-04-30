@@ -130,7 +130,8 @@ module RISCVBusiness #(
     );
 
     coherency_unit #(
-        .CPUID(HART_ID * 2)
+        .CPUID(HART_ID * 2),
+        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
     ) i_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),
@@ -141,7 +142,8 @@ module RISCVBusiness #(
     );
 
     coherency_unit #(
-        .CPUID(HART_ID * 2 + 1)
+        .CPUID(HART_ID * 2 + 1),
+        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
     ) d_coherence_unit (
         .CLK(CLK),
         .nRST(nRST),

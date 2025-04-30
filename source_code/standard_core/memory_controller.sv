@@ -36,7 +36,7 @@ module memory_controller #(
     bus_ctrl_if bcif,
     generic_bus_if.cpu out_gen_bus_if
 );
-    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2)) BUS_CTRL(
+    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2), .NONCACHE_START_ADDR(NONCACHE_START_ADDR)) BUS_CTRL(
         .CLK(CLK),
         .nRST(nRST),
         .ccif(bcif)
