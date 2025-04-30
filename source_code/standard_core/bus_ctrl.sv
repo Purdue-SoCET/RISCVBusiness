@@ -22,12 +22,12 @@
 *	Description:  Bus controller for MESI cache coherence
 */
 
+`include "component_selection_defines.vh"
 `include "bus_ctrl_if.vh"
 
 module bus_ctrl #(
     parameter BLOCK_SIZE = 2,
-    parameter CPUS = 2,
-    parameter NONCACHE_START_ADDR = 32'hF000_0000
+    parameter CPUS = 2
 )(
     input logic CLK, nRST,
     bus_ctrl_if.cc ccif

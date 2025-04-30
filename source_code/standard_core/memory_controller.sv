@@ -24,8 +24,8 @@
 *                 and data accesses
 */
 
-`include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
+`include "generic_bus_if.vh"
 `include "bus_ctrl_if.vh"
 
 module memory_controller #(
