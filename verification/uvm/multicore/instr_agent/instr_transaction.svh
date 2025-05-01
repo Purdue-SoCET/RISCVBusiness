@@ -19,7 +19,7 @@ class instr_transaction extends uvm_sequence_item;
     // *********** DUT Inputs *********** (Just handled by instruction agent but arbitary decision)
     // Universal accross both agents
     randc logic nRST;
-    randc logic [63:0] mtime;
+    rand  logic [63:0] mtime;
 
     // *********** DUT Output *********** (Just handled by instruction agent but arbitary decision)
     logic halt;
@@ -33,8 +33,8 @@ class instr_transaction extends uvm_sequence_item;
 
     // *********** DUT Outputs ***********
     // Instruction Agent Outputs to CPU
-    logic               ierror;                 // Error signal
-    logic               i_req_stall;            // Request stall signal
+    logic                 ierror;               // Error signal
+    logic                 i_req_stall;          // Request stall signal
     logic [A_WIDTH-1 : 0] instruction;          // Instruction data
 
     `uvm_object_utils_begin(instr_transaction)

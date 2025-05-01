@@ -13,11 +13,13 @@
 import uvm_pkg::*;
 
 // --- Data Reset Seq --- //
-class data_reset_seq extends uvm_sequence #(data_transaction);
-    `uvm_object_utils(data_reset_seq)
+class data_reset_sequence extends uvm_sequence #(data_transaction);
+    `uvm_object_utils(data_reset_sequence)
+
+    data_transaction data_reset_seq;
 
     // --- Constructor --- //
-    function new(string name = "data_reset_seq");
+    function new(string name = "data_reset_sequence");
         super.new(name);
     endfunction
 
@@ -25,20 +27,22 @@ class data_reset_seq extends uvm_sequence #(data_transaction);
     task body();
         `uvm_info("DATA_RST_SEQ", "Initiating Data Reset Sequence", UVM_HIGH)
         
-        data_reset_tx = data_transaction::type_id::create("data_reset_tx", null, get_full_name());
-        start_item(data_reset_tx);
-        data_reset_tx.randomize() with {nRST==1'b0;};
-        finish_item(data_reset_tx);
+        data_reset_seq = data_transaction::type_id::create("data_reset_seq");
+        start_item(data_reset_seq);
+        data_reset_seq.randomize() with {nRST==1'b0;};
+        finish_item(data_reset_seq);
 
     endtask
 endclass
 
 // --- Data Garbage Sequence --- //
-class data_garbage_seq extends uvm_sequence #(data_transaction);
-    `uvm_object_utils(data_garbage_seq)
+class data_garbage_sequence extends uvm_sequence #(data_transaction);
+    `uvm_object_utils(data_garbage_sequence)
+
+    data_transaction data_garbage_seq;
 
     // --- Constructor --- //
-    function new(string name = "data_garbage_seq");
+    function new(string name = "data_garbage_sequence");
         super.new(name);
     endfunction
 
@@ -46,10 +50,10 @@ class data_garbage_seq extends uvm_sequence #(data_transaction);
     task body();
         `uvm_info("DATA_GRBG_SEQ", "Initiating Data Garbage Sequence", UVM_HIGH)
         
-        data_garbage_tx = data_transaction::type_id::create("data_garbage_tx", null, get_full_name());
-        start_item(data_garbage_tx);
-        data_garbage_tx.randomize() with {nRST==1'b1;};
-        finish_item(data_garbage_tx);
+        data_garbage_seq = data_transaction::type_id::create("data_garbage_seq");
+        start_item(data_garbage_seq);
+        data_garbage_seq.randomize() with {nRST==1'b1;};
+        finish_item(data_garbage_seq);
 
     endtask
 endclass

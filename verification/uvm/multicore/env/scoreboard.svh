@@ -72,7 +72,24 @@ class scoreboard extends uvm_scoreboard;
     
     task compare_instr(instr_transaction i_tx);
         if (i_tx.nRST == 1'b0) begin
-            `uvm_info("COMPARE", "RESET TEST PRINT INSTR", UVM_LOW)
+
+            if (i_tx.ierror == '0) begin
+                `uvm_info("COMPARE", $sformatf("Test Case: Reset - ierror      : PASSED"), UVM_LOW)
+            end else begin
+                `uvm_info("COMPARE", $sformatf("Test Case: Reset - ierror      : FAILED"), UVM_LOW)
+            end
+
+            if (i_tx.i_req_stall == '0) begin
+                `uvm_info("COMPARE", $sformatf("Test Case: Reset - i_req_stall : PASSED"), UVM_LOW)
+            end else begin
+                `uvm_info("COMPARE", $sformatf("Test Case: Reset - i_req_stall : FAILED"), UVM_LOW)
+            end
+
+            if (i_tx.instruction === 'X) begin
+                `uvm_info("COMPARE", $sformatf("Test Case: Reset - instruction : PASSED"), UVM_LOW)
+            end else begin
+                `uvm_info("COMPARE", $sformatf("Test Case: Reset - instruction : FAILED"), UVM_LOW)
+            end
         end
     endtask
 

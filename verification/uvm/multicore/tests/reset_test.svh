@@ -25,8 +25,11 @@ class reset_test extends uvm_test;
     
     // Test Components
     env e; 
-    instr_reset_seq multicore_instr_rst_seq; 
-    data_reset_seq  multicore_data_rst_seq; 
+    instr_reset_sequence instr_reset_seq; 
+    data_reset_sequence  data_reset_seq; 
+    instr_garbage_sequence instr_garbage_seq;
+    data_garbage_sequence data_garbage_seq;
+
     virtual multicore_if #(RST_PC, HARTS, D_WIDTH, A_WIDTH) mcif; 
 
     // Constructor
@@ -53,20 +56,34 @@ class reset_test extends uvm_test;
         `uvm_info("TEST_CLASS", "Run Phase - Reset Test", UVM_LOW)
         phase.raise_objection(this, "Starting reset sequence");
 
-        // Init Seqs
-        multicore_instr_rst_seq = instr_reset_seq::type_id::create("multicore_instr_rst_seq", this);
-        multicore_data_rst_seq  = data_reset_seq::type_id::create("multicore_data_rst_seq", this);
+        // FORK?
+        repeat (6) begin
+            data_garbage_seq  = data_garbage_sequence::type_id::create("data_garbage_seq");
+            instr_garbage_seq = instr_garbage_sequence::type_id::create("instr_garbage_seq");
+            fork
+                data_garbage_seq.start(e.data_agent_inst.data_sqr);
+                instr_garbage_seq.start(e.instr_agent_inst.instr_sqr);
+            join 
+        end
 
-        // FIXME: new test procedure
-        // Execute Threads
-        fork
-            multicore_instr_rst_seq.start(e.instr_agent_inst.instr_sqr);   
-            multicore_data_rst_seq.start(e.data_agent_inst.data_sqr);  
+        instr_reset_seq = instr_reset_sequence::type_id::create("instr_reset_seq", this);
+        data_reset_seq  = data_reset_sequence::type_id::create("data_reset_seq", this);
+        
+        fork    
+            data_reset_seq.start(e.data_agent_inst.data_sqr);
+            instr_reset_seq.start(e.instr_agent_inst.instr_sqr);
         join
-        #100ns;
+
+        repeat (6) begin
+            data_garbage_seq  = data_garbage_sequence::type_id::create("data_garbage_seq");
+            instr_garbage_seq = instr_garbage_sequence::type_id::create("instr_garbage_seq");
+            fork
+                data_garbage_seq.start(e.data_agent_inst.data_sqr);
+                instr_garbage_seq.start(e.instr_agent_inst.instr_sqr);
+            join 
+        end
 
         phase.drop_objection(this, "Finished reset sequence");
     endtask
 endclass
-
 `endif
