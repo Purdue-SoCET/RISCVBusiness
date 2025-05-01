@@ -27,8 +27,7 @@ module cache_coh_wrapper(
     l1_cache #(
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
-        .ASSOC(1),
-        .NONCACHE_START_ADDR(32'hF000_0000)
+        .ASSOC(1)
     )
     dcache (
         .CLK(CLK),

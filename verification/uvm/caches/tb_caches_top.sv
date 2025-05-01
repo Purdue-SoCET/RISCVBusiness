@@ -96,8 +96,7 @@ module tb_caches_top ();
   l1_cache #(
       .CACHE_SIZE(`L1_CACHE_SIZE),
       .BLOCK_SIZE(`L1_BLOCK_SIZE),
-      .ASSOC(`L1_ASSOC),
-      .NONCACHE_START_ADDR(`NONCACHE_START_ADDR)
+      .ASSOC(`L1_ASSOC)
   ) l1 (
       .CLK(d_cif.CLK),
       .nRST(d_cif.nRST),
@@ -115,8 +114,7 @@ module tb_caches_top ();
   // l2_cache #(
   //     .CACHE_SIZE(`L2_CACHE_SIZE),
   //     .BLOCK_SIZE(`L2_BLOCK_SIZE),
-  //     .ASSOC(`L2_ASSOC),
-  //     .NONCACHE_START_ADDR(`NONCACHE_START_ADDR)
+  //     .ASSOC(`L2_ASSOC)
   // ) l2 (
   //     .CLK(l2_cif.CLK),
   //     .nRST(l2_cif.nRST),
@@ -134,8 +132,7 @@ module tb_caches_top ();
   l1_cache #(
       .CACHE_SIZE(`L1_CACHE_SIZE),
       .BLOCK_SIZE(`L1_BLOCK_SIZE),
-      .ASSOC(`L1_ASSOC),
-      .NONCACHE_START_ADDR(`NONCACHE_START_ADDR)
+      .ASSOC(`L1_ASSOC)
   ) d_l1 (
       .CLK(d_cif.CLK),
       .nRST(d_cif.nRST),
@@ -153,8 +150,7 @@ module tb_caches_top ();
   l1_cache #(
       .CACHE_SIZE(`L1_CACHE_SIZE),
       .BLOCK_SIZE(`L1_BLOCK_SIZE),
-      .ASSOC(`L1_ASSOC),
-      .NONCACHE_START_ADDR(`NONCACHE_START_ADDR)
+      .ASSOC(`L1_ASSOC))
   ) i_l1 (
       .CLK(i_cif.CLK),
       .nRST(i_cif.nRST),
@@ -183,8 +179,7 @@ module tb_caches_top ();
   // l2_cache #(
   //     .CACHE_SIZE(`L2_CACHE_SIZE),
   //     .BLOCK_SIZE(`L2_BLOCK_SIZE),
-  //     .ASSOC(`L2_ASSOC),
-  //     .NONCACHE_START_ADDR(`NONCACHE_START_ADDR)
+  //     .ASSOC(`L2_ASSOC)
   // ) l2 (
   //     .CLK(l2_cif.CLK),
   //     .nRST(l2_cif.nRST),

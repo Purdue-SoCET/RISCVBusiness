@@ -26,6 +26,7 @@
 *                     - Prefetch Length
 */
 
+`include "component_selection_defines.vh"
 `include "generic_bus_if.vh"
 
 module direct_mapped_tpf_cache (
@@ -47,7 +48,6 @@ module direct_mapped_tpf_cache (
     parameter CACHE_SIZE = 1024;  // In bytes, must be power of 2
     parameter BLOCK_SIZE = 2;  // must be power of 2
     parameter PREFETCH_LENGTH = 1;  // must be power of 2
-    parameter NONCACHE_START_ADDR = 32'h8000_0000;
 
     // local parameters
     localparam N_INDICES = CACHE_SIZE / (BLOCK_SIZE * WORD_SIZE / 8);

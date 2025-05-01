@@ -18,8 +18,7 @@ module two_cache_coh_wrapper(
     l1_cache #(
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
-        .ASSOC(1),
-        .NONCACHE_START_ADDR(32'hF000_0000)
+        .ASSOC(1)
     ) cache0 (
         .CLK(CLK),
         .nRST(nRST),
@@ -47,8 +46,7 @@ module two_cache_coh_wrapper(
     l1_cache #(
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
-        .ASSOC(1),
-        .NONCACHE_START_ADDR(32'hF000_0000)
+        .ASSOC(1)
     ) cache1 (
         .CLK(CLK),
         .nRST(nRST),

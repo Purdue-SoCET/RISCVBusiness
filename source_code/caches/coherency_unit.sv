@@ -22,6 +22,7 @@
 *	Description:  Coherency unit for MESI Coherence
 */
 
+`include "component_selection_defines.vh"
 `include "generic_bus_if.vh"
 `include "cache_coherence_if.vh"
 `include "bus_ctrl_if.vh"
@@ -29,8 +30,7 @@
 module coherency_unit #(
     parameter ADDR_WIDTH = 32, // Address width for cache lines
     parameter BLOCK_SIZE = 2,
-    parameter CPUID = 0,
-    parameter NONCACHE_START_ADDR = 32'hF000_0000
+    parameter CPUID = 0
 ) (
     input logic CLK, nRST,
     bus_ctrl_if.tb bcif,            // Bus Controller Interface
