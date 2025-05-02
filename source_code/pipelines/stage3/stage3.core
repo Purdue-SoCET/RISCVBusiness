@@ -1,0 +1,36 @@
+CAPI=2:
+name: socet:riscv:stage3:0.1.0
+description: Two-stage pipeline
+
+filesets:
+    rtl:
+        files:
+            - source/stage3_types_pkg.sv
+            - include/stage3_fetch_execute_if.vh : {is_include_file: true}
+            - include/stage3_mem_pipe_if.vh : {is_include_file: true}
+            - include/stage3_hazard_unit_if.vh : {is_include_file: true}
+            - include/stage3_forwarding_unit_if.vh : {is_include_file: true}
+            - source/stage3_fetch_stage.sv
+            - source/stage3_execute_stage.sv
+            - source/stage3_mem_stage.sv
+            - source/stage3_hazard_unit.sv
+            - source/stage3_forwarding_unit.sv
+            - source/stage3.sv
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: stage3
+
+    lint:
+        <<: *default
+        description: Linting
+        default_tool: veriblelint
+        toplevel: stage3
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search', '--waiver_files=stage3.waiver']
+

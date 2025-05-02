@@ -120,7 +120,7 @@ module priv_1_12_int_ex_handler (
                                     | (prv_intern_if.curr_mie.meie & prv_intern_if.curr_mip.meip)));
 
     // Register updates on Interrupts/Exceptions
-    assign prv_intern_if.inject_mcause = exception | interrupt_fired;
+    assign prv_intern_if.inject_mcause = (exception | interrupt_fired) && !prv_intern_if.ex_mem_stall;
     assign prv_intern_if.next_mcause.interrupt = ~exception;
     assign prv_intern_if.next_mcause.cause = exception ? ex_src : int_src;
 
@@ -147,7 +147,7 @@ module priv_1_12_int_ex_handler (
         else if (prv_intern_if.clear_timer_int_s) prv_intern_if.next_mip.stip = 1'b0;
     end
 
-    assign prv_intern_if.inject_mstatus = prv_intern_if.intr | prv_intern_if.mret;
+    assign prv_intern_if.inject_mstatus = (prv_intern_if.intr | prv_intern_if.mret) && !prv_intern_if.ex_mem_stall;
 
     always_comb begin
         prv_intern_if.next_mstatus = prv_intern_if.curr_mstatus;
@@ -172,7 +172,7 @@ module priv_1_12_int_ex_handler (
         end
     end
 
-    assign prv_intern_if.inject_mepc = exception | interrupt_fired;
+    assign prv_intern_if.inject_mepc = (exception | interrupt_fired) && !prv_intern_if.ex_mem_stall;
     assign prv_intern_if.next_mepc = prv_intern_if.epc;
 
     assign prv_intern_if.inject_mtval = (prv_intern_if.mal_l | prv_intern_if.fault_l

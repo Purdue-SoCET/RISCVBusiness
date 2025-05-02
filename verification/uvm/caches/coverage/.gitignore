@@ -1,0 +1,4 @@
+# Note: this folder needs to exist to hold the coverage files
+
+# However; we ignore all its contents
+*.ucdb

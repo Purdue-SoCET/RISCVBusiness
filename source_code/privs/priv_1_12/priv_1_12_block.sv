@@ -27,7 +27,9 @@
 `include "core_interrupt_if.vh"
 `include "priv_ext_if.vh"
 
-module priv_1_12_block (
+module priv_1_12_block #(
+    parameter HART_ID
+) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
     prv_pipeline_if.priv_block prv_pipe_if,
@@ -40,7 +42,7 @@ module priv_1_12_block (
     priv_ext_if priv_ext_pma_if();
     priv_ext_if priv_ext_pmp_if();
 
-    priv_1_12_csr csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
+    priv_1_12_csr #(.HART_ID(HART_ID)) csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
     priv_1_12_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
     priv_1_12_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
     priv_1_12_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
@@ -48,6 +50,8 @@ module priv_1_12_block (
     priv_1_12_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
     // Assign CSR values
+    assign prv_intern_if.hpm3_inc = prv_pipe_if.icache_miss;
+    assign prv_intern_if.hpm4_inc = prv_pipe_if.dcache_miss;
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.csr_addr;
     assign prv_intern_if.csr_write = prv_pipe_if.swap;
@@ -62,10 +66,10 @@ module priv_1_12_block (
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;
     assign prv_intern_if.timer_int_s = 1'b0;
-    assign prv_intern_if.timer_int_m = interrupt_if.timer_int;
+    assign prv_intern_if.timer_int_m = interrupt_if.timer_int[HART_ID];
     assign prv_intern_if.soft_int_u = 1'b0;
     assign prv_intern_if.soft_int_s = 1'b0;
-    assign prv_intern_if.soft_int_m = interrupt_if.soft_int;
+    assign prv_intern_if.soft_int_m = interrupt_if.soft_int[HART_ID];
     assign prv_intern_if.ext_int_u = 1'b0;
     assign prv_intern_if.ext_int_s = 1'b0;
     assign prv_intern_if.ext_int_m = interrupt_if.ext_int;
@@ -73,10 +77,10 @@ module priv_1_12_block (
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;
     assign prv_intern_if.clear_timer_int_s = 1'b0;
-    assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear;
+    assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear[HART_ID];
     assign prv_intern_if.clear_soft_int_u = 1'b0;
     assign prv_intern_if.clear_soft_int_s = 1'b0;
-    assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear;
+    assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear[HART_ID];
     assign prv_intern_if.clear_ext_int_u = 1'b0;
     assign prv_intern_if.clear_ext_int_s = 1'b0;
     assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear;
@@ -124,5 +128,6 @@ module priv_1_12_block (
     assign prv_pipe_if.prot_fault_i = prv_intern_if.pma_i_fault | prv_intern_if.pmp_i_fault;
     assign prv_pipe_if.prot_fault_l = prv_intern_if.pma_l_fault | prv_intern_if.pmp_l_fault;
     assign prv_pipe_if.prot_fault_s = prv_intern_if.pma_s_fault | prv_intern_if.pmp_s_fault;
+    assign prv_intern_if.ex_mem_stall = prv_pipe_if.ex_mem_stall;
 
 endmodule

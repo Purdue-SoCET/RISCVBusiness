@@ -196,16 +196,17 @@ module tspp_execute_stage (
             rf_if.w_data = rm_if.reg_wdata;
         end else begin
             case (cu_if.w_sel)
-                3'd0:    rf_if.w_data = dload_ext;
-                3'd1:    rf_if.w_data = fetch_ex_if.fetch_ex_reg.pc4;
-                3'd2:    rf_if.w_data = cu_if.imm_U;
-                3'd3:    rf_if.w_data = alu_if.port_out;
-                3'd4:    rf_if.w_data = prv_pipe_if.rdata;
-                default: rf_if.w_data = '0;
+                W_SEL_FROM_DLOAD:       rf_if.w_data = dload_ext;
+                W_SEL_FROM_PC:          rf_if.w_data = fetch_ex_if.fetch_ex_reg.pc4;
+                W_SEL_FROM_IMM_U:       rf_if.w_data = cu_if.imm_U;
+                W_SEL_FROM_ALU:         rf_if.w_data = alu_if.port_out;
+                W_SEL_FROM_PRIV_PIPE:   rf_if.w_data = prv_pipe_if.rdata;
+                default:                rf_if.w_data = '0;
             endcase
         end
     end
 
+    assign rf_if.rd = cu_if.rd; // Change to accommodate tspp and stage3
     assign rf_if.wen = (cu_if.wen | (rm_if.req_reg_w & rm_if.reg_w))
                        & (~hazard_if.if_ex_stall | hazard_if.npc_sel | rv32cif.done_earlier)
                        & ~(cu_if.dren & mal_addr);

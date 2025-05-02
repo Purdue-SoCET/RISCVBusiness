@@ -1,5 +1,5 @@
 CAPI=2:
-name: socet:riscv:RISCVBusiness:0.1.0
+name: socet:riscv:RISCVBusiness:0.1.1
 description: RISC-V Core for AFTx series
 
 filesets:
@@ -9,19 +9,24 @@ filesets:
             - "socet:bus-components:ahb_if"
             - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
+            - "socet:riscv:stage3"
             - "socet:riscv:priv"
             - "socet:riscv:caches"
-            - "socet:riscv:risc_mgmt"
+            #- "socet:riscv:risc_mgmt"
             - "socet:riscv:riscv_standard"
             - "socet:riscv:riscv_include"
+            - "socet:riscv:rv32a"
             - "socet:riscv:rv32c"
+            - "socet:riscv:rv32m"
+            - "socet:riscv:rv32b"
+            - "socet:riscv:rv32zc"
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
-            - source_code/pipelines/tspp/tspp_hazard_unit.sv
-            - source_code/pipelines/tspp/tspp_fetch_stage.sv
-            - source_code/pipelines/tspp/tspp_execute_stage.sv
+            #- source_code/pipelines/tspp/tspp_hazard_unit.sv
+            #- source_code/pipelines/tspp/tspp_fetch_stage.sv
+            #- source_code/pipelines/tspp/tspp_execute_stage.sv
             - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
@@ -41,15 +46,20 @@ filesets:
 
     fpga_wrapper:
         files:
-            - source_code/fpga/RISCVBusiness_fpga.sv
-            - source_code/ram/ram_sim_model.sv
-            - source_code/ram/ram_wrapper.sv
-        file_type: systemVerilogSource
+            - source_code/fpga/RISCVBusiness_fpga.sv : {file_type: systemVerilogSource}
+            - source_code/ram/ram_sim_model.sv : {file_type: systemVerilogSource}
+            - source_code/ram/ram_wrapper.sv : {file_type: systemVerilogSource}
+            - rvb.sdc : {file_type: SDC}
             
     verilator_tb:
         files:
-            - tb_core.cc : {fileType: cppSource} 
-        file_type: systemVerilogSource    
+            - tb_core.cc : {file_type: cppSource}
+        file_type: systemVerilogSource
+
+    no_memory_tb:
+        files:
+            - tb_core_no_memory.cc : {file_type: cppSource}
+        file_type: systemVerilogSource
 
     tb:
         files:
@@ -58,7 +68,6 @@ filesets:
             - source_code/ram/ram_sim_model.sv
             - source_code/ram/ram_wrapper.sv
         file_type: systemVerilogSource
-
 
 targets:
     default: &default
@@ -89,7 +98,21 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-UNOPTFLAT", "-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+
+    no_mc:
+        <<: *default
+        description: Simulate w/TB, no memory controller
+        default_tool: verilator
+        filesets_append:
+            #- trackers
+            - "tool_verilator? (no_memory_tb)"
+        toplevel:
+            - "tool_verilator? (top_core)"
+        tools:
+            verilator:
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
 
     fpga:
         <<: *default

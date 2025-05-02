@@ -36,6 +36,7 @@ module ram_wrapper (
 
     logic [RAM_ADDR_SIZE-3:0] word_addr;
     assign word_addr = gen_bus_if.addr[WORD_SIZE-1:2];
+    assign gen_bus_if.error = (gen_bus_if.addr < 32'h8000_0000);
 
     ram_sim_model #(
         .LAT(0),

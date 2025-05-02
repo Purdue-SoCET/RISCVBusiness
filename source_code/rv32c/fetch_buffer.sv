@@ -62,7 +62,7 @@ module fetch_buffer (
             pc <= fb_if.nextpc;
             final_inst_store <= final_inst;
             reset_next <= 1'b1;
-        end else if (fb_if.inst_arrived | fb_if.done_earlier) begin
+        end else if ((fb_if.inst_arrived || fb_if.done_earlier) && fb_if.pc_update) begin
             buffer <= nextbuffer;
             combine_reg <= combine;
             waitnext_reg <= waitnext;

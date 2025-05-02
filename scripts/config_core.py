@@ -25,23 +25,73 @@
 import yaml
 import argparse 
 import sys
+from math import log2
 
 VH_FILE = 'source_code/include/component_selection_defines.vh'
 C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
 
+# If running PMP tests, the macro G in verification/pmp-tests/utility.h will need to 
+# be updated to the corresponding value found in PMP_MINIMUM_GRANULARITY.
+PMP_MINIMUM_GRANULARITY = \
+  {
+    '4'    :  0,
+    '8'    :  1,
+    '16'   :  2,
+    '32'   :  3,
+    '64'   :  4,
+    '128'  :  5,
+    '256'  :  6,
+    '512'  :  7,
+    '1K'   :  8,
+    '2K'   :  9,
+    '4K'   : 10,
+    '8K'   : 11,
+    '16K'  : 12,
+    '32K'  : 13,
+    '64K'  : 14,
+    '128K' : 15,
+    '256K' : 16,
+    '512K' : 17,
+    '1M'   : 18,
+    '2M'   : 19,
+    '4M'   : 20,
+    '8M'   : 21,
+    '16M'  : 22,
+    '32M'  : 23,
+    '64M'  : 24,
+    '128M' : 25,
+    '256M' : 26,
+    '512M' : 27,
+    '1G'   : 28,
+    '2G'   : 29,
+    '4G'   : 30,
+  }
+
 ISA_PARAMS = \
   {
-    'xlen' : [32]
+    'xlen' : [32],
+    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys())
   }
 
 UARCH_PARAMS = \
   {
+    # Multicore configurations
+    'num_harts' : [],
     # Branch/Jump Configurations
     'br_predictor_type' : ['not_taken'],
     # Cache Configurations
     'cache_config' : ['separate'],
-    'dcache_type' : ['pass_through', 'direct_mapped_tpf'],
-    'icache_type' : ['pass_through', 'direct_mapped_tpf'],
+    'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
+    'icache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
+    # Cache Configurations (free_params)
+    'noncache_start_addr' : [],
+    # Cache Configurations (int_params)
+    'dcache_size' : [],
+    'dcache_block_size' : [],
+    'dcache_assoc' : [],
+    'icache_size' : [],
+    'icache_block_size' : [],
+    'icache_assoc' : [],
     # Bus Configurations
     'bus_endianness' : ['big', 'little'],
     'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
@@ -59,7 +109,7 @@ UARCH_PARAMS = \
 RISC_MGMT_PARAMS = \
   {
     # Valid standard extensions
-    'standard_extensions' : {'name' : ['rv32m']},
+    'standard_extensions' : {'name' : ['rv32m', 'rv32a', 'rv32b', 'rv32zc']},
     # Valid nonstandard extensions
     'nonstandard_extensions' : {'encoding' : ['R_TYPE', 'M_TYPE', 'J_TYPE', 'BR_TYPE', 'G_TYPE']}
   }
@@ -115,6 +165,8 @@ def create_include(config):
 
   # Handle localparam configurations
   isa_params = config['isa_params']
+  free_params = ['num_harts', 'noncache_start_addr']
+  int_params = ['num_harts', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc']
   include_file.write('// ISA Params:\n') 
   for isa_param in isa_params:
     try:
@@ -124,9 +176,11 @@ def create_include(config):
         sys.exit(err)
       else:
         line = 'localparam '
-        # xlen will be an integer in include file, so no quotes needed
+        # xlen & pmp_minimum_granularity will be an integer in include file, so no quotes needed
         if 'xlen' == isa_param:
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
+        elif 'pmp_minimum_granularity' == isa_param:
+          line += isa_param.upper() + ' = ' + str(PMP_MINIMUM_GRANULARITY[isa_params[isa_param]])
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         line += ';\n'
@@ -136,13 +190,30 @@ def create_include(config):
   include_file.write('\n// Microarch Params:\n') 
   uarch_params = config['microarch_params']
   for uarch_param in uarch_params:
-    if uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
+    # errors
+    if uarch_param in int_params or uarch_param in free_params:
+      if uarch_param not in free_params and not isinstance(uarch_params[uarch_param], int):
+        err = 'Illegal configuration of incorrect type for ' + uarch_param
+        sys.exit(err)
+      if uarch_params['dcache_size'] % (uarch_params['dcache_block_size'] * uarch_params['dcache_assoc']) != 0:
+        err = 'Invalid dcache_size. Not divisible by block_size * assoc.'
+        sys.exit(err)
+      if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
+        err = 'Invalid icache_size. Not divisible by block_size * assoc.'
+        sys.exit(err)
+    elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
       err = 'Illegal configuration. ' + uarch_params[uarch_param]
       err += ' is not a valid configuration for ' + uarch_param
       sys.exit(err)
+    # write to parameter file
+    if uarch_param in free_params or uarch_param in int_params:
+      line = 'localparam ' + uarch_param.upper() + ' = ' + str(uarch_params[uarch_param]) + ';\n'
     else:
       line = 'localparam '
-      line += uarch_param.upper() + ' = "' + uarch_params[uarch_param] + '"'
+      if isinstance(uarch_params[uarch_param], str): # deal with integer params
+        line += uarch_param.upper() + ' = "' + uarch_params[uarch_param] + '"'
+      else:
+        line += uarch_param.upper() + ' = ' + str(uarch_params[uarch_param])
       line += ';\n'
     include_file.write(line)
 

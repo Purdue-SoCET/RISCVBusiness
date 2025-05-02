@@ -1,5 +1,6 @@
 `include "core_interrupt_if.vh"
 `include "generic_bus_if.vh"
+`include "component_selection_defines.vh"
 
 module top_core #(
     parameter logic [31:0] RESET_PC = 32'h80000000
@@ -12,6 +13,7 @@ module top_core #(
     // generic bus if case
 `ifdef BUS_INTERFACE_GENERIC_BUS
     input busy,
+    input error,
     input [31:0] rdata,
     output ren,
     wen,
@@ -21,6 +23,8 @@ module top_core #(
     // ahb if case
 `elsif BUS_INTERFACE_AHB
     // TODO
+`else
+
 `endif
     // core_interrupt_if
     input ext_int,
@@ -34,28 +38,28 @@ module top_core #(
 
     function [31:0] get_x28;
         // verilator public
-        get_x28 = CORE.execute_stage_i.g_rfile_select.rf.registers[28];
+        get_x28 = CORE.x28;
     endfunction
 
-    /*
-    bind tspp_execute_stage cpu_tracker cpu_track1 (
+    bind multicore_wrapper cpu_tracker #(.NUM_HARTS(NUM_HARTS)) cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),
-        .instr(fetch_ex_if.fetch_ex_reg.instr),
-        .pc(fetch_ex_if.fetch_ex_reg.pc),
-        .opcode(cu_if.opcode),
+        .instr(instr),
+        .pc(pc),
+        .opcode(opcode),
         .funct3(funct3),
         .funct12(funct12),
-        .rs1(rf_if.rs1),
-        .rs2(rf_if.rs2),
-        .rd(rf_if.rd),
-        .imm_S(cu_if.imm_S),
-        .imm_I(cu_if.imm_I),
-        .imm_U(cu_if.imm_U),
-        .imm_UJ(imm_UJ_ext),
-        .imm_SB(cu_if.imm_SB),
-        .instr_30(instr_30)
-    );*/
+        .rs1(rs1),
+        .rs2(rs2),
+        .rd(rd),
+        .imm_S(imm_S), // TODO: Extract constants. Maybe we could pass these in the pipeline and they'd be removed by synthesis?
+        .imm_I(imm_I),
+        .imm_U(imm_U),
+        .imm_UJ(imm_UJ),
+        .imm_SB(imm_UJ),
+        .instr_30(instr_30),
+        .cache_statistics(cache_statistics)
+    );
 
 
 
@@ -71,6 +75,7 @@ module top_core #(
     generic_bus_if gen_bus_if ();
     assign gen_bus_if.busy = busy;
     assign gen_bus_if.rdata = rdata;
+    assign gen_bus_if.error = error;
     assign ren = gen_bus_if.ren;
     assign wen = gen_bus_if.wen;
     assign byte_en = gen_bus_if.byte_en;
@@ -82,9 +87,11 @@ module top_core #(
 
 `elsif BUS_INTERFACE_APB
     apb_if apb_requester (CLK, nRST);
+`else
+
 `endif
 
 
-    RISCVBusiness #(.RESET_PC(RESET_PC)) CORE (.*);
+    multicore_wrapper #(.RESET_PC(RESET_PC), .NUM_HARTS(NUM_HARTS)) CORE (.*);
 
 endmodule

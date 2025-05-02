@@ -60,33 +60,36 @@ module ahb (
         if (out_gen_bus_if.ren) begin
             ahb_m.HTRANS = 2'b10;
             ahb_m.HWRITE = 1'b0;
-            ahb_m.HADDR = out_gen_bus_if.addr;
+            ahb_m.HADDR = {out_gen_bus_if.addr[31:2], 2'b00};
             ahb_m.HWDATA = out_gen_bus_if.wdata;
-            ahb_m.HBURST = 0;
-            ahb_m.HMASTLOCK = 0;
+            ahb_m.HWSTRB = out_gen_bus_if.byte_en;
         end else if (out_gen_bus_if.wen) begin
             ahb_m.HTRANS = 2'b10;
             ahb_m.HWRITE = 1'b1;
-            ahb_m.HADDR = out_gen_bus_if.addr;
+            ahb_m.HADDR = {out_gen_bus_if.addr[31:2], 2'b00};
             ahb_m.HWDATA = out_gen_bus_if.wdata;
-            ahb_m.HBURST = 0;
-            ahb_m.HMASTLOCK = 0;
+            ahb_m.HWSTRB = out_gen_bus_if.byte_en;
         end else begin
             ahb_m.HTRANS = 2'b0;
             ahb_m.HWRITE = 1'b0;
             ahb_m.HADDR = 0;
             ahb_m.HWDATA = out_gen_bus_if.wdata;
-            ahb_m.HBURST = 0;
-            ahb_m.HMASTLOCK = 0;
+            ahb_m.HWSTRB = out_gen_bus_if.byte_en;
         end
 
         if (state == DATA) begin
             ahb_m.HWDATA = out_gen_bus_if.wdata;
+            ahb_m.HWSTRB = out_gen_bus_if.byte_en;
         end
     end
 
 
     assign out_gen_bus_if.busy  = state == IDLE || ~((ahb_m.HREADY && (state == DATA)));
     assign out_gen_bus_if.rdata = ahb_m.HRDATA;
+    assign out_gen_bus_if.error = ahb_m.HRESP;
+    // Unused signals
+    assign ahb_m.HMASTLOCK = 1'b0;
+    assign ahb_m.HBURST = 3'b000;
+    assign ahb_m.HSEL = (ahb_m.HTRANS != 2'b00);
 
 endmodule

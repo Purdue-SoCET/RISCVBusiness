@@ -5,8 +5,9 @@ module apb (
     generic_bus_if.generic_bus out_gen_bus_if
 );
 
-    typedef enum logic {
+    typedef enum logic [1:0] {
         IDLE,
+        REQUEST,
         DATA
     } state_t;
 
@@ -33,7 +34,7 @@ module apb (
     always_comb begin
         request_n = request;
         if(state == IDLE || (state == DATA && apbif.PREADY)) begin
-            request_n.addr = out_gen_bus_if.addr;
+            request_n.addr = {out_gen_bus_if.addr[31:2], 2'b00};
             request_n.wdata = out_gen_bus_if.wdata;
             request_n.wen = out_gen_bus_if.wen;
             request_n.strobe = out_gen_bus_if.byte_en;
@@ -43,23 +44,47 @@ module apb (
 
     // TODO: How does APB work with the memory controller?
     always_comb begin
+        n_state = state;
+        if(state == IDLE && (out_gen_bus_if.ren || out_gen_bus_if.wen)) begin
+            n_state = REQUEST;
+        end else if(state == REQUEST) begin
+            n_state = DATA;
+        end else if(state == DATA && !apbif.PREADY) begin
+            n_state = DATA;
+        end else if(state == DATA && apbif.PREADY && (out_gen_bus_if.ren || out_gen_bus_if.wen)) begin
+            n_state = REQUEST;
+        end else if(state == DATA && apbif.PREADY && !(out_gen_bus_if.ren || out_gen_bus_if.wen)) begin
+            n_state = IDLE;
+        end
+
+        /*
         if(state == DATA && !apbif.PREADY) begin
             n_state = state;
-        end else if(out_gen_bus_if.ren || out_gen_bus_if.wen) begin
+        end else if(state == DATA && apbif.PREADY && (out_gen_bus_if.ren || out_gen_bus_if.wen)) begin
+            n_state = REQUEST;
+        end else if(state == REQUEST) begin
             n_state = DATA;
         end else begin
             n_state = IDLE;
         end
+        */
     end
 
     always_comb begin
         if(state == IDLE) begin
-            apbif.PADDR = out_gen_bus_if.addr;
-            apbif.PSEL = (out_gen_bus_if.ren || out_gen_bus_if.wen);
+            apbif.PADDR = '0;
+            apbif.PSEL = '0; 
             apbif.PPROT = '0;
-            apbif.PENABLE = 0;
-            apbif.PWRITE = out_gen_bus_if.wen;
-            apbif.PSTRB = out_gen_bus_if.byte_en;
+            apbif.PENABLE = '0;
+            apbif.PWRITE = '0;
+            apbif.PSTRB = '0;
+        end else if(state == REQUEST) begin
+            apbif.PADDR = request.addr;
+            apbif.PSEL = 1'b1;
+            apbif.PPROT = '0;
+            apbif.PENABLE = 1'b0;
+            apbif.PWRITE = request.wen;
+            apbif.PSTRB = request.strobe;
         end else begin
             apbif.PADDR = request.addr;
             apbif.PSEL = 1'b1;
@@ -72,7 +97,7 @@ module apb (
 
     // Response
     assign out_gen_bus_if.rdata = apbif.PRDATA;
-    assign out_gen_bus_if.busy = (state == IDLE) || ~apbif.PREADY;
+    assign out_gen_bus_if.busy = (state == IDLE) || (state == REQUEST) || ~apbif.PREADY;
     assign apbif.PWDATA = out_gen_bus_if.wdata;
 
 endmodule

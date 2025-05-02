@@ -27,6 +27,7 @@
 `include "rv32i_reg_file_if.vh"
 `include "risc_mgmt_if.vh"
 `include "decompressor_if.vh"
+`include "component_selection_defines.vh"
 
 module control_unit (
           control_unit_if.control_unit       cu_if,
@@ -40,6 +41,10 @@ module control_unit (
     import alu_types_pkg::*;
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
+    import rv32m_pkg::*;
+    import rv32b_pkg::*;
+    import rv32a_pkg::*;
+    import rv32zc_pkg::*;
 
     stype_t  instr_s;
     itype_t  instr_i;
@@ -47,6 +52,16 @@ module control_unit (
     sbtype_t instr_sb;
     utype_t  instr_u;
     ujtype_t instr_uj;
+
+    // Set if base ISA doesn't have this instruction, but overriden by claim from extension
+    logic maybe_illegal;
+    logic claimed;
+    // Per-extension claim signals
+    logic rv32m_claim, rv32a_claim, rv32b_claim;
+    // A extension helpers
+    // TODO: Add cu plumbing for AMO execution
+    logic rv32a_lr, rv32a_sc, rv32a_amo;
+    logic rv32zc_claim; 
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -58,7 +73,7 @@ module control_unit (
     assign cu_if.opcode = opcode_t'(cu_if.instr[6:0]);
     assign rf_if.rs1 = rmgmt_req_reg_r ? rmgmt_rsel_s_0 : cu_if.instr[19:15];
     assign rf_if.rs2 = rmgmt_req_reg_r ? rmgmt_rsel_s_1 : cu_if.instr[24:20];
-    assign rf_if.rd = rmgmt_req_reg_w ? rmgmt_rsel_d : cu_if.instr[11:7];
+    assign cu_if.rd = rmgmt_req_reg_w ? rmgmt_rsel_d : cu_if.instr[11:7];
     assign cu_if.shamt = cu_if.instr[24:20];
 
     // Assign the immediate values
@@ -76,12 +91,12 @@ module control_unit (
                             (instr_i.funct3 == SLLI || instr_i.funct3 == SRI));
 
     // Assign branch and load type
-    assign cu_if.load_type = load_t'(instr_i.funct3);
+    assign cu_if.load_type = rv32a_lr ? LW : load_t'(instr_i.funct3);
     assign cu_if.branch_type = branch_t'(instr_sb.funct3);
 
     // Assign memory read/write enables
-    assign cu_if.dwen = (cu_if.opcode == STORE);
-    assign cu_if.dren = (cu_if.opcode == LOAD);
+    assign cu_if.dwen = (cu_if.opcode == STORE) || rv32a_sc;
+    assign cu_if.dren = (cu_if.opcode == LOAD) || rv32a_lr;
     assign cu_if.ifence = (cu_if.opcode == MISCMEM) && (rv32i_miscmem_t'(instr_r.funct3) == FENCEI);
 
     // Assign control flow signals
@@ -89,6 +104,7 @@ module control_unit (
     assign cu_if.jump = (cu_if.opcode == JAL || cu_if.opcode == JALR);
     assign cu_if.ex_pc_sel = (cu_if.opcode == JAL || cu_if.opcode == JALR);
     assign cu_if.j_sel = (cu_if.opcode == JAL);
+
     // Assign alu operands
     always_comb begin
         case (cu_if.opcode)
@@ -97,6 +113,7 @@ module control_unit (
             AUIPC:               cu_if.alu_a_sel = 2'd2;
             default:             cu_if.alu_a_sel = 2'd2;
         endcase
+        if (rv32a_lr || rv32a_sc) cu_if.alu_a_sel = 2'd0;
     end
 
     always_comb begin
@@ -112,13 +129,14 @@ module control_unit (
     // Assign write select
     always_comb begin
         case (cu_if.opcode)
-            LOAD:                 cu_if.w_sel = 3'd0;
-            JAL, JALR:            cu_if.w_sel = 3'd1;
-            LUI:                  cu_if.w_sel = 3'd2;
-            IMMED, AUIPC, REGREG: cu_if.w_sel = 3'd3;
-            SYSTEM:               cu_if.w_sel = 3'd4;
-            default:              cu_if.w_sel = 3'd0;
+            LOAD:                 cu_if.w_sel = W_SEL_FROM_DLOAD;
+            JAL, JALR:            cu_if.w_sel = W_SEL_FROM_PC;
+            LUI:                  cu_if.w_sel = W_SEL_FROM_IMM_U;
+            IMMED, AUIPC, REGREG: cu_if.w_sel = W_SEL_FROM_ALU; // RV32M: Opcodes are REGREG, no change needed
+            SYSTEM:               cu_if.w_sel = W_SEL_FROM_PRIV_PIPE;
+            default:              cu_if.w_sel = W_SEL_FROM_DLOAD;
         endcase
+        if (rv32a_lr || rv32a_sc) cu_if.w_sel = W_SEL_FROM_DLOAD;
     end
 
     // Assign register write enable
@@ -129,12 +147,12 @@ module control_unit (
             SYSTEM:                                     cu_if.wen = cu_if.csr_rw_valid;
             default:                                    cu_if.wen = 1'b0;
         endcase
+        if (rv32a_lr || rv32a_sc) cu_if.wen = 1'b1;
     end
 
     // Assign alu opcode
     logic sr, aluop_srl, aluop_sra, aluop_add, aluop_sub, aluop_and, aluop_or;
     logic aluop_sll, aluop_xor, aluop_slt, aluop_sltu, add_sub;
-
 
     assign sr = ((cu_if.opcode == IMMED && instr_i.funct3 == SRI) ||
                 (cu_if.opcode == REGREG && instr_r.funct3 == SR));
@@ -190,12 +208,15 @@ module control_unit (
 
     always_comb begin
         case (cu_if.opcode)
-            REGREG: cu_if.illegal_insn = instr_r.funct7[0];
+            REGREG: maybe_illegal = instr_r.funct7[0];
             LUI, AUIPC, JAL, JALR, BRANCH, LOAD, STORE, IMMED, SYSTEM, MISCMEM, opcode_t'('0):
-            cu_if.illegal_insn = 1'b0;
-            default: cu_if.illegal_insn = 1'b1;
+            maybe_illegal = 1'b0;
+            default: maybe_illegal = 1'b1;
         endcase
     end
+
+    assign cu_if.illegal_insn = maybe_illegal && !claimed;
+    assign claimed = rv32m_claim || rv32a_claim || rv32b_claim || rv32zc_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions
     always_comb begin
@@ -244,5 +265,59 @@ module control_unit (
 
     assign cu_if.csr_addr     = csr_addr_t'(instr_i.imm11_00);
     assign cu_if.zimm         = cu_if.instr[19:15];
+
+    // Extension decoding
+    `ifdef RV32M_SUPPORTED
+    rv32m_decode RV32M_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32m_claim),
+        .rv32m_control(cu_if.rv32m_control)
+    );
+    `else
+    assign cu_if.rv32m_control = {1'b0, rv32m_op_t'(0)};
+    assign rv32m_claim = 1'b0;
+    `endif // RV32M_SUPPORTED
+    `ifdef RV32A_SUPPORTED
+    rv32a_decode RV32A_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32a_claim),
+        .rv32a_control(cu_if.rv32a_control)
+    );
+    assign rv32a_lr = rv32a_claim && cu_if.rv32a_control.op == AMO_LR;
+    assign rv32a_sc = rv32a_claim && cu_if.rv32a_control.op == AMO_SC;
+    assign rv32a_amo = rv32a_claim && ~(rv32a_lr || rv32a_sc);
+    assign cu_if.reserve = rv32a_lr || rv32a_sc || rv32a_amo;
+    assign cu_if.exclusive = rv32a_amo;
+    `else
+    assign cu_if.rv32a_control = {1'b0, rv32a_op_e'(0)};
+    assign rv32a_claim = 1'b0;
+    assign rv32a_lr = 1'b0;
+    assign rv32a_sc = 1'b0;
+    assign rv32a_amo = 1'b0;
+    assign cu_if.reserve = 1'b0;
+    assign cu_if.exclusive = 1'b0;
+    `endif // RV32M_SUPPORTED
+
+    `ifdef RV32B_SUPPORTED
+    rv32b_decode RV32B_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32b_claim),
+        .rv32b_control(cu_if.rv32b_control)
+    );
+    `else
+    assign cu_if.rv32b_control = {1'b0, rv32b_op_t'(0)};
+    assign rv32b_claim = 1'b0;
+    `endif
+
+    `ifdef RV32ZC_SUPPORTED
+    rv32zc_decode RV32ZC_DECODE(
+        .insn(cu_if.instr),
+        .claim(rv32zc_claim),
+        .rv32zc_control(cu_if.rv32zc_control)
+    );
+    `else
+    assign cu_if.rv32zc_control = {1'b0, rv32zc_op_t'(0)};
+    assign rv32zc_claim = 1'b0;
+    `endif
 
 endmodule

@@ -13,7 +13,11 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     mepc_value += 4;
     asm volatile("csrw mepc, %0" : : "r"(mepc_value));
 
-    print("PMP Unit Handler tripped\n");
+    uint32_t mtval;
+    asm volatile("csrr %0, mtval" : "=r"(mtval));
+
+    print("PMP Unit Handler tripped: ");
+    put_uint32_hex(mtval >>2);
     flag -= 1;
 }
 
@@ -26,9 +30,9 @@ int main() {
     // 0. Setup the instruction/stack/MMIO regions
     uint32_t pmp_cfg = 0x001F1F00;
     asm volatile("csrw pmpcfg0, %0" : : "r" (pmp_cfg));
-    uint32_t pmp_addr = (0x80000000 >> 2) & ~((1 << 14) - 1) | ((1 << (14 - 1)) - 1);
+    uint32_t pmp_addr = ADDR_G(0x80000000, 14);
     asm volatile("csrw pmpaddr1, %0" : : "r" (pmp_addr));
-    pmp_addr = (0xFFFFFFE0 >> 2) & ~((1 << 4) - 1) | ((1 << (4 - 1)) - 1);
+    pmp_addr = ADDR_G(0xFFFFFFE0, 4);
     asm volatile("csrw pmpaddr2, %0" : : "r" (pmp_addr));
 
     // 1. Test PMP, NA4 in M Mode

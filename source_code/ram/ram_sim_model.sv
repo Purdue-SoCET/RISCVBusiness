@@ -28,7 +28,7 @@ module ram_sim_model #(
     parameter ENDIANNESS = "little",
     parameter N_BYTES = 4,
     parameter DEPTH = 8192,
-    parameter MEM_INIT_FILE = "meminit.hex",
+    parameter MEM_INIT_FILE = "meminit.bin",
     parameter MEM_DEFAULT = 32'h0000_0000,
     parameter ADDR_BITS = $clog2(DEPTH),
     parameter COUNT_BITS = $clog2(LAT) + 1,
@@ -71,9 +71,13 @@ module ram_sim_model #(
     string line;
     int res;
 
+    logic [7:0] byte_buf;
+    logic [31:0] word_buf;
+    int bytes_read;
+
 
     // Load in meminit
-    initial begin
+    /*initial begin
         if (MEM_INIT_FILE != "") begin
             fptr = $fopen(MEM_INIT_FILE, "r");
             if (!fptr) begin
@@ -90,6 +94,32 @@ module ram_sim_model #(
                     end
                 end
                 $fclose(fptr);
+            end
+        end
+    end*/
+
+    // assumes binary file starts at bottom of memory!
+    initial begin
+        if(MEM_INIT_FILE != "") begin
+            fptr = $fopen(MEM_INIT_FILE, "r");
+            if(!fptr) begin
+                $info("Warning: Couldn't open memory init file %s", MEM_INIT_FILE);
+            end else begin
+                faddr = 32'h8000_0000;
+                while(!$feof(fptr)) begin
+                    word_buf = 32'b0;
+                    for(int i = 0; i < 4; i++) begin
+                        bytes_read = $fread(byte_buf, fptr);
+                        if(bytes_read < 1) begin
+                            word_buf <<= (3-i)*8;
+                            break;
+                        end else begin
+                            word_buf = {word_buf[23:0], byte_buf};
+                        end
+                    end
+                    memory[faddr] = word_buf;
+                    faddr += 1;
+                end
             end
         end
     end

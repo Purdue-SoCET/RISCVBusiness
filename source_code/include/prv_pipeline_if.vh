@@ -52,6 +52,7 @@ interface prv_pipeline_if();
 
   // performance signals
   logic wb_enable, instr;
+  logic icache_miss, dcache_miss;
 
   // RISC-MGMT
   logic ex_rmgmt;
@@ -62,18 +63,19 @@ interface prv_pipeline_if();
   logic [RAM_ADDR_SIZE-1:0] iaddr, daddr;
   pma_accwidth_t d_acc_width, i_acc_width;
   logic prot_fault_s, prot_fault_l, prot_fault_i;
+  logic ex_mem_stall;
 
   modport hazard (
-    input priv_pc, insert_pc, intr,
+    input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
     output pipe_clear, ret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
-            breakpoint, env, badaddr, wb_enable,
-            ex_rmgmt, ex_rmgmt_cause
+            breakpoint, env, wfi, badaddr, wb_enable,
+            ex_rmgmt, ex_rmgmt_cause, ex_mem_stall
   );
 
   modport pipe (
-    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, wfi,
-    input  rdata, invalid_priv_isn, prot_fault_s, prot_fault_l
+    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width,
+    input  rdata, invalid_priv_isn
   );
 
   modport fetch (
@@ -86,10 +88,11 @@ interface prv_pipeline_if();
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
           breakpoint, env, badaddr, swap, clr, set, read_only, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,
+          icache_miss, dcache_miss,
           ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, dren, dwen, iren,
-          d_acc_width, i_acc_width,
-    output priv_pc, insert_pc, intr, rdata, invalid_priv_isn, 
+          d_acc_width, i_acc_width, ex_mem_stall,
+    output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
             prot_fault_s, prot_fault_l, prot_fault_i
   );
 

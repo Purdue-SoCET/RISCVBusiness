@@ -46,6 +46,8 @@ module priv_1_12_pma (
   `define RAM_PMA pma_cfg_t'({2'b0, 1'b1, 1'b1, 1'b1, WordAcc, 1'b1, 1'b1, 1'b1, RsrvEventual, AMONone, 1'b1})
   //  IO_PMA - reserved, W, R, X, WordAcc, no Idm, no Cache, Coh, RsrvEventual, AMONone, I/O
   `define IO_PMA  pma_cfg_t'({2'b0, 1'b1, 1'b1, 1'b1, WordAcc, 1'b0, 1'b0, 1'b1, RsrvEventual, AMONone, 1'b0})
+  //  NONE_PMA - reserved, no W, no R, no X, WordAcc, no Idm, no Cache, no Coh, RsrvEventual, AMONone, Memory
+  `define NONE_PMA  pma_cfg_t'({2'b0, 1'b0, 1'b0, 1'b0, WordAcc, 1'b0, 1'b0, 1'b0, RsrvNone, AMONone, 1'b1})
 
   // Core State Registers
   always_ff @ (posedge CLK, negedge nRST) begin
@@ -76,7 +78,7 @@ module priv_1_12_pma (
     nxt_pma_regs = pma_regs;
     priv_ext_if.ack = 1'b0;
     new_val = pma_reg_t'(priv_ext_if.value_in);
-    if (priv_ext_if.csr_addr[11:4] == 8'b10111100) begin
+    if (priv_ext_if.csr_addr[11:4] == 8'hBC) begin
       priv_ext_if.ack = 1'b1;
       if (priv_ext_if.csr_active) begin
         // WARL checks
@@ -84,17 +86,19 @@ module priv_1_12_pma (
           new_val.pma_cfg_0.Rsrv = RsrvNone;
         end
         if (new_val.pma_cfg_1.Rsrv == RsrvReserved) begin
-          new_val.pma_cfg_0.Rsrv = RsrvNone;
+          new_val.pma_cfg_1.Rsrv = RsrvNone;
         end
         if (new_val.pma_cfg_0.AccWidth == AccWidthReserved) begin
           new_val.pma_cfg_0.AccWidth = WordAcc;
         end
         if (new_val.pma_cfg_1.AccWidth == AccWidthReserved) begin
-          new_val.pma_cfg_0.AccWidth = WordAcc;
+          new_val.pma_cfg_1.AccWidth = WordAcc;
         end
 
         nxt_pma_regs[priv_ext_if.csr_addr[3:0]] = new_val;
       end
+    end else if (priv_ext_if.csr_addr[11:4] == 8'hCC) begin
+      priv_ext_if.ack = 1'b1;
     end
   end
 

@@ -1,0 +1,27 @@
+CAPI=2:
+name: socet:riscv:rv32m:0.1.0
+description: RV32M Extension for RISCVBusiness
+
+filesets:
+    rtl:
+        depend:
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:packages"
+        files:
+            #- rv32m_pkg.sv
+            - carry_save_adder.sv
+            - full_adder.sv
+            - flex_counter_mul.sv
+            - pp_mul32.sv
+            - radix4_divider.sv
+            - rv32m_decode.sv
+            - rv32m_disabled.sv
+            - rv32m_enabled.sv
+            - rv32m_wrapper.sv
+        file_type: systemVerilogSource
+    
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: rv32m_wrapper

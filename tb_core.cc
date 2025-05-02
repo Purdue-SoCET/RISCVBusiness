@@ -1,14 +1,18 @@
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <csignal>
 
 #include "verilated.h"
 #include "verilated_fst_c.h"
 #include "Vtop_core.h"
 #include "Vtop_core_top_core.h"
+
+#define BASE_SIM_TIME    100000
 
 #define MTIME_ADDR      0xFFFFFFE0
 #define MTIMEH_ADDR     0xFFFFFFE4
@@ -18,6 +22,7 @@
 #define EXT_ADDR_SET    0xFFFFFFF4
 #define EXT_ADDR_CLEAR  0xFFFFFFF8
 #define MAGIC_ADDR      0xFFFFFFFC
+#define BUS_ERROR_TOP   0x20000000
 
 // Inclusive range of memory-mapped peripherals
 #define MMIO_RANGE_BEGIN (MTIME_ADDR)
@@ -25,6 +30,14 @@
 
 // doubles as mtime counter
 vluint64_t sim_time = 0;
+Vtop_core *dut_ptr;
+VerilatedFstC *trace_ptr;
+bool use_tohost = false;
+uint32_t tohost_address = 0;
+uint64_t max_sim_time = BASE_SIM_TIME;
+bool tohost_break = false;
+bool virtual_test = false;
+bool require_trace = true;
 
 /*
  *  Emulate memory-mapped CSRs
@@ -35,7 +48,12 @@ uint32_t msip = 0;
 // Interrupt signals
 bool ext_int = false;
 
-
+void signal_handler(int signum) {
+    std::cout << "Got signal " << signum << std::endl;
+    dut_ptr->final();
+    trace_ptr->close();
+    exit(1);
+}
 
 class MemoryMap {
 private:
@@ -146,6 +164,7 @@ public:
     }
 
     void write(uint32_t addr, uint32_t value, uint8_t mask) {
+
         // NOTE: For now, assuming that all memory is legally acessible.
         auto it = mmap.find(addr);
         if(it != mmap.end()) {
@@ -153,6 +172,13 @@ public:
             it->second = (value & mask_exp) | (it->second & ~mask_exp);
         } else {
             mmap.insert(std::make_pair(addr, value));
+        }
+
+        if(use_tohost && addr == tohost_address) {
+            if (virtual_test)
+                std::cout << static_cast<char>(value);
+            else
+                tohost_break = true;
         }
     }
 
@@ -169,10 +195,10 @@ public:
         for(auto p : mmap) {
             if(p.second != 0) {
                 char buf[80];
-                snprintf(buf, 80, "%08x : %02x%02x%02x%02x", p.first, 
-                        (p.second & 0xFF000000) >> 24, 
-                        (p.second & 0x00FF0000) >> 16, 
-                        (p.second & 0x0000FF00) >> 8, 
+                snprintf(buf, 80, "%08x : %02x%02x%02x%02x", p.first,
+                        (p.second & 0xFF000000) >> 24,
+                        (p.second & 0x00FF0000) >> 16,
+                        (p.second & 0x0000FF00) >> 8,
                         p.second & 0x000000FF);
                 outfile << buf << std::endl;
             }
@@ -221,7 +247,7 @@ void tick(Vtop_core& dut, VerilatedFstC& trace) {
 }
 
 void reset(Vtop_core& dut, VerilatedFstC& trace) {
-    // Initialize signals 
+    // Initialize signals
     dut.CLK = 0;
     dut.nRST = 0;
     dut.ext_int = 0;
@@ -241,37 +267,102 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
     tick(dut, trace);
 }
 
+void print_help() {
+    std::cout << "Usage: ./Vtop_core [--tohost-address <unsigned int> --max-sim-time <unsigned long> --virtual --notrace] <filename>" << std::endl;
+    std::cout << "\t--help   : Print this" << std::endl;
+    std::cout << "\t--tohost-address <address>: address for tohost checking functionality. A write to this address will end the program if --virtual is not set." << std::endl;
+    std::cout << "\t--max-sim-time <sim-time> : Maximum time to run simulation. Defaults to 100,000." << std::endl;
+    std::cout << "\t--virtual: Indicate virtualized address space will be run. Changes tohost-address functionality" << std::endl;
+    std::cout << "\t--notrace: Indicate to not generate a waveform file. Speeds up simulation incredibly." << std::endl;
+    std::cout << "\tfilename : An executable .bin file to run" << std::endl;
+}
+
 
 int main(int argc, char **argv) {
 
-    const char *fname;
+    const char *fname = "meminit.bin";
 
-    if(argc < 2) {
-        std::cout << "Warning: No bin file name provided, assuming './meminit.bin' as file location!" << std::endl;
-        fname = "meminit.bin";
-    } else {
-        fname = argv[1];
+    int i = 0;
+    while(i < argc) {
+        if(strcmp(argv[i], "--tohost-address") == 0) {
+            use_tohost = true;
+            if(i+1 < argc) {
+                try {
+                    tohost_address = std::stoul(argv[i+1], nullptr, 0);
+                } catch (const std::exception& e) {
+                    std::cerr << "Could not convert " << argv[i+1] << " to U32" << std::endl;
+                    return 1;
+                }
+
+                i += 1;
+            } else {
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
+                print_help();
+            }
+        } else if(strcmp(argv[i], "--max-sim-time") == 0) {
+            if(i+1 < argc) {
+                try {
+                    max_sim_time = std::stoul(argv[i+1], nullptr, 0);
+                } catch (const std::exception& e) {
+                    std::cerr << "Could not convert " << argv[i+1] << " to U64" << std::endl;
+                    return 1;
+                }
+
+                i += 1;
+            } else {
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
+                print_help();
+            }
+        } else if(strcmp(argv[i], "--help") == 0) {
+            print_help();
+            return 1;
+        } else if(strcmp(argv[i], "--virtual") == 0) {
+            virtual_test = true;
+        } else if(strcmp(argv[i], "--notrace") == 0) {
+            require_trace = false;
+        } else {
+            fname = argv[i];
+        }
+
+        i += 1;
     }
+
+    std::cout << "Filename: " << fname << std::endl;
+    std::cout << "tohost: " << use_tohost << " addr: " << tohost_address << std::endl;
 
     MemoryMap memory(fname);
 
     Vtop_core dut;
 
-    Verilated::traceEverOn(true);
     VerilatedFstC m_trace;
-    dut.trace(&m_trace, 5);
-    m_trace.open("waveform.fst");
+
+    if (require_trace) {
+        Verilated::traceEverOn(true);
+        dut.trace(&m_trace, 5);
+        m_trace.open("waveform.fst");
+    }
 
     mtimecmp = 0xFFFFFFFFFFFFFFFF; // Default to a massive value
 
+
+    dut_ptr = &dut;
+    trace_ptr = &m_trace;
+
+    signal(SIGINT, signal_handler);
+
+    auto tstart = std::chrono::high_resolution_clock::now();
+
     reset(dut, m_trace);
-    while(!dut.halt && sim_time < 100000) {
+    while(!dut.halt && !tohost_break && sim_time < max_sim_time) {
+        dut.error = 0;
         // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
             dut.busy = 0;
             if(dut.ren) {
                 uint32_t addr = dut.addr & 0xFFFFFFFC;
-                if(!MemoryMap::is_mmio_region(addr)) {
+                if(addr < BUS_ERROR_TOP) {
+                    dut.error = 1;
+                }else if(!MemoryMap::is_mmio_region(addr)) {
                     dut.rdata = memory.read(addr);
                 } else {
                     dut.rdata = memory.mmio_read(addr);
@@ -280,7 +371,9 @@ int main(int argc, char **argv) {
                 uint32_t addr = dut.addr & 0xFFFFFFFC;
                 uint32_t value = dut.wdata;
                 uint8_t mask = dut.byte_en;
-                if(!MemoryMap::is_mmio_region(addr)) {
+                if(addr < BUS_ERROR_TOP) {
+                    dut.error = 1;
+                } else if(!MemoryMap::is_mmio_region(addr)) {
                     memory.write(addr, value, mask);
                 } else {
                     memory.mmio_write(addr, value, mask);
@@ -296,14 +389,22 @@ int main(int argc, char **argv) {
         update_interrupt_signals(dut);
     }
 
-    if(sim_time >= 100000) {
+    if(sim_time >= max_sim_time) {
         std::cout << "Test TIMED OUT" << std::endl;
-    } else if(dut.top_core->get_x28() == 1) {
+    } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else {
-        std::cout << "Test FAILED: Test " << dut.top_core->get_x28() << std::endl;
+        std::cout << "Test FAILED: Test " << memory.read(tohost_address) << std::endl;
     }
-    m_trace.close();
+
+    auto tend = std::chrono::high_resolution_clock::now();
+
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(tend - tstart);
+
+    std::cout << "Simulated " << sim_time << " cycles in " << ms.count() << "ms" << ", rate of " << (float)sim_time / ((float)ms.count() / 1000.0) << " cycles per second." << std::endl;
+
+    if (require_trace)
+        m_trace.close();
     memory.dump();
     dut.final();
 

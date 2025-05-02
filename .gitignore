@@ -33,12 +33,13 @@ source_code/fpga/output_files
 *.cmd
 mitll*
 # Ignore temporary files created by gedit
-*~
+*.~*
 # Ignore test cache files
 run_tests_cache.json
 # Ignore log files and Verilator outputs
 *.log
 *.fst
+*.gtkw
 memsim.dump
 meminit.bin
 
@@ -55,14 +56,46 @@ __pycache__/
 
 # ignore xrun files
 INCA_libs/
+cov_work
 xcelium.d/
-xrun.history
-xrun.key
+*.history
+*.key
+*.diag
 .simvision
-waves.shm/
+*.shm/
+*.temp*
 
 open_files.sh
 
 # fusesoc
 fusesoc_libraries
 fusesoc.conf
+
+# synthesis scripts
+desflow1/
+.vscode/*
+
+# uvm
+work
+mapped
+fpga
+transcript
+*.wlf
+README
+*.swp
+._*
+*.log
+*.deps
+*.hex
+*.ver
+mti*
+*.diff
+system.summary
+system_fpga.summary
+*.vstf
+*vsim*
+
+# locally built mdbook
+doc/book/**
+*.txt
+*.dump

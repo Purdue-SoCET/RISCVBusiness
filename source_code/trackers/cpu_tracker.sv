@@ -25,162 +25,197 @@
 
 `define TRACE_FILE_NAME "trace.log"
 
-module cpu_tracker (
-    input logic CLK, wb_stall, instr_30,
-    input rv32i_types_pkg::word_t instr, pc,
-    input rv32i_types_pkg::opcode_t opcode,
-    input logic [2:0] funct3,
-    input logic [11:0] funct12,
-    input logic [4:0] rs1, rs2, rd,
-    input logic [12:0] imm_SB,
-    input logic [11:0] imm_S, imm_I,
-    input logic [20:0] imm_UJ,
-    input logic [31:0] imm_U
+module cpu_tracker #(
+    parameter int NUM_HARTS = 1
+) (
+    input logic CLK,
+    input logic [NUM_HARTS-1:0] wb_stall,
+    input logic [NUM_HARTS-1:0] instr_30,
+    input rv32i_types_pkg::word_t [NUM_HARTS-1:0] instr,
+    input rv32i_types_pkg::word_t [NUM_HARTS-1:0] pc,
+    input rv32i_types_pkg::opcode_t [NUM_HARTS-1:0] opcode,
+    input logic [NUM_HARTS-1:0] [2:0] funct3,
+    input logic [NUM_HARTS-1:0] [11:0] funct12,
+    input logic [NUM_HARTS-1:0] [4:0] rs1,
+    input logic [NUM_HARTS-1:0] [4:0] rs2,
+    input logic [NUM_HARTS-1:0] [4:0] rd,
+    input logic [NUM_HARTS-1:0] [12:0] imm_SB,
+    input logic [NUM_HARTS-1:0] [11:0] imm_S,
+    input logic [NUM_HARTS-1:0] [11:0] imm_I,
+    input logic [NUM_HARTS-1:0] [20:0] imm_UJ,
+    input logic [NUM_HARTS-1:0] [31:0] imm_U,
+    input cache_coherence_statistics_t cache_statistics [(NUM_HARTS * 2)-1:0]
 );
     import rv32i_types_pkg::*;
     import machine_mode_types_1_12_pkg::*;
-
-    parameter int CPUID = 0;
+    import rv32m_pkg::*;
 
     integer fptr;
-    string instr_mnemonic, output_str, src1, src2, dest, operands;
-    string csr, temp_str;
-    logic [63:0] pc64;
-    assign pc64 = {{32{1'b0}}, pc};
+    string instr_mnemonic [];
+    string src1 [];
+    string src2 [];
+    string dest [];
+    string operands [];
+    string csr [];
+    string temp_str;
+    string output_str;
+    logic [NUM_HARTS-1:0] [63:0] pc64;
     initial begin : INIT_FILE
         fptr = $fopen(`TRACE_FILE_NAME, "w");
     end
 
     always_comb begin
-        src1 = registerAssign(rs1);
-        src2 = registerAssign(rs2);
-        dest = registerAssign(rd);
-        csr  = csrRegisterAssign(funct12);
+        for (int i = 0; i < NUM_HARTS; i = i + 1) begin
+            pc64[i] = {{32{1'b0}}, pc[i]};
+            src1[i] = registerAssign(rs1[i]);
+            src2[i] = registerAssign(rs2[i]);
+            dest[i] = registerAssign(rd[i]);
+            csr[i]  = csrRegisterAssign(funct12[i]);
+        end
     end
 
     always_comb begin
-        case (opcode)
-            LUI, AUIPC: $sformat(operands, "%s, %d", dest, imm_U[31:12]);
-            JAL:        $sformat(operands, "%s, pc + %d", dest, signed'(imm_UJ));
-            JALR:       $sformat(operands, "%s, %s, %d", dest, src1, signed'(imm_I));
-            BRANCH:     $sformat(operands, "%s, %s, pc + %d", src1, src2, signed'(imm_SB));
-            STORE:      $sformat(operands, "%s, %d(%s)", src2, signed'(imm_S), src1);
-            LOAD:       $sformat(operands, "%s, %d(%s)", dest, signed'(imm_I), src1);
-            IMMED:      $sformat(operands, "%s, %s, %d", dest, src1, signed'(imm_I));
-            REGREG:     $sformat(operands, "%s, %s, %s", dest, src1, src2);
-            SYSTEM: begin
-                case (rv32i_system_t'(funct3))
-                    CSRRS, CSRRW, CSRRC:    $sformat(operands, "%s, %s, %s", dest, csr, src1);
-                    CSRRSI, CSRRWI, CSRRCI: $sformat(operands, "%s, %s, %d", dest, csr, rs1);
-                    PRIV:                   operands = "";
-                    default:                operands = "";
-                endcase
-            end
-            default:    operands = "";
-        endcase
+        for (int i = 0; i < NUM_HARTS; i = i + 1) begin
+            case (opcode[i])
+                LUI, AUIPC: $sformat(operands[i], "%s, %d", dest[i], imm_U[i][31:12]);
+                JAL:        $sformat(operands[i], "%s, pc + %d", dest[i], signed'(imm_UJ[i]));
+                JALR:       $sformat(operands[i], "%s, %s, %d", dest[i], src1[i], signed'(imm_I[i]));
+                BRANCH:     $sformat(operands[i], "%s, %s, pc + %d", src1[i], src2[i], signed'(imm_SB[i]));
+                STORE:      $sformat(operands[i], "%s, %d(%s)", src2[i], signed'(imm_S[i]), src1[i]);
+                LOAD:       $sformat(operands[i], "%s, %d(%s)", dest[i], signed'(imm_I[i]), src1[i]);
+                IMMED:      $sformat(operands[i], "%s, %s, %d", dest[i], src1[i], signed'(imm_I[i]));
+                REGREG:     $sformat(operands[i], "%s, %s, %s", dest[i], src1[i], src2[i]);
+                SYSTEM: begin
+                    case (rv32i_system_t'(funct3))
+                        CSRRS, CSRRW, CSRRC:    $sformat(operands[i], "%s, %s, %s", dest[i], csr[i], src1[i]);
+                        CSRRSI, CSRRWI, CSRRCI: $sformat(operands[i], "%s, %s, %d", dest[i], csr[i], rs1);
+                        PRIV:                   operands[i] = "";
+                        default:                operands[i] = "";
+                    endcase
+                end
+                default:    operands[i] = "";
+            endcase
+        end
     end
 
     always_comb begin
-        case (opcode)
-            LUI:     instr_mnemonic = "lui";
-            AUIPC:   instr_mnemonic = "auipc";
-            JAL:     instr_mnemonic = "jal";
-            JALR:    instr_mnemonic = "jalr";
-            BRANCH: begin
-                case (branch_t'(funct3))
-                    BEQ:     instr_mnemonic = "beq";
-                    BNE:     instr_mnemonic = "bne";
-                    BLT:     instr_mnemonic = "blt";
-                    BGE:     instr_mnemonic = "bge";
-                    BLTU:    instr_mnemonic = "bltu";
-                    BGEU:    instr_mnemonic = "bgeu";
-                    default: instr_mnemonic = "unknown branch op";
-                endcase
-            end
-            LOAD: begin
-                case (load_t'(funct3))
-                    LB:      instr_mnemonic = "lb";
-                    LH:      instr_mnemonic = "lh";
-                    LW:      instr_mnemonic = "lw";
-                    LBU:     instr_mnemonic = "lbu";
-                    LHU:     instr_mnemonic = "lhu";
-                    default: instr_mnemonic = "unknown load op";
-                endcase
-            end
-            STORE: begin
-                case (store_t'(funct3))
-                    SB:      instr_mnemonic = "sb";
-                    SH:      instr_mnemonic = "sh";
-                    SW:      instr_mnemonic = "sw";
-                    default: instr_mnemonic = "unknown store op";
-                endcase
-            end
-            IMMED: begin
-                case (imm_t'(funct3))
-                    ADDI:    instr_mnemonic = "addi";
-                    SLTI:    instr_mnemonic = "slti";
-                    SLTIU:   instr_mnemonic = "sltiu";
-                    XORI:    instr_mnemonic = "xori";
-                    ORI:     instr_mnemonic = "ori";
-                    ANDI:    instr_mnemonic = "andi";
-                    SLLI:    instr_mnemonic = "slli";
-                    SRI: begin
-                        if (instr_30) instr_mnemonic = "srai";
-                        else instr_mnemonic = "srli";
-                    end
-                    default: instr_mnemonic = "unknown immed op";
-                endcase
-            end
-            REGREG: begin
-                case (regreg_t'(funct3))
-                    ADDSUB: begin
-                        if (instr_30) instr_mnemonic = "sub";
-                        else instr_mnemonic = "add";
-                    end
-                    SLL:     instr_mnemonic = "sll";
-                    SLT:     instr_mnemonic = "slt";
-                    SLTU:    instr_mnemonic = "sltu";
-                    XOR:     instr_mnemonic = "xor";
-                    SR: begin
-                        if (instr_30) instr_mnemonic = "sra";
-                        else instr_mnemonic = "srl";
-                    end
-                    OR:      instr_mnemonic = "or";
-                    AND:     instr_mnemonic = "and";
-                    default: instr_mnemonic = "unknown regreg op";
-                endcase
-            end
-            SYSTEM: begin
-                case (rv32i_system_t'(funct3))
-                    CSRRW:   instr_mnemonic = "csrrw";
-                    CSRRS:   instr_mnemonic = "csrrs";
-                    CSRRC:   instr_mnemonic = "csrrc";
-                    CSRRWI:  instr_mnemonic = "csrrwi";
-                    CSRRSI:  instr_mnemonic = "csrrsi";
-                    CSRRCI:  instr_mnemonic = "csrrci";
-                    PRIV: begin
-                        case (priv_insn_t'(funct12))
-                            ECALL:  instr_mnemonic = "ecall";
-                            EBREAK: instr_mnemonic = "ebreak";
-                            MRET:   instr_mnemonic = "mret";
-                            default: begin
-                                instr_mnemonic = "errr";
-                                $display("%b", priv_insn_t'(funct12));
+        for (int i = 0; i < NUM_HARTS; i = i + 1) begin
+            case (opcode[i])
+                LUI:     instr_mnemonic[i] = "lui";
+                AUIPC:   instr_mnemonic[i] = "auipc";
+                JAL:     instr_mnemonic[i] = "jal";
+                JALR:    instr_mnemonic[i] = "jalr";
+                BRANCH: begin
+                    case (branch_t'(funct3[i]))
+                        BEQ:     instr_mnemonic[i] = "beq";
+                        BNE:     instr_mnemonic[i] = "bne";
+                        BLT:     instr_mnemonic[i] = "blt";
+                        BGE:     instr_mnemonic[i] = "bge";
+                        BLTU:    instr_mnemonic[i] = "bltu";
+                        BGEU:    instr_mnemonic[i] = "bgeu";
+                        default: instr_mnemonic[i] = "unknown branch op";
+                    endcase
+                end
+                LOAD: begin
+                    case (load_t'(funct3[i]))
+                        LB:      instr_mnemonic[i] = "lb";
+                        LH:      instr_mnemonic[i] = "lh";
+                        LW:      instr_mnemonic[i] = "lw";
+                        LBU:     instr_mnemonic[i] = "lbu";
+                        LHU:     instr_mnemonic[i] = "lhu";
+                        default: instr_mnemonic[i] = "unknown load op";
+                    endcase
+                end
+                STORE: begin
+                    case (store_t'(funct3[i]))
+                        SB:      instr_mnemonic[i] = "sb";
+                        SH:      instr_mnemonic[i] = "sh";
+                        SW:      instr_mnemonic[i] = "sw";
+                        default: instr_mnemonic[i] = "unknown store op";
+                    endcase
+                end
+                IMMED: begin
+                    case (imm_t'(funct3[i]))
+                        ADDI:    instr_mnemonic[i] = "addi";
+                        SLTI:    instr_mnemonic[i] = "slti";
+                        SLTIU:   instr_mnemonic[i] = "sltiu";
+                        XORI:    instr_mnemonic[i] = "xori";
+                        ORI:     instr_mnemonic[i] = "ori";
+                        ANDI:    instr_mnemonic[i] = "andi";
+                        SLLI:    instr_mnemonic[i] = "slli";
+                        SRI: begin
+                            if (instr_30[i]) instr_mnemonic[i] = "srai";
+                            else instr_mnemonic[i] = "srli";
+                        end
+                        default: instr_mnemonic[i] = "unknown immed op";
+                    endcase
+                end
+                REGREG: begin
+                    if(instr[i][31 -: 7] == RV32M_OPCODE_MINOR) begin
+                        case (rv32m_op_t'(funct3[i]))
+                            MUL:    instr_mnemonic[i] = "mul";
+                            MULH:   instr_mnemonic[i] = "mulh";
+                            MULHSU: instr_mnemonic[i] = "mulhsu";
+                            MULHU:  instr_mnemonic[i] = "mulhu";
+                            DIV:    instr_mnemonic[i] = "div";
+                            DIVU:   instr_mnemonic[i] = "divu";
+                            REM:    instr_mnemonic[i] = "rem";
+                            REMU:   instr_mnemonic[i] = "remu";
+                            // No default -- full case
+                        endcase
+                    end else begin
+                        case (regreg_t'(funct3[i]))
+                            ADDSUB: begin
+                                if (instr_30[i]) instr_mnemonic[i] = "sub";
+                                else instr_mnemonic[i] = "add";
                             end
+                            SLL:     instr_mnemonic[i] = "sll";
+                            SLT:     instr_mnemonic[i] = "slt";
+                            SLTU:    instr_mnemonic[i] = "sltu";
+                            XOR:     instr_mnemonic[i] = "xor";
+                            SR: begin
+                                if (instr_30[i]) instr_mnemonic[i] = "sra";
+                                else instr_mnemonic[i] = "srl";
+                            end
+                            OR:      instr_mnemonic[i] = "or";
+                            AND:     instr_mnemonic[i] = "and";
+
+                            default: instr_mnemonic[i] = "unknown regreg op";
                         endcase
                     end
-                    default: instr_mnemonic = "unknown system op";
-                endcase
-            end
-            MISCMEM: begin
-                case (rv32i_miscmem_t'(funct3))
-                    FENCE:   instr_mnemonic = "fence";
-                    FENCEI:  instr_mnemonic = "fence.i";
-                    default: instr_mnemonic = "unknown misc-mem op";
-                endcase
-            end
-            default: instr_mnemonic = "xxx";
-        endcase
+                end
+                SYSTEM: begin
+                    case (rv32i_system_t'(funct3[i]))
+                        CSRRW:   instr_mnemonic[i] = "csrrw";
+                        CSRRS:   instr_mnemonic[i] = "csrrs";
+                        CSRRC:   instr_mnemonic[i] = "csrrc";
+                        CSRRWI:  instr_mnemonic[i] = "csrrwi";
+                        CSRRSI:  instr_mnemonic[i] = "csrrsi";
+                        CSRRCI:  instr_mnemonic[i] = "csrrci";
+                        PRIV: begin
+                            case (priv_insn_t'(funct12[i]))
+                                ECALL:  instr_mnemonic[i] = "ecall";
+                                EBREAK: instr_mnemonic[i] = "ebreak";
+                                MRET:   instr_mnemonic[i] = "mret";
+                                default: begin
+                                    instr_mnemonic[i] = "errr";
+                                    $display("%b", priv_insn_t'(funct12));
+                                end
+                            endcase
+                        end
+                        default: instr_mnemonic[i] = "unknown system op";
+                    endcase
+                end
+                MISCMEM: begin
+                    case (rv32i_miscmem_t'(funct3[i]))
+                        FENCE:   instr_mnemonic[i] = "fence";
+                        FENCEI:  instr_mnemonic[i] = "fence.i";
+                        default: instr_mnemonic[i] = "unknown misc-mem op";
+                    endcase
+                end
+                default: instr_mnemonic[i] = "xxx";
+            endcase
+        end
     end
 
     function string registerAssign(input logic [4:0] register);
@@ -243,15 +278,38 @@ module cpu_tracker (
     endfunction
 
     always_ff @(posedge CLK) begin
-        if (!wb_stall && instr != 0) begin
-            $sformat(temp_str, "core%d: 0x%h (0x%h)", CPUID, pc64, instr);
-            $sformat(output_str, "%s %s %s\n", temp_str, instr_mnemonic, operands);
-            $fwrite(fptr, output_str);
+        for (int i = 0; i < NUM_HARTS; i = i + 1) begin
+            if (!wb_stall[i] && instr[i] != 0) begin
+                $sformat(temp_str, "core%d: 0x%h (0x%h)", i, pc64[i], instr[i]);
+                $sformat(output_str, "%s %s %s\n", temp_str, instr_mnemonic[i], operands[i]);
+                $fwrite(fptr, output_str);
+            end
         end
     end
 
     final begin : CLOSE_FILE
+        for (int i = 0; i < NUM_HARTS; i = i + 1) begin
+            $sformat(
+                output_str,
+                "core%d: icache: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
+                i,
+                cache_statistics[i * 2].invalidated_blocks,
+                cache_statistics[i * 2].shared_blocks,
+                cache_statistics[i * 2].to_s_transitions,
+                cache_statistics[i * 2].to_e_transitions
+            );
+            $fwrite(fptr, output_str);
+            $sformat(
+                output_str,
+                "core%d: dcache: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
+                i,
+                cache_statistics[i * 2 + 1].invalidated_blocks,
+                cache_statistics[i * 2 + 1].shared_blocks,
+                cache_statistics[i * 2 + 1].to_s_transitions,
+                cache_statistics[i * 2 + 1].to_e_transitions
+            );
+            $fwrite(fptr, output_str);
+        end
         $fclose(fptr);
     end
-
 endmodule

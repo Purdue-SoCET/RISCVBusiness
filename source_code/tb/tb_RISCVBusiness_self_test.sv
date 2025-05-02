@@ -80,7 +80,8 @@ module tb_RISCVBusiness_self_test ();
     assign data = data_temp;
   else ;//TODO:ERROR
 
-  bind tspp_execute_stage cpu_tracker cpu_track1 (
+  /*
+  bind stage3_execute_stage cpu_tracker cpu_track1 (
     .CLK(CLK),
     .wb_stall(wb_stall),
     .instr(fetch_ex_if.fetch_ex_reg.instr),
@@ -105,7 +106,7 @@ module tb_RISCVBusiness_self_test ();
     .update_predictor(predict_if.update_predictor),
     .prediction(predict_if.prediction),
     .branch_result(predict_if.branch_result)
-  );
+  );*/
 
   //Ramif Mux
   always_comb begin
@@ -167,9 +168,9 @@ module tb_RISCVBusiness_self_test ();
     // Check Register 28 to see if test passed or failed
     if (clk_count == `RVBSELF_CLK_TIMEOUT)
       $display("ERROR: Test timed out");
-    else if(DUT.execute_stage_i.g_rfile_select.rf.registers[28] != 32'h1)
+    else if(DUT.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] != 32'h1)
       $display("ERROR: Test %0d did not pass",
-                (DUT.execute_stage_i.g_rfile_select.rf.registers[28] - 1)/2);
+                (DUT.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] - 1)/2);
     else
       $display("SUCCESS");
     $finish;

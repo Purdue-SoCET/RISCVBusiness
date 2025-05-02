@@ -5,11 +5,13 @@ extern volatile int flag;
 extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
-    uint32_t mepc, mtval;
+    uint32_t mepc, mtval, icache_misses, dcache_misses;
     mcause_t mcause;
     asm volatile("csrr %0, mepc" : "=r"(mepc));
     asm volatile("csrr %0, mtval" : "=r"(mtval));
     asm volatile("csrr %0, mcause" : "=r"((mcause_t) mcause));
+    asm volatile("csrr %0, hpmcounter3" : "=r"(icache_misses));
+    asm volatile("csrr %0, hpmcounter4" : "=r"(dcache_misses));
 
     print("mepc: ");
     put_uint32_hex(mepc);
@@ -23,6 +25,14 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     put_uint32_hex(mcause.interrupt & 0x1);
     print(" ");
     put_uint32_hex(mcause.ex_code);
+    print("\n");
+
+    print("icache misses: ");
+    put_uint32_hex(icache_misses);
+    print("\n");
+
+    print("dcache misses: ");
+    put_uint32_hex(dcache_misses);
     print("\n");
 
     print("-----\n");
@@ -78,7 +88,8 @@ int main(void) {
     asm volatile("nop; nop; nop;");
     asm volatile("csrr %0, cycle" : "=r"(csr_val_1));
 
-    if (csr_val_1 - csr_val_0 < 15) // Are the two cycle counts close?
+    // TODO: This test is highly dependent on I-fetch speed
+    if (csr_val_1 - csr_val_0 < 30) // Are the two cycle counts close?
     {
         flag -= 1;
     }
