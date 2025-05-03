@@ -166,18 +166,78 @@ uint32_t get_instrs() {
     return ret;
 }
 
+uint32_t get_mhartid() {
+    uint32_t mhartid_value;
+    __asm__ volatile(
+        "csrr %0, mhartid"
+        : "=r"(mhartid_value));
+
+    return mhartid_value;
+}
+
 void wait_for_hart1_done() {
     while (hart1_done == 0) {
         __asm__ volatile("");
     }
 }
 
-void wait_for_all_harts_done() {
-    // hart1_done == 0 || hart2_done == 0 || hart3_done == 0 || hart4_done == 0 || hart5_done == 0 || hart6_done == 0 || hart7_done == 0
-    while (hart1_done == 0 || hart2_done == 0 || hart3_done == 0) {
+void wait_for_hart2_done() {
+    while (hart2_done == 0) {
         __asm__ volatile("");
-        print("hart1_done = %d\n", hart1_done);
-        print("hart2_done = %d\n", hart2_done);
-        print("hart3_done = %d\n", hart3_done);
+    }
+}
+
+void wait_for_hart3_done() {
+    while (hart3_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart4_done() {
+    while (hart4_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart5_done() {
+    while (hart5_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart6_done() {
+    while (hart6_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart7_done() {
+    while (hart7_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_all_harts_done(int num_harts) {
+    switch (num_harts) {
+        case 1:
+            while (hart_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+        case 2:
+            while (hart_done == 0 || hart1_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+        case 4:
+            while (hart_done == 0 || hart1_done == 0 || hart2_done == 0 || hart3_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+        case 8:
+            while (hart_done == 0 || hart1_done == 0 || hart2_done == 0 || hart3_done == 0 || hart4_done == 0 || hart5_done == 0 || hart6_done == 0 || hart7_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
     }
 }

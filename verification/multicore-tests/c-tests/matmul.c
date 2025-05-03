@@ -5,16 +5,15 @@
 #define ARRAY_SIZE 256
 #define DIM_SIZE 16
 
-#define MULTICORE 0
+// #define MULTICORE 0
 
-#if MULTICORE
-#define NUM_CORES 2
-#else
-#define NUM_CORES 1
-#endif
+// #if MULTICORE
+// #define NUM_CORES 2
+// #else
+// #define NUM_CORES 1
+// #endif
 
-#define NUM_HART 4
-#define MAX_HART 8
+#define NUM_HART 1
 
 static uint32_t input1_data[ARRAY_SIZE] = {
     0, 3, 2, 0, 3, 1, 0, 3, 2, 3, 2, 0, 3, 3, 1, 2, 3, 0, 0, 1, 1, 1, 2, 3, 1, 2, 3, 1, 1, 3, 2, 2,
@@ -61,34 +60,27 @@ void matmul(const size_t coreid, const size_t ncores, const size_t lda, const ui
     for (i = 0; i < lda; i++) {
         for (j = start; j < (start + block); j++) {
             uint32_t sum = 0;
-            for (k = 0; k < lda; k++)
+            for (k = 0; k < lda; k++) {
                 sum += A[j * lda + k] * B[k * lda + i];
+            }
             C[i + j * lda] = sum;
         }
     }
 }
 
-// void main() {
-//     int mhartid = get_mhartid();
-//     harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
-//     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
-    
-//     // Mark completion
-//     harts_done |= (uint8_t) (1 << mhartid);
-
-//     // Verify result
-//     if(mhartid == 0) {
-//         for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
-//             if (results[i] != verify_data[i]) {
-//                 flag = 0;
-//                 return;
-//             }
-//         }
-//     }
-//     wait_for_all_harts_done();
-
-//     return;
-// }
+void verifydata(int coreid, const size_t ncores, uint32_t results[], uint32_t verify_data[]) {
+    size_t start = ARRAY_SIZE / ncores * coreid;
+    size_t end = ARRAY_SIZE / ncores * (coreid + 1);
+    start = 0;
+    end = ARRAY_SIZE;
+    for(int i = start; i < end; i++) {
+        if (results[i] != verify_data[i]) {
+            print("Incorrect data in hart %d!\n", coreid);
+            print("Incorrect data at %d!\n", i);
+            return;
+        }
+    }
+}
 
 // void hart0_main() {
 //     matmul(0, NUM_CORES, DIM_SIZE, input1_data, input2_data, results);
@@ -111,18 +103,14 @@ void matmul(const size_t coreid, const size_t ncores, const size_t lda, const ui
 
 void hart0_main() {
     int mhartid = 0;
-    print("hello from hart0\n");
+    uint32_t beginning_cycle = get_cycles();
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
-    
-    print("hart0 waiting for other harts\n");
-    wait_for_all_harts_done();
+    uint32_t ending_cycle = get_cycles();
+    uint32_t cycle = ending_cycle - beginning_cycle;
+    hart_done = 1;
+    wait_for_all_harts_done(NUM_HART);
+    print("Took %x cycles\n", cycle);
 
-    for (uint32_t i = 0; i < ARRAY_SIZE; i++) {
-        if (results[i] != verify_data[i]) {
-            flag = 0;
-            return;
-        }
-    }
     flag = 1;
     print("hart0 done\n");
     return;
