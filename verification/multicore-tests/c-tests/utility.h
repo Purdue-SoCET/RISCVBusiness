@@ -5,6 +5,7 @@
 
 extern int32_t flag;
 
+extern volatile int32_t hart_done;
 extern volatile int32_t hart1_done;
 extern volatile int32_t hart2_done;
 extern volatile int32_t hart3_done;
@@ -13,7 +14,6 @@ extern volatile int32_t hart5_done;
 extern volatile int32_t hart6_done;
 extern volatile int32_t hart7_done;
 
-extern volatile int8_t harts_done;
 #define MTIME_ADDR 0xFFFFFFE0
 #define MTIMEH_ADDR 0xFFFFFFE4
 #define MTIMECMP_ADDR 0xFFFFFFE8
@@ -28,6 +28,13 @@ void put_uint32_hex(uint32_t hex);
 uint32_t get_cycles();
 uint32_t get_instrs();
 void __attribute__((noinline)) wait_for_hart1_done();
+void __attribute__((noinline)) wait_for_hart2_done();
+void __attribute__((noinline)) wait_for_hart3_done();
+void __attribute__((noinline)) wait_for_hart4_done();
+void __attribute__((noinline)) wait_for_hart5_done();
+void __attribute__((noinline)) wait_for_hart6_done();
+void __attribute__((noinline)) wait_for_hart7_done();
 void wait_for_all_harts_done();
+uint32_t get_mhartid();
 
 #endif
