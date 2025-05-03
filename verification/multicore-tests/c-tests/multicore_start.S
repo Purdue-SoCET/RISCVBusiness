@@ -2,7 +2,7 @@
 WANT_AMO_EMU_SUPPORT
 
 #ifndef NUM_CORE
-#define NUM_CORE 8 
+#define NUM_CORE 4 
 #endif
 
 .global _start
@@ -42,7 +42,6 @@ wait_for_bss_cleared:
     li t2, NUM_CORE
     bge s0, t2, hart_wait_loop
 
-  
     slli t0, s0, 2    
     la t1, main_array
     add t0, t0, t1
@@ -57,7 +56,7 @@ wait_for_bss_cleared:
 
 .global done
 hart0_done:
-    la t1, harts_done   
+    la t1, hart_done   
     li t2, 1        
 
 wait_all_harts:
@@ -76,45 +75,38 @@ all_done:
     j __inf_loop
 
 hart1_done_end:
-    li t0, 1
     la t1, hart1_done
-    sw x28, 4(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 hart2_done_end:
-    li t0, 1
     la t1, hart2_done
-    sw x28, 8(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 hart3_done_end:
-    li t0, 1
     la t1, hart3_done
-    sw x28, 12(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 hart4_done_end:
-    li t0, 1
     la t1, hart4_done
-    sw x28, 16(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 hart5_done_end:
-    li t0, 1
     la t1, hart5_done
-    sw x28, 20(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 hart6_done_end:
-    li t0, 1
     la t1, hart6_done
-    sw x28, 24(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 hart7_done_end:
-    li t0, 1
     la t1, hart7_done
-    sw x28, 28(t1)
+    lw x28, 0(t1)
     j __inf_loop
 
 __inf_loop:
@@ -140,8 +132,8 @@ flag: .word 0x00
 .global bss_cleared
 bss_cleared: .word 0x00
 
-.global harts_done
-harts_done: .word 0x00
+.global hart_done
+hart_done: .word 0x00
 
 .global hart1_done
 hart1_done: .word 0x00
@@ -164,19 +156,6 @@ hart6_done: .word 0x00
 .global hart7_done
 hart7_done: .word 0x00
 
-
-
-.global done_flags
-done_flags:
-    .word 0x00  # hart0
-    .word 0x00  # hart1
-    .word 0x00  # hart2
-    .word 0x00  # hart3
-    .word 0x00  # hart4
-    .word 0x00  # hart5
-    .word 0x00  # hart6
-    .word 0x00  # hart7
-
 .global main_array
 main_array:
     .int hart0_main
@@ -198,3 +177,4 @@ done_array:
     .int hart5_done_end
     .int hart6_done_end
     .int hart7_done_end
+    

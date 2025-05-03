@@ -6,7 +6,7 @@ isa_params:
 # Microarchitectural Configurations
 microarch_params:
   # Multicore configurations
-  num_harts : 1
+  num_harts : 4
 
   # Branch/Jump Configurations
   br_predictor_type : "not_taken"

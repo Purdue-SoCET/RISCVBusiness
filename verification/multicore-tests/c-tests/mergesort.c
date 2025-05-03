@@ -6,11 +6,12 @@
 
 // In order to properly run with N >= 512, you need to bump the size of the stack for each hart in
 // start.S
-#define N 20
+#define N 16
 #include "merge.h"
 
 #define NUM_HART 4
-#define MAX_HART 8
+
+// #define WARMUP
 
 uint32_t arr[2048] = {
     1157, 4050, 3787, 2591, 2747, 1917, 4068, 1552, 967,  2724, 2987, 2097, 2097, 4603, 2762, 3992,
@@ -141,42 +142,173 @@ uint32_t arr[2048] = {
     427,  3240, 4345, 3871, 1619, 1396, 3460, 4584, 5071, 842,  4906, 3213, 1556, 4189, 31,   500,
     2806, 4116, 5186, 3432, 3730, 3366, 5506, 3578, 3454, 3295, 3650, 3067, 4525, 3503, 2566, 3688,
     1899, 4490, 1971, 1982, 720,  1403, 2296, 2575, 3008, 3429, 2822, 4542, 999,  1397, 3389, 276};
-__attribute__((section(".noinit"))) uint32_t out_arr[2048];
 
-void main() {
-    int mhartid = 0;
+__attribute__((section(".noinit"))) uint32_t temp_arr_1[2048];
+__attribute__((section(".noinit"))) uint32_t temp_arr_2[2048];
+__attribute__((section(".noinit"))) uint32_t temp_arr_3[2048];
 
-    for(int i = 1; i <= NUM_HART; i *= 2) {
-        // Fill n bits from the right for completion check
-        harts_done = NUM_HART == MAX_HART ? 0 : ~((1 << NUM_HART) - 1);
-        // Merge sort
-        if(mhartid % i == 0) {
-            mergeSort(&arr[N / NUM_HART * mhartid], N / NUM_HART * i);
+void check_sorted() {
+    if(NUM_HART == 1) {
+        for (int i = 0; i < N - 1; i++) {
+            if(arr[i] > arr[i + 1]) {
+                print("not sorted!\n");
+                return;
+            }
         }
-        // Mark completion
-        harts_done |= (uint8_t) (1 << mhartid);
-        // Wait for all other harts
-        wait_for_all_harts_done();
     }
+    else if (NUM_HART == 2) {
+        for (int i = 0; i < N - 1; i++) {
+            if(temp_arr_1[i] > temp_arr_1[i + 1]) {
+                print("not sorted!\n");
+                return;
+            }
+        }
+    }
+    else if (NUM_HART == 4) {
+        for (int i = 0; i < N - 1; i++) {
+            if(temp_arr_2[i] > temp_arr_2[i + 1]) {
+                print("not sorted!\n");
+                return;
+            }
+        }
+    }
+    else if (NUM_HART == 8) {
+        for (int i = 0; i < N - 1; i++) {
+            if(temp_arr_3[i] > temp_arr_3[i + 1]) {
+                print("not sorted!\n");
+                return;
+            }
+            print("%x\n", temp_arr_3[i]);
+        }
+    }
+    print("sorted!\n");
+}
 
-    return;
+void warmup() {
+    #ifdef WARMUP
+    volatile uint32_t temp = 0;
+    for(int i = 0; i < N; i ++) {
+        temp = arr[i];
+    }
+    #endif
 }
 
 void hart0_main() {
-    mergeSort(arr, N / 2);
-    wait_for_hart1_done();
-    merge(arr, out_arr, 0, (N / 2) - 1, N - 1);
+    warmup();
+    int beginning_cycle = get_cycles();
+
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+
+    hart_done = 1;
+
+    // 2 cores
+    if(NUM_HART > 1) {
+        wait_for_hart1_done();
+        merge(arr, temp_arr_1, 0, block_size - 1, block_size * 2 - 1);
+    }
+    // 4 cores
+    if(NUM_HART > 2) {
+        wait_for_hart2_done();
+        merge(temp_arr_1, temp_arr_2, 0, block_size * 2 - 1, block_size * 4 - 1);
+    }
+    // 8 cores
+    if(NUM_HART > 4) {
+        wait_for_hart4_done();
+        merge(temp_arr_2, temp_arr_3, 0, block_size * 4 - 1, block_size * 8 - 1);
+    }
+
+    int ending_cycle = get_cycles();
+    print("Took %x cycles\n", ending_cycle - beginning_cycle);
+    check_sorted();
     flag = 1;
 }
 
 void hart1_main() {
-    mergeSort(&arr[N / 2], N / 2);
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
     hart1_done = 1;
 }
 
-void hart2_main() {}
-void hart3_main() {}
-void hart4_main() {}
-void hart5_main() {}
-void hart6_main() {}
-void hart7_main() {}
+void hart2_main() {
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+
+    if(NUM_HART > 3) {
+        wait_for_hart3_done();
+        merge(arr, temp_arr_1, start_index, block_size - 1, block_size * 2 - 1);
+    }
+
+    hart2_done = 1;
+}
+
+void hart3_main() {
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+    hart3_done = 1;
+}
+void hart4_main() {
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+
+    hart4_done = 1;
+
+    // 2 cores
+    if(NUM_HART > 1) {
+        wait_for_hart5_done();
+        merge(arr, temp_arr_1, start_index, block_size - 1, block_size * 2 - 1);
+    }
+    // 4 cores
+    if(NUM_HART > 2) {
+        wait_for_hart6_done();
+        merge(temp_arr_1, temp_arr_2, start_index, block_size * 2 - 1, block_size * 4 - 1);
+    }
+
+    hart4_done = 1;
+}
+void hart5_main() {
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+
+    hart5_done = 1;
+}
+void hart6_main() {
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+
+    if(NUM_HART > 6) {
+        wait_for_hart7_done();
+        merge(arr, temp_arr_1, start_index, block_size - 1, block_size * 2 - 1);
+    }
+
+    hart6_done = 1;
+}
+void hart7_main() {
+    warmup();
+    int mhartid = get_mhartid();
+    int start_index = N / NUM_HART * mhartid;
+    int block_size = N / NUM_HART;
+    mergeSort(&arr[start_index], block_size);
+
+    hart7_done = 1;
+}
