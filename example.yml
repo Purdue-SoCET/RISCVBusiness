@@ -6,7 +6,7 @@ isa_params:
 # Microarchitectural Configurations
 microarch_params:
   # Multicore configurations
-  num_harts : 2
+  num_harts : 1
 
   # Branch/Jump Configurations
   br_predictor_type : "not_taken"
@@ -33,7 +33,7 @@ microarch_params:
   sparce_enabled : "disabled"
 
   # RV32C
-  rv32c_enabled : "enabled"
+  rv32c_enabled : "disabled"
   
   # Halt
   infinite_loop_halts : "true"
@@ -43,7 +43,6 @@ microarch_params:
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
-  standard_extensions: 
-    - name: "rv32a"
+  standard_extensions:
   nonstandard_extensions:
 

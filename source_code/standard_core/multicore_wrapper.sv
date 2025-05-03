@@ -11,8 +11,7 @@
 
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter NUM_HARTS,
-    parameter NONCACHE_START_ADDR = 32'hF0000000
+    parameter NUM_HARTS
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
