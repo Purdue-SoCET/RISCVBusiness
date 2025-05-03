@@ -119,7 +119,7 @@ module RISCVBusiness #(
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
         .bus_ctrl_if(bus_ctrl_if),
-        .abort_bus(abort_bus)
+        .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
