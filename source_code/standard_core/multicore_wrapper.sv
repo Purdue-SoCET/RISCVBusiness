@@ -30,8 +30,7 @@ module multicore_wrapper #(
     generic_bus_if pipeline_trans_if ();
 
     memory_controller #(
-        .NUM_HARTS(NUM_HARTS),
-        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+        .NUM_HARTS(NUM_HARTS)
     ) mc (
         .CLK(CLK),
         .nRST(nRST),
