@@ -82,9 +82,9 @@ module branch_predictor_wrapper (
                 // static backward taken/forward not taken predictor
 		        "btfnt"	   : btfnt_predictor predictor (CLK, nRST, predict_temp1);
                 // BTB with 1b predictor
-		        "btb_1"	   : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4), .ASSOC(BTB_ASSOC)) predictor (CLK, nRST, predict_temp1);	
+		        "btb_1"	   : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_temp1);	
                 // BTB with 2b predictor
-		        "btb_2"	   : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4), .ASSOC(BTB_ASSOC)) predictor (CLK, nRST, predict_temp1);
+		        "btb_2"	   : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_temp1);
                 // BTB with global history predictor
 			    "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);
             endcase

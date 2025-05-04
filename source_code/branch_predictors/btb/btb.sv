@@ -26,8 +26,7 @@
 
 module btb #(
     parameter int PRED_BITS = 1,
-    parameter int NFRAMES = 32,
-    parameter int ASSOC = 1
+    parameter int NFRAMES = 32
 )
 (
     input logic CLK, nRST,
@@ -47,25 +46,21 @@ module btb #(
     } btb_frame_t;      // BTB frame
 
     typedef struct packed {
-        btb_frame_t [ASSOC-1:0] frames;
-    } btb_set_t;        // BTB set
-
-    typedef struct packed {
         logic [N_IGNORE_BITS-1:0] ignore_bits;
         logic [N_TAG_BITS-1:0] tag_bits;
         logic [N_SET_BITS-1:0] idx_bits;
         logic [1:0] byte_bits;
     } btb_addr_t;       // decoded curr PC type
 
-    btb_set_t [N_SETS-1:0] buffer;
+    btb_frame_t [N_SETS-1:0] buffer;
     btb_addr_t curr_pc, update_pc;
-    btb_set_t selected_set, next_set, update_set;
+    btb_frame_t selected_set, next_set, update_set;
     btb_frame_t selected_frame; 
 
     assign curr_pc = predict_if.current_pc; // convert PC to decoded type
     assign update_pc = predict_if.pc_to_update;
     assign selected_set = buffer[curr_pc.idx_bits];
-    assign selected_frame = (selected_set.frames[0].tag == curr_pc.tag_bits)? selected_set.frames[0] : selected_set.frames[1];
+    assign selected_frame = selected_set;
     assign update_set = buffer[update_pc.idx_bits];
     
     always_ff @(posedge CLK, negedge nRST) begin
@@ -88,33 +83,21 @@ module btb #(
     always_comb begin: update_logic
         next_set = buffer[update_pc.idx_bits];
         if(predict_if.update_predictor) begin
-            if(update_set.frames[0].tag == update_pc.tag_bits || update_set.frames[0].target == '0) begin
-                next_set.frames[0].tag = update_pc.tag_bits;
-                next_set.frames[0].target = predict_if.update_addr;
-                case(update_set.frames[0].taken) 
-                    SNT: next_set.frames[0].taken = predict_if.branch_result ? WNT : SNT; 
-                    WNT: next_set.frames[0].taken = predict_if.branch_result ? ST : SNT; 
-                    ST: next_set.frames[0].taken = predict_if.branch_result ? ST : WT; 
-                    WT: next_set.frames[0].taken = predict_if.branch_result ? ST : SNT; 
-                    default: next_set.frames[0].taken = SNT;
-                endcase
-            end else begin
-                next_set.frames[1].tag = update_pc.tag_bits;
-                next_set.frames[1].target = predict_if.update_addr;
-                case(update_set.frames[1].taken) 
-                    SNT: next_set.frames[1].taken = predict_if.branch_result ? WNT : SNT; 
-                    WNT: next_set.frames[1].taken = predict_if.branch_result ? ST : SNT; 
-                    ST: next_set.frames[1].taken = predict_if.branch_result ? ST : WT; 
-                    WT: next_set.frames[1].taken = predict_if.branch_result ? ST : SNT; 
-                    default: next_set.frames[1].taken = SNT;
-                endcase
-            end
+            next_set.tag = update_pc.tag_bits;
+            next_set.target = predict_if.update_addr;
+            case(update_set.taken) 
+                SNT: next_set.taken = predict_if.branch_result ? WNT : SNT; 
+                WNT: next_set.taken = predict_if.branch_result ? ST : SNT; 
+                ST: next_set.taken = predict_if.branch_result ? ST : WT; 
+                WT: next_set.taken = predict_if.branch_result ? ST : SNT; 
+                default: next_set.taken = SNT;
+            endcase
         end
     end
 
     // get prediction
     always_comb begin : predict_logic
-        if(selected_set.frames[0].tag != curr_pc.tag_bits && selected_set.frames[1].tag != curr_pc.tag_bits) begin
+        if(selected_set.tag != curr_pc.tag_bits) begin
             // current PC not in buffer: predict not taken, 
             predict_if.predict_taken = 0;
             predict_if.target_addr = predict_if.is_rv32c ? predict_if.current_pc + 2 : predict_if.current_pc + 4;
