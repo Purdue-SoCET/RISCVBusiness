@@ -67,8 +67,7 @@ module separate_caches (
             l1_cache #(
                 .CACHE_SIZE(DCACHE_SIZE),
                 .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
-                .ASSOC(DCACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+                .ASSOC(DCACHE_ASSOC)
             )
             dcache (
                 .CLK(CLK),
@@ -115,8 +114,7 @@ module separate_caches (
             l1_cache #(
                 .CACHE_SIZE(ICACHE_SIZE),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
-                .ASSOC(ICACHE_ASSOC),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+                .ASSOC(ICACHE_ASSOC)
             )
             icache (
                 .CLK(CLK),

@@ -47,8 +47,6 @@ filesets:
         files:
             - "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
             - "!tool_verilator? (source_code/bus_bridges/apb.sv)"
-            #- source_code/bus_bridges/apb.sv
-            #- source_code/bus_bridges/ahb.sv
         file_type: systemVerilogSource
 
     fpga_wrapper:
@@ -89,7 +87,6 @@ targets:
         description: Simulate w/TB
         default_tool: verilator
         filesets_append:
-            #- trackers
             - "tool_verilator? (verilator_tb)"
             - "!tool_verilator? (tb)"
         toplevel:

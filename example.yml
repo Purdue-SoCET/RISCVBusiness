@@ -9,7 +9,10 @@ microarch_params:
   num_harts : 1
 
   # Branch/Jump Configurations
-  br_predictor_type : "btb_2"
+  br_predictor_type : "not_taken"
+  btb_size : 1024
+  btb_assoc : 1
+  use_ras : "false"
   
   # Cache configurations
   cache_config  : "separate"
@@ -41,6 +44,6 @@ microarch_params:
 
 # RISC-MGMT Extension Configuration
 risc_mgmt_params:
-  standard_extensions: "MAC"
+  standard_extensions:
   nonstandard_extensions:
 

@@ -31,7 +31,6 @@ module branch_predictor_wrapper (
     input logic CLK,
     nRST,
     predictor_pipeline_if.predictor predict_if
-    //predictor_pipeline_if.access access_if
 );
     // Predictor used based on the BR_PREDICTOR_TYPE definition
 
@@ -39,8 +38,6 @@ module branch_predictor_wrapper (
     predictor_pipeline_if predict_temp2();    
    
     always_comb begin
-        $display(BR_PREDICTOR_TYPE);
-
         predict_temp1.current_pc = predict_if.current_pc;
         predict_temp1.update_predictor = predict_if.update_predictor;
         predict_temp1.prediction = predict_if.prediction;
@@ -79,21 +76,25 @@ module branch_predictor_wrapper (
         end
     end
     generate
-        //case (BR_PREDICTOR_TYPE)
-        //    "not_taken": nottaken_predictor predictor (.*);	// static not taken predictor
-		//	"btfnt"	   : btfnt_predictor predictor (.*);	// static backward taken/forward not taken predictor
-		//	"btb_1"	   : btb predictor (.*);				// branch target buffer with 1 bit predictor
-		//	"btb_2"	   : btb #(.PRED_BITS(2)) predictor (.*); // BTB with 2-bit predictor
-		//	"return"   : return_predictor #(.entries(10)) predictor (.*); //return address predictor
-        //endcase
             case (BR_PREDICTOR_TYPE)
-                "not_taken": nottaken_predictor predictor (CLK, nRST, predict_temp1);	// static not taken predictor
-		        "btfnt"	   : btfnt_predictor predictor (CLK, nRST, predict_temp1);	// static backward taken/forward not taken predictor
-		        "btb_1"	   : btb predictor (CLK, nRST, predict_temp1);				// branch target buffer with 1 bit predictor
-		        "btb_2"	   : btb #(.PRED_BITS(2)) predictor (CLK, nRST, predict_temp1); // BTB with 2-bit predictor
-			    "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);	// BTB with global history and prediction history
+                // static not taken predictor
+                "not_taken": nottaken_predictor predictor (CLK, nRST, predict_temp1);
+                // static backward taken/forward not taken predictor
+		        "btfnt"	   : btfnt_predictor predictor (CLK, nRST, predict_temp1);
+                // BTB with 1b predictor
+		        "btb_1"	   : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4), .ASSOC(BTB_ASSOC)) predictor (CLK, nRST, predict_temp1);	
+                // BTB with 2b predictor
+		        "btb_2"	   : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4), .ASSOC(BTB_ASSOC)) predictor (CLK, nRST, predict_temp1);
+                // BTB with global history predictor
+			    "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);
             endcase
     endgenerate
-    return_predictor #(.entries(4)) predictor (CLK, nRST, predict_temp2);
+
+    generate
+        if(USE_RAS == "true")
+            return_predictor #(.entries(4)) predictor (CLK, nRST, predict_temp2);
+        else // 'no-op' predictor
+            nottaken_predictor predictor(CLK, nRST, predict_temp2);
+    endgenerate
 
 endmodule

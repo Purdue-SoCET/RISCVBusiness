@@ -87,7 +87,6 @@ module stage3_fetch_stage (
 	assign predict_if.current_pc = pc;
 	assign predict_if.is_rv32c = rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11);
 	// TODO: duplicating control unit. Not right for compressed instruction, decompression happens in EX stage
-	//assign instr_sb = rv32cif.c_ena? sbtype_t'(rv32cif.inst32) : sbtype_t'(instr_to_ex);
 	assign instr_sb = sbtype_t'(instr_to_ex);
 	assign predict_if.instr = instr_to_ex;
 	assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
