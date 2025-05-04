@@ -1,8 +1,6 @@
 
 #include "utility.h"
 
-//volatile int x[] = {0, 1, 2, 3, 4, 5};
-//volatile int y[] = {0, 0, 0, 0, 0, 0};
 int x[] = {0, 1, 2, 3, 4, 5};
 int y[] = {0, 0, 0, 0, 0, 0};
 
