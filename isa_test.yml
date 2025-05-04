@@ -9,6 +9,8 @@ microarch_params:
 
   # Branch/Jump Configurations
   br_predictor_type : "not_taken"
+  btb_size : 128 
+  use_ras : "false"
 
   # Cache configurations
   cache_config  : "separate"

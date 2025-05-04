@@ -14,6 +14,7 @@ package stage3_types_pkg;
         word_t instr;
         word_t prediction;
         word_t badaddr;
+        word_t predicted_address;
     } fetch_ex_t;
 
     typedef struct packed {
@@ -67,6 +68,7 @@ package stage3_types_pkg;
         word_t pc4;
         word_t imm_U;
         word_t badaddr;
+        word_t predicted_address;
         tracker_ex_mem_t tracker_signals;
         // TODO: imm_U? Maybe needed
     } ex_mem_t;
