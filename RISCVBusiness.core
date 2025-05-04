@@ -107,19 +107,6 @@ targets:
                 make_options:
                     - -j 48
 
-    no_mc:
-        <<: *default
-        description: Simulate w/TB, no memory controller
-        default_tool: verilator
-        filesets_append:
-            #- trackers
-            - "tool_verilator? (no_memory_tb)"
-        toplevel:
-            - "tool_verilator? (top_core)"
-        tools:
-            verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
-
     fpga:
         <<: *default
         filesets_append:
