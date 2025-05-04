@@ -82,15 +82,15 @@ module stage3_fetch_stage (
 
     assign pc4or2 = (rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11)) ? (pc + 2) : (pc + 4);
     
-	//Branch Predictor logic
-	sbtype_t instr_sb;
-	assign predict_if.current_pc = pc;
-	assign predict_if.is_rv32c = rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11);
-	// TODO: duplicating control unit. Not right for compressed instruction, decompression happens in EX stage
-	assign instr_sb = sbtype_t'(instr_to_ex);
-	assign predict_if.instr = instr_to_ex;
-	assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
-	assign predict_if.is_branch = (instr_sb.opcode == BRANCH) ? 1 : 0;
+    //Branch Predictor logic
+    sbtype_t instr_sb;
+    assign predict_if.current_pc = pc;
+    assign predict_if.is_rv32c = rv32cif.rv32c_ena & (rv32cif.result[1:0] != 2'b11);
+    // TODO: duplicating control unit. Not right for compressed instruction, decompression happens in EX stage
+    assign instr_sb = sbtype_t'(instr_to_ex);
+    assign predict_if.instr = instr_to_ex;
+    assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
+    assign predict_if.is_branch = (instr_sb.opcode == BRANCH) ? 1 : 0;
     assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR)) ? 1:0;
 
     assign npc = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
@@ -120,7 +120,6 @@ module stage3_fetch_stage (
     //Fetch Execute Pipeline Signals
     word_t instr_to_ex;
     assign instr_to_ex = rv32cif.rv32c_ena ? rv32cif.result : igen_bus_if.rdata;
-    logic predict_taken_buffer;
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) fetch_ex_if.fetch_ex_reg <= '0;
         else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_ex_if.fetch_ex_reg <= '0;
@@ -139,9 +138,8 @@ module stage3_fetch_stage (
             fetch_ex_if.fetch_ex_reg.badaddr    <= badaddr;
             fetch_ex_if.fetch_ex_reg.pc         <= pc;
             fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
-	    predict_taken_buffer 		<= predict_if.predict_taken; //Really bad buffer setup - should work?
-            fetch_ex_if.fetch_ex_reg.prediction <= predict_taken_buffer; // TODO: This is just wrong...
-	    fetch_ex_if.fetch_ex_reg.predicted_address<=predict_if.target_addr; //MF:btb address to if predicted_address
+            fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
+            fetch_ex_if.fetch_ex_reg.predicted_address <= predict_if.target_addr;
         end
     end
 
