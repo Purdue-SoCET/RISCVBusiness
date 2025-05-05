@@ -7,9 +7,6 @@ filesets:
         files:
             - alu_types_pkg.sv
             - rv32i_types_pkg.sv
-            #- machine_mode_types_1_12_pkg.sv
-            #- pma_types_1_12_pkg.sv
-            #- pmp_types_1_12_pkg.sv
             - machine_mode_types_1_13_pkg.sv
             - pma_types_1_13_pkg.sv
             - pmp_types_1_13_pkg.sv
