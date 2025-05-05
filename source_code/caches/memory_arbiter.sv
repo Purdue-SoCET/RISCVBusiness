@@ -1,9 +1,9 @@
 `include "generic_bus_if.vh"
 
 module memory_arbiter (
-    input CLK, nRST,
-    generic_bus_if.generic_bus icache_if, dcache_if,
-    generic_bus_if.cpu mem_arb_if
+	input CLK, nRST,
+	generic_bus_if.generic_bus icache_if, dcache_if,
+	generic_bus_if.cpu mem_arb_if
 );
     typedef enum logic[1:0] {IDLE, IREQUEST, DREQUEST} state_t;
     state_t state, next_state;
@@ -63,38 +63,38 @@ module memory_arbiter (
 		endcase
 	end
 
-   	always_comb begin : NEXT_STATE_LOGIC
-       	next_state  = state;
+	always_comb begin : NEXT_STATE_LOGIC
+		next_state = state;
 
-       	case(state)
-					IDLE: begin
-						if((dcache_if.wen || dcache_if.ren) && mem_arb_if.busy) begin
-							next_state  = DREQUEST;
-						end
-						else if((icache_if.wen || icache_if.ren) && mem_arb_if.busy) begin
-							next_state  = IREQUEST;
-						end
-					end
-					DREQUEST: begin
-						if(~mem_arb_if.busy) begin // hopefully, busy will always be high until fetch, so no problem
-							next_state  = IDLE;
-						end
-					end
-					IREQUEST: begin
-						if(~mem_arb_if.busy) begin
-							next_state  = IDLE;
-						end
-					end
-      	endcase
-   	end
-    
-   	always_ff @ (posedge CLK, negedge nRST) begin
-			if(~nRST) begin
-	   		state <= IDLE;
-			end 
-			else begin
-	   		state <= next_state;
+		case(state)
+			IDLE: begin
+				if((dcache_if.wen || dcache_if.ren) && mem_arb_if.busy) begin
+					next_state = DREQUEST;
+				end
+				else if((icache_if.wen || icache_if.ren) && mem_arb_if.busy) begin
+					next_state = IREQUEST;
+				end
 			end
-   	end
+			DREQUEST: begin
+				if(~mem_arb_if.busy) begin // hopefully, busy will always be high until fetch, so no problem
+					next_state = IDLE;
+				end
+			end
+			IREQUEST: begin
+				if(~mem_arb_if.busy) begin
+					next_state = IDLE;
+				end
+			end
+		endcase
+	end
+    
+	always_ff @ (posedge CLK, negedge nRST) begin
+		if(~nRST) begin
+			state <= IDLE;
+		end 
+		else begin
+			state <= next_state;
+		end
+	end
     
 endmodule
