@@ -230,7 +230,7 @@ module l1_cache #(
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
                     //Read or write hit
                     if((state == HIT && (proc_gen_bus_if.ren || (proc_gen_bus_if.wen && coherence_hit))) || state == SNOOP) begin
-	                    hit       = 1'b1;
+	                    hit       = state == HIT;//1'b1;
         	            hit_data  = sramRead.frames[i].data;
                 	    hit_idx   = i;
                     end
@@ -327,15 +327,7 @@ module l1_cache #(
                     // during SNOOP, this will bring busy low before it's actually
                     // written to the sram. For testing, use seed 1734995039
                     // and 999914 transactions on the stress testbench
-                    casez (proc_gen_bus_if.byte_en)
-                        4'b0001:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][0+:8] != proc_gen_bus_if.wdata[0+:8];
-                        4'b0010:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][8+:8] != proc_gen_bus_if.wdata[8+:8];
-                        4'b0100:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][16+:8] != proc_gen_bus_if.wdata[16+:8];
-                        4'b1000:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][24+:8] != proc_gen_bus_if.wdata[24+:8];
-                        4'b0011:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][0+:16] != proc_gen_bus_if.wdata[0+:16];
-                        4'b1100:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits][16+:16] != proc_gen_bus_if.wdata[16+:16];
-                        default:    proc_gen_bus_if.busy = sramRead.frames[hit_idx].data[decoded_addr.idx.block_bits] != proc_gen_bus_if.wdata;
-                    endcase
+                    proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
                     casez (proc_gen_bus_if.byte_en)
                         4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
