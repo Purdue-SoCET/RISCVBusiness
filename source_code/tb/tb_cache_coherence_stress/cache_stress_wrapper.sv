@@ -34,31 +34,49 @@ module cache_stress_wrapper (
     cache_control_if c1c_if();
     bus_ctrl_if bus_ctrl_if();
 
+    always_ff @(posedge CLK, negedge nRST) begin
+        if(!nRST) begin
+            cache0_proc_gen_bus_if.addr <= 0;
+            cache0_proc_gen_bus_if.wdata <= 0;
+            cache0_proc_gen_bus_if.ren <= 0;
+            cache0_proc_gen_bus_if.wen <= 0;
+            cache0_proc_gen_bus_if.byte_en <= 0;
+            cache1_proc_gen_bus_if.addr <= 0;
+            cache1_proc_gen_bus_if.wdata <= 0;
+            cache1_proc_gen_bus_if.ren <= 0;
+            cache1_proc_gen_bus_if.wen <= 0;
+            cache1_proc_gen_bus_if.byte_en <= 0;
+            c0c_if.dcache_flush <= 0;
+            c1c_if.dcache_flush <= 0;
+        end else begin
+            cache0_proc_gen_bus_if.addr <= cache0_addr;
+            cache0_proc_gen_bus_if.wdata <= cache0_wdata;
+            cache0_proc_gen_bus_if.ren <= cache0_ren;
+            cache0_proc_gen_bus_if.wen <= cache0_wen;
+            cache0_proc_gen_bus_if.byte_en <= 'hf;
+            cache1_proc_gen_bus_if.addr <= cache1_addr;
+            cache1_proc_gen_bus_if.wdata <= cache1_wdata;
+            cache1_proc_gen_bus_if.ren <= cache1_ren;
+            cache1_proc_gen_bus_if.wen <= cache1_wen;
+            cache1_proc_gen_bus_if.byte_en <= 'hf;
+            c0c_if.dcache_flush <= cache0_flush;
+            c1c_if.dcache_flush <= cache1_flush;
+        end
+    end
+
     always_comb begin
-        c0c_if.dcache_flush = cache0_flush;
         cache0_flush_done = c0c_if.dflush_done;
-        c1c_if.dcache_flush = cache1_flush;
         cache1_flush_done = c1c_if.dflush_done;
 
         out_gen_bus_if.rdata = memory_rdata;
         out_gen_bus_if.busy = memory_busy;
         out_gen_bus_if.byte_en = 'hf;
 
-        cache0_proc_gen_bus_if.addr = cache0_addr;
-        cache0_proc_gen_bus_if.wdata = cache0_wdata;
-        cache0_proc_gen_bus_if.ren = cache0_ren;
-        cache0_proc_gen_bus_if.wen = cache0_wen;
         cache0_rdata = cache0_proc_gen_bus_if.rdata;
         cache0_busy = cache0_proc_gen_bus_if.busy;
-        cache0_proc_gen_bus_if.byte_en = 'hf;
 
-        cache1_proc_gen_bus_if.addr = cache1_addr;
-        cache1_proc_gen_bus_if.wdata = cache1_wdata;
-        cache1_proc_gen_bus_if.ren = cache1_ren;
-        cache1_proc_gen_bus_if.wen = cache1_wen;
         cache1_rdata = cache1_proc_gen_bus_if.rdata;
         cache1_busy = cache1_proc_gen_bus_if.busy;
-        cache1_proc_gen_bus_if.byte_en = 'hf;
 
         out_gen_bus_if.addr = bus_ctrl_if.l2addr;
         out_gen_bus_if.ren = bus_ctrl_if.l2REN;
@@ -89,7 +107,8 @@ module cache_stress_wrapper (
         .reserve(c0c_if.dcache_reserve),
         .flush_done(c0c_if.dflush_done),
         .clear_done(c0c_if.dclear_done),
-        .abort_bus()
+        .abort_bus(),
+        .cache_miss()
     );
 
     l1_cache #(
@@ -107,7 +126,8 @@ module cache_stress_wrapper (
         .reserve(c1c_if.dcache_reserve),
         .flush_done(c1c_if.dflush_done),
         .clear_done(c1c_if.dclear_done),
-        .abort_bus()
+        .abort_bus(),
+        .cache_miss()
     );
 
     bus_ctrl #(
