@@ -77,21 +77,12 @@ import machine_mode_types_1_13_pkg::*;
 
 `timescale 1ns/10ps
 
-// permissions
-// parameter RWXV_PERMS = PAGE_PERM_READ |
-//                        PAGE_PERM_WRITE |
-//                        PAGE_PERM_EXECUTE |
-//                        PAGE_PERM_VALID;
-
-// parameter PERIOD = 20;
-// parameter DELAY = 5;
-
 module tb_page_perm_check ();
 
-  logic CLK = 0;
-  
-  // clock
-  always #(PERIOD/2) CLK++;
+logic CLK = 0;
+
+// clock
+always #(PERIOD/2) CLK++;
 
 // inputs to page perm check
 logic check;
@@ -469,7 +460,7 @@ initial begin : MAIN
   /**************************
   * No Fault -> R = 0, W = 0, X = 1, mstatus.mxr = 1
   **************************/
-   begin_test("Loads", "Fault -> R = 0, W = 0, X = 1, mstatus.mxr = 1");
+  begin_test("Loads", "Fault -> R = 0, W = 0, X = 1, mstatus.mxr = 1");
 
   // non test related inputs
   set_priv_level(S_MODE);
