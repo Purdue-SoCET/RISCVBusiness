@@ -344,7 +344,7 @@ module l1_cache #(
             end
             HIT: begin
                 // Hit logic
-                mem_gen_bus_if.addr = (at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr) & ~{CLEAR_LENGTH{1'b1}};
+                mem_gen_bus_if.addr = (at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr);
                 // cache hit on a page walker read
                 if(pw_gen_bus_if.ren && hit && !flush) begin
                     pw_gen_bus_if.busy = 0;
