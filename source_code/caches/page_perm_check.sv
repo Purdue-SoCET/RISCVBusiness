@@ -83,9 +83,9 @@ always_comb begin
       else if (access == ACCESS_STORE & ~pte_perms.writable) begin
         fault_store_page = 1;
       end
-      // fault if U = 1 and is S-mode or U = 0 and is U-mode
-      else if ((pte_perms.user & prv_pipe_if.curr_privilege_level == S_MODE & ~prv_pipe_if.mstatus.sum) |
-              (~pte_perms.user & prv_pipe_if.curr_privilege_level == U_MODE)) begin
+      // fault if U = 1 and is S-mode or U = 0 and is U-mode (or MPRV accesses where MPP is S-mode or U-mode, respectively)
+      else if ((pte_perms.user & (prv_pipe_if.curr_privilege_level == S_MODE | (prv_pipe_if.mstatus.mprv & prv_pipe_if.mstatus.mpp == S_MODE)) & ~prv_pipe_if.mstatus.sum) |
+              (~pte_perms.user & (prv_pipe_if.curr_privilege_level == U_MODE | (prv_pipe_if.mstatus.mprv & prv_pipe_if.mstatus.mpp == U_MODE)))) begin
         fault_load_page  = access == ACCESS_LOAD;
         fault_store_page = access == ACCESS_STORE;
         fault_insn_page  = access == ACCESS_INSN;

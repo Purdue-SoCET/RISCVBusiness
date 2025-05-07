@@ -58,7 +58,8 @@ module separate_caches (
 
     generic_bus_if empty_gen_bus_if ();
 
-    address_translation_if at_if ();
+    address_translation_if insn_at_if ();
+    address_translation_if data_at_if ();
 
     // assign physical addresses to pmp
     assign prv_pipe_if.ipaddr = icache_mem_gen_bus_if.addr;
@@ -114,7 +115,7 @@ module separate_caches (
                 .ccif(d_cache_coherency_if),
                 .cache_miss(dcache_miss),
                 .prv_pipe_if(prv_pipe_if),
-                .at_if(at_if),
+                .at_if(data_at_if),
                 .tlb_miss(1'b0),
                 .ppn_tag('0)
             );
@@ -140,7 +141,7 @@ module separate_caches (
                     .clear_done(control_if.dclear_done),
                     .ccif(d_cache_coherency_if),
                     .prv_pipe_if(prv_pipe_if),
-                    .at_if(at_if),
+                    .at_if(data_at_if),
                     .tlb_miss(dtlb_miss),
                     .ppn_tag(dtlb_hit_data[PPNLEN + 10 - 1:10])
                 );
@@ -155,7 +156,7 @@ module separate_caches (
                     .page_fault(prv_pipe_if.fault_load_page | prv_pipe_if.fault_store_page | prv_pipe_if.fault_insn_page),
                     .fence_done(control_if.dtlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
-                    .at_if(at_if),
+                    .at_if(data_at_if),
                     .tlb_miss(dtlb_miss),
                     .fault_load_page(dtlb_fault_load_page),
                     .fault_store_page(dtlb_fault_store_page),
@@ -215,7 +216,7 @@ module separate_caches (
                 .ccif(i_cache_coherency_if),
                 .cache_miss(icache_miss),
                 .prv_pipe_if(prv_pipe_if),
-                .at_if(at_if),
+                .at_if(insn_at_if),
                 .tlb_miss(1'b0),
                 .ppn_tag('0)
             );
@@ -241,7 +242,7 @@ module separate_caches (
                     .clear_done(control_if.iclear_done),
                     .ccif(i_cache_coherency_if),
                     .prv_pipe_if(prv_pipe_if),
-                    .at_if(at_if),
+                    .at_if(insn_at_if),
                     .tlb_miss(itlb_miss),
                     .ppn_tag(itlb_hit_data[PPNLEN + 10 - 1:10])
                 );
@@ -256,7 +257,7 @@ module separate_caches (
                     .page_fault(prv_pipe_if.fault_load_page | prv_pipe_if.fault_store_page | prv_pipe_if.fault_insn_page),
                     .fence_done(control_if.itlb_fence_done),
                     .prv_pipe_if(prv_pipe_if),
-                    .at_if(at_if),
+                    .at_if(insn_at_if),
                     .tlb_miss(itlb_miss),
                     .fault_load_page(itlb_fault_load_page),
                     .fault_store_page(itlb_fault_store_page),
@@ -280,7 +281,8 @@ module separate_caches (
                 .itlb_gen_bus_if(itlb_gen_bus_if),
                 .dtlb_gen_bus_if(dtlb_gen_bus_if),
                 .prv_pipe_if(prv_pipe_if),
-                .at_if(at_if)
+                .insn_at_if(insn_at_if),
+                .data_at_if(data_at_if)
             );
 
             assign prv_pipe_if.itlb_miss = itlb_miss;
@@ -323,7 +325,8 @@ module separate_caches (
                 end
             end
         end else begin
-            assign at_if.addr_trans_on = '0;
+            assign insn_at_if.addr_trans_on = '0;
+            assign data_at_if.addr_trans_on = '0;
         end
     endgenerate
 
