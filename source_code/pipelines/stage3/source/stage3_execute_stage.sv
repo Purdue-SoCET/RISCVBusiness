@@ -42,7 +42,8 @@ module stage3_execute_stage (
     stage3_forwarding_unit_if.execute fw_if,
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
-    rv32c_if.execute rv32cif
+    rv32c_if.execute rv32cif,
+    prv_pipeline_if.pipe prv_pipe_if
 );
     import rv32i_types_pkg::*;
     import pma_types_1_13_pkg::*;
@@ -70,6 +71,7 @@ module stage3_execute_stage (
     control_unit cu (
         .cu_if(cu_if),
         .rf_if(rf_if),
+        .prv_pipe_if(prv_pipe_if),
         .rmgmt_rsel_s_0('0),
         .rmgmt_rsel_s_1('0),
         .rmgmt_rsel_d('0),

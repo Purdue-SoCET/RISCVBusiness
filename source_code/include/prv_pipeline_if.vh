@@ -89,7 +89,7 @@ interface prv_pipeline_if();
 
   modport pipe (
     output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
-    input  rdata, invalid_priv_isn, fault_insn_page, fault_load_page, fault_store_page, dtlb_miss
+    input  rdata, invalid_priv_isn, fault_insn_page, fault_load_page, fault_store_page, dtlb_miss, mstatus, curr_privilege_level
   );
 
   modport fetch (

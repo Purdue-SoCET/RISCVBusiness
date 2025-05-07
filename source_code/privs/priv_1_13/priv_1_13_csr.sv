@@ -371,13 +371,17 @@ module priv_1_13_csr #(
             mstatus_next.spp = nxt_csr_val[8];
             mstatus_next.mprv = nxt_csr_val[17];
             mstatus_next.sum = nxt_csr_val[18];
+            mstatus_next.mxr = nxt_csr_val[19];
+            mstatus_next.tvm = nxt_csr_val[20];
             mstatus_next.tw = nxt_csr_val[21];
+            mstatus_next.tsr = nxt_csr_val[22];
             
             // Update sstatus
             sstatus_next.sie = mstatus_next.sie;
             sstatus_next.spie = mstatus_next.spie;
             sstatus_next.spp = mstatus_next.spp;
             sstatus_next.sum = mstatus_next.sum;
+            sstatus_next.mxr = mstatus_next.mxr;
           end
 
           MTVEC_ADDR: begin
@@ -474,12 +478,14 @@ module priv_1_13_csr #(
             sstatus_next.spie = nxt_csr_val[5];
             sstatus_next.spp = nxt_csr_val[8];
             sstatus_next.sum = nxt_csr_val[18];
+            sstatus_next.mxr = nxt_csr_val[19];
             
             // Update mstatus
             mstatus_next.sie = sstatus_next.sie;
             mstatus_next.spie = sstatus_next.spie;
             mstatus_next.spp = sstatus_next.spp;
             mstatus_next.sum = sstatus_next.sum;
+            mstatus_next.mxr = sstatus_next.mxr;
           end
           SIE_ADDR: begin
             sie_next.ssie = nxt_csr_val[1];
