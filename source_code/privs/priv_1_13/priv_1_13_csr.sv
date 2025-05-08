@@ -56,8 +56,10 @@ module priv_1_13_csr #(
   /* Machine Trap Setup */
   mstatus_t         mstatus, mstatus_next;
   misa_t            misa;
+  `ifdef SMODE_SUPPORTED
   long_csr_t        medeleg, medeleg_next;
   csr_reg_t         mideleg, mideleg_next;
+  `endif // SMODE_SUPPORTED
   mie_t             mie, mie_next;
   mtvec_t           mtvec, mtvec_next;
   mstatush_t        mstatush;
@@ -76,6 +78,9 @@ module priv_1_13_csr #(
   csr_reg_t         minstreth;
   long_csr_t        cycles_full, cf_next;
   long_csr_t        instret_full, if_next;
+  /* Supervisor environment configuration */
+  long_csr_t        menvcfg, menvcfg_next;
+  `ifdef SMODE_SUPPORTED
   /* Supervisor Protection and Translation */
   satp_t            satp, satp_next;
   /* Supervisor Trap Setup */
@@ -91,6 +96,9 @@ module priv_1_13_csr #(
   /* Supervisor Counters/Timers */
   scounteren_t      scounteren, scounteren_next;
   // scountinhibit_t   scountinhibit, scountinhibit_next; // No effect without Smcdeleg/Ssccfg
+  /* Supervisor environment configuration */
+  senvcfg_t         senvcfg, senvcfg_next; // unused, we zero it out. may be important for future!
+  `endif // SMODE_SUPPORTED
 
 
   csr_reg_t nxt_csr_val;
@@ -205,11 +213,13 @@ module priv_1_13_csr #(
       mtvec.mode <= DIRECT;
       mtvec.base <= '0;
 
+      `ifdef SMODE_SUPPORTED
       /* medeleg reset */
       medeleg <= medeleg_next;
 
       /* mideleg reset */
       mideleg <= mideleg_next;
+      `endif // SMODE_SUPPORTED
 
       /* mie reset */
       mie <= '0;
@@ -237,6 +247,10 @@ module priv_1_13_csr #(
       /* mcause reset */
       mcause <= '0;
 
+      /* menvcfg reset */
+      menvcfg <= '0;
+
+      `ifdef SMODE_SUPPORTED
       /* satp reset */
       satp <= '0;
 
@@ -294,11 +308,17 @@ module priv_1_13_csr #(
       
       /* scounteren reset */
       scounteren <= '0;
+
+      /* senvcfg reset */
+      senvcfg <= '0;
+      `endif // SMODE_SUPPORTED
     end else begin
       mstatus <= mstatus_next;
       mtvec <= mtvec_next;
+      `ifdef SMODE_SUPPORTED
       medeleg <= medeleg_next;
       mideleg <= mideleg_next;
+      `endif // SMODE_SUPPORTED
       mie <= mie_next;
       mip <= mip_next;
       mscratch <= mscratch_next;
@@ -309,6 +329,8 @@ module priv_1_13_csr #(
       mcause <= mcause_next;
       cycles_full <= cf_next;
       instret_full <= if_next;
+      menvcfg <= menvcfg_next;
+      `ifdef SMODE_SUPPORTED
       satp <= satp_next;
       sstatus <= sstatus_next;
       sie <= sie_next;
@@ -319,6 +341,8 @@ module priv_1_13_csr #(
       stval <= stval_next;
       sip <= sip_next;
       scounteren <= scounteren_next;
+      senvcfg <= senvcfg_next;
+      `endif // SMODE_SUPPORTED
     end
   end
 
@@ -335,6 +359,20 @@ module priv_1_13_csr #(
     mcounteren_next = mcounteren;
     mcounterinhibit_next = mcounterinhibit;
     mcause_next = mcause;
+    menvcfg_next = menvcfg;
+    `ifdef SMODE_SUPPORTED
+    satp_next = satp;
+    sstatus_next = sstatus;
+    sie_next = sie;
+    stvec_next = stvec;
+    sscratch_next = sscratch;
+    sepc_next = sepc;
+    scause_next = scause;
+    stval_next = stval;
+    sip_next = sip;
+    scounteren_next = scounteren;
+    senvcfg_next = senvcfg;
+    `endif // SMODE_SUPPORTED
 
     inject_mcycle = 1'b0;
     inject_mcycleh = 1'b0;
@@ -359,29 +397,31 @@ module priv_1_13_csr #(
       if (prv_intern_if.valid_write) begin
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
-            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE) begin
+            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR_ENABLED == "disabled")) begin
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
             end
-            mstatus_next.sie = nxt_csr_val[1];
+            mstatus_next.sie = nxt_csr_val[1] && SUPERVISOR_ENABLED == "enabled";
             mstatus_next.mie = nxt_csr_val[3];
-            mstatus_next.spie = nxt_csr_val[5];
+            mstatus_next.spie = nxt_csr_val[5] && SUPERVISOR_ENABLED == "enabled";
             mstatus_next.mpie = nxt_csr_val[7];
-            mstatus_next.spp = nxt_csr_val[8];
+            mstatus_next.spp = nxt_csr_val[8] && SUPERVISOR_ENABLED == "enabled";
             mstatus_next.mprv = nxt_csr_val[17];
-            mstatus_next.sum = nxt_csr_val[18];
-            mstatus_next.mxr = nxt_csr_val[19];
-            mstatus_next.tvm = nxt_csr_val[20];
-            mstatus_next.tw = nxt_csr_val[21];
-            mstatus_next.tsr = nxt_csr_val[22];
+            mstatus_next.sum = nxt_csr_val[18] && SUPERVISOR_ENABLED == "enabled" && ADDRESS_TRANSLATION_ENABLED == "enabled";
+            mstatus_next.mxr = nxt_csr_val[19] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.tvm = nxt_csr_val[20] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.tw = nxt_csr_val[21]; // RO-zero if no less privileged modes other than M-mode (we have U-mode regardless!)
+            mstatus_next.tsr = nxt_csr_val[22] && SUPERVISOR_ENABLED == "enabled";
             
+            `ifdef SMODE_SUPPORTED
             // Update sstatus
             sstatus_next.sie = mstatus_next.sie;
             sstatus_next.spie = mstatus_next.spie;
             sstatus_next.spp = mstatus_next.spp;
-            sstatus_next.sum = mstatus_next.sum;
+            sstatus_next.sum = mstatus_next.sum && ADDRESS_TRANSLATION_ENABLED == "enabled";
             sstatus_next.mxr = mstatus_next.mxr;
+            `endif // SMODE_SUPPORTED
           end
 
           MTVEC_ADDR: begin
@@ -392,7 +432,7 @@ module priv_1_13_csr #(
             end
             mtvec_next.base = nxt_csr_val[31:2];
           end
-
+          `ifdef SMODE_SUPPORTED
           MEDELEG_ADDR: begin
             medeleg_next[31:0] = nxt_csr_val;
           end
@@ -410,33 +450,37 @@ module priv_1_13_csr #(
             mideleg_next[11] = nxt_csr_val[11];
             mideleg_next[13] = nxt_csr_val[13];
           end
-
+          `endif // SMODE_SUPPORTED
           MIE_ADDR: begin
-            mie_next.ssie = nxt_csr_val[1];
+            mie_next.ssie = nxt_csr_val[1] && SUPERVISOR_ENABLED == "enabled";
             mie_next.msie = nxt_csr_val[3];
-            mie_next.stie = nxt_csr_val[5];
+            mie_next.stie = nxt_csr_val[5] && SUPERVISOR_ENABLED == "enabled";
             mie_next.mtie = nxt_csr_val[7];
-            mie_next.seie = nxt_csr_val[9];
+            mie_next.seie = nxt_csr_val[9] && SUPERVISOR_ENABLED == "enabled";
             mie_next.meie = nxt_csr_val[11];
 
+            `ifdef SMODE_SUPPORTED
             // Update sie
             sie_next.ssie = mie_next.ssie;
             sie_next.stie = mie_next.stie;
             sie_next.seie = mie_next.seie;
+            `endif // SMODE_SUPPORTED
           end
 
           MIP_ADDR: begin
-            mip_next.ssip = nxt_csr_val[1];
+            mip_next.ssip = nxt_csr_val[1] && SUPERVISOR_ENABLED == "enabled";
             mip_next.msip = nxt_csr_val[3];
-            mip_next.stip = nxt_csr_val[5];
+            mip_next.stip = nxt_csr_val[5] && SUPERVISOR_ENABLED == "enabled";
             mip_next.mtip = nxt_csr_val[7];
-            mip_next.seip = nxt_csr_val[9];
+            mip_next.seip = nxt_csr_val[9] && SUPERVISOR_ENABLED == "enabled";
             mip_next.meip = nxt_csr_val[11];
 
+            `ifdef SMODE_SUPPORTED
             // Update sip
             sip_next.ssip = mip_next.ssip;
             sip_next.stip = mip_next.stip;
             sip_next.seip = mip_next.seip;
+            `endif // SMODE_SUPPORTED
           end
           MSCRATCH_ADDR: begin
             mscratch_next = nxt_csr_val;
@@ -468,10 +512,17 @@ module priv_1_13_csr #(
           MINSTRETH_ADDR: begin
             inject_minstreth = 1'b1;
           end
+          MENVCFG_ADDR: begin
+            menvcfg_next[31:0] = '0;
+          end
+          MENVCFGH_ADDR: begin
+            menvcfg_next[63:32] = '0;
+          end
+          `ifdef SMODE_SUPPORTED
           SATP_ADDR: begin
             satp_next.ppn = nxt_csr_val[21:0];
             satp_next.asid = nxt_csr_val[30:22];
-            satp_next.mode = nxt_csr_val[31];
+            satp_next.mode = ADDRESS_TRANSLATION_ENABLED == "enabled" ? nxt_csr_val[31] : 0;
           end
           SSTATUS_ADDR: begin
             sstatus_next.sie = nxt_csr_val[1];
@@ -531,6 +582,10 @@ module priv_1_13_csr #(
           SCOUNTEREN_ADDR: begin
             scounteren_next = nxt_csr_val;
           end
+          SENVCFG_ADDR: begin
+            senvcfg_next = '0;
+          end
+          `endif // SMODE_SUPPORTED
         endcase
       end
     end
@@ -540,7 +595,10 @@ module priv_1_13_csr #(
     //       see priv_1_13_int_ex_handler for why
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
+      
+      `ifdef SMODE_SUPPORTED
       sstatus_next = sstatus_t'(prv_intern_if.next_mstatus & SSTATUS_MASK);
+      `endif
     end
     if (prv_intern_if.inject_mtval) begin
       mtval_next = prv_intern_if.next_mtval;
@@ -553,8 +611,11 @@ module priv_1_13_csr #(
     end
     if (prv_intern_if.inject_mip) begin
       mip_next = prv_intern_if.next_mip;
+      `ifdef SMODE_SUPPORTED
       sip_next = sip_t'(prv_intern_if.next_mip & SIE_MASK);
+      `endif
     end
+    `ifdef SMODE_SUPPORTED
     if (prv_intern_if.inject_scause) begin
       scause_next = prv_intern_if.next_scause;
     end
@@ -564,9 +625,13 @@ module priv_1_13_csr #(
     if (prv_intern_if.inject_sepc) begin
       sepc_next = prv_intern_if.next_sepc;
     end
+    `endif // SMODE_SUPPORTED
 
     mstatus_next.sd = &(mstatus_next.vs) | &(mstatus_next.fs) | &(mstatus_next.xs);
+    
+    `ifdef SMODE_SUPPORTED
     sstatus_next.sd = mstatus_next.sd;
+    `endif
   end
 
   // hw perf mon
@@ -610,12 +675,14 @@ module priv_1_13_csr #(
       MCONFIGPTR_ADDR: prv_intern_if.old_csr_val = mconfigptr;
       MSTATUS_ADDR: prv_intern_if.old_csr_val = mstatus;
       MISA_ADDR: prv_intern_if.old_csr_val = misa;
+      `ifdef SMODE_SUPPORTED
       MEDELEG_ADDR: prv_intern_if.old_csr_val = medeleg[31:0];
+      MEDELEGH_ADDR: prv_intern_if.old_csr_val = medeleg[63:32];
       MIDELEG_ADDR: prv_intern_if.old_csr_val = mideleg;
+      `endif // SMODE_SUPPORTED
       MIE_ADDR: prv_intern_if.old_csr_val = mie;
       MTVEC_ADDR: prv_intern_if.old_csr_val = mtvec;
       MSTATUSH_ADDR: prv_intern_if.old_csr_val = mstatush;
-      MEDELEGH_ADDR: prv_intern_if.old_csr_val = medeleg[63:32];
       MSCRATCH_ADDR: prv_intern_if.old_csr_val = mscratch;
       MEPC_ADDR: prv_intern_if.old_csr_val = mepc;
       MCAUSE_ADDR: prv_intern_if.old_csr_val = mcause;
@@ -627,6 +694,7 @@ module priv_1_13_csr #(
       MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
       MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
       MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
+      `ifdef SMODE_SUPPORTED
       /* Supervisor Mode Addresses */
       SATP_ADDR: prv_intern_if.old_csr_val = satp;
       SSTATUS_ADDR: prv_intern_if.old_csr_val = sstatus;
@@ -638,6 +706,7 @@ module priv_1_13_csr #(
       SCAUSE_ADDR: prv_intern_if.old_csr_val = scause;
       STVAL_ADDR: prv_intern_if.old_csr_val = stval;
       SCOUNTEREN_ADDR: prv_intern_if.old_csr_val = scounteren;
+      `endif // SMODE_SUPPORTED
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
         if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
@@ -717,16 +786,20 @@ module priv_1_13_csr #(
   end
 
   /* Priv control return */
+  `ifdef SMODE_SUPPORTED
   assign prv_intern_if.curr_medeleg = medeleg;
   assign prv_intern_if.curr_mideleg = mideleg;
+  `endif // SMODE_SUPPORTED
   assign prv_intern_if.curr_mip = mip; // reflects sip
   assign prv_intern_if.curr_mie = mie; // reflects sie
   assign prv_intern_if.curr_mcause = mcause;
   assign prv_intern_if.curr_mepc = mepc;
   assign prv_intern_if.curr_mstatus = mstatus; // reflects sstatus
   assign prv_intern_if.curr_mtvec = mtvec;
+  `ifdef SMODE_SUPPORTED
   assign prv_intern_if.curr_scause = scause;
   assign prv_intern_if.curr_sepc = sepc;
   assign prv_intern_if.curr_stvec = stvec;
   assign prv_intern_if.curr_satp = satp;
+  `endif // SMODE_SUPPORTED
 endmodule

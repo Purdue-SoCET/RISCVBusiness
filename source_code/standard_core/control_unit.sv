@@ -65,7 +65,7 @@ module control_unit (
     logic rv32a_lr, rv32a_sc, rv32a_amo;
     logic rv32zc_claim;
     // Privileged trap signals
-    logic tvm_trap, tw_trap, tsr_trap;
+    logic tvm_trap, tw_trap, tsr_trap, disabled_smode_trap;
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -228,8 +228,11 @@ module control_unit (
     // Trap Supervisor Returns if SRET instruction, TSR is set, and current privilege level is S-Mode
     assign tsr_trap = cu_if.sret_insn && prv_pipe_if.mstatus.tsr && prv_pipe_if.curr_privilege_level == S_MODE;
 
+    // Trap when we have a supervisor instruction and the Supervisor Extension is disabled
+    assign disabled_smode_trap = (cu_if.sfence || cu_if.sret_insn) && SUPERVISOR_ENABLED == "disabled";
+
     // Illegal instruction logic
-    assign cu_if.illegal_insn = (maybe_illegal && !claimed) || tvm_trap || tw_trap || tsr_trap;
+    assign cu_if.illegal_insn = (maybe_illegal && !claimed) || tvm_trap || tw_trap || tsr_trap || disabled_smode_trap;
     assign claimed = rv32m_claim || rv32a_claim || rv32b_claim || rv32zc_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions

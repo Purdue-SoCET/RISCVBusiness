@@ -254,8 +254,8 @@ module l1_cache #(
         pass_through    = (at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr) >= NONCACHE_START_ADDR;
         coherence_hit   = 0;
         sc_valid_block  = 0;
-        ren = IS_ICACHE ? proc_gen_bus_if.ren : prv_pipe_if.ex_mem_ren;
-        wen = IS_ICACHE ?                   0 : prv_pipe_if.ex_mem_wen;
+        ren = IS_ICACHE ? proc_gen_bus_if.ren : prv_pipe_if.ex_mem_ren; // HACK: prevents comb loop in D$, find a better fix?
+        wen = IS_ICACHE ?                   0 : prv_pipe_if.ex_mem_wen; // HACK: prevents comb loop in D$, find a better fix?
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
@@ -264,9 +264,9 @@ module l1_cache #(
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
                     //Read or write hit
                     if((state == HIT && (pw_gen_bus_if.ren || ((ren || (wen && coherence_hit)) && ~pw_gen_bus_if.ren))) || state == SNOOP) begin
-	                    hit       = 1'b1;
-        	            hit_data  = sramRead.frames[i].data;
-                	    hit_idx   = i;
+                        hit       = 1'b1;
+                        hit_data  = sramRead.frames[i].data;
+                        hit_idx   = i;
                     end
                 end
             end

@@ -2,6 +2,8 @@
 isa_params:  
   xlen : 32
   pmp_minimum_granularity : "64K"
+  supervisor_enabled : "disabled"
+  address_translation_enabled : "disabled"
 
 # Microarchitectural Configurations
 microarch_params:
@@ -13,11 +15,11 @@ microarch_params:
   
   # Cache configurations
   cache_config  : "separate"
-  dcache_type   : "l1_tlb"
+  dcache_type   : "l1"
   dcache_size : 1024
   dcache_block_size : 2
   dcache_assoc : 1
-  icache_type   : "l1_tlb"
+  icache_type   : "l1"
   icache_size : 1024
   icache_block_size : 2
   icache_assoc : 1

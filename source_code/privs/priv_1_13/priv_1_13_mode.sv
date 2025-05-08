@@ -49,11 +49,11 @@ module priv_1_13_mode (
         next_priv_level = curr_priv_level;
         if (prv_intern_if.intr) begin
             // if interrupt into s mode else m mode
-            next_priv_level = prv_intern_if.intr_to_s ? S_MODE : M_MODE;
+            next_priv_level = prv_intern_if.intr_to_s && SUPERVISOR_ENABLED == "enabled" ? S_MODE : M_MODE;
         end else if (prv_intern_if.mret) begin
             next_priv_level = prv_intern_if.curr_mstatus.mpp;
         end else if (prv_intern_if.sret) begin
-            next_priv_level = prv_intern_if.curr_mstatus.spp ? S_MODE : U_MODE; 
+            next_priv_level = prv_intern_if.curr_mstatus.spp && SUPERVISOR_ENABLED == "enabled" ? S_MODE : U_MODE; 
         end
     end
 

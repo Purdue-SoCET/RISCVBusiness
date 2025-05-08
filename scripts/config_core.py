@@ -70,7 +70,9 @@ PMP_MINIMUM_GRANULARITY = \
 ISA_PARAMS = \
   {
     'xlen' : [32],
-    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys())
+    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys()),
+    'supervisor_enabled' : [ 'enabled', 'disabled' ],
+    'address_translation_enabled' : [ 'enabled', 'disabled' ]
   }
 
 UARCH_PARAMS = \
@@ -182,6 +184,11 @@ def create_include(config):
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
         elif 'pmp_minimum_granularity' == isa_param:
           line += isa_param.upper() + ' = ' + str(PMP_MINIMUM_GRANULARITY[isa_params[isa_param]])
+        elif 'supervisor_enabled' == isa_param and isa_params[isa_param] == 'enabled':
+          line  = '`define SMODE_SUPPORTED\n'
+          line += 'localparam ' + isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
+        elif 'address_translation_enabled' == isa_param:
+          line += isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         line += ';\n'
