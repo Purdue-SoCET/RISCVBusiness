@@ -144,6 +144,8 @@ package rv32c_pkg;
         ofmt.funct3 = rv32i_types_pkg::ADDI;
         ofmt.rd = decompress_regselect(ifmt.rd);
         ofmt.opcode = rv32i_types_pkg::IMMED;
+
+        return ofmt;
     endfunction
 
     // CL and CS are same format,
