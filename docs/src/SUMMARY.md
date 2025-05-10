@@ -1,3 +1,4 @@
 # Summary
 
-- [Overview](./overview.md)
+[Overview](./overview.md)
+[Multicore](./multicore.md)
