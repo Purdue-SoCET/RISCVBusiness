@@ -177,4 +177,3 @@ done_array:
     .int hart5_done_end
     .int hart6_done_end
     .int hart7_done_end
-    

@@ -25,12 +25,12 @@
 `ifndef BUS_CTRL_IF_VH
 `define BUS_CTRL_IF_VH
 
+`include "component_selection_defines.vh"
+
 // parameters
 parameter CPUS = NUM_HARTS * 2;
-parameter BLOCK_SIZE = 2;
+parameter BLOCK_SIZE = DCACHE_BLOCK_SIZE > ICACHE_BLOCK_SIZE ? DCACHE_BLOCK_SIZE : ICACHE_BLOCK_SIZE;
 localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
-localparam CPU_ID_LENGTH = $clog2(CPUS);
-
 
 // coherence bus controller states
 typedef enum {
@@ -62,8 +62,6 @@ typedef enum logic [1:0] {
 // taken from coherence_ctrl_if.vh
 typedef logic [31:0] bus_word_t;
 typedef logic [DATA_WIDTH-1:0] transfer_width_t;
-typedef logic [CPUS-1:0] cpus_bitvec_t;
-typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if ();

@@ -144,10 +144,3 @@ void hart0_main() {
 void hart1_main() {
     hart1_done = 1;
 }
-
-void hart2_main() {}
-void hart3_main() {}
-void hart4_main() {}
-void hart5_main() {}
-void hart6_main() {}
-void hart7_main() {}

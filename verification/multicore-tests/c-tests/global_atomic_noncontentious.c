@@ -25,10 +25,3 @@ void hart1_main() {
     }
     hart1_done = global[2] == N;
 }
-
-void hart2_main() {}
-void hart3_main() {}
-void hart4_main() {}
-void hart5_main() {}
-void hart6_main() {}
-void hart7_main() {}

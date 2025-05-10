@@ -3,7 +3,6 @@
 void hart0_main() {
     print("hello from hart0!\n");
     flag = 1;
-    return;
 }
 
 void hart1_main() {

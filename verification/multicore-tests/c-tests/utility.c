@@ -64,7 +64,8 @@ static int convert_integer(uint32_t in, int base, char *out) {
     return i;
 }
 
-void __attribute__((noinline)) vformat(const char *fmt, char *buf, va_list args) {
+void __attribute__((noinline))
+vformat(const char *fmt, char *buf, va_list args) {
     int out_idx = 0;
     for (int i = 0; fmt[i]; i++) {
         if (fmt[i] != '%') {
@@ -241,3 +242,14 @@ void wait_for_all_harts_done(int num_harts) {
             break;
     }
 }
+
+#define DEFINE_HARTN_MAIN(n)                                                   \
+    void __attribute__((weak)) hart##n##_main() { hart##n##_done = 1; }
+
+DEFINE_HARTN_MAIN(1)
+DEFINE_HARTN_MAIN(2)
+DEFINE_HARTN_MAIN(3)
+DEFINE_HARTN_MAIN(4)
+DEFINE_HARTN_MAIN(5)
+DEFINE_HARTN_MAIN(6)
+DEFINE_HARTN_MAIN(7)
