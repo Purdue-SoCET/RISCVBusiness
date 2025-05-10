@@ -139,6 +139,9 @@ module l1_cache #(
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
 
+    // error handling
+    assign proc_gen_bus_if.error = bus_ctrl_if.derror[HART_ID];
+
     assign snoop_decoded_addr = decoded_cache_addr_t'(bus_ctrl_if.ccsnoopaddr[HART_ID]);
 
     // sram instance
@@ -543,7 +546,7 @@ module l1_cache #(
                     next_state = FLUSH_CACHE;
 	        end
 	        FETCH: begin
-                if (!bus_ctrl_if.dwait[HART_ID]) begin
+                if (bus_ctrl_if.derror[HART_ID] || !bus_ctrl_if.dwait[HART_ID]) begin
                     cache_miss = 1;
                     next_state = HIT;
                 end else if (snoop_hit && !sramWEN)
@@ -552,7 +555,7 @@ module l1_cache #(
                     next_state = CANCEL_REQ;
             end
             WB: begin
-                if (!bus_ctrl_if.dwait[HART_ID])
+                if (bus_ctrl_if.derror[HART_ID] || !bus_ctrl_if.dwait[HART_ID])
                     next_state = HIT;
                 else if (snoop_hit && !sramWEN)
                     next_state = SNOOP;

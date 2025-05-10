@@ -66,7 +66,7 @@ typedef logic [DATA_WIDTH-1:0] transfer_width_t;
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if ();
     // L1 generic control signals
-    logic               [CPUS-1:0] dREN, dWEN, dwait; 
+    logic               [CPUS-1:0] dREN, dWEN, dwait, derror;
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
     bus_word_t          [CPUS-1:0] daddr;
     logic         [CPUS-1:0] [3:0] dbyte_en;
@@ -83,7 +83,7 @@ interface bus_ctrl_if ();
     // L2 signals
     l2_state_t l2state; 
     bus_word_t l2load, l2store;
-    logic l2WEN, l2REN; 
+    logic l2WEN, l2REN, l2error;
     bus_word_t l2addr; 
     logic [3:0] l2_byte_en;
     // Core outputs
@@ -106,14 +106,14 @@ interface bus_ctrl_if ();
     modport cc(
         input   dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccdirty, ccsnoopdone,
-                l2load, l2state, ccabort,
-        output  dwait, dload, 
+                l2load, l2state, l2error, ccabort,
+        output  dwait, dload, derror,
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 
 
     modport cache(
-        input dwait, dload, ccwait, ccinv, ccsnoopaddr, ccexclusive,
+        input dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
         output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
     );
 
