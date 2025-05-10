@@ -11,9 +11,20 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3 # required
-      - name: Run Regression Tests
-        uses: Purdue-SoCET/SoCET-CI@main # core usage
+      - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          targets: | # List all FuseSoC Test Targets
-            make config
-            make verilate
+          packages: verilator g++-13
+          version: 1.0
+      - name: Get verilator version
+        run: verilator --version
+      - name: Install fusesoc
+        run: |
+          pip install fusesoc==2.3
+          fusesoc --version
+      - name: Build core
+        run: |
+          make verilate
+      - name: Build and run riscv-tests
+        run: |
+          ./setup-riscv-tests.sh
+          python3 run_riscv_tests.py --isa i
