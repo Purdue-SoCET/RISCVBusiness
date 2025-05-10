@@ -156,7 +156,7 @@ module l1_cache #(
     logic addr_is_reserved;
     // Request tracking
     cache_request_t request, next_request;
-    generic_bus_if #(.BLOCK_SIZE(IS_ICACHE ? ICACHE_BLOCK_SIZE : DCACHE_BLOCK_SIZE)) request_bus ();
+    generic_bus_if #(.BLOCK_SIZE(BLOCK_SIZE)) request_bus ();
 
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
@@ -350,10 +350,6 @@ module l1_cache #(
                     pw_gen_bus_if.busy = 0;
                     pw_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
                     next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                    // Delay so we can set the reservation set
-                    if (reserve && !addr_is_reserved) begin
-                        pw_gen_bus_if.busy = 1;
-                    end
                 end
                 else if (pw_gen_bus_if.ren && ~hit && !flush) begin
                     next_decoded_req_addr = decoded_addr;
@@ -584,7 +580,6 @@ module l1_cache #(
         end
     end
 
-    /*
     always_comb begin
         // To properly catch this case, set epoch size to 10k and range to
         // be % 512 in cache stress testbench
@@ -618,7 +613,6 @@ module l1_cache #(
             end
         end
     end
-    */
 
     // next state logic
     always_comb begin
@@ -702,10 +696,10 @@ module l1_cache #(
     // TODO: Remove exclusive signal
     always_comb begin
         next_reservation_set = reservation_set;
-        if ((pw_gen_bus_if.ren || proc_gen_bus_if.ren) && reserve && hit) begin
+        if (proc_gen_bus_if.ren && reserve && hit) begin
             next_reservation_set.idx = decoded_addr.idx;
             next_reservation_set.reserved = 1'b1;
-        end else if (((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && !proc_gen_bus_if.busy) || (pw_gen_bus_if.ren && !pw_gen_bus_if.busy) || clear || flush) begin
+        end else if (((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && !proc_gen_bus_if.busy) || clear || flush) begin
             next_reservation_set.reserved = 1'b0;
         end
         addr_is_reserved = reservation_set.idx == decoded_addr.idx && reservation_set.reserved;
