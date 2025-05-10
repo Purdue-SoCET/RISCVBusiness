@@ -34,6 +34,7 @@ module btb #(
 );
     import rv32i_types_pkg::*;
 
+    localparam ASSOC        = 2;
     localparam N_SETS       = NFRAMES / ASSOC;
     localparam N_TAG_BITS   = 8 - PRED_BITS;
     localparam N_SET_BITS   = $clog2(N_SETS) + (N_SETS == 1);
