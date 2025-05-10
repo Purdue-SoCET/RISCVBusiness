@@ -40,7 +40,11 @@ package rv32c_pkg;
                             RVC_CI_FUNC_FLDSP    = 3'b001,
                             RVC_CI_FUNC_LWSP     = 3'b010,
                             RVC_CI_FUNC_FLWSP    = 3'b011,
-                            RVC_CI_FUNC_LDSP     = 3'b011;
+                            RVC_CI_FUNC_LDSP     = 3'b011,
+                            RVC_CI_FUNC_FSDSP    = 3'b101,
+                            RVC_CI_FUNC_SWSP     = 3'b110,
+                            RVC_CI_FUNC_FSWSP    = 3'b111,
+                            RVC_CI_FUNC_SDSP     = 3'b111;
 
     localparam logic [7:0]  RVC_CA_FUNC_SUB      = 8'b1000_1100,
                             RVC_CA_FUNC_XOR      = 8'b1000_1101,
@@ -75,7 +79,7 @@ package rv32c_pkg;
         logic [1 : 0]   op;
     } rvc_cr_t;
 
-    function automatic logic [4:0] decompress_cr(logic [15:0] compressed);
+    function automatic logic [31:0] decompress_cr(logic [15:0] compressed);
         // C.JR, C.JALR, C.MV, C.ADD, C.EBREAK
         // CR-format is always op == C2.
         // CR-format has 2 valid functs, overloaded to 5 insns
@@ -133,7 +137,7 @@ package rv32c_pkg;
         logic [1:0] op;
     } rvc_ciw_t;
 
-    function automatic decompress_ciw(logic [15:0] compress);
+    function automatic logic [31:0] decompress_ciw(logic [15:0] compress);
         // only ADDI4SPN -> addi rd', x2, imm
         rvc_ciw_t ifmt = compress;
         // if imm = 0, it's the canonical illegal instruciton
@@ -177,14 +181,12 @@ package rv32c_pkg;
                         ? {4'b0000, ifmt.imm2, ifmt.imm3, 3'b000}
                         : {5'b0000, ifmt.imm2[6], ifmt.imm3, ifmt.imm2[5], 2'b00};
         ofmt.rs1 = decompress_regselect(ifmt.rs1);
-        // TODO: types package, double-word load
         ofmt.funct3 = (ifmt.funct3 == RVC_CL_FUNC_LW || ifmt.funct3 == RVC_CL_FUNC_FLW)
                         ? rv32i_types_pkg::LW
-                        : 3'b011;
+                        : rv32i_types_pkg::LD;
         ofmt.rd  = decompress_regselect(ifmt.rs2);
-        // TODO: FP types package - FP-LOAD Opcode
         ofmt.opcode = (ifmt.funct3 == RVC_CL_FUNC_FLD || ifmt.funct3 == RVC_CL_FUNC_FLW)
-                        ? 7'b000_0111
+                        ? rv32i_types_pkg::LOAD_FP
                         : rv32i_types_pkg::LOAD;
 
         return ofmt;
@@ -209,14 +211,12 @@ package rv32c_pkg;
         ofmt.imm11_05 = imm12[11:5];
         ofmt.imm04_00 = imm12[4:0];
         ofmt.rs1 = decompress_regselect(ifmt.rs1);
-        // TODO: types package, double-word store 
         ofmt.funct3 = (ifmt.funct3 == RVC_CS_FUNC_SW || ifmt.funct3 == RVC_CS_FUNC_FSW)
                         ? rv32i_types_pkg::SW
-                        : 3'b011;
-        ofmt.rd  = decompress_regselect(ifmt.rs2);
-        // TODO: FP types package - FP-STORE Opcode
+                        : rv32i_types_pkg::SD;
+        ofmt.rs2 = decompress_regselect(ifmt.rs2);
         ofmt.opcode = (ifmt.funct3 == RVC_CS_FUNC_FSD || ifmt.funct3 == RVC_CS_FUNC_FSW)
-                        ? 7'b010_0111
+                        ? rv32i_types_pkg::STORE_FP
                         : rv32i_types_pkg::LOAD;
 
         return ofmt;
@@ -249,7 +249,7 @@ package rv32c_pkg;
         ofmt.rd  = ifmt.rd;
         ofmt.opcode = (ifmt.funct3 == RVC_CI_FUNC_LWSP)
                     ? rv32i_types_pkg::LOAD
-                    : 7'b000_0111;
+                    : rv32i_types_pkg::LOAD_FP;
     endfunction
 
     // FIXME: Missing instructions
@@ -279,7 +279,7 @@ package rv32c_pkg;
             || ifmt.funct3 == RVC_CI_FUNC_NOP
             || ifmt.funct3 == RVC_CI_FUNC_LI) begin
             rv32i_types_pkg::itype_t ofmt;
-            ofmt.imm11_00 = {6'h0, ofmt.imm1, ofmt.imm5};
+            ofmt.imm11_00 = {6'h0, ifmt.imm1, ifmt.imm5};
             ofmt.funct3 = rv32i_types_pkg::ADDI;
             ofmt.rs1 = (ifmt.funct3 == RVC_CI_FUNC_LI) ? 5'h0 : ifmt.rd;
             ofmt.rd = ifmt.rd;
@@ -290,8 +290,8 @@ package rv32c_pkg;
                     || ifmt.funct3 == RVC_CI_FUNC_SRLI
                     || ifmt.funct3 == RVC_CI_FUNC_SRAI) begin
             rv32i_types_pkg::itype_t ofmt;
-            logic is_sra = (ifmt.funct3 == RVC_CI_FUNC_SRAI) && ifmt.rd[5:4] == 2'b01;
-            logic is_srl = (ifmt.funct3 == RVC_CI_FUNC_SRLI) && ifmt.rd[5:4] == 2'b00;
+            logic is_sra = (ifmt.funct3 == RVC_CI_FUNC_SRAI) && ifmt.rd[11:10] == 2'b01;
+            logic is_srl = (ifmt.funct3 == RVC_CI_FUNC_SRLI) && ifmt.rd[11:10] == 2'b00;
             logic is_sll = (ifmt.funct3 == RVC_CI_FUNC_SLLI) && ifmt.op == RVC_C2;
             //assert(is_sra || is_srl || is_sll);
             ofmt.imm11_00 = is_sra 
@@ -312,8 +312,8 @@ package rv32c_pkg;
         end else if(ifmt.funct3 == RVC_CI_FUNC_ADDI16SP
             && ifmt.rd == 5'd2) begin 
             rv32i_types_pkg::itype_t ofmt;
-            ofmt.imm11_00 = {2'b00, ifmt.imm1, ifmt.imm[4:3], ifmt.imm[5],
-                ifmt.imm[2], ifmt.imm[6], 4'h0};
+            ofmt.imm11_00 = {2'b00, ifmt.imm1, ifmt.imm5[4:3], ifmt.imm5[5],
+                ifmt.imm5[2], ifmt.imm5[6], 4'h0};
             ofmt.funct3 = rv32i_types_pkg::ADDI;
             ofmt.rs1 = 5'd2;
             ofmt.rd = 5'd2;
@@ -340,7 +340,7 @@ package rv32c_pkg;
     } rvc_css_t;
     
     function automatic logic [31:0] decompress_css(logic [15:0] compressed);
-        rvc_ci_t ifmt = compressed;
+        rvc_css_t ifmt = compressed;
         //assert(ifmt.op == RVC_C2);
         //assert(ifmt.funct3 == RVC_CI_SWSP
         //    || ifmt.funct3 == RVC_CI_FSWSP
@@ -358,9 +358,9 @@ package rv32c_pkg;
                         ? rv32i_types_pkg::SW
                         : 3'b011;
         ofmt.rs2  = ifmt.rs2;
-        ofmt.opcode = (ifmt.funct3 == RVC_CI_SWSP)
+        ofmt.opcode = (ifmt.funct3 == RVC_CI_FUNC_SWSP)
                     ? rv32i_types_pkg::STORE
-                    : 7'b010_0111;
+                    : rv32i_types_pkg::STORE_FP;
     endfunction
 
     typedef struct packed {
@@ -381,14 +381,14 @@ package rv32c_pkg;
         // -> OP rd', rd', rs2'
         rv32i_types_pkg::rtype_t ofmt;
         // bit 30 determines add/subtract
-        ofmt.funct7 = (funct_ext == RVC_CA_SUB) ? 7'b010_0000 : 7'b000_0000;
+        ofmt.funct7 = (funct_ext == RVC_CA_FUNC_SUB) ? 7'b010_0000 : 7'b000_0000;
         ofmt.rs2 = decompress_regselect(ifmt.rs2);
         ofmt.rs1 = decompress_regselect(ifmt.rd);
         casez(funct_ext)
-            RVC_CA_AND: ofmt.funct3 = rv32i_types_pkg::AND;
-            RVC_CA_OR:  ofmt.funct3 = rv32i_types_pkg::OR;
-            RVC_CA_XOR: ofmt.funct3 = rv32i_types_pkg::XOR;
-            RVC_CA_SUB: ofmt.funct3 = rv32i_types_pkg::ADDSUB;
+            RVC_CA_FUNC_AND: ofmt.funct3 = rv32i_types_pkg::AND;
+            RVC_CA_FUNC_OR:  ofmt.funct3 = rv32i_types_pkg::OR;
+            RVC_CA_FUNC_XOR: ofmt.funct3 = rv32i_types_pkg::XOR;
+            RVC_CA_FUNC_SUB: ofmt.funct3 = rv32i_types_pkg::ADDSUB;
             default: return UNIMP;
         endcase
         ofmt.rd  = decompress_regselect(ifmt.rd);
@@ -412,7 +412,7 @@ package rv32c_pkg;
         //assert(ifmt.funct3 == RVC_CB_BEQZ
         //    || ifmt.funct3 == RVC_CB_BNEZ
         //    || (ifmt.funct3 == RVC_CB_ANDI && ifmt.funct2 == 2'b10));
-        if(ifmt.funct3 == RVC_CB_ANDI) begin
+        if(ifmt.funct3 == RVC_CB_FUNC_ANDI) begin
             // C.ANDI -> andi rd', rd', imm
             rv32i_types_pkg::itype_t ofmt;
             ofmt.imm11_00 = {6'h0, ifmt.imm1, ifmt.imm5};
@@ -434,7 +434,7 @@ package rv32c_pkg;
             ofmt.imm10_05 = imm[10:5];
             ofmt.rs2 = 5'd0;
             ofmt.rs1 = decompress_regselect(ifmt.rd);
-            ofmt.funct3 = (ifmt.funct3 == RVC_CB_BEQZ) ? rv32i_types_pkg::BEQ : rv32i_types_pkg::BNE;
+            ofmt.funct3 = (ifmt.funct3 == RVC_CB_FUNC_BEQZ) ? rv32i_types_pkg::BEQ : rv32i_types_pkg::BNE;
             ofmt.imm04_01 = imm[4:1];
             ofmt.imm11 = imm[11];
             ofmt.opcode = rv32i_types_pkg::BRANCH;
@@ -455,10 +455,10 @@ package rv32c_pkg;
         //assert(ifmt.funct3 == RVC_CJ_J || ifmt.funct3 == RVC_CJ_JAL);
         rv32i_types_pkg::ujtype_t ofmt;
         ofmt.imm20 = 1'b0;
-        ofmt.imm10_01 = {ifmt.imm[8], ifmt.imm[10:9], ifmt.imm[6], ifmt.imm[7], ifmt.imm[2], ifmt.imm[5:3]};
+        ofmt.imm10_01 = {1'b0, ifmt.imm[8], ifmt.imm[10:9], ifmt.imm[6], ifmt.imm[7], ifmt.imm[2], ifmt.imm[5:3]};
         ofmt.imm11 = ifmt.imm[12];
         ofmt.imm19_12 = 0;
-        ofmt.rd = (ifmt.funct3 == RVC_CJ_JAL) ? 5'd1 : 5'd0;
+        ofmt.rd = (ifmt.funct3 == RVC_CJ_FUNC_JAL) ? 5'd1 : 5'd0;
         ofmt.opcode = rv32i_types_pkg::JAL;
 
         return ofmt;
