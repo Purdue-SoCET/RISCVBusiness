@@ -2,7 +2,7 @@
 WANT_AMO_EMU_SUPPORT
 
 #ifndef NUM_CORE
-#define NUM_CORE 4 
+#define NUM_CORE 8
 #endif
 
 .global _start

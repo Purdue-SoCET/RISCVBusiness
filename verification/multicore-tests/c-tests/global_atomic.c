@@ -2,7 +2,7 @@
 #include "utility.h"
 
 #define N 256
-#define NUM_HART 2
+#define NUM_HART 8
 
 uint32_t global = 0;
 
@@ -20,29 +20,33 @@ void hart0_main() {
     flag = global == (N * NUM_HART);
 }
 
-void hart1_main() {
-    for (int i = 0; i < N; i++) {
-        atomic_add(&global, 1);
+#define HARTN_MAIN(n)                                                          \
+    void hart##n##_main() {                                                    \
+        for (int i = 0; i < N; i++) {                                          \
+            atomic_add(&global, 1);                                            \
+        }                                                                      \
+        hart##n##_done = 1;                                                    \
+        print("hart " #n " done\n");                                           \
     }
-    hart1_done = 1;
-    print("hart1 done\n");
-}
- 
-void hart2_main() {
-    for (int i = 0; i < N; i++) {
-        atomic_add(&global, 1);
-    }
-    hart2_done = 1;
-    print("hart2 done\n");
-}
-void hart3_main() {
-    for (int i = 0; i < N; i++) {
-        atomic_add(&global, 1);
-    }
-    hart3_done = 1;
-    print("hart3 done\n");
-}
-void hart4_main() {}
-void hart5_main() {}
-void hart6_main() {}
-void hart7_main() {}
+
+#if NUM_HART > 1
+HARTN_MAIN(1)
+#if NUM_HART > 2
+HARTN_MAIN(2)
+#if NUM_HART > 3
+HARTN_MAIN(3)
+#if NUM_HART > 4
+HARTN_MAIN(4)
+#if NUM_HART > 5
+HARTN_MAIN(5)
+#if NUM_HART > 6
+HARTN_MAIN(6)
+#if NUM_HART > 7
+HARTN_MAIN(7)
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
+#endif
