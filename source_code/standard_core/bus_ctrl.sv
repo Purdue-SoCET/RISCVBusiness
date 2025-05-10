@@ -111,7 +111,8 @@ module bus_ctrl #(
             // BUS_TO_CACHE:       nstate = IDLE;
             TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
             TRANSFER_RX:        nstate = BUS_TO_CACHE;
-            READ_L2:            nstate = block_count_done ? BUS_TO_CACHE : state;
+            READ_L2:            nstate = ccif.l2error ? IDLE :
+                                         block_count_done ? BUS_TO_CACHE : state;
             WRITEBACK_MS:       nstate = block_count_done ? IDLE : state;
             WRITEBACK:          nstate = block_count_done ? IDLE : state;
             BUS_TO_CACHE:       nstate = IDLE;
@@ -134,6 +135,7 @@ module bus_ctrl #(
         ccif.l2WEN = '0;
         ccif.ccexclusive = '0;
         ccif.ccinv = '0;
+        ccif.derror = '0;
         ndload = ccif.dload[requester_cpu];
         nexclusiveUpdate = exclusiveUpdate;
         nrequester_cpu = requester_cpu;
@@ -143,6 +145,7 @@ module bus_ctrl #(
 
         casez(state)
             IDLE: begin // obtain the requester CPU id
+                nblock_count = 0;
                 if (|(ccif.dWEN & ~ccif.ccabort))
                     nrequester_cpu = priorityEncode(ccif.dWEN & ~ccif.ccabort);
                 else if (|(ccif.dREN & ccif.ccwrite & ~ccif.ccabort))
@@ -188,7 +191,9 @@ module bus_ctrl #(
                 nblock_count = block_count;
                 ccif.l2REN = !block_count_done;
 
-                if (ccif.l2state == L2_ACCESS) begin
+                if (ccif.l2error) begin
+                    ccif.derror[requester_cpu] = 1;
+                end if (ccif.l2state == L2_ACCESS) begin
                     ccif.l2REN = 0;
                     nblock_count = block_count + 1;
                     if (!pass_through && block_count < BLOCK_SIZE - 1) begin

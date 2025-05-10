@@ -51,5 +51,6 @@ module memory_controller #(
 
         bus_ctrl_if.l2load = out_gen_bus_if.rdata;
         bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+        bus_ctrl_if.l2error = out_gen_bus_if.error;
     end
 endmodule
