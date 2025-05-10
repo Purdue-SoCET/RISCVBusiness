@@ -322,11 +322,6 @@ module l1_cache #(
                 end
                 // cache hit on a processor write
                 else if(proc_gen_bus_if.wen && hit && (!reserve || (reserve && addr_is_reserved)) && !flush) begin
-                    // TODO: handle this nasty case better
-                    // On SNOOP->HIT transition when cache hit transaction started
-                    // during SNOOP, this will bring busy low before it's actually
-                    // written to the sram. For testing, use seed 1734995039
-                    // and 999914 transactions on the stress testbench
                     proc_gen_bus_if.busy = 0;
                     sramWEN = 1;
                     casez (proc_gen_bus_if.byte_en)
@@ -592,7 +587,6 @@ module l1_cache #(
     end
 
     // Reservation tracking logic
-    // TODO: Remove exclusive signal
     always_comb begin
         next_reservation_set = reservation_set;
         if (proc_gen_bus_if.ren && reserve && hit) begin
