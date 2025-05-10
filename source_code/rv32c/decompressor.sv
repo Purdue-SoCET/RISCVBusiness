@@ -42,7 +42,7 @@ module decompressor(
             end
 
             5'b001_00, 5'b010_00, 5'b011_00: return rv32c_pkg::decompress_cl(compressed);
-            5'b100_00: return UNIMP; // reserved
+            5'b100_00: return rv32c_pkg::UNIMP; // reserved
             5'b101_00, 5'b110_00, 5'b111_00: return rv32c_pkg::decompress_cs(compressed);
             5'b000_01, 5'b010_01, 5'b011_01, 5'b100_01: begin
                 // ANDI exception case
@@ -57,9 +57,9 @@ module decompressor(
             5'b110_01, 5'b111_01: return rv32c_pkg::decompress_cb(compressed);
             5'b000_10: return rv32c_pkg::decompress_ci_arith(compressed);
             5'b001_10, 5'b010_10, 5'b011_10: return rv32c_pkg::decompress_ci_load(compressed);
-            5'b100_10: return decompress_cr(compressed);
-            5'b101_10, 5'b110_10, 5'b111_10: return rv32c_pkg::decompress_ci_store(compressed);
-            default: return UNIMP; // inst. is full-size
+            5'b100_10: return rv32c_pkg::decompress_cr(compressed);
+            5'b101_10, 5'b110_10, 5'b111_10: return rv32c_pkg::decompress_css(compressed);
+            default: return rv32c_pkg::UNIMP; // inst. is full-size
         endcase
     endfunction
 
