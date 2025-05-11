@@ -126,7 +126,7 @@ module stage3_hazard_unit (
 
     assign prv_pipe_if.ex_rmgmt_cause = '0;//rm_if.ex_cause;
     assign prv_pipe_if.epc = epc;
-    assign prv_pipe_if.badaddr = hazard_if.badaddr;
+    assign prv_pipe_if.badaddr = hazard_if.fault_addr;
 
 
     /*

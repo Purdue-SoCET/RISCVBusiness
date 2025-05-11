@@ -45,7 +45,7 @@ interface cache_control_if;
   logic dcache_exclusive;
 
   modport pipeline (
-    output icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive, itlb_fence, dtlb_fence, 
+    output icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive, itlb_fence, dtlb_fence,
     input iclear_done, iflush_done, dclear_done, dflush_done, itlb_fence_done, dtlb_fence_done
   );
 
