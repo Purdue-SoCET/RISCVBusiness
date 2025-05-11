@@ -84,8 +84,8 @@ package rv32c_pkg;
         // CR-format is always op == C2.
         // CR-format has 2 valid functs, overloaded to 5 insns
         rvc_cr_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C2);
-        //assert(ifmt.funct4 == RVC_CR_FUNC_ADD || ifmt.funct4 == RVC_CR_FUNC_MV);
+        assert(ifmt.op == RVC_C2);
+        assert(ifmt.funct4 == RVC_CR_FUNC_ADD || ifmt.funct4 == RVC_CR_FUNC_MV);
         
         // instruction determined on rs1/rs2
         // C.ADD/C.MV: rs2 != 0. rs1 != 0 -> HINT
@@ -140,10 +140,10 @@ package rv32c_pkg;
     function automatic logic [31:0] decompress_ciw(logic [15:0] compress);
         // only ADDI4SPN -> addi rd', x2, imm
         rvc_ciw_t ifmt = compress;
-        // if imm = 0, it's the canonical illegal instruciton
-        ////assert(ifmt.op == RVC_C0 && ifmt.funct3 == RVC_CIW_FUNC_ADDI4SPN && ifmt.nzuimm != 0);
-
         rv32i_types_pkg::itype_t ofmt;
+        // if imm = 0, it's the canonical illegal instruciton
+        assert(ifmt.op == RVC_C0 && ifmt.funct3 == RVC_CIW_FUNC_ADDI4SPN && ifmt.nzuimm != 0);
+
         ofmt.imm11_00 = {2'b00, ifmt.nzuimm[10:7], ifmt.nzuimm[12:11], ifmt.nzuimm[5], ifmt.nzuimm[6], 2'b00};
         ofmt.rs1 = 5'd2;
         ofmt.funct3 = rv32i_types_pkg::ADDI;
@@ -171,12 +171,12 @@ package rv32c_pkg;
         // based on RV32/64/128. This assumes
         // RV32 *only* for now.
         rvc_cl_cs_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C0 
-        //        && ifmt.funct3 != 3'b000 
-        //        && ifmt.funct3 != 3'b100
-        //        && ifmt.funct3[15] == 1'b0);
-
         rv32i_types_pkg::itype_t ofmt;
+        assert(ifmt.op == RVC_C0 
+                && ifmt.funct3 != 3'b000 
+                && ifmt.funct3 != 3'b100
+                && ifmt.funct3[15] == 1'b0);
+
         ofmt.imm11_00 = (ifmt.funct3 == RVC_CL_FUNC_FLD)
                         ? {4'b0000, ifmt.imm2, ifmt.imm3, 3'b000}
                         : {5'b0000, ifmt.imm2[6], ifmt.imm3, ifmt.imm2[5], 2'b00};
@@ -199,13 +199,11 @@ package rv32c_pkg;
         // based on RV32/64/128. This assumes
         // RV32 *only* for now.
         rvc_cl_cs_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C0 
-        //        && ifmt.funct3 != 3'b000 
-        //        && ifmt.funct3 != 3'b100
-        //        && ifmt.funct3[15] == 1'b1);
-
         rv32i_types_pkg::stype_t ofmt;
-        logic [11:0] imm12 = (ifmt.funct3 == RVC_CS_FUNC_SD || ifmt.funct3 == RVC_CS_FUNC_FSD)
+        logic [11:0] imm12;
+        assert(ifmt.op == RVC_C0 && ifmt.funct3 != 3'b000 && ifmt.funct3 != 3'b100 && ifmt.funct3[15] == 1'b1);
+
+        imm12 = (ifmt.funct3 == RVC_CS_FUNC_SD || ifmt.funct3 == RVC_CS_FUNC_FSD)
                         ? {4'b0000, ifmt.imm2, ifmt.imm3, 3'b000}
                         : {5'b0000, ifmt.imm2[6], ifmt.imm3, ifmt.imm2[5], 2'b00};
         ofmt.imm11_05 = imm12[11:5];
@@ -232,13 +230,13 @@ package rv32c_pkg;
 
     function automatic logic [31:0] decompress_ci_load(logic [15:0] compressed);
         rvc_ci_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C2);
-        //assert(ifmt.funct3 == RVC_CI_LWSP
-        //    || ifmt.funct3 == RVC_CI_FLWSP
-        //    || ifmt.funct3 == RVC_CI_FLDSP);
+        rv32i_types_pkg::itype_t ofmt;
+        assert(ifmt.op == RVC_C2);
+        assert(ifmt.funct3 == RVC_CI_FUNC_LWSP
+            || ifmt.funct3 == RVC_CI_FUNC_FLWSP
+            || ifmt.funct3 == RVC_CI_FUNC_FLDSP);
 
         // lw -> lw rd, offset(x2)
-        rv32i_types_pkg::itype_t ofmt;
         ofmt.imm11_00 = (ifmt.funct3 == RVC_CI_FUNC_LWSP || ifmt.funct3 == RVC_CI_FUNC_FLWSP)
                         ? {4'h0, ifmt.imm5[3:2], ifmt.imm1, ifmt.imm5[6:4], 2'b00}
                         : {3'b000, ifmt.imm5[4:2], ifmt.imm1, ifmt.imm5[6:5], 3'b000};
@@ -272,8 +270,8 @@ package rv32c_pkg;
         //              imm == 0 -> RESERVED
         //              rd == x2 -> C.ADDI16SP
         // C.NOP -> nop (addi x0, x0, 0)
-        //assert((ifmt.op == RVC_C2 && ifmt.funct3 == RVC_CI_SLLI)
-        //    || ifmt.op == RVC_C1);
+        assert((ifmt.op == RVC_C2 && ifmt.funct3 == RVC_CI_FUNC_SLLI)
+            || ifmt.op == RVC_C1);
 
         if(ifmt.funct3 == RVC_CI_FUNC_ADDI
             || ifmt.funct3 == RVC_CI_FUNC_NOP
@@ -341,14 +339,15 @@ package rv32c_pkg;
     
     function automatic logic [31:0] decompress_css(logic [15:0] compressed);
         rvc_css_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C2);
-        //assert(ifmt.funct3 == RVC_CI_SWSP
-        //    || ifmt.funct3 == RVC_CI_FSWSP
-        //    || ifmt.funct3 == RVC_CI_FSDSP);
-
-        // sw -> sw rs2, offset(x2)
         rv32i_types_pkg::stype_t ofmt;
-        logic [11:0] imm = (ifmt.funct3 == RVC_CI_FUNC_SWSP || ifmt.funct3 == RVC_CI_FUNC_FSWSP)
+        logic [11:0] imm;
+
+        assert(ifmt.op == RVC_C2);
+        assert(ifmt.funct3 == RVC_CI_FUNC_SWSP
+            || ifmt.funct3 == RVC_CI_FUNC_FSWSP
+            || ifmt.funct3 == RVC_CI_FUNC_FSDSP);
+        // sw -> sw rs2, offset(x2)
+        imm = (ifmt.funct3 == RVC_CI_FUNC_SWSP || ifmt.funct3 == RVC_CI_FUNC_FSWSP)
                         ? {4'h0, ifmt.imm[8:7], ifmt.imm[12:9], 2'b00}
                         : {3'b000, ifmt.imm[9:7], ifmt.imm[12:10], 3'b000};
         ofmt.imm11_05 = imm[11:5];
@@ -373,13 +372,14 @@ package rv32c_pkg;
 
     function automatic logic [31:0] decompress_ca(logic [15:0] compressed);
         rvc_ca_t ifmt = compressed;
+        rv32i_types_pkg::rtype_t ofmt;
         logic [7:0] funct_ext = {ifmt.funct6, ifmt.funct2};
-        //assert(ifmt.op == RVC_C1);
-        //assert(ifmt.funct6[15:12] == 3'b100);
+
+        assert(ifmt.op == RVC_C1);
+        assert(ifmt.funct6[15:13] == 3'b100);
 
         // C.AND, C.OR, C.XOR, C.SUB, C.ADDW, C.SUBW
         // -> OP rd', rd', rs2'
-        rv32i_types_pkg::rtype_t ofmt;
         // bit 30 determines add/subtract
         ofmt.funct7 = (funct_ext == RVC_CA_FUNC_SUB) ? 7'b010_0000 : 7'b000_0000;
         ofmt.rs2 = decompress_regselect(ifmt.rs2);
@@ -408,10 +408,10 @@ package rv32c_pkg;
     
     function automatic logic [31:0] decompress_cb(logic [15:0] compressed);
         rvc_cb_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C1);
-        //assert(ifmt.funct3 == RVC_CB_BEQZ
-        //    || ifmt.funct3 == RVC_CB_BNEZ
-        //    || (ifmt.funct3 == RVC_CB_ANDI && ifmt.funct2 == 2'b10));
+        assert(ifmt.op == RVC_C1);
+        assert(ifmt.funct3 == RVC_CB_FUNC_BEQZ
+            || ifmt.funct3 == RVC_CB_FUNC_BNEZ
+            || (ifmt.funct3 == RVC_CB_FUNC_ANDI && ifmt.funct2 == 2'b10));
         if(ifmt.funct3 == RVC_CB_FUNC_ANDI) begin
             // C.ANDI -> andi rd', rd', imm
             rv32i_types_pkg::itype_t ofmt;
@@ -451,9 +451,9 @@ package rv32c_pkg;
 
     function automatic logic [31:0] decompress_cj(logic [15:0] compressed);
         rvc_cj_t ifmt = compressed;
-        //assert(ifmt.op == RVC_C1);
-        //assert(ifmt.funct3 == RVC_CJ_J || ifmt.funct3 == RVC_CJ_JAL);
         rv32i_types_pkg::ujtype_t ofmt;
+        assert(ifmt.op == RVC_C1);
+        assert(ifmt.funct3 == RVC_CJ_FUNC_J || ifmt.funct3 == RVC_CJ_FUNC_JAL);
         ofmt.imm20 = 1'b0;
         ofmt.imm10_01 = {1'b0, ifmt.imm[8], ifmt.imm[10:9], ifmt.imm[6], ifmt.imm[7], ifmt.imm[2], ifmt.imm[5:3]};
         ofmt.imm11 = ifmt.imm[12];
