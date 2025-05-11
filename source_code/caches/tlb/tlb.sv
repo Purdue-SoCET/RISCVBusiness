@@ -37,7 +37,7 @@ module tlb #(
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
     parameter TLB_SIZE            = TLB_ENTRIES, // Number of entries in the TLB
     parameter TLB_ASSOC           = 1,  // dont set this to 0, TLB_SIZE / TLB_ASSOC must be power of 2
-    parameter IS_ITLB             = 1,   // denotes special behavior for permission checking
+    parameter IS_ITLB             = 1,  // denotes special behavior for permission checking
     parameter BLOCK_SIZE          = 1
 )
 (
@@ -65,18 +65,14 @@ module tlb #(
     localparam N_BLOCK_BITS       = $clog2(BLOCK_SIZE) + (BLOCK_SIZE == 1);
     localparam N_TAG_BITS         = VPN_LENGTH - N_SET_BITS;
     localparam TOTAL_TAG_SIZE     = (N_TAG_BITS + ASID_LENGTH + 1); // +1 for valid
-    localparam FRAME_SIZE         = WORD_SIZE + TOTAL_TAG_SIZE; // in bits
-    localparam SRAM_W             = FRAME_SIZE * TLB_ASSOC;                      // sram parameters
-
-    // coherence params, not sure if needed
-    localparam SRAM_TAG_W         = TOTAL_TAG_SIZE * TLB_ASSOC; // +1 for valid
-    localparam CLEAR_LENGTH       = $clog2(BLOCK_SIZE) + 2;
+    localparam FRAME_SIZE         = WORD_SIZE + TOTAL_TAG_SIZE;     // in bits
+    localparam SRAM_W             = FRAME_SIZE * TLB_ASSOC;         // sram parameters
 
     // Define the TLB entry structure
     typedef struct packed {
         logic valid;
-        logic [ASID_LENGTH-1:0] asid; // Address Space Identifier
-        logic [N_TAG_BITS-1:0]  vpn_tag;  // Tagged virtual Page Number
+        logic [ASID_LENGTH-1:0] asid;    // Address Space Identifier
+        logic [N_TAG_BITS-1:0]  vpn_tag; // Tagged virtual Page Number
     } tlb_tag_t;
 
     typedef struct packed {
@@ -119,11 +115,11 @@ module tlb #(
         logic                    finish;
         logic [N_SET_BITS-1:0]   set_num;
         logic [N_FRAME_BITS-1:0] frame_num; // TLB_ASSOC
-    } fence_idx_t;             // fence counter type
+    } fence_idx_t; // fence counter type
 
     typedef enum {
-       IDLE, HIT, FETCH, FENCE_TLB
-    } tlb_fsm_t;            // tlb state machine
+        IDLE, HIT, FETCH, FENCE_TLB
+    } tlb_fsm_t; // tlb state machine
 
     // Signals Declarations
     // counter signals
@@ -144,7 +140,7 @@ module tlb #(
     decoded_tlb_addr_t decoded_addr;
 
     // Cache Hit
-    logic hit, pass_through, activate_hit;
+    logic hit, activate_hit;
     word_t [BLOCK_SIZE-1:0] hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
 
@@ -154,7 +150,6 @@ module tlb #(
     logic [N_SET_BITS-1:0] sramSEL;
 
     // fence reg
-    logic fence_req, nfence_req;
     logic idle_done;
 
     // fence va and asid
@@ -174,7 +169,7 @@ module tlb #(
     assign fence_asid = prv_pipe_if.fence_asid;
 
     // turning on or off hit logic
-    assign activate_hit = ~pass_through && at_if.addr_trans_on;
+    assign activate_hit = at_if.addr_trans_on;
 
     // sram instance
     assign sramSEL = (state == FENCE_TLB || state == IDLE) ? fence_idx.set_num : decoded_addr.vpn.idx_bits;
@@ -213,7 +208,6 @@ module tlb #(
             last_used <= 0;
             read_addr <= 0;
             decoded_req_addr <= 0;
-            fence_req <= 0;
         end
         else begin
             state <= next_state;                        // cache state machine
@@ -221,7 +215,6 @@ module tlb #(
             last_used <= next_last_used;                // MRU index
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
-            fence_req <= nfence_req;                    // fence requested by core
         end
     end
 
@@ -263,8 +256,6 @@ module tlb #(
         hit 	        = 0;
         hit_idx         = 0;
         hit_data        = 0;
-        // pass_through    = proc_gen_bus_if.addr >= NONCACHE_START_ADDR;
-        pass_through    = 0;
 
         if (activate_hit) begin
             for(int i = 0; i < TLB_ASSOC; i++) begin
@@ -273,9 +264,9 @@ module tlb #(
                    sramRead.frames[i].tag.valid) begin
                     //Read or write hit
                     if(state == HIT) begin
-	                    hit       = 1'b1;
-        	            hit_data  = sramRead.frames[i].pte;
-                	    hit_idx   = i;
+                        hit       = 1'b1;
+                        hit_data  = sramRead.frames[i].pte;
+                        hit_idx   = i;
                     end
                 end
             end
@@ -317,7 +308,7 @@ module tlb #(
             IDLE: begin
                 // clear out tlbs with fence
                 sramWEN = 1;
-    	        sramWrite.frames[fence_idx.frame_num] = '0;
+                sramWrite.frames[fence_idx.frame_num] = '0;
                 sramMask.frames[fence_idx.frame_num] = '0;
                 enable_fence_count_nowb = 1;
                 // flag the completion of fence
@@ -335,13 +326,13 @@ module tlb #(
                     next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                 end
                 // tlb miss on a clean block
-		        else if(at_if.addr_trans_on && ~hit && activate_hit) begin
+                else if(at_if.addr_trans_on && ~hit && activate_hit) begin
                     mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                     mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                     mem_gen_bus_if.addr = proc_gen_bus_if.addr;
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
-			    end
+                end
             end
             FETCH: begin
                 // set tlb to be invalid before cache completes fetch
@@ -396,7 +387,7 @@ module tlb #(
                     next_state = HIT;
             end
             HIT: begin
-                if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~pass_through) // not sure what to do with pass through yet.
+                if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit)
                     next_state = FETCH;
                 if (fence)
                     next_state = FENCE_TLB;
@@ -410,15 +401,6 @@ module tlb #(
                     next_state = HIT;
             end
         endcase
-    end
-
-    // fence saver
-    always_comb begin
-        nfence_req = fence_req;
-        if (fence)
-            nfence_req = 1;
-        if (fence_done)
-            nfence_req = 0;
     end
 
 endmodule
