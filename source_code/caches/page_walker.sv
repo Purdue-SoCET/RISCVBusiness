@@ -77,13 +77,6 @@ module page_walker #(
     access_t access, next_access;
 
     // rtl (need to add logic for sv39-64 if RV64 is implemented)
-    // assign at_if.sv32 = prv_pipe_if.satp.mode == SV32_MODE;
-    // assign at_if.sv39 = 0; // prv_pipe_if.satp.mode == SV39_MODE
-    // assign at_if.sv48 = 0; // prv_pipe_if.satp.mode == SV48_MODE
-    // assign at_if.sv57 = 0; // prv_pipe_if.satp.mode == SV57_MODE
-    // assign at_if.sv64 = 0; // prv_pipe_if.satp.mode == SV64_MODE
-    // assign at_if.addr_trans_on = (at_if.sv32 | at_if.sv39 | at_if.sv48 | at_if.sv57 | at_if.sv64) && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
-    
     assign insn_at_if.sv32 = prv_pipe_if.satp.mode == SV32_MODE;
     assign insn_at_if.sv39 = 0; // prv_pipe_if.satp.mode == SV39_MODE
     assign insn_at_if.sv48 = 0; // prv_pipe_if.satp.mode == SV48_MODE
@@ -189,14 +182,18 @@ module page_walker #(
                     end
 
                     if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
-                        casez({data_at_if.sv64, data_at_if.sv57, data_at_if.sv48, data_at_if.sv39, data_at_if.sv32})
-                            5'b????1: next_page_address = {prv_pipe_if.satp.ppn[19:0], decoded_addr_sv32.vpn[1], 2'b00};
-                            5'b???10: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[2], 3'b00};
-                            5'b??100: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv48.vpn[3], 3'b00};
-                            5'b?1000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv57.vpn[4], 3'b00};
-                            5'b10000: next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv64.vpn[5], 3'b00};
-                            default : next_page_address = '0;
-                        endcase
+                        if (data_at_if.sv32)
+                            next_page_address = {prv_pipe_if.satp.ppn[19:0], decoded_addr_sv32.vpn[1], 2'b00};
+                        else if (data_at_if.sv39)
+                            next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[2], 3'b00};
+                        else if (data_at_if.sv48)
+                            next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[3], 3'b00};
+                        else if (data_at_if.sv57)
+                            next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv57.vpn[4], 3'b00};
+                        else if (data_at_if.sv64)
+                            next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv64.vpn[5], 3'b00};
+                        else
+                            next_page_address = '0;
                     end
                 end
             end
@@ -236,14 +233,18 @@ module page_walker #(
                             end
                         endcase
                     end else begin
-                        casez({data_at_if.sv64, data_at_if.sv57, data_at_if.sv48, data_at_if.sv39, data_at_if.sv32})
-                            5'b????1: next_page_address = {pte_sv32.ppn[19:0], decoded_addr_sv32.vpn[level-1], 2'b00};
-                            5'b???10: next_page_address = '0; // {pte_sv39.ppn, decoded_addr_sv39.vpn[level-1], 3'b00};
-                            5'b??100: next_page_address = '0; // {pte_sv48.ppn, decoded_addr_sv48.vpn[level-1], 3'b00};
-                            5'b?1000: next_page_address = '0; // {pte_sv57.ppn, decoded_addr_sv57.vpn[level-1], 3'b00};
-                            5'b10000: next_page_address = '0; // {pte_sv64.ppn, decoded_addr_sv64.vpn[level-1], 3'b00};
-                            default : next_page_address = '0;
-                        endcase
+                        if (data_at_if.sv32)
+                            next_page_address = {pte_sv32.ppn[19:0], decoded_addr_sv32.vpn[level-1], 2'b00};
+                        else if (data_at_if.sv39)
+                            next_page_address = '0; // {pte_sv39.ppn, decoded_addr_sv39.vpn[level-1], 3'b00};
+                        else if (data_at_if.sv48)
+                            next_page_address = '0; // {pte_sv48.ppn, decoded_addr_sv48.vpn[level-1], 3'b00};
+                        else if (data_at_if.sv57)
+                            next_page_address = '0; // {pte_sv57.ppn, decoded_addr_sv57.vpn[level-1], 3'b00};
+                        else if (data_at_if.sv64)
+                            next_page_address = '0; // {pte_sv64.ppn, decoded_addr_sv64.vpn[level-1], 3'b00};
+                        else
+                            next_page_address = '0;
                     end
                 end
             end
