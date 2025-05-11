@@ -188,6 +188,11 @@ def create_include(config):
           line  = '`define SMODE_SUPPORTED\n'
           line += 'localparam ' + isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         elif 'address_translation_enabled' == isa_param:
+          # supervisor enabled should be enabled if address translation is on
+          if isa_params[isa_param] == 'enabled' and isa_params['supervisor_enabled'] == 'disabled':
+            err = 'Illegal configuration. ' + isa_param  + ' == ' + isa_params[isa_param]
+            err += ' is not a valid configuration with supervisor_enabled == disabled'
+            sys.exit(err)
           line += isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
