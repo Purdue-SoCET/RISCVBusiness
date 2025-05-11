@@ -162,7 +162,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
 
 def main():
     parser = argparse.ArgumentParser(prog='RISC-V Tests', description='Runner for RISCVBusiness RISC-V Tests')
-    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' is supported at this time.', default=['p'])
+    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' and \'v\' are supported at this time.', default=['p'])
     parser.add_argument('--isa', choices=supported_isa, nargs='*', help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.', default=[])
     parser.add_argument('--machine', action='store_true', help='Enable M-mode tests. Not currently supported.')
     parser.add_argument('--supervisor', action='store_true', help='Enable S-mode tests. Not currently supported.')
@@ -175,14 +175,6 @@ def main():
     if 'pm' in args.environment or 'pt' in args.environment:
         print("Environments 'pt' and 'pm' are not yet supported.")
         exit(1)
-    
-    # if args.machine:
-    #     print("M-mode tests are not currently supported.")
-    #     exit(1)
-    
-    # if args.supervisor:
-    #     print("S-mode not currently supported on RISCVBusiness.")
-    #     exit(1)
     
     run_selected_tests(args.isa, args.environment, args.machine, args.supervisor)
 
