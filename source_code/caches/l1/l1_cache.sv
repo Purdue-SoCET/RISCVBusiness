@@ -133,14 +133,15 @@ module l1_cache #(
     logic [N_SETS-1:0] last_used;
     logic [N_SETS-1:0] next_last_used;
     // address
-    word_t read_addr, next_read_addr, sv32_addr, request_addr;
+    word_t read_addr, next_read_addr, sv32_addr, request_addr, phy_addr;
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
     decoded_cache_addr_t decoded_addr, decoded_read_addr, snoop_decoded_addr;
+    decoded_cache_addr_t decoded_pw_addr;
     logic [N_TAG_BITS-1:0] fetch_physical_tag;
     //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
     logic hit, pass_through;
-    word_t [BLOCK_SIZE-1:0] hit_data;
+    word_t [BLOCK_SIZE-1:0] hit_data, mem_bus_hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
     cache_set_t sramWrite, sramRead, sramMask;
@@ -166,9 +167,15 @@ module l1_cache #(
 
     assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
 
+    assign decoded_pw_addr = decoded_cache_addr_t'(pw_gen_bus_if.addr);
+
     assign sv32_addr = |ppn_tag[9:0] ? {ppn_tag[19:0], proc_gen_bus_if.addr[11:0]} : {ppn_tag[19:10], proc_gen_bus_if.addr[21:0]}; // superpaging support
 
     assign request_addr = pw_gen_bus_if.ren ? pw_gen_bus_if.addr : sv32_addr;
+
+    assign phy_addr = at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr;
+
+    assign mem_bus_hit_data = mem_gen_bus_if.rdata; // used in PW fetches
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
@@ -239,7 +246,7 @@ module l1_cache #(
     end
 
     // decoded address conversion
-    assign decoded_addr = state == SNOOP ? snoop_decoded_addr : at_if.addr_trans_on ? decoded_cache_addr_t'(request_addr) : decoded_cache_addr_t'(proc_gen_bus_if.addr);
+    assign decoded_addr = state == SNOOP ? snoop_decoded_addr : decoded_cache_addr_t'(phy_addr);
 
     logic coherence_hit, sc_valid_block;
 
@@ -251,7 +258,7 @@ module l1_cache #(
         hit 	        = 0;
         hit_idx         = 0;
         hit_data        = 0;
-        pass_through    = (at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr) >= NONCACHE_START_ADDR;
+        pass_through    = phy_addr >= NONCACHE_START_ADDR;
         coherence_hit   = 0;
         sc_valid_block  = 0;
         ren = IS_ICACHE ? proc_gen_bus_if.ren : prv_pipe_if.ex_mem_ren; // HACK: prevents comb loop in D$, find a better fix?
@@ -302,7 +309,7 @@ module l1_cache #(
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
         mem_gen_bus_if.addr     = 0;
-        mem_gen_bus_if.wdata    = 0; 
+        mem_gen_bus_if.wdata    = 0;
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         enable_flush_count      = 0;
         enable_flush_count_nowb = 0;
@@ -315,7 +322,7 @@ module l1_cache #(
         // found in multiple places in the below `casez` statement, however,
         // it wouldn't execute correctly. For example, 0x80000510 would become
         // 0x80000500 for a block size of 2.
-        next_read_addr          = (at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr) & ~{CLEAR_LENGTH{1'b1}};
+        next_read_addr          = phy_addr & ~{CLEAR_LENGTH{1'b1}};
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
         ccif.dWEN               = 1'b0;
@@ -344,7 +351,7 @@ module l1_cache #(
             end
             HIT: begin
                 // Hit logic
-                mem_gen_bus_if.addr = (at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr);
+                mem_gen_bus_if.addr = phy_addr;
                 // cache hit on a page walker read
                 if(pw_gen_bus_if.ren && hit && !flush) begin
                     pw_gen_bus_if.busy = 0;
@@ -437,12 +444,7 @@ module l1_cache #(
                 // if page walker, we don't want to store this
                 if(request == CACHE_REQUEST_PW && ~mem_gen_bus_if.busy) begin
                     pw_gen_bus_if.busy = 0;
-
-                    // very scuffed...
-                    if (pw_gen_bus_if.addr[2])
-                        pw_gen_bus_if.rdata = mem_gen_bus_if.rdata[63:32];
-                    else
-                        pw_gen_bus_if.rdata = mem_gen_bus_if.rdata[31:0];
+                    pw_gen_bus_if.rdata = mem_bus_hit_data[decoded_pw_addr.idx.block_bits];
                 end
                 // fill data
                 else if(request == CACHE_REQUEST_PROC && ~mem_gen_bus_if.busy) begin
@@ -629,7 +631,7 @@ module l1_cache #(
                     next_state = SNOOP;
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;
-                else if (pw_gen_bus_if.ren && ~hit) // don't ever fetch if we're an I$ and we have a tlb_miss
+                else if (pw_gen_bus_if.ren && ~hit)
                     next_state = FETCH;
                 else if (tlb_miss) // don't ever fetch if we have a TLB miss & no current page walk request
                     next_state = state;
