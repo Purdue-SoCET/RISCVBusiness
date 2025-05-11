@@ -45,17 +45,11 @@ module separate_caches (
     import machine_mode_types_1_13_pkg::*;
     import rv32i_types_pkg::*;
 
-    // TLB signals
-    logic itlb_miss, itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
-    logic dtlb_miss, dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
-    logic pw_fault_load_page, pw_fault_store_page, pw_fault_insn_page;
-    
+    // TLB signals L1$ needs
+    logic itlb_miss, dtlb_miss;
     word_t itlb_hit_data, dtlb_hit_data;
 
-    generic_bus_if itlb_gen_bus_if ();
-    generic_bus_if dtlb_gen_bus_if ();
     generic_bus_if pw_gen_bus_if ();
-
     generic_bus_if empty_gen_bus_if ();
 
     address_translation_if insn_at_if ();
@@ -183,6 +177,15 @@ module separate_caches (
 
     generate
         if (ADDRESS_TRANSLATION_ENABLED == "enabled") begin
+            // TLB busses
+            generic_bus_if itlb_gen_bus_if ();
+            generic_bus_if dtlb_gen_bus_if ();
+
+            // TLB/PW signals
+            logic itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
+            logic dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
+            logic pw_fault_load_page, pw_fault_store_page, pw_fault_insn_page;
+
             // DTLB
             tlb #(.IS_ITLB(0)) dtlb (
                 .CLK(CLK),
