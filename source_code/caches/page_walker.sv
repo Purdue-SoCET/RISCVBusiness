@@ -29,7 +29,7 @@
 `include "address_translation_if.vh"
 
 module page_walker #(
-    parameter int PHYSICAL_ADDR_WIDTH = 32 // Can be 34 for Sv32, 56 for Sv39-57
+    parameter int PHYSICAL_ADDR_WIDTH = 32 // Can max out to 34 bits for Sv32, 56 for Sv39-57
 )
 (
     input logic CLK, nRST,
@@ -59,7 +59,7 @@ module page_walker #(
     } pw_fsm_t;
 
     // address signals
-    logic [(PHYSICAL_ADDR_WIDTH-1):0] page_address, next_page_address;
+    logic [33:0] page_address, next_page_address; // will need to change num bits if not using sv32
     
     // sv32
     va_sv32_t decoded_daddr_sv32, decoded_iaddr_sv32, decoded_addr_sv32;
@@ -183,7 +183,7 @@ module page_walker #(
 
                     if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
                         if (data_at_if.sv32)
-                            next_page_address = {prv_pipe_if.satp.ppn[19:0], decoded_addr_sv32.vpn[1], 2'b00};
+                            next_page_address = {prv_pipe_if.satp.ppn, decoded_addr_sv32.vpn[1], 2'b00};
                         else if (data_at_if.sv39)
                             next_page_address = '0; // {prv_pipe_if.satp.ppn, decoded_addr_sv39.vpn[2], 3'b00};
                         else if (data_at_if.sv48)
@@ -199,7 +199,7 @@ module page_walker #(
             end
             WALK: begin
                 mem_gen_bus_if.ren = 1;
-                mem_gen_bus_if.addr = page_address;
+                mem_gen_bus_if.addr = page_address[(PHYSICAL_ADDR_WIDTH-1):0];
                 if (~mem_gen_bus_if.busy) begin
                     if (leaf_pte) begin
                         next_page_address = '0;
@@ -234,7 +234,7 @@ module page_walker #(
                         endcase
                     end else begin
                         if (data_at_if.sv32)
-                            next_page_address = {pte_sv32.ppn[19:0], decoded_addr_sv32.vpn[level-1], 2'b00};
+                            next_page_address = {pte_sv32.ppn, decoded_addr_sv32.vpn[level-1], 2'b00};
                         else if (data_at_if.sv39)
                             next_page_address = '0; // {pte_sv39.ppn, decoded_addr_sv39.vpn[level-1], 3'b00};
                         else if (data_at_if.sv48)
