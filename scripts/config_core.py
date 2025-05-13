@@ -80,7 +80,10 @@ UARCH_PARAMS = \
     # Multicore configurations
     'num_harts' : [],
     # Branch/Jump Configurations
-    'br_predictor_type' : ['not_taken'],
+    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2', 'return', 'btb_ghr_pht'],
+    'use_ras' : ['true', 'false'],
+    # btb has fixed block size of 4B
+    'btb_size' : [],
     # Cache Configurations
     'cache_config' : ['separate'],
     'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
@@ -169,7 +172,7 @@ def create_include(config):
   # Handle localparam configurations
   isa_params = config['isa_params']
   free_params = ['num_harts', 'noncache_start_addr']
-  int_params = ['num_harts', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
+  int_params = ['num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
   include_file.write('// ISA Params:\n') 
   for isa_param in isa_params:
     try:
@@ -208,12 +211,21 @@ def create_include(config):
       if uarch_param not in free_params and not isinstance(uarch_params[uarch_param], int):
         err = 'Illegal configuration of incorrect type for ' + uarch_param
         sys.exit(err)
+      if uarch_params['btb_size'] % 4 != 0:
+          err = 'Invalid btb size, not divisible by 4'
+          sys.exit(err)
       if uarch_params['dcache_size'] % (uarch_params['dcache_block_size'] * uarch_params['dcache_assoc']) != 0:
         err = 'Invalid dcache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
       if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
         err = 'Invalid icache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
+      if(uarch_params['rv32c_enabled'] == 'enabled') & (uarch_params['br_predictor_type'] != 'not_taken'):
+        err = 'RV32C and advanced branch prediction cannot be enabled simultaneously.'
+        sys.exit(err)
+      if(uarch_params['br_predictor_type'] == 'btb_ghr_pht'):
+        print('Warning: GHR predictor is experimental and may not work as expected!',
+                'BTB parameters are currently ignored for this, using default size')
       if uarch_params['tlb_entries'] not in [1, 2, 4, 8, 16, 32, 64]:
         err = 'Invalid tlb_entries. Not a multiple of two and/or less than or equal to 64.'
         sys.exit(err)

@@ -149,6 +149,10 @@ struct Ram {
             outfile << buf << std::endl;
         }
     }
+
+    bool operator==(const Ram &rhs) {
+        return this->mmap == rhs.mmap;
+    }
 };
 
 bool cache0_done = false;
@@ -456,23 +460,21 @@ int main(int argc, char **argv) {
         epoch.tick();
     }
 
+    std::cout << "Finished running transactions, dumping now..." << "\033[0m" << std::endl;
+
     epoch.cache0.dump();
     epoch.cache1.dump();
     epoch.flush();
 
     dut->final();
     trace->close();
+    if (epoch.sim_model != epoch.golden_model) {
+        std::cout << "\033[91m" << "MEMORY MAPS DO NOT MATCH!" << "\033[0m" << std::endl;
+    } else {
+        std::cout << "\033[92m" << "Memory maps match!" << "\033[0m" << std::endl;
+    }
     epoch.sim_model.dump();
     epoch.golden_model.dump();
-
-    printf(
-        "cache0: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
-        dut->cache0_invalidated_blocks, dut->cache0_shared_blocks, dut->cache0_to_s_transitions,
-        dut->cache0_to_e_transitions);
-    printf(
-        "cache1: invalidations: %d, send shared block: %d, got shared block: %d, exclusives: %d\n",
-        dut->cache1_invalidated_blocks, dut->cache1_shared_blocks, dut->cache1_to_s_transitions,
-        dut->cache1_to_e_transitions);
 
     return 0;
 }

@@ -26,8 +26,8 @@
 *	            - ASSOC | either 1 or 2
 */
 
+`include "component_selection_defines.vh"
 `include "generic_bus_if.vh"
-`include "cache_coherence_if.vh"
 `include "prv_pipeline_if.vh"
 `include "address_translation_if.vh"
 
@@ -43,21 +43,21 @@ module l1_cache #(
     parameter BLOCK_SIZE          = 2, // must be power of 2, max 8
     parameter ASSOC               = 1, // dont set this to 0
     parameter IS_ICACHE           = 1,   // denotes special behavior for page walk behavior
-    parameter NONCACHE_START_ADDR = 32'hF000_0000 // sh/sb still have issues when uncached; not sure whats up with that still tbh
+    parameter HART_ID
 )
 (
     input logic CLK, nRST,
-    input logic clear, flush, reserve, exclusive, tlb_miss,
+    input logic clear, flush, reserve, tlb_miss,
     input logic [PPNLEN-1:0] ppn_tag,
-    output logic clear_done, flush_done,
-    generic_bus_if.cpu mem_gen_bus_if,
+    output logic clear_done, flush_done, abort_bus,
     generic_bus_if.generic_bus proc_gen_bus_if,
     generic_bus_if.generic_bus pw_gen_bus_if,
-    cache_coherence_if.cache ccif, //Coherency interface, connected to coherency unit
+    bus_ctrl_if.cache bus_ctrl_if,
     prv_pipeline_if.cache prv_pipe_if,
     address_translation_if.cache at_if,
     output logic cache_miss
 );
+    import rv32i_types_pkg::*;
     
     // local parameters
     localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
@@ -141,7 +141,7 @@ module l1_cache #(
     //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
     logic hit, pass_through;
-    word_t [BLOCK_SIZE-1:0] hit_data, mem_bus_hit_data;
+    word_t [BLOCK_SIZE-1:0] hit_data, bus_ctrl_hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
     // sram signals
     cache_set_t sramWrite, sramRead, sramMask;
@@ -162,10 +162,13 @@ module l1_cache #(
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
 
+    // error handling
+    assign proc_gen_bus_if.error = bus_ctrl_if.derror[HART_ID];
+
     // determine physical tag for fetch if address translation is on
     assign decoded_read_addr = decoded_cache_addr_t'(read_addr);
 
-    assign snoop_decoded_addr = decoded_cache_addr_t'(ccif.addr);
+    assign snoop_decoded_addr = decoded_cache_addr_t'(bus_ctrl_if.ccsnoopaddr[HART_ID]);
 
     assign decoded_pw_addr = decoded_cache_addr_t'(pw_gen_bus_if.addr);
 
@@ -175,13 +178,13 @@ module l1_cache #(
 
     assign phy_addr = at_if.addr_trans_on ? request_addr : proc_gen_bus_if.addr;
 
-    assign mem_bus_hit_data = mem_gen_bus_if.rdata; // used in PW fetches
+    assign bus_ctrl_hit_data = bus_ctrl_if.dload[HART_ID]; // used in PW fetches
 
     // sram instance
     assign sramSEL = (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
                    : (state == SNOOP) ? snoop_decoded_addr.idx.idx_bits
                    : decoded_addr.idx.idx_bits;
-    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
+    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS))
         CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
     sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
         BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(sramWEN), .SEL(sramSNOOPSEL), .wMask(sramTagsMask));
@@ -197,7 +200,7 @@ module l1_cache #(
             read_addr <= 0;
             decoded_req_addr <= 0;
             flush_req <= 0;
-            ccif.abort_bus <= 0;
+            abort_bus <= 0;
             reservation_set <= 0;
             request <= CACHE_REQUEST_NONE;
         end
@@ -208,7 +211,7 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
-            ccif.abort_bus <= !pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen && state != FLUSH_CACHE; // no flush cache check will cause fence.i to stall processor
+            abort_bus <= (!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen && next_state != FLUSH_CACHE) || next_state == CANCEL_REQ; // no flush cache check will cause fence.i to stall processor
             reservation_set <= next_reservation_set;
             request <= next_request;
         end
@@ -280,18 +283,20 @@ module l1_cache #(
         end
     end
 
+    logic snoop_hit, valid, dirty, exclusive;
+
     always_comb begin
-        ccif.snoop_hit  = 0;
-        ccif.valid = 0;
-        ccif.dirty = 0;
-        ccif.exclusive = 0;
+        snoop_hit  = 0;
+        valid = 0;
+        dirty = 0;
+        exclusive = 0;
 
         for(int i = 0; i < ASSOC; i++) begin
             if (read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid) begin
-                ccif.snoop_hit = 1'b1;
-                ccif.valid = read_tag_bits[i].valid;
-                ccif.dirty = read_tag_bits[i].dirty;
-                ccif.exclusive = read_tag_bits[i].exclusive;
+                snoop_hit = bus_ctrl_if.ccwait[HART_ID];
+                valid = read_tag_bits[i].valid;
+                dirty = read_tag_bits[i].dirty;
+                exclusive = read_tag_bits[i].exclusive;
             end
         end
     end
@@ -306,11 +311,6 @@ module l1_cache #(
         proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         pw_gen_bus_if.busy      = 1;
         pw_gen_bus_if.rdata     = 0;
-        mem_gen_bus_if.ren      = 0;
-        mem_gen_bus_if.wen      = 0;
-        mem_gen_bus_if.addr     = 0;
-        mem_gen_bus_if.wdata    = 0;
-        mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         enable_flush_count      = 0;
         enable_flush_count_nowb = 0;
         clear_flush_count       = 0;
@@ -322,11 +322,17 @@ module l1_cache #(
         // found in multiple places in the below `casez` statement, however,
         // it wouldn't execute correctly. For example, 0x80000510 would become
         // 0x80000500 for a block size of 2.
-        next_read_addr          = phy_addr & ~{CLEAR_LENGTH{1'b1}};
-        next_decoded_req_addr   = decoded_req_addr;
-        next_last_used          = last_used;
-        ccif.dWEN               = 1'b0;
-        ccif.requested_data     = {BLOCK_SIZE{32'hBAD1BAD1}};
+        next_read_addr                   = phy_addr & ~{CLEAR_LENGTH{1'b1}};
+        next_decoded_req_addr            = decoded_req_addr;
+        next_last_used                   = last_used;
+        bus_ctrl_if.dREN[HART_ID]        = 1'b0;
+        bus_ctrl_if.dWEN[HART_ID]        = 1'b0;
+        bus_ctrl_if.daddr[HART_ID]       = 32'hBAD1BAD1;
+        bus_ctrl_if.dstore[HART_ID]      = 32'hBAD1BAD1;
+        bus_ctrl_if.ccwrite[HART_ID]     = 1'b0;
+        bus_ctrl_if.ccsnoophit[HART_ID]  = 1'b0;
+        bus_ctrl_if.ccdirty[HART_ID]     = 1'b0;
+        bus_ctrl_if.ccsnoopdone[HART_ID] = 1'b0;
 
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx.idx_bits] == (ASSOC - 1)))
@@ -351,7 +357,7 @@ module l1_cache #(
             end
             HIT: begin
                 // Hit logic
-                mem_gen_bus_if.addr = phy_addr;
+                bus_ctrl_if.daddr[HART_ID] = phy_addr;
                 // cache hit on a page walker read
                 if(pw_gen_bus_if.ren && hit && !flush) begin
                     pw_gen_bus_if.busy = 0;
@@ -396,20 +402,20 @@ module l1_cache #(
                     end
                     // passthrough
                     else if(pass_through) begin
-                        mem_gen_bus_if.wen     = proc_gen_bus_if.wen;
-                        mem_gen_bus_if.ren     = proc_gen_bus_if.ren;
-                        mem_gen_bus_if.byte_en = proc_gen_bus_if.byte_en;
-                        proc_gen_bus_if.busy   = mem_gen_bus_if.busy;
-                        proc_gen_bus_if.rdata  = mem_gen_bus_if.rdata;
+                        bus_ctrl_if.dWEN[HART_ID]     = proc_gen_bus_if.wen;
+                        bus_ctrl_if.dREN[HART_ID]     = proc_gen_bus_if.ren;
+                        bus_ctrl_if.dbyte_en[HART_ID] = proc_gen_bus_if.byte_en;
+                        proc_gen_bus_if.busy          = bus_ctrl_if.dwait[HART_ID];
+                        proc_gen_bus_if.rdata         = bus_ctrl_if.dload[HART_ID];
                         if(proc_gen_bus_if.wen) begin
                             casez (proc_gen_bus_if.byte_en)
-                                4'b0001:    mem_gen_bus_if.wdata = {24'd0, proc_gen_bus_if.wdata[7:0]};
-                                4'b0010:    mem_gen_bus_if.wdata = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
-                                4'b0100:    mem_gen_bus_if.wdata = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
-                                4'b1000:    mem_gen_bus_if.wdata = {proc_gen_bus_if.wdata[31:24], 24'd0};
-                                4'b0011:    mem_gen_bus_if.wdata = {16'd0, proc_gen_bus_if.wdata[15:0]};
-                                4'b1100:    mem_gen_bus_if.wdata = {proc_gen_bus_if.wdata[31:16],16'd0};
-                                default:    mem_gen_bus_if.wdata = proc_gen_bus_if.wdata;
+                                4'b0001: bus_ctrl_if.dstore[HART_ID] = {24'd0, proc_gen_bus_if.wdata[7:0]};
+                                4'b0010: bus_ctrl_if.dstore[HART_ID] = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
+                                4'b0100: bus_ctrl_if.dstore[HART_ID] = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
+                                4'b1000: bus_ctrl_if.dstore[HART_ID] = {proc_gen_bus_if.wdata[31:24], 24'd0};
+                                4'b0011: bus_ctrl_if.dstore[HART_ID] = {16'd0, proc_gen_bus_if.wdata[15:0]};
+                                4'b1100: bus_ctrl_if.dstore[HART_ID] = {proc_gen_bus_if.wdata[31:16],16'd0};
+                                default: bus_ctrl_if.dstore[HART_ID] = proc_gen_bus_if.wdata;
                             endcase
                         end
                     end
@@ -431,9 +437,9 @@ module l1_cache #(
             end
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-                mem_gen_bus_if.wen =  request == CACHE_REQUEST_PW ? 0 : proc_gen_bus_if.wen;
-                mem_gen_bus_if.ren = (request == CACHE_REQUEST_PW ? pw_gen_bus_if.ren : proc_gen_bus_if.ren) || !ccif.abort_bus;
-                mem_gen_bus_if.addr = read_addr;
+                bus_ctrl_if.ccwrite[HART_ID] =  request == CACHE_REQUEST_PW ? 0 : proc_gen_bus_if.wen;
+                bus_ctrl_if.dREN[HART_ID] = (request == CACHE_REQUEST_PW ? pw_gen_bus_if.ren : proc_gen_bus_if.ren || proc_gen_bus_if.wen) || !abort_bus;
+                bus_ctrl_if.daddr[HART_ID] = read_addr;
 
                 // only modify cache if its a processor request
                 if (request == CACHE_REQUEST_PROC) begin
@@ -442,104 +448,66 @@ module l1_cache #(
                 end
 
                 // if page walker, we don't want to store this
-                if(request == CACHE_REQUEST_PW && ~mem_gen_bus_if.busy) begin
+                if(request == CACHE_REQUEST_PW && !bus_ctrl_if.dwait[HART_ID]) begin
                     pw_gen_bus_if.busy = 0;
-                    pw_gen_bus_if.rdata = mem_bus_hit_data[decoded_pw_addr.idx.block_bits];
+                    pw_gen_bus_if.rdata = bus_ctrl_hit_data[decoded_pw_addr.idx.block_bits];
                 end
                 // fill data
-                else if(request == CACHE_REQUEST_PROC && ~mem_gen_bus_if.busy) begin
+                else if(request == CACHE_REQUEST_PROC && !bus_ctrl_if.dwait[HART_ID]) begin
                     sramWEN                             = 1'b1;
-                    sramWrite.frames[ridx].data         = mem_gen_bus_if.rdata;
+                    sramWrite.frames[ridx].data         = bus_ctrl_if.dload[HART_ID];
                     sramWrite.frames[ridx].tag.valid    = 1'b1;
                     sramWrite.frames[ridx].tag.tag_bits = decoded_req_addr.idx.tag_bits;
-                    sramMask.frames[ridx].data          = 1'b0;
-                    sramMask.frames[ridx].tag.valid     = 1'b0;
-                    sramMask.frames[ridx].tag.tag_bits  = 1'b0;
+                    sramMask.frames[ridx].data          = 0;
+                    sramMask.frames[ridx].tag.valid     = 0;
+                    sramMask.frames[ridx].tag.tag_bits  = 0;
 
-                    sramWrite.frames[ridx].tag.exclusive = (ccif.state_transfer == EXCLUSIVE);
-                    sramWrite.frames[ridx].tag.dirty = (ccif.state_transfer == MODIFIED);
+                    sramWrite.frames[ridx].tag.exclusive = !proc_gen_bus_if.wen && bus_ctrl_if.ccexclusive[HART_ID];
+                    sramWrite.frames[ridx].tag.dirty = proc_gen_bus_if.wen;
                     sramMask.frames[ridx].tag.exclusive = 0;
                     sramMask.frames[ridx].tag.dirty = 0;
-
-                    if (proc_gen_bus_if.wen) begin
-                        casez (proc_gen_bus_if.byte_en)
-                            4'b0001:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][7:0] = proc_gen_bus_if.wdata[7:0];
-                            4'b0010:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:8] = proc_gen_bus_if.wdata[15:8];
-                            4'b0100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][23:16] = proc_gen_bus_if.wdata[23:16];
-                            4'b1000:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:24] = proc_gen_bus_if.wdata[31:24];
-                            4'b0011:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][15:0] = proc_gen_bus_if.wdata[15:0];
-                            4'b1100:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits][31:16] = proc_gen_bus_if.wdata[31:16];
-                            default:    sramWrite.frames[ridx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
-                        endcase
-                    end
                 end
             end
             WB: begin
                 // set stim for eviction
-                ccif.dWEN = 1'b1;
-                mem_gen_bus_if.wen = 1'b1;
-                mem_gen_bus_if.addr = read_addr; 
-                mem_gen_bus_if.wdata = sramRead.frames[ridx].data;
+                bus_ctrl_if.dWEN[HART_ID] = 1'b1;
+                bus_ctrl_if.daddr[HART_ID] = read_addr;
+                bus_ctrl_if.dstore[HART_ID] = sramRead.frames[ridx].data;
                 next_read_addr =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
                 // increment eviction word counter
-                if(!mem_gen_bus_if.busy) begin
+                if(!bus_ctrl_if.dwait[HART_ID]) begin
                     // invalidate when eviction is complete
                     sramWEN = 1;
                     sramWrite.frames[ridx].tag.dirty = 0;
                     sramWrite.frames[ridx].tag.valid = 0;
+                    sramWrite.frames[ridx].tag.exclusive = 0;
                     sramMask.frames[ridx].tag.dirty  = 0;
                     sramMask.frames[ridx].tag.valid  = 0;
+                    sramMask.frames[ridx].tag.exclusive  = 0;
                 end
             end
             SNOOP: begin
-                ccif.requested_data = sramRead.frames[hit_idx].data;
-                if (!mem_gen_bus_if.busy) begin
+                bus_ctrl_if.dstore[HART_ID]      = sramRead.frames[hit_idx].data;
+                bus_ctrl_if.ccsnoopdone[HART_ID] = 1'b1;
+                bus_ctrl_if.ccsnoophit[HART_ID]  = 1'b1;
+                bus_ctrl_if.ccdirty[HART_ID]     = sramRead.frames[hit_idx].tag.dirty;
+                if (!bus_ctrl_if.ccwait[HART_ID]) begin
                     sramWEN = 1;
-                    case(ccif.state_transfer)
-                        INVALID: begin
-                            sramWrite.frames[hit_idx].tag.dirty     = 0;
-                            sramWrite.frames[hit_idx].tag.valid     = 0;
-                            sramWrite.frames[hit_idx].tag.exclusive = 0;
-                            sramMask.frames[hit_idx].tag.dirty      = 0;
-                            sramMask.frames[hit_idx].tag.valid      = 0;
-                            sramMask.frames[hit_idx].tag.exclusive  = 0;
-                        end 
-                        SHARED: begin
-                            sramWrite.frames[hit_idx].tag.dirty     = 0;
-                            sramWrite.frames[hit_idx].tag.valid     = 1;
-                            sramWrite.frames[hit_idx].tag.exclusive = 0;
-                            sramMask.frames[hit_idx].tag.dirty      = 0;
-                            sramMask.frames[hit_idx].tag.valid      = 0;
-                            sramMask.frames[hit_idx].tag.exclusive  = 0;
-                        end 
-                        EXCLUSIVE: begin
-                            sramWrite.frames[hit_idx].tag.dirty     = 0;
-                            sramWrite.frames[hit_idx].tag.valid     = 1;
-                            sramWrite.frames[hit_idx].tag.exclusive = 1;
-                            sramMask.frames[hit_idx].tag.dirty      = 0;
-                            sramMask.frames[hit_idx].tag.valid      = 0;
-                            sramMask.frames[hit_idx].tag.exclusive  = 0;
-                        end 
-                        MODIFIED: begin
-                            sramWrite.frames[hit_idx].tag.dirty     = 1;
-                            sramWrite.frames[hit_idx].tag.valid     = 1;
-                            sramWrite.frames[hit_idx].tag.exclusive = 0;
-                            sramMask.frames[hit_idx].tag.dirty      = 0;
-                            sramMask.frames[hit_idx].tag.valid      = 0;
-                            sramMask.frames[hit_idx].tag.exclusive  = 0;
-                        end 
-                    endcase
+                    sramWrite.frames[hit_idx].tag.dirty     = 0;
+                    sramWrite.frames[hit_idx].tag.valid     = !bus_ctrl_if.ccinv[HART_ID];
+                    sramWrite.frames[hit_idx].tag.exclusive = 0;
+                    sramMask.frames[hit_idx].tag.dirty      = 0;
+                    sramMask.frames[hit_idx].tag.valid      = 0;
+                    sramMask.frames[hit_idx].tag.exclusive  = 0;
                 end
             end
             FLUSH_CACHE: begin
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].tag.dirty) begin
-                    ccif.dWEN             = 1'b1;
-                    mem_gen_bus_if.wen    = 1'b1;
-                    mem_gen_bus_if.addr   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
-                    mem_gen_bus_if.wdata  = sramRead.frames[flush_idx.frame_num].data;
-                    // increment to next word when flush of word is done
-                    if (~mem_gen_bus_if.busy) begin
+                    bus_ctrl_if.dWEN[HART_ID]    = 1'b1;
+                    bus_ctrl_if.daddr[HART_ID]   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
+                    bus_ctrl_if.dstore[HART_ID]  = sramRead.frames[flush_idx.frame_num].data;
+                    if (!bus_ctrl_if.dwait[HART_ID]) begin
                         enable_flush_count = 1;
                         // clears entry when flushed
                         sramWEN = 1;
@@ -561,20 +529,26 @@ module l1_cache #(
                 end
             end
             CANCEL_REQ: begin
-                mem_gen_bus_if.wen     = 0;
-                mem_gen_bus_if.ren     = 1;
-                mem_gen_bus_if.addr    = decoded_addr;
-                mem_gen_bus_if.byte_en = 0;
-                proc_gen_bus_if.busy   = 1;
+                // TODO:
+                bus_ctrl_if.dWEN[HART_ID]     = 0;
+                bus_ctrl_if.dREN[HART_ID]     = 1;
+                bus_ctrl_if.daddr[HART_ID]    = decoded_addr;
+                bus_ctrl_if.dbyte_en[HART_ID] = 0;
+                proc_gen_bus_if.busy = 1;
             end
         endcase
+
+        // Handle failed snoops
+        if (bus_ctrl_if.ccwait[HART_ID] && !snoop_hit) begin
+            bus_ctrl_if.ccsnoopdone[HART_ID] = 1'b1;
+            bus_ctrl_if.ccsnoophit[HART_ID]  = 1'b0;
+        end
 
         // Same as sramSEL except try to lookup the snoop addr when there's
         // a request
         sramSNOOPSEL    = sramWEN ? sramSEL
-                        : ccif.snoop_req ? snoop_decoded_addr.idx.idx_bits
+                        : bus_ctrl_if.ccwait[HART_ID] ? snoop_decoded_addr.idx.idx_bits
                         : sramSEL;
-        ccif.snoop_busy = sramWEN || !ccif.snoop_req;
 
         for (int i = 0; i < ASSOC; i++) begin
             sramTags[i] = sramWrite.frames[i].tag;
@@ -627,7 +601,7 @@ module l1_cache #(
                     next_state = HIT;
 	        end
 	        HIT: begin
-                if (ccif.snoop_hit && !ccif.snoop_busy)
+                if (snoop_hit && !sramWEN)
                     next_state = SNOOP;
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;
@@ -641,46 +615,46 @@ module l1_cache #(
                     next_state = WB;
                 else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].tag.dirty && ~pass_through)
                     next_state = FETCH;
-                if (flush || flush_req)  
+                if (flush || flush_req)
                     next_state = FLUSH_CACHE;
 
                 next_request = next_state == FETCH ? pw_gen_bus_if.ren ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC : CACHE_REQUEST_NONE;
 	        end
 	        FETCH: begin
-                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error) begin
+                if (bus_ctrl_if.derror[HART_ID] || !bus_ctrl_if.dwait[HART_ID]) begin
                     cache_miss = 1;
-                    next_state = HIT; 
-                end else if (ccif.snoop_hit && !ccif.snoop_busy)
+                    next_state = HIT;
+                end else if (snoop_hit && !sramWEN)
                     next_state = SNOOP;
-                else if (!ccif.abort_bus && !pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
+                else if (!abort_bus && !pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
                     next_state = CANCEL_REQ;
 
                 next_request = next_state == state ? request : CACHE_REQUEST_NONE;
             end
             WB: begin
-                if (!mem_gen_bus_if.busy)
-                    next_state = HIT; 
-                else if (ccif.snoop_hit && !ccif.snoop_busy)
+                if (bus_ctrl_if.derror[HART_ID] || !bus_ctrl_if.dwait[HART_ID])
+                    next_state = HIT;
+                else if (snoop_hit && !sramWEN)
                     next_state = SNOOP;
                 
                 next_request = next_state == state ? request : CACHE_REQUEST_NONE;
             end
             SNOOP: begin
-                next_state = ccif.snoop_req ? SNOOP :
-                             flush_req      ? FLUSH_CACHE : HIT;
+                next_state = bus_ctrl_if.ccwait[HART_ID] ? SNOOP :
+                             flush_req                   ? FLUSH_CACHE : HIT;
             end
             FLUSH_CACHE: begin
                 if (flush_done)
                     next_state = HIT;
-                else if (ccif.snoop_hit && !ccif.snoop_busy)
+                else if (snoop_hit && !sramWEN)
                     next_state = SNOOP;
             end
             CANCEL_REQ: begin
-               if (!mem_gen_bus_if.busy) begin
-                   next_state = HIT;
-               end else if (ccif.snoop_hit && !ccif.snoop_busy) begin
-                   next_state = SNOOP;
-               end
+                if (!bus_ctrl_if.dwait[HART_ID]) begin
+                    next_state = HIT;
+                end else if (snoop_hit && !sramWEN) begin
+                    next_state = SNOOP;
+                end
             end
 	    endcase
     end
@@ -695,7 +669,6 @@ module l1_cache #(
     end
 
     // Reservation tracking logic
-    // TODO: Remove exclusive signal
     always_comb begin
         next_reservation_set = reservation_set;
         if (proc_gen_bus_if.ren && reserve && hit) begin

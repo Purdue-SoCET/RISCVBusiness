@@ -24,8 +24,8 @@
 *                 and data accesses
 */
 
-`include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
+`include "generic_bus_if.vh"
 `include "bus_ctrl_if.vh"
 
 module memory_controller #(
@@ -36,7 +36,7 @@ module memory_controller #(
     bus_ctrl_if bcif,
     generic_bus_if.cpu out_gen_bus_if
 );
-    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2), .NONCACHE_START_ADDR(NONCACHE_START_ADDR)) BUS_CTRL(
+    bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2)) BUS_CTRL(
         .CLK(CLK),
         .nRST(nRST),
         .ccif(bcif)
@@ -51,5 +51,6 @@ module memory_controller #(
 
         bcif.l2load = out_gen_bus_if.rdata;
         bcif.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+        bcif.l2error = out_gen_bus_if.error;
     end
 endmodule

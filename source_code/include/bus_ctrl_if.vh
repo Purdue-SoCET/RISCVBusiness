@@ -29,10 +29,8 @@
 
 // parameters
 parameter CPUS = NUM_HARTS * 2;
-localparam BC_BLOCK_SIZE = 2; //Why doesn't cache_coherency_if get this value?
-localparam DATA_WIDTH = 32 * BC_BLOCK_SIZE; // 64 bit/clk memory bandwidth
-localparam CPU_ID_LENGTH = $clog2(CPUS);
-
+parameter BLOCK_SIZE = DCACHE_BLOCK_SIZE > ICACHE_BLOCK_SIZE ? DCACHE_BLOCK_SIZE : ICACHE_BLOCK_SIZE;
+localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
 
 // coherence bus controller states
 typedef enum {
@@ -64,13 +62,11 @@ typedef enum logic [1:0] {
 // taken from coherence_ctrl_if.vh
 typedef logic [31:0] bus_word_t;
 typedef logic [DATA_WIDTH-1:0] transfer_width_t;
-typedef logic [CPUS-1:0] cpus_bitvec_t;
-typedef logic [CPU_ID_LENGTH-1:0] cpuid_t;
 
 // modified from coherence_ctrl_if.vh
 interface bus_ctrl_if ();
     // L1 generic control signals
-    logic               [CPUS-1:0] dREN, dWEN, dwait; 
+    logic               [CPUS-1:0] dREN, dWEN, dwait, derror;
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
     bus_word_t          [CPUS-1:0] daddr;
     logic         [CPUS-1:0] [3:0] dbyte_en;
@@ -78,7 +74,6 @@ interface bus_ctrl_if ();
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
     logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
     logic               [CPUS-1:0] ccsnoopdone; // indicates that the responder has the data
-    logic               [CPUS-1:0] ccIsPresent; // indicates that nonrequesters have the data valid
     logic               [CPUS-1:0] ccdirty;     // indicates that we have [I -> S, M -> S]
     // L1 coherence OUTPUTS
     logic               [CPUS-1:0] ccwait;      // indicates a potential snoophit wait request
@@ -88,7 +83,7 @@ interface bus_ctrl_if ();
     // L2 signals
     l2_state_t l2state; 
     bus_word_t l2load, l2store;
-    logic l2WEN, l2REN; 
+    logic l2WEN, l2REN, l2error;
     bus_word_t l2addr; 
     logic [3:0] l2_byte_en;
     // Core outputs
@@ -110,19 +105,24 @@ interface bus_ctrl_if ();
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, dbyte_en,
-                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
-                l2load, l2state, ccabort,
-        output  dwait, dload, 
+                ccwrite, ccsnoophit, ccdirty, ccsnoopdone,
+                l2load, l2state, l2error, ccabort,
+        output  dwait, dload, derror,
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 
+
+    modport cache(
+        input dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
+        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
+    );
 
     modport tb(
         input   dwait, dload, 
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en,
         output  dREN, dWEN, daddr, dstore, dbyte_en,
-                ccwrite, ccsnoophit, ccIsPresent, ccdirty, ccsnoopdone,
+                ccwrite, ccsnoophit, ccdirty, ccsnoopdone,
                 l2load, l2state, ccabort
     ); 
 

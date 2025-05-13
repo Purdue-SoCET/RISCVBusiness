@@ -29,16 +29,19 @@
 `include "prv_pipeline_if.vh"
 `include "address_translation_if.vh"
 
-module separate_caches (
-    input logic CLK, nRST,
+module separate_caches#(
+    parameter HART_ID
+) (
+    input logic CLK,
+    nRST,
     generic_bus_if.cpu icache_mem_gen_bus_if,
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches control_if,
-    cache_coherence_if.cache i_cache_coherency_if,
-    cache_coherence_if.cache d_cache_coherency_if,
     prv_pipeline_if.cache prv_pipe_if,
+    bus_ctrl_if.cache bus_ctrl_if,
+    output logic abort_bus,
     output logic icache_miss,
     output logic dcache_miss
 );
@@ -56,8 +59,8 @@ module separate_caches (
     address_translation_if data_at_if ();
 
     // assign physical addresses to pmp
-    assign prv_pipe_if.ipaddr = icache_mem_gen_bus_if.addr;
-    assign prv_pipe_if.dpaddr = dcache_mem_gen_bus_if.addr;
+    assign prv_pipe_if.ipaddr = bus_ctrl_if.daddr[HART_ID*2];
+    assign prv_pipe_if.dpaddr = bus_ctrl_if.daddr[HART_ID*2+1];
 
     generate
         /* verilator lint_off width */
@@ -93,21 +96,20 @@ module separate_caches (
                 .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
                 .ASSOC(DCACHE_ASSOC),
                 .IS_ICACHE(0),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+                .HART_ID(HART_ID*2+1)
             )
             dcache (
                 .CLK(CLK),
                 .nRST(nRST),
-                .mem_gen_bus_if(dcache_mem_gen_bus_if),
                 .proc_gen_bus_if(dcache_proc_gen_bus_if),
                 .pw_gen_bus_if(pw_gen_bus_if),
+                .bus_ctrl_if(bus_ctrl_if),
                 .flush(control_if.dcache_flush),
                 .clear(control_if.dcache_clear),
                 .reserve(control_if.dcache_reserve),
-                .exclusive(control_if.dcache_exclusive),
                 .flush_done(control_if.dflush_done),
+                .abort_bus(),
                 .clear_done(control_if.dclear_done),
-                .ccif(d_cache_coherency_if),
                 .cache_miss(dcache_miss),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(data_at_if),
@@ -151,21 +153,20 @@ module separate_caches (
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
                 .ASSOC(ICACHE_ASSOC),
                 .IS_ICACHE(1),
-                .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
+                .HART_ID(HART_ID*2)
             )
             icache (
                 .CLK(CLK),
                 .nRST(nRST),
-                .mem_gen_bus_if(icache_mem_gen_bus_if),
                 .proc_gen_bus_if(icache_proc_gen_bus_if),
                 .pw_gen_bus_if(empty_gen_bus_if),
+                .bus_ctrl_if(bus_ctrl_if),
                 .flush(control_if.icache_flush),
                 .clear(control_if.icache_clear),
                 .reserve(1'b0),
-                .exclusive(1'b0),
                 .flush_done(control_if.iflush_done),
                 .clear_done(control_if.iclear_done),
-                .ccif(i_cache_coherency_if),
+                .abort_bus(abort_bus),
                 .cache_miss(icache_miss),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(insn_at_if),

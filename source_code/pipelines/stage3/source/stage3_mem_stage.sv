@@ -30,6 +30,10 @@ module stage3_mem_stage(
     assign predict_if.prediction = ex_mem_if.ex_mem_reg.prediction;
     assign predict_if.branch_result = ex_mem_if.ex_mem_reg.branch_taken;
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
+    assign predict_if.pc_to_update = ex_mem_if.ex_mem_reg.pc;
+    assign predict_if.direction = ex_mem_if.ex_mem_reg.instr[WORD_SIZE-1];
+    assign predict_if.is_jalr = (ex_mem_if.ex_mem_reg.instr[6:0] == JALR && (ex_mem_if.ex_mem_reg.instr[19:15] == 5'd5 || ex_mem_if.ex_mem_reg.instr[19:15] == 5'd1)) ? 1 : 0;
+
 
     /*************
     * Data Access
@@ -230,7 +234,7 @@ module stage3_mem_stage(
     assign hazard_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
-    assign hazard_if.mispredict = ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken;
+    assign hazard_if.mispredict = (ex_mem_if.ex_mem_reg.predicted_address != ex_mem_if.ex_mem_reg.brj_addr) || (ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken);
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
 
     assign halt = ex_mem_if.ex_mem_reg.halt;

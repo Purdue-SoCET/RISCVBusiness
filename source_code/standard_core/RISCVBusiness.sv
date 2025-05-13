@@ -23,7 +23,6 @@
 */
 
 `include "generic_bus_if.vh"
-`include "cache_coherence_if.vh"
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
@@ -41,7 +40,6 @@ module RISCVBusiness #(
     input logic CLK, nRST,
     input logic [63:0] mtime,
     output logic wfi, halt, abort_bus,
-    output cache_coherence_statistics_t dcache_statistics, icache_statistics,
     core_interrupt_if.core interrupt_if,
     bus_ctrl_if bus_ctrl_if
 );
@@ -56,10 +54,6 @@ module RISCVBusiness #(
     cache_control_if control_if ();
     sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
-
-    //Added for coherency
-    cache_coherence_if i_cache_coherency_if ();
-    cache_coherence_if d_cache_coherency_if ();
 
     //interface instantiations
     tspp_fetch_execute_if fetch_ex_if ();
@@ -114,7 +108,9 @@ module RISCVBusiness #(
     );
     */
 
-    separate_caches sep_caches (
+    separate_caches #(
+        .HART_ID(HART_ID)
+    ) sep_caches (
         .CLK(CLK),
         .nRST(nRST),
         .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
@@ -122,36 +118,19 @@ module RISCVBusiness #(
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
-        .i_cache_coherency_if(i_cache_coherency_if),
-        .d_cache_coherency_if(d_cache_coherency_if),
         .prv_pipe_if(prv_pipe_if),
+        .bus_ctrl_if(bus_ctrl_if),
+        .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
 
-    coherency_unit #(
-        .CPUID(HART_ID * 2),
-        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
-    ) i_coherence_unit (
+    /*
+    sparce_wrapper sparce_wrapper_i (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(i_cache_coherency_if),
-        .bcif(bus_ctrl_if),
-        .gbif(icache_mc_if),
-        .coherence_statistics(icache_statistics)
-    );
-
-    coherency_unit #(
-        .CPUID(HART_ID * 2 + 1),
-        .NONCACHE_START_ADDR(NONCACHE_START_ADDR)
-    ) d_coherence_unit (
-        .CLK(CLK),
-        .nRST(nRST),
-        .ccif(d_cache_coherency_if),
-        .bcif(bus_ctrl_if),
-        .gbif(dcache_mc_if),
-        .coherence_statistics(dcache_statistics)
-    );
+        .sparce_if(sparce_if)
+    );*/
 
     sparce_disabled sparce_disabled_i (
         .CLK(CLK),

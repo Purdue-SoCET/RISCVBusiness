@@ -22,12 +22,12 @@
 *	Description:  Bus controller for MESI cache coherence
 */
 
+`include "component_selection_defines.vh"
 `include "bus_ctrl_if.vh"
 
 module bus_ctrl #(
     parameter BLOCK_SIZE = 2,
-    parameter CPUS = 2,
-    parameter NONCACHE_START_ADDR = 32'hF000_0000
+    parameter CPUS = 2
 )(
     input logic CLK, nRST,
     bus_ctrl_if.cc ccif
@@ -49,7 +49,7 @@ module bus_ctrl #(
     logic [$clog2(BLOCK_SIZE):0] block_count, nblock_count;
     logic block_count_done, nblock_count_done;
     logic hit_delay;
-    logic pass_through;
+    logic pass_through, should_abort;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
@@ -80,18 +80,20 @@ module bus_ctrl #(
         end
     end
 
+    assign should_abort = ccif.ccabort[requester_cpu] && state_can_abort(state);
+
     // next state logic for bus FSM
     always_comb begin
         nstate = state;
         casez (state)
             IDLE:  begin
-                if (|ccif.dWEN)
+                if (|(ccif.dWEN & ~ccif.ccabort))
                     nstate = GRANT_EVICT;
-                else if (|(ccif.dREN & ccif.ccwrite))
+                else if (|(ccif.dREN & ccif.ccwrite & ~ccif.ccabort))
                     nstate = GRANT_RX;
-                else if (|ccif.dREN)
+                else if (|(ccif.dREN & ~ccif.ccabort))
                     nstate = GRANT_R;
-                else if (|ccif.ccwrite)
+                else if (|(ccif.ccwrite & ~ccif.ccabort))
                     nstate = GRANT_INV;
             end
             GRANT_R:            nstate = SNOOP_R;
@@ -109,14 +111,15 @@ module bus_ctrl #(
             // BUS_TO_CACHE:       nstate = IDLE;
             TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
             TRANSFER_RX:        nstate = BUS_TO_CACHE;
-            READ_L2:            nstate = block_count_done ? BUS_TO_CACHE : state;
+            READ_L2:            nstate = ccif.l2error ? IDLE :
+                                         block_count_done ? BUS_TO_CACHE : state;
             WRITEBACK_MS:       nstate = block_count_done ? IDLE : state;
             WRITEBACK:          nstate = block_count_done ? IDLE : state;
             BUS_TO_CACHE:       nstate = IDLE;
             INVALIDATE:         nstate = IDLE;
         endcase
         // handle exception
-        if (ccif.ccabort[requester_cpu] && state_can_abort(state))
+        if (should_abort)
             nstate = IDLE;
     end
 
@@ -132,6 +135,7 @@ module bus_ctrl #(
         ccif.l2WEN = '0;
         ccif.ccexclusive = '0;
         ccif.ccinv = '0;
+        ccif.derror = '0;
         ndload = ccif.dload[requester_cpu];
         nexclusiveUpdate = exclusiveUpdate;
         nrequester_cpu = requester_cpu;
@@ -141,14 +145,15 @@ module bus_ctrl #(
 
         casez(state)
             IDLE: begin // obtain the requester CPU id
-                if (|ccif.dWEN)
-                    nrequester_cpu = priorityEncode(ccif.dWEN);
-                else if (|(ccif.dREN & ccif.ccwrite))
-                    nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite));
-                else if (|ccif.dREN)
-                    nrequester_cpu = priorityEncode(ccif.dREN);
-                else if (|ccif.ccwrite)
-                    nrequester_cpu = priorityEncode(ccif.ccwrite);
+                nblock_count = 0;
+                if (|(ccif.dWEN & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode(ccif.dWEN & ~ccif.ccabort);
+                else if (|(ccif.dREN & ccif.ccwrite & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode((ccif.dREN & ccif.ccwrite & ~ccif.ccabort));
+                else if (|(ccif.dREN & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode(ccif.dREN & ~ccif.ccabort);
+                else if (|(ccif.ccwrite & ~ccif.ccabort))
+                    nrequester_cpu = priorityEncode(ccif.ccwrite & ~ccif.ccabort);
             end
             GRANT_R, GRANT_RX, GRANT_INV: begin // set the stimulus for snooping
                 for (int i = 0; i < CPUS; i++) begin
@@ -166,13 +171,13 @@ module bus_ctrl #(
                 nl2_store = ccif.dstore[requester_cpu][31:0];
             end
             SNOOP_R: begin  // determine what to do on busRD
-                nexclusiveUpdate = !(|ccif.ccIsPresent);
+                nexclusiveUpdate = !(|ccif.ccsnoophit);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
                 nl2_addr = pass_through ? ccif.daddr[requester_cpu] : ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
             end
             SNOOP_RX: begin // determine what to do on busRDX
-                nexclusiveUpdate = !(|ccif.ccIsPresent);
+                nexclusiveUpdate = !(|ccif.ccsnoophit);
                 ccif.ccinv = nonRequesterEnable(requester_cpu);
                 ccif.ccwait = nonRequesterEnable(requester_cpu);
                 nsupplier_cpu = priorityEncode(ccif.ccsnoophit);
@@ -186,7 +191,9 @@ module bus_ctrl #(
                 nblock_count = block_count;
                 ccif.l2REN = !block_count_done;
 
-                if (ccif.l2state == L2_ACCESS) begin
+                if (ccif.l2error) begin
+                    ccif.derror[requester_cpu] = 1;
+                end if (ccif.l2state == L2_ACCESS) begin
                     ccif.l2REN = 0;
                     nblock_count = block_count + 1;
                     if (!pass_through && block_count < BLOCK_SIZE - 1) begin
@@ -257,6 +264,16 @@ module bus_ctrl #(
         nblock_count_done = (nblock_count == BLOCK_SIZE) || (pass_through && ccif.l2state == L2_ACCESS);
 
         ccif.l2_byte_en = pass_through ? ccif.dbyte_en[requester_cpu] : 'hF;
+
+        // Handle bus controller aborting
+        if (should_abort) begin
+            ccif.dwait[requester_cpu] = 0;
+        end
+        // Handle non-bus controller aborting
+        for (int i = 0; i < CPUS; i++) begin
+            if (ccif.ccabort[i] && (requester_cpu != i))
+                ccif.dwait[i] = 0;
+        end
     end
 
     // function to obtain all non requesters
@@ -284,15 +301,9 @@ module bus_ctrl #(
     // Helper function to determine whether requester_cpu is properly set and
     // can be used for abort purposes
     function logic state_can_abort(bus_state_t state);
-    return state == SNOOP_R ||
-        state == SNOOP_RX ||
-        state == SNOOP_INV ||
-        state == TRANSFER_R ||
-        state == TRANSFER_RX ||
-        state == READ_L2 ||
-        state == BUS_TO_CACHE ||
-        state == WRITEBACK ||
-        state == WRITEBACK_MS ||
-        state == INVALIDATE;
+    return state == GRANT_R ||
+        state == GRANT_RX ||
+        state == SNOOP_R ||
+        state == SNOOP_RX;
     endfunction
 endmodule

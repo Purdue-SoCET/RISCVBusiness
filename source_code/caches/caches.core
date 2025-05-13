@@ -9,7 +9,6 @@ filesets:
         files:
             - caches_wrapper.sv
             - separate_caches.sv
-            - coherency_unit.sv
             - page_walker.sv
             - page_perm_check.sv
             - direct_mapped_tpf/direct_mapped_tpf_cache.sv

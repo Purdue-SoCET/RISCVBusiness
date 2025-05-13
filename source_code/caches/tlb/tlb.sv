@@ -332,6 +332,8 @@ module tlb #(
                     mem_gen_bus_if.addr = proc_gen_bus_if.addr;
                     tlb_miss = 1;
                     next_decoded_req_addr = decoded_addr;
+                end else if (fence) begin
+                    tlb_miss = 1;
                 end
             end
             FETCH: begin
@@ -357,6 +359,7 @@ module tlb #(
             end
             FENCE_TLB: begin
                 enable_fence_count_nowb = 1;
+                tlb_miss = 1;
                 // fence if valid and
                 // rs1 == 0 or sram.vpn == fence_va.vpn and
                 // rs2 == 0 or (sram.asid == fence_asid and is not a global page)

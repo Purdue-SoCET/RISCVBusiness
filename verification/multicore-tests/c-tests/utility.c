@@ -64,7 +64,8 @@ static int convert_integer(uint32_t in, int base, char *out) {
     return i;
 }
 
-void __attribute__((noinline)) vformat(const char *fmt, char *buf, va_list args) {
+void __attribute__((noinline))
+vformat(const char *fmt, char *buf, va_list args) {
     int out_idx = 0;
     for (int i = 0; fmt[i]; i++) {
         if (fmt[i] != '%') {
@@ -166,8 +167,89 @@ uint32_t get_instrs() {
     return ret;
 }
 
+uint32_t get_mhartid() {
+    uint32_t mhartid_value;
+    __asm__ volatile(
+        "csrr %0, mhartid"
+        : "=r"(mhartid_value));
+
+    return mhartid_value;
+}
+
 void wait_for_hart1_done() {
     while (hart1_done == 0) {
         __asm__ volatile("");
     }
 }
+
+void wait_for_hart2_done() {
+    while (hart2_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart3_done() {
+    while (hart3_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart4_done() {
+    while (hart4_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart5_done() {
+    while (hart5_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart6_done() {
+    while (hart6_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart7_done() {
+    while (hart7_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_all_harts_done(int num_harts) {
+    switch (num_harts) {
+        case 1:
+            while (hart_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+        case 2:
+            while (hart_done == 0 || hart1_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+        case 4:
+            while (hart_done == 0 || hart1_done == 0 || hart2_done == 0 || hart3_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+        case 8:
+            while (hart_done == 0 || hart1_done == 0 || hart2_done == 0 || hart3_done == 0 || hart4_done == 0 || hart5_done == 0 || hart6_done == 0 || hart7_done == 0) {
+                __asm__ volatile("");
+            }
+            break;
+    }
+}
+
+#define DEFINE_HARTN_MAIN(n)                                                   \
+    void __attribute__((weak)) hart##n##_main() { hart##n##_done = 1; }
+
+DEFINE_HARTN_MAIN(1)
+DEFINE_HARTN_MAIN(2)
+DEFINE_HARTN_MAIN(3)
+DEFINE_HARTN_MAIN(4)
+DEFINE_HARTN_MAIN(5)
+DEFINE_HARTN_MAIN(6)
+DEFINE_HARTN_MAIN(7)

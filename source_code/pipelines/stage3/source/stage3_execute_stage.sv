@@ -310,6 +310,7 @@ module stage3_execute_stage (
                 ex_mem_if.ex_mem_reg.fault_addr                <= fetch_ex_if.fetch_ex_reg.fault_addr;
                 ex_mem_if.ex_mem_reg.mal_insn                  <= fetch_ex_if.fetch_ex_reg.mal_insn;
                 ex_mem_if.ex_mem_reg.fault_insn                <= fetch_ex_if.fetch_ex_reg.fault_insn;
+                ex_mem_if.ex_mem_reg.predicted_address	       <= fetch_ex_if.fetch_ex_reg.predicted_address;
 
                 // Bit vectors
                 ex_mem_if.ex_mem_reg.w_sel      <= cu_if.w_sel;

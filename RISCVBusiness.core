@@ -23,6 +23,11 @@ filesets:
         files:
             - source_code/branch_predictors/branch_predictor_wrapper.sv
             - source_code/branch_predictors/nottaken_predictor/nottaken_predictor.sv
+            - source_code/branch_predictors/btfnt_predictor/btfnt_predictor.sv
+            - source_code/branch_predictors/btb/btb.sv
+            - source_code/branch_predictors/return_predictor/return_predictor.sv
+            - source_code/branch_predictors/ghr_pht/ghr_pht.sv
+            - source_code/branch_predictors/btb_ghr_pht/btb_ghr_pht.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
             #- source_code/pipelines/tspp/tspp_hazard_unit.sv
             #- source_code/pipelines/tspp/tspp_fetch_stage.sv
@@ -74,6 +79,7 @@ targets:
         filesets:
             - rtl
             - buses
+            - trackers
         toplevel: RISCVBusiness
 
     sim:
@@ -81,7 +87,6 @@ targets:
         description: Simulate w/TB
         default_tool: verilator
         filesets_append:
-            - trackers
             - "tool_verilator? (verilator_tb)"
             - "!tool_verilator? (tb)"
         toplevel:
@@ -98,8 +103,9 @@ targets:
                     - -t ps
 
             verilator:
-                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
-                #verilator_options: ["-Wno-lint", "--trace", "--trace-fst", "--trace-structs"]
+                verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-ENUMVALUE", "-Wno-lint", "--trace", "--trace-fst", "--trace-structs", "--trace-threads 4", "--threads 4"]
+                make_options:
+                    - -j 48
 
     no_mc:
         <<: *default

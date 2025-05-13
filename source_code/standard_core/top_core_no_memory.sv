@@ -63,7 +63,15 @@ module top_core #(
         .instr_30(instr_30)
     );
 
-
+    bind branch_predictor_wrapper branch_tracker branch_track1 (
+        .CLK(CLK),
+        .nRST(nRST),
+        .update_predictor(predict_if.update_predictor),
+        .direction(predict_if.direction),
+        .prediction(predict_if.prediction),
+        .branch_result(predict_if.branch_result),
+	.is_jump(predict_if.is_jump)
+    );
 
     core_interrupt_if interrupt_if ();
     assign interrupt_if.ext_int = ext_int;

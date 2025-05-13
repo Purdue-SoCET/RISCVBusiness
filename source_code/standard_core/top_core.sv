@@ -57,11 +57,18 @@ module top_core #(
         .imm_U(imm_U),
         .imm_UJ(imm_UJ),
         .imm_SB(imm_UJ),
-        .instr_30(instr_30),
-        .cache_statistics(cache_statistics)
+        .instr_30(instr_30)
     );
 
-
+    bind branch_predictor_wrapper branch_tracker branch_track1 (
+        .CLK(CLK),
+        .nRST(nRST),
+        .update_predictor(predict_if.update_predictor),
+        .direction(predict_if.direction),
+        .prediction(predict_if.prediction),
+        .branch_result(predict_if.branch_result),
+	.is_jalr(predict_if.is_jalr)
+    );
 
     core_interrupt_if interrupt_if ();
     assign interrupt_if.ext_int = ext_int;
@@ -82,7 +89,7 @@ module top_core #(
     assign addr = gen_bus_if.addr;
     assign wdata = gen_bus_if.wdata;
 `elsif BUS_INTERFACE_AHB
-    ahb_if ahb_master ();
+    ahb_if ahb_manager ();
     // TODO
 
 `elsif BUS_INTERFACE_APB
