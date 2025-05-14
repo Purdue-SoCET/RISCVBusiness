@@ -97,6 +97,11 @@ module cache_stress_wrapper (
         memory_wdata = out_gen_bus_if.wdata;
         memory_ren = out_gen_bus_if.ren;
         memory_wen = out_gen_bus_if.wen;
+
+        cache0_prv_pipe_if.ex_mem_ren = cache0_proc_gen_bus_if.ren;
+        cache0_prv_pipe_if.ex_mem_wen = cache0_proc_gen_bus_if.wen;
+        cache1_prv_pipe_if.ex_mem_ren = cache1_proc_gen_bus_if.ren;
+        cache1_prv_pipe_if.ex_mem_wen = cache1_proc_gen_bus_if.wen;
     end
 
     l1_cache #(
