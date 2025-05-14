@@ -42,8 +42,8 @@ module tlb #(
 )
 (
     input logic CLK, nRST,
-    input logic clear, fence, page_fault,
-    output logic clear_done, fence_done, tlb_miss,
+    input logic fence, page_fault,
+    output logic fence_done, tlb_miss,
     output logic fault_load_page, fault_store_page, fault_insn_page,
     output word_t tlb_hit_data,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
@@ -197,7 +197,8 @@ module tlb #(
         .fault_store_page(fault_store_page),
         .fault_insn_page(fault_insn_page),
         .prv_pipe_if(prv_pipe_if),
-        .at_if(at_if)
+        .at_if(at_if),
+        .leaf_pte()
     );
 
     // flip flops
@@ -293,7 +294,6 @@ module tlb #(
         fence_done 	            = 0;
         tlb_miss                = 0;
         idle_done               = 0;
-        clear_done 	            = 0;
         next_read_addr          = proc_gen_bus_if.addr;
         next_decoded_req_addr   = decoded_req_addr;
         next_last_used          = last_used;
