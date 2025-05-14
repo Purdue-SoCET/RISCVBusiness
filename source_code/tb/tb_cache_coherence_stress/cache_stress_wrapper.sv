@@ -33,6 +33,13 @@ module cache_stress_wrapper (
     cache_control_if c0c_if();
     cache_control_if c1c_if();
     bus_ctrl_if bus_ctrl_if();
+    prv_pipeline_if cache0_prv_pipe_if();
+    prv_pipeline_if cache1_prv_pipe_if();
+    generic_bus_if cache0_pw_gen_bus_if();
+    generic_bus_if cache1_pw_gen_bus_if();
+    address_translation_if cache0_at_if();
+    address_translation_if cache1_at_if();
+
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
@@ -96,11 +103,13 @@ module cache_stress_wrapper (
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
         .ASSOC(1),
+        .IS_ICACHE(0),
         .HART_ID(0)
     ) cache0 (
         .CLK(CLK),
         .nRST(nRST),
         .proc_gen_bus_if(cache0_proc_gen_bus_if),
+        .pw_gen_bus_if(cache0_pw_gen_bus_if),
         .bus_ctrl_if(bus_ctrl_if),
         .flush(c0c_if.dcache_flush),
         .clear(c0c_if.dcache_clear),
@@ -108,18 +117,24 @@ module cache_stress_wrapper (
         .flush_done(c0c_if.dflush_done),
         .clear_done(c0c_if.dclear_done),
         .abort_bus(),
-        .cache_miss()
+        .cache_miss(),
+        .prv_pipe_if(cache0_prv_pipe_if),
+        .at_if(cache0_at_if),
+        .tlb_miss('0),
+        .ppn_tag('0)
     );
 
     l1_cache #(
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
         .ASSOC(1),
+        .IS_ICACHE(0),
         .HART_ID(1)
     ) cache1 (
         .CLK(CLK),
         .nRST(nRST),
         .proc_gen_bus_if(cache1_proc_gen_bus_if),
+        .pw_gen_bus_if(cache0_pw_gen_bus_if),
         .bus_ctrl_if(bus_ctrl_if),
         .flush(c1c_if.dcache_flush),
         .clear(c1c_if.dcache_clear),
@@ -127,7 +142,11 @@ module cache_stress_wrapper (
         .flush_done(c1c_if.dflush_done),
         .clear_done(c1c_if.dclear_done),
         .abort_bus(),
-        .cache_miss()
+        .cache_miss(),
+        .prv_pipe_if(cache1_prv_pipe_if),
+        .at_if(cache1_at_if),
+        .tlb_miss('0),
+        .ppn_tag('0)
     );
 
     bus_ctrl #(
