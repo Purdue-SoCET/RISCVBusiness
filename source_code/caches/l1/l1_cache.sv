@@ -618,7 +618,7 @@ module l1_cache #(
                 if (flush || flush_req)
                     next_state = FLUSH_CACHE;
 
-                next_request = next_state == FETCH ? pw_gen_bus_if.ren ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC : CACHE_REQUEST_NONE;
+                next_request = next_state == FETCH || next_state == WB ? pw_gen_bus_if.ren ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC : CACHE_REQUEST_NONE;
 	        end
 	        FETCH: begin
                 if (bus_ctrl_if.derror[HART_ID] || !bus_ctrl_if.dwait[HART_ID]) begin
