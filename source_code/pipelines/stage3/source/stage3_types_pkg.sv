@@ -2,7 +2,7 @@
 package stage3_types_pkg;
 
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_12_pkg::*;
+    import machine_mode_types_1_13_pkg::*;
 
     typedef struct packed {
         logic valid;
@@ -13,7 +13,7 @@ package stage3_types_pkg;
         word_t pc4;
         word_t instr;
         word_t prediction;
-        word_t badaddr;
+        word_t fault_addr;
         word_t predicted_address;
     } fetch_ex_t;
 
@@ -36,6 +36,7 @@ package stage3_types_pkg;
         logic dwen;
         logic reg_write;
         logic ifence;
+        logic sfence;
         logic jump;
         logic halt;
         logic csr_swap;
@@ -45,7 +46,8 @@ package stage3_types_pkg;
         logic csr_read_only;
         logic breakpoint;
         logic ecall_insn;
-        logic ret_insn;
+        logic mret_insn;
+        logic sret_insn;
         logic wfi_insn;
         logic was_compressed; // Determine if PC should advance by 4 or 2, avoid passing PC and PC + (2/4) through pipeline
         logic reserve; // Determine if reservation set should be reserved/reservation set should be checked
@@ -67,7 +69,7 @@ package stage3_types_pkg;
         word_t pc;
         word_t pc4;
         word_t imm_U;
-        word_t badaddr;
+        word_t fault_addr;
         word_t predicted_address;
         tracker_ex_mem_t tracker_signals;
         // TODO: imm_U? Maybe needed

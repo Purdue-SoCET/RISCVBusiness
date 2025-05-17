@@ -32,8 +32,12 @@
 `include "bus_ctrl_if.vh"
 
 interface cache_control_if;
+
+  import machine_mode_types_1_13_pkg::*;
+
   logic icache_clear, icache_flush, iclear_done, iflush_done;
   logic dcache_clear, dcache_flush, dclear_done, dflush_done;
+  logic itlb_fence, itlb_fence_done, dtlb_fence, dtlb_fence_done;
   // Used to signal that instruction depends on state of reservation set.
   // Reservation should always be lost after this goes high.
   logic dcache_reserve;
@@ -41,13 +45,13 @@ interface cache_control_if;
   logic dcache_exclusive;
 
   modport pipeline (
-    output icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
-    input iclear_done, iflush_done, dclear_done, dflush_done
+    output icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive, itlb_fence, dtlb_fence,
+    input iclear_done, iflush_done, dclear_done, dflush_done, itlb_fence_done, dtlb_fence_done
   );
 
   modport caches (
-    input icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
-    output iclear_done, iflush_done, dclear_done, dflush_done
+    input icache_clear, icache_flush, dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive, itlb_fence, dtlb_fence,
+    output iclear_done, iflush_done, dclear_done, dflush_done, itlb_fence_done, dtlb_fence_done
   );
   
   modport icache (
@@ -58,6 +62,16 @@ interface cache_control_if;
   modport dcache ( 
     input dcache_clear, dcache_flush, dcache_reserve, dcache_exclusive,
     output dclear_done, dflush_done
+  );
+
+  modport itlb (
+    input itlb_fence,
+    output itlb_fence_done
+  );
+
+  modport dtlb (
+    input dtlb_fence,
+    output dtlb_fence_done
   );
 
 endinterface

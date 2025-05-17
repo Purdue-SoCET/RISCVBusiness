@@ -1,5 +1,5 @@
 diff --git a/isa/Makefile b/isa/Makefile
-index bf85e1f..569f64f 100644
+index bf85e1f..1e68ca1 100644
 --- a/isa/Makefile
 +++ b/isa/Makefile
 @@ -45,7 +45,7 @@ default: all
@@ -11,15 +11,19 @@ index bf85e1f..569f64f 100644
  RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data
  RISCV_SIM ?= spike
  
-@@ -66,7 +66,7 @@ vpath %.S $(src_dir)
- define compile_template
+diff --git a/isa/rv64si/dirty.S b/isa/rv64si/dirty.S
+index 15f3163..73c8adf 100644
+--- a/isa/rv64si/dirty.S
++++ b/isa/rv64si/dirty.S
+@@ -17,6 +17,8 @@
+ RVTEST_RV64M
+ RVTEST_CODE_BEGIN
  
- $$($(1)_p_tests): $(1)-p-%: $(1)/%.S
--	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@
-+	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< $(src_dir)/../env/v/amo_emu.c -o $$@
- $(1)_tests += $$($(1)_p_tests)
- 
- $$($(1)_v_tests): $(1)-v-%: $(1)/%.S
++  li sp, DRAM_BASE + 0x20000000
++
+   # Turn on VM
+   li a0, (SATP_MODE & ~(SATP_MODE<<1)) * SATP_MODE_SV39
+   la a1, page_table_1
 diff --git a/isa/rv64ua/amoadd_w.S b/isa/rv64ua/amoadd_w.S
 index d076d45..05e28b8 100644
 --- a/isa/rv64ua/amoadd_w.S

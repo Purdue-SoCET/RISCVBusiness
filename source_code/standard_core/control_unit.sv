@@ -23,15 +23,17 @@
 *                 signals used in the processor based on the incoming instruction.
 */
 
+`include "component_selection_defines.vh"
+`include "prv_pipeline_if.vh"
 `include "control_unit_if.vh"
 `include "rv32i_reg_file_if.vh"
 `include "risc_mgmt_if.vh"
 `include "decompressor_if.vh"
-`include "component_selection_defines.vh"
 
 module control_unit (
-          control_unit_if.control_unit       cu_if,
-          rv32i_reg_file_if.cu               rf_if,
+    control_unit_if.control_unit       cu_if,
+    rv32i_reg_file_if.cu               rf_if,
+    prv_pipeline_if.pipe               prv_pipe_if,
     input logic                        [4:0] rmgmt_rsel_s_0,
     rmgmt_rsel_s_1,
     rmgmt_rsel_d,
@@ -40,7 +42,7 @@ module control_unit (
 );
     import alu_types_pkg::*;
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_12_pkg::*;
+    import machine_mode_types_1_13_pkg::*;
     import rv32m_pkg::*;
     import rv32b_pkg::*;
     import rv32a_pkg::*;
@@ -61,7 +63,9 @@ module control_unit (
     // A extension helpers
     // TODO: Add cu plumbing for AMO execution
     logic rv32a_lr, rv32a_sc, rv32a_amo;
-    logic rv32zc_claim; 
+    logic rv32zc_claim;
+    // Privileged trap signals
+    logic tvm_trap, tw_trap, tsr_trap, disabled_smode_trap;
 
     assign instr_s = stype_t'(cu_if.instr);
     assign instr_i = itype_t'(cu_if.instr);
@@ -215,22 +219,39 @@ module control_unit (
         endcase
     end
 
-    assign cu_if.illegal_insn = maybe_illegal && !claimed;
+    // Trap VM if TVM is set, privilege level is S-Mode and either an sfence or csr R/W to SATP
+    assign tvm_trap = ((cu_if.sfence) || (cu_if.csr_rw_valid && cu_if.csr_addr == SATP_ADDR)) && prv_pipe_if.mstatus.tvm && prv_pipe_if.curr_privilege_level == S_MODE;
+
+    // Raise illegal instruction on WFI if Timer Wait is set, and privilege mode is not M-Mode
+    assign tw_trap  = cu_if.wfi && prv_pipe_if.mstatus.tw && prv_pipe_if.curr_privilege_level != M_MODE;
+
+    // Trap Supervisor Returns if SRET instruction, TSR is set, and current privilege level is S-Mode
+    assign tsr_trap = cu_if.sret_insn && prv_pipe_if.mstatus.tsr && prv_pipe_if.curr_privilege_level == S_MODE;
+
+    // Trap when we have a supervisor instruction and the Supervisor Extension is disabled
+    assign disabled_smode_trap = (cu_if.sfence || cu_if.sret_insn) && SUPERVISOR_ENABLED == "disabled";
+
+    // Illegal instruction logic
+    assign cu_if.illegal_insn = (maybe_illegal && !claimed) || tvm_trap || tw_trap || tsr_trap || disabled_smode_trap;
     assign claimed = rv32m_claim || rv32a_claim || rv32b_claim || rv32zc_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions
     always_comb begin
-        cu_if.ret_insn = 1'b0;
+        cu_if.mret_insn = 1'b0;
+        cu_if.sret_insn = 1'b0;
         cu_if.breakpoint = 1'b0;
         cu_if.ecall_insn = 1'b0;
         cu_if.wfi = 1'b0;
+        cu_if.sfence = 1'b0;
 
         if (cu_if.opcode == SYSTEM) begin
             if (rv32i_system_t'(instr_i.funct3) == PRIV) begin
-                if (priv_insn_t'(instr_i.imm11_00) == MRET) cu_if.ret_insn = 1'b1;
+                if (priv_insn_t'(instr_i.imm11_00) == SRET) cu_if.sret_insn = 1'b1;
+                if (priv_insn_t'(instr_i.imm11_00) == MRET) cu_if.mret_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == EBREAK) cu_if.breakpoint = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == ECALL) cu_if.ecall_insn = 1'b1;
                 if (priv_insn_t'(instr_i.imm11_00) == WFI) cu_if.wfi = 1'b1;
+                if (memmgmt_t'(instr_r.funct7) == SFENCE_VMA) cu_if.sfence = 1'b1;
             end
         end
     end

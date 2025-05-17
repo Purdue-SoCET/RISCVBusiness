@@ -70,7 +70,9 @@ PMP_MINIMUM_GRANULARITY = \
 ISA_PARAMS = \
   {
     'xlen' : [32],
-    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys())
+    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys()),
+    'supervisor_enabled' : [ 'enabled', 'disabled' ],
+    'address_translation_enabled' : [ 'enabled', 'disabled' ]
   }
 
 UARCH_PARAMS = \
@@ -95,6 +97,7 @@ UARCH_PARAMS = \
     'icache_size' : [],
     'icache_block_size' : [],
     'icache_assoc' : [],
+    'tlb_entries' : [],
     # Bus Configurations
     'bus_endianness' : ['big', 'little'],
     'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
@@ -169,7 +172,7 @@ def create_include(config):
   # Handle localparam configurations
   isa_params = config['isa_params']
   free_params = ['num_harts', 'noncache_start_addr']
-  int_params = ['num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc']
+  int_params = ['num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
   include_file.write('// ISA Params:\n') 
   for isa_param in isa_params:
     try:
@@ -184,6 +187,16 @@ def create_include(config):
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
         elif 'pmp_minimum_granularity' == isa_param:
           line += isa_param.upper() + ' = ' + str(PMP_MINIMUM_GRANULARITY[isa_params[isa_param]])
+        elif 'supervisor_enabled' == isa_param and isa_params[isa_param] == 'enabled':
+          line  = '`define SMODE_SUPPORTED\n'
+          line += 'localparam ' + isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
+        elif 'address_translation_enabled' == isa_param:
+          # supervisor enabled should be enabled if address translation is on
+          if isa_params[isa_param] == 'enabled' and isa_params['supervisor_enabled'] == 'disabled':
+            err = 'Illegal configuration. ' + isa_param  + ' == ' + isa_params[isa_param]
+            err += ' is not a valid configuration with supervisor_enabled == disabled'
+            sys.exit(err)
+          line += isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         line += ';\n'
@@ -207,12 +220,21 @@ def create_include(config):
       if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
         err = 'Invalid icache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
+      if uarch_params['dcache_size'] / (8 * uarch_params['dcache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
+        err = 'Invalid dcache_size. Sets are not less than or equal to the virtual page size of 4KB.'
+        sys.exit(err)
+      if uarch_params['icache_size'] / (8 * uarch_params['icache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
+        err = 'Invalid icache_size. Sets are not less than or equal to the virtual page size of 4KB.'
+        sys.exit(err)
       if(uarch_params['rv32c_enabled'] == 'enabled') & (uarch_params['br_predictor_type'] != 'not_taken'):
         err = 'RV32C and advanced branch prediction cannot be enabled simultaneously.'
         sys.exit(err)
       if(uarch_params['br_predictor_type'] == 'btb_ghr_pht'):
         print('Warning: GHR predictor is experimental and may not work as expected!',
                 'BTB parameters are currently ignored for this, using default size')
+      if uarch_params['tlb_entries'] not in [1, 2, 4, 8, 16, 32, 64]:
+        err = 'Invalid tlb_entries. Not a multiple of two and/or less than or equal to 64.'
+        sys.exit(err)
     elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
       err = 'Illegal configuration. ' + uarch_params[uarch_param]
       err += ' is not a valid configuration for ' + uarch_param

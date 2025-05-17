@@ -2,6 +2,8 @@
 isa_params:  
   xlen : 32
   pmp_minimum_granularity : "64K"
+  supervisor_enabled : "disabled"
+  address_translation_enabled : "disabled"
 
 # Microarchitectural Configurations
 microarch_params:
@@ -24,6 +26,7 @@ microarch_params:
   icache_block_size : 2
   icache_assoc : 1
   noncache_start_addr : 32'hF000_0000
+  tlb_entries : 16
   
   # Bus configurations
   bus_endianness      : "big"

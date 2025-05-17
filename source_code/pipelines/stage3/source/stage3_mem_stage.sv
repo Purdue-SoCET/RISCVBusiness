@@ -20,7 +20,8 @@ module stage3_mem_stage(
     output logic wfi
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_12_pkg::*;
+    import machine_mode_types_1_13_pkg::*;
+    import pma_types_1_13_pkg::*;
 
     /***************
     * Branch Update
@@ -49,6 +50,8 @@ module stage3_mem_stage(
     assign dgen_bus_if.byte_en = byte_en;
     assign dgen_bus_if.addr = ex_mem_if.ex_mem_reg.port_out;
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
+    assign prv_pipe_if.ex_mem_ren = ex_mem_if.ex_mem_reg.dren;
+    assign prv_pipe_if.ex_mem_wen = ex_mem_if.ex_mem_reg.dwen;
 
     // TODO: RISC-MGMT
     assign byte_en_temp = byte_en_standard;
@@ -130,10 +133,10 @@ module stage3_mem_stage(
     * Cache management
     *******************/
     logic ifence_reg;
+    logic ifence_reg_next;
     logic ifence_pulse;
     logic iflushed, iflushed_next;
     logic dflushed, dflushed_next;
-    logic iflush_done_reg, dflush_done_reg;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
@@ -141,7 +144,7 @@ module stage3_mem_stage(
             iflushed <= 1'b1;
             dflushed <= 1'b1;
         end else begin
-            ifence_reg <= ex_mem_if.ex_mem_reg.ifence;
+            ifence_reg <= ifence_reg_next;
             iflushed <= iflushed_next;
             dflushed <= dflushed_next;
         end
@@ -157,6 +160,7 @@ module stage3_mem_stage(
         iflushed_next = iflushed;
         dflushed_next = dflushed;
         if (ifence_pulse) begin
+            ifence_reg_next = 1;
             iflushed_next = 0;
             dflushed_next = 0;
         end
@@ -164,6 +168,52 @@ module stage3_mem_stage(
             iflushed_next = 1;
         if (cc_if.dflush_done)
             dflushed_next = 1;
+        if (iflushed_next && dflushed_next)
+            ifence_reg_next = 0;
+    end
+
+    /******************
+    * TLB management
+    *******************/
+    logic itlb_fence_reg;
+    logic itlb_fence_reg_next;
+    logic itlb_fence_pulse;
+    logic itlb_fenced, itlb_fenced_next;
+    logic dtlb_fenced, dtlb_fenced_next;
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if(!nRST) begin
+            itlb_fence_reg <= 1'b0;
+            itlb_fenced <= 1'b1;
+            dtlb_fenced <= 1'b1;
+        end else begin
+            itlb_fence_reg <= itlb_fence_reg_next;
+            itlb_fenced <= itlb_fenced_next;
+            dtlb_fenced <= dtlb_fenced_next;
+        end
+    end
+
+    assign itlb_fence_pulse  = ex_mem_if.ex_mem_reg.sfence & ~itlb_fence_reg;
+    assign cc_if.itlb_fence = itlb_fence_pulse;
+    assign cc_if.dtlb_fence = itlb_fence_pulse;
+    assign prv_pipe_if.fence_asid = ex_mem_if.ex_mem_reg.rs2_data[ASID_LENGTH-1:0];
+    assign prv_pipe_if.fence_va = ex_mem_if.ex_mem_reg.rs1_data;
+    // holds itlb_fenced/dtlb_fenced high when done, resets to 0 on a pulse
+    always_comb begin
+        itlb_fence_reg_next = itlb_fence_reg;
+        itlb_fenced_next = itlb_fenced;
+        dtlb_fenced_next = dtlb_fenced;
+        if (itlb_fence_pulse) begin
+            itlb_fence_reg_next = 1;
+            itlb_fenced_next = 0;
+            dtlb_fenced_next = 0;
+        end
+        if (cc_if.itlb_fence_done)
+            itlb_fenced_next = 1;
+        if (cc_if.dtlb_fence_done)
+            dtlb_fenced_next = 1;
+        if ((itlb_fenced_next && dtlb_fenced_next) || ADDRESS_TRANSLATION_ENABLED == "disabled") // hardwired TLB fences to be done if AT is disabled in ISA param
+            itlb_fence_reg_next = 0;
     end
 
     /************************
@@ -172,7 +222,8 @@ module stage3_mem_stage(
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.fence_stall = ifence_reg && !(iflushed && dflushed);
+    assign hazard_if.sfence = ex_mem_if.ex_mem_reg.sfence & SUPERVISOR_ENABLED == "enabled";
+    assign hazard_if.fence_stall = (ifence_reg && !(iflushed && dflushed)) || (itlb_fence_reg && !(itlb_fenced && dtlb_fenced));
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
@@ -213,9 +264,13 @@ module stage3_mem_stage(
     assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & mal_addr;
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
-    assign hazard_if.ret = ex_mem_if.ex_mem_reg.ret_insn;
+    assign hazard_if.mret = ex_mem_if.ex_mem_reg.mret_insn;
+    assign hazard_if.sret = ex_mem_if.ex_mem_reg.sret_insn & SUPERVISOR_ENABLED == "enabled";
     assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
-    assign hazard_if.badaddr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.badaddr : dgen_bus_if.addr;
+    assign hazard_if.fault_insn_page = prv_pipe_if.fault_insn_page;
+    assign hazard_if.fault_load_page = prv_pipe_if.fault_load_page;
+    assign hazard_if.fault_store_page = prv_pipe_if.fault_store_page;
+    assign hazard_if.fault_addr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.fault_addr : (prv_pipe_if.fault_insn_page ? hazard_if.fault_addr_fetch : dgen_bus_if.addr);
 
     // NEW
     assign hazard_if.pc_m = ex_mem_if.ex_mem_reg.pc;
@@ -223,9 +278,9 @@ module stage3_mem_stage(
     assign ex_mem_if.pc4 = ex_mem_if.ex_mem_reg.pc4;
 
     // Memory protection (doesn't consider RISC-MGMT)
-    assign prv_pipe_if.dren  = ex_mem_if.ex_mem_reg.dren;
-    assign prv_pipe_if.dwen  = ex_mem_if.ex_mem_reg.dwen;
-    assign prv_pipe_if.daddr = ex_mem_if.ex_mem_reg.port_out;
+    assign prv_pipe_if.dren  = ~prv_pipe_if.dtlb_miss & ex_mem_if.ex_mem_reg.dren;
+    assign prv_pipe_if.dwen  = ~prv_pipe_if.dtlb_miss & ex_mem_if.ex_mem_reg.dwen;
+    assign prv_pipe_if.daddr = dgen_bus_if.addr; // physical address
     assign prv_pipe_if.d_acc_width = WordAcc;
 
     // TODO: Currently omitting SparCE

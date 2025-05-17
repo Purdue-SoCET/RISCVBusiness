@@ -24,6 +24,7 @@ skip_list = [
     'rv32mi-p-illegal.bin', # requires RV32C illegal instruction detection, which we have not implemented
     'rv32mi-p-breakpoint.bin', # requires some parts of debug spec implemented.
     'rv32mi-p-shamt.bin', # requires full detection of illegal instructions (including RV32 SLL with shamt[5] set)
+    'rv32ui-v-ma_data.bin', # requires misaligned load/store, which is optional.
 ]
 
 def apply_skips(test):
@@ -96,9 +97,12 @@ def get_hostaddress(fname):
                 tohost_address = st_value
     return tohost_address
 
-def run_test(fname):
+def run_test(fname, env):
     tohost_address = get_hostaddress(fname)
-    res = subprocess.run([verilator_binary, '--tohost-address', str(tohost_address), fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), fname]
+    if env == 'v':
+        run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--max-sim-time', '1000000', '--virtual', fname, '--notrace']
+    res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ')
         print(res.stderr)
@@ -109,7 +113,7 @@ def run_test(fname):
 
     return ('PASSED' in res.stdout)
 
-def run_selected_tests(isa, envs, machine_mode_tests):
+def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
     pass_count = 0
     total_count = 0
 
@@ -121,7 +125,7 @@ def run_selected_tests(isa, envs, machine_mode_tests):
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             for test in filter(apply_skips, tests):
                 total_count += 1
-                status = run_test(test)
+                status = run_test(test, env)
                 if status:
                     pass_count += 1
                 else:
@@ -133,7 +137,19 @@ def run_selected_tests(isa, envs, machine_mode_tests):
             tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
             for test in filter(apply_skips, tests):
                 total_count += 1
-                status = run_test(test)
+                status = run_test(test, env)
+                if status:
+                    pass_count += 1
+                else:
+                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+
+        # supervisor-mode tests
+        if supervisor_mode_tests:
+            print(f"Supervisor Mode tests")
+            tests = test_base_dir.glob(f'rv32si-{env}*.bin')
+            for test in filter(apply_skips, tests):
+                total_count += 1
+                status = run_test(test, env)
                 if status:
                     pass_count += 1
                 else:
@@ -147,7 +163,7 @@ def run_selected_tests(isa, envs, machine_mode_tests):
 
 def main():
     parser = argparse.ArgumentParser(prog='RISC-V Tests', description='Runner for RISCVBusiness RISC-V Tests')
-    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' is supported at this time.', default=['p'])
+    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' and \'v\' are supported at this time.', default=['p'])
     parser.add_argument('--isa', choices=supported_isa, nargs='*', help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.', default=[])
     parser.add_argument('--machine', action='store_true', help='Enable M-mode tests. Not currently supported.')
     parser.add_argument('--supervisor', action='store_true', help='Enable S-mode tests. Not currently supported.')
@@ -157,19 +173,11 @@ def main():
         print("Must supply at least one of --isa, --machine, or --supervisor")
         exit(1)
 
-    if 'v' in args.environment or 'pm' in args.environment or 'pt' in args.environment:
-        print("Environments 'pt', 'pm' and 'v' are not yet supported.")
+    if 'pm' in args.environment or 'pt' in args.environment:
+        print("Environments 'pt' and 'pm' are not yet supported.")
         exit(1)
     
-    # if args.machine:
-    #     print("M-mode tests are not currently supported.")
-    #     exit(1)
-    
-    if args.supervisor:
-        print("S-mode not currently supported on RISCVBusiness.")
-        exit(1)
-    
-    run_selected_tests(args.isa, args.environment, args.machine)
+    run_selected_tests(args.isa, args.environment, args.machine, args.supervisor)
 
 if __name__ == "__main__":
     main()

@@ -34,7 +34,7 @@ localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
 
 // coherence bus controller states
 typedef enum {
-    GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV, 
+    GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV,
     IDLE,               // determines if a request is going on
     SNOOP_R,            // sends a snoop based on busRD
     SNOOP_RX,           // sends a snoop based on busRDX

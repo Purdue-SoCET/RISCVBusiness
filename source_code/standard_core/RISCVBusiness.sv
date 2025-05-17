@@ -118,6 +118,7 @@ module RISCVBusiness #(
         .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
+        .prv_pipe_if(prv_pipe_if),
         .bus_ctrl_if(bus_ctrl_if),
         .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),

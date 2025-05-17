@@ -6,14 +6,14 @@ filesets:
     rtl:
         files:
             - priv_wrapper.sv
-            - priv_1_12/priv_1_12_int_ex_handler.sv
-            - priv_1_12/priv_1_12_block.sv
-            - priv_1_12/priv_1_12_csr.sv
-            - priv_1_12/priv_1_12_pipe_control.sv
-            - priv_1_12/priv_1_12_pma.sv
-            - priv_1_12/priv_1_12_pmp.sv
-            - priv_1_12/priv_1_12_pmp_matcher.sv
-            - priv_1_12/priv_1_12_mode.sv
+            - priv_1_13/priv_1_13_int_ex_handler.sv
+            - priv_1_13/priv_1_13_block.sv
+            - priv_1_13/priv_1_13_csr.sv
+            - priv_1_13/priv_1_13_pipe_control.sv
+            - priv_1_13/priv_1_13_pma.sv
+            - priv_1_13/priv_1_13_pmp.sv
+            - priv_1_13/priv_1_13_pmp_matcher.sv
+            - priv_1_13/priv_1_13_mode.sv
         file_type: systemVerilogSource
 
 

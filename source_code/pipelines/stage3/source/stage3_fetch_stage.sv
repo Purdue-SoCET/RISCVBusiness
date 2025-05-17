@@ -44,7 +44,7 @@ module stage3_fetch_stage (
     prv_pipeline_if.fetch prv_pipe_if
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_12_pkg::*;
+    import pma_types_1_13_pkg::*;
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
 
@@ -54,7 +54,7 @@ module stage3_fetch_stage (
     logic mal_addr;
     logic fault_insn;
     logic mal_insn;
-    word_t badaddr;
+    word_t fault_addr;
 
     //PC logic
 
@@ -109,11 +109,11 @@ module stage3_fetch_stage (
     assign igen_bus_if.byte_en = 4'b1111;
     assign igen_bus_if.wdata = '0;
 
-
+    assign hazard_if.fault_addr_fetch = igen_bus_if.addr; // used for instruction page fault handling
     assign mal_addr = (igen_bus_if.addr[1:0] != 2'b00);
     assign fault_insn = prv_pipe_if.prot_fault_i || (igen_bus_if.ren && igen_bus_if.error); // TODO: Set this up to fault on bus error
     assign mal_insn = mal_addr;
-    assign badaddr = igen_bus_if.addr;
+    assign fault_addr = igen_bus_if.addr;
     assign hazard_if.pc_f = pc;
     assign hazard_if.rv32c_ready = rv32cif.done_earlier && rv32cif.rv32c_ena; // TODO: Is rv32cif.done needed? Seems like it coincides with busy = 0
 
@@ -135,7 +135,7 @@ module stage3_fetch_stage (
             fetch_ex_if.fetch_ex_reg.token      <= 1'b1;
             fetch_ex_if.fetch_ex_reg.mal_insn   <= mal_insn;
             fetch_ex_if.fetch_ex_reg.fault_insn <= fault_insn;
-            fetch_ex_if.fetch_ex_reg.badaddr    <= badaddr;
+            fetch_ex_if.fetch_ex_reg.fault_addr <= fault_addr;
             fetch_ex_if.fetch_ex_reg.pc         <= pc;
             fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
             fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
@@ -144,7 +144,7 @@ module stage3_fetch_stage (
     end
 
     // Send memory protection signals
-    assign prv_pipe_if.iren = hazard_if.iren;
+    assign prv_pipe_if.iren = ~prv_pipe_if.itlb_miss & hazard_if.iren;
     assign prv_pipe_if.iaddr = igen_bus_if.addr;
     assign prv_pipe_if.i_acc_width = WordAcc;
 

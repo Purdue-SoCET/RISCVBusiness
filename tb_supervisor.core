@@ -1,0 +1,64 @@
+CAPI=2:
+name: socet:riscv:tb_supervisor:0.1.0
+description: Supervisor testbenches
+
+filesets:
+  rtl:
+    depend:
+      - "socet:bus-components:bus_protocol_if"
+      - "socet:bus-components:ahb_if"
+      - "socet:bus-components:apb_if"
+      - "socet:riscv:packages"
+      - "socet:riscv:priv"
+      - "socet:riscv:caches"
+      - "socet:riscv:riscv_standard"
+      - "socet:riscv:riscv_include"
+    file_type: systemVerilogSource
+
+  tb:
+    files:
+      - source_code/tb/tb_supervisor.sv
+      - source_code/tb/tb_tlb_directmapped.sv
+      - source_code/tb/tb_tlb_associative.sv
+      - source_code/tb/tb_page_perm_check.sv
+      - source_code/tb/tb_supervisor_cache.sv
+      - source_code/tb/tb_supervisor_cache_wrapper.sv
+    file_type: systemVerilogSource
+
+targets:
+  default: &default
+    filesets:
+      - rtl
+      - tb
+    toplevel: tlb
+    default_tool: verilator
+    tools:
+      verilator:
+        verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-TIMESCALEMOD", "-Wno-lint", "--binary", "--trace", "--trace-fst", "--trace-structs"]
+        # verilator_options: ["-Wno-TIMESCALEMOD", "-Wno-lint", "--binary", "--trace-fst", "--trace-structs"]
+
+  sim:
+    <<: *default
+    description: Simulate all tests
+    toplevel: tb_supervisor
+
+  sim_tlb_directmapped:
+    <<: *default
+    toplevel: tb_tlb_directmapped
+    description: Simulate direct mapped TLB
+
+  sim_tlb_associative:
+    <<: *default
+    toplevel: tb_tlb_associative
+    description: Simulate two-way associative TLB
+
+  sim_page_perm_check:
+    <<: *default
+    toplevel: tb_page_perm_check
+    description: Simulate page permission checking
+
+  sim_supervisor_cache:
+    <<: *default
+    toplevel: tb_supervisor_cache
+    description: Simulate instruction and data L1/TLB + Pagewalker interactions
+
