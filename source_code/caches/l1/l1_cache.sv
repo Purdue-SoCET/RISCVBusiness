@@ -60,7 +60,7 @@ module l1_cache #(
     import rv32i_types_pkg::*;
     
     // local parameters
-    localparam N_TOTAL_BYTES      = CACHE_SIZE / 8;
+    localparam N_TOTAL_BYTES      = CACHE_SIZE;
     localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
     localparam N_TOTAL_FRAMES     = N_TOTAL_WORDS / BLOCK_SIZE;
     localparam N_SETS             = N_TOTAL_FRAMES / ASSOC;
