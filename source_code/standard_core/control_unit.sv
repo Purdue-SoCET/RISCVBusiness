@@ -330,7 +330,7 @@ module control_unit (
     assign rv32b_claim = 1'b0;
     `endif
 
-    `ifdef RV32ZC_SUPPORTED
+    `ifdef RV32ZICOND_SUPPORTED
     rv32zc_decode RV32ZC_DECODE(
         .insn(cu_if.instr),
         .claim(rv32zc_claim),

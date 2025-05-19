@@ -26,6 +26,7 @@ import yaml
 import argparse 
 import sys
 from math import log2
+from functools import reduce
 
 VH_FILE = 'source_code/include/component_selection_defines.vh'
 C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
@@ -72,7 +73,8 @@ ISA_PARAMS = \
     'xlen' : [32],
     'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys()),
     'supervisor_enabled' : [ 'enabled', 'disabled' ],
-    'address_translation_enabled' : [ 'enabled', 'disabled' ]
+    'address_translation_enabled' : [ 'enabled', 'disabled' ],
+    'isa' : []
   }
 
 UARCH_PARAMS = \
@@ -103,27 +105,22 @@ UARCH_PARAMS = \
     'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
     # Sparisty Optimizations
     'sparce_enabled' : [ 'enabled', 'disabled' ],
-    # RV32C
-    'rv32c_enabled' : [ 'enabled', 'disabled' ],
-    # base ISA Configurations
-    'base_isa': ['RV32I', 'RV32E'], 
-    
+
     # Halt Enable -- Good for testing, not for tapeout
     'infinite_loop_halts' : ['true', 'false']
   }
 
-RISC_MGMT_PARAMS = \
-  {
-    # Valid standard extensions
-    'standard_extensions' : {'name' : ['rv32m', 'rv32a', 'rv32b', 'rv32zc']},
-    # Valid nonstandard extensions
-    'nonstandard_extensions' : {'encoding' : ['R_TYPE', 'M_TYPE', 'J_TYPE', 'BR_TYPE', 'G_TYPE']}
-  }
-
-NONSTANDARD_OPCODES = [ '0001011',
-                        '0101011',
-                        '1011011',
-                        '1111011']
+# Supported ISA extensions. Order matters and should reflect the proper order
+# of extensions in an ISA string
+RISCV_ISA = {
+    "m" : False,
+    "a" : False,
+    "c" : False,
+    "b" : False,
+    "zicond" : False,
+    "zifencei" : False,
+    "zicsr" : False
+}
 
 # Returns an object containing the parsed configuration file.
 # Currently uses PyYAML and YAML format
@@ -146,6 +143,50 @@ def add_custom_instruction_header(name, encoding, length, opcode, fptr):
   else:
     err = "Error: Invalid custom instruction encoding: " + encoding
     sys.exit(err)
+
+def parse_riscv_isa_string(string):
+    string = string.lower()
+    riscv_isa = RISCV_ISA.copy()
+
+    # Skip past rv32{i,e}
+    if string[0:4] != "rv32":
+        print("Error: 32-bit RISC-V ISA string must begin with rv32")
+    string = string[4:]
+
+    # Determine base ISA
+    if string[0] == "i":
+        base_isa = "RV32I"
+    elif string[0] == "e":
+        base_isa = "RV32E"
+    else:
+        err = "Unknown base ISA " + string
+        sys.exit(err)
+    string = string[1:]
+
+    # Determine extensions
+    for ext in RISCV_ISA.keys():
+        if string[0:len(ext)] == ext:
+            riscv_isa[ext] = True
+            string = string[len(ext):]
+            # If we're at 'z' extensions, trim off the underscore if there's
+            # anything left in the string
+            if ext[0] == 'z' and string != "":
+                if string[0] == "_":
+                    string = string[1:]
+                else:
+                    err = "Error: Expected '_' between 'z' extensions! Found " + string
+                    sys.exit(err)
+    if string != "":
+        err = "Error: Unknown extension: " + string + ". Double check that your isa string is valid!"
+        sys.exit(err)
+
+    require = ["zifencei", "zicsr"]
+
+    for ext in require:
+        if not riscv_isa[ext]:
+            err = "Error: Extension " + ext + " is a required extension. Please add it to your ISA string"
+            sys.exit(err)
+    return base_isa, riscv_isa
 
 # Creates the include file from the config object
 def create_include(config):
@@ -171,12 +212,15 @@ def create_include(config):
 
   # Handle localparam configurations
   isa_params = config['isa_params']
-  free_params = ['num_harts', 'noncache_start_addr']
+  free_params = ['isa', 'num_harts', 'noncache_start_addr']
   int_params = ['num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
   include_file.write('// ISA Params:\n') 
-  for isa_param in isa_params:
+
+  base_isa = None
+  riscv_ext = None
+  for isa_param in ISA_PARAMS:
     try:
-      if isa_params[isa_param] not in ISA_PARAMS[isa_param]:
+      if isa_param not in free_params and isa_params[isa_param] not in ISA_PARAMS[isa_param]:
         err = 'Illegal configuration. ' + isa_params[isa_param]
         err += ' is not a valid configuration for ' + isa_param
         sys.exit(err)
@@ -197,6 +241,9 @@ def create_include(config):
             err += ' is not a valid configuration with supervisor_enabled == disabled'
             sys.exit(err)
           line += isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
+        elif 'isa' == isa_param:
+          base_isa, riscv_ext = parse_riscv_isa_string(isa_params[isa_param])
+          continue
         else:
           line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         line += ';\n'
@@ -226,7 +273,7 @@ def create_include(config):
       if uarch_params['icache_size'] / (8 * uarch_params['icache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
         err = 'Invalid icache_size. Sets are not less than or equal to the virtual page size of 4KB.'
         sys.exit(err)
-      if(uarch_params['rv32c_enabled'] == 'enabled') & (uarch_params['br_predictor_type'] != 'not_taken'):
+      if riscv_ext["c"] & (uarch_params['br_predictor_type'] != 'not_taken'):
         err = 'RV32C and advanced branch prediction cannot be enabled simultaneously.'
         sys.exit(err)
       if(uarch_params['br_predictor_type'] == 'btb_ghr_pht'):
@@ -251,63 +298,35 @@ def create_include(config):
       line += ';\n'
     include_file.write(line)
 
+  # Add base ISA
+  include_file.write(f"localparam BASE_ISA = \"{base_isa}\";\n")
+
   # Handle bus interface define
   bus_type = uarch_params['bus_interface_type'].split('_if')[0]
   bus_define = '`define BUS_INTERFACE_' + bus_type.upper() + '\n'
   include_file.write(bus_define)
 
-  # Handling of RISC-MGMT Extensions
-  rmgmt_extensions = []
-  try:
-    if 'risc_mgmt_params' in config:
-      rmgmt_params = config['risc_mgmt_params']
-      if rmgmt_params != None:
-        for rmgmt_param in rmgmt_params:
-          extensions = rmgmt_params[rmgmt_param]
-          if extensions != None:
-            for extension in extensions:
-              if rmgmt_param == "standard_extensions" and extension['name'] not in RISC_MGMT_PARAMS[rmgmt_param]['name']:
-                err = 'Unsupported extension: ' + extension['name']
-                sys.exit(err)
-              else:
-                rmgmt_extensions.append([extension, rmgmt_param])
-  except:
-    err = "Error Parsing RISC-MGMT extension configuration."
-    sys.exit(err) 
-
-  # Need to at least have the nop extension
-  if(len(rmgmt_extensions) == 0):
-    rmgmt_extensions.append([{'name':'template', 'encoding' : 'R_TYPE', 'length':1}, 'nonstandard_extension'])
-
+  total_exts = reduce(lambda x, y: x + (y == True), riscv_ext.values())
   include_file.write('\n// RISC-MGMT Extensions:\n') 
-  include_file.write('`define NUM_EXTENSIONS ' + str(len(rmgmt_extensions)) + '\n')
+  include_file.write('`define NUM_EXTENSIONS ' + str(total_exts) + '\n')
   include_file.write('`define RISC_MGMT_EXTENSIONS\t\\\n')
   ext_num = 0
   nonstandard_num = 0
-  for extension in rmgmt_extensions:
-    if(extension[1] == 'standard_extensions'):
-      include_file.write('\t`ADD_EXTENSION('+extension[0]['name']+','+str(ext_num)+")")
-    elif (nonstandard_num < len(NONSTANDARD_OPCODES)):
-      include_file.write('\t`ADD_EXTENSION_WITH_OPCODE('+extension[0]['name']+','+
-        str(ext_num)+','+ "7'b" + NONSTANDARD_OPCODES[nonstandard_num]+")")
-      if 'encoding' in extension[0].keys() and 'length' in extension[0].keys():
-        add_custom_instruction_header(extension[0]['name'], extension[0]['encoding'], 
-          extension[0]['length'], NONSTANDARD_OPCODES[nonstandard_num], c_file)
-      else:
-        err = "Error: Missing the encoding or lenght field for nonstandard extension"
-        sys.exit(err)
-      nonstandard_num = nonstandard_num + 1
-    ext_num = ext_num + 1
-    if(ext_num != len(rmgmt_extensions)):
-      include_file.write('\t\\\n')
-    else:
-      include_file.write('\n')
+  for extension in riscv_ext:
+      if riscv_ext[extension]:
+        if(extension[0] != 'Z'):
+          include_file.write('\t`ADD_EXTENSION('+extension+','+str(ext_num)+")")
+        ext_num = ext_num + 1
+        if(ext_num != total_exts):
+          include_file.write('\t\\\n')
+        else:
+          include_file.write('\n')
 
   #set defines to indicate what ISA support is present
   include_file.write('\n')
-  for extension in rmgmt_extensions:
-    if(extension[1] == 'standard_extensions'):
-      include_file.write('`define ' + extension[0]['name'].upper() + '_SUPPORTED\t1\n')
+  for extension in riscv_ext:
+    if riscv_ext[extension]:
+      include_file.write('`define RV32' + extension.upper() + '_SUPPORTED\t1\n')
 
   # Write include footer to file
   footer = '\n`endif // COMPONENT_SELECTION_DEFINES_VH\n'
@@ -317,8 +336,6 @@ def create_include(config):
   footer = '\n#endif // CUSTOM_INSTRUCTION_CALLS_H\n'
   c_file.write(footer)
   c_file.close()
-  
-
 
 if __name__ == '__main__':
   description = 'Configure a processor. This script takes a .yml'

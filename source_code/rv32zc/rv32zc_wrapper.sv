@@ -8,7 +8,7 @@ module rv32zc_wrapper(
     output logic [31:0] rv32zc_out
 );
 
-    `ifdef RV32ZC_SUPPORTED
+    `ifdef RV32ZICOND_SUPPORTED
         rv32zc_enabled RV32ZC(.*);
     `else
         rv32zc_disabled RV32ZC(.*);
