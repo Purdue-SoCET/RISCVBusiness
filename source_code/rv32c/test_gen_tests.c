@@ -34,7 +34,7 @@ const struct {
     {0x8e26, 0x00900e33}, // C.MV t3, s1
     {0x9002, 0x00100073}, // C.EBREAK
     {0x9182, 0x000180e7}, // C.JALR 
-    {0x931e, 0x00700333}, // C.ADD t1, t2
+    {0x931e, 0x00730333}, // C.ADD t1, t2
     {0xac26, 0x00913c27}, // C.FSDSP fs1, 24
     {0xd22e, 0x02b12223}, // C.SWSP a1, 36
     // C1 quadrant
@@ -53,6 +53,9 @@ const struct {
     {0xbfed, 0xffbff06f},
     {0xd001, 0xf00400e3}, // c.beqz s0, -256
     {0xecfd, 0x0e049f63}, // c.bnez s1, 254
+    // extra
+    {0x9086, 0x001080b3}, // c.add ra, ra
+    {0x9c01, 0x4084043b},
 #ifdef RV64C_MODE
     // RV64C-specific instructions
 
