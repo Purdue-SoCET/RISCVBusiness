@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "riscv-opcodes/encoding.out.h"
+#include "encoding.out.h"
 #include "gen_tests.h"
 
 #define USE_ZCF (1)
@@ -368,9 +368,9 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
                 }
             } else {
                 // c.lui rd, imm -> lui rd, imm
-                uint32_t imm = (insn & INSN_FIELD_C_NZIMM6HI) << 5
-                                | (insn & INSN_FIELD_C_NZIMM6LO) << 10;
-                
+                uint32_t imm = (insn & INSN_FIELD_C_NZIMM6HI) >> 7
+                                | (insn & INSN_FIELD_C_NZIMM6LO) >> 2;
+                imm = sigext(imm, 6);
                 if(rd == 0) {
                     hint_instruction(insn, "c.lui x0, imm", encodingOut);
                 } else if(imm == 0) {
@@ -378,7 +378,7 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
                 } else {
                     uint32_t decompressed = MATCH_LUI
                                         | rd << FULL_RD_OFFSET
-                                        | imm;
+                                        | imm << 12;
                     encodingOut->compressedEncoding = insn;
                     encodingOut->decompressedEncoding = decompressed;
                     sprintf(encodingOut->compressedMnemonic, "c.lui %s, %d", registerNames[rd], imm);
