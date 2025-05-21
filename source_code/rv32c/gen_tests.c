@@ -420,7 +420,7 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
                 } break;
 
                 case 0b11: {
-                    uint16_t sub_funct = (insn & 0x1000) >> 12
+                    uint16_t sub_funct = (insn & 0x1000) >> 10
                                         | (insn & 0x60) >> 5;
                     uint32_t op_lookup[] = {
                         MATCH_SUB, MATCH_XOR, MATCH_OR, MATCH_AND,
@@ -616,7 +616,7 @@ void decompressC2(uint16_t insn, InstructionEncoding *encodingOut) {
                 // c.mv rs1, rs2 -> add rs1, x0, rs2
                 // c.add rs1, rs2 -> add rs1, rs1, rs2
                 uint32_t rd = rs1;
-                uint32_t rs1 = determine_bit ? rs1 : REG_ZERO; // shadows parameter rs1
+                rs1 = determine_bit ? rs1 : REG_ZERO;
                 uint32_t decompressed = MATCH_ADD
                                 | (rd << FULL_RD_OFFSET)
                                 | (rs1 << FULL_RS1_OFFSET)
