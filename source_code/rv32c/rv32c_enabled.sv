@@ -31,7 +31,7 @@ module rv32c_enabled (
 
     // Decompressor
     decompressor_if dcpr_if ();
-    decompressor DECOMPRESSOR (dcpr_if);
+    decompressor_wrapper DCPR_WRAPPER (dcpr_if);
     assign dcpr_if.inst16 = rv32cif.inst16;
     assign rv32cif.inst32 = dcpr_if.inst32;
     assign rv32cif.c_ena = dcpr_if.c_ena;
