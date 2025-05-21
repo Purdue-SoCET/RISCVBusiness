@@ -56,6 +56,7 @@ const struct {
     // extra
     {0x9086, 0x001080b3}, // c.add ra, ra
     {0x9c01, 0x4084043b},
+    {0x7405, 0xfffe1437}, // lui s0, -31
 #ifdef RV64C_MODE
     // RV64C-specific instructions
 

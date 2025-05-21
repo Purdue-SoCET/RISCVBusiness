@@ -323,7 +323,7 @@ package rv32c_pkg;
             return ofmt;
         end else if(ifmt.funct3 == RVC_CI_FUNC_LUI) begin
             rv32i_types_pkg::utype_t ofmt;
-            ofmt.imm31_12 = {14'h0000, ifmt.imm1, ifmt.imm5};
+            ofmt.imm31_12 = {{14{ifmt.imm1}}, ifmt.imm1, ifmt.imm5};
             ofmt.rd = ifmt.rd;
             ofmt.opcode = rv32i_types_pkg::LUI;
 

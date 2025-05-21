@@ -4,6 +4,8 @@ description: rv32c
 
 filesets:
     rtl:
+        depend:
+            - "socet:riscv:packages"
         files:
             - rv32c_pkg.sv
             - decompressor.sv
@@ -14,7 +16,35 @@ filesets:
             - rv32c_wrapper.sv
         file_type: systemVerilogSource
 
+    decompressor-test:
+        depend:
+            - "socet:riscv:packages"
+        files:
+            - rv32c_pkg.sv
+            - decompressor.sv
+            - encoding.out.h : {file_type: cppSource, is_include_file: true}
+            - gen_tests.h : {file_type: cppSource, is_include_file: true}
+            - gen_tests.c : {file_type: cppSource}
+            - tb_decompressor.cc : {file_type: cppSource}
+        file_type: systemVerilogSource
+
 targets:
     default: &default
         filesets:
             - rtl
+
+    decompressor-sim:
+        description: Simulate decompressor standalone
+        default_tool: verilator
+        filesets:
+            - decompressor-test
+        toplevel: decompressor
+        tools:
+            verilator:
+                verilator_options:
+                    - --assert
+                    - --cc
+                    - --exe
+                    - -CFLAGS -std=c++20
+                    - -Wno-SYMRSVDWORD # due to 'packages' dependencies
+
