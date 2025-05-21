@@ -21,7 +21,15 @@
 *   Date Created: 5/4/2025
 *   Description:  Decompress RV32C instructions into full-size instruction
 */
-module decompressor(
+module decompressor #(
+    // Note: C = Zca + (Zcf if F) + (Zcd if D)
+    parameter bit ZCA = 1,
+    parameter bit ZCF = 1,
+    parameter bit ZCD = 1,
+    parameter bit ZCB = 0,
+    parameter bit ZCMP = 0,
+    parameter bit ZCMT = 0
+)(
     input [15:0] compressed,
     output logic [31:0] decompressed
 );
@@ -44,11 +52,12 @@ module decompressor(
             5'b001_00, 5'b010_00, 5'b011_00: return rv32c_pkg::decompress_cl(compressed);
             5'b100_00: return rv32c_pkg::UNIMP; // reserved
             5'b101_00, 5'b110_00, 5'b111_00: return rv32c_pkg::decompress_cs(compressed);
-            5'b000_01, 5'b010_01, 5'b011_01, 5'b100_01: begin
+            5'b000_01, 5'b010_01, 5'b011_01: return rv32c_pkg::decompress_ci_arith(compressed);
+            5'b100_01: begin
                 // ANDI exception case
                 if(compressed[11:10] == 2'b11)
                     return rv32c_pkg::decompress_ca(compressed);
-                else if(compressed[11:10] == 2'b10)
+                else if(compressed[15:13] == 3'b100 && compressed[11:10] == 2'b10)
                     return rv32c_pkg::decompress_cb(compressed);
                 else
                     return rv32c_pkg::decompress_ci_arith(compressed);
