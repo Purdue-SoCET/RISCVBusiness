@@ -91,7 +91,7 @@ package rv32c_pkg;
         // C.ADD/C.MV: rs2 != 0. rs1 != 0 -> HINT
         // C.JR/C.JALR: rs2 == 0 && rs1 != 0
         // C.EBREAK: rs1 == rs2 == 0
-        if(ifmt.rs1 == 0 && ifmt.rs2 == 0) begin
+        if(ifmt.funct4 == RVC_CR_FUNC_EBREAK && ifmt.rs1 == 0 && ifmt.rs2 == 0) begin
             // C.EBREAK
             rv32i_types_pkg::systype_t ofmt;
             ofmt.csr = rv32i_types_pkg::EBREAK;
@@ -101,9 +101,10 @@ package rv32c_pkg;
             ofmt.opcode = rv32i_types_pkg::SYSTEM;
 
             return ofmt;
-        end else if(ifmt.rs1 != 0 && ifmt.rs2 == 0) begin
+        end else if(ifmt.rs2 == 0) begin
             // C.JR -> jalr x0, 0(rs1)
             // C.JALR -> jalr x1, 0(rs1)
+            // C.JR x0 is reserved
             rv32i_types_pkg::itype_t ofmt;
             ofmt.imm11_00 = 12'h0;
             ofmt.rs1 = ifmt.rs1;
@@ -115,8 +116,7 @@ package rv32c_pkg;
         end else begin
             // C.ADD -> add rs1, rs1, rs2
             // C.MV  -> add rs1, x0, rs2
-            // C.ADD and C.MV with rs1 (rd) set to 0
-            // is legal; HINT space.
+            // C.ADD and C.MV with rs1 (rd) set to 0 is HINT
             rv32i_types_pkg::rtype_t ofmt;
             ofmt.funct7 = 7'b000_0000;
             ofmt.rs2 = ifmt.rs2;
@@ -141,8 +141,7 @@ package rv32c_pkg;
         // only ADDI4SPN -> addi rd', x2, imm
         rvc_ciw_t ifmt = compress;
         rv32i_types_pkg::itype_t ofmt;
-        // if imm = 0, it's the canonical illegal instruciton
-        assert(ifmt.op == RVC_C0 && ifmt.funct3 == RVC_CIW_FUNC_ADDI4SPN && ifmt.nzuimm != 0);
+        assert(ifmt.op == RVC_C0 && ifmt.funct3 == RVC_CIW_FUNC_ADDI4SPN && (ifmt.nzuimm != 0 || ifmt.rd != 0));
 
         ofmt.imm11_00 = {2'b00, ifmt.nzuimm[10:7], ifmt.nzuimm[12:11], ifmt.nzuimm[5], ifmt.nzuimm[6], 2'b00};
         ofmt.rs1 = 5'd2;
@@ -179,7 +178,7 @@ package rv32c_pkg;
 
         ofmt.imm11_00 = (ifmt.funct3 == RVC_CL_FUNC_FLD)
                         ? {4'b0000, ifmt.imm2, ifmt.imm3, 3'b000}
-                        : {5'b0000, ifmt.imm2[6], ifmt.imm3, ifmt.imm2[5], 2'b00};
+                        : {5'b0000, ifmt.imm2[5], ifmt.imm3, ifmt.imm2[6], 2'b00};
         ofmt.rs1 = decompress_regselect(ifmt.rs1);
         ofmt.funct3 = (ifmt.funct3 == RVC_CL_FUNC_LW || ifmt.funct3 == RVC_CL_FUNC_FLW)
                         ? rv32i_types_pkg::LW
@@ -188,6 +187,7 @@ package rv32c_pkg;
         ofmt.opcode = (ifmt.funct3 == RVC_CL_FUNC_FLD || ifmt.funct3 == RVC_CL_FUNC_FLW)
                         ? rv32i_types_pkg::LOAD_FP
                         : rv32i_types_pkg::LOAD;
+
 
         return ofmt;
     endfunction
@@ -203,9 +203,11 @@ package rv32c_pkg;
         logic [11:0] imm12;
         assert(ifmt.op == RVC_C0 && ifmt.funct3 != 3'b000 && ifmt.funct3 != 3'b100 && ifmt.funct3[15] == 1'b1);
 
-        imm12 = (ifmt.funct3 == RVC_CS_FUNC_SD || ifmt.funct3 == RVC_CS_FUNC_FSD)
+        // layout: hi - imm[5:3], lo - imm[2|6] for SW, imm[7:6] for SD
+        // ignore SD -- RV64 only, overlaps FLW
+        imm12 = (ifmt.funct3 == RVC_CS_FUNC_FSD)
                         ? {4'b0000, ifmt.imm2, ifmt.imm3, 3'b000}
-                        : {5'b0000, ifmt.imm2[6], ifmt.imm3, ifmt.imm2[5], 2'b00};
+                        : {5'b00000, ifmt.imm2[5], ifmt.imm3, ifmt.imm2[6], 2'b00};
         ofmt.imm11_05 = imm12[11:5];
         ofmt.imm04_00 = imm12[4:0];
         ofmt.rs1 = decompress_regselect(ifmt.rs1);
@@ -215,7 +217,7 @@ package rv32c_pkg;
         ofmt.rs2 = decompress_regselect(ifmt.rs2);
         ofmt.opcode = (ifmt.funct3 == RVC_CS_FUNC_FSD || ifmt.funct3 == RVC_CS_FUNC_FSW)
                         ? rv32i_types_pkg::STORE_FP
-                        : rv32i_types_pkg::LOAD;
+                        : rv32i_types_pkg::STORE;
 
         return ofmt;
     endfunction
@@ -248,6 +250,7 @@ package rv32c_pkg;
         ofmt.opcode = (ifmt.funct3 == RVC_CI_FUNC_LWSP)
                     ? rv32i_types_pkg::LOAD
                     : rv32i_types_pkg::LOAD_FP;
+        return ofmt;
     endfunction
 
     // FIXME: Missing instructions
@@ -273,11 +276,12 @@ package rv32c_pkg;
         assert((ifmt.op == RVC_C2 && ifmt.funct3 == RVC_CI_FUNC_SLLI)
             || ifmt.op == RVC_C1);
 
-        if(ifmt.funct3 == RVC_CI_FUNC_ADDI
+        if(ifmt.op == RVC_C1 &&
+            (ifmt.funct3 == RVC_CI_FUNC_ADDI
             || ifmt.funct3 == RVC_CI_FUNC_NOP
-            || ifmt.funct3 == RVC_CI_FUNC_LI) begin
+            || ifmt.funct3 == RVC_CI_FUNC_LI)) begin
             rv32i_types_pkg::itype_t ofmt;
-            ofmt.imm11_00 = {6'h0, ifmt.imm1, ifmt.imm5};
+            ofmt.imm11_00 = {{6{ifmt.imm1}}, ifmt.imm1, ifmt.imm5};
             ofmt.funct3 = rv32i_types_pkg::ADDI;
             ofmt.rs1 = (ifmt.funct3 == RVC_CI_FUNC_LI) ? 5'h0 : ifmt.rd;
             ofmt.rd = ifmt.rd;
@@ -296,21 +300,20 @@ package rv32c_pkg;
                                 ? {6'b01_0000, ifmt.imm1, ifmt.imm5}
                                 : {6'b00_0000, ifmt.imm1, ifmt.imm5};
             ofmt.rs1 = (is_sra || is_srl)
-                        ? decompress_regselect(ifmt.rd[2:0])
+                        ? decompress_regselect(ifmt.rd[9:7])
                         : ifmt.rd;
+            ofmt.rd = ofmt.rs1;
             ofmt.funct3 = (ifmt.funct3 == RVC_CI_FUNC_SLLI)
                         ? rv32i_types_pkg::SLLI
                         : rv32i_types_pkg::SRI;
-            ofmt.rd  = (is_sra || is_srl)
-                        ? decompress_regselect(ifmt.rd[2:0])
-                        : ifmt.rd;
             ofmt.opcode = rv32i_types_pkg::IMMED;
 
             return ofmt;
         end else if(ifmt.funct3 == RVC_CI_FUNC_ADDI16SP
             && ifmt.rd == 5'd2) begin 
             rv32i_types_pkg::itype_t ofmt;
-            ofmt.imm11_00 = {2'b00, ifmt.imm1, ifmt.imm5[4:3], ifmt.imm5[5],
+            // immediate is sign-extended
+            ofmt.imm11_00 = {{2{ifmt.imm1}}, ifmt.imm1, ifmt.imm5[4:3], ifmt.imm5[5],
                 ifmt.imm5[2], ifmt.imm5[6], 4'h0};
             ofmt.funct3 = rv32i_types_pkg::ADDI;
             ofmt.rs1 = 5'd2;
@@ -360,6 +363,8 @@ package rv32c_pkg;
         ofmt.opcode = (ifmt.funct3 == RVC_CI_FUNC_SWSP)
                     ? rv32i_types_pkg::STORE
                     : rv32i_types_pkg::STORE_FP;
+        
+        return ofmt;
     endfunction
 
     typedef struct packed {
@@ -412,10 +417,12 @@ package rv32c_pkg;
         assert(ifmt.funct3 == RVC_CB_FUNC_BEQZ
             || ifmt.funct3 == RVC_CB_FUNC_BNEZ
             || (ifmt.funct3 == RVC_CB_FUNC_ANDI && ifmt.funct2 == 2'b10));
+
+
         if(ifmt.funct3 == RVC_CB_FUNC_ANDI) begin
             // C.ANDI -> andi rd', rd', imm
             rv32i_types_pkg::itype_t ofmt;
-            ofmt.imm11_00 = {6'h0, ifmt.imm1, ifmt.imm5};
+            ofmt.imm11_00 = {{6{ifmt.imm1}}, ifmt.imm1, ifmt.imm5};
             ofmt.rs1 = decompress_regselect(ifmt.rd);
             ofmt.funct3 = rv32i_types_pkg::ANDI;
             ofmt.rd  = decompress_regselect(ifmt.rd);
@@ -429,7 +436,7 @@ package rv32c_pkg;
             // in the branch format, 'funct2' is
             // an extension of the imm1 (imm3)
             rv32i_types_pkg::sbtype_t ofmt;
-            logic [12:0] imm = {4'h0, ifmt.imm1, ifmt.imm5[6:5], ifmt.imm5[2], ifmt.funct2, ifmt.imm5[4:3], 1'b0};
+            logic [12:0] imm = {{4{ifmt.imm1}}, ifmt.imm1, ifmt.imm5[6:5], ifmt.imm5[2], ifmt.funct2, ifmt.imm5[4:3], 1'b0};
             ofmt.imm12 = imm[12];
             ofmt.imm10_05 = imm[10:5];
             ofmt.rs2 = 5'd0;
@@ -454,10 +461,11 @@ package rv32c_pkg;
         rv32i_types_pkg::ujtype_t ofmt;
         assert(ifmt.op == RVC_C1);
         assert(ifmt.funct3 == RVC_CJ_FUNC_J || ifmt.funct3 == RVC_CJ_FUNC_JAL);
-        ofmt.imm20 = 1'b0;
-        ofmt.imm10_01 = {1'b0, ifmt.imm[8], ifmt.imm[10:9], ifmt.imm[6], ifmt.imm[7], ifmt.imm[2], ifmt.imm[5:3]};
+        // imm layout is [11|4|9:8|10|6|7|3:1|5]
+        ofmt.imm20 = ifmt.imm[12];
+        ofmt.imm10_01 = {ifmt.imm[8], ifmt.imm[10:9], ifmt.imm[6], ifmt.imm[7], ifmt.imm[2], ifmt.imm[11], ifmt.imm[5:3]};
         ofmt.imm11 = ifmt.imm[12];
-        ofmt.imm19_12 = 0;
+        ofmt.imm19_12 = {8{ifmt.imm[12]}};
         ofmt.rd = (ifmt.funct3 == RVC_CJ_FUNC_JAL) ? 5'd1 : 5'd0;
         ofmt.opcode = rv32i_types_pkg::JAL;
 
