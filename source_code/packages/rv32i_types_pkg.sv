@@ -53,7 +53,9 @@ package rv32i_types_pkg;
         REGREG  = 7'b0110011,
         // All system instructions share an opcode
         SYSTEM  = 7'b1110011,
-        MISCMEM = 7'b0001111
+        MISCMEM = 7'b0001111,
+        LOAD_FP = 7'b0000111,
+        STORE_FP = 7'b0100111
     } opcode_t;
 
     typedef enum logic [BR_W-1:0] {
@@ -70,13 +72,15 @@ package rv32i_types_pkg;
         LH  = 3'b001,
         LW  = 3'b010,
         LBU = 3'b100,
-        LHU = 3'b101
+        LHU = 3'b101,
+        LD  = 3'b011
     } load_t;
 
     typedef enum logic [SW_W-1:0] {
         SB = 3'b000,
         SH = 3'b001,
-        SW = 3'b010
+        SW = 3'b010,
+        SD = 3'b011
     } store_t;
 
     typedef enum logic [IMM_W-1:0] {
