@@ -1,145 +1,134 @@
-/*
-*   Copyright 2016 Purdue University
-*
-*   Licensed under the Apache License, Version 2.0 (the "License");
-*   you may not use this file except in compliance with the License.
-*   You may obtain a copy of the License at
-*
-*       http://www.apache.org/licenses/LICENSE-2.0
-*
-*   Unless required by applicable law or agreed to in writing, software
-*   distributed under the License is distributed on an "AS IS" BASIS,
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*   See the License for the specific language governing permissions and
-*   limitations under the License.
-*
-*
-*   Filename:     fetch_buffer.sv
-*
-*   Created by:   Jing Yin See
-*   Email:        see4@purdue.edu
-*   Date Created: 01/15/2021
-*   Description:  Generate next pc and instruction memory pc, output instructions
-*/
+`include "generic_bus_if.vh"
 
-`include "fetch_buffer_if.vh"
 module fetch_buffer (
-    input logic clk,
-    n_rst,
-    fetch_buffer_if.fb fb_if
+    input CLK,
+    input nRST,
+    input logic ren,
+    input logic invalidate,
+    input [31:0] pc,
+    output logic insn_valid,
+    output logic insn_compressed,
+    output logic [31:0] insn_out,
+    generic_bus_if.cpu icache
 );
-    logic [15:0] buffer, nextbuffer;
-    logic [31:0] pc, next_imem_pc;
-    logic combine, combine_reg, waitnext, waitnext_reg;
-    logic [31:0] final_inst_store, final_inst;
-    logic reset_next, finished;
-    logic inst_arrived_delay;
+    // Fetch Buffer
+    //
+    // transparently allows for misaligned reads
+    // of data from the I$
+    //
+    // Idea: Use PC alignment and FB validity
+    // to determine where to fetch.
+    
+    struct packed {
+        logic [15:0] data;
+        logic valid;
+    } fb, fb_next;
 
-    always_ff @(posedge clk, negedge n_rst) begin
-        if (n_rst == 0) inst_arrived_delay <= 1'b0;
-        else inst_arrived_delay <= fb_if.inst_arrived;
-    end
+    logic pc_aligned, want_fetch;
+    logic [31:0] fetch_addr;
+
+    assign pc_aligned = (pc[1] == 0);
 
 
-    assign fb_if.done_earlier = inst_arrived_delay & waitnext_reg & !fb_if.ex_busy;
-    //assign fb_if.done_earlier = 0;
+    function automatic logic is_compressed(logic [15:0] chunk);
+        return (chunk[1:0] != 2'b11);
+    endfunction
 
-    // Buffer and PC logic
-    always_ff @(posedge clk, negedge n_rst) begin
-        if (n_rst == 0) begin
-            buffer <= 16'd0;
-            combine_reg <= 1'b0;
-            waitnext_reg <= 1'b0;
-            fb_if.imem_pc <= fb_if.reset_pc_val;
-            pc <= fb_if.reset_pc_val;
-            final_inst_store <= 32'd0;
-            reset_next <= 1'b0;
-        end else if (fb_if.reset_en) begin
-            buffer <= nextbuffer;
-            combine_reg <= combine;
-            waitnext_reg <= waitnext;
-            fb_if.imem_pc <= next_imem_pc;
-            pc <= fb_if.nextpc;
-            final_inst_store <= final_inst;
-            reset_next <= 1'b1;
-        end else if ((fb_if.inst_arrived || fb_if.done_earlier) && fb_if.pc_update) begin
-            buffer <= nextbuffer;
-            combine_reg <= combine;
-            waitnext_reg <= waitnext;
-            fb_if.imem_pc <= next_imem_pc;
-            pc <= fb_if.nextpc;
-            final_inst_store <= final_inst;
-            reset_next <= 1'b0;
+    always_ff @(posedge CLK, negedge nRST) begin
+        if(!nRST) begin
+            fb <= '0;
+        end else begin
+            fb <= fb_next;
         end
     end
 
-    always_comb begin
-        next_imem_pc = fb_if.imem_pc;
-        fb_if.nextpc = pc;
-        nextbuffer = buffer;
-        combine = 1'b0;
-        waitnext = 1'b0;
-        final_inst = final_inst_store;
-        finished = 1'b0;
-        // Jump/Branch condition when misaligned
-        if (fb_if.inst_arrived & reset_next & (pc != fb_if.imem_pc)) begin
-            next_imem_pc = fb_if.imem_pc + 4;
-            if (fb_if.inst[17:16] != 2'b11) begin  // upper 16 bits are compressed
-                final_inst = {16'd0, fb_if.inst[31:16]};
-                fb_if.nextpc = pc + 2;
-                finished = 1'b1;
+
+    always_comb begin : BUFFER_UPDATE
+        fb_next = fb;
+        fetch_addr = pc;
+        insn_out = 32'h0; // TODO: better default for less logic
+        want_fetch = 1'b0;
+        insn_valid = 1'b0;
+        insn_compressed = 1'b0;
+        if(invalidate) begin
+            fb_next.valid = 1'b0;
+        end else if(ren) begin
+            // The case pc_aligned && fb.valid is not possible,
+            // sufficient to just check this bit. 
+            // Additionally, if we somehow get into the bad state,
+            // this allows us to recover by always prioritizing I$.
+            if(pc_aligned) begin
+                want_fetch = 1'b1;
+                if(!icache.busy) begin
+                    if(is_compressed(icache.rdata[15:0])) begin
+                        insn_out = icache.rdata;
+                        insn_compressed = 1'b1;
+                        insn_valid = 1'b1;
+                        fb_next.valid = 1'b1;
+                        fb_next.data = icache.rdata[31:16];
+                    end else begin
+                        insn_out = icache.rdata;
+                        insn_compressed = 1'b0;
+                        insn_valid = 1'b1;
+                        fb_next.valid = 1'b0;
+                    end
+                end
+            end else if(!pc_aligned && fb.valid) begin
+                if(is_compressed(fb.data)) begin
+                    insn_out = {16'b0, fb.data};
+                    insn_compressed = 1'b1;
+                    insn_valid = 1'b1;
+                    fb_next.valid = 1'b0;
+                end else begin
+                    want_fetch = 1'b1;
+                    // PC is misaligned, we have half a 32b
+                    // insn in FB, need to fetch next word
+                    // for rest.
+                    fetch_addr = pc + 2;
+                    if(!icache.busy) begin
+                        fb_next.valid = 1'b1;
+                        fb_next.data = icache.rdata[31:16];
+                        insn_out = {fb.data, icache.rdata[15:0]};
+                        insn_compressed = 1'b0;
+                        insn_valid = 1'b1;
+                    end
+                end
             end else begin
-                combine = 1;
-                nextbuffer = fb_if.inst[31:16];
-                //              nextpc = pc + 4;
-                finished = 1'b0;
+                // !pc_aligned && !fb.valid
+                want_fetch = 1'b1;
+                // PC is misaligned, want to fetch
+                // the *current* word pointed to
+                fetch_addr = {pc[31:2], 2'b00};
+                if(!icache.busy) begin
+                    if(is_compressed(icache.rdata[31:16])) begin
+                        // TODO: upper bits here don't matter,
+                        // can we relax this? output 0 isn't free
+                        insn_out = {16'b0, icache.rdata[31:16]};
+                        insn_compressed = 1'b1;
+                        insn_valid = 1'b1;
+                        fb_next.valid = 1'b0;
+                    end else begin
+                        // Stall case: transition to state
+                        // {misaligned, valid} to handle this
+                        insn_out = icache.rdata; // don't care
+                        insn_compressed = 1'b0;
+                        insn_valid = 1'b0;
+                        fb_next.valid = 1'b1;
+                        fb_next.data = icache.rdata[31:16];
+                    end
+                end
             end
-        end else if (fb_if.reset_en) begin
-            next_imem_pc = {fb_if.reset_pc[31:2], 2'b0};  // Always aligned
-            fb_if.nextpc = fb_if.reset_pc;  // Can be misaligned
-            nextbuffer   = 16'd0;
-            final_inst   = 32'd0;
-        end else if (fb_if.inst_arrived & combine_reg) begin
-            final_inst = {fb_if.inst[15:0], buffer};
-            nextbuffer = fb_if.inst[31:16];
-            fb_if.nextpc = pc + 4;
-            finished = 1'b1;
-            if (fb_if.inst[17:16] != 2'b11) begin  // upper 16 bits are compressed
-                waitnext = 1;
-                next_imem_pc = fb_if.imem_pc;
-            end else begin
-                combine = 1;
-                next_imem_pc = fb_if.imem_pc + 4;
-            end
-        end else if (fb_if.done_earlier | (fb_if.inst_arrived & waitnext_reg)) begin
-            final_inst = {16'b0, buffer};
-            finished = 1'b1;
-            fb_if.nextpc = pc + 2;
-            next_imem_pc = fb_if.imem_pc + 4;
-        end else if (fb_if.inst[1:0] != 2'b11) begin  // lower 16 bits are compressed
-            final_inst = fb_if.inst[15:0];
-            nextbuffer = fb_if.inst[31:16];
-            fb_if.nextpc = pc + 2;
-            finished = 1'b1;
-            if (fb_if.inst[17:16] != 2'b11) begin  // upper 16 bits are compressed
-                waitnext = 1;
-                next_imem_pc = fb_if.imem_pc;
-            end else begin
-                combine = 1;
-                next_imem_pc = fb_if.imem_pc + 4;
-            end
-        end else if (fb_if.inst[1:0] == 2'b11) begin
-            final_inst = fb_if.inst;
-            next_imem_pc = fb_if.imem_pc + 4;
-            fb_if.nextpc = pc + 4;
-            finished = 1'b1;
         end
+        
+        // this state combination cannot happen
+        assert(!(pc_aligned && fb.valid));
     end
 
-    //logic [31:0] debug;
-    assign fb_if.result = final_inst;
-    //assign debug = fb_if.inst_arrived ? final_inst : final_inst_store;
-    //assign c_ena = fb_if.result[1:0] != 2'b11;
-    assign fb_if.done   = fb_if.inst_arrived & finished;
+
+    assign icache.wen = 1'b0;
+    assign icache.ren = ren && want_fetch;
+    assign icache.addr = fetch_addr;
+    assign icache.wdata = '0;
+    assign icache.byte_en = 4'hF;
 
 endmodule
