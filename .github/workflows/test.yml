@@ -14,6 +14,8 @@ jobs:
       - name: Run Regression Tests
         uses: Purdue-SoCET/SoCET-CI@63-fix-cicd # core usage
         with:
+          ssh_private_key: ${{secrets.SSH_PRIVATE_KEY}}
+          ssh_passphrase: ${{secrets.SSH_PASSPHRASE}}
           targets: | # List all FuseSoC Test Targets
             fusesoc --version
             verilator --version
