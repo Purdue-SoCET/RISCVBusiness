@@ -11,16 +11,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4 # required
-      - name: Load SSH Key and Passphrase
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{secrets.SSH_PRIVATE_KEY}}
       - name: Run Regression Tests
         uses: Purdue-SoCET/SoCET-CI@63-fix-cicd # core usage
         with:
           targets: | # List all FuseSoC Test Targets
             fusesoc --version
             verilator --version
-            ./setup.sh
             make config
             make verilate
