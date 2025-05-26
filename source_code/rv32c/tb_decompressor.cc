@@ -1,6 +1,6 @@
 #include <cstring>
 #include <iostream>
-#include <format>
+#include <stdio.h>
 
 #include "verilated.h"
 #include "Vdecompressor.h"
@@ -14,17 +14,17 @@ unsigned ignore_count = 0;
 auto check(uint16_t insn, uint32_t actual, InstructionEncoding& expected) -> void {
     test_count += 1;
     if(actual == expected.decompressedEncoding) {
-        std::cout << std::format("[PASS]: {:#04x} -> {:#08x} {}", insn, actual, expected.compressedMnemonic) << std::endl;
+        printf("[PASS]: 0x%04x -> 0x%08x %s\n", insn, actual, expected.compressedMnemonic);
         pass_count += 1;
     } else if(std::strstr(expected.compressedMnemonic, "hint") != nullptr) {
         // ignore HINTs for now
-        std::cout << std::format("[IGNORE]: Hint {:#04x} -> {:#08x} {}", insn, actual, expected.compressedMnemonic) << std::endl;
+        printf("[IGNORE]: Hint 0x%04x -> 0x%08x %s\n", insn, actual, expected.compressedMnemonic);
         ignore_count += 1;
     } else if(std::strstr(expected.compressedMnemonic, "custom") != nullptr) {
-        std::cout << std::format("[IGNORE] Custom {:#04x} -> {:#08x} {}", insn, actual, expected.compressedMnemonic) << std::endl;
+        printf("[IGNORE]: Custom 0x%04x -> 0x%08x %s\n", insn, actual, expected.compressedMnemonic);
         ignore_count += 1;
     } else {
-        std::cout << std::format("[FAIL]: {} {:#04x} -> {:#08x} (Expected {:#08x})", expected.compressedMnemonic, insn, actual, expected.decompressedEncoding) << std::endl;
+        printf("[FAIL]: %s 0x%04x -> 0x%08x (Expected 0x%08x)\n", expected.compressedMnemonic, insn, actual, expected.decompressedEncoding);
     }
 }
 
