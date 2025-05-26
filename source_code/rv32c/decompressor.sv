@@ -41,14 +41,7 @@ module decompressor #(
     // spec allows either. May have area advantage.
     function automatic logic [31:0] decompress(logic [15:0] compressed);
         casez({compressed[15:13], compressed[1:0]})
-            5'b000_00: begin
-                if (compressed == 16'h0000) begin
-                    return rv32c_pkg::UNIMP;
-                end else begin
-                    return rv32c_pkg::decompress_ciw(compressed);
-                end
-            end
-
+            5'b000_00: return rv32c_pkg::decompress_ciw(compressed);
             5'b001_00, 5'b010_00, 5'b011_00: return rv32c_pkg::decompress_cl(compressed);
             5'b100_00: return rv32c_pkg::UNIMP; // reserved
             5'b101_00, 5'b110_00, 5'b111_00: return rv32c_pkg::decompress_cs(compressed);

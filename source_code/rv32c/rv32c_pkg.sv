@@ -112,6 +112,11 @@ package rv32c_pkg;
             ofmt.rd = (ifmt.funct4 == RVC_CR_FUNC_JALR) ? 5'd1 : 5'd0;
             ofmt.opcode = rv32i_types_pkg::JALR;
 
+            // jalr rd, imm(x0) is reserved
+            if(ifmt.funct4 == RVC_CR_FUNC_JR && ifmt.rs1 == 5'd0) begin
+                return UNIMP;
+            end
+
             return ofmt;
         end else begin
             // C.ADD -> add rs1, rs1, rs2
@@ -141,7 +146,15 @@ package rv32c_pkg;
         // only ADDI4SPN -> addi rd', x2, imm
         rvc_ciw_t ifmt = compress;
         rv32i_types_pkg::itype_t ofmt;
-        assert(ifmt.op == RVC_C0 && ifmt.funct3 == RVC_CIW_FUNC_ADDI4SPN && (ifmt.nzuimm != 0 || ifmt.rd != 0));
+        assert(ifmt.op == RVC_C0 && ifmt.funct3 == RVC_CIW_FUNC_ADDI4SPN);
+
+        // canonical illegal instruction
+        if(compress == 16'b0) begin
+            return UNIMP;
+        // addi4spn rd != 0, 0 is reserved
+        end else if(ifmt.nzuimm == 0) begin
+            return UNIMP;
+        end
 
         ofmt.imm11_00 = {2'b00, ifmt.nzuimm[10:7], ifmt.nzuimm[12:11], ifmt.nzuimm[5], ifmt.nzuimm[6], 2'b00};
         ofmt.rs1 = 5'd2;
@@ -250,6 +263,12 @@ package rv32c_pkg;
         ofmt.opcode = (ifmt.funct3 == RVC_CI_FUNC_LWSP)
                     ? rv32i_types_pkg::LOAD
                     : rv32i_types_pkg::LOAD_FP;
+
+        // lwsp x0, imm is reserved
+        if(ifmt.funct3 == RVC_CI_FUNC_LWSP && ifmt.rd == 5'd0) begin
+            return UNIMP;
+        end
+
         return ofmt;
     endfunction
 
@@ -320,12 +339,21 @@ package rv32c_pkg;
             ofmt.rd = 5'd2;
             ofmt.opcode = rv32i_types_pkg::IMMED;
 
+            if({ifmt.imm1, ifmt.imm5} == 'd0) begin
+                return UNIMP;
+            end
+
             return ofmt;
         end else if(ifmt.funct3 == RVC_CI_FUNC_LUI) begin
             rv32i_types_pkg::utype_t ofmt;
             ofmt.imm31_12 = {{14{ifmt.imm1}}, ifmt.imm1, ifmt.imm5};
             ofmt.rd = ifmt.rd;
             ofmt.opcode = rv32i_types_pkg::LUI;
+
+            // lui rd, 0 is reserved
+            if({ifmt.imm1, ifmt.imm5} == 'd0) begin
+                return UNIMP;
+            end
 
             return ofmt;
         end else begin
@@ -386,6 +414,7 @@ package rv32c_pkg;
         // C.AND, C.OR, C.XOR, C.SUB, C.ADDW, C.SUBW
         // -> OP rd', rd', rs2'
         // bit 30 determines add/subtract
+        // C.ADDW, C.SUBW reserved in RV32C
         ofmt.funct7 = (funct_ext == RVC_CA_FUNC_SUB) ? 7'b010_0000 : 7'b000_0000;
         ofmt.rs2 = decompress_regselect(ifmt.rs2);
         ofmt.rs1 = decompress_regselect(ifmt.rd);
