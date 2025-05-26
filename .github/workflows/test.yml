@@ -14,8 +14,7 @@ jobs:
       - name: Load SSH Key and Passphrase
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh_private_key: ${{secrets.SSH_PRIVATE_KEY}}
-          ssh_passphrase: ${{secrets.SSH_PASSPHRASE}}
+          ssh-private-key: ${{secrets.SSH_PRIVATE_KEY}}
       - name: Run Regression Tests
         uses: Purdue-SoCET/SoCET-CI@63-fix-cicd # core usage
         with:
