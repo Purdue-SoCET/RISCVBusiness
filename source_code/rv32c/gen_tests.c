@@ -173,17 +173,21 @@ void decompressC0(uint16_t insn, InstructionEncoding *encodingOut) {
                                 | ((insn >> 2) & 0b1000)
                                 | ((insn >> 7) & 0b110000)
                                 | ((insn >> 1) & 0b1111000000);
-                uint32_t rdp = (insn & INSN_FIELD_RD_P) >> 2;
-                uint32_t rd = cregToIdx(rdp);
-                uint32_t decompressed = MATCH_ADDI
-                                | (imm << 20)
-                                | (0x2 << FULL_RS1_OFFSET)
-                                | (rd << FULL_RD_OFFSET);
-                        
-                encodingOut->compressedEncoding = insn;
-                encodingOut->decompressedEncoding = decompressed;
-                sprintf(encodingOut->compressedMnemonic, "c.addi4spn %s", registerNames[rd]);
-                sprintf(encodingOut->decompressedMnemonic, "addi %s, %s, %d", registerNames[rd], registerNames[2], sigext(imm, 12));
+                if(imm == 0) {
+                    reserved_instruction(insn, "addi4spn rd, 0", encodingOut);
+                } else {
+                    uint32_t rdp = (insn & INSN_FIELD_RD_P) >> 2;
+                    uint32_t rd = cregToIdx(rdp);
+                    uint32_t decompressed = MATCH_ADDI
+                                    | (imm << 20)
+                                    | (0x2 << FULL_RS1_OFFSET)
+                                    | (rd << FULL_RD_OFFSET);
+
+                    encodingOut->compressedEncoding = insn;
+                    encodingOut->decompressedEncoding = decompressed;
+                    sprintf(encodingOut->compressedMnemonic, "c.addi4spn %s", registerNames[rd]);
+                    sprintf(encodingOut->decompressedMnemonic, "addi %s, %s, %d", registerNames[rd], registerNames[2], sigext(imm, 12));
+                }
             }
         } break;
 
@@ -451,7 +455,14 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
 
                     if(sub_funct >= 6) {
                         reserved_instruction(insn, "arithmetic funct 6/7", encodingOut);
-                    } else {
+                    }
+#ifndef RV64C_MODE
+                    // For RV32, these are reserved
+                    else if(sub_funct >= 4) {
+                        reserved_instruction(insn, sub_funct == 4 ? "RV64 addw" : "RV64 subw", encodingOut);
+                    }
+#endif
+                    else {
                         uint32_t decompressed = make_rtype(op_lookup[sub_funct], rs1, rs2, rs1);
                         encodingOut->compressedEncoding = insn;
                         encodingOut->decompressedEncoding = decompressed;
@@ -584,7 +595,7 @@ void decompressC2(uint16_t insn, InstructionEncoding *encodingOut) {
             uint32_t decompressed = make_load(base, REG_SP, rd, imm);
             if(funct3 == 0b010 && rd == 0) {
                 // c.lwsp x0, imm is reserved
-                reserved_instruction(insn, "c.lw zero, imm", encodingOut);
+                reserved_instruction(insn, "c.lwsp zero, imm", encodingOut);
             } else {
                 encodingOut->compressedEncoding = insn;
                 encodingOut->decompressedEncoding = decompressed;
