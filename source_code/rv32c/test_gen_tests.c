@@ -38,7 +38,7 @@ const struct {
     {0xac26, 0x00913c27}, // C.FSDSP fs1, 24
     {0xd22e, 0x02b12223}, // C.SWSP a1, 36
     // C1 quadrant
-    {0x1, 0x00000013}, // c.nop
+    {0x0001, 0x00000013}, // c.nop
     {0x1f7d, 0xffff0f13}, // c.addi x30, -1
     {0x5735, 0xfed00713}, // c.li a4, -19
     {0x7111, 0xf0010113}, // c.addi16sp -256
