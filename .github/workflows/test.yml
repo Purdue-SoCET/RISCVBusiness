@@ -17,5 +17,6 @@ jobs:
           targets: | # List all FuseSoC Test Targets
             fusesoc --version
             verilator --version
+            ./setup.sh
             make config
             make verilate
