@@ -71,6 +71,14 @@ void hint_instruction(uint16_t compressed, const char *mnemonic_hint, Instructio
 }
 
 static inline
+void custom_instruction(uint16_t compressed, const char *mnemonic_hint, InstructionEncoding *encodingOut) {
+    encodingOut->compressedEncoding = compressed;
+    sprintf(encodingOut->compressedMnemonic, "custom %04x (%s)", compressed, mnemonic_hint);
+    encodingOut->decompressedEncoding = 0x1; // canonical nop; in TB ignore completely
+    strcpy(encodingOut->decompressedMnemonic, "custom");
+}
+
+static inline
 int32_t sigext(uint32_t value, unsigned int bits) {
     // Validate input
     assert(bits > 0 && bits < 32);
@@ -332,12 +340,16 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
             uint32_t rd = (insn & INSN_FIELD_C_RS1_N0) >> 7;
             uint32_t imm = (insn & INSN_FIELD_C_IMM6HI) >> 7
                             | (insn & INSN_FIELD_C_IMM6LO) >> 2;
-            imm = sigext(imm, 6);
-            uint32_t decompressed = make_itype(MATCH_ADDI, REG_ZERO, rd, imm);
-            encodingOut->compressedEncoding = insn;
-            encodingOut->decompressedEncoding = decompressed;
-            sprintf(encodingOut->compressedMnemonic, "c.li %s, %d", registerNames[rd], imm);
-            sprintf(encodingOut->decompressedMnemonic, "addi %s, %s, %d", registerNames[rd], registerNames[REG_ZERO], imm);
+            if(rd == 0) {
+                    hint_instruction(insn, "c.li x0, imm", encodingOut);
+            } else {
+                imm = sigext(imm, 6);
+                uint32_t decompressed = make_itype(MATCH_ADDI, REG_ZERO, rd, imm);
+                encodingOut->compressedEncoding = insn;
+                encodingOut->decompressedEncoding = decompressed;
+                sprintf(encodingOut->compressedMnemonic, "c.li %s, %d", registerNames[rd], imm);
+                sprintf(encodingOut->decompressedMnemonic, "addi %s, %s, %d", registerNames[rd], registerNames[REG_ZERO], imm);
+            }
         } break;
 
         case 0b011: {
@@ -371,10 +383,10 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
                 uint32_t imm = (insn & INSN_FIELD_C_NZIMM6HI) >> 7
                                 | (insn & INSN_FIELD_C_NZIMM6LO) >> 2;
                 imm = sigext(imm, 6);
-                if(rd == 0) {
-                    hint_instruction(insn, "c.lui x0, imm", encodingOut);
-                } else if(imm == 0) {
+                if(imm == 0) {
                     reserved_instruction(insn, "c.lui rd, 0", encodingOut);
+                } else if(rd == 0) {
+                    hint_instruction(insn, "c.lui x0, imm", encodingOut);
                 } else {
                     uint32_t decompressed = MATCH_LUI
                                         | rd << FULL_RD_OFFSET
@@ -399,7 +411,7 @@ void decompressC1(uint16_t insn, InstructionEncoding *encodingOut) {
                     if(imm == 0) {
                         hint_instruction(insn, minor_opcode == 0b00 ? "srli64" : "srai64", encodingOut);
                     } else if(imm >= 32) {
-                        hint_instruction(insn, minor_opcode == 0b00 ? "srli rd, imm >= 32" : "srai rd, imm >= 32", encodingOut);
+                        custom_instruction(insn, minor_opcode == 0b00 ? "srli rd, imm >= 32" : "srai rd, imm >= 32", encodingOut);
                     } else {
                         uint32_t decompress = make_itype(base, rs1, rs1, imm);
                         encodingOut->compressedEncoding = insn;
@@ -514,6 +526,8 @@ void decompressC2(uint16_t insn, InstructionEncoding *encodingOut) {
                             | (insn & INSN_FIELD_C_NZIMM6LO) >> 2;
             if(imm == 0) {
                 hint_instruction(insn, "c.slli64", encodingOut);
+            } else if(imm >= 32) {
+                custom_instruction(insn, "slli rd, imm >= 32", encodingOut);
             } else if(rs1 == 0) {
                 char buf[40];
                 sprintf(buf, "c.slli x0, %d", imm);
