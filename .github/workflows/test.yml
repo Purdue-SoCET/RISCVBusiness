@@ -18,7 +18,4 @@ jobs:
             make config
             make verilate
 
-            fusesoc --cores-root . run --target sim_tlb_directmapped socet:riscv:tb_supervisor:0.1.0 --make_options='-j'
-            fusesoc --cores-root . run --target sim_tlb_associative socet:riscv:tb_supervisor:0.1.0 --make_options='-j'
-            fusesoc --cores-root . run --target sim_page_walker socet:riscv:tb_supervisor:0.1.0 --make_options='-j'
-            fusesoc --cores-root . run --target sim_supervisor_cache socet:riscv:tb_supervisor:0.1.0 --make_options='-j'
+            ./source_code/tb/tb_cache_coherence_stress/build.sh
