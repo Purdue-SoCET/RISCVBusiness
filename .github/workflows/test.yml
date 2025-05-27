@@ -17,5 +17,5 @@ jobs:
           targets: | # List all FuseSoC Test Targets
             make config
             make verilate
-
+            ./setup-riscv-tests.sh
             ./source_code/tb/tb_cache_coherence_stress/build.sh
