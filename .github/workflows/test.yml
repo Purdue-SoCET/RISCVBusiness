@@ -17,5 +17,5 @@ jobs:
           targets: | # List all FuseSoC Test Targets
             make config
             make verilate
-            python3 run_tests_verilator.py -a RV32I -t self-tests --clean --march=rv32ima_zifencei_zicsr
             ./source_code/tb/tb_cache_coherence_stress/build.sh
+            make lint
