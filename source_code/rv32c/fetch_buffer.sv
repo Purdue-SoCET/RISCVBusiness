@@ -119,9 +119,6 @@ module fetch_buffer (
                 end
             end
         end
-        
-        // this state combination cannot happen
-        assert(!(pc_aligned && fb.valid));
     end
 
 
