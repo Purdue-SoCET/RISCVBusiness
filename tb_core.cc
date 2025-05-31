@@ -391,7 +391,7 @@ int main(int argc, char **argv) {
 
     if(sim_time >= max_sim_time) {
         std::cout << "Test TIMED OUT" << std::endl;
-    } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
+    } else if((use_tohost && memory.read(tohost_address) == 1) || (!use_tohost && dut.top_core->get_x28() == 1)) {
         std::cout << "Test PASSED" << std::endl;
     } else {
         std::cout << "Test FAILED: Test " << memory.read(tohost_address) << std::endl;
