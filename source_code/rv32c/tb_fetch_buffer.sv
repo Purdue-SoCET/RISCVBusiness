@@ -46,7 +46,7 @@ module tb_fetch_buffer();
         icache.busy = 1'b0;
         icache.rdata = value;
         icache.error = 1'b0;
-        @(posedge clk);
+        @(posedge clk); #(1);
     endtask
 
     task automatic reset_bus();
@@ -64,7 +64,7 @@ module tb_fetch_buffer();
             reset_bus();
             // wait for read
             $display("Bus sim: Await ren signal");
-            while(!icache.ren) @(posedge clk);
+            while(!icache.ren) @(posedge clk); #(1);
             $display("Bus sim: prepare response");
             do_response(latency);
         end
@@ -75,6 +75,7 @@ module tb_fetch_buffer();
         ren = vec.read;
         invalidate = vec.inv;
         @(posedge clk);
+        #(1);
     endtask
 
     task automatic reset_inputs();
@@ -84,7 +85,10 @@ module tb_fetch_buffer();
     endtask
 
     task automatic await_insn(ExpectedValue expected);
-        while(!insn_valid) @(posedge clk);
+        while(!insn_valid) begin
+            @(posedge clk);
+            #(1);
+        end
         if(expected.compressed) begin
             assert(insn_compressed == 1'b1)
             else $display("Expected compressed instruction");
@@ -141,11 +145,23 @@ module tb_fetch_buffer();
 
         // TODO: generate istream/expected from 'mem' contents.
         // ...or vice-versa
+        // all full-size insns
+        memory = '{32'hF, 32'hFF, 32'hFFF, 32'hFFFF};
         istream = '{'{32'h0, 1'b0, 1'b1}, '{32'h4, 1'b0, 1'b1},
                     '{32'h8, 1'b0, 1'b1}, '{32'hC, 1'b0, 1'b1}};
         expected = '{'{32'h000F, 1'b0}, '{32'h00FF, 1'b0},
                      '{32'h0FFF, 1'b0}, '{32'hFFFF, 1'b0}};
-        memory = '{32'hF, 32'hFF, 32'hFFF, 32'hFFFF};
+        run_trace();
+
+        reset_dut();
+        memory = new [2];
+        istream = new [4];
+        expected = new [4];
+        memory = '{{16'h4, 16'h42}, {16'h4001, 16'h8002}};
+        istream = '{'{32'h0, 1'b0, 1'b1}, '{32'h2, 1'b0, 1'b1},
+                    '{32'h4, 1'b0, 1'b1}, '{32'h6, 1'b0, 1'b1}};
+        expected = '{'{32'h42, 1'b1}, '{32'h4, 1'b1},
+                     '{32'h8002, 1'b1}, '{32'h4001, 1'b1}};
         run_trace();
 
         $finish();
