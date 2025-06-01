@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Free up space
+        run:  rm -rf /opt/hostedtoolcache
       - name: Checkout Repository
         uses: actions/checkout@v4 # required
       - name: Run Regression Tests
