@@ -9,15 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Free up space
-        run:  rm -rf /opt/hostedtoolcache
       - name: Checkout Repository
         uses: actions/checkout@v4 # required
       - name: Run Regression Tests
         uses: Purdue-SoCET/SoCET-CI@63-fix-cicd # core usage
         with:
           targets: | # List all FuseSoC Test Targets
+            ./setup-riscv-tests.sh
             make config
             make verilate
             python3 run_tests_verilator.py -a RV32I -t self-tests --clean --march=rv32ima_zifencei_zicsr
-            make lint
