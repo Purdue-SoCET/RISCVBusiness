@@ -88,7 +88,7 @@ module fetch_buffer (
                     if(!icache.busy) begin
                         fb_next.valid = 1'b1;
                         fb_next.data = icache.rdata[31:16];
-                        insn_out = {fb.data, icache.rdata[15:0]};
+                        insn_out = {icache.rdata[15:0], fb.data};
                         insn_compressed = 1'b0;
                         insn_valid = 1'b1;
                     end
@@ -129,3 +129,4 @@ module fetch_buffer (
     assign icache.byte_en = 4'hF;
 
 endmodule
+

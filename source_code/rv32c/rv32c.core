@@ -28,6 +28,15 @@ filesets:
             - tb_decompressor.cc : {file_type: cppSource}
         file_type: systemVerilogSource
 
+    fetch-buffer-test:
+        depend:
+            - "socet:riscv:packages"
+            - "socet:riscv:riscv_include"
+        files:
+            - fetch_buffer.sv
+            - tb_fetch_buffer.sv
+        file_type: systemVerilogSource
+
 targets:
     default: &default
         filesets:
@@ -48,3 +57,17 @@ targets:
                     - -CFLAGS -std=c++20
                     - -Wno-SYMRSVDWORD # due to 'packages' dependencies
 
+    fetch-buffer-sim:
+        description: Simulate fetch buffer standalone
+        default_tool: verilator
+        filesets:
+            - fetch-buffer-test
+        toplevel: tb_fetch_buffer
+        tools:
+            verilator:
+                verilator_options:
+                    - --assert
+                    - --binary
+                    - -Wno-SYMRSVDWORD
+                    - --trace-fst
+                    - --trace-structs
