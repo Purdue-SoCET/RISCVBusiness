@@ -3,20 +3,28 @@
 
 module tb_fetch_buffer();
 
+    localparam FETCH_BUFFER_TESTS = 4; // increment when adding a new test
+
     typedef struct {
         logic [31:0] data;
         logic compressed;
     } ExpectedValue;
-
-    function automatic string format_expected(ExpectedValue e);
-        return $sformatf("Expected (%s) %x", e.compressed ? "C" : "F", e.data);
-    endfunction
 
     typedef struct {
         logic [31:0] addr;
         logic inv;
         logic read;
     } InsnVector;
+
+    typedef struct {
+        logic [31:0] memory [];
+        InsnVector istream [];
+        ExpectedValue expected[];
+    } TestVector;
+
+    function automatic string format_expected(ExpectedValue e);
+        return $sformatf("Expected (%s) %x", e.compressed ? "C" : "F", e.data);
+    endfunction
 
     function automatic string format_insn(InsnVector iv);
         return $sformatf("%s @ %x", iv.read ? "Read" : (iv.inv ? "Inv" : "Stall"), iv.addr);
@@ -40,6 +48,7 @@ module tb_fetch_buffer();
     logic [31:0] memory [];
     InsnVector istream [];
     ExpectedValue expected[];
+    TestVector tv [];
 
     fetch_buffer DUT(
         .CLK(clk),
@@ -159,86 +168,139 @@ module tb_fetch_buffer();
         repeat(1000) @(posedge clk);
     endtask
 
+    task automatic setup_tv();
+        integer test_num = 0;
+        // define tv
+        tv = new[FETCH_BUFFER_TESTS];
+
+        //--------------------------------
+        // Test 1: All 32b insns
+        //--------------------------------
+        test_num = 0;
+        tv[test_num].memory = new[4];
+        tv[test_num].memory = '{
+            32'h000F,
+            32'h00FF,
+            32'h0FFF,
+            32'hFFFF
+        };
+
+        tv[test_num].istream = new[4];
+        tv[test_num].istream = '{
+            '{32'h0, 1'b0, 1'b1},
+            '{32'h4, 1'b0, 1'b1},
+            '{32'h8, 1'b0, 1'b1},
+            '{32'hC, 1'b0, 1'b1}
+        };
+
+        tv[test_num].expected = new[4];
+        tv[test_num].expected = '{
+            '{32'h000F, 1'b0},
+            '{32'h00FF, 1'b0},
+            '{32'h0FFF, 1'b0},
+            '{32'hFFFF, 1'b0}
+        };
+
+        //--------------------------------
+        // Test 2: All 16b insns
+        //--------------------------------
+        test_num++;
+        tv[test_num].memory = new[2];
+        tv[test_num].memory = '{
+            {16'h0004, 16'h0042},
+            {16'h4001, 16'h8002}
+        };
+
+        tv[test_num].istream = new[4];
+        tv[test_num].istream = '{
+            '{32'h0, 1'b0, 1'b1},
+            '{32'h2, 1'b0, 1'b1},
+            '{32'h4, 1'b0, 1'b1},
+            '{32'h6, 1'b0, 1'b1}
+        };
+
+        tv[test_num].expected = new[4];
+        tv[test_num].expected = '{
+            '{32'h0042, 1'b1},
+            '{32'h0004, 1'b1},
+            '{32'h8002, 1'b1},
+            '{32'h4001, 1'b1}
+        };
+
+        //--------------------------------
+        // Test 3: mixed 16 and 32b
+        // | 16:32l | 32h:16 |
+        //--------------------------------
+        test_num++;
+        tv[test_num].memory = new[2];
+        tv[test_num].memory = '{
+            {16'h0003, 16'h0002}, // lower of 32b, 16b
+            {16'h2221, 16'h3333}  // second 16b, upper of 32b
+        };
+
+        tv[test_num].istream = new[3];
+        tv[test_num].istream = '{
+            '{32'h0, 1'b0, 1'b1}, // 16b @ 0x0
+            '{32'h2, 1'b0, 1'b1}, // 32b @ 0x2-0x4
+            '{32'h6, 1'b0, 1'b1}  // 16b @ 0x6
+        };
+
+        tv[test_num].expected = new[3];
+        tv[test_num].expected = '{
+            '{32'h00000002, 1'b1},
+            '{32'h33330003, 1'b0},
+            '{32'h00002221, 1'b1}
+        };
+
+        //--------------------------------
+        // Test 4: Invalidation trace
+        // Simulate branch to misaligned addr w/32b value.
+        // Start at PC 0, invalidate, goto PC 6.
+        // FB will store upper 16, but should invalidate immediately.
+        // | 16 : 16 | 16 : 32l | 32h : ... |
+        //--------------------------------
+        test_num++;
+        tv[test_num].memory = new[3];
+        tv[test_num].memory = '{
+            {16'h0004, 16'h0002}, 
+            {16'h0003, 16'h2221},
+            {16'hABCD, 16'h3330}
+        };
+
+        tv[test_num].istream = new[3];
+        tv[test_num].istream = '{
+            '{32'h0, 1'b0, 1'b1}, // 16b @ 0x0
+            '{32'h2, 1'b1, 1'b0}, // INV branch to 0x6
+            '{32'h6, 1'b0, 1'b1}  // 32b @ 0x6
+        };
+
+        tv[test_num].expected = new[3];
+        tv[test_num].expected = '{
+            '{32'h00000002, 1'b1},
+            '{32'h00000000, 1'b0}, // placeholder for inv. step
+            '{32'h33300003, 1'b0}
+        };
+
+        // Add more tests here...
+    endtask
 
     initial begin
         $dumpfile("waveform.fst");
         $dumpvars(0, tb_fetch_buffer);
         reset_bus();
         reset_dut();
+        setup_tv();
+
         $display("Starting...");
-        // test 1: just 32b insns
-        memory = new[4];
-        istream = new[4];
-        expected = new[4];
-
-        // TODO: generate istream/expected from 'mem' contents.
-        // ...or vice-versa
-        // all full-size insns
-        memory = '{32'hF, 32'hFF, 32'hFFF, 32'hFFFF};
-        istream = '{'{32'h0, 1'b0, 1'b1}, '{32'h4, 1'b0, 1'b1},
-                    '{32'h8, 1'b0, 1'b1}, '{32'hC, 1'b0, 1'b1}};
-        expected = '{'{32'h000F, 1'b0}, '{32'h00FF, 1'b0},
-                     '{32'h0FFF, 1'b0}, '{32'hFFFF, 1'b0}};
-        run_trace();
-
-        // all half-size, note layout
-        reset_dut();
-        memory = new [2];
-        istream = new [4];
-        expected = new [4];
-        memory = '{{16'h4, 16'h42}, {16'h4001, 16'h8002}};
-        istream = '{'{32'h0, 1'b0, 1'b1}, '{32'h2, 1'b0, 1'b1},
-                    '{32'h4, 1'b0, 1'b1}, '{32'h6, 1'b0, 1'b1}};
-        expected = '{'{32'h42, 1'b1}, '{32'h4, 1'b1},
-                     '{32'h8002, 1'b1}, '{32'h4001, 1'b1}};
-        run_trace();
-
-        // mixed 16- and 32-bit
-        // | 16 : 32l | 32h : 16 |
-        reset_dut();
-        memory = new [4];
-        istream = new[4];
-        expected = new[4];
-        memory = '{
-            {16'h0003, 16'h0002}, // lower of 32b, 16b
-            {16'h2221, 16'h3333}  // second 16b, upper of 32b
-        };
-        istream = '{
-            '{32'h0, 1'b0, 1'b1}, // 16b @ 0x0
-            '{32'h2, 1'b0, 1'b1}, // 32b @ 0x2-0x4
-            '{32'h6, 1'b0, 1'b1}  // 16b @ 0x6
-        };
-        expected = '{
-            '{32'h00000002, 1'b1},
-            '{32'h33330003, 1'b0},
-            '{32'h00002221, 1'b1}
-        };
-        run_trace();
-
-        // invalidation trace - simulate branch to misaligned addr. w/32b value
-        // | 16 : 16 | 16 : 32l | 32h : ... |
-        // start at PC 0, invalidate, goto PC 6
-        // FB will store upper 16 but should invalidate immediately.
-        reset_dut();
-        memory = new [4];
-        istream = new[4];
-        expected = new[4];
-        memory = '{
-            {16'h0004, 16'h0002}, 
-            {16'h0003, 16'h2221},
-            {16'hABCD, 16'h3330}
-        };
-        istream = '{
-            '{32'h0, 1'b0, 1'b1}, // 16b @ 0x0
-            '{32'h2, 1'b1, 1'b0}, // INV branch to 0x6
-            '{32'h6, 1'b0, 1'b1}  // 32b @ 0x6
-        };
-        expected = '{
-            '{32'h00000002, 1'b1},
-            '{32'h0, 1'b0}, // placeholder for inv. step
-            '{32'h33300003, 1'b0}
-        };
-        run_trace();
+        for (integer test_num = 0; test_num < FETCH_BUFFER_TESTS; test_num++) begin
+            $display("---- Starting Test %0d ----", test_num + 1);
+            reset_dut();
+            memory   = tv[test_num].memory;
+            istream  = tv[test_num].istream;
+            expected = tv[test_num].expected;
+            run_trace();
+            $display("---- Finished Test %0d ----\n", test_num + 1);
+        end
 
         $finish();
     end
