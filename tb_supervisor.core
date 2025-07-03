@@ -34,8 +34,15 @@ targets:
     default_tool: verilator
     tools:
       verilator:
-        verilator_options: ["-Wno-SYMRSVDWORD", "-Wno-TIMESCALEMOD", "-Wno-lint", "--binary", "--trace", "--trace-fst", "--trace-structs"]
-        # verilator_options: ["-Wno-TIMESCALEMOD", "-Wno-lint", "--binary", "--trace-fst", "--trace-structs"]
+        verilator_options:
+          - --assert
+          - --binary
+          - -Wno-SYMRSVDWORD
+          - -Wno-TIMESCALEMOD
+          - -Wno-lint
+          - --trace-fst
+          - --trace-structs
+          - -CFLAGS --std=c++20
 
   sim:
     <<: *default

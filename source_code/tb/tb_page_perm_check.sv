@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     tb_supervisor.sv
+*   Filename:     tb_page_perm_check.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
