@@ -42,7 +42,7 @@ targets:
           - -Wno-lint
           - --trace-fst
           - --trace-structs
-          - -CFLAGS --std=c++20
+          - -CFLAGS -std=c++20
 
   sim:
     <<: *default
