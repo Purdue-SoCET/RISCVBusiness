@@ -30,7 +30,6 @@
 `include "prv_pipeline_if.vh"
 `include "address_translation_if.vh"
 `include "generic_bus_if.vh"
-`include "cache_coherence_if.vh"
 `include "bus_ctrl_if.vh"
 
 import rv32i_types_pkg::*;
@@ -47,22 +46,17 @@ module supervisor_cache_wrapper(
   generic_bus_if out_gen_bus_if
 );
 
-  logic clear, fence, clear_done, fence_done, tlb_miss;
+  logic abort_bus, fence, fence_done, tlb_miss;
   logic fault_load_page, fault_store_page, fault_insn_page;
 
   // test signals
   generic_bus_if #(.BLOCK_SIZE(2)) icache_mem_gen_bus_if();
   generic_bus_if #(.BLOCK_SIZE(2)) dcache_mem_gen_bus_if();
 
-  cache_coherence_if     i_cache_coherency_if();
-  cache_coherence_if     d_cache_coherency_if();
-
-  bus_ctrl_if            bus_ctrl_if();
-
-  cache_coherence_statistics_t icoherence_statistics, dcoherence_statistics;
+  bus_ctrl_if bus_ctrl_if();
 
   // modules
-  separate_caches CACHES (
+  separate_caches #(.HART_ID(0)) CACHES (
     .CLK(CLK),
     .nRST(nRST),
     .icache_mem_gen_bus_if(icache_mem_gen_bus_if),
@@ -70,32 +64,14 @@ module supervisor_cache_wrapper(
     .icache_proc_gen_bus_if(icache_proc_gen_bus_if),
     .dcache_proc_gen_bus_if(dcache_proc_gen_bus_if),
     .control_if(control_if),
-    .i_cache_coherency_if(i_cache_coherency_if),
-    .d_cache_coherency_if(d_cache_coherency_if),
-    .prv_pipe_if(prv_pipe_if)
+    .prv_pipe_if(prv_pipe_if),
+    .bus_ctrl_if(bus_ctrl_if),
+    .abort_bus(abort_bus),
+    .icache_miss(prv_pipe_if.icache_miss),
+    .dcache_miss(prv_pipe_if.dcache_miss)
   );
 
-  coherency_unit #(
-    .CPUID(0)
-  ) INSN_COH (
-    .CLK(CLK),
-    .nRST(nRST),
-    .bcif(bus_ctrl_if),
-    .ccif(i_cache_coherency_if),
-    .gbif(icache_mem_gen_bus_if),
-    .coherence_statistics(icoherence_statistics)
-  );
-
-  coherency_unit #(
-    .CPUID(1)
-  ) DATA_COH (
-    .CLK(CLK),
-    .nRST(nRST),
-    .bcif(bus_ctrl_if),
-    .ccif(d_cache_coherency_if),
-    .gbif(dcache_mem_gen_bus_if),
-    .coherence_statistics(dcoherence_statistics)
-  );
+  assign bus_ctrl_if.ccabort = abort_bus;
 
   memory_controller #(
     .NUM_HARTS(1)
