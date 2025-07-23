@@ -1,0 +1,500 @@
+   47  cd spi/
+   48  make fusesoc_sim_apb
+   49  cd ECE337clear
+   50  clear
+   51  cd spi/
+   52  ls
+   53  code makefile 
+   54  nano makefile
+   55  make fusesoc_sim_apb
+   56  cd spi
+   57  make fusesoc_sim_apb
+   58  make fusesoc_sim_apb
+   59  git pull -Branch QSPI-DEV-Branch
+   60  git pull -b QSPI-DEV-Branch
+   61  git pull origin QSPI-DEV-Branch
+   62  git pull origin QSPI-Dev-Branch
+   63  make clean
+   64  git pull origin QSPI-Dev-Branch
+   65  qeustasim
+   66  git pull origin QSPI-Dev-Branch --force
+   67  make clean
+   68  git add .
+   69  git commit -m "stash"
+   70  git pull origin QSPI-Dev-Branch --force
+   71  git add .
+   72  git push -b QSPI-Dev-Branch
+   73  git push origin QSPI-Dev-Branch
+   74  git pull origin QSPI-Dev-Branch
+   75  cd spi/
+   76  code .
+   77  clear
+   78  ls
+   79  cd spi/
+   80  make fusesoc_sim_apb
+   81  clear
+   82  ls
+   83  cd spi/
+   84  ls
+   85  clear
+   86  clear
+   87  clear
+   88  git push origin --delete QSPI-DEV-Branch
+   89  git pull origin QSPI-Dev-Branch
+   90  git checkout -b apb_dev QSPI-Dev-Branch
+   91  make clean
+   92  git add .
+   93  git commit -m "top-level integration"
+   94  git push
+   95  git push origin apb_dev
+   96  git add .
+   97  git commit -m "clean"
+   98  git push origin apb_dev
+   99  git add .
+  100  git commit -m "clean"
+  101  git push origin apb_dev
+  102  git add .
+  103  git commit -m "clean"
+  104  git push origin apb_dev
+  105  git checkout
+  106  git status
+  107  git checkout origin QSPI-Dev-Branch
+  108  git checkout QSPI-Dev-Branch
+  109  ls
+  110  git checkout apb_dev
+  111  make clean
+  112  checkout main
+  113  git checkout QSPI-Dev-Branch
+  114  git add .
+  115  git commit -m "stash"
+  116  git checkout QSPI-Dev-Branch
+  117  make xrun_sim
+  118  clear
+  119  make fusesoc_sim
+  120  git stash
+  121  hostname
+  122  exit
+  123  screen
+  124  serial
+  125  dmesg | grep tty
+  126  dmesg | grep
+  127  dmesg | grep --help
+  128  lsserial
+  129  exit
+  130  git stash
+  131  git checkout qspi_validation
+  132  git checkout qspi_validation
+  133  git checkout qspi_validation
+  134  git checkout origin qspi_validation
+  135  git branch
+  136  git branch
+  137  git branch origin
+  138  git branch -r
+  139  git fetch --all
+  140  githeckout qspi_validation
+  141  git checkout qspi_validation
+  142  make clean
+  143  git add .
+  144  git commit -m "stash -don't care"
+  145  git checkout QSPI-Dev-Branch
+  146  git pull
+  147  cd ..
+  148  rm -r spi
+  149  git clone https://github.com/Purdue-SoCET/spi.git
+  150  git checkout qspi_validation
+  151  cd spi
+  152  git checkout qspi_validation
+  153  make fusesoc_sim
+  154  make fusesoc_sim_apb_interface
+  155  make fusesoc_sim_apb_
+  156  make fusesoc_sim_apb
+  157  git checkout apb_dev
+  158  make fusesoc_sim_apb
+  159  make fusesoc_sim_apb
+  160  git checkout qspi_validation
+  161  git stash
+  162  git checkout qspi_validation
+  163  clear
+  164  ls
+  165  gtkwave
+  166  cd spi/
+  167  gtkwave simvision.vcd 
+  168  cd spi/
+  169  make fusesoc_sim
+  170  code .
+  171  ls
+  172  clear
+  173  quartus
+  174  module load intel/quartus-std/21.1
+  175  quartus
+  176  code spi/
+  177  cd spi/
+  178  ls
+  179  make fusesoc_sim_apb
+  180  cd ..
+  181  cd spi/
+  182  ls
+  183  clear
+  184  make fusesoc_apb_sim
+  185  make fusesoc_sim_apb
+  186  clear
+  187  make fusesoc_sim_apb
+  188  run
+  189  make fusesoc_sim_apb
+  190  clear
+  191  ls
+  192  cd spi/
+  193  ls
+  194  make sim_flash
+  195  cd spi/
+  196  make sim_flash
+  197  cd spi/
+  198  make sim_flash
+  199  cd spi/
+  200  make sim_flash
+  201  python3 -m venv venv
+  202  source venv/bin/activate
+  203  pip3 install -r requirements.txt
+  204  ./setup.sh
+  205  make sim_flash
+  206  source venv/bin/activate
+  207  ./setup.sh
+  208  code ./setup.sh 
+  209  make sim_flash
+  210  clear
+  211  cd spi/
+  212  make sim_flash
+  213  make sim_flash_alt
+  214  make sim_flash
+  215  clear
+  216  ls
+  217  cd spi/
+  218  code .
+  219  make sim_flash
+  220  cd spi/
+  221  make sim_flash
+  222  cd spi
+  223  make sim_flash
+  224  make sim_flash
+  225  make sim_flash
+  226  make sim_flash
+  227  make sim_flash
+  228  make sim_flash
+  229  make sim_flash
+  230  make sim_flash
+  231  make sim_flash
+  232  make sim_flash
+  233  make clean
+  234  fusesoc --cores-root . run --target sim socet:aft:qspi_flash
+  235  fusesoc --cores-root . run --target sim socet:aft:qspi_flash
+  236  code ./setup.sh 
+  237  source venv/bin/activate
+  238  pip3 install -r requirements.txt
+  239  ./setup.sh
+  240  ./setup.sh
+  241  git stash
+  242  git checkout QSPI-Dev-Branch
+  243  git stash
+  244  git checkout qspi_validation
+  245  git checkout qspi_validation
+  246  ./setup.sh
+  247  ./setup.sh
+  248  rm -rf venv
+  249  python3 -m venv venv
+  250  source venv/bin/activate
+  251  pip3 install -r requirements.txt
+  252  ./setup.sh
+  253  ./setup.sh
+  254  git push
+  255  git push
+  256  clear
+  257  git pull
+  258  cd spi
+  259  make sim_flash
+  260  ls
+  261  cd spi/
+  262  ls
+  263  clear
+  264  make sim_flash
+  265  cd spi/
+  266  make sim_flash
+  267  cd spi
+  268  make sim_flash
+  269  cd spi/
+  270  ls
+  271  make sim_flash
+  272  make clean
+  273  clear
+  274  git push
+  275  git pull
+  276  git push
+  277  clear
+  278  cd spi/
+  279  make sim_flash
+  280  clear
+  281  git push
+  282  cd spi/
+  283  make sim_flash
+  284  exit
+  285  git clone https://github.com/Purdue-SoCET/RISCVBusiness.git
+  286  cd RISCVBusiness/
+  287  code .
+  288  cd ..
+  289  cd RISCVBusiness/
+  290  git remote -v
+  291  git remote set-url origin git@github.com:someone/digital-lib.git
+  292  cd RISCVBusiness/ssh -T git@github.com
+  293  ssh -T git@github.com
+  294  ./setup.sh
+  295  ./setup.sh
+  296  ssh git@github.com:Purdue-SoCET/RISCVBusiness.git
+  297  https://github.com/Purdue-SoCET/RISCVBusiness.git
+  298  cd ..
+  299  ls ~/.ssh/id_rsa.pub
+  300  eval "$(ssh-agent -s)"
+  301  ssh-add ~/.ssh/id_rsa
+  302  cat ~/.ssh/id_rsa.pub 
+  303  ssh -T git@github.com:Purdue-SoCET/RISCVBusiness.git
+  304  lcode~/.ssh/id_rsa.pub
+  305  code ~/.ssh/id_rsa.pub
+  306  code ./ssh
+  307  code ssh
+  308  code .ssh
+  309  cd RISCVBusiness/
+  310  setup.sh
+  311  ls
+  312  ./setup.sh
+  313  ./setup.sh
+  314  ./setup.sh
+  315  make
+  316  make config
+  317  make verilate
+  318  pip uninstall yaml -y
+  319  pip uninstall yaml -y
+  320  pip3 uninstall yaml -y
+  321  pip install PyYAML
+  322  pip3 install PyYAML
+  323  pip3 install yamle
+  324  pip3 install yaml
+  325  pip show PyYAML
+  326  pip3 show PyYAML
+  327  ./setup.sh
+  328  pip3 install pyyaml
+  329  pip3 show pyyaml
+  330  python3 -m venv fusesoc_env
+  331  ./setup.sh
+  332  source fusesoc_env/bin/activate
+  333  ./setup.sh
+  334  pip3 install pyyaml
+  335  ./setup.sh
+  336  pip install fusesoc
+  337  ./setup.sh
+  338  make config
+  339  make verilate
+  340  make clean
+  341  make veryclean
+  342  ./setup.sh
+  343  make config
+  344  make verilate
+  345  python3 scripts/config_core.py example.yml
+  346  make verilate
+  347  make xcelium
+  348  make no_mem
+  349  make xcelium
+  350  make xcelium
+  351  make lint
+  352  pip install --upgrade edaliz
+  353  pip install --upgrade edalize
+  354  make veryclean
+  355  ./setup.sh
+  356  make config
+  357  cd RISC
+  358  ls
+  359  cd RISCVBusiness/
+  360  make config
+  361  make xcelium
+  362  ./setup.sh
+  363  source fusesoc_env/bin/activate
+  364  ./setup.sh
+  365  make config
+  366  make xcelium
+  367  run_tests_verilator.py
+  368  fusesoc run
+  369  run_tests_verilator.py
+  370  clear
+  371  run_tests_verilator.py
+  372  clear
+  373  deactivate 
+  374  source fusesoc_env/bin/activate
+  375  make config
+  376  python3 --verison
+  377  python3 --version
+  378  module load fusesoc/5.036
+  379  module load verilator/5.036
+  380  ./setup.sh
+  381  make config
+  382  make verilator
+  383  make verilate
+  384  run_tests_verilator.py
+  385  chmod 
+  386  chmod +x run_tests_verilator.py 
+  387  run_tests_verilator.py
+  388  python3 run_tests_verilator.py 
+  389  ls
+  390  ./setup-riscv-tests.sh 
+  391  groups
+  392  riscv64-unknown-elf-gcc
+  393  module riscv64-unknown-elf-gcc
+  394  module load riscv-gcc
+  395  riscv64-unknown-elf-gcc
+  396  ./setup-riscv-tests.sh 
+  397  ./rvb_out/sim-verilator/Vtop_core meminit.bin
+  398  module spider fusesoc
+  399  make veryclean
+  400  rm -r fusesoc_env/
+  401  python3 -m venv fusesoc_env
+  402  source fusesoc_env/bin/activate
+  403  pip install fusesoc
+  404  ./setup.sh
+  405  make config
+  406  make xcelium
+  407  source /home/asicfab/a/ryongtia/RISCVBusiness/fusesoc_env/bin/activate
+  408  pip install --upgrade jinja2 fusesoc
+  409  python -c "import fusesoc; print(fusesoc.__file__)"
+  410  python -c "import fusesoc; print(fusesoc.__file__)"
+  411  python -c "import fusesoc"
+  412  python -c "print(fusesoc)"
+  413  python -c "import fusesoc; print(fusesoc)"
+  414  fusesoc run
+  415  clear
+  416  make xcelium
+  417  clear
+  418  FuseSoC run --build
+  419  fusesoc run --build
+  420  fusesoc run --build RISCVBusiness.core 
+  421  fusesoc run --build RISCVBusiness
+  422  run_tests_verilator.py
+  423  python3 run_tests_verilator.py
+  424  workon
+  425  deactivate 
+  426  make veryclean
+  427  python3 -m venv fusesoc_env
+  428  source fusesoc_env/bin/activate
+  429  make config
+  430  ./setup.sh
+  431  make config
+  432  make xcelium
+  433  cd ..
+  434  code .ssh/
+  435  cd RISCVBusiness/
+  436  make verilate
+  437  fusesoc --version
+  438  python3 --version
+  439  module spider python
+  440  module load python3/3.11
+  441  python --version
+  442  python3 --version
+  443  deactivate
+  444  source fusesoc_env/bin/activate
+  445  make config
+  446  make verilator
+  447  make verilate
+  448  rm -r fusesoc_env/
+  449  python3 -v fusesoc_env
+  450  python3 -m venv fusesoc_env
+  451  source fusesoc_env/bin/activate
+  452  make config
+  453  ./setup.sh
+  454  pip3 install fusesoc
+  455  ./setup.sh
+  456  make config
+  457  make verilate
+  458  python3 --version
+  459  deactivate
+  460  python3 --version
+  461  rm -r fusesoc_env
+  462  python3 --version
+  463  module spider python3
+  464  ls
+  465  python3 --version
+  466  module load python3/3.11
+  467  python3 --version
+  468  python3 -m venv fusesoc_env
+  469  python3 --version
+  470  ./setup.sh
+  471  make config
+  472  make verilator
+  473  make verilate
+  474  make xcelium
+  475   File "./run_tests_verilator.py", line 194, in compile_asm
+  476   File "./run_tests_verilator.py", line 194, in compile_asm
+  477  run_tests_verilator.py
+  478  run_tests_verilator.py
+  479  ./run_tests_verilator.py
+  480  make verilate
+  481  make verilate
+  482  make verilate
+  483  make verilate
+  484  verilator
+  485  verilator --version
+  486  module spider verilator
+  487  module load verilator/5.036
+  488  make verilate
+  489  run_tests_verilator.py
+  490  ./run_tests_verilator.py
+  491  cd ..
+  492  cd .ssh/
+  493  ls
+  494  cd 
+  495  module spider fusesoc
+  496  cd RISCVBusiness/
+  497  source fusesoc_env/bin/activate
+  498  fusesoc --version
+  499  module spider fusesoc
+  500  ls
+  501  clear
+  502  ls
+  503  ls
+  504  clear
+  505  source fusesoc_env/bin/activate
+  506  clea
+  507  clear
+  508  ./setup.sh
+  509  source fusesoc_env/bin/deactivate
+  510  cd fusesoc_env/bin/
+  511  ls
+  512  cd ..
+  513  cd ..
+  514  deactivate
+  515  module spider python3
+  516  cd ..
+  517  code .
+  518  cd RISCVBusiness/
+  519  module load python3/3.11
+  520  source fusesoc_env/bin/activate
+  521  clear
+  522  ls
+  523  setup.sh
+  524  ./setup.sh
+  525  make
+  526  make config
+  527  python3 --version
+  528  pip3 install yaml
+  529  pip install yaml
+  530  make config
+  531  pip3 install PyYaml
+  532  make config
+  533  make verilate
+  534  module spider verilate
+  535  module spider verilator
+  536  make verilate
+  537  module load verilator/5.036
+  538  make verilate
+  539  run_tests_verilator.py
+  540  python3 run_tests_verilator.py
+  541  module spider riscv64
+  542  module spider riscv64-unknown-elf-gcc
+  543  module load riscv-gcc
+  544  python3 run_tests_verilator.py
+  545  history
+  546  history >> history
