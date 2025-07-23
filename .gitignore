@@ -99,3 +99,6 @@ system_fpga.summary
 doc/book/**
 *.txt
 *.dump
+
+# ignore fusesoc_env
+fusesoc_env

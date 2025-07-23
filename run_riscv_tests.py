@@ -16,7 +16,8 @@ supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
 
 # For now, only support 'p' environment. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
-verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
+# verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
+verilator_binary = "./rvb_out/sim-verilator/Vtop_core"
 test_base_dir = pathlib.Path("./riscv-tests/isa")
 
 skip_list = [
@@ -116,7 +117,7 @@ def run_test(fname, env):
 def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
     pass_count = 0
     total_count = 0
-
+    
     for env in envs:
         print(f"Running '{env}' TVM tests...")
         for ext in isa:
@@ -177,6 +178,7 @@ def main():
         print("Environments 'pt' and 'pm' are not yet supported.")
         exit(1)
     
+    print("Running selected tests...")
     run_selected_tests(args.isa, args.environment, args.machine, args.supervisor)
 
 if __name__ == "__main__":
