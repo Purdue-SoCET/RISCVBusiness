@@ -95,17 +95,43 @@ module rv32m_enabled (
     assign mul_start    = operand_diff && is_multiply && rv32m_start;
 
     // Module instantiations
-    // TODO: Case for which multiplier/divider to use
-    pp_mul32 mult_i (
-        .CLK(CLK),
-        .nRST(nRST),
-        .multiplicand(multiplicand),
-        .multiplier(multiplier),
-        .product(product),
-        .is_signed(is_signed),
-        .start(mul_start),
-        .finished(mul_finished)
-    );
+    `ifdef PP_MUL32
+        pp_mul32 mult_i (
+            .CLK(CLK),
+            .nRST(nRST),
+            .multiplicand(multiplicand),
+            .multiplier(multiplier),
+            .product(product),
+            .is_signed(is_signed),
+            .start(mul_start),
+            .finished(mul_finished)
+        );
+    `endif
+
+    `ifdef SHIFT_ADD_MULTIPLIER // FIXME This one fails all multiplication test cases.
+        // pp_mul32 mult_i (
+        shift_add_multiplier mult_i (
+            .CLK(CLK),
+            .nRST(nRST),
+            .multiplicand(multiplicand),
+            .multiplier(multiplier),
+            .is_signed(is_signed),
+            .start(mul_start),
+            .product(product),
+            .finished(mul_finished)
+        );
+    `endif
+
+    // pp_mul32 mult_i (
+    //     .CLK(CLK),
+    //     .nRST(nRST),
+    //     .multiplicand(multiplicand),
+    //     .multiplier(multiplier),
+    //     .product(product),
+    //     .is_signed(is_signed),
+    //     .start(mul_start),
+    //     .finished(mul_finished)
+    // );
 
 
     /* DIVISION / REMAINDER */

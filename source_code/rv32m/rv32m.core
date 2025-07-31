@@ -18,6 +18,8 @@ filesets:
             - rv32m_disabled.sv
             - rv32m_enabled.sv
             - rv32m_wrapper.sv
+            - shift_add_multiplier.sv
+            - shift_test_restore_divider.sv
         file_type: systemVerilogSource
     
 targets:
