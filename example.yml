@@ -38,3 +38,8 @@ microarch_params:
   
   # Halt
   infinite_loop_halts : "true"
+  
+  # Multiplier settings
+multiplier_params:
+  rv32m_supported : "true"
+  multiplier_select : "shift_add_multiplier"
