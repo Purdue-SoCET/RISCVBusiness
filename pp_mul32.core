@@ -1,0 +1,50 @@
+CAPI=2:
+
+name: pp_mul32
+description: Multiplier test
+filesets:
+  rtl:
+    files:
+      # - source_code/rv32m/shift_add_multiplier.sv
+      - source_code/rv32m/pp_mul32.sv
+      - source_code/rv32m/flex_counter_mul.sv
+      - source_code/rv32m/carry_save_adder.sv
+      - source_code/rv32m/full_adder.sv
+    file_type: systemVerilogSource
+  tb:
+    files:
+      - source_code/tb/tb_pp_mul32.sv
+    file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: tb_pp_mul32
+    
+    sim:
+        <<: *default
+        description: Simulate w/TB
+        default_tool: xcelium
+        filesets_append:
+            - tb
+        toplevel: 
+            - "!tool_verilator? (tb_pp_mul32)"
+            - "tool_verilator? (pp_mul32)"
+        tools:
+            xcelium:
+                xrun_options:
+                    - +xmtimescale+1ns/100ps
+            modelsim:
+                vsim_options:
+                    - -vopt
+                   #- -voptargs='+acc'
+                    - -t ps
+            vcs:
+                vcs_options:
+                    - -assert svaext
+            verilator:
+                verilator_options:
+                    - --trace
+                    - --trace-fst
+                    - --trace-structs

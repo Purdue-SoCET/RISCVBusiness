@@ -11,13 +11,14 @@ module rv32m_wrapper(
     output logic [31:0] rv32m_out
 );
     import rv32m_pkg::*;
-
+    
     /*generate
         case(RV32M_ENABLED)
             "disabled": rv32m_disabled RV32M(.*);
             "enabled": rv32m_enabled RV32M(.*);
         endcase
     endgenerate*/
+
     `ifdef RV32M_SUPPORTED
     rv32m_enabled RV32M(.*);
     `else

@@ -41,7 +41,7 @@ module rv32m_enabled (
     /* Operand Saver to detect new request */
 
     // operand saver
-    word_t op_a, op_b, op_a_save, op_b_save;
+    word_t op_a, op_b, op_a_save, op_b_save;        // logic [31:0]
     rv32m_op_t operation_save;
     //logic [2:0] operation, operation_save;
     //logic [1:0] is_signed_save, is_signed_curr, is_signed;
@@ -49,6 +49,7 @@ module rv32m_enabled (
     logic is_multiply;
     logic is_divide;
     logic [1:0] is_signed;
+
 
     assign is_multiply = (operation == MUL) || (operation == MULH) || (operation == MULHU) || (operation == MULHSU);
     assign is_divide   = (operation == DIV) || (operation == DIVU) || (operation == REM) || (operation == REMU);
@@ -170,48 +171,94 @@ module rv32m_enabled (
     end
 
     /* Result */
-    always_comb begin
-        if(rv32m_start) begin
-            // Note: operand_diff on all these cases is to fix condition where
-            // "done" flag asserted by FU due to previous op. RV32M will always
-            // take at least 1 extra cycle if we aren't reusing a value.
-            casez(operation)
-                MUL: begin
-                    rv32m_done = !operand_diff || mul_finished;
-                    rv32m_out  = product[WORD_SIZE-1:0];
-                end
+    `ifdef PP_MUL32
+        always_comb begin
+            if(rv32m_start) begin
+                // Note: operand_diff on all these cases is to fix condition where
+                // "done" flag asserted by FU due to previous op. RV32M will always
+                // take at least 1 extra cycle if we aren't reusing a value.
+                casez(operation)
+                    MUL: begin
+                        rv32m_done = !operand_diff || mul_finished;
+                        rv32m_out  = product[WORD_SIZE-1:0];
+                    end
 
-                MULH, MULHU, MULHSU: begin
-                    rv32m_done = !operand_diff || mul_finished;
-                    rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
-                end
+                    MULH, MULHU, MULHSU: begin
+                        rv32m_done = !operand_diff || mul_finished;
+                        rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
+                    end
 
-                // TODO: Is there a better way to decode this? Lots of repetition.
-                DIV: begin
-                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
-                end
+                    // TODO: Is there a better way to decode this? Lots of repetition.
+                    DIV: begin
+                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    end
 
-                DIVU: begin
-                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
-                end
+                    DIVU: begin
+                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    end
 
-                REM, REMU: begin
-                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
-                end
+                    REM, REMU: begin
+                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                        rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
+                    end
 
-                default: begin
-                    rv32m_done = 1'b1;
-                    rv32m_out = 32'b0; // TODO: Should this return BAD3?
-                end
-            endcase
-        end else begin
-            rv32m_done = 1'b1;
-            rv32m_out = 32'b0;
+                    default: begin
+                        rv32m_done = 1'b1;
+                        rv32m_out = 32'b0; // TODO: Should this return BAD3?
+                    end
+                endcase
+            end else begin
+                rv32m_done = 1'b1;
+                rv32m_out = 32'b0;
+            end
         end
-    end
+    `endif
+
+
+    `ifdef SHIFT_ADD_MULTIPLIER 
+        always_comb begin
+            if (rv32m_start) begin
+                casez(operation)
+                    MUL: begin
+                        rv32m_done = mul_finished;
+                        rv32m_out  = product[WORD_SIZE-1:0];
+                    end
+
+                    MULH, MULHU, MULHSU: begin
+                        rv32m_done = mul_finished;
+                        rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
+                    end
+
+                    // TODO: Is there a better way to decode this? Lots of repetition.
+                    DIV: begin
+                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    end
+
+                    DIVU: begin
+                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    end
+
+                    REM, REMU: begin
+                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                        rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
+                    end
+
+                    default: begin
+                        rv32m_done = 1'b1;
+                        rv32m_out = 32'b0;
+                    end
+                endcase
+            end else begin
+                rv32m_done = 1'b1;
+                rv32m_out = 32'b0;
+            end
+        end
+    `endif
+
 
     /*
     always_comb begin
