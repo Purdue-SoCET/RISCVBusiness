@@ -42,4 +42,5 @@ microarch_params:
   # Multiplier settings
 multiplier_params:
   rv32m_supported : "true"
-  multiplier_select : "shift_add_multiplier"
+  # multiplier_select : "shift_add_multiplier"
+  multiplier_select : "pp_mul32"

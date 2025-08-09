@@ -1,0 +1,260 @@
+# SimVision Command Script (Sat Aug 09 01:41:34 PM EDT 2025)
+#
+# Version 23.03.s004
+#
+# You can restore this configuration with:
+#
+#      xrun -q -f edalize_main.f +xmtimescale+1ns/100ps -access r -top tb_rv32m_enabled -input /home/asicfab/a/ryongtia/RISCVBusiness/xcelium_files/restore.tcl
+#
+
+
+#
+# Preferences
+#
+preferences set plugin-enable-svdatabrowser-new 1
+preferences set plugin-enable-groupscope 0
+preferences set plugin-enable-interleaveandcompare 0
+preferences set plugin-enable-waveformfrequencyplot 0
+
+#
+# Simulator
+#
+database require simulator -hints {
+	simulator "xrun -q -f edalize_main.f +xmtimescale+1ns/100ps -access r -gui -top tb_rv32m_enabled -input restore.tcl"
+}
+#
+# Groups
+#
+catch {group new -name SYSTEM -overlay 0}
+catch {group new -name FLAGS -overlay 0}
+catch {group new -name INOUT -overlay 0}
+catch {group new -name rv32m_enabled -overlay 0}
+catch {group new -name {Group 1} -overlay 0}
+group using SYSTEM
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_nRST}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_CLK}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_test_case_num}]} ]
+group using FLAGS
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_start}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_finished}]} ]
+group using INOUT
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_rv32m_enabled.operation[2:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_multiplicand[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_multiplier[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_product[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.tb_expected_out[69:0]}]} ]
+group using rv32m_enabled
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.rv32m_start}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.rv32m_out[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.rv32m_done}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.rv32m_a[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.rv32m_b[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.product[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.overflow}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.operation_save[2:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.operation[2:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.operand_diff}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.op_b_save[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.op_b[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.op_a_save[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.op_a[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.multiplier[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.multiplicand[31:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mul_start}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mul_finished}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.is_signed[1:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.is_multiply}]} ]
+group using {Group 1}
+group set -overlay 0
+group set -comment {}
+group clear 0 end
+
+group insert \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.start}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.finished}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.product[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.partial_product[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplier_reg[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplier_ext[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplicand_reg[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplicand_ext[63:0]}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.mult_complete}]} ] \
+    [subst  {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.is_signed[1:0]}]} ]
+
+#
+# Mnemonic Maps
+#
+mmap new  -reuse -name {Boolean as Logic} -radix %b -contents {{%c=FALSE -edgepriority 1 -shape low}
+{%c=TRUE -edgepriority 1 -shape high}}
+mmap new  -reuse -name {Example Map} -radix %x -contents {{%b=11???? -bgcolor orange -label REG:%x -linecolor yellow -shape bus}
+{%x=1F -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=2C -bgcolor red -label ERROR -linecolor white -shape EVENT}
+{%x=* -label %x -linecolor gray -shape bus}}
+
+#
+# Design Browser windows
+#
+if {[catch {window new WatchList -name "Design Browser 1" -geometry 730x500+111+49}] != ""} {
+    window geometry "Design Browser 1" 730x500+111+49
+}
+window target "Design Browser 1" on
+browser using {Design Browser 1}
+browser set -scope [subst  {simulator::[format {tb_rv32m_enabled}]} ]
+browser set \
+    -signalsort name
+browser yview see [subst  {simulator::[format {tb_rv32m_enabled}]} ]
+browser timecontrol set -lock 0
+
+#
+# Waveform windows
+#
+if {[catch {window new WaveWindow -name "Waveform 1" -geometry 1105x1016+795+19}] != ""} {
+    window geometry "Waveform 1" 1105x1016+795+19
+}
+window target "Waveform 1" on
+waveform using {Waveform 1}
+waveform sidebar visibility partial
+waveform set \
+    -primarycursor TimeA \
+    -signalnames name \
+    -signalwidth 175 \
+    -units ps \
+    -valuewidth 131
+waveform baseline set -time 0
+
+
+set groupId0 [waveform add -groups SYSTEM]
+
+
+set groupId0 [waveform add -groups FLAGS]
+
+
+set groupId0 [waveform add -groups INOUT]
+set gpGlist0 [waveform hierarchy contents $groupId0]
+set gpID0 [lindex $gpGlist0 0]
+foreach {name attrs} [subst  {
+    {simulator::[format {tb_rv32m_enabled.operation[2:0]}]} {}
+    {simulator::[format {tb_rv32m_enabled.tb_multiplicand[31:0]}]} {-radix %d}
+    {simulator::[format {tb_rv32m_enabled.tb_multiplier[31:0]}]} {-radix %d}
+    {simulator::[format {tb_rv32m_enabled.tb_product[63:0]}]} {}
+    {simulator::[format {tb_rv32m_enabled.tb_expected_out[69:0]}]} {-color #ffff00}
+}] childcmds {
+    {}
+    {}
+    {}
+    {}
+    {}
+} {
+    set expected [ join [waveform signals -format fullpath $gpID0] ]
+    if {[string equal $name $expected] || $name == "cdivider"} {
+        if {$attrs != ""} {
+            eval waveform format $gpID0 $attrs
+        }
+        if { $childcmds != ""} {
+            eval $childcmds
+        }
+    }
+    set gpGlist0 [lrange $gpGlist0 1 end]
+    set gpID0 [lindex $gpGlist0 0]
+}
+
+
+set groupId0 [waveform add -groups rv32m_enabled]
+
+
+set groupId0 [waveform add -groups {{Group 1}}]
+set gpGlist0 [waveform hierarchy contents $groupId0]
+set gpID0 [lindex $gpGlist0 0]
+foreach {name attrs} [subst  {
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.start}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.finished}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.product[63:0]}]} {-radix %d}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.partial_product[63:0]}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplier_reg[63:0]}]} {-radix %d}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplier_ext[63:0]}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplicand_reg[63:0]}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.multiplicand_ext[63:0]}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.mult_complete}]} {}
+    {simulator::[format {tb_rv32m_enabled.rv32m.mult_i.is_signed[1:0]}]} {}
+}] childcmds {
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+    {}
+} {
+    set expected [ join [waveform signals -format fullpath $gpID0] ]
+    if {[string equal $name $expected] || $name == "cdivider"} {
+        if {$attrs != ""} {
+            eval waveform format $gpID0 $attrs
+        }
+        if { $childcmds != ""} {
+            eval $childcmds
+        }
+    }
+    set gpGlist0 [lrange $gpGlist0 1 end]
+    set gpID0 [lindex $gpGlist0 0]
+}
+
+
+waveform xview limits 0 429380ps
+
+#
+# Waveform Window Links
+#
+
+#
+# Source Browser windows
+#
+if {[catch {window new SrcBrowser -name "Source Browser 1" -geometry 700x525+256+343}] != ""} {
+    window geometry "Source Browser 1" 700x525+256+343
+}
+window target "Source Browser 1" on
+srcbrowser using {Source Browser 1}
+srcbrowser set \
+    -primarycursor TimeA \
+    -units ps \
+    -radix default \
+    -showstrength 0 \
+    -showcallstack 0 \
+    -displayvalues 0
+
+srcbrowser show -scope tb_rv32m_enabled -file /home/asicfab/a/ryongtia/RISCVBusiness/build/rv32m_enabled_0/sim-xcelium/src/rv32m_enabled_0/source_code/tb/tb_rv32m_enabled.sv -line 33
+
+srcbrowser sidebar visibility partial
+
+#
+# Console windows
+#
+console set -windowname Console
+window geometry Console 730x250+352+168
+
+#
+# Layout selection
+#
+

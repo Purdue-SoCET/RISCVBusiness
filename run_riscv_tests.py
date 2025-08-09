@@ -101,13 +101,17 @@ def get_hostaddress(fname):
 def run_test(fname, env):
     tohost_address = get_hostaddress(fname)
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), fname]
+    print(fname)
     if env == 'v':
         run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--max-sim-time', '1000000', '--virtual', fname, '--notrace']
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     if res.returncode != 0:
-        print('Verilator failed to run, exiting: ')
+        # print('Verilator failed to run, exiting: ')
+        print('Verilator failed to run, running next test: ')
         print(res.stderr)
+        # print(res.stdout)
         exit(1)
+        # return False
 
     if 'PASSED' not in res.stdout:
         print(res.stdout)
@@ -126,6 +130,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             for test in filter(apply_skips, tests):
                 total_count += 1
+                print(f"\nRunning Test {total_count}")
                 status = run_test(test, env)
                 if status:
                     pass_count += 1

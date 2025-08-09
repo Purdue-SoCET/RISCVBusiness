@@ -43,6 +43,13 @@ xcelium: config
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
 
+sim_rv32m: config
+	@fusesoc run --target=sim --tool=xcelium rv32m_enabled
+# 	cd build/rv32m_enabled_0/sim-xcelium; make run-gui
+
+sim_pp_mul32: config
+	@fusesoc run --target=sim --tool=xcelium pp_mul32
+
 lint: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
 	@echo "Lint finished, no errors found"
