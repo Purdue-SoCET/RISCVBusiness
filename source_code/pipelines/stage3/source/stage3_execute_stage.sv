@@ -119,14 +119,14 @@ module stage3_execute_stage (
     branch_res branch_res (.br_if(branch_if));
 
     rv32m_wrapper RV32M_FU (
-        .CLK,
-        .nRST,
+        .CLK(CLK),
+        .nRST(nRST),
         .rv32m_start(cu_if.rv32m_control.select && !hazard_if.mem_use_stall),
         .operation(cu_if.rv32m_control.op), // TODO: Better way?
         .rv32m_a(rs1_post_fwd), // All RV32M are reg-reg, so just feed post-fwd regs
         .rv32m_b(rs2_post_fwd),
-        .rv32m_done,
-        .rv32m_out
+        .rv32m_done(rv32m_done),
+        .rv32m_out(rv32m_out)
     );
 
     rv32b_wrapper RV32B_FU(

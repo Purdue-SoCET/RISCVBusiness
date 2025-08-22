@@ -16,8 +16,7 @@ supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
 
 # For now, only support 'p' environment. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
-# verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
-verilator_binary = "./rvb_out/sim-verilator/Vtop_core"
+verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
 test_base_dir = pathlib.Path("./riscv-tests/isa")
 
 skip_list = [
@@ -101,22 +100,31 @@ def get_hostaddress(fname):
 def run_test(fname, env):
     tohost_address = get_hostaddress(fname)
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), fname]
-    print(fname)
     if env == 'v':
         run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--max-sim-time', '1000000', '--virtual', fname, '--notrace']
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    if res.returncode != 0:
-        # print('Verilator failed to run, exiting: ')
-        print('Verilator failed to run, running next test: ')
-        print(res.stderr)
-        # print(res.stdout)
-        exit(1)
-        # return False
 
-    if 'PASSED' not in res.stdout:
+    print(f'\t{fname}: ', end="")
+    status = ('PASSED' in res.stdout)
+    if status:
+        print(f'{Colors.GREEN}[PASSED]{Colors.END}')
+    else:
+        print(f"{Colors.RED}[FAILED]{Colors.END}")
         print(res.stdout)
 
-    return ('PASSED' in res.stdout)
+    if res.returncode != 0:
+        print('Verilator failed to run, exiting: ')
+        print(res.stderr)
+        exit(1)
+
+    return status
+
+def _run_tests(tests, total_count, pass_count, env):
+    for test in filter(apply_skips, tests):
+        total_count += 1
+        if run_test(test, env):
+            pass_count += 1
+    return total_count, pass_count
 
 def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
     pass_count = 0
@@ -128,38 +136,25 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
             print(f"ISA: RV32{ext.capitalize()}")
 
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
-            for test in filter(apply_skips, tests):
-                total_count += 1
-                print(f"\nRunning Test {total_count}")
-                status = run_test(test, env)
-                if status:
-                    pass_count += 1
-                else:
-                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+            total_count, pass_count = _run_tests(
+                tests, total_count, pass_count, env
+            )
 
         # machine-mode tests
         if machine_mode_tests:
             print(f"Machine Mode tests")
             tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
-            for test in filter(apply_skips, tests):
-                total_count += 1
-                status = run_test(test, env)
-                if status:
-                    pass_count += 1
-                else:
-                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+            total_count, pass_count = _run_tests(
+                tests, total_count, pass_count, env
+            )
 
         # supervisor-mode tests
         if supervisor_mode_tests:
             print(f"Supervisor Mode tests")
             tests = test_base_dir.glob(f'rv32si-{env}*.bin')
-            for test in filter(apply_skips, tests):
-                total_count += 1
-                status = run_test(test, env)
-                if status:
-                    pass_count += 1
-                else:
-                    print(f"{Colors.RED}[FAILED]: {Colors.END}{test}")
+            total_count, pass_count = _run_tests(
+                tests, total_count, pass_count, env
+            )
         
     if pass_count == total_count:
         print(f"{Colors.GREEN}[All {pass_count} tests passed.]{Colors.END}")
@@ -168,11 +163,33 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='RISC-V Tests', description='Runner for RISCVBusiness RISC-V Tests')
-    parser.add_argument('--environment', choices=['p', 'pm', 'pt', 'v'], nargs='*', help='riscv-tests "TVM" option. Only \'p\' and \'v\' are supported at this time.', default=['p'])
-    parser.add_argument('--isa', choices=supported_isa, nargs='*', help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.', default=[])
-    parser.add_argument('--machine', action='store_true', help='Enable M-mode tests. Not currently supported.')
-    parser.add_argument('--supervisor', action='store_true', help='Enable S-mode tests. Not currently supported.')
+    parser = argparse.ArgumentParser(
+        prog='RISC-V Tests',
+        description='Runner for RISCVBusiness RISC-V Tests'
+    )
+    parser.add_argument(
+        '--environment',
+        choices=['p', 'pm', 'pt', 'v'],
+        nargs='*',
+        help='riscv-tests "TVM" option. Only \'p\' and \'v\' are supported at this time.',
+        default=['p']
+    )
+    parser.add_argument(
+        '--isa',
+        choices=supported_isa,
+        nargs='*',
+        help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.',
+        default=[])
+    parser.add_argument(
+        '--machine',
+        action='store_true',
+        help='Enable M-mode tests. Not currently supported.'
+    )
+    parser.add_argument(
+        '--supervisor',
+        action='store_true',
+        help='Enable S-mode tests. Not currently supported.'
+    )
     args = parser.parse_args()
 
     if not args.machine and not args.isa and not args.supervisor:

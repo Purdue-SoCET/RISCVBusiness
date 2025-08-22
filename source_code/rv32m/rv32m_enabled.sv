@@ -39,53 +39,32 @@ module rv32m_enabled (
 
 
     /* Operand Saver to detect new request */
-
-    // operand saver
-    word_t op_a, op_b, op_a_save, op_b_save;        // logic [31:0]
+    word_t op_a, op_b, op_a_save, op_b_save;
     rv32m_op_t operation_save;
-    //logic [2:0] operation, operation_save;
-    //logic [1:0] is_signed_save, is_signed_curr, is_signed;
     logic operand_diff;
     logic is_multiply;
     logic is_divide;
     logic [1:0] is_signed;
 
-
     assign is_multiply = (operation == MUL) || (operation == MULH) || (operation == MULHU) || (operation == MULHSU);
     assign is_divide   = (operation == DIV) || (operation == DIVU) || (operation == REM) || (operation == REMU);
-
-
     assign op_a = operand_diff ? rv32m_a : op_a_save;
     assign op_b = operand_diff ? rv32m_b : op_b_save;
     assign operand_diff = rv32m_start && ((op_a_save != rv32m_a) || (op_b_save != rv32m_b) || (operation_save != operation));
-    /*assign operand_diff   = ((op_a_save != rv32m_a) ||
-                          (op_b_save != rv32m_b) ||
-                          (is_signed_save != is_signed_curr) ||
-                          (operation_save != {idex.mul, idex.div, idex.rem})) &&
-                          idex.start ;
-    assign is_signed_curr = idex.usign_usign ? 2'b00 : (idex.sign_sign ? 2'b11 : 2'b10);
-    // Is signed + operation = func3? Seems like we could potentially just save off the func3 wholesale
-    assign is_signed = operand_diff ? is_signed_curr : is_signed_save;
-    assign operation = operand_diff ? {idex.mul, idex.div, idex.rem} : operation_save;*/
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
             op_a_save      <= '0;
             op_b_save      <= '0;
-            //is_signed_save <= '0;
             operation_save <= MUL;
         end else if (rv32m_start && rv32m_done) begin
             op_a_save      <= rv32m_a;
             op_b_save      <= rv32m_b;
-            //is_signed_save <= is_signed_curr;
             operation_save <= operation;
         end
     end
 
-
     /* MULTIPLICATION */
-
-    // multiplier signals
     word_t multiplicand, multiplier;
     logic [(WORD_SIZE*2)-1:0] product;
     logic mul_finished;
@@ -107,10 +86,7 @@ module rv32m_enabled (
             .start(mul_start),
             .finished(mul_finished)
         );
-    `endif
-
-    `ifdef SHIFT_ADD_MULTIPLIER // FIXME This one fails all multiplication test cases.
-        // pp_mul32 mult_i (
+    `elsif SHIFT_ADD_MULTIPLIER
         shift_add_multiplier mult_i (
             .CLK(CLK),
             .nRST(nRST),
@@ -121,22 +97,11 @@ module rv32m_enabled (
             .product(product),
             .finished(mul_finished)
         );
+    `else
+        assert(0); // Build error
     `endif
 
-    // pp_mul32 mult_i (
-    //     .CLK(CLK),
-    //     .nRST(nRST),
-    //     .multiplicand(multiplicand),
-    //     .multiplier(multiplier),
-    //     .product(product),
-    //     .is_signed(is_signed),
-    //     .start(mul_start),
-    //     .finished(mul_finished)
-    // );
-
-
     /* DIVISION / REMAINDER */
-
     logic overflow, div_zero, div_finished;
     word_t divisor, dividend, quotient, remainder, divisor_save, dividend_save;
     logic div_operand_diff;
@@ -171,130 +136,47 @@ module rv32m_enabled (
     end
 
     /* Result */
-    `ifdef PP_MUL32
-        always_comb begin
-            if(rv32m_start) begin
-                // Note: operand_diff on all these cases is to fix condition where
-                // "done" flag asserted by FU due to previous op. RV32M will always
-                // take at least 1 extra cycle if we aren't reusing a value.
-                casez(operation)
-                    MUL: begin
-                        rv32m_done = !operand_diff || mul_finished;
-                        rv32m_out  = product[WORD_SIZE-1:0];
-                    end
-
-                    MULH, MULHU, MULHSU: begin
-                        rv32m_done = !operand_diff || mul_finished;
-                        rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
-                    end
-
-                    // TODO: Is there a better way to decode this? Lots of repetition.
-                    DIV: begin
-                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
-                    end
-
-                    DIVU: begin
-                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
-                    end
-
-                    REM, REMU: begin
-                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                        rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
-                    end
-
-                    default: begin
-                        rv32m_done = 1'b1;
-                        rv32m_out = 32'b0; // TODO: Should this return BAD3?
-                    end
-                endcase
-            end else begin
-                rv32m_done = 1'b1;
-                rv32m_out = 32'b0;
-            end
-        end
-    `endif
-
-
-    `ifdef SHIFT_ADD_MULTIPLIER 
-        always_comb begin
-            if (rv32m_start) begin
-                casez(operation)
-                    MUL: begin
-                        rv32m_done = mul_finished;
-                        rv32m_out  = product[WORD_SIZE-1:0];
-                    end
-
-                    MULH, MULHU, MULHSU: begin
-                        rv32m_done = mul_finished;
-                        rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
-                    end
-
-                    // TODO: Is there a better way to decode this? Lots of repetition.
-                    DIV: begin
-                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
-                    end
-
-                    DIVU: begin
-                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                        rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
-                    end
-
-                    REM, REMU: begin
-                        rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                        rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
-                    end
-
-                    default: begin
-                        rv32m_done = 1'b1;
-                        rv32m_out = 32'b0;
-                    end
-                endcase
-            end else begin
-                rv32m_done = 1'b1;
-                rv32m_out = 32'b0;
-            end
-        end
-    `endif
-
-
-    /*
     always_comb begin
-        casez (operation)
-            3'b1??: begin  // MUL
-                eif.busy = ~mul_finished;
-                eif.reg_wdata = idex.lower_word ?
-                                    product[WORD_SIZE-1:0]
-                                    : product[(WORD_SIZE*2)-1 : WORD_SIZE];
-            end
-            3'b01?: begin  // DIV
-                eif.busy = ~div_finished & ~(div_zero | overflow);
-                if (div_zero) begin
-                    eif.reg_wdata = idex.sign_sign ? 32'hffff_ffff : 32'h7fff_ffff;
-                end else if (overflow) begin
-                    eif.reg_wdata = 32'h8000_0000;
-                end else begin
-                    eif.reg_wdata = quotient;
+        if(rv32m_start) begin
+            // Note: operand_diff on all these cases is to fix condition where
+            // "done" flag asserted by FU due to previous op. RV32M will always
+            // take at least 1 extra cycle if we aren't reusing a value.
+            casez(operation)
+                MUL: begin
+                    rv32m_done = !operand_diff || mul_finished;
+                    rv32m_out  = product[WORD_SIZE-1:0];
                 end
-            end
-            3'b001: begin  // REM
-                eif.busy = ~div_finished & ~(div_zero | overflow);
-                if (div_zero) begin
-                    eif.reg_wdata = dividend;
-                end else if (overflow) begin
-                    eif.reg_wdata = 32'h0000_0000;
-                end else begin
-                    eif.reg_wdata = remainder;
+
+                MULH, MULHU, MULHSU: begin
+                    rv32m_done = !operand_diff || mul_finished;
+                    rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
                 end
-            end
-            default: begin
-                eif.busy = 1'b0;
-                eif.reg_wdata = 32'hBAD3_BAD3;
-            end
-        endcase
+
+                // TODO: Is there a better way to decode this? Lots of repetition.
+                DIV: begin
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                end
+
+                DIVU: begin
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                end
+
+                REM, REMU: begin
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                    rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
+                end
+
+                default: begin
+                    rv32m_done = 1'b1;
+                    rv32m_out = 32'b0; // TODO: Should this return BAD3?
+                end
+            endcase
+        end else begin
+            rv32m_done = 1'b1;
+            rv32m_out = 32'b0;
+        end
     end
-    */
 
 endmodule

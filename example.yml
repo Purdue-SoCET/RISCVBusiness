@@ -4,7 +4,7 @@ isa_params:
   pmp_minimum_granularity : "64K"
   supervisor_enabled : "disabled"
   address_translation_enabled : "disabled"
-  isa: "rv32izifencei_zicsr"
+  isa: "rv32imzifencei_zicsr"
 
 # Microarchitectural Configurations
 microarch_params:
@@ -41,6 +41,4 @@ microarch_params:
   
   # Multiplier settings
 multiplier_params:
-  rv32m_supported : "true"
-  # multiplier_select : "shift_add_multiplier"
-  multiplier_select : "pp_mul32"
+  multiplier_select : "shift_add_multiplier"

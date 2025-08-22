@@ -36,11 +36,15 @@ module shift_add_multiplier #(
     output logic finished
 );
 
+    typedef enum logic {SAM_IDLE, SAM_BUSY} sam_state;
+    sam_state state, nxt_state;
+
     logic [(N*2)-1:0] multiplier_reg, multiplicand_reg;
     logic [(N*2)-1:0] multiplier_ext, multiplicand_ext;
     logic [(N*2)-1:0] partial_product;
-    logic mult_complete, adjust_product;
+    logic mult_complete, adjust_product, sam_start;
 
+    assign sam_start        = state == SAM_IDLE && start && ~finished;
     assign mult_complete    = !(|multiplier_reg);
     assign adjust_product   = (is_signed[0] & multiplier[N-1]) ^ (is_signed[1] & multiplicand[N-1]);
     assign partial_product  = multiplier_reg[0] ? multiplicand_reg : '0;
@@ -48,9 +52,10 @@ module shift_add_multiplier #(
     assign multiplicand_ext = (~{{N{multiplicand[N-1]}},multiplicand}) + 1;
 
     always_ff @(posedge CLK, negedge nRST) begin
-        if (~nRST) finished <= 1'b0;
-        else if (start) finished <= 1'b0;
-        else if (mult_complete) finished <= 1'b1;
+        if (~nRST)
+            finished <= 1'b0;
+        else
+            finished <= mult_complete && state == SAM_BUSY;
     end
 
     always_ff @(posedge CLK, negedge nRST) begin
@@ -58,7 +63,7 @@ module shift_add_multiplier #(
             multiplicand_reg <= '0;
             multiplier_reg   <= '0;
             product          <= '0;
-        end else if (start) begin
+        end else if (sam_start) begin
             multiplicand_reg  <= (is_signed[1] && multiplicand[N-1]) ?
                                     multiplicand_ext : {{N{1'b0}}, multiplicand};
             multiplier_reg    <= (is_signed[0] && multiplier[N-1]) ?
@@ -75,4 +80,18 @@ module shift_add_multiplier #(
         end
     end
 
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (~nRST)
+            state <= SAM_IDLE;
+        else
+            state <= nxt_state;
+    end
+
+    always_comb begin
+        nxt_state = state;
+        if (nxt_state == SAM_IDLE && start && ~finished)
+            nxt_state = SAM_BUSY;
+        else if (mult_complete)
+            nxt_state = SAM_IDLE;
+    end
 endmodule
