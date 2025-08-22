@@ -73,43 +73,18 @@ module tb_shift_add_multiplier ();
     start = 0;
     start2 = 0;
 
-    // fork
-    //   begin
-    //     static time t = $realtime;
-    //     while(!finished && $realtime < t + PERIOD*10) 
-    //       @(posedge CLK);
-    //     $display("  1 finished");
-    //   end
-    //   begin
-    //     static time t = $realtime;
-    //     while(!finished2 && $realtime < t + PERIOD*10)
-    //       @(posedge CLK);
-    //     $display("  2 finished");
-    //   end
-    // join
-
-    // if (product2 == product) begin
-    //   $display("OK. product == %0h EXPECTED %0h", product, expected_out);
-    // end else begin
-    //   $display("Different Outputs: shift_add_multiplier %0h pp_mul32 %0h EXPECTED %0h", product, product2, expected_out);
-    // end
-
-    // while(!finished || !finished2) 
     while(!finished) 
       @(posedge CLK);
       cycles = cycles + 1;
     
-    // assert (product == expected_out) else $error("Multiplication failed for test %0d\n", test_num);
-    if (product == expected_out) begin
-      $display("Test %0d Passed: GOT %0h after %0d cycles", test_num, product, cycles);
-    end else begin 
+    assert (product == expected_out) else begin
       $display("Test %0d Failed: EXPECTED %0h GOT %0h after %0d cycles", test_num, expected_out, product, cycles);
     end
-    // if (product2 == product) begin
-    //   $display("OK");
-    // end else begin
-    //   $display("Different Outputs: shift_add_multiplier %0h pp_mul32 %0h", product, product2);
-    // end
+    if (product2 == product) begin
+      $display("OK");
+    end else begin
+      $display("Different Outputs: shift_add_multiplier %0h pp_mul32 %0h", product, product2);
+    end
     test_num++;
   endtask
 

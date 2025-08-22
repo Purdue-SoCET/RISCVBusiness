@@ -24,7 +24,6 @@ config:
 	@python3 scripts/config_core.py example.yml
 
 verilate: config
-	@ccache -C
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
 	@echo "------------------------------------------------------------------"
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
