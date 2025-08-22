@@ -4,7 +4,7 @@ isa_params:
   pmp_minimum_granularity : "64K"
   supervisor_enabled : "disabled"
   address_translation_enabled : "disabled"
-  isa: "rv32imzifencei_zicsr"
+  isa: "rv32izifencei_zicsr"
 
 # Microarchitectural Configurations
 microarch_params:
