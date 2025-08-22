@@ -114,7 +114,6 @@ UARCH_PARAMS = \
 # Multiplier to be used TODO: Make sure it works.
 MULTIPLIER_PARAMS = {
   'multiplier_select' : ['pp_mul32', 'shift_add_multiplier'],
-  'rv32m_supported' : ['true', 'false']
 }
 
 # Supported ISA extensions. Order matters and should reflect the proper order
@@ -308,30 +307,18 @@ def create_include(config):
   # Multiplier parameters
   include_file.write("// Multiplier parameters\n")
   mul_params = config['multiplier_params']
-  MULTIPLIER_PARAMS = {
-    'multiplier_select' : ['pp_mul32', 'shift_add_multiplier'],
-    'rv32m_supported' : ['true', 'false']
-  }
-  if (not mul_params['multiplier_select'] in MULTIPLIER_PARAMS['multiplier_select']):
-    err = "Invalid multiplier_select"
-    sys.exit(err)
-  if (not mul_params['rv32m_supported'] in MULTIPLIER_PARAMS['rv32m_supported']):
-    err = "Invalid rv32m_supported"
+  multiplier_select = mul_params.get('multiplier_select', None)
+  if not multiplier_select or not (multiplier_select in MULTIPLIER_PARAMS['multiplier_select']):
+    err = "Invalid multiplier_select configuration."
     sys.exit(err)
 
-  # if (mul_params['multiplier_select'] == 'pp_mul32'):
-  #   include_file.write(f"localparam MULTIPLIER_SELECT = 0;\n")
-  # else:
-  #   include_file.write(f"localparam MULTIPLIER_SELECT = 1;\n")
-  if (mul_params['multiplier_select'] == 'pp_mul32'):
+  if multiplier_select == 'pp_mul32':
     include_file.write(f"`define PP_MUL32\n")
-  else:
+  elif multiplier_select == 'shift_add_multiplier':
     include_file.write(f"`define SHIFT_ADD_MULTIPLIER\n")
-  
-  if (mul_params['rv32m_supported'] == 'true'):
-    include_file.write(f"`define RV32M_SUPPORTED\n\n")
   else:
-    include_file.write(f"\n\n")
+    err = "Invalid multiplier_select configuration. How did we get here?"
+    sys.exit(err)
 
   # Add base ISA
   include_file.write(f"localparam BASE_ISA = \"{base_isa}\";\n")
