@@ -8,7 +8,6 @@ filesets:
             - "socet:riscv:riscv_include"
             - "socet:riscv:packages"
         files:
-            #- rv32m_pkg.sv
             - carry_save_adder.sv
             - full_adder.sv
             - flex_counter_mul.sv
@@ -21,9 +20,59 @@ filesets:
             - shift_add_multiplier.sv
             - shift_test_restore_divider.sv
         file_type: systemVerilogSource
-    
+    tb:
+        files:
+            - tb_pp_mul32.sv
+            - tb_radix4_divider.sv
+            - tb_rv32m_enabled.sv
+            - tb_shift_add_multiplier.sv
+            - tb_shift_test_restore_divider.sv
+        file_type: systemVerilogSource
+
 targets:
     default: &default
         filesets:
             - rtl
         toplevel: rv32m_wrapper
+
+    tb_default: &tb_default
+        <<: *default
+        default_tool: verilator
+        filesets:
+            - rtl
+            - tb
+        tools:
+            verilator:
+                verilator_options:
+                    - --assert
+                    - --binary
+                    - -Wno-SYMRSVDWORD
+                    - -Wno-TIMESCALEMOD
+                    - -Wno-lint
+                    - --trace-fst
+                    - --trace-structs
+
+    tb_pp_mul32:
+        <<: *tb_default
+        toplevel: tb_pp_mul32
+        description: Simulate the PP mul32 multiplier TB
+
+    tb_radix4_divider:
+        <<: *tb_default
+        toplevel: tb_radix4_divider
+        description: Simulate the Radix4 Divider TB
+
+    tb_rv32m_enabled:
+        <<: *tb_default
+        toplevel: tb_rv32m_enabled
+        description: Simulate the RV32M enabled module TB
+
+    tb_shift_add_multiplier:
+        <<: *tb_default
+        toplevel: tb_shift_add_multiplier
+        description: Simulate the shift add multiplier TB
+
+    tb_shift_test_restore_divider:
+        <<: *tb_default
+        toplevel: tb_shift_test_restore_divider
+        description: Simulate the shift test restore divider TB
