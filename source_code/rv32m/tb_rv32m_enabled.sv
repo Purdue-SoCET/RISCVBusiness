@@ -14,12 +14,12 @@
 *   limitations under the License.
 *
 *
-*   Filename:     tb_pp_mul32.sv
+*   Filename:     tb_rv32m_enabled.sv
 *
 *   Created by:   Renzhi Yongtian
 *   Email:        ryongtia@purdue.edu
 *   Date Created: 08/09/2025
-*   Description:  Tests a 32bitx32bit PP mul32 operand_b
+*   Description:  Tests a 32bitx32bit RV32M functional unit
 */
 
 `timescale 1ns/10ps
