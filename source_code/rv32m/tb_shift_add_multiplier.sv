@@ -1,25 +1,61 @@
+/*
+*   Copyright 2016 Purdue University
+*   
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*   
+*       http://www.apache.org/licenses/LICENSE-2.0
+*   
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
+*
+*
+*   Filename:     tb_shift_add_multiplier.sv
+*
+*   Created by:   John Skubic
+*   Email:        jskubic@purdue.edu
+*   Date Created: 02/15/2017
+*   Description:  Tests a 32bitx32bit multiplier
+*/
+
 `timescale 1ns/10ps
-module tb_pp_mul32 ();
-	parameter BIT_WIDTH = 32;
+`include "component_selection_defines.vh"
+
+module tb_shift_add_multiplier ();
 	parameter CLOCK_PERIOD = 10ns;
+
 	logic tb_CLK, tb_nRST;
 	logic tb_start, tb_finished;
-	logic [(BIT_WIDTH-1):0] tb_multiplicand;
-	logic [(BIT_WIDTH-1):0] tb_multiplier;
-	logic [(2*BIT_WIDTH-1):0] tb_product;
+	logic [(XLEN-1):0] tb_multiplicand;
+	logic [(XLEN-1):0] tb_multiplier;
+	logic [(2*XLEN-1):0] tb_product;
 	logic [1:0] tb_is_signed;
-	logic [(2*BIT_WIDTH+5):0] tb_expected_out;
+	logic [(2*XLEN-1):0] tb_expected_out;
 	integer tb_test_case_num;
+	
 	typedef struct {
 		string test_name;
-		logic [(BIT_WIDTH-1):0] test_multiplicand;
-		logic [(BIT_WIDTH-1):0] test_multiplier;
+		logic [(XLEN-1):0] test_multiplicand;
+		logic [(XLEN-1):0] test_multiplier;
 		logic [1:0] test_is_signed;
 	} testvector;
 	testvector tb_test_case [];
-	
-	pp_mul32 DUT (.CLK(tb_CLK), .nRST(tb_nRST), .multiplicand(tb_multiplicand), .multiplier(tb_multiplier), .is_signed(tb_is_signed), .start(tb_start), .finished(tb_finished), .product(tb_product));
+  shift_add_multiplier #(32) DUT (
+			.CLK(tb_CLK),
+			.nRST(tb_nRST),
+			.multiplicand(tb_multiplicand),
+			.multiplier(tb_multiplier),
+			.is_signed(tb_is_signed),
+			.start(tb_start),
+			.finished(tb_finished),
+			.product(tb_product)
+	);
 
+  /*  CLK generation */
 	always begin
 		tb_CLK=0;
 		#(CLOCK_PERIOD/2.0);
@@ -138,31 +174,52 @@ module tb_pp_mul32 ();
 		tb_is_signed = '0;
 		tb_start = 0;
 		tb_nRST = 1;		
-		for (tb_test_case_num = 0; tb_test_case_num < tb_test_case.size(); tb_test_case_num ++) begin
-			$display("TEST CASE %d - %s", tb_test_case_num, tb_test_case[tb_test_case_num].test_name);
+		for (tb_test_case_num = 0; tb_test_case_num < tb_test_case.size(); tb_test_case_num++) begin
+			$info (
+					"TEST CASE %0d - %s",
+					tb_test_case_num,
+					tb_test_case[tb_test_case_num].test_name
+			);
 			reset_dut();
+
+			// Align inputs to change @ CLK/4
 			@(posedge tb_CLK);
 			#(CLOCK_PERIOD/4.0);
+
+			// drive inputs to DUT
 			tb_multiplicand = tb_test_case[tb_test_case_num].test_multiplicand;
 			tb_multiplier = tb_test_case[tb_test_case_num].test_multiplier;
 			tb_is_signed = tb_test_case[tb_test_case_num].test_is_signed;
+
+			// begin multiplication
 			@(negedge tb_CLK);	
 			tb_start = 1; 
 			@(negedge tb_CLK); // First Clock Cycle
 			tb_start = 0;
-			tb_expected_out = tb_multiplicand * tb_multiplier;
-			@(posedge tb_CLK); // Second Clock Cycle
-			@(posedge tb_CLK); // Third Clock Cycle
-			#(CLOCK_PERIOD/4.0);	
-			if (tb_product == tb_expected_out) begin
-				$info ("CORRECT MULTIPLICATION");
-				$display("%0h", tb_product);
+
+			// Need to treat multiplication differently if signed or unsigned
+			if (tb_is_signed) begin
+				tb_expected_out = signed'(tb_multiplicand) * signed'(tb_multiplier);
 			end else begin
-				$error ("ACTUAL: %h, EXPECTED: %h", tb_product, tb_expected_out); // see waveform value for test case 3-5 (waveform will show negative value)
-				$display("%0h\n", tb_product);
+				tb_expected_out = tb_multiplicand * tb_multiplier;
+			end
+
+			// wait for multiplication to finish
+			while(tb_finished == 1'b0) @(posedge tb_CLK);
+			#(CLOCK_PERIOD/4.0);
+
+			assert(tb_product == tb_expected_out) begin
+				$info ("TEST PASS\n");
+			end else begin
+				$info ("IS SIGNED    : %s", tb_is_signed ? "YES" : "NO");
+				$info ("MULTIPLICAND : 0x%8h", tb_multiplicand);
+				$info ("MULTIPLIER   : 0x%8h", tb_multiplier);
+				$info ("ACTUAL       : 0x%16h", tb_product);
+				$info ("EXPECTED     : 0x%16h", tb_expected_out);
+				$info ("TEST FAIL, INCORRECT PRODUCT\n");
+				$stop;
 			end
 		end
 		$finish;
 	end
-	
 endmodule
