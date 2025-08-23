@@ -135,6 +135,10 @@ logic check;
 
 initial begin : MAIN
 
+  assert (SUPERVISOR_ENABLED == "enabled" && ADDRESS_TRANSLATION_ENABLED == "enabled") else begin
+    $error ("Please enable both the Supervisor and Address Translation to run this test in your core yml, run `make verilate`, and try again.");
+  end
+
   $dumpfile("waveform.fst");
   $dumpvars(0, tb_supervisor_cache);
 
