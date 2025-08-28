@@ -58,5 +58,8 @@ module priv_1_13_mode (
     end
 
     assign prv_intern_if.curr_privilege_level = curr_priv_level;
+    assign prv_intern_if.isUMode = curr_priv_level == U_MODE;
+    assign prv_intern_if.isSMode = (curr_priv_level == S_MODE) & (SUPERVISOR_ENABLED == "enabled");  // supervisor enabled sanity check
+    assign prv_intern_if.isMMode = curr_priv_level == M_MODE;
 
 endmodule

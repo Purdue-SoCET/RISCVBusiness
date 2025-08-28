@@ -26,6 +26,20 @@
 `include "priv_ext_if.vh"
 `include "component_selection_defines.vh"
 
+`define UPDATE_HPM_COUNTER(name)                            \
+    if (!mcounterinhibit.``name``) begin                    \
+        ``name``_next = name + prv_intern_if.``name``_inc;  \
+    end
+
+`define READ_HPM_COUNTER(num)                                  \
+  HPMCOUNTER``num``_ADDR : begin                               \
+    if (isUSMode & ~mcounteren.hpm``num``) begin    \
+      invalid_csr_addr = 1'b1;                                 \
+    end else begin                                             \
+      prv_intern_if.old_csr_val = hpm``num``;                  \
+    end                                                        \
+  end
+
 module priv_1_13_csr #(
   parameter int HART_ID
 )(
@@ -78,6 +92,8 @@ module priv_1_13_csr #(
   csr_reg_t         minstreth;
   long_csr_t        cycles_full, cf_next;
   long_csr_t        instret_full, if_next;
+  csr_reg_t         hpm3, hpm3_next;
+  csr_reg_t         hpm4, hpm4_next;
   /* Supervisor environment configuration */
   long_csr_t        menvcfg, menvcfg_next;
   `ifdef SMODE_SUPPORTED
@@ -100,6 +116,8 @@ module priv_1_13_csr #(
   senvcfg_t         senvcfg, senvcfg_next; // unused, we zero it out. may be important for future!
   `endif // SMODE_SUPPORTED
 
+  logic isUSMode;
+  assign isUSMode = prv_intern_if.isUMode | prv_intern_if.isSMode;
 
   csr_reg_t nxt_csr_val;
 
@@ -243,6 +261,8 @@ module priv_1_13_csr #(
       /* perf mon reset */
       cycles_full <= '0;
       instret_full <= '0;
+      hpm3 <= '0;
+      hpm4 <= '0;
 
       /* mcause reset */
       mcause <= '0;
@@ -329,6 +349,8 @@ module priv_1_13_csr #(
       mcause <= mcause_next;
       cycles_full <= cf_next;
       instret_full <= if_next;
+      hpm3 <= hpm3_next;
+      hpm4 <= hpm4_next;
       menvcfg <= menvcfg_next;
       `ifdef SMODE_SUPPORTED
       satp <= satp_next;
@@ -638,6 +660,8 @@ module priv_1_13_csr #(
   always_comb begin
     cf_next = cycles_full;
     if_next = instret_full;
+    hpm3_next = hpm3;
+    hpm4_next = hpm4;
 
     if (~mcounterinhibit.cy) begin
       cf_next = cycles_full + 1;
@@ -645,6 +669,8 @@ module priv_1_13_csr #(
     if (~mcounterinhibit.ir) begin
       if_next = instret_full + prv_intern_if.inst_ret;
     end
+    `UPDATE_HPM_COUNTER(hpm3)
+    `UPDATE_HPM_COUNTER(hpm4)
 
     if (inject_mcycle) begin
       cf_next = {mcycleh, nxt_csr_val};
@@ -709,47 +735,49 @@ module priv_1_13_csr #(
       `endif // SMODE_SUPPORTED
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
+        if (isUSMode & ~mcounteren.cy) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycle;
         end
       end
       CYCLEH_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
+        if (isUSMode & ~mcounteren.cy) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycleh;
         end
       end
       INSTRET_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.ir) begin
+        if (isUSMode & ~mcounteren.ir) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstret;
         end
       end
       INSTRETH_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.ir) begin
+        if (isUSMode & ~mcounteren.ir) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstreth;
         end
       end
       TIME_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.tm) begin
+        if (isUSMode & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtime */ mtime[31:0];
         end
       end
       TIMEH_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.tm) begin
+        if (isUSMode & ~mcounteren.tm) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtimeh */ mtime[63:32];
         end
       end
+      `READ_HPM_COUNTER(3)
+      `READ_HPM_COUNTER(4)
       /* Extension Addresses */
       default: begin
         if (csr_operation) begin

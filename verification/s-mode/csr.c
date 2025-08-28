@@ -4,12 +4,19 @@
 extern volatile int flag;
 extern volatile int done;
 
+void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler (void);
+void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler (void);
+void __attribute__((noreturn)) user_main (void);
+void __attribute__((noreturn)) __attribute__((aligned(4))) setup_s_mode (void);
+
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
-    uint32_t mepc, mtval;
+    uint32_t mepc, mtval, icache_misses, dcache_misses;
     mcause_t mcause;
     asm volatile("csrr %0, mepc" : "=r"(mepc));
     asm volatile("csrr %0, mtval" : "=r"(mtval));
     asm volatile("csrr %0, mcause" : "=r"((mcause_t) mcause));
+    asm volatile("csrr %0, hpmcounter3" : "=r"(icache_misses));
+    asm volatile("csrr %0, hpmcounter4" : "=r"(dcache_misses));
 
     print("mepc: ");
     put_uint32_hex(mepc);
@@ -23,6 +30,14 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
     put_uint32_hex(mcause.interrupt & 0x1);
     print(" ");
     put_uint32_hex(mcause.ex_code);
+    print("\n");
+
+    print("icache misses: ");
+    put_uint32_hex(icache_misses);
+    print("\n");
+
+    print("dcache misses: ");
+    put_uint32_hex(dcache_misses);
     print("\n");
 
     print("-----\n");
@@ -74,6 +89,8 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
         flag -= 1;
     }
     asm volatile("csrw sepc, %0" : : "r"(sepc));
+
+    asm volatile("sret");
 }
 
 // U-mode calls M-mode exception handler
@@ -87,7 +104,6 @@ void __attribute__((noreturn)) user_main(void) {
     asm volatile("ecall"); // ends user_main
 
     __builtin_unreachable();
-
 }
 
 int main(void) {
@@ -106,12 +122,12 @@ int main(void) {
     // Setup PMP
     uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2; // Protect flag
     asm volatile("csrw pmpaddr0, %0" : : "r"(pmp_addr));
-    pmp_addr = 0x20001FFF; // Allows for the entire text, bss, stack section
+    pmp_addr = 0xFFFFFFFF; // Allows for the entire text, bss, stack section
     asm volatile("csrw pmpaddr1, %0" : : "r"(pmp_addr));
-    uint32_t pmp_cfg = 0x00001F11; // [NAPOT, RWX, no L] [NA4, R, no L]
+    uint32_t pmp_cfg = 0x00001F17; // [NAPOT, RWX, no L] [NA4, R, no L]
     asm volatile("csrw pmpcfg0, %0" : : "r"(pmp_cfg));
 
-    flag = 5;
+    flag = 3;
 
     // Test registers in M_MODE
     uint32_t csr_val_0, csr_val_1;
@@ -131,9 +147,6 @@ int main(void) {
 
 
     // Jump to user program by using mret to return from an M-mode trap
-    uint32_t mepc_value = (uint32_t) user_main;
-    asm volatile("csrw mepc, %0" : : "r"(mepc_value));
-    asm volatile("mret");
 
     // Set delegation register to use S-mode handler
     uint32_t medeleg = 0xFFFFFFFF;

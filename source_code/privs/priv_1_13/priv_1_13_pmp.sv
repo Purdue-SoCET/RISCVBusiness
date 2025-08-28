@@ -201,7 +201,7 @@ module priv_1_13_pmp (
       default: d_match_found = 1'b0;
     endcase
 
-    if (prv_intern_if.curr_privilege_level != M_MODE || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
+    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
       if (~d_match_found) begin
         d_prot_fault = 1'b1;
       end else begin
@@ -262,7 +262,7 @@ module priv_1_13_pmp (
       default: i_match_found = 1'b0;
     endcase
 
-    if (prv_intern_if.curr_privilege_level != M_MODE || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
+    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
       if (~i_match_found) begin
         i_prot_fault = 1'b1;
       end else begin
