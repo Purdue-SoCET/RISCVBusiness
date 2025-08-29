@@ -44,7 +44,7 @@ module page_walker #(
 );
 
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_13_pkg::*;
+    import machine_mode_types_pkg::*;
 
     // local parameters
     localparam SV32_LEVELS = 2;

@@ -27,7 +27,7 @@
 `define PRIV_EXT_IF_VH
 
 interface priv_ext_if();
-import machine_mode_types_1_13_pkg::*;
+import machine_mode_types_pkg::*;
 import rv32i_types_pkg::*;
 
 // from Priv-CSR to Ext-CSR

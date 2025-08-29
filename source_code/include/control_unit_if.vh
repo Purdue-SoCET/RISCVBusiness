@@ -29,7 +29,7 @@
 interface control_unit_if;
   import alu_types_pkg::*;
   import rv32i_types_pkg::*;
-  import machine_mode_types_1_13_pkg::*;
+  import machine_mode_types_pkg::*;
   import rv32a_pkg::*;
   import rv32m_pkg::*;
   import rv32b_pkg::*;

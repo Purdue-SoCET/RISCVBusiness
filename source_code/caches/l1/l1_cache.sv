@@ -36,7 +36,7 @@
 `endif
 
 import rv32i_types_pkg::*;
-import machine_mode_types_1_13_pkg::*;
+import machine_mode_types_pkg::*;
 
 module l1_cache #(
     parameter CACHE_SIZE          = 1024, // must be power of 2, in bytes, max 4k - 4 * 2^10
