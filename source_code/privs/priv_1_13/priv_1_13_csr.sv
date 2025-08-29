@@ -26,17 +26,17 @@
 `include "priv_ext_if.vh"
 `include "component_selection_defines.vh"
 
-`define UPDATE_HPM_COUNTER(name)                            \
-    if (!mcounterinhibit.``name``) begin                    \
-        ``name``_next = name + prv_intern_if.``name``_inc;  \
+`define UPDATE_HPM_COUNTER(hpm_id)                                       \
+    if (!mcounterinhibit.hpm``hpm_id``) begin                            \
+        hpm_next[hpm_id] = hpm[hpm_id] + prv_intern_if.hpm_inc[hpm_id];  \
     end
 
-`define READ_HPM_COUNTER(num)                                  \
-  HPMCOUNTER``num``_ADDR : begin                               \
-    if (isUSMode & ~mcounteren.hpm``num``) begin    \
+`define READ_HPM_COUNTER(hpm_id)                               \
+  HPMCOUNTER``hpm_id``_ADDR : begin                            \
+    if (isUSMode & ~mcounteren.hpm``hpm_id``) begin            \
       invalid_csr_addr = 1'b1;                                 \
     end else begin                                             \
-      prv_intern_if.old_csr_val = hpm``num``;                  \
+      prv_intern_if.old_csr_val = hpm[hpm_id];                 \
     end                                                        \
   end
 
@@ -92,8 +92,7 @@ module priv_1_13_csr #(
   csr_reg_t         minstreth;
   long_csr_t        cycles_full, cf_next;
   long_csr_t        instret_full, if_next;
-  csr_reg_t         hpm3, hpm3_next;
-  csr_reg_t         hpm4, hpm4_next;
+  csr_reg_t [WORD_SIZE-1:0] hpm, hpm_next;
   /* Supervisor environment configuration */
   long_csr_t        menvcfg, menvcfg_next;
   `ifdef SMODE_SUPPORTED
@@ -261,8 +260,7 @@ module priv_1_13_csr #(
       /* perf mon reset */
       cycles_full <= '0;
       instret_full <= '0;
-      hpm3 <= '0;
-      hpm4 <= '0;
+      hpm <= '0;
 
       /* mcause reset */
       mcause <= '0;
@@ -349,8 +347,7 @@ module priv_1_13_csr #(
       mcause <= mcause_next;
       cycles_full <= cf_next;
       instret_full <= if_next;
-      hpm3 <= hpm3_next;
-      hpm4 <= hpm4_next;
+      hpm <= hpm_next;
       menvcfg <= menvcfg_next;
       `ifdef SMODE_SUPPORTED
       satp <= satp_next;
@@ -660,8 +657,7 @@ module priv_1_13_csr #(
   always_comb begin
     cf_next = cycles_full;
     if_next = instret_full;
-    hpm3_next = hpm3;
-    hpm4_next = hpm4;
+    hpm_next = hpm;
 
     if (~mcounterinhibit.cy) begin
       cf_next = cycles_full + 1;
@@ -669,8 +665,8 @@ module priv_1_13_csr #(
     if (~mcounterinhibit.ir) begin
       if_next = instret_full + prv_intern_if.inst_ret;
     end
-    `UPDATE_HPM_COUNTER(hpm3)
-    `UPDATE_HPM_COUNTER(hpm4)
+    `UPDATE_HPM_COUNTER(3)
+    `UPDATE_HPM_COUNTER(4)
 
     if (inject_mcycle) begin
       cf_next = {mcycleh, nxt_csr_val};

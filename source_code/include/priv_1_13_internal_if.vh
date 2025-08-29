@@ -44,8 +44,7 @@ interface priv_1_13_internal_if;
     logic csr_write, csr_set, csr_clear, csr_read_only; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
     logic inst_ret; // signal when an instruction is retired
-    logic hpm3_inc; // counter for icache misses
-    logic hpm4_inc; // counter for dcache misses
+    word_t hpm_inc; // increment counter for hpm values
     word_t new_csr_val, old_csr_val; // new and old CSR values (atomically swapped)
     logic valid_write; // valid write occurs with an r type instruction that does not have any pipeline stalls
 
@@ -103,7 +102,7 @@ interface priv_1_13_internal_if;
     logic pmp_s_fault, pmp_l_fault, pmp_i_fault; // PMP store fault, load fault, instruction fault
 
     modport csr (
-        input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, hpm3_inc, hpm4_inc,
+        input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, hpm_inc,
             valid_write, inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval,
             isUMode, isSMode, isMMode,
