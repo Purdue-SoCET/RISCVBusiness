@@ -27,13 +27,13 @@
 `include "component_selection_defines.vh"
 
 `define UPDATE_HPM_COUNTER(hpm_id)                                       \
-    if (!mcounterinhibit.hpm``hpm_id``) begin                            \
+    if (!mcounterinhibit.hpm[hpm_id]) begin                            \
         hpm_next[hpm_id] = hpm[hpm_id] + prv_intern_if.hpm_inc[hpm_id];  \
     end
 
 `define READ_HPM_COUNTER(hpm_id)                               \
   HPMCOUNTER``hpm_id``_ADDR : begin                            \
-    if (isUSMode & ~mcounteren.hpm``hpm_id``) begin            \
+    if (check_bad_mcounteren(mcounteren.hpm[hpm_id])) begin  \
       invalid_csr_addr = 1'b1;                                 \
     end else begin                                             \
       prv_intern_if.old_csr_val = hpm[hpm_id];                 \
@@ -417,6 +417,7 @@ module priv_csr #(
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
             if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR_ENABLED == "disabled")) begin
+              assert(SUPERVISOR_ENABLED == "enabled");
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
@@ -512,9 +513,14 @@ module priv_csr #(
           end
           MCOUNTEREN_ADDR: begin
             mcounteren_next = nxt_csr_val;
+            mcounteren_next.cy = nxt_csr_val[0];
+            mcounteren_next.ir = nxt_csr_val[2];
+            mcounteren_next.hpm = nxt_csr_val[31:3];
           end
           MCOUNTINHIBIT_ADDR: begin
-            mcounterinhibit_next = nxt_csr_val;
+            mcounterinhibit_next.cy = nxt_csr_val[0];
+            mcounterinhibit_next.ir = nxt_csr_val[2];
+            mcounterinhibit_next.hpm = nxt_csr_val[31:3];
           end
           MCAUSE_ADDR: begin
             mcause_next = nxt_csr_val;
@@ -731,42 +737,42 @@ module priv_csr #(
       `endif // SMODE_SUPPORTED
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
-        if (isUSMode & ~mcounteren.cy) begin
+        if (check_bad_mcounteren(mcounteren.cy)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycle;
         end
       end
       CYCLEH_ADDR: begin
-        if (isUSMode & ~mcounteren.cy) begin
+        if (check_bad_mcounteren(mcounteren.cy)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycleh;
         end
       end
       INSTRET_ADDR: begin
-        if (isUSMode & ~mcounteren.ir) begin
+        if (check_bad_mcounteren(mcounteren.ir)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstret;
         end
       end
       INSTRETH_ADDR: begin
-        if (isUSMode & ~mcounteren.ir) begin
+        if (check_bad_mcounteren(mcounteren.ir)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstreth;
         end
       end
       TIME_ADDR: begin
-        if (isUSMode & ~mcounteren.tm) begin
+        if (check_bad_mcounteren(mcounteren.tm)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtime */ mtime[31:0];
         end
       end
       TIMEH_ADDR: begin
-        if (isUSMode & ~mcounteren.tm) begin
+        if (check_bad_mcounteren(mcounteren.tm)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtimeh */ mtime[63:32];
@@ -826,4 +832,13 @@ module priv_csr #(
   assign prv_intern_if.curr_stvec = stvec;
   assign prv_intern_if.curr_satp = satp;
   `endif // SMODE_SUPPORTED
+
+  // function to obtain all non requesters
+  function logic check_bad_mcounteren;
+      input logic mcounteren_bit;
+      check_bad_mcounteren = (
+          (isUSMode & ~mcounteren_bit) |
+          (SUPERVISOR_ENABLED == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
+      );
+  endfunction
 endmodule
