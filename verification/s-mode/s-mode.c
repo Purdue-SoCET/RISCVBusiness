@@ -95,9 +95,29 @@ void __attribute__((noreturn)) user_main(void) {
 }
 
 int main(void) {
-    // Setup exceptions
+    // check to see if s-mode is enabled
+    // easiest way is to set mstatus.mpp to S-mode and
+    // read it to see if its the expected value for S-mode
+    // S_MODE = 2'b01, mpp is bits [12:11]
+    uint32_t mstatus_value = 0b01 << 11;
+    asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
+    asm volatile("csrr %0, mstatus" : "=r"(mstatus_value));
+
+    // If S-mode is not enabled
+    if ((mstatus_value & 0x1800) == 0) {
+        print("Enable the Supervisor to run this testbench!\n");
+        mstatus_value = 0x1800; // set mpp back to M_MODE
+        asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
+        asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
+        asm volatile("mret");
+    }
+    // set mstatus value back to default
+    mstatus_value &= ~0x1800;
+    asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
+
+    // Setup exceptions for M-mode
     uint32_t mtvec_value = (uint32_t) m_mode_handler;
-    uint32_t mstatus_value = 0x08;
+    mstatus_value = 0x08;
     asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
     asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
 
