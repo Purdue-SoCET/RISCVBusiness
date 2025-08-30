@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     pma_types_1_13_pkg.sv
+*   Filename:     pma_types_pkg.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -22,10 +22,10 @@
 *   Description:  Types needed to implement physical memory attributes
 */
 
-`ifndef PMA_TYPES_1_13_PKG_SV
-`define PMA_TYPES_1_13_PKG_SV
+`ifndef PMA_TYPES_PKG_SV
+`define PMA_TYPES_PKG_SV
 
-package pma_types_1_13_pkg;
+package pma_types_pkg;
 
   /* pmacfg types */
 
@@ -75,4 +75,4 @@ package pma_types_1_13_pkg;
 
 endpackage
 
-`endif //PMA_TYPES_1_13_PKG_SV
+`endif //PMA_TYPES_PKG_SV

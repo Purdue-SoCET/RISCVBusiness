@@ -34,7 +34,7 @@
 `include "bus_ctrl_if.vh"
 
 import rv32i_types_pkg::*;
-import machine_mode_types_1_13_pkg::*;
+import machine_mode_types_pkg::*;
 
 `timescale 1ns/10ps
 

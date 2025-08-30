@@ -30,7 +30,7 @@
 `include "address_translation_if.vh"
 
 import rv32i_types_pkg::*;
-import machine_mode_types_1_13_pkg::*;
+import machine_mode_types_pkg::*;
 
 module page_perm_check (
     input logic check,

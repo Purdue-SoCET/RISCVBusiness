@@ -78,6 +78,15 @@ int main(void) {
   // Setup PMP
   uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2; // Protect flag
   asm volatile("csrw pmpaddr0, %0" : : "r"(pmp_addr));
+  uint32_t actual_pmp_addr;
+  asm volatile("csrr %0, pmpaddr0" : "=r"(actual_pmp_addr));
+  if (actual_pmp_addr != pmp_addr) {
+      print("Set PMP granularity down to 4 to run this test!\n");
+      mstatus_value = 0x1800; // set mpp back to M_MODE
+      asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
+      asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
+      asm volatile("mret");
+  }
   pmp_addr = 0x20001FFF; // Allows for the entire text, bss, stack section
   asm volatile("csrw pmpaddr1, %0" : : "r"(pmp_addr));
   uint32_t pmp_cfg = 0x00001F11; // [NAPOT, RWX, no L] [NA4, R, no L]

@@ -44,7 +44,7 @@ module stage3_fetch_stage (
     prv_pipeline_if.fetch prv_pipe_if
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_13_pkg::*;
+    import pma_types_pkg::*;
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
 
