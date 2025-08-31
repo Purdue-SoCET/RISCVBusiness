@@ -29,7 +29,7 @@ module priv_pipe_control (
     priv_internal_if.pipe_ctrl prv_intern_if
 );
 
-    import machine_mode_types_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     assign prv_intern_if.insert_pc = prv_intern_if.mret | prv_intern_if.sret | prv_intern_if.intr;

@@ -58,7 +58,7 @@ module priv_csr #(
 );
 
 
-  import machine_mode_types_pkg::*;
+  import priv_isa_types_pkg::*;
   import rv32i_types_pkg::*;
 
   /* Machine Information */

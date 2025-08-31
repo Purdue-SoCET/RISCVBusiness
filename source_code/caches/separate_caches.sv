@@ -45,7 +45,7 @@ module separate_caches#(
     output logic icache_miss,
     output logic dcache_miss
 );
-    import machine_mode_types_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     // TLB signals L1$ needs

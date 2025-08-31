@@ -32,7 +32,7 @@ module priv_pmp (
 );
 
   import pmp_types_pkg::*;
-  import machine_mode_types_pkg::*;
+  import priv_isa_types_pkg::*;
   import rv32i_types_pkg::*;
 
   localparam NAPOT_ADDR_BITS = PMP_MINIMUM_GRANULARITY == 0 ? 1 : PMP_MINIMUM_GRANULARITY;

@@ -20,7 +20,7 @@ module stage3_mem_stage(
     output logic wfi
 );
     import rv32i_types_pkg::*;
-    import machine_mode_types_pkg::*;
+    import priv_isa_types_pkg::*;
     import pma_types_pkg::*;
 
     /***************

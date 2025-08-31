@@ -36,7 +36,7 @@ module priv_block #(
     core_interrupt_if.core interrupt_if
 );
 
-    import machine_mode_types_pkg::*;
+    import priv_isa_types_pkg::*;
 
     priv_internal_if prv_intern_if();
     priv_ext_if priv_ext_pma_if();

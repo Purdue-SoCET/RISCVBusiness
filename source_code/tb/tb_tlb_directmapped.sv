@@ -42,7 +42,7 @@
 `include "address_translation_if.vh"
 
 import rv32i_types_pkg::*;
-import machine_mode_types_pkg::*;
+import priv_isa_types_pkg::*;
 
 `timescale 1ns/10ps
 

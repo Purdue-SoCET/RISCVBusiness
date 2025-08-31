@@ -28,7 +28,7 @@
 `include "component_selection_defines.vh"
 
 interface prv_pipeline_if();
-  import machine_mode_types_pkg::*;
+  import priv_isa_types_pkg::*;
   import rv32i_types_pkg::*;
   import pma_types_pkg::*;
 

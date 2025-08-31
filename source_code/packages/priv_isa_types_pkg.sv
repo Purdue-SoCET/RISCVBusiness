@@ -14,18 +14,18 @@
 *   limitations under the License.
 *
 *
-*   Filename:     machine_mode_types_pkg.sv
+*   Filename:     priv_isa_types_pkg.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
 *   Date Created: 09/26/2024
-*   Description:  Types needed to implement machine mode priv. isa 1.13
+*   Description:  Types needed to implement priv. isa 1.13
 */
 
-`ifndef MACHINE_MODE_TYPES_PKG_SV
-`define MACHINE_MODE_TYPES_PKG_SV
+`ifndef PRIV_ISA_TYPES_PKG_SV
+`define PRIV_ISA_TYPES_PKG_SV
 
-package machine_mode_types_pkg;
+package priv_isa_types_pkg;
   parameter int MXLEN  = 32;
   parameter int SXLEN  = 32;
   parameter int UXLEN  = 32;
@@ -647,4 +647,4 @@ package machine_mode_types_pkg;
 
 endpackage
 
-`endif //MACHINE_MODE_TYPES_PKG_SV
+`endif //PRIV_ISA_TYPES_PKG_SV

@@ -29,7 +29,7 @@ module priv_int_ex_handler (
     priv_internal_if.int_ex_handler prv_intern_if
 );
 
-    import machine_mode_types_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     ex_code_t ex_src;

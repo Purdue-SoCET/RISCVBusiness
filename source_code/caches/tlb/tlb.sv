@@ -31,7 +31,7 @@
 `endif
 
 import rv32i_types_pkg::*;
-import machine_mode_types_pkg::*;
+import priv_isa_types_pkg::*;
 
 module tlb #(
     parameter PAGE_OFFSET_BITS    = 12, // For 4KB pages
