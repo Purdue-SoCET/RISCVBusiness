@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_internal_if.vh
+*   Filename:     priv_internal_if.vh
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -22,14 +22,14 @@
 *   Description:  Interface for components within the privilege block v1.13
 */
 
-`ifndef PRIV_1_13_INTERNAL_IF_VH
-`define PRIV_1_13_INTERNAL_IF_VH
+`ifndef PRIV_INTERNAL_IF_VH
+`define PRIV_INTERNAL_IF_VH
 
 `include "component_selection_defines.vh"
 
-interface priv_1_13_internal_if;
-    import machine_mode_types_1_13_pkg::*;
-    import pma_types_1_13_pkg::*;
+interface priv_internal_if;
+    import priv_isa_types_pkg::*;
+    import pma_types_pkg::*;
     import rv32i_types_pkg::*;
 
     // RISC-MGMT?
@@ -44,6 +44,7 @@ interface priv_1_13_internal_if;
     logic csr_write, csr_set, csr_clear, csr_read_only; // Is the CSR currently being modified?
     logic invalid_csr; // Bad CSR address
     logic inst_ret; // signal when an instruction is retired
+    word_t hpm_inc; // increment counter for hpm values
     word_t new_csr_val, old_csr_val; // new and old CSR values (atomically swapped)
     logic valid_write; // valid write occurs with an r type instruction that does not have any pipeline stalls
 
@@ -77,6 +78,7 @@ interface priv_1_13_internal_if;
     csr_reg_t curr_stval, next_stval;
     satp_t curr_satp;
     logic inject_mip, inject_mcause, inject_mepc, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval;
+    logic isUMode, isSMode, isMMode;
 
     // Things from the pipe we care about
     word_t epc; // pc of the instruction prior to the exception
@@ -100,9 +102,10 @@ interface priv_1_13_internal_if;
     logic pmp_s_fault, pmp_l_fault, pmp_i_fault; // PMP store fault, load fault, instruction fault
 
     modport csr (
-        input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, valid_write,
-            inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
+        input csr_addr, curr_privilege_level, csr_write, csr_set, csr_clear, csr_read_only, new_csr_val, inst_ret, hpm_inc,
+            valid_write, inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval,
+            isUMode, isSMode, isMMode,
         output old_csr_val, invalid_csr,
             curr_medeleg, curr_mideleg, curr_mcause, curr_mepc, curr_mie, curr_mip, curr_mstatus, curr_mtvec, curr_scause, curr_sepc, curr_stvec, curr_satp
     );
@@ -113,6 +116,7 @@ interface priv_1_13_internal_if;
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
             env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_medeleg, curr_mideleg, curr_mcause, curr_mepc, curr_mie,
             curr_mip, curr_mstatus, curr_mtval, curr_scause, curr_sepc, curr_stval, mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level, ex_mem_stall,
+            isUMode, isSMode, isMMode,
         output inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval, intr,
             intr_to_s
@@ -130,15 +134,15 @@ interface priv_1_13_internal_if;
     );
 
     modport pmp (
-        input iaddr, daddr, ren, wen, xen, curr_privilege_level, curr_mstatus,
+        input iaddr, daddr, ren, wen, xen, curr_privilege_level, curr_mstatus, isUMode, isSMode, isMMode,
         output pmp_s_fault, pmp_i_fault, pmp_l_fault
     );
 
     modport mode (
         input mret, sret, curr_mstatus, intr, intr_to_s,
-        output curr_privilege_level
+        output curr_privilege_level, isUMode, isSMode, isMMode
     );
 
 endinterface
 
-`endif  // PRIV_1_13_INTERNAL_IF_VH
+`endif  // PRIV_INTERNAL_IF_VH

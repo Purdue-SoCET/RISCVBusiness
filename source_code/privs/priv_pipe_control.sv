@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_pipe_control.sv
+*   Filename:     priv_pipe_control.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -23,13 +23,13 @@
                    address after an exception or interrupt
 */
 
-`include "priv_1_13_internal_if.vh"
+`include "priv_internal_if.vh"
 
-module priv_1_13_pipe_control (
-    priv_1_13_internal_if.pipe_ctrl prv_intern_if
+module priv_pipe_control (
+    priv_internal_if.pipe_ctrl prv_intern_if
 );
 
-    import machine_mode_types_1_13_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     assign prv_intern_if.insert_pc = prv_intern_if.mret | prv_intern_if.sret | prv_intern_if.intr;

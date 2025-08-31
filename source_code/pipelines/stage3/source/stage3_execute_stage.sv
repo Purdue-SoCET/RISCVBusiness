@@ -46,7 +46,7 @@ module stage3_execute_stage (
     prv_pipeline_if.pipe prv_pipe_if
 );
     import rv32i_types_pkg::*;
-    import pma_types_1_13_pkg::*;
+    import pma_types_pkg::*;
     import stage3_types_pkg::*;
 
     // Interface declarations

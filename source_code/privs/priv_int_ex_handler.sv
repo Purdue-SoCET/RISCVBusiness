@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_int_ex_handler.sv
+*   Filename:     priv_int_ex_handler.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -22,14 +22,14 @@
 *   Description:  Main interrupt and exception handler block
 */
 
-`include "priv_1_13_internal_if.vh"
+`include "priv_internal_if.vh"
 
-module priv_1_13_int_ex_handler (
+module priv_int_ex_handler (
     input CLK, nRST,
-    priv_1_13_internal_if.int_ex_handler prv_intern_if
+    priv_internal_if.int_ex_handler prv_intern_if
 );
 
-    import machine_mode_types_1_13_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     ex_code_t ex_src;
@@ -189,7 +189,7 @@ module priv_1_13_int_ex_handler (
         if (prv_intern_if.timer_int_m) prv_intern_if.next_mip.mtip = 1'b1;
         else if (prv_intern_if.clear_timer_int_m) prv_intern_if.next_mip.mtip = 1'b0;
 
-        // From note in priv_1_13_csr.sv: Supervisor interrupts change mip fields
+        // From note in priv_csr.sv: Supervisor interrupts change mip fields
         `ifdef SMODE_SUPPORTED
         if (prv_intern_if.ext_int_s) prv_intern_if.next_mip.seip = 1'b1;
         else if (prv_intern_if.clear_ext_int_s) prv_intern_if.next_mip.seip = 1'b0;

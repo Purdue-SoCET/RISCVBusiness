@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_pmp_matcher.sv
+*   Filename:     priv_pmp_matcher.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -25,9 +25,9 @@
 
 `include "component_selection_defines.vh"
 
-import pmp_types_1_13_pkg::*;
+import pmp_types_pkg::*;
 
-module priv_1_13_pmp_matcher(
+module priv_pmp_matcher(
   input logic[31:0] phys_addr,     // address to check
   input pmpcfg_base_t check_cfg,   // configuration to match
   input pmpaddr_t cfg_addr,        // configuration address

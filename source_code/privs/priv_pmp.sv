@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_pmp.sv
+*   Filename:     priv_pmp.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -22,17 +22,17 @@
 *   Description:  PMP Unit, version 1.13
 */
 
-`include "priv_1_13_internal_if.vh"
+`include "priv_internal_if.vh"
 `include "priv_ext_if.vh"
 
-module priv_1_13_pmp (
+module priv_pmp (
   input logic CLK, nRST,
-  priv_1_13_internal_if.pmp prv_intern_if,
+  priv_internal_if.pmp prv_intern_if,
   priv_ext_if.ext priv_ext_if
 );
 
-  import pmp_types_1_13_pkg::*;
-  import machine_mode_types_1_13_pkg::*;
+  import pmp_types_pkg::*;
+  import priv_isa_types_pkg::*;
   import rv32i_types_pkg::*;
 
   localparam NAPOT_ADDR_BITS = PMP_MINIMUM_GRANULARITY == 0 ? 1 : PMP_MINIMUM_GRANULARITY;
@@ -163,7 +163,7 @@ module priv_1_13_pmp (
 
   generate
     for (i=0; i<16; i++) begin : g_dpmp_match
-      priv_1_13_pmp_matcher matcher (
+      priv_pmp_matcher matcher (
         {2'b00, prv_intern_if.daddr[31:2]},
         pmp_cfg_regs[i>>2][i & 3],
         pmp_addr_regs[i],
@@ -201,7 +201,7 @@ module priv_1_13_pmp (
       default: d_match_found = 1'b0;
     endcase
 
-    if (prv_intern_if.curr_privilege_level != M_MODE || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
+    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
       if (~d_match_found) begin
         d_prot_fault = 1'b1;
       end else begin
@@ -224,7 +224,7 @@ module priv_1_13_pmp (
 
   generate
     for (j=0; j<16; j++) begin : g_ipmp_matchers
-      priv_1_13_pmp_matcher matcher (
+      priv_pmp_matcher matcher (
         {2'b00, prv_intern_if.iaddr[31:2]},
         pmp_cfg_regs[j>>2][j%4],
         pmp_addr_regs[j],
@@ -262,7 +262,7 @@ module priv_1_13_pmp (
       default: i_match_found = 1'b0;
     endcase
 
-    if (prv_intern_if.curr_privilege_level != M_MODE || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
+    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
       if (~i_match_found) begin
         i_prot_fault = 1'b1;
       end else begin

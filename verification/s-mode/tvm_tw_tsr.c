@@ -69,15 +69,44 @@ void __attribute__((noreturn)) __attribute__((aligned(4))) supervisor_main(void)
 }
 
 int main(void) {
+  // check to see if s-mode is enabled
+  // easiest way is to set mstatus.mpp to S-mode and
+  // read it to see if its the expected value for S-mode
+  // S_MODE = 2'b01, mpp is bits [12:11]
+  uint32_t mstatus_value = 0b01 << 11;
+  asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
+  asm volatile("csrr %0, mstatus" : "=r"(mstatus_value));
+
+  // If S-mode is not enabled
+  if ((mstatus_value & 0x1800) == 0) {
+      print("Enable the Supervisor to run this testbench!\n");
+      mstatus_value = 0x1800; // set mpp back to M_MODE
+      asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
+      asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
+      asm volatile("mret");
+  }
+  // set mstatus value back to default
+  mstatus_value &= ~0x1800;
+  asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
+
   // Setup exceptions
   uint32_t mtvec_value = (uint32_t) handler;
-  uint32_t mstatus_value = (1 << 3) | (1 << 11) | (1 << 20) | (1 << 21) | (1 << 22); // set MIE, MPP == S_MODE, TVM, TW, TSR
+  mstatus_value = (1 << 3) | (1 << 11) | (1 << 20) | (1 << 21) | (1 << 22); // set MIE, MPP == S_MODE, TVM, TW, TSR
   asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
   asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
 
   // Setup PMP
   uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2; // Protect flag
   asm volatile("csrw pmpaddr0, %0" : : "r"(pmp_addr));
+  uint32_t actual_pmp_addr;
+  asm volatile("csrr %0, pmpaddr0" : "=r"(actual_pmp_addr));
+  if (actual_pmp_addr != pmp_addr) {
+      print("Set PMP granularity down to 4 to run this test!\n");
+      mstatus_value = 0x1800; // set mpp back to M_MODE
+      asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
+      asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
+      asm volatile("mret");
+  }
   pmp_addr = 0x20001FFF; // Allows for the entire text, bss, stack section
   asm volatile("csrw pmpaddr1, %0" : : "r"(pmp_addr));
   uint32_t pmp_cfg = 0x00001F11; // [NAPOT, RWX, no L] [NA4, R, no L]

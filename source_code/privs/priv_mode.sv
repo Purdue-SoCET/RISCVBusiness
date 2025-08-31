@@ -14,25 +14,25 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_12_mode.sv
+*   Filename:     priv_mode.sv
 *
-*   Created by:   Hadi Ahmed
-*   Email:        ahmed138@purdue.edu
-*   Date Created: 11/16/2022
+*   Created by:   William Cunningham
+*   Email:        wrcunnin@purdue.edu
+*   Date Created: 09/26/2024
 *   Description:  Processor privilege mode switcher
 */
 
 `include "prv_pipeline_if.vh"
-`include "priv_1_12_internal_if.vh"
+`include "priv_internal_if.vh"
 `include "core_interrupt_if.vh"
 `include "priv_ext_if.vh"
 
-module priv_1_12_mode (
+module priv_mode (
     input logic CLK, nRST,
-    priv_1_12_internal_if.mode prv_intern_if
+    priv_internal_if.mode prv_intern_if
 );
 
-    import machine_mode_types_1_12_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     priv_level_t curr_priv_level, next_priv_level;
@@ -48,12 +48,18 @@ module priv_1_12_mode (
     always_comb begin
         next_priv_level = curr_priv_level;
         if (prv_intern_if.intr) begin
-            next_priv_level = M_MODE;
+            // if interrupt into s mode else m mode
+            next_priv_level = prv_intern_if.intr_to_s && SUPERVISOR_ENABLED == "enabled" ? S_MODE : M_MODE;
         end else if (prv_intern_if.mret) begin
             next_priv_level = prv_intern_if.curr_mstatus.mpp;
+        end else if (prv_intern_if.sret) begin
+            next_priv_level = prv_intern_if.curr_mstatus.spp && SUPERVISOR_ENABLED == "enabled" ? S_MODE : U_MODE; 
         end
     end
 
     assign prv_intern_if.curr_privilege_level = curr_priv_level;
+    assign prv_intern_if.isUMode = curr_priv_level == U_MODE;
+    assign prv_intern_if.isSMode = (curr_priv_level == S_MODE) & (SUPERVISOR_ENABLED == "enabled");  // supervisor enabled sanity check
+    assign prv_intern_if.isMMode = curr_priv_level == M_MODE;
 
 endmodule

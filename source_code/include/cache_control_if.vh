@@ -33,7 +33,7 @@
 
 interface cache_control_if;
 
-  import machine_mode_types_1_13_pkg::*;
+  import priv_isa_types_pkg::*;
 
   logic icache_clear, icache_flush, iclear_done, iflush_done;
   logic dcache_clear, dcache_flush, dclear_done, dflush_done;

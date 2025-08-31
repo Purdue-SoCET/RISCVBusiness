@@ -46,7 +46,7 @@ module cpu_tracker #(
     input logic [NUM_HARTS-1:0] [31:0] imm_U
 );
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_13_pkg::*;
+    import priv_isa_types_pkg::*;
     import rv32m_pkg::*;
 
     integer fptr;

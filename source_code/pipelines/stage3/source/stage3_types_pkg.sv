@@ -2,7 +2,7 @@
 package stage3_types_pkg;
 
     import rv32i_types_pkg::*;
-    import machine_mode_types_1_13_pkg::*;
+    import priv_isa_types_pkg::*;
 
     typedef struct packed {
         logic valid;

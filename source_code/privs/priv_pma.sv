@@ -14,24 +14,24 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_12_pma.sv
+*   Filename:     priv_pma.sv
 *
-*   Created by:   Hadi Ahmed
-*   Email:        ahmed138@purdue.edu
-*   Date Created: 04/05/2022
-*   Description:  PMA Checker, version 1.12
+*   Created by:   William Cunningham
+*   Email:        wrcunnin@purdue.edu
+*   Date Created: 09/26/2024
+*   Description:  PMA Checker, version 1.13
 */
 
-`include "priv_1_12_internal_if.vh"
+`include "priv_internal_if.vh"
 `include "priv_ext_if.vh"
 
-module priv_1_12_pma (
+module priv_pma (
   input logic CLK, nRST,
-  priv_1_12_internal_if.pma prv_intern_if,
+  priv_internal_if.pma prv_intern_if,
   priv_ext_if.ext priv_ext_if
 );
 
-  import pma_types_1_12_pkg::*;
+  import pma_types_pkg::*;
   import rv32i_types_pkg::*;
 
   pma_reg_t [15:0] pma_regs, nxt_pma_regs;

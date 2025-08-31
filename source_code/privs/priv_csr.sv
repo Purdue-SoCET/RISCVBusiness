@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_csr.sv
+*   Filename:     priv_csr.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -22,17 +22,31 @@
 *   Description:  CSR File for Priv Unit 1.13
 */
 
-`include "priv_1_13_internal_if.vh"
+`include "priv_internal_if.vh"
 `include "priv_ext_if.vh"
 `include "component_selection_defines.vh"
 
-module priv_1_13_csr #(
+`define UPDATE_HPM_COUNTER(hpm_id)                                       \
+    if (!mcounterinhibit.hpm[hpm_id]) begin                            \
+        hpm_next[hpm_id] = hpm[hpm_id] + prv_intern_if.hpm_inc[hpm_id];  \
+    end
+
+`define READ_HPM_COUNTER(hpm_id)                               \
+  HPMCOUNTER``hpm_id``_ADDR : begin                            \
+    if (check_bad_mcounteren(mcounteren.hpm[hpm_id])) begin  \
+      invalid_csr_addr = 1'b1;                                 \
+    end else begin                                             \
+      prv_intern_if.old_csr_val = hpm[hpm_id];                 \
+    end                                                        \
+  end
+
+module priv_csr #(
   parameter int HART_ID
 )(
   input CLK,
   input nRST,
   input logic [63:0] mtime,
-  priv_1_13_internal_if.csr prv_intern_if,
+  priv_internal_if.csr prv_intern_if,
   priv_ext_if.priv priv_ext_pma_if,
   priv_ext_if.priv priv_ext_pmp_if
   `ifdef RV32F_SUPPORTED
@@ -44,7 +58,7 @@ module priv_1_13_csr #(
 );
 
 
-  import machine_mode_types_1_13_pkg::*;
+  import priv_isa_types_pkg::*;
   import rv32i_types_pkg::*;
 
   /* Machine Information */
@@ -78,6 +92,7 @@ module priv_1_13_csr #(
   csr_reg_t         minstreth;
   long_csr_t        cycles_full, cf_next;
   long_csr_t        instret_full, if_next;
+  csr_reg_t [WORD_SIZE-1:0] hpm, hpm_next;
   /* Supervisor environment configuration */
   long_csr_t        menvcfg, menvcfg_next;
   `ifdef SMODE_SUPPORTED
@@ -100,6 +115,8 @@ module priv_1_13_csr #(
   senvcfg_t         senvcfg, senvcfg_next; // unused, we zero it out. may be important for future!
   `endif // SMODE_SUPPORTED
 
+  logic isUSMode;
+  assign isUSMode = prv_intern_if.isUMode | prv_intern_if.isSMode;
 
   csr_reg_t nxt_csr_val;
 
@@ -243,6 +260,7 @@ module priv_1_13_csr #(
       /* perf mon reset */
       cycles_full <= '0;
       instret_full <= '0;
+      hpm <= '0;
 
       /* mcause reset */
       mcause <= '0;
@@ -329,6 +347,7 @@ module priv_1_13_csr #(
       mcause <= mcause_next;
       cycles_full <= cf_next;
       instret_full <= if_next;
+      hpm <= hpm_next;
       menvcfg <= menvcfg_next;
       `ifdef SMODE_SUPPORTED
       satp <= satp_next;
@@ -398,6 +417,7 @@ module priv_1_13_csr #(
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
             if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR_ENABLED == "disabled")) begin
+              assert(SUPERVISOR_ENABLED == "enabled");
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
@@ -493,9 +513,14 @@ module priv_1_13_csr #(
           end
           MCOUNTEREN_ADDR: begin
             mcounteren_next = nxt_csr_val;
+            mcounteren_next.cy = nxt_csr_val[0];
+            mcounteren_next.ir = nxt_csr_val[2];
+            mcounteren_next.hpm = nxt_csr_val[31:3];
           end
           MCOUNTINHIBIT_ADDR: begin
-            mcounterinhibit_next = nxt_csr_val;
+            mcounterinhibit_next.cy = nxt_csr_val[0];
+            mcounterinhibit_next.ir = nxt_csr_val[2];
+            mcounterinhibit_next.hpm = nxt_csr_val[31:3];
           end
           MCAUSE_ADDR: begin
             mcause_next = nxt_csr_val;
@@ -592,7 +617,7 @@ module priv_1_13_csr #(
 
     // inject values
     // Note: injections to sstatus/sip inject mstatus/mip and vice versa
-    //       see priv_1_13_int_ex_handler for why
+    //       see priv_int_ex_handler for why
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
       
@@ -638,6 +663,7 @@ module priv_1_13_csr #(
   always_comb begin
     cf_next = cycles_full;
     if_next = instret_full;
+    hpm_next = hpm;
 
     if (~mcounterinhibit.cy) begin
       cf_next = cycles_full + 1;
@@ -645,6 +671,8 @@ module priv_1_13_csr #(
     if (~mcounterinhibit.ir) begin
       if_next = instret_full + prv_intern_if.inst_ret;
     end
+    `UPDATE_HPM_COUNTER(3)
+    `UPDATE_HPM_COUNTER(4)
 
     if (inject_mcycle) begin
       cf_next = {mcycleh, nxt_csr_val};
@@ -709,47 +737,49 @@ module priv_1_13_csr #(
       `endif // SMODE_SUPPORTED
       /* Unprivileged Addresses */
       CYCLE_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
+        if (check_bad_mcounteren(mcounteren.cy)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycle;
         end
       end
       CYCLEH_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.cy) begin
+        if (check_bad_mcounteren(mcounteren.cy)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = mcycleh;
         end
       end
       INSTRET_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.ir) begin
+        if (check_bad_mcounteren(mcounteren.ir)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstret;
         end
       end
       INSTRETH_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.ir) begin
+        if (check_bad_mcounteren(mcounteren.ir)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = minstreth;
         end
       end
       TIME_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.tm) begin
+        if (check_bad_mcounteren(mcounteren.tm)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtime */ mtime[31:0];
         end
       end
       TIMEH_ADDR: begin
-        if (prv_intern_if.curr_privilege_level == U_MODE & ~mcounteren.tm) begin
+        if (check_bad_mcounteren(mcounteren.tm)) begin
           invalid_csr_addr = 1'b1;
         end else begin
           prv_intern_if.old_csr_val = /* TODO get mtimeh */ mtime[63:32];
         end
       end
+      `READ_HPM_COUNTER(3)
+      `READ_HPM_COUNTER(4)
       /* Extension Addresses */
       default: begin
         if (csr_operation) begin
@@ -802,4 +832,13 @@ module priv_1_13_csr #(
   assign prv_intern_if.curr_stvec = stvec;
   assign prv_intern_if.curr_satp = satp;
   `endif // SMODE_SUPPORTED
+
+  // function to obtain all non requesters
+  function logic check_bad_mcounteren;
+      input logic mcounteren_bit;
+      check_bad_mcounteren = (
+          (isUSMode & ~mcounteren_bit) |
+          (SUPERVISOR_ENABLED == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
+      );
+  endfunction
 endmodule

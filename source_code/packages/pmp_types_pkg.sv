@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     pmp_types_1_13_pkg.sv
+*   Filename:     pmp_types_pkg.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -22,10 +22,10 @@
 *   Description:  Types needed to implement physical memory protection
 */
 
-`ifndef PMP_TYPES_1_13_PKG_SV
-`define PMP_TYPES_1_13_PKG_SV
+`ifndef PMP_TYPES_PKG_SV
+`define PMP_TYPES_PKG_SV
 
-package pmp_types_1_13_pkg;
+package pmp_types_pkg;
 
   /* PMP CSR Addresses */
   typedef enum logic [11:0] {
@@ -143,4 +143,4 @@ typedef logic [31:0] pmpaddr_t;
 
 endpackage
 
-`endif //PMP_TYPES_1_13_PKG_SV
+`endif //PMP_TYPES_PKG_SV

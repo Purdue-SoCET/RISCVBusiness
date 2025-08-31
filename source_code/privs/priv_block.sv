@@ -14,7 +14,7 @@
 *   limitations under the License.
 *
 *
-*   Filename:     priv_1_13_block.sv
+*   Filename:     priv_block.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
@@ -23,11 +23,11 @@
 */
 
 `include "prv_pipeline_if.vh"
-`include "priv_1_13_internal_if.vh"
+`include "priv_internal_if.vh"
 `include "core_interrupt_if.vh"
 `include "priv_ext_if.vh"
 
-module priv_1_13_block #(
+module priv_block #(
     parameter HART_ID
 ) (
     input logic CLK, nRST,
@@ -36,20 +36,22 @@ module priv_1_13_block #(
     core_interrupt_if.core interrupt_if
 );
 
-    import machine_mode_types_1_13_pkg::*;
+    import priv_isa_types_pkg::*;
 
-    priv_1_13_internal_if prv_intern_if();
+    priv_internal_if prv_intern_if();
     priv_ext_if priv_ext_pma_if();
     priv_ext_if priv_ext_pmp_if();
 
-    priv_1_13_csr #(.HART_ID(HART_ID)) csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
-    priv_1_13_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
-    priv_1_13_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
-    priv_1_13_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
-    priv_1_13_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
-    priv_1_13_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
+    priv_csr #(.HART_ID(HART_ID)) csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
+    priv_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
+    priv_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
+    priv_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
+    priv_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
+    priv_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
     // Assign CSR values
+    assign prv_intern_if.hpm_inc[3] = prv_pipe_if.icache_miss;
+    assign prv_intern_if.hpm_inc[4] = prv_pipe_if.dcache_miss;
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.csr_addr;
     assign prv_intern_if.csr_write = prv_pipe_if.swap;
@@ -58,31 +60,31 @@ module priv_1_13_block #(
     assign prv_intern_if.csr_read_only = prv_pipe_if.read_only;
     assign prv_intern_if.new_csr_val = prv_pipe_if.wdata;
     assign prv_pipe_if.rdata = prv_intern_if.old_csr_val;
-    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.mret & (prv_intern_if.curr_privilege_level != M_MODE)) 
-                                            | (prv_pipe_if.sret & (prv_intern_if.curr_privilege_level != M_MODE) & (prv_intern_if.curr_privilege_level != S_MODE) & (SUPERVISOR_ENABLED == "enabled"))
-                                            | (prv_pipe_if.wfi & (prv_intern_if.curr_privilege_level == U_MODE) & (prv_intern_if.curr_mstatus.tw));
+    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.mret & !prv_intern_if.isMMode) 
+                                            | (prv_pipe_if.sret & !prv_intern_if.isMMode & !prv_intern_if.isSMode & (SUPERVISOR_ENABLED == "enabled"))
+                                            | (prv_pipe_if.wfi & prv_intern_if.isUMode & (prv_intern_if.curr_mstatus.tw));
 
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;
-    assign prv_intern_if.timer_int_s = interrupt_if.timer_int[HART_ID] && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled");
-    assign prv_intern_if.timer_int_m = interrupt_if.timer_int[HART_ID] && (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.timer_int_s = interrupt_if.timer_int[HART_ID] && prv_intern_if.isSMode;
+    assign prv_intern_if.timer_int_m = interrupt_if.timer_int[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.soft_int_u = 1'b0;
-    assign prv_intern_if.soft_int_s = interrupt_if.soft_int[HART_ID] && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled");
-    assign prv_intern_if.soft_int_m = interrupt_if.soft_int[HART_ID] && (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.soft_int_s = interrupt_if.soft_int[HART_ID] && prv_intern_if.isSMode;
+    assign prv_intern_if.soft_int_m = interrupt_if.soft_int[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.ext_int_u = 1'b0;
-    assign prv_intern_if.ext_int_s = interrupt_if.ext_int && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled");
-    assign prv_intern_if.ext_int_m = interrupt_if.ext_int && (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.ext_int_s = interrupt_if.ext_int && prv_intern_if.isSMode;
+    assign prv_intern_if.ext_int_m = interrupt_if.ext_int && prv_intern_if.isMMode;
 
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;
-    assign prv_intern_if.clear_timer_int_s = interrupt_if.timer_int_clear[HART_ID] && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled"); // find references, are these needed for s-mode?
-    assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear[HART_ID] && (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.clear_timer_int_s = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isSMode; // find references, are these needed for s-mode?
+    assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.clear_soft_int_u = 1'b0;
-    assign prv_intern_if.clear_soft_int_s = interrupt_if.soft_int_clear[HART_ID] && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled"); // find references, are these needed for s-mode?
-    assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear[HART_ID] && (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.clear_soft_int_s = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isSMode; // find references, are these needed for s-mode?
+    assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.clear_ext_int_u = 1'b0;
-    assign prv_intern_if.clear_ext_int_s = interrupt_if.ext_int_clear && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled"); // find references, are these needed for s-mode?
-    assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear && (prv_intern_if.curr_privilege_level == M_MODE);
+    assign prv_intern_if.clear_ext_int_s = interrupt_if.ext_int_clear && prv_intern_if.isSMode; // find references, are these needed for s-mode?
+    assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear && prv_intern_if.isMMode;
 
     // from pipeline to the priv unit
     assign prv_intern_if.pipe_clear        = prv_pipe_if.pipe_clear;
@@ -95,17 +97,17 @@ module priv_1_13_block #(
     assign prv_intern_if.fault_s           = prv_pipe_if.fault_s;
     assign prv_intern_if.mal_s             = prv_pipe_if.mal_s;
     assign prv_intern_if.breakpoint        = prv_pipe_if.breakpoint;
-    assign prv_intern_if.env_m             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == M_MODE);
-    assign prv_intern_if.env_s             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == S_MODE) && (SUPERVISOR_ENABLED == "enabled");
-    assign prv_intern_if.env_u             = prv_pipe_if.env && (prv_intern_if.curr_privilege_level == U_MODE);
+    assign prv_intern_if.env_m             = prv_pipe_if.env && prv_intern_if.isMMode;
+    assign prv_intern_if.env_s             = prv_pipe_if.env && prv_intern_if.isSMode;
+    assign prv_intern_if.env_u             = prv_pipe_if.env && prv_intern_if.isUMode;
     assign prv_intern_if.fault_insn_page   = prv_pipe_if.fault_insn_page;
     assign prv_intern_if.fault_load_page   = prv_pipe_if.fault_load_page;
     assign prv_intern_if.fault_store_page  = prv_pipe_if.fault_store_page;
     assign prv_intern_if.curr_mtval        = prv_pipe_if.badaddr;
     assign prv_intern_if.curr_stval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
-    assign prv_intern_if.mret              = prv_pipe_if.mret & (prv_intern_if.curr_privilege_level == M_MODE);
-    assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.curr_privilege_level == S_MODE | prv_intern_if.curr_privilege_level == M_MODE) && (SUPERVISOR_ENABLED == "enabled");
+    assign prv_intern_if.mret              = prv_pipe_if.mret & prv_intern_if.isMMode;
+    assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.isSMode | prv_intern_if.isMMode) && (SUPERVISOR_ENABLED == "enabled");
     assign prv_intern_if.ex_mem_stall      = prv_pipe_if.ex_mem_stall;
 
     // RISC-MGMT?

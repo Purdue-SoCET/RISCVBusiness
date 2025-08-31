@@ -28,7 +28,7 @@
 interface tlb_if();
 
   import rv32i_types_pkg::*;
-  import machine_mode_types_1_13_pkg::*;
+  import priv_isa_types_pkg::*;
 
   // from priv block
   satp_t satp;

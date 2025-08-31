@@ -14,18 +14,18 @@
 *   limitations under the License.
 *
 *
-*   Filename:     machine_mode_types_1_13_pkg.sv
+*   Filename:     priv_isa_types_pkg.sv
 *
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
 *   Date Created: 09/26/2024
-*   Description:  Types needed to implement machine mode priv. isa 1.13
+*   Description:  Types needed to implement priv. isa 1.13
 */
 
-`ifndef MACHINE_MODE_TYPES_1_13_PKG_SV
-`define MACHINE_MODE_TYPES_1_13_PKG_SV
+`ifndef PRIV_ISA_TYPES_PKG_SV
+`define PRIV_ISA_TYPES_PKG_SV
 
-package machine_mode_types_1_13_pkg;
+package priv_isa_types_pkg;
   parameter int MXLEN  = 32;
   parameter int SXLEN  = 32;
   parameter int UXLEN  = 32;
@@ -129,7 +129,7 @@ package machine_mode_types_1_13_pkg;
     MSECCFGH_ADDR   = 12'h757,
 
     /* Machine Memory Protection */
-    /* See pmp_types_1_13_pkg.sv */
+    /* See pmp_types_pkg.sv */
 
     /* Machine Counter/Timers */
     MCYCLE_ADDR         = 12'hB00,
@@ -489,70 +489,14 @@ package machine_mode_types_1_13_pkg;
 
   /* mcounteren and mcountinhibit types */
   typedef struct packed {
-    logic hpm31;
-    logic hpm30;
-    logic hpm29;
-    logic hpm28;
-    logic hpm27;
-    logic hpm26;
-    logic hpm25;
-    logic hpm24;
-    logic hpm23;
-    logic hpm22;
-    logic hpm21;
-    logic hpm20;
-    logic hpm19;
-    logic hpm18;
-    logic hpm17;
-    logic hpm16;
-    logic hpm15;
-    logic hpm14;
-    logic hpm13;
-    logic hpm12;
-    logic hpm11;
-    logic hpm10;
-    logic hpm9;
-    logic hpm8;
-    logic hpm7;
-    logic hpm6;
-    logic hpm5;
-    logic hpm4;
-    logic hpm3;
+    logic [31:3] hpm;
     logic ir;
     logic tm;
     logic cy;
  } mcounteren_t;
 
   typedef struct packed {
-    logic hpm31;
-    logic hpm30;
-    logic hpm29;
-    logic hpm28;
-    logic hpm27;
-    logic hpm26;
-    logic hpm25;
-    logic hpm24;
-    logic hpm23;
-    logic hpm22;
-    logic hpm21;
-    logic hpm20;
-    logic hpm19;
-    logic hpm18;
-    logic hpm17;
-    logic hpm16;
-    logic hpm15;
-    logic hpm14;
-    logic hpm13;
-    logic hpm12;
-    logic hpm11;
-    logic hpm10;
-    logic hpm9;
-    logic hpm8;
-    logic hpm7;
-    logic hpm6;
-    logic hpm5;
-    logic hpm4;
-    logic hpm3;
+    logic [31:3] hpm;
     logic ir;
     logic reserved_0;
     logic cy;
@@ -663,70 +607,14 @@ package machine_mode_types_1_13_pkg;
   /* scounteren and scountinhibit types */
 
   typedef struct packed {
-    logic hpm31;
-    logic hpm30;
-    logic hpm29;
-    logic hpm28;
-    logic hpm27;
-    logic hpm26;
-    logic hpm25;
-    logic hpm24;
-    logic hpm23;
-    logic hpm22;
-    logic hpm21;
-    logic hpm20;
-    logic hpm19;
-    logic hpm18;
-    logic hpm17;
-    logic hpm16;
-    logic hpm15;
-    logic hpm14;
-    logic hpm13;
-    logic hpm12;
-    logic hpm11;
-    logic hpm10;
-    logic hpm9;
-    logic hpm8;
-    logic hpm7;
-    logic hpm6;
-    logic hpm5;
-    logic hpm4;
-    logic hpm3;
+    logic [31:3] hpm;
     logic ir;
     logic tm;
     logic cy;
  } scounteren_t;
 
  typedef struct packed {
-    logic hpm31;
-    logic hpm30;
-    logic hpm29;
-    logic hpm28;
-    logic hpm27;
-    logic hpm26;
-    logic hpm25;
-    logic hpm24;
-    logic hpm23;
-    logic hpm22;
-    logic hpm21;
-    logic hpm20;
-    logic hpm19;
-    logic hpm18;
-    logic hpm17;
-    logic hpm16;
-    logic hpm15;
-    logic hpm14;
-    logic hpm13;
-    logic hpm12;
-    logic hpm11;
-    logic hpm10;
-    logic hpm9;
-    logic hpm8;
-    logic hpm7;
-    logic hpm6;
-    logic hpm5;
-    logic hpm4;
-    logic hpm3;
+    logic [31:3] hpm;
     logic ir;
     logic reserved_0;
     logic cy;
@@ -759,4 +647,4 @@ package machine_mode_types_1_13_pkg;
 
 endpackage
 
-`endif //MACHINE_MODE_TYPES_1_13_PKG_SV
+`endif //PRIV_ISA_TYPES_PKG_SV
