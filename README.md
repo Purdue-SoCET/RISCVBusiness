@@ -1,7 +1,8 @@
 # RISCVBusiness
 Design documents and project information for the RISC-V Business project can be found here:
 
-[RISCV-Business Documentation](https://wiki.itap.purdue.edu/display/RISC/RISCV-Business)
+[RISCV-Business Documentation](https://wiki.itap.purdue.edu/display/RISC/RISCV->
+
 
 **Current User-Level ISA Spec :** v2.1
 **Current Privileged ISA Spec :** v1.12
@@ -37,7 +38,7 @@ make xcelium # build with Xcelium
 # Run ISA tests
 run_tests_verilator.py
 
-# Run specify binary on Verliator core simulation
+# Run specify binary on Verilator core simulation
 ./rvb_out/sim-verilator/Vtop_core meminit.bin
 ```
 
@@ -50,7 +51,7 @@ Refer to the following link for instructions on installing the RISC-V software t
 Execute the following commands to download the correct version of the RISC-V tools:
 
 ~~~
-git clone https://github.com/riscv/riscv-tools.git
+git clone https://github.com/Purdue-SoCET/RISCVBusiness.git
 git checkout 4635ab67966c763a84f7217bc2c20b65dcabc7ec
 git submodule update --init --recursive
 ~~~
@@ -58,7 +59,7 @@ git submodule update --init --recursive
 Change the line to build the riscv-gnu-toolchain tools to:
 
 ~~~
-build_project riscv-gnu-toolchain --prefix=$RISCV --with-xlen="$with_xlen" --with-arch=RV32IM
+build_project riscv-gnu-toolchain --prefix=$RISCV --with-xlen="$with_xlen" --with-multilib
 ~~~
 
 Then run after setting the environment variable "RISCV" to your install location:
