@@ -82,7 +82,7 @@ config:
 build: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool modelsim socet:riscv:RISCVBusiness
 	@echo "------------------------------------------------------------------"
-	@echo "Build finished, you can run with 'make run'
+	@echo "Build finished, you can run with 'make run'"
 	@echo "------------------------------------------------------------------"
 
 run: config
