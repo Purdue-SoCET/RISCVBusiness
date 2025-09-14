@@ -92,9 +92,9 @@ module branch_predictor_wrapper (
 
     generate
         if(USE_RAS == "true")
-            return_predictor #(.entries(4)) predictor (CLK, nRST, predict_temp2);
+            return_predictor #(.entries(4)) ret_predictor (CLK, nRST, predict_temp2);
         else // 'no-op' predictor
-            nottaken_predictor predictor(CLK, nRST, predict_temp2);
+            nottaken_predictor nt_predictor(CLK, nRST, predict_temp2);
     endgenerate
 
 endmodule

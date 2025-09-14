@@ -51,7 +51,7 @@ module ghr_pht #(
         nxt_PHT = PHT[GHR];
         
         if (predict_if.update_predictor) begin
-            nxt_PHT = {PHT[GHR],previous_branch} [(PRED_BITS - 1):0];
+            nxt_PHT = {PHT[GHR],previous_branch};
         end
     end
 

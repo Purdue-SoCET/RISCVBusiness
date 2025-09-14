@@ -159,6 +159,7 @@ module stage3_mem_stage(
     always_comb begin
         iflushed_next = iflushed;
         dflushed_next = dflushed;
+        ifence_reg_next = 0;
         if (ifence_pulse) begin
             ifence_reg_next = 1;
             iflushed_next = 0;

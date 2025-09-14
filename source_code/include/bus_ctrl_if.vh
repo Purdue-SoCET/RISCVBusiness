@@ -123,7 +123,7 @@ interface back_side_bus_if#(
 
     genvar i;
     generate
-        for (i = 0; i < CPUS; i++)  begin
+        for (i = 0; i < CPUS; i++)  begin : GEN_BUS_MAP
             `MAP_FRONT_TO_BACK(dREN)
             `MAP_FRONT_TO_BACK(dWEN)
             `MAP_FRONT_TO_BACK(daddr)

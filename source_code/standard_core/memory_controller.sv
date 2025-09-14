@@ -33,7 +33,7 @@ module memory_controller #(
 ) (
     input logic CLK,
     nRST,
-    back_side_bus_if bus_ctrl_if,
+    back_side_bus_if.cc bus_ctrl_if,
     generic_bus_if.cpu out_gen_bus_if
 );
     bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2)) BUS_CTRL(
@@ -48,9 +48,5 @@ module memory_controller #(
         out_gen_bus_if.ren = bus_ctrl_if.l2REN;
         out_gen_bus_if.wen = bus_ctrl_if.l2WEN;
         out_gen_bus_if.wdata = bus_ctrl_if.l2store;
-
-        bus_ctrl_if.l2load = out_gen_bus_if.rdata;
-        bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
-        bus_ctrl_if.l2error = out_gen_bus_if.error;
     end
 endmodule

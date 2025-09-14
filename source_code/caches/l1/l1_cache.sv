@@ -332,6 +332,7 @@ module l1_cache #(
         bus_ctrl_if.ccsnoophit  = 1'b0;
         bus_ctrl_if.ccdirty     = 1'b0;
         bus_ctrl_if.ccsnoopdone = 1'b0;
+        bus_ctrl_if.dbyte_en    = 4'b0;
 
         // associativity, using NRU
         if (ASSOC == 1 || (last_used[decoded_addr.idx.idx_bits] == (ASSOC - 1)))
