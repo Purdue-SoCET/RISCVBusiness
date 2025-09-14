@@ -212,7 +212,7 @@ module stage3_mem_stage(
             itlb_fenced_next = 1;
         if (cc_if.dtlb_fence_done)
             dtlb_fenced_next = 1;
-        if ((itlb_fenced_next && dtlb_fenced_next) || ADDRESS_TRANSLATION_ENABLED == "disabled") // hardwired TLB fences to be done if AT is disabled in ISA param
+        if ((itlb_fenced_next && dtlb_fenced_next) || `ADDRESS_TRANSLATION == "disabled") // hardwired TLB fences to be done if AT is disabled in ISA param
             itlb_fence_reg_next = 0;
     end
 

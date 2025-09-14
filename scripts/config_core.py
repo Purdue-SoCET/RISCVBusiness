@@ -73,7 +73,7 @@ ISA_PARAMS = \
     'xlen' : [32],
     'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys()),
     'supervisor_enabled' : [ 'enabled', 'disabled' ],
-    'address_translation_enabled' : [ 'enabled', 'disabled' ],
+    'address_translation' : [ 'enabled', 'disabled' ],
     'isa' : []
   }
 
@@ -240,13 +240,14 @@ def create_include(config):
         elif 'supervisor_enabled' == isa_param and isa_params[isa_param] == 'enabled':
           line  = '`define SMODE_SUPPORTED\n'
           line += 'localparam ' + isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
-        elif 'address_translation_enabled' == isa_param:
+        elif 'address_translation' == isa_param:
           # supervisor enabled should be enabled if address translation is on
           if isa_params[isa_param] == 'enabled' and isa_params['supervisor_enabled'] == 'disabled':
             err = 'Illegal configuration. ' + isa_param  + ' == ' + isa_params[isa_param]
             err += ' is not a valid configuration with supervisor_enabled == disabled'
             sys.exit(err)
-          line += isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
+          line = f'`define {isa_param.upper()} "{(str(isa_params[isa_param]) if isa_params["supervisor_enabled"] == "enabled" else "disabled")}"\n'
+          line += 'localparam ' + isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
         elif 'isa' == isa_param:
           base_isa, riscv_ext = parse_riscv_isa_string(isa_params[isa_param])
           continue
@@ -273,10 +274,10 @@ def create_include(config):
       if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
         err = 'Invalid icache_size. Not divisible by block_size * assoc.'
         sys.exit(err)
-      if uarch_params['dcache_size'] / (8 * uarch_params['dcache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
+      if uarch_params['dcache_size'] / (8 * uarch_params['dcache_assoc']) > 4096 and isa_params['address_translation'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
         err = 'Invalid dcache_size. Sets are not less than or equal to the virtual page size of 4KB.'
         sys.exit(err)
-      if uarch_params['icache_size'] / (8 * uarch_params['icache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
+      if uarch_params['icache_size'] / (8 * uarch_params['icache_assoc']) > 4096 and isa_params['address_translation'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
         err = 'Invalid icache_size. Sets are not less than or equal to the virtual page size of 4KB.'
         sys.exit(err)
       if riscv_ext["c"] & (uarch_params['br_predictor_type'] != 'not_taken'):

@@ -428,7 +428,7 @@ module priv_csr #(
             mstatus_next.mpie = nxt_csr_val[7];
             mstatus_next.spp = nxt_csr_val[8] && SUPERVISOR_ENABLED == "enabled";
             mstatus_next.mprv = nxt_csr_val[17];
-            mstatus_next.sum = nxt_csr_val[18] && SUPERVISOR_ENABLED == "enabled" && ADDRESS_TRANSLATION_ENABLED == "enabled";
+            mstatus_next.sum = nxt_csr_val[18] && SUPERVISOR_ENABLED == "enabled" && `ADDRESS_TRANSLATION == "enabled";
             mstatus_next.mxr = nxt_csr_val[19] && SUPERVISOR_ENABLED == "enabled";
             mstatus_next.tvm = nxt_csr_val[20] && SUPERVISOR_ENABLED == "enabled";
             mstatus_next.tw = nxt_csr_val[21]; // RO-zero if no less privileged modes other than M-mode (we have U-mode regardless!)
@@ -439,7 +439,7 @@ module priv_csr #(
             sstatus_next.sie = mstatus_next.sie;
             sstatus_next.spie = mstatus_next.spie;
             sstatus_next.spp = mstatus_next.spp;
-            sstatus_next.sum = mstatus_next.sum && ADDRESS_TRANSLATION_ENABLED == "enabled";
+            sstatus_next.sum = mstatus_next.sum && `ADDRESS_TRANSLATION == "enabled";
             sstatus_next.mxr = mstatus_next.mxr;
             `endif // SMODE_SUPPORTED
           end
@@ -547,7 +547,7 @@ module priv_csr #(
           SATP_ADDR: begin
             satp_next.ppn = nxt_csr_val[21:0];
             satp_next.asid = nxt_csr_val[30:22];
-            satp_next.mode = ADDRESS_TRANSLATION_ENABLED == "enabled" ? nxt_csr_val[31] : 0;
+            satp_next.mode = `ADDRESS_TRANSLATION == "enabled" ? nxt_csr_val[31] : 0;
           end
           SSTATUS_ADDR: begin
             sstatus_next.sie = nxt_csr_val[1];
