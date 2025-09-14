@@ -837,8 +837,11 @@ module priv_csr #(
   function logic check_bad_mcounteren;
       input logic mcounteren_bit;
       check_bad_mcounteren = (
-          (isUSMode & ~mcounteren_bit) |
-          (SUPERVISOR_ENABLED == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
+          (csr_operation) &
+          (
+              (isUSMode & ~mcounteren_bit) |
+              (SUPERVISOR_ENABLED == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
+          )
       );
   endfunction
 endmodule

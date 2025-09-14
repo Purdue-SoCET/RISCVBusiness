@@ -109,8 +109,8 @@ module l1_cache #(
         logic [N_FRAME_BITS-1:0] frame_num; // assoc
     } flush_idx_t;             // flush counter type
 
-    typedef enum {
-       IDLE, HIT, FETCH, WB, FLUSH_CACHE, SNOOP, CANCEL_REQ
+    typedef enum logic [2:0] {
+        IDLE, HIT, FETCH, WB, FLUSH_CACHE, SNOOP, CANCEL_REQ
     } cache_fsm_t;            // cache state machine
 
     typedef struct packed {
@@ -118,7 +118,7 @@ module l1_cache #(
         logic reserved;
     } reservation_set_t;
     
-    typedef enum {
+    typedef enum logic [1:0] {
         CACHE_REQUEST_NONE, CACHE_REQUEST_PW, CACHE_REQUEST_PROC
     } cache_request_t;
 

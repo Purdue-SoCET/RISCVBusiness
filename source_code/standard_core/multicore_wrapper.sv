@@ -83,8 +83,8 @@ module multicore_wrapper #(
                 .wfi(pipeline_wfi),
                 .halt(pipeline_halts[HART_ID]),
                 .interrupt_if(interrupt_if),
-                .dcache_bus_ctrl_if(front_side_bus[HART_ID*2]),
-                .icache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
+                .dcache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
+                .icache_bus_ctrl_if(front_side_bus[HART_ID*2]),
                 .abort_bus(abort_bus)
             );
 
