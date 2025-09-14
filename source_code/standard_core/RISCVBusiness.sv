@@ -41,7 +41,8 @@ module RISCVBusiness #(
     input logic [63:0] mtime,
     output logic wfi, halt, abort_bus,
     core_interrupt_if.core interrupt_if,
-    bus_ctrl_if bus_ctrl_if
+    front_side_bus_if dcache_bus_ctrl_if,
+    front_side_bus_if icache_bus_ctrl_if
 );
     // Interface instantiations
     generic_bus_if tspp_icache_gen_bus_if ();
@@ -108,9 +109,7 @@ module RISCVBusiness #(
     );
     */
 
-    separate_caches #(
-        .HART_ID(HART_ID)
-    ) sep_caches (
+    separate_caches sep_caches (
         .CLK(CLK),
         .nRST(nRST),
         .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
@@ -119,7 +118,8 @@ module RISCVBusiness #(
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
         .prv_pipe_if(prv_pipe_if),
-        .bus_ctrl_if(bus_ctrl_if),
+        .dcache_bus_ctrl_if(dcache_bus_ctrl_if),
+        .icache_bus_ctrl_if(icache_bus_ctrl_if),
         .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss)

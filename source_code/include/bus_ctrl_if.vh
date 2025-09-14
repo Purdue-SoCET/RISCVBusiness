@@ -63,14 +63,40 @@ typedef enum logic [1:0] {
 typedef logic [31:0] bus_word_t;
 typedef logic [DATA_WIDTH-1:0] transfer_width_t;
 
-// modified from coherence_ctrl_if.vh
-interface bus_ctrl_if ();
+interface front_side_bus_if();
+    logic            dREN, dWEN, dwait, derror;
+    transfer_width_t dload, dstore, snoop_dstore, driver_dstore;
+    bus_word_t       daddr;
+    logic [3:0]      dbyte_en;
+    // L1 coherence INPUTS to bus
+    logic            ccwrite;     // indicates that the requester is attempting to go to M
+    logic            ccsnoophit;  // indicates that the responder has the data
+    logic            ccsnoopdone; // indicates that the responder has the data
+    logic            ccdirty;     // indicates that we have [I -> S, M -> S]
+    // L1 coherence OUTPUTS
+    logic            ccwait;      // indicates a potential snoophit wait request
+    logic            ccinv;       // indicates an invalidation request
+    logic            ccexclusive; // indicates an exclusivity update
+    bus_word_t       ccsnoopaddr;
+    logic            ccabort;
+
+    modport cache(
+        input dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
+        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
+    );
+endinterface
+
+interface back_side_bus_if#(
+    parameter int CPUS
+)(
+    front_side_bus_if front_side [CPUS-1:0]
+);
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait, derror;
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
     bus_word_t          [CPUS-1:0] daddr;
     logic         [CPUS-1:0] [3:0] dbyte_en;
-    // L1 coherence INPUTS to bus 
+    // L1 coherence INPUTS to bus
     logic               [CPUS-1:0] ccwrite;     // indicates that the requester is attempting to go to M
     logic               [CPUS-1:0] ccsnoophit;  // indicates that the responder has the data
     logic               [CPUS-1:0] ccsnoopdone; // indicates that the responder has the data
@@ -79,15 +105,43 @@ interface bus_ctrl_if ();
     logic               [CPUS-1:0] ccwait;      // indicates a potential snoophit wait request
     logic               [CPUS-1:0] ccinv;       // indicates an invalidation request
     logic               [CPUS-1:0] ccexclusive; // indicates an exclusivity update
-    bus_word_t          [CPUS-1:0] ccsnoopaddr; 
+    bus_word_t          [CPUS-1:0] ccsnoopaddr;
     // L2 signals
-    l2_state_t l2state; 
+    l2_state_t l2state;
     bus_word_t l2load, l2store;
     logic l2WEN, l2REN, l2error;
     bus_word_t l2addr; 
     logic [3:0] l2_byte_en;
     // Core outputs
     logic               [CPUS-1:0] ccabort;
+
+`define MAP_FRONT_TO_BACK(sig) \
+    assign sig[i] = front_side[i].sig;
+
+`define MAP_BACK_TO_FRONT(sig) \
+    assign front_side[i].sig = sig[i];
+
+    genvar i;
+    generate
+        for (i = 0; i < CPUS; i++)  begin
+            `MAP_FRONT_TO_BACK(dREN)
+            `MAP_FRONT_TO_BACK(dWEN)
+            `MAP_FRONT_TO_BACK(daddr)
+            `MAP_FRONT_TO_BACK(dstore)
+            `MAP_FRONT_TO_BACK(dbyte_en)
+            `MAP_FRONT_TO_BACK(ccwrite)
+            `MAP_FRONT_TO_BACK(ccsnoophit)
+            `MAP_FRONT_TO_BACK(ccdirty)
+            `MAP_FRONT_TO_BACK(ccsnoopdone)
+            `MAP_BACK_TO_FRONT(dwait)
+            `MAP_BACK_TO_FRONT(dload)
+            `MAP_BACK_TO_FRONT(derror)
+            `MAP_BACK_TO_FRONT(ccwait)
+            `MAP_BACK_TO_FRONT(ccinv)
+            `MAP_BACK_TO_FRONT(ccsnoopaddr)
+            `MAP_BACK_TO_FRONT(ccexclusive)
+        end
+    endgenerate
 
     // HACK: dstore becomes multidriven here. memory_controller expects to drive dstore but
     // this is also used when testbenching
@@ -112,19 +166,13 @@ interface bus_ctrl_if ();
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 
 
-    modport cache(
-        input dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
-        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
-    );
-
     modport tb(
-        input   dwait, dload, 
-                ccwait, ccinv, ccsnoopaddr, ccexclusive, 
+        input   dwait, dload,
+                ccwait, ccinv, ccsnoopaddr, ccexclusive,
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en,
         output  dREN, dWEN, daddr, dstore, dbyte_en,
                 ccwrite, ccsnoophit, ccdirty, ccsnoopdone,
                 l2load, l2state, ccabort
-    ); 
-
+    );
 endinterface
 `endif // BUS_CTRL_IF_VH

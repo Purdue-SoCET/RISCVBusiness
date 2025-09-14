@@ -33,24 +33,24 @@ module memory_controller #(
 ) (
     input logic CLK,
     nRST,
-    bus_ctrl_if bcif,
+    back_side_bus_if bus_ctrl_if,
     generic_bus_if.cpu out_gen_bus_if
 );
     bus_ctrl #(.BLOCK_SIZE(2), .CPUS(NUM_HARTS * 2)) BUS_CTRL(
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(bcif)
+        .ccif(bus_ctrl_if)
     );
 
     always_comb begin
-        out_gen_bus_if.addr = bcif.l2addr;
-        out_gen_bus_if.byte_en = bcif.l2_byte_en;
-        out_gen_bus_if.ren = bcif.l2REN;
-        out_gen_bus_if.wen = bcif.l2WEN;
-        out_gen_bus_if.wdata = bcif.l2store;
+        out_gen_bus_if.addr = bus_ctrl_if.l2addr;
+        out_gen_bus_if.byte_en = bus_ctrl_if.l2_byte_en;
+        out_gen_bus_if.ren = bus_ctrl_if.l2REN;
+        out_gen_bus_if.wen = bus_ctrl_if.l2WEN;
+        out_gen_bus_if.wdata = bus_ctrl_if.l2store;
 
-        bcif.l2load = out_gen_bus_if.rdata;
-        bcif.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
-        bcif.l2error = out_gen_bus_if.error;
+        bus_ctrl_if.l2load = out_gen_bus_if.rdata;
+        bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+        bus_ctrl_if.l2error = out_gen_bus_if.error;
     end
 endmodule

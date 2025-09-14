@@ -14,7 +14,12 @@ module rv32a_decode(
 
     always_comb begin
         insn_decode = rv32a_insn_t'(insn);
-        valid_funct5 = $cast(insn_op, insn_decode.funct5);
+        insn_op = rv32a_op_e'(insn_decode.funct5);
+        case (insn_decode.funct5)
+            AMO_ADD, AMO_SWAP, AMO_LR, AMO_SC, AMO_XOR, AMO_OR, AMO_AND, AMO_MIN,
+            AMO_MAX, AMO_MINU, AMO_MAXU : valid_funct5 = 1;
+            default : valid_funct5 = 0;
+        endcase
         lr_valid_rs2 = insn_decode.rs2 == 0;
 
         claim = (insn_decode.opcode == RV32A_OPCODE) &&

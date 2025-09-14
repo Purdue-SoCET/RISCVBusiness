@@ -26,7 +26,10 @@ module multicore_wrapper #(
     apb_if.requester apb_requester
 `endif
 );
-    bus_ctrl_if bus_ctrl_if();
+    front_side_bus_if front_side_bus [NUM_HARTS*2-1:0] ();
+    back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if(
+        .front_side(front_side_bus)
+    );
     generic_bus_if pipeline_trans_if ();
 
     memory_controller #(
@@ -35,7 +38,7 @@ module multicore_wrapper #(
         .CLK(CLK),
         .nRST(nRST),
         .out_gen_bus_if(pipeline_trans_if),
-        .bcif(bus_ctrl_if)
+        .bus_ctrl_if(bus_ctrl_if)
     );
 
     logic [NUM_HARTS-1:0] pipeline_halts;
@@ -67,7 +70,7 @@ module multicore_wrapper #(
 
     genvar HART_ID;
     generate
-        for (HART_ID = 0; HART_ID < NUM_HARTS; HART_ID = HART_ID + 1) begin
+        for (HART_ID = 0; HART_ID < NUM_HARTS; HART_ID = HART_ID + 1) begin : GEN_HART
             logic pipeline_wfi;
 
             RISCVBusiness #(
@@ -80,7 +83,8 @@ module multicore_wrapper #(
                 .wfi(pipeline_wfi),
                 .halt(pipeline_halts[HART_ID]),
                 .interrupt_if(interrupt_if),
-                .bus_ctrl_if(bus_ctrl_if),
+                .dcache_bus_ctrl_if(front_side_bus[HART_ID*2]),
+                .icache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
                 .abort_bus(abort_bus)
             );
 
@@ -107,32 +111,26 @@ module multicore_wrapper #(
     endgenerate
 
     // Instantiate the chosen bus interface
-    generate
-        case (BUS_INTERFACE_TYPE)
-            "generic_bus_if": begin : g_generic_bus_if
-                generic_nonpipeline bt (
-                    .CLK(CLK),
-                    .nRST(nRST),
-                    .pipeline_trans_if(pipeline_trans_if),
-                    .out_gen_bus_if(gen_bus_if)
-                );
-            end
-            "ahb_if": begin : g_ahb_if
-                ahb bt (
-                    .CLK(CLK),
-                    .nRST(nRST),
-                    .out_gen_bus_if(pipeline_trans_if),
-                    .ahb_m(ahb_manager)
-                );
-            end
-            "apb_if": begin : g_apb_if
-                apb bt(
-                    .CLK(CLK),
-                    .nRST(nRST),
-                    .out_gen_bus_if(pipeline_trans_if),
-                    .apbif(apb_requester)
-                );
-            end
-        endcase
-    endgenerate
+`ifdef BUS_INTERFACE_GENERIC_BUS
+    generic_nonpipeline bt (
+        .CLK(CLK),
+        .nRST(nRST),
+        .pipeline_trans_if(pipeline_trans_if),
+        .out_gen_bus_if(gen_bus_if)
+    );
+`elsif BUS_INTERFACE_AHB
+    ahb bt (
+        .CLK(CLK),
+        .nRST(nRST),
+        .out_gen_bus_if(pipeline_trans_if),
+        .ahb_m(ahb_manager)
+    );
+`elsif BUS_INTERFACE_APB
+    apb bt(
+        .CLK(CLK),
+        .nRST(nRST),
+        .out_gen_bus_if(pipeline_trans_if),
+        .apbif(apb_requester)
+    );
+`endif
 endmodule
