@@ -1,0 +1,35 @@
+CAPI=2:
+name: socet:performance_counters:counter64bit:1.0.0
+description: Core file for overwritable 64 bit counters 
+
+filesets:
+  rtl:
+    files:
+      - src/counter64bit.sv
+    file_type: systemVerilogSource
+  
+  tb:
+    files:
+      - tb/tb_counter64bit.sv
+    file_type: systemVerilogSource
+  
+targets:
+  default: &default
+    filesets:
+      - rtl
+    toplevel: counter64bit
+  
+  sim:
+    <<: *default
+    description: Simulate w/SV TB
+    default_tool: verilator
+    filesets_append:
+      - tb
+    toplevel: tb_counter64bit
+    tools:
+      verilator:
+        verilator_options:
+          - --binary
+          - --coverage
+          - --trace-fst
+          - --trace-structs
