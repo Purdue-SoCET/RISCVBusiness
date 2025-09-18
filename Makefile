@@ -53,3 +53,20 @@ clean:
 veryclean:
 	rm -rf fusesoc_libraries
 	rm fusesoc.conf
+
+VERILATOR = verilator
+SRC_DIR = ./source_code
+INCLUDE_DIRS = \
+  +incdir+$(SRC_DIR)/packages \
+  +incdir+$(SRC_DIR)/include \
+  +incdir+$(SRC_DIR)/privs/performance_counters/src
+
+SRCS = \
+  $(SRC_DIR)/packages/rv32i_types_pkg.sv \
+  $(SRC_DIR)/packages/machine_mode_types_1_13_pkg.sv \
+  $(SRC_DIR)/privs/performance_counters/src/counter64bit.sv \
+  $(SRC_DIR)/privs/performance_counters/src/hpm.sv
+
+hpmlint:
+	$(VERILATOR) --lint-only --Wno-fatal $(INCLUDE_DIRS) $(SRCS)
+
