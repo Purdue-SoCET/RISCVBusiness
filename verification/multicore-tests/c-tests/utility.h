@@ -27,13 +27,6 @@ void print(const char *fmt, ...);
 void put_uint32_hex(uint32_t hex);
 uint32_t get_cycles();
 uint32_t get_instrs();
-void __attribute__((noinline)) wait_for_hart1_done();
-void __attribute__((noinline)) wait_for_hart2_done();
-void __attribute__((noinline)) wait_for_hart3_done();
-void __attribute__((noinline)) wait_for_hart4_done();
-void __attribute__((noinline)) wait_for_hart5_done();
-void __attribute__((noinline)) wait_for_hart6_done();
-void __attribute__((noinline)) wait_for_hart7_done();
 void wait_for_all_harts_done();
 uint32_t get_mhartid();
 

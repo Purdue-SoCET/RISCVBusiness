@@ -5,7 +5,7 @@
 #define ARRAY_SIZE 256
 #define DIM_SIZE 16
 
-#define NUM_HART 8
+#define NUM_HART 1
 
 static uint32_t input1_data[ARRAY_SIZE] = {
     0, 3, 2, 0, 3, 1, 0, 3, 2, 3, 2, 0, 3, 3, 1, 2, 3, 0, 0, 1, 1, 1, 2, 3,
@@ -62,44 +62,82 @@ void matmul(const size_t coreid, const size_t ncores, const size_t lda,
         for (j = start; j < (start + block); j++) {
             uint32_t sum = 0;
             for (k = 0; k < lda; k++) {
+            for (k = 0; k < lda; k++) {
                 sum += A[j * lda + k] * B[k * lda + i];
+            }
             }
             C[i + j * lda] = sum;
         }
     }
 }
 
-void verifydata() {
-    size_t start = 0;
-    size_t end = ARRAY_SIZE;
-    for (int i = start; i < end; i++) {
+void verifydata_per_core(int coreid, const size_t ncores, uint32_t results[], uint32_t verify_data[]) {
+    size_t start = ARRAY_SIZE / ncores * coreid;
+    size_t end = ARRAY_SIZE / ncores * (coreid + 1);
+
+    print("Verifying result for hart %d.\n", coreid);
+    for(int i = start; i < end; i++) {
         if (results[i] != verify_data[i]) {
             print("Incorrect data at %d!\n", i);
             return;
         }
     }
+    print("Correct data in hart %d!\n", coreid);
+}
+
+void warmup() {
+    volatile uint32_t temp = 0;
+    for(int i = 0; i < ARRAY_SIZE; i ++) {
+        temp = input1_data[i];
+    }
+    for(int i = 0; i < ARRAY_SIZE; i ++) {
+        temp = input2_data[i];
+    }
+}
+
+void verifydata(uint32_t results[], uint32_t verify_data[]) {
+    size_t start = 0;
+    size_t end = ARRAY_SIZE;
+
+    print("Verifying result from hart 0.\n");
+    for(int i = start; i < end; i++) {
+        if (results[i] != verify_data[i]) {
+            print("Incorrect data at %d!\n", i);
+            return;
+        }
+    }
+    print("Data is correct!\n");
+    flag = 1;
 }
 
 void hart0_main() {
+    warmup();
+
     int mhartid = 0;
     uint32_t beginning_cycle = get_cycles();
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
-    uint32_t ending_cycle = get_cycles();
-    uint32_t cycle = ending_cycle - beginning_cycle;
     hart_done = 1;
     wait_for_all_harts_done(NUM_HART);
-    verifydata();
-    print("Took %x cycles\n", cycle);
-    flag = 1;
+
+    uint32_t ending_cycle = get_cycles();
+    uint32_t cycle = ending_cycle - beginning_cycle;
+
+    verifydata_per_core(0, NUM_HART, results, verify_data);
+    verifydata(results, verify_data);
+
     print("hart0 done\n");
+    print("Took %d cycles\n", cycle);
     return;
 }
 
-#define HARTN_MAIN(n)                                                          \
-    void hart##n##_main() {                                                    \
-        matmul(n, NUM_HART, DIM_SIZE, input1_data, input2_data, results);      \
-        hart##n##_done = 1;                                                    \
-        print("hart" #n " done\n");                                            \
+#define HARTN_MAIN(n)                                                         \
+    void hart##n##_main() {                                                   \
+        warmup();                                                             \
+        matmul(n, NUM_HART, DIM_SIZE, input1_data, input2_data, results);     \
+        hart##n##_done = 1;                                                   \
+        print("hart" #n " done\n");                                           \
+        verifydata_per_core(n, NUM_HART, results, verify_data);               \
+        return;                                                               \
     }
 
 #if NUM_HART > 1
