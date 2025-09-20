@@ -9,7 +9,7 @@
 #define N 16
 #include "merge.h"
 
-#define NUM_HART 4
+#define NUM_HART 1
 
 // #define WARMUP
 
@@ -221,7 +221,7 @@ void hart0_main() {
     }
 
     int ending_cycle = get_cycles();
-    print("Took %x cycles\n", ending_cycle - beginning_cycle);
+    print("Took %d cycles\n", ending_cycle - beginning_cycle);
     check_sorted();
     flag = 1;
 }
