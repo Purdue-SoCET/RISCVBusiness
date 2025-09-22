@@ -1,0 +1,195 @@
+# Microarchitectural Configurations
+microarch_params:
+  # Global configurations
+  num_harts: 8
+
+  xlen: 32
+
+  bus_endianness: "big"
+  bus_interface_type: "generic_bus_if"
+
+  infinite_loop_halts: "true"
+
+  # Per-core configurations 
+  core0_params:
+    # ISA Configuration
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"
+
+    # Branch/Jump Configurations
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+
+    # Cache configurations
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+
+    # Multiplier settings
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core1_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"   
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core2_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"          
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core3_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"            
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core4_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"          
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core5_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"          
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core6_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"          
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
+
+  core7_params:
+    pmp_minimum_granularity: "64K" 
+    supervisor_enabled: "disabled" 
+    address_translation_enabled: "disabled"
+    isa: "rv32izifencei_zicsr"          
+    br_predictor_type: "not_taken"
+    btb_size: 128
+    use_ras: "false"
+    cache_config: "separate"
+    dcache_type: "l1"
+    dcache_size: 1024
+    dcache_block_size: 2
+    dcache_assoc: 1
+    icache_type: "l1"
+    icache_size: 1024
+    icache_block_size: 2
+    icache_assoc: 1
+    noncache_start_addr: 32'hF000_0000
+    tlb_entries: 16
+    multiplier_params:
+      multiplier_select: "shift_add_multiplier"
