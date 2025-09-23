@@ -30,7 +30,9 @@
 `include "rv32i_reg_file_if.vh"
 `include "alu_if.vh"
 
-module stage3_execute_stage (
+module stage3_execute_stage #(
+    parameter HART_ID
+) (
     input CLK,
     input nRST,
     stage3_fetch_execute_if.execute fetch_ex_if,
@@ -71,7 +73,7 @@ module stage3_execute_stage (
             : fetch_ex_if.fetch_ex_reg.instr;
 
     // Control unit, inputs are post-decompression
-    control_unit cu (
+    control_unit #(.HART_ID(HART_ID)) cu (
         .cu_if(cu_if),
         .rf_if(rf_if),
         .prv_pipe_if(prv_pipe_if)
@@ -109,7 +111,7 @@ module stage3_execute_stage (
     jump_calc jump_calc (.*);
     branch_res branch_res (.br_if(branch_if));
 
-    rv32m_wrapper RV32M_FU (
+    rv32m_wrapper #(.HART_ID(HART_ID)) RV32M_FU (
         .CLK(CLK),
         .nRST(nRST),
         .rv32m_start(cu_if.rv32m_control.select && !hazard_if.mem_use_stall),
@@ -120,7 +122,7 @@ module stage3_execute_stage (
         .rv32m_out(rv32m_out)
     );
 
-    rv32b_wrapper RV32B_FU(
+    rv32b_wrapper #(.HART_ID(HART_ID)) RV32B_FU(
         .rv32b_a(alu_if.port_a),
         .rv32b_b(alu_if.port_b),
         .operation(cu_if.rv32b_control.op),
@@ -128,7 +130,7 @@ module stage3_execute_stage (
         .rv32b_out(rv32b_out)
     );
 
-    rv32zc_wrapper RV32ZC_FU(
+    rv32zc_wrapper #(.HART_ID(HART_ID)) RV32ZC_FU(
         .rv32zc_a(alu_if.port_a),
         .rv32zc_b(alu_if.port_b),
         .operation(cu_if.rv32zc_control.op),

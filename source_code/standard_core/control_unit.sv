@@ -29,7 +29,9 @@
 `include "rv32i_reg_file_if.vh"
 `include "decompressor_if.vh"
 
-module control_unit (
+module control_unit #(
+    parameter HART_ID
+) (
     control_unit_if.control_unit       cu_if,
     rv32i_reg_file_if.cu               rf_if,
     prv_pipeline_if.cu                 prv_pipe_if

@@ -1,6 +1,8 @@
 `include "component_selection_defines.vh"
 
-module rv32b_wrapper(
+module rv32b_wrapper #(
+    parameter HART_ID
+) (
     input rv32b_pkg::rv32b_op_t operation,
     input [31:0] rv32b_a,
     input [31:0] rv32b_b,

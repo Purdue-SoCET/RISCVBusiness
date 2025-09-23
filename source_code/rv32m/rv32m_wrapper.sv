@@ -1,6 +1,8 @@
 `include "component_selection_defines.vh"
 
-module rv32m_wrapper(
+module rv32m_wrapper #(
+    parameter HART_ID
+) (
     input CLK,
     input nRST,
     input rv32m_start,
@@ -11,6 +13,7 @@ module rv32m_wrapper(
     output logic [31:0] rv32m_out
 );
     import rv32m_pkg::*;
+    import core_configuration_pkg::*;
 
     `ifdef RV32M_SUPPORTED
     rv32m_enabled RV32M(.*);
