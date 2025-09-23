@@ -15,10 +15,19 @@ module rv32m_wrapper #(
     import rv32m_pkg::*;
     import core_configuration_pkg::*;
 
-    `ifdef RV32M_SUPPORTED
-    rv32m_enabled RV32M(.*);
-    `else
-    rv32m_disabled RV32M(.*);
-    `endif
+    // `ifdef RV32M_SUPPORTED
+    // rv32m_enabled RV32M(.*);
+    // `else
+    // rv32m_disabled RV32M(.*);
+    // `endif
+
+    generate
+        if(CORE_CONFIG[HART_ID][M]) begin
+            rv32m_enabled RV32M(.*);
+        end
+        else begin
+            rv32m_disabled RV32M(.*);
+        end
+    endgenerate
 
 endmodule
