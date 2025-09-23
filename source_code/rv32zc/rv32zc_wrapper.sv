@@ -1,6 +1,8 @@
 `include "component_selection_defines.vh"
 
-module rv32zc_wrapper(
+module rv32zc_wrapper #(
+    parameter HART_ID
+) (
     input rv32zc_pkg::rv32zc_op_t operation,
     input [31:0] rv32zc_a,
     input [31:0] rv32zc_b,
