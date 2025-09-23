@@ -5,14 +5,15 @@ localparam NUM_HARTS = 2; // Included to use it as array declaration
 // ISA extensions
 localparam BASE_ISA[NUM_HARTS] = {"RV32E", "RV32I"};
 
+// Packed struct is MSB - LSB
 typedef struct packed {
-    bit RV32M;
-    bit RV32A;
-    bit RV32C;
-    bit RV32B;
-    bit RV32ZICOND;
-    bit RV32ZIFENCEI;
     bit RV32ZICSR;
+    bit RV32ZIFENCEI;
+    bit RV32ZICOND;
+    bit RV32B;
+    bit RV32C;
+    bit RV32A;
+    bit RV32M;
 } isa_extension_t;
 
 typedef enum int {  
