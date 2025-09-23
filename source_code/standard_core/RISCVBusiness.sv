@@ -61,7 +61,7 @@ module RISCVBusiness #(
 
     logic pipeline_wfi;
 
-    stage3 #(.RESET_PC(RESET_PC)) pipeline(
+    stage3 #(.RESET_PC(RESET_PC), .HART_ID(HART_ID)) pipeline(
         .CLK(CLK),
         .nRST(nRST),
         .igen_bus_if(tspp_icache_gen_bus_if),
