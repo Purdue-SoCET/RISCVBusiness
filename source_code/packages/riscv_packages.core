@@ -14,6 +14,7 @@ filesets:
             - rv32a_pkg.sv
             - rv32b_pkg.sv
             - rv32zc_pkg.sv
+            - core_configuration_pkg.sv
         file_type: systemVerilogSource
 
 targets:
