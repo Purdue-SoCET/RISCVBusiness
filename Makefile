@@ -75,3 +75,6 @@ TARGET = hpm_wrapper
 hpmsim:
 	fusesoc --cores-root . run --target sim $(TARGET)
 
+hpmwave:
+	gtkwave build/socet_performance_counters_hpm_wrapper_1.0.0/sim-verilator/waveform.fst
+
