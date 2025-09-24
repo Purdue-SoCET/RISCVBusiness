@@ -7,7 +7,7 @@ module hpm #(
     input logic clk,
     input logic n_rst,
 
-    input logic enable_array [NUM_PEFORMANCE_COUNTERS-1 : 0],
+    input logic [NUM_PEFORMANCE_COUNTERS-1 : 0] enable_array,
 
     priv_ext_if.ext priv
 );

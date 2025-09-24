@@ -70,3 +70,8 @@ SRCS = \
 hpmlint:
 	$(VERILATOR) --lint-only --Wno-fatal $(INCLUDE_DIRS) $(SRCS)
 
+TARGET = hpm_wrapper
+
+hpmsim:
+	fusesoc --cores-root . run --target sim $(TARGET)
+
