@@ -1,0 +1,76 @@
+[*]
+[*] GTKWave Analyzer v3.3.124 (w)1999-2025 BSI
+[*] Wed Sep 24 21:19:08 2025
+[*]
+[dumpfile] "/home/asicfab/a/wunderld/AFT-dev/RISCVBusiness/build/socet_performance_counters_hpm_wrapper_1.0.0/sim-verilator/waveform.fst"
+[dumpfile_mtime] "Wed Sep 24 20:24:28 2025"
+[dumpfile_size] 4706
+[savefile] "/home/asicfab/a/wunderld/AFT-dev/RISCVBusiness/tb_hpm.gtkw"
+[timestart] 0
+[size] 1920 900
+[pos] -1 -1
+*-13.800000 62040 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] tb_hpm.
+[treeopen] tb_hpm.DUT.
+[treeopen] tb_hpm.DUT.u_hpm.
+[sst_width] 275
+[signals_width] 368
+[sst_expanded] 1
+[sst_vpaned_height] 436
+@201
+-Clock / Reset
+@28
+tb_hpm.DUT.clk
+tb_hpm.DUT.n_rst
+@200
+-HPM Inputs
+@28
+tb_hpm.DUT.priv_csr_active
+@22
+tb_hpm.DUT.priv_csr_addr[11:0]
+tb_hpm.DUT.priv_value_in[31:0]
+tb_hpm.DUT.enable_array[31:0]
+@200
+-HPM Outputs
+@22
+tb_hpm.DUT.priv_value_out[31:0]
+@28
+tb_hpm.DUT.priv_ack
+tb_hpm.DUT.priv_invalid_csr
+@200
+-HPM Internal Counter Regs
+@22
+tb_hpm.DUT.u_hpm.count_out[0][63:0]
+tb_hpm.DUT.u_hpm.count_out[1][63:0]
+tb_hpm.DUT.u_hpm.count_out[2][63:0]
+tb_hpm.DUT.u_hpm.count_out[3][63:0]
+tb_hpm.DUT.u_hpm.count_out[4][63:0]
+tb_hpm.DUT.u_hpm.count_out[5][63:0]
+tb_hpm.DUT.u_hpm.count_out[6][63:0]
+tb_hpm.DUT.u_hpm.count_out[7][63:0]
+tb_hpm.DUT.u_hpm.count_out[8][63:0]
+tb_hpm.DUT.u_hpm.count_out[9][63:0]
+tb_hpm.DUT.u_hpm.count_out[10][63:0]
+tb_hpm.DUT.u_hpm.count_out[11][63:0]
+tb_hpm.DUT.u_hpm.count_out[12][63:0]
+tb_hpm.DUT.u_hpm.count_out[13][63:0]
+tb_hpm.DUT.u_hpm.count_out[14][63:0]
+tb_hpm.DUT.u_hpm.count_out[15][63:0]
+tb_hpm.DUT.u_hpm.count_out[16][63:0]
+tb_hpm.DUT.u_hpm.count_out[17][63:0]
+tb_hpm.DUT.u_hpm.count_out[18][63:0]
+tb_hpm.DUT.u_hpm.count_out[19][63:0]
+tb_hpm.DUT.u_hpm.count_out[20][63:0]
+tb_hpm.DUT.u_hpm.count_out[21][63:0]
+tb_hpm.DUT.u_hpm.count_out[22][63:0]
+tb_hpm.DUT.u_hpm.count_out[23][63:0]
+tb_hpm.DUT.u_hpm.count_out[24][63:0]
+tb_hpm.DUT.u_hpm.count_out[25][63:0]
+tb_hpm.DUT.u_hpm.count_out[26][63:0]
+tb_hpm.DUT.u_hpm.count_out[27][63:0]
+tb_hpm.DUT.u_hpm.count_out[28][63:0]
+tb_hpm.DUT.u_hpm.count_out[29][63:0]
+tb_hpm.DUT.u_hpm.count_out[30][63:0]
+tb_hpm.DUT.u_hpm.count_out[31][63:0]
+[pattern_trace] 1
+[pattern_trace] 0
