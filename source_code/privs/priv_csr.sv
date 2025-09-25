@@ -416,30 +416,30 @@ module priv_csr #(
       if (prv_intern_if.valid_write) begin
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
-            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR_ENABLED == "disabled")) begin
-              assert(SUPERVISOR_ENABLED == "enabled");
+            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR == "disabled")) begin
+              assert(SUPERVISOR == "enabled");
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
               mstatus_next.mpp = priv_level_t'(nxt_csr_val[12:11]);
             end
-            mstatus_next.sie = nxt_csr_val[1] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.sie = nxt_csr_val[1] && SUPERVISOR == "enabled";
             mstatus_next.mie = nxt_csr_val[3];
-            mstatus_next.spie = nxt_csr_val[5] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.spie = nxt_csr_val[5] && SUPERVISOR == "enabled";
             mstatus_next.mpie = nxt_csr_val[7];
-            mstatus_next.spp = nxt_csr_val[8] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.spp = nxt_csr_val[8] && SUPERVISOR == "enabled";
             mstatus_next.mprv = nxt_csr_val[17];
-            mstatus_next.sum = nxt_csr_val[18] && SUPERVISOR_ENABLED == "enabled" && `ADDRESS_TRANSLATION == "enabled";
-            mstatus_next.mxr = nxt_csr_val[19] && SUPERVISOR_ENABLED == "enabled";
-            mstatus_next.tvm = nxt_csr_val[20] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.sum = nxt_csr_val[18] && SUPERVISOR == "enabled" && ADDRESS_TRANSLATION == "enabled";
+            mstatus_next.mxr = nxt_csr_val[19] && SUPERVISOR == "enabled";
+            mstatus_next.tvm = nxt_csr_val[20] && SUPERVISOR == "enabled";
             mstatus_next.tw = nxt_csr_val[21]; // RO-zero if no less privileged modes other than M-mode (we have U-mode regardless!)
-            mstatus_next.tsr = nxt_csr_val[22] && SUPERVISOR_ENABLED == "enabled";
+            mstatus_next.tsr = nxt_csr_val[22] && SUPERVISOR == "enabled";
             
             `ifdef SMODE_SUPPORTED
             // Update sstatus
             sstatus_next.sie = mstatus_next.sie;
             sstatus_next.spie = mstatus_next.spie;
             sstatus_next.spp = mstatus_next.spp;
-            sstatus_next.sum = mstatus_next.sum && `ADDRESS_TRANSLATION == "enabled";
+            sstatus_next.sum = mstatus_next.sum && ADDRESS_TRANSLATION == "enabled";
             sstatus_next.mxr = mstatus_next.mxr;
             `endif // SMODE_SUPPORTED
           end
@@ -472,11 +472,11 @@ module priv_csr #(
           end
           `endif // SMODE_SUPPORTED
           MIE_ADDR: begin
-            mie_next.ssie = nxt_csr_val[1] && SUPERVISOR_ENABLED == "enabled";
+            mie_next.ssie = nxt_csr_val[1] && SUPERVISOR == "enabled";
             mie_next.msie = nxt_csr_val[3];
-            mie_next.stie = nxt_csr_val[5] && SUPERVISOR_ENABLED == "enabled";
+            mie_next.stie = nxt_csr_val[5] && SUPERVISOR == "enabled";
             mie_next.mtie = nxt_csr_val[7];
-            mie_next.seie = nxt_csr_val[9] && SUPERVISOR_ENABLED == "enabled";
+            mie_next.seie = nxt_csr_val[9] && SUPERVISOR == "enabled";
             mie_next.meie = nxt_csr_val[11];
 
             `ifdef SMODE_SUPPORTED
@@ -488,11 +488,11 @@ module priv_csr #(
           end
 
           MIP_ADDR: begin
-            mip_next.ssip = nxt_csr_val[1] && SUPERVISOR_ENABLED == "enabled";
+            mip_next.ssip = nxt_csr_val[1] && SUPERVISOR == "enabled";
             mip_next.msip = nxt_csr_val[3];
-            mip_next.stip = nxt_csr_val[5] && SUPERVISOR_ENABLED == "enabled";
+            mip_next.stip = nxt_csr_val[5] && SUPERVISOR == "enabled";
             mip_next.mtip = nxt_csr_val[7];
-            mip_next.seip = nxt_csr_val[9] && SUPERVISOR_ENABLED == "enabled";
+            mip_next.seip = nxt_csr_val[9] && SUPERVISOR == "enabled";
             mip_next.meip = nxt_csr_val[11];
 
             `ifdef SMODE_SUPPORTED
@@ -547,7 +547,7 @@ module priv_csr #(
           SATP_ADDR: begin
             satp_next.ppn = nxt_csr_val[21:0];
             satp_next.asid = nxt_csr_val[30:22];
-            satp_next.mode = `ADDRESS_TRANSLATION == "enabled" ? nxt_csr_val[31] : 0;
+            satp_next.mode = ADDRESS_TRANSLATION == "enabled" ? nxt_csr_val[31] : 0;
           end
           SSTATUS_ADDR: begin
             sstatus_next.sie = nxt_csr_val[1];
@@ -840,7 +840,7 @@ module priv_csr #(
           (csr_operation) &
           (
               (isUSMode & ~mcounteren_bit) |
-              (SUPERVISOR_ENABLED == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
+              (SUPERVISOR == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
           )
       );
   endfunction

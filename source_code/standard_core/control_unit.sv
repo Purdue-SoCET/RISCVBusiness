@@ -229,7 +229,7 @@ module control_unit (
     assign tsr_trap = cu_if.sret_insn && prv_pipe_if.mstatus.tsr && prv_pipe_if.curr_privilege_level == S_MODE;
 
     // Trap when we have a supervisor instruction and the Supervisor Extension is disabled
-    assign disabled_smode_trap = (cu_if.sfence || cu_if.sret_insn) && SUPERVISOR_ENABLED == "disabled";
+    assign disabled_smode_trap = (cu_if.sfence || cu_if.sret_insn) && SUPERVISOR == "disabled";
 
     // Illegal instruction logic
     assign cu_if.illegal_insn = (maybe_illegal && !claimed) || tvm_trap || tw_trap || tsr_trap || disabled_smode_trap;

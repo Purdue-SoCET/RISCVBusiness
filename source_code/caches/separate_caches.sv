@@ -173,7 +173,7 @@ module separate_caches(
         endcase
     endgenerate
 
-`ifdef ADDRESS_TRANSLATION_ENABLED
+`ifdef ADDRESS_TRANSLATION
     // TLB busses
     generic_bus_if itlb_gen_bus_if ();
     generic_bus_if dtlb_gen_bus_if ();

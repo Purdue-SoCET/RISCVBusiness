@@ -72,7 +72,7 @@ ISA_PARAMS = \
   {
     'xlen' : [32],
     'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys()),
-    'supervisor_enabled' : [ 'enabled', 'disabled' ],
+    'supervisor' : [ 'enabled', 'disabled' ],
     'address_translation' : [ 'enabled', 'disabled' ],
     'isa' : []
   }
@@ -237,17 +237,19 @@ def create_include(config):
           line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
         elif 'pmp_minimum_granularity' == isa_param:
           line += isa_param.upper() + ' = ' + str(PMP_MINIMUM_GRANULARITY[isa_params[isa_param]])
-        elif 'supervisor_enabled' == isa_param and isa_params[isa_param] == 'enabled':
+        elif 'supervisor' == isa_param and isa_params[isa_param] == 'enabled':
           line  = '`define SMODE_SUPPORTED\n'
           line += 'localparam ' + isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
         elif 'address_translation' == isa_param:
-          # supervisor enabled should be enabled if address translation is on
-          if isa_params[isa_param] == 'enabled' and isa_params['supervisor_enabled'] == 'disabled':
+          # supervisor should be enabled if address translation is on
+          if isa_params[isa_param] == 'enabled' and isa_params['supervisor'] == 'disabled':
             err = 'Illegal configuration. ' + isa_param  + ' == ' + isa_params[isa_param]
-            err += ' is not a valid configuration with supervisor_enabled == disabled'
+            err += ' is not a valid configuration with supervisor == disabled'
             sys.exit(err)
-          line = f'`define {isa_param.upper()} "{(str(isa_params[isa_param]) if isa_params["supervisor_enabled"] == "enabled" else "disabled")}"\n'
-          line += 'localparam ' + isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
+          line = ''
+          if isa_params[isa_param] == 'enabled' and isa_params['supervisor'] == 'enabled':
+            line = f'`define {isa_param.upper()}\n'
+          line += 'localparam ' + isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor'] == 'enabled' else 'disabled') + '"'
         elif 'isa' == isa_param:
           base_isa, riscv_ext = parse_riscv_isa_string(isa_params[isa_param])
           continue
