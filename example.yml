@@ -2,8 +2,8 @@
 isa_params:  
   xlen : 32
   pmp_minimum_granularity : "64K"
-  supervisor_enabled : "disabled"
-  address_translation_enabled : "disabled"
+  supervisor : "disabled"
+  address_translation : "disabled"
   isa: "rv32izifencei_zicsr"
 
 # Microarchitectural Configurations

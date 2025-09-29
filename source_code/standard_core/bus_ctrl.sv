@@ -30,7 +30,7 @@ module bus_ctrl #(
     parameter CPUS = 2
 )(
     input logic CLK, nRST,
-    bus_ctrl_if.cc ccif
+    back_side_bus_if.cc ccif
 );
     // localparams/imports
     localparam CLEAR_LENGTH = $clog2(BLOCK_SIZE) + 2;

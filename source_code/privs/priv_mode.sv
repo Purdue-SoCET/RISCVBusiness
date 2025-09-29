@@ -49,17 +49,17 @@ module priv_mode (
         next_priv_level = curr_priv_level;
         if (prv_intern_if.intr) begin
             // if interrupt into s mode else m mode
-            next_priv_level = prv_intern_if.intr_to_s && SUPERVISOR_ENABLED == "enabled" ? S_MODE : M_MODE;
+            next_priv_level = prv_intern_if.intr_to_s && SUPERVISOR == "enabled" ? S_MODE : M_MODE;
         end else if (prv_intern_if.mret) begin
             next_priv_level = prv_intern_if.curr_mstatus.mpp;
         end else if (prv_intern_if.sret) begin
-            next_priv_level = prv_intern_if.curr_mstatus.spp && SUPERVISOR_ENABLED == "enabled" ? S_MODE : U_MODE; 
+            next_priv_level = prv_intern_if.curr_mstatus.spp && SUPERVISOR == "enabled" ? S_MODE : U_MODE; 
         end
     end
 
     assign prv_intern_if.curr_privilege_level = curr_priv_level;
     assign prv_intern_if.isUMode = curr_priv_level == U_MODE;
-    assign prv_intern_if.isSMode = (curr_priv_level == S_MODE) & (SUPERVISOR_ENABLED == "enabled");  // supervisor enabled sanity check
+    assign prv_intern_if.isSMode = (curr_priv_level == S_MODE) & (SUPERVISOR == "enabled");  // supervisor enabled sanity check
     assign prv_intern_if.isMMode = curr_priv_level == M_MODE;
 
 endmodule

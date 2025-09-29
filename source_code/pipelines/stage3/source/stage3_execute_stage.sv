@@ -84,8 +84,6 @@ module stage3_execute_stage (
         //.rmgmt_req_reg_w(rm_if.req_reg_w)
     );
 
-    assign wfi = cu_if.wfi;  //Added by rkannank
-
     generate
         if (BASE_ISA == "RV32E") begin : g_rfile_select
             rv32e_reg_file rf (
@@ -132,7 +130,7 @@ module stage3_execute_stage (
     rv32b_wrapper RV32B_FU(
         .rv32b_a(alu_if.port_a),
         .rv32b_b(alu_if.port_b),
-        .operation(cu_if.rv32b_control),
+        .operation(cu_if.rv32b_control.op),
         .rv32b_done(rv32b_done),
         .rv32b_out(rv32b_out)
     );
@@ -140,7 +138,7 @@ module stage3_execute_stage (
     rv32zc_wrapper RV32ZC_FU(
         .rv32zc_a(alu_if.port_a),
         .rv32zc_b(alu_if.port_b),
-        .operation(cu_if.rv32zc_control),
+        .operation(cu_if.rv32zc_control.op),
         .rv32zc_done(rv32zc_done),
         .rv32zc_out(rv32zc_out)
     );
