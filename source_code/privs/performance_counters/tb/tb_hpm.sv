@@ -4,7 +4,7 @@
 module tb_hpm ();
 
     localparam CLK_PERIOD = 10ns;
-    localparam NUM_TEST_CASES = 1;
+    localparam NUM_TEST_CASES = 2;
 
     localparam ADDRLOWERCOUNTER1 = 12'hC00;
     localparam ADDRLOWERCOUNTER2 = 12'hC01;
@@ -125,6 +125,7 @@ module tb_hpm ();
         //n_rst, [31:0]enable_array, [11:0]priv_csr_addr, [31:0]priv_value_in, priv_csr_active, ind
 
         fill_tv(1, 32'h0000FFFF, ADDRLOWERCOUNTER1, 32'hCAFEBABE, 1, 0);
+	fill_tv(1, 32'hFFFF0000, ADDRLOWERCOUNTER2, 32'hAAAAAAAA, 1, 1);
 
         for(i = 0; i < NUM_TEST_CASES; i++) begin
             n_rst = hpm_tv[i].tv_n_rst;
