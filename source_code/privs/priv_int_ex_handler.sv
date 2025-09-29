@@ -139,7 +139,7 @@ module priv_int_ex_handler (
     assign prv_intern_if.intr = exception | interrupt_fired | interrupt_fired_s;
 
     // if not m-mode intr and (deleg ex or deleg int and has right conditions to go to S-Mode)
-    assign prv_intern_if.intr_to_s = SUPERVISOR_ENABLED == "enabled" & !interrupt_fired & 
+    assign prv_intern_if.intr_to_s = SUPERVISOR == "enabled" & !interrupt_fired & 
                                         ((|{prv_intern_if.curr_medeleg[30:0] & ex_src_bit} & exception) |
                                             ((|{prv_intern_if.curr_mideleg[30:0] & int_src_bit & SIE_MASK}) & interrupt_fired_s &
                                                 ((prv_intern_if.curr_privilege_level == S_MODE & prv_intern_if.curr_mstatus.sie) |
@@ -150,7 +150,7 @@ module priv_int_ex_handler (
                                 ((prv_intern_if.curr_mie.mtie & prv_intern_if.curr_mip.mtip) |
                                  (prv_intern_if.curr_mie.msie & prv_intern_if.curr_mip.msip) |
                                  (prv_intern_if.curr_mie.meie & prv_intern_if.curr_mip.meip)));
-    assign interrupt_fired_s = SUPERVISOR_ENABLED == "enabled" & (prv_intern_if.curr_mstatus.sie &
+    assign interrupt_fired_s = SUPERVISOR == "enabled" & (prv_intern_if.curr_mstatus.sie &
                                 ((prv_intern_if.curr_mie.stie & prv_intern_if.curr_mip.stip) |
                                  (prv_intern_if.curr_mie.ssie & prv_intern_if.curr_mip.ssip) |
                                  (prv_intern_if.curr_mie.seie & prv_intern_if.curr_mip.seip)));

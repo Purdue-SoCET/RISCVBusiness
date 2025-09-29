@@ -159,6 +159,7 @@ module stage3_mem_stage(
     always_comb begin
         iflushed_next = iflushed;
         dflushed_next = dflushed;
+        ifence_reg_next = 0;
         if (ifence_pulse) begin
             ifence_reg_next = 1;
             iflushed_next = 0;
@@ -212,7 +213,7 @@ module stage3_mem_stage(
             itlb_fenced_next = 1;
         if (cc_if.dtlb_fence_done)
             dtlb_fenced_next = 1;
-        if ((itlb_fenced_next && dtlb_fenced_next) || ADDRESS_TRANSLATION_ENABLED == "disabled") // hardwired TLB fences to be done if AT is disabled in ISA param
+        if ((itlb_fenced_next && dtlb_fenced_next) || ADDRESS_TRANSLATION == "disabled") // hardwired TLB fences to be done if AT is disabled in ISA param
             itlb_fence_reg_next = 0;
     end
 
@@ -222,7 +223,7 @@ module stage3_mem_stage(
     // Note: Some hazard unit signals are assigned below in the CSR section
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
-    assign hazard_if.sfence = ex_mem_if.ex_mem_reg.sfence & SUPERVISOR_ENABLED == "enabled";
+    assign hazard_if.sfence = ex_mem_if.ex_mem_reg.sfence & SUPERVISOR == "enabled";
     assign hazard_if.fence_stall = (ifence_reg && !(iflushed && dflushed)) || (itlb_fence_reg && !(itlb_fenced && dtlb_fenced));
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
@@ -265,7 +266,7 @@ module stage3_mem_stage(
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
     assign hazard_if.mret = ex_mem_if.ex_mem_reg.mret_insn;
-    assign hazard_if.sret = ex_mem_if.ex_mem_reg.sret_insn & SUPERVISOR_ENABLED == "enabled";
+    assign hazard_if.sret = ex_mem_if.ex_mem_reg.sret_insn & SUPERVISOR == "enabled";
     assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
     assign hazard_if.fault_insn_page = prv_pipe_if.fault_insn_page;
     assign hazard_if.fault_load_page = prv_pipe_if.fault_load_page;

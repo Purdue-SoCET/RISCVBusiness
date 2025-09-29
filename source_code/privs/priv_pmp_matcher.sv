@@ -39,14 +39,17 @@ module priv_pmp_matcher(
   localparam NAPOT_ADDR_GRAN = NAPOT_ADDR_BITS - 1;
   localparam NAPOT_MATCHES   = XLEN - NAPOT_ADDR_GRAN + 1; // 32 - (granularity) + 1 bit for all 1's
 
+  logic [(NAPOT_MATCHES-3):0][(XLEN-1):0] napot_value_to_match;
   logic [(NAPOT_MATCHES-1):0] napot_match;
 
   // NAPOT configurable granularity matching -> area optimzied, yields lower area with lower granularity
   genvar i;
   generate
-    for (i = 0; i < (NAPOT_MATCHES - 2); i++) begin
-      assign napot_match[i] = cfg_addr[(i + NAPOT_ADDR_GRAN):0] == {~(32'b1 << (i + NAPOT_ADDR_GRAN))}[(i + NAPOT_ADDR_GRAN):0] ?
-                             phys_addr[31:(i + NAPOT_ADDR_BITS)] == cfg_addr[31:(i + NAPOT_ADDR_BITS)] : 0;
+    for (i = 0; i < (NAPOT_MATCHES - 2); i++) begin : NAPOT_MATCHING
+      assign napot_value_to_match[i] = {~(32'b1 << (i + NAPOT_ADDR_GRAN))};
+      assign napot_match[i] = cfg_addr[(i + NAPOT_ADDR_GRAN):0] == napot_value_to_match[i][(i + NAPOT_ADDR_GRAN):0] ?
+                              phys_addr[31:(i + NAPOT_ADDR_BITS)] == cfg_addr[31:(i + NAPOT_ADDR_BITS)] : 0;
+
     end
   endgenerate
   assign napot_match[NAPOT_MATCHES-2] = cfg_addr == 32'b01111111111111111111111111111111;
