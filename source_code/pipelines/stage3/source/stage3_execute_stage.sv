@@ -30,7 +30,6 @@
 `include "rv32i_reg_file_if.vh"
 `include "alu_if.vh"
 //`include "prv_pipeline_if.vh"
-//`include "risc_mgmt_if.vh"
 `include "rv32c_if.vh"
 
 module stage3_execute_stage (
@@ -40,7 +39,6 @@ module stage3_execute_stage (
     stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hazard_unit_if.execute hazard_if,
     stage3_forwarding_unit_if.execute fw_if,
-    //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif,
     prv_pipeline_if.pipe prv_pipe_if
@@ -63,7 +61,7 @@ module stage3_execute_stage (
     // RV32C inputs
     assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
     assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
-    assign rv32cif.ex_busy = hazard_if.ex_mem_stall; //cu_if.dren | cu_if.dwen | rm_if.risc_mgmt_start;
+    assign rv32cif.ex_busy = hazard_if.ex_mem_stall; //cu_if.dren | cu_if.dwen;
     assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
     //assign rm_if.insn = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
 
