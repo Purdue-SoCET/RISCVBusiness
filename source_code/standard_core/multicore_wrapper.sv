@@ -2,7 +2,6 @@
 `include "component_selection_defines.vh"
 `include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
-`include "sparce_pipeline_if.vh"
 `include "tspp_fetch_execute_if.vh"
 `include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
