@@ -138,7 +138,9 @@ module RISCVBusiness #(
         .sparce_if(sparce_if)
     );
 
-    rv32c_wrapper rv32c (
+    rv32c_wrapper #(
+        .HART_ID(HART_ID)
+    ) rv32c (
         .CLK(CLK),
         .nRST(nRST),
         .rv32cif(rv32cif)

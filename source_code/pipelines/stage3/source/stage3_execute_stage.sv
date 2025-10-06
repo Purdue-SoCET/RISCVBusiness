@@ -50,6 +50,7 @@ module stage3_execute_stage #(
     import rv32i_types_pkg::*;
     import pma_types_pkg::*;
     import stage3_types_pkg::*;
+    import core_configuration_pkg::*;
 
     // Interface declarations
     control_unit_if cu_if ();
@@ -89,7 +90,7 @@ module stage3_execute_stage #(
     assign wfi = cu_if.wfi;  //Added by rkannank
 
     generate
-        if (BASE_ISA == "RV32E") begin : g_rfile_select
+        if (BASE_ISA[HART_ID] == "RV32E") begin : g_rfile_select
             rv32e_reg_file rf (
                 .CLK,
                 .nRST,
