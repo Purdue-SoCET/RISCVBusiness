@@ -13,9 +13,9 @@ from functools import reduce
 # ---------------------------------------------------------------------
 # Output file paths
 # ---------------------------------------------------------------------
-VH_FILE  = "component_selection_defines.vh"   # Global defines
-C_FILE   = "custom_instruction_calls.h"       # Custom instr. header
-PKG_FILE = "core_configuration_pkg.sv"        # Per-core SystemVerilog package
+VH_FILE = 'source_code/include/component_selection_defines.vh'
+C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
+PKG_FILE = "source_code/packages/core_configuration_pkg.sv"        # Per-core SystemVerilog package
 
 # ---------------------------------------------------------------------
 # Legal value dictionaries
