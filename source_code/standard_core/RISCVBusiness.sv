@@ -24,7 +24,6 @@
 
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
-`include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
 `include "sparce_pipeline_if.vh"
 `include "tspp_fetch_execute_if.vh"
@@ -91,16 +90,8 @@ module RISCVBusiness #(
         .mtime(mtime)
     );
 
-    /* TODO: Adding back RISC-MGMT to 3-stage pipeline
-    risc_mgmt_wrapper rmgmt (
-        .CLK  (CLK),
-        .nRST (nRST),
-        .rm_if(rm_if)
-    );
-
-    caches_wrapper #(
-        .HART_ID(HART_ID)
-    ) caches (
+    /* 
+    caches_wrapper caches (
         .CLK(CLK),
         .nRST(nRST),
         .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
