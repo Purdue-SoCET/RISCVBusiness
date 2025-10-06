@@ -1,6 +1,5 @@
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
-`include "risc_mgmt_if.vh"
 `include "cache_control_if.vh"
 `include "sparce_pipeline_if.vh"
 `include "tspp_fetch_execute_if.vh"

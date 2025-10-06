@@ -25,12 +25,10 @@
 
 `include "stage3_hazard_unit_if.vh"
 `include "prv_pipeline_if.vh"
-//`include "risc_mgmt_if.vh"
 
 module stage3_hazard_unit (
     stage3_hazard_unit_if.hazard_unit hazard_if,
     prv_pipeline_if.hazard prv_pipe_if
-    //risc_mgmt_if.ts_hazard rm_if,
     //sparce_pipeline_if.hazard sparce_if
 );
     import alu_types_pkg::*;
