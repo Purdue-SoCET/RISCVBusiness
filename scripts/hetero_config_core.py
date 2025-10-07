@@ -215,6 +215,16 @@ def create_include(config):
         if "bus_interface_type" in uarch_params:
             bus_type = uarch_params["bus_interface_type"].split("_if")[0]
             include_file.write(f"`define BUS_INTERFACE_{bus_type.upper()}\n")
+        
+        include_file.write("\n// RISC-MGMT Extensions:\n")
+        include_file.write("/*`define NUM_EXTENSIONS 6\n")
+        include_file.write("`define RISC_MGMT_EXTENSIONS\t\\\n")
+        include_file.write("    `ADD_EXTENSION(m,0) \\\n")
+        include_file.write("    `ADD_EXTENSION(a,1) \\\n")
+        include_file.write("    `ADD_EXTENSION(c,2) \\\n")
+        include_file.write("    `ADD_EXTENSION(zicond,3) \\\n")
+        include_file.write("    `ADD_EXTENSION(zifencei,4) \\\n")
+        include_file.write("    `ADD_EXTENSION(zicsr,5)*/\n")
 
         include_file.write("\n`endif // COMPONENT_SELECTION_DEFINES_VH\n")
 
