@@ -26,7 +26,9 @@
 `include "cache_control_if.vh"
 `include "component_selection_defines.vh"
 
-module caches_wrapper (
+module caches_wrapper #(
+    parameter HART_ID
+)(
     input logic CLK,
     nRST,
     generic_bus_if.cpu icache_mem_gen_bus_if,
@@ -36,8 +38,10 @@ module caches_wrapper (
     cache_control_if cc_if,
     output logic abort_bus
 );
+    import core_configuration_pkg::*;
+    
     generate
-        case (CACHE_CONFIG)
+        case (CACHE_CONFIG[HART_ID][C])
             "separate": separate_caches sep_caches (.*);
         endcase
     endgenerate
