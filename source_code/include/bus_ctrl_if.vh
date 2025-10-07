@@ -127,7 +127,7 @@ interface back_side_bus_if#(
             `MAP_FRONT_TO_BACK(dREN)
             `MAP_FRONT_TO_BACK(dWEN)
             `MAP_FRONT_TO_BACK(daddr)
-            assign dstore[i] = ccsnoopdone[i] ? snoop_dstore[i] : front_side[i].dstore;
+            `MAP_FRONT_TO_BACK(dstore)
             `MAP_FRONT_TO_BACK(dbyte_en)
             `MAP_FRONT_TO_BACK(ccwrite)
             `MAP_FRONT_TO_BACK(ccsnoophit)

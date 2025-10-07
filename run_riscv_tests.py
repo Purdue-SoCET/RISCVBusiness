@@ -101,7 +101,7 @@ def run_test(fname, env):
     tohost_address = get_hostaddress(fname)
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--notrace']
     if env == 'v':
-        run_cmd.extend(['--max-sim-time', '1000000', '--virtual'])
+        run_cmd.extend(['--max-sim-time', '1000000'])
     run_cmd.append(fname)
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
