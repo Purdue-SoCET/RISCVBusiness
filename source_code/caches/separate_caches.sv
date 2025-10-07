@@ -37,7 +37,7 @@ module separate_caches(
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
     cache_control_if.caches control_if,
-    prv_pipeline_if.cache prv_pipe_if,
+    prv_pipeline_if prv_pipe_if,
     front_side_bus_if.cache dcache_bus_ctrl_if,
     front_side_bus_if.cache icache_bus_ctrl_if,
     output logic abort_bus,

@@ -88,7 +88,7 @@ module multicore_wrapper #(
                 .interrupt_if(interrupt_if),
                 .dcache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
                 .icache_bus_ctrl_if(front_side_bus[HART_ID*2]),
-                .abort_bus(abort_bus)
+                .abort_bus(abort_bus[HART_ID])
             );
 
             // always_comb begin

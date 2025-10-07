@@ -127,7 +127,7 @@ interface back_side_bus_if#(
             `MAP_FRONT_TO_BACK(dREN)
             `MAP_FRONT_TO_BACK(dWEN)
             `MAP_FRONT_TO_BACK(daddr)
-            `MAP_FRONT_TO_BACK(dstore)
+            assign dstore[i] = ccsnoopdone[i] ? snoop_dstore[i] : front_side[i].dstore;
             `MAP_FRONT_TO_BACK(dbyte_en)
             `MAP_FRONT_TO_BACK(ccwrite)
             `MAP_FRONT_TO_BACK(ccsnoophit)
@@ -142,19 +142,6 @@ interface back_side_bus_if#(
             `MAP_BACK_TO_FRONT(ccexclusive)
         end
     endgenerate
-
-    // HACK: dstore becomes multidriven here. memory_controller expects to drive dstore but
-    // this is also used when testbenching
-    `ifndef VERILATOR
-    `ifndef XCELIUM
-    always_comb begin
-        for(int i = 0; i < CPUS; i++) begin
-            if(ccsnoopdone[i]) dstore[i] = snoop_dstore[i];
-            else dstore[i] = driver_dstore[i];
-        end
-    end
-    `endif
-    `endif
 
     // modports
     modport cc(

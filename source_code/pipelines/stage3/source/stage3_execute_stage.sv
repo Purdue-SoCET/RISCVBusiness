@@ -43,7 +43,7 @@ module stage3_execute_stage (
     //risc_mgmt_if.ts_execute rm_if,
     sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif,
-    prv_pipeline_if.pipe prv_pipe_if
+    prv_pipeline_if.cu prv_pipe_if
 );
     import rv32i_types_pkg::*;
     import pma_types_pkg::*;
