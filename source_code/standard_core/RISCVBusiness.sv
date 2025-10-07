@@ -97,7 +97,9 @@ module RISCVBusiness #(
         .rm_if(rm_if)
     );
 
-    caches_wrapper caches (
+    caches_wrapper #(
+        .HART_ID(HART_ID)
+    ) caches (
         .CLK(CLK),
         .nRST(nRST),
         .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
