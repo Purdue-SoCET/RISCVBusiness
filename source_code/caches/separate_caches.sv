@@ -46,7 +46,8 @@ module separate_caches(
 );
     import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
-
+    import core_configuration_pkg::*;
+    
     // TLB signals L1$ needs
     logic itlb_miss, dtlb_miss;
     word_t itlb_hit_data, dtlb_hit_data;
@@ -63,7 +64,7 @@ module separate_caches(
 
     generate
         /* verilator lint_off width */
-        case (DCACHE_TYPE)
+        case (DCACHE_TYPE[HART_ID][C])
             /* verilator lint_on width */
             "pass_through": begin : g_dcache_passthrough
                 pass_through_cache dcache (
@@ -119,7 +120,7 @@ module separate_caches(
 
     generate
         /* verilator lint_off width */
-        case (ICACHE_TYPE)
+        case (ICACHE_TYPE[HART_ID][C])
             /* verilator lint_on width */
             "pass_through": begin : g_icache_passthrough
                 pass_through_cache icache (
