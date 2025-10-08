@@ -140,7 +140,6 @@ def create_pkg(config):
             icache_size.append(str(core["icache_size"]))
             icache_block_size.append(str(core["icache_block_size"]))
             icache_assoc.append(str(core["icache_assoc"]))
-            tlb_entries.append(str(core["tlb_entries"]))
             mults.append(f"\"{core['multiplier_params']['multiplier_select']}\"")
             smode.append("1" if core["supervisor_enabled"] == "enabled" else "0")
             sup.append(f"\"{core['supervisor_enabled']}\"")
@@ -177,8 +176,6 @@ def create_pkg(config):
         pkg.write(arr("ICACHE_SIZE", icache_size))
         pkg.write(arr("ICACHE_BLOCK_SIZE", icache_block_size))
         pkg.write(arr("ICACHE_ASSOC", icache_assoc))
-        pkg.write(arr("TLB_ENTRIES", tlb_entries))
-        pkg.write("\nlocalparam NONCACHE_START_ADDR = 32'hF000_0000;\n\n")
 
         pkg.write("// Multiplier settings\n")
         pkg.write(arr("MULTIPLIER_TYPE", mults, "string"))
@@ -216,6 +213,13 @@ def create_include(config):
             bus_type = uarch_params["bus_interface_type"].split("_if")[0]
             include_file.write(f"`define BUS_INTERFACE_{bus_type.upper()}\n")
         
+        # Add additional global hardware parameters
+        if "tlb_entries" in uarch_params:
+            include_file.write(f"localparam int TLB_ENTRIES = {uarch_params['tlb_entries']};\n")
+
+        if "noncache_start_addr" in uarch_params:
+            include_file.write(f"localparam int NONCACHE_START_ADDR = {uarch_params['noncache_start_addr']};\n")
+
         include_file.write("\n// RISC-MGMT Extensions:\n")
         include_file.write("/*`define NUM_EXTENSIONS 6\n")
         include_file.write("`define RISC_MGMT_EXTENSIONS\t\\\n")
