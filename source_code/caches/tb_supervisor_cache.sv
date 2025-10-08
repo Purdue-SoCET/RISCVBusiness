@@ -67,8 +67,8 @@ module tb_supervisor_cache();
   always #(PERIOD/2) CLK++; 
 
   // test signals
-  generic_bus_if         icache_proc_gen_bus_if (); // Fetch to I$/iTLB
-  generic_bus_if         dcache_proc_gen_bus_if (); // Fetch to D$/dTLB
+  generic_bus_if         icache_proc_gen_bus_if (); // Fetch Stage to I$/iTLB
+  generic_bus_if         dcache_proc_gen_bus_if (); // Memory Stage to D$/dTLB
   generic_bus_if #(.BLOCK_SIZE(2)) out_gen_bus_if         (); // Bus Controller to Memory
   prv_pipeline_if        prv_pipe_if            (); // Priv to TLB
   cache_control_if       control_if             (); // coherence bus to caches
@@ -135,7 +135,7 @@ logic check;
 
 initial begin : MAIN
 
-  assert (SUPERVISOR_ENABLED == "enabled" && ADDRESS_TRANSLATION_ENABLED == "enabled") else begin
+  assert (SUPERVISOR == "enabled" && ADDRESS_TRANSLATION == "enabled") else begin
     $error ("Please enable both the Supervisor and Address Translation to run this test in your core yml, run `make verilate`, and try again.");
   end
 

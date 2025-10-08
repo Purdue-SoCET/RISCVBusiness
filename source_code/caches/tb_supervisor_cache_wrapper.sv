@@ -53,10 +53,13 @@ module supervisor_cache_wrapper(
   generic_bus_if #(.BLOCK_SIZE(2)) icache_mem_gen_bus_if();
   generic_bus_if #(.BLOCK_SIZE(2)) dcache_mem_gen_bus_if();
 
-  bus_ctrl_if bus_ctrl_if();
+  front_side_bus_if front_side_bus [1:0] ();
+  back_side_bus_if #(.CPUS(2)) bus_ctrl_if(
+      .front_side(front_side_bus)
+  );
 
   // modules
-  separate_caches #(.HART_ID(0)) CACHES (
+  separate_caches CACHES (
     .CLK(CLK),
     .nRST(nRST),
     .icache_mem_gen_bus_if(icache_mem_gen_bus_if),
@@ -65,21 +68,25 @@ module supervisor_cache_wrapper(
     .dcache_proc_gen_bus_if(dcache_proc_gen_bus_if),
     .control_if(control_if),
     .prv_pipe_if(prv_pipe_if),
-    .bus_ctrl_if(bus_ctrl_if),
+    .dcache_bus_ctrl_if(front_side_bus[1]),
+    .icache_bus_ctrl_if(front_side_bus[0]),
     .abort_bus(abort_bus),
     .icache_miss(prv_pipe_if.icache_miss),
     .dcache_miss(prv_pipe_if.dcache_miss)
   );
 
   assign bus_ctrl_if.ccabort = abort_bus;
+  assign bus_ctrl_if.l2load = out_gen_bus_if.rdata;
+  assign bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+  assign bus_ctrl_if.l2error = out_gen_bus_if.error;
 
   memory_controller #(
     .NUM_HARTS(1)
   ) MC (
-      .CLK(CLK),
-      .nRST(nRST),
-      .out_gen_bus_if(out_gen_bus_if),
-      .bcif(bus_ctrl_if)
+    .CLK(CLK),
+    .nRST(nRST),
+    .out_gen_bus_if(out_gen_bus_if),
+    .bus_ctrl_if(bus_ctrl_if)
   );
   
 endmodule
