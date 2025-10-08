@@ -46,6 +46,7 @@ index 7bf35cf..4741c40 100644
 +    li sp, 0x90000000;                                                                            \
 +
  #endif
+
 diff --git a/v/amo_emu.c b/v/amo_emu.c
 new file mode 100644
 index 0000000..2d2db27
@@ -303,7 +304,11 @@ index 0000000..2d2db27
 +    __builtin_unreachable();
 +}
 diff --git a/v/vm.c b/v/vm.c
+<<<<<<< HEAD
 index 178d90b..d087cd2 100644
+=======
+index 178d90b..3148bc6 100644
+>>>>>>> 7c9b12b2 (Revise RISCVBusiness for AFT FPGA Build (#94))
 --- a/v/vm.c
 +++ b/v/vm.c
 @@ -22,8 +22,6 @@ extern volatile uint64_t fromhost;
