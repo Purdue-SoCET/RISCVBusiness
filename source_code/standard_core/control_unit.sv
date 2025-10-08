@@ -33,7 +33,7 @@
 module control_unit (
     control_unit_if.control_unit       cu_if,
     rv32i_reg_file_if.cu               rf_if,
-    prv_pipeline_if.pipe               prv_pipe_if,
+    prv_pipeline_if.cu                 prv_pipe_if,
     input logic                        [4:0] rmgmt_rsel_s_0,
     rmgmt_rsel_s_1,
     rmgmt_rsel_d,

@@ -40,12 +40,13 @@ index 7bf35cf..52bb51a 100644
 +    li sp, 0x90000000;                                                                            \
 +
  #endif
+
 diff --git a/v/amo_emu.c b/v/amo_emu.c
 new file mode 100644
 index 0000000..c432389
 --- /dev/null
 +++ b/v/amo_emu.c
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,250 @@
 +#include <stdint.h>
 +
 +#define ILLEGAL_INSN 0x2
@@ -208,6 +209,8 @@ index 0000000..c432389
 +    if (cause == ILLEGAL_INSN) {
 +        uint32_t instr, opcode, rd, rs1, rs2, funct3, funct7;
 +        // Good case: instruction 32 bit aligned
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 +        if (!__builtin_expect(epc & 0x3, 0x00)) {
 +            instr = *(uint32_t *)epc;
 +        } else {
@@ -216,6 +219,7 @@ index 0000000..c432389
 +            uint16_t second = *((uint16_t *)epc + 1);
 +            instr = second << 16 | first;
 +        }
++#pragma GCC diagnostic pop
 +        opcode = instr & 0x0000007F;
 +        rd = (instr & 0x00000F80) >> 7;
 +        rs1 = regs[(instr & 0x000F8000) >> 15];
@@ -294,7 +298,7 @@ index 0000000..c432389
 +    __builtin_unreachable();
 +}
 diff --git a/v/vm.c b/v/vm.c
-index 178d90b..50ec166 100644
+index 178d90b..3148bc6 100644
 --- a/v/vm.c
 +++ b/v/vm.c
 @@ -22,8 +22,6 @@ extern volatile uint64_t fromhost;
@@ -319,7 +323,7 @@ index 178d90b..50ec166 100644
 -    cputchar(*s++);
 +  size_t len = strlen(s);
 +  for (size_t i = 0; i < len; i++) {
-+    cputchar(*s++);  
++    cputchar(*s++);
 +  }
 +  cputchar('\n');
  }
@@ -342,3 +346,17 @@ index 178d90b..50ec166 100644
  
      terminate(n);
    }
+@@ -228,12 +231,7 @@ static void coherence_torture()
+   uint64_t random = ENTROPY;
+   while (1) {
+     uintptr_t paddr = DRAM_BASE + ((random % (2 * (MAX_TEST_PAGES + 1) * PGSIZE)) & -4);
+-#ifdef __riscv_atomic
+-    if (random & 1) // perform a no-op write
+-      asm volatile ("amoadd.w zero, zero, (%0)" :: "r"(paddr));
+-    else // perform a read
+-#endif
+-      asm volatile ("lw zero, (%0)" :: "r"(paddr));
++    asm volatile ("lw zero, (%0)" :: "r"(paddr));
+     random = lfsr63(random);
+   }
+ }
