@@ -65,7 +65,7 @@ module separate_caches#(
 
     generate
         /* verilator lint_off width */
-        case (DCACHE_TYPE[HART_ID][C])
+        case (DCACHE_TYPE[HART_ID])
             /* verilator lint_on width */
             "pass_through": begin : g_dcache_passthrough
                 pass_through_cache dcache (
@@ -93,9 +93,9 @@ module separate_caches#(
             end
             "l1":
             l1_cache #(
-                .CACHE_SIZE(DCACHE_SIZE),
-                .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
-                .ASSOC(DCACHE_ASSOC),
+                .CACHE_SIZE(DCACHE_SIZE[HART_ID]),
+                .BLOCK_SIZE(DCACHE_BLOCK_SIZE[HART_ID]),
+                .ASSOC(DCACHE_ASSOC[HART_ID]),
                 .IS_ICACHE(0),
                 .HART_ID(HART_ID*2+1)
             )
@@ -122,7 +122,7 @@ module separate_caches#(
 
     generate
         /* verilator lint_off width */
-        case (ICACHE_TYPE[HART_ID][C])
+        case (ICACHE_TYPE[HART_ID])
             /* verilator lint_on width */
             "pass_through": begin : g_icache_passthrough
                 pass_through_cache icache (
@@ -150,9 +150,9 @@ module separate_caches#(
             end
             "l1":
             l1_cache #(
-                .CACHE_SIZE(ICACHE_SIZE),
-                .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
-                .ASSOC(ICACHE_ASSOC),
+                .CACHE_SIZE(ICACHE_SIZE[HART_ID]),
+                .BLOCK_SIZE(ICACHE_BLOCK_SIZE[HART_ID]),
+                .ASSOC(ICACHE_ASSOC[HART_ID]),
                 .IS_ICACHE(1),
                 .HART_ID(HART_ID*2)
             )
