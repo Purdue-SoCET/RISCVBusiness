@@ -39,3 +39,11 @@ microarch_params:
   # Multiplier settings
 multiplier_params:
   multiplier_select : "shift_add_multiplier"
+ 
+base_isa: "RV32I"
+
+risc_mgmt_params:
+        standard_extensions:
+                - name: "rv32a"
+                - name: "rv32m"
+        nonstandard_extensions:

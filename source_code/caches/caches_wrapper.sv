@@ -41,7 +41,7 @@ module caches_wrapper #(
     import core_configuration_pkg::*;
     
     generate
-        case (CACHE_CONFIG[HART_ID][C])
+        case (CACHE_CONFIG[HART_ID])
             "separate": separate_caches sep_caches (.*);
         endcase
     endgenerate

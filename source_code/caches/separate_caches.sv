@@ -64,7 +64,7 @@ module separate_caches(
 
     generate
         /* verilator lint_off width */
-        case (DCACHE_TYPE[HART_ID][C])
+        case (DCACHE_TYPE[HART_ID])
             /* verilator lint_on width */
             "pass_through": begin : g_dcache_passthrough
                 pass_through_cache dcache (
@@ -120,7 +120,7 @@ module separate_caches(
 
     generate
         /* verilator lint_off width */
-        case (ICACHE_TYPE[HART_ID][C])
+        case (ICACHE_TYPE[HART_ID])
             /* verilator lint_on width */
             "pass_through": begin : g_icache_passthrough
                 pass_through_cache icache (

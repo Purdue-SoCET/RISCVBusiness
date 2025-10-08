@@ -10,6 +10,9 @@ microarch_params:
 
   infinite_loop_halts: "true"
 
+  noncache_start_addr: 32'hF000_0000
+  tlb_entries: 16
+
   # Per-core configurations 
   core0_params:
     # ISA Configuration
@@ -33,9 +36,7 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
-
+ 
     # Multiplier settings
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -57,8 +58,6 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
 
@@ -79,8 +78,6 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
 
@@ -101,8 +98,6 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
 
@@ -123,8 +118,6 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
 
@@ -145,8 +138,6 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
 
@@ -167,8 +158,6 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
 
@@ -189,7 +178,5 @@ microarch_params:
     icache_size: 1024
     icache_block_size: 2
     icache_assoc: 1
-    noncache_start_addr: 32'hF000_0000
-    tlb_entries: 16
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
