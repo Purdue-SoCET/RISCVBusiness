@@ -60,7 +60,7 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [11:0] imm_I;
     logic [NUM_HARTS-1:0] [20:0] imm_UJ;
     logic [NUM_HARTS-1:0] [31:0] imm_U;
-    logic [NUM_HARTS-1:0] abort_bus;
+    logic [(2*NUM_HARTS)-1:0] abort_bus;
 
     assign bus_ctrl_if.ccabort = abort_bus;
 
@@ -88,7 +88,7 @@ module multicore_wrapper #(
                 .interrupt_if(interrupt_if),
                 .dcache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
                 .icache_bus_ctrl_if(front_side_bus[HART_ID*2]),
-                .abort_bus(abort_bus)
+                .abort_bus(abort_bus[HART_ID*2])
             );
 
             // always_comb begin

@@ -36,7 +36,7 @@ bool use_tohost = false;
 uint32_t tohost_address = 0;
 uint64_t max_sim_time = BASE_SIM_TIME;
 bool tohost_break = false;
-bool virtual_test = false;
+bool debug_test = false;
 bool require_trace = true;
 
 /*
@@ -175,7 +175,7 @@ public:
         }
 
         if(use_tohost && addr == tohost_address) {
-            if (virtual_test)
+            if (debug_test)
                 std::cout << static_cast<char>(value);
             else
                 tohost_break = true;
@@ -268,11 +268,11 @@ void reset(Vtop_core& dut, VerilatedFstC& trace) {
 }
 
 void print_help() {
-    std::cout << "Usage: ./Vtop_core [--tohost-address <unsigned int> --max-sim-time <unsigned long> --virtual --notrace] <filename>" << std::endl;
+    std::cout << "Usage: ./Vtop_core [--tohost-address <unsigned int> --max-sim-time <unsigned long> --debug --notrace] <filename>" << std::endl;
     std::cout << "\t--help   : Print this" << std::endl;
-    std::cout << "\t--tohost-address <address>: address for tohost checking functionality. A write to this address will end the program if --virtual is not set." << std::endl;
+    std::cout << "\t--tohost-address <address>: address for tohost checking functionality. A write to this address will end the program if --debug is not set." << std::endl;
     std::cout << "\t--max-sim-time <sim-time> : Maximum time to run simulation. Defaults to 100,000." << std::endl;
-    std::cout << "\t--virtual: Indicate virtualized address space will be run. Changes tohost-address functionality" << std::endl;
+    std::cout << "\t--debug  : Allows debug strings to print from cores. Changes tohost-address functionality" << std::endl;
     std::cout << "\t--notrace: Indicate to not generate a waveform file. Speeds up simulation incredibly." << std::endl;
     std::cout << "\tfilename : An executable .bin file to run" << std::endl;
 }
@@ -316,8 +316,8 @@ int main(int argc, char **argv) {
         } else if(strcmp(argv[i], "--help") == 0) {
             print_help();
             return 1;
-        } else if(strcmp(argv[i], "--virtual") == 0) {
-            virtual_test = true;
+        } else if(strcmp(argv[i], "--debug") == 0) {
+            debug_test = true;
         } else if(strcmp(argv[i], "--notrace") == 0) {
             require_trace = false;
         } else {
