@@ -46,7 +46,7 @@ new file mode 100644
 index 0000000..c432389
 --- /dev/null
 +++ b/v/amo_emu.c
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,250 @@
 +#include <stdint.h>
 +
 +#define ILLEGAL_INSN 0x2
@@ -209,6 +209,8 @@ index 0000000..c432389
 +    if (cause == ILLEGAL_INSN) {
 +        uint32_t instr, opcode, rd, rs1, rs2, funct3, funct7;
 +        // Good case: instruction 32 bit aligned
++#pragma GCC diagnostic push
++#pragma GCC diagnostic ignored "-Wint-to-pointer-cast"
 +        if (!__builtin_expect(epc & 0x3, 0x00)) {
 +            instr = *(uint32_t *)epc;
 +        } else {
@@ -217,6 +219,7 @@ index 0000000..c432389
 +            uint16_t second = *((uint16_t *)epc + 1);
 +            instr = second << 16 | first;
 +        }
++#pragma GCC diagnostic pop
 +        opcode = instr & 0x0000007F;
 +        rd = (instr & 0x00000F80) >> 7;
 +        rs1 = regs[(instr & 0x000F8000) >> 15];
