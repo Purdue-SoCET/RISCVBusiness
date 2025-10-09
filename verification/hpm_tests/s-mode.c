@@ -1,6 +1,14 @@
 #include <stdint.h>
 #include "utility.h"
 
+#define READ_PRINT_HPM(x) do { \
+    uint32_t val; \
+    asm volatile("csrr %0, hpmcounter" #x : "=r"(val)); \
+    print("  count " #x ": "); \
+    put_uint32_hex(val); \
+    print("\n"); \
+} while(0)
+
 extern volatile int flag;
 extern volatile int done;
 
