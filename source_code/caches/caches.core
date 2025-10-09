@@ -6,6 +6,9 @@ filesets:
     rtl:
         depend:
             - "socet:riscv:packages"
+            - "socet:riscv:priv"
+            - "socet:riscv:riscv_standard"
+            - "socet:riscv:riscv_include"
         files:
             - caches_wrapper.sv
             - separate_caches.sv
@@ -17,9 +20,56 @@ filesets:
             - tlb/tlb.sv
             - sram/sram.sv
         file_type: systemVerilogSource
+    tb:
+        files:
+            - tb_supervisor.sv
+            - tb_tlb_directmapped.sv
+            - tb_tlb_associative.sv
+            - tb_page_perm_check.sv
+            - tb_supervisor_cache.sv
+            - tb_supervisor_cache_wrapper.sv
+        file_type: systemVerilogSource
 
 targets:
     default: &default
         filesets:
             - rtl
         toplevel: caches_wrapper
+
+    tb_default: &tb_default
+        filesets:
+            - rtl
+            - tb
+        default_tool: verilator
+        tools:
+            verilator:
+                verilator_options:
+                    - --assert
+                    - --binary
+                    - -Wno-SYMRSVDWORD
+                    - -Wno-TIMESCALEMOD
+                    - -Wno-lint
+                    - --trace-fst
+                    - --trace-structs
+                    - -CFLAGS -std=c++20
+
+    tb_page_perm_check:
+        <<: *tb_default
+        toplevel: tb_page_perm_check
+        description: Simulate page permission checking
+
+    tb_supervisor_cache:
+        <<: *tb_default
+        toplevel: tb_supervisor_cache
+        description: Simulate instruction and data L1/TLB + Pagewalker interactions
+
+    tb_tlb_associative:
+        <<: *tb_default
+        toplevel: tb_tlb_associative
+        description: Simulate two-way associative TLB
+
+    tb_tlb_directmapped:
+        <<: *tb_default
+        toplevel: tb_tlb_directmapped
+        description: Simulate direct mapped TLB
+
