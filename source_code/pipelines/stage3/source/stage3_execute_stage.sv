@@ -41,7 +41,6 @@ module stage3_execute_stage #(
     stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hazard_unit_if.execute hazard_if,
     stage3_forwarding_unit_if.execute fw_if,
-    sparce_pipeline_if.pipe_execute sparce_if,
     rv32c_if.execute rv32cif,
     prv_pipeline_if.cu prv_pipe_if
 );
@@ -344,14 +343,4 @@ module stage3_execute_stage #(
             // else: retain state
         end
     end
-
-    /*********************************************************
-  *** SparCE Module Logic
-  *********************************************************/
-    /*assign sparce_if.wb_data = rf_if.w_data;
-    assign sparce_if.wb_en = rf_if.wen;
-    assign sparce_if.sasa_data = rf_if.rs2_data;
-    assign sparce_if.sasa_addr = alu_if.port_out;
-    assign sparce_if.sasa_wen = cu_if.dwen;
-    assign sparce_if.rd = rf_if.rd;*/
 endmodule
