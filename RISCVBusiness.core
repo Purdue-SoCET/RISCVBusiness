@@ -32,7 +32,6 @@ filesets:
             #- source_code/pipelines/tspp/tspp_hazard_unit.sv
             #- source_code/pipelines/tspp/tspp_fetch_stage.sv
             #- source_code/pipelines/tspp/tspp_execute_stage.sv
-            - source_code/sparce/sparce_disabled/sparce_disabled.sv
             - source_code/RV32E/rv32e_reg_file.sv
             - source_code/RV32E/rv32e_wrapper.sv
         file_type: systemVerilogSource
