@@ -25,7 +25,6 @@
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
-`include "sparce_pipeline_if.vh"
 `include "tspp_fetch_execute_if.vh"
 `include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
@@ -51,7 +50,6 @@ module RISCVBusiness #(
     predictor_pipeline_if predict_if ();
     prv_pipeline_if prv_pipe_if ();
     cache_control_if control_if ();
-    sparce_pipeline_if sparce_if ();
     rv32c_if rv32cif ();
 
     //interface instantiations
@@ -68,7 +66,6 @@ module RISCVBusiness #(
         .prv_pipe_if(prv_pipe_if),
         .predict_if(predict_if),
         .cc_if(control_if),
-        .sparce_if(sparce_if),
         .rv32cif(rv32cif),
         .halt(halt),
         .wfi(wfi)
@@ -115,19 +112,6 @@ module RISCVBusiness #(
         .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss)
-    );
-
-    /*
-    sparce_wrapper sparce_wrapper_i (
-        .CLK(CLK),
-        .nRST(nRST),
-        .sparce_if(sparce_if)
-    );*/
-
-    sparce_disabled sparce_disabled_i (
-        .CLK(CLK),
-        .nRST(nRST),
-        .sparce_if(sparce_if)
     );
 
     rv32c_wrapper rv32c (

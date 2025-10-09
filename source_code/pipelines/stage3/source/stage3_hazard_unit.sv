@@ -29,7 +29,6 @@
 module stage3_hazard_unit (
     stage3_hazard_unit_if.hazard_unit hazard_if,
     prv_pipeline_if.hazard prv_pipe_if
-    //sparce_pipeline_if.hazard sparce_if
 );
     import alu_types_pkg::*;
     import rv32i_types_pkg::*;
@@ -181,10 +180,4 @@ module stage3_hazard_unit (
                                   //|| branch_jump && wait_for_imem; // This can be removed once there is I$. Solves problem where
                                                                    // stale I-request returns after PC is redirected
     // TODO: Enforce mutual exclusivity of these signals with assertion
-
-    /*********************************************************
-  *** SparCE Module Logic
-  *********************************************************/
-    //assign sparce_if.if_ex_enable = rm_if.if_ex_enable;
-
 endmodule
