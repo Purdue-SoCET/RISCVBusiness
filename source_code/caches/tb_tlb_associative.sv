@@ -83,10 +83,8 @@ module tb_tlb_associative();
   (
     .CLK(CLK),
     .nRST(nRST),
-    .clear(clear),
     .fence(fence),
     .page_fault(page_fault),
-    .clear_done(clear_done),
     .fence_done(fence_done),
     .tlb_miss(tlb_miss),
     .fault_load_page(fault_load_page), 
@@ -661,34 +659,23 @@ endtask
 task handle_tlb_miss;
   input logic [WORD_SIZE-1:0] new_rdata;
 
-  // fork between waiting and servicing a tlb miss
-  fork
-    begin : WAIT_FOR_SERVICE // does nothing atm but might be important in the future
-      while (tlb_miss) begin
-        @(posedge CLK);
-      end
-    end
+  if (tlb_miss) begin
+    if (VERBOSE)
+      $display("Handled TLB miss for rdata: 0x%h\n", new_rdata);
+    // assert busy
+    set_busy(1'b1);
 
-    begin : SERVICE_MISS
-      if (tlb_miss) begin
-        if (VERBOSE)
-          $display("Handled TLB miss for rdata: 0x%h\n", new_rdata);
-        // assert busy
-        set_busy(1'b1);
+    // be busy for a couple cycles
+    @(posedge CLK);
+    @(posedge CLK);
 
-        // be busy for a couple cycles
-        @(posedge CLK);
-        @(posedge CLK);
+    // set the data to fill in the TLB
+    set_rdata(new_rdata);
+    set_busy(1'b0);
 
-        // set the data to fill in the TLB
-        set_rdata(new_rdata);
-        set_busy(1'b0);
-
-        // miss should be serviced
-        @(posedge CLK);
-      end
-    end
-  join
+    // miss should be serviced
+    @(posedge CLK);
+  end
 endtask
 
 // generate_asid

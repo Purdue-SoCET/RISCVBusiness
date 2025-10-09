@@ -67,8 +67,8 @@ module tb_supervisor_cache();
   always #(PERIOD/2) CLK++; 
 
   // test signals
-  generic_bus_if         icache_proc_gen_bus_if (); // Fetch to I$/iTLB
-  generic_bus_if         dcache_proc_gen_bus_if (); // Fetch to D$/dTLB
+  generic_bus_if         icache_proc_gen_bus_if (); // Fetch Stage to I$/iTLB
+  generic_bus_if         dcache_proc_gen_bus_if (); // Memory Stage to D$/dTLB
   generic_bus_if #(.BLOCK_SIZE(2)) out_gen_bus_if         (); // Bus Controller to Memory
   prv_pipeline_if        prv_pipe_if            (); // Priv to TLB
   cache_control_if       control_if             (); // coherence bus to caches
@@ -135,14 +135,16 @@ logic check;
 
 initial begin : MAIN
 
+  assert (SUPERVISOR == "enabled" && ADDRESS_TRANSLATION == "enabled") else begin
+    $error ("Please enable both the Supervisor and Address Translation to run this test in your core yml, run `make verilate`, and try again.");
+  end
+
   $dumpfile("waveform.fst");
   $dumpvars(0, tb_supervisor_cache);
 
   // Initial reset
   nRST = 0;
   check = 0;
-  // clear = 0;
-  // fence = 0;
   reset_all();
   reset_priv();
 
@@ -377,7 +379,7 @@ initial begin : MAIN
   set_priv_level(S_MODE);
 
   // begin write 
-  initiate_write(32'h00200100, 32'h98765432, DCACHE);
+  initiate_write(32'h00200400, 32'h98765432, DCACHE);
 
   // first level page walk
   complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
@@ -411,7 +413,7 @@ initial begin : MAIN
   set_priv_level(S_MODE);
 
   // replace current block in cache
-  initiate_write(32'h00200100, 32'h98765432, DCACHE);
+  initiate_write(32'h00200400, 32'h98765432, DCACHE);
 
   // complete write
   complete_write('h12345678, DCACHE);
@@ -643,7 +645,6 @@ initial begin : MAIN
   // second level page walk, DCACHE
   complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
 
-  
   // first level page walk, ICACHE
   complete_read(('h80030000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
 
@@ -789,7 +790,7 @@ end
 
 // --- Helper Tasks and Functions --- //
 
-task begin_test;
+task automatic begin_test;
   input string test_main;
   input string test_name;
 
@@ -800,14 +801,14 @@ task begin_test;
   $display("\n---------- %s: %s ---------\n", test_type, test_case);
 endtask
 
-task complete_test;
+task automatic complete_test;
   // $display("--------------------------------------------------\n");
   // $fflush(); // unfortunately does not work with v-rilator
 endtask
 
 // set_ren
 // sets the read enable from processor to the TLB to new_ren
-task set_ren;
+task automatic set_ren;
   input logic new_ren;
   input tb_access_t access;
 
@@ -822,7 +823,7 @@ endtask
 
 // set_wen
 // sets the write enable from processor to the TLB to new_ren
-task set_wen;
+task automatic set_wen;
   input logic new_wen;
   input tb_access_t access;
 
@@ -837,7 +838,7 @@ endtask
 
 // set_byte_en
 // sets the byte enable from processor to the TLB to new_byte_en
-task set_byte_en;
+task automatic set_byte_en;
   input logic [3:0] new_byte_en;
   input tb_access_t access;
 
@@ -849,7 +850,7 @@ endtask
 
 // set_addr
 // sets the address from processor to the TLB to new_addr
-task set_addr;
+task automatic set_addr;
   input logic [RAM_ADDR_SIZE-1:0] new_addr;
   input tb_access_t access;
 
@@ -861,7 +862,7 @@ endtask
 
 // set_wdata
 // sets the write data from processor to the TLB to new_wdata
-task set_wdata;
+task automatic set_wdata;
   input logic [SXLEN-1:0] new_wdata;
   input tb_access_t access;
 
@@ -873,7 +874,7 @@ endtask
 
 // set_rdata;
 // sets the read data from page walker to TLB to new_rdata
-task set_rdata;
+task automatic set_rdata;
   input logic [WORD_SIZE-1:0] new_rdata;
 
   out_gen_bus_if.rdata = {new_rdata, new_rdata};
@@ -881,7 +882,7 @@ endtask
 
 // set_busy;
 // sets the busy signal from page walker to TLB to new_busy
-task set_busy;
+task automatic set_busy;
   input logic new_busy;
 
   out_gen_bus_if.busy = new_busy;
@@ -889,7 +890,7 @@ endtask
 
 // set_error;
 // sets the error signal from page walker to TLB to new_error
-task set_error;
+task automatic set_error;
   input logic new_error;
 
   out_gen_bus_if.error = new_error;
@@ -897,7 +898,7 @@ endtask
 
 // set_priv_level
 // sets the current privilege level to new_priv_level
-task set_priv_level;
+task automatic set_priv_level;
   input priv_level_t new_priv_level;
 
   prv_pipe_if.curr_privilege_level = new_priv_level;
@@ -905,7 +906,7 @@ endtask
 
 // set_satp
 // sets the supervisor address translation register to new_satp
-task set_satp;
+task automatic set_satp;
   input logic new_mode;
   input logic [ASID_LENGTH-1:0] new_asid;
   input logic [PPNLEN-1:0] new_ppn;
@@ -915,14 +916,14 @@ task set_satp;
   prv_pipe_if.satp.ppn  = new_ppn;
 endtask
 
-task reset_all;
+task automatic reset_all;
   reset_icache_proc();
   reset_dcache_proc();
   reset_out_gen();
   // reset_priv();
 endtask
 
-task reset_icache_proc;
+task automatic reset_icache_proc;
   set_ren(0, ICACHE);
   set_wen(0, ICACHE);
   set_addr('0, ICACHE);
@@ -930,7 +931,7 @@ task reset_icache_proc;
   set_byte_en('0, ICACHE);
 endtask
 
-task reset_dcache_proc;
+task automatic reset_dcache_proc;
   set_ren(0, DCACHE);
   set_wen(0, DCACHE);
   set_addr('0, DCACHE);
@@ -940,7 +941,7 @@ endtask
 
 // reset_out_gen
 // resets out_gen_bus_if
-task reset_out_gen;
+task automatic reset_out_gen;
   set_rdata('0);
   set_busy(1'b1);
   set_error(1'b0);
@@ -948,7 +949,7 @@ endtask
 
 // reset_priv
 // resets prv_pipe_if
-task reset_priv;
+task automatic reset_priv;
   // prv_pipe_if = 0;
   set_priv_level(M_MODE);
   set_satp('0, '0, '0);
@@ -956,7 +957,7 @@ endtask
 
 // fence_tlb
 // sets the fence signal the TLB and waits until done
-task fence_tlb;
+task automatic fence_tlb;
   control_if.itlb_fence = 1'b1;
   control_if.dtlb_fence = 1'b1;
   @(posedge CLK);
@@ -971,7 +972,7 @@ endtask
 
 // initiate_read
 // initiates a read transaction to the cache
-task initiate_read;
+task automatic initiate_read;
   input logic [RAM_ADDR_SIZE-1:0] read_addr;
   input tb_access_t access;
 
@@ -986,7 +987,7 @@ endtask
 
 // complete_read
 // completes a read transaction from the mem bus
-task complete_read;
+task automatic complete_read;
   input logic [SXLEN-1:0] rdata;
   input tb_access_t access;
 
@@ -1004,18 +1005,11 @@ task complete_read;
   @(posedge CLK);
   set_busy(1);
 
-  // if (access != PAGEWALK) begin
-  //   @(posedge CLK);
-  //   set_busy(0);
-  //   set_rdata(rdata);
-  //   @(posedge CLK);
-  //   set_busy(1);
-  // end
 endtask
 
 // complete_read_check
 // completes and verifies a read transaction from mem to the processor
-task complete_read_check;
+task automatic complete_read_check;
   input logic [SXLEN-1:0] expected_rdata;
   input logic read_mem;
   input tb_access_t access;
@@ -1058,7 +1052,7 @@ endtask
 
 // initiate_write
 // initiates a write transaction to the cache
-task initiate_write;
+task automatic initiate_write;
   input logic [RAM_ADDR_SIZE-1:0] write_addr;
   input logic [SXLEN-1:0] write_data;
   input tb_access_t access;
@@ -1074,7 +1068,7 @@ endtask
 
 // complete_writeback
 // completes a bus writeback transaction from the mem bus due to cache block eviction
-task complete_writeback;
+task automatic complete_writeback;
   input tb_access_t access;
   output logic [1:0][SXLEN-1:0] out_wdata;
 
@@ -1094,7 +1088,7 @@ endtask
 
 // complete_writeback_check
 // completes a bus writeback transaction from the mem bus due to cache block eviction
-task complete_writeback_check;
+task automatic complete_writeback_check;
   input logic [1:0][SXLEN-1:0] expected_wdata;
   input tb_access_t access;
 
@@ -1118,46 +1112,47 @@ task complete_writeback_check;
 endtask
 
 // complete_write
-task complete_write;
+task automatic complete_write;
   input logic [SXLEN-1:0] wdata;
   input tb_access_t access;
   complete_read(wdata, access);
   @(posedge CLK);
   @(posedge CLK);
+  @(posedge CLK);
 endtask;
 
 // generate_asid
-task generate_asid;
+task automatic generate_asid;
   output logic [ASID_LENGTH-1:0] random_asid;
 
   random_asid = {$random % ASID_MAX};
 endtask
 
-task generate_tlb_tag;
+task automatic generate_tlb_tag;
   output logic [TLB_TAG_BITS-1:0] random_tag;
 
   random_tag = $random % TLB_TAG_MAX;
 endtask
 
-task generate_ppn;
+task automatic generate_ppn;
   output logic [PPNLEN-1:0] random_ppn;
 
   random_ppn = $random % PPN_MAX;
 endtask
 
-task generate_perms;
+task automatic generate_perms;
   output logic [9:0] random_perms;
 
   random_perms = (($random % (1 << 8)) | RWXV_PERMS) & (~PAGE_PERM_USER);
 endtask
 
-task generate_rdata;
+task automatic generate_rdata;
   output logic [SXLEN-1:0] random_rdata;
 
   random_rdata = $random;
 endtask
 
-task generate_pte;
+task automatic generate_pte;
   output logic [SXLEN-1:0] random_pte;
 
   generate_ppn(random_pte[SXLEN-1:10]);
@@ -1165,13 +1160,13 @@ task generate_pte;
   random_pte[9:8] = '0;
 endtask
 
-task generate_index;
+task automatic generate_index;
   output logic [TLB_SIZE_LOG2-1:0] random_index;
 
   random_index = $random % TLB_SIZE;
 endtask
 
-task reset_tlb_test_metadata;
+task automatic reset_tlb_test_metadata;
   for (integer i = 0; i < TLB_SIZE; i = i + 1) begin
     tlb_asid[i]  = '0;
     tlb_ppn[i]   = '0;
@@ -1179,7 +1174,7 @@ task reset_tlb_test_metadata;
   end
 endtask
 
-task set_tlb_test_metadata;
+task automatic set_tlb_test_metadata;
   input logic [ASID_LENGTH-1:0] asid;
   input logic [TLB_TAG_BITS-1:0] tag;
   input logic [SXLEN-1:0] rdata;
@@ -1190,7 +1185,7 @@ task set_tlb_test_metadata;
   tlb_rdata[index] = rdata;
 endtask
 
-task fence_tlb_asid_va;
+task automatic fence_tlb_asid_va;
   input logic [ASID_LENGTH-1:0] asid;
   input logic [SXLEN-1:0] va;
 
@@ -1207,7 +1202,7 @@ task fence_tlb_asid_va;
   @(posedge CLK);
 endtask
 
-task fence_tlb_va;
+task automatic fence_tlb_va;
   input logic [SXLEN-1:0] va;
   logic [ASID_LENGTH-1:0] asid;
 
@@ -1218,7 +1213,7 @@ task fence_tlb_va;
   fence_tlb_asid_va(asid, va);
 endtask
 
-task fence_tlb_asid;
+task automatic fence_tlb_asid;
   input logic [ASID_LENGTH-1:0] asid;
   logic [SXLEN-1:0] va;
 
@@ -1229,7 +1224,7 @@ task fence_tlb_asid;
   fence_tlb_asid_va(asid, va);
 endtask
 
-task fence_tlb_all;
+task automatic fence_tlb_all;
   logic [ASID_LENGTH-1:0] asid;
   logic [SXLEN-1:0] va;
 
