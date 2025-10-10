@@ -32,11 +32,6 @@ interface priv_internal_if;
     import pma_types_pkg::*;
     import rv32i_types_pkg::*;
 
-    // RISC-MGMT?
-    //  not sure what these are for, part of priv 1.11
-    logic ex_rmgmt;
-    logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
-
     priv_level_t curr_privilege_level; // Current process privilege
 
     // CSR block values
@@ -115,7 +110,7 @@ interface priv_internal_if;
             clear_timer_int_u, clear_timer_int_s, clear_timer_int_m, clear_soft_int_u, clear_soft_int_s, clear_soft_int_m,
             clear_ext_int_u, clear_ext_int_s, clear_ext_int_m, mal_insn, fault_insn_access, illegal_insn, breakpoint, fault_l, mal_l, fault_s, mal_s,
             env_u, env_s, env_m, fault_insn_page, fault_load_page, fault_store_page, curr_medeleg, curr_mideleg, curr_mcause, curr_mepc, curr_mie,
-            curr_mip, curr_mstatus, curr_mtval, curr_scause, curr_sepc, curr_stval, mret, sret, pipe_clear, ex_rmgmt, ex_rmgmt_cause, epc, curr_privilege_level, ex_mem_stall,
+            curr_mip, curr_mstatus, curr_mtval, curr_scause, curr_sepc, curr_stval, mret, sret, pipe_clear, epc, curr_privilege_level, ex_mem_stall,
             isUMode, isSMode, isMMode,
         output inject_mcause, inject_mepc, inject_mip, inject_mstatus, inject_mtval, inject_scause, inject_sepc, inject_stval,
             next_mcause, next_mepc, next_mie, next_mip, next_mstatus, next_mtval, next_scause, next_sepc, next_stval, intr,

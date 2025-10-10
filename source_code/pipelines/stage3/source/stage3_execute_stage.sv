@@ -68,17 +68,7 @@ module stage3_execute_stage (
     control_unit cu (
         .cu_if(cu_if),
         .rf_if(rf_if),
-        .prv_pipe_if(prv_pipe_if),
-        .rmgmt_rsel_s_0('0),
-        .rmgmt_rsel_s_1('0),
-        .rmgmt_rsel_d('0),
-        .rmgmt_req_reg_r('0),
-        .rmgmt_req_reg_w('0)
-        //.rmgmt_rsel_s_0(rm_if.rsel_s_0),
-        //.rmgmt_rsel_s_1(rm_if.rsel_s_1),
-        //.rmgmt_rsel_d(rm_if.rsel_d),
-        //.rmgmt_req_reg_r(rm_if.req_reg_r),
-        //.rmgmt_req_reg_w(rm_if.req_reg_w)
+        .prv_pipe_if(prv_pipe_if)
     );
 
     generate

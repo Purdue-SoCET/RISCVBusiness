@@ -68,10 +68,6 @@ interface prv_pipeline_if();
   logic wb_enable, instr;
   logic icache_miss, dcache_miss;
 
-  // RISC-MGMT
-  logic ex_rmgmt;
-  logic [$clog2(`NUM_EXTENSIONS)-1:0] ex_rmgmt_cause;
-
   // Memory protection signals
   logic iren, dwen, dren;
   logic [RAM_ADDR_SIZE-1:0] iaddr, daddr, ipaddr, dpaddr;
@@ -84,7 +80,7 @@ interface prv_pipeline_if();
           fault_insn_page, fault_load_page, fault_store_page,
     output pipe_clear, mret, sret, epc, fault_insn, mal_insn,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
-            breakpoint, env, wfi, badaddr, wb_enable, ex_rmgmt, ex_rmgmt_cause, ex_mem_stall
+            breakpoint, env, wfi, badaddr, wb_enable, ex_mem_stall
   );
 
   modport pipe (
@@ -118,7 +114,6 @@ interface prv_pipeline_if();
           badaddr, swap, clr, set, read_only, wfi,
           wdata, csr_addr, valid_write, wb_enable, instr,
           icache_miss, dcache_miss,
-          ex_rmgmt, ex_rmgmt_cause,
           daddr, iaddr, ipaddr, dpaddr, dren, dwen, iren,
           d_acc_width, i_acc_width, ex_mem_stall,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
