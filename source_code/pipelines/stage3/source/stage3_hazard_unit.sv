@@ -51,12 +51,6 @@ module stage3_hazard_unit (
     logic intr;
     word_t epc;
 
-    // TODO: RISC-MGMT
-    //logic rmgmt_stall;
-
-    //assign rm_if.if_ex_enable = ~hazard_if.if_ex_stall;
-    //assign rmgmt_stall = rm_if.memory_stall | rm_if.execute_stall;
-
     // Hazard detection
     assign rs1_match = (hazard_if.rs1_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
     assign rs2_match  = (hazard_if.rs2_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
@@ -118,10 +112,8 @@ module stage3_hazard_unit (
     assign prv_pipe_if.breakpoint = hazard_if.breakpoint;
     assign prv_pipe_if.env = hazard_if.env;
     assign prv_pipe_if.wfi = hazard_if.wfi;
-    assign prv_pipe_if.ex_rmgmt = 1'b0;//rm_if.exception;
     assign prv_pipe_if.ex_mem_stall = hazard_if.ex_mem_stall;
 
-    assign prv_pipe_if.ex_rmgmt_cause = '0;//rm_if.ex_cause;
     assign prv_pipe_if.epc = epc;
     assign prv_pipe_if.badaddr = hazard_if.fault_addr;
 
@@ -145,9 +137,6 @@ module stage3_hazard_unit (
     *   - there is a forced redirect
     */
 
-    /*assign hazard_if.pc_en = (~wait_for_dmem & ~wait_for_imem & ~hazard_if.halt & ~ex_flush_hazard
-                                & ~rmgmt_stall & ~hazard_if.fence_stall)
-                          | branch_jump | prv_pipe_if.insert_pc | prv_pipe_if.ret | hazard_if.rollback;*/
     // Unforunately, pc_en is negative logic of stalling
     assign hazard_if.pc_en = (!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
                             || branch_jump

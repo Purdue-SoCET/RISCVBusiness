@@ -110,11 +110,6 @@ module priv_block #(
     assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.isSMode | prv_intern_if.isMMode) && (SUPERVISOR == "enabled");
     assign prv_intern_if.ex_mem_stall      = prv_pipe_if.ex_mem_stall;
 
-    // RISC-MGMT?
-    //  not sure what these are for, part of priv 1.11
-    assign prv_intern_if.ex_rmgmt = prv_pipe_if.ex_rmgmt;
-    assign prv_intern_if.ex_rmgmt_cause = prv_pipe_if.ex_rmgmt_cause;
-
     // from priv unit to pipeline
     assign prv_pipe_if.priv_pc   = prv_intern_if.priv_pc;
     assign prv_pipe_if.insert_pc = prv_intern_if.insert_pc;

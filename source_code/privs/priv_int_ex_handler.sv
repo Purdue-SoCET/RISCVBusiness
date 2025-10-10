@@ -128,9 +128,6 @@ module priv_int_ex_handler (
         end else if (prv_intern_if.fault_l) begin
             ex_src = L_FAULT;
             ex_src_bit = 1 << L_FAULT;
-        end else if (prv_intern_if.ex_rmgmt) begin
-            ex_src = ex_code_t'(prv_intern_if.ex_rmgmt_cause);
-            ex_src_bit = 1 << ex_src;
         end else
             exception = 1'b0;
     end
@@ -274,8 +271,7 @@ module priv_int_ex_handler (
                                         | prv_intern_if.fault_store_page
                                         | prv_intern_if.fault_insn_page
                                         | prv_intern_if.mal_insn
-                                        | prv_intern_if.breakpoint
-                                        | prv_intern_if.ex_rmgmt)
+                                        | prv_intern_if.breakpoint)
                                         & prv_intern_if.pipe_clear;
             prv_intern_if.next_stval = prv_intern_if.curr_stval;
         end else begin
@@ -287,8 +283,7 @@ module priv_int_ex_handler (
                                         | prv_intern_if.fault_store_page
                                         | prv_intern_if.fault_insn_page
                                         | prv_intern_if.mal_insn
-                                        | prv_intern_if.breakpoint
-                                        | prv_intern_if.ex_rmgmt)
+                                        | prv_intern_if.breakpoint)
                                         & prv_intern_if.pipe_clear;
             prv_intern_if.next_mtval = prv_intern_if.curr_mtval;
         end

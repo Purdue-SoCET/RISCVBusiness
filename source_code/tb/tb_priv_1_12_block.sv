@@ -103,8 +103,6 @@ module tb_priv_1_12_block ();
     prv_pipeline_if.valid_write = '0;
     prv_pipeline_if.wb_enable = '0;
     prv_pipeline_if.instr = '0;
-    prv_pipeline_if.ex_rmgmt = '0;
-    prv_pipeline_if.ex_rmgmt_cause = '0;
 
     @(posedge CLK);
     @(posedge CLK);

@@ -142,8 +142,6 @@ def add_custom_instruction_header(name, encoding, length, opcode, fptr):
       funct = format(i, '010b')
       fptr.write("GENERATE_CUSTOM_INSTRUCTION_R_TYPE(" +
         name + "," + opcode + "," + str(i) + "," + funct[0:7] + "," + funct[7:10] + ")\n")
-  elif encoding in RISC_MGMT_PARAMS['nonstandard_extensions']['encoding']:
-    print("Warning: Generation of C Macros for the encoding " + encoding + " is not supported.")
   else:
     err = "Error: Invalid custom instruction encoding: " + encoding
     sys.exit(err)
@@ -330,30 +328,11 @@ def create_include(config):
   bus_define = '`define BUS_INTERFACE_' + bus_type.upper() + '\n'
   include_file.write(bus_define)
 
-  total_exts = reduce(lambda x, y: x + (y == True), riscv_ext.values())
-  include_file.write('\n// RISC-MGMT Extensions:\n') 
-  include_file.write('`define NUM_EXTENSIONS ' + str(total_exts) + '\n')
-  include_file.write('`define RISC_MGMT_EXTENSIONS\t\\\n')
-  ext_num = 0
-  nonstandard_num = 0
-  for extension in riscv_ext:
-      if riscv_ext[extension]:
-        if(extension[0] != 'Z'):
-          include_file.write('\t`ADD_EXTENSION('+extension+','+str(ext_num)+")")
-        ext_num = ext_num + 1
-        if(ext_num != total_exts):
-          include_file.write('\t\\\n')
-        else:
-          include_file.write('\n')
-
   #set defines to indicate what ISA support is present
-  include_file.write('\n')
+  include_file.write('\n// RISC-V Extensions:\n')
   for extension in riscv_ext:
     if riscv_ext[extension]:
       include_file.write('`define RV32' + extension.upper() + '_SUPPORTED\t1\n')
-
-  # # set define to enable rv32m
-  # include_file.write('`define RV32M_SUPPORTED ' + u)
 
   # Write include footer to file
   footer = '\n`endif // COMPONENT_SELECTION_DEFINES_VH\n'
