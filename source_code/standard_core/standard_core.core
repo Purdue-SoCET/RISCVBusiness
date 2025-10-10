@@ -15,6 +15,7 @@ filesets:
             - control_unit.sv
             - jump_calc.sv
             - rv32i_reg_file.sv
+            - fetch_unit.sv
             - RISCVBusiness.sv
             - top_core.sv
         file_type: systemVerilogSource
