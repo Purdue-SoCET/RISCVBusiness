@@ -33,7 +33,7 @@ module cpu_tracker #(
     input logic [NUM_HARTS-1:0] instr_30,
     input rv32i_types_pkg::word_t [NUM_HARTS-1:0] instr,
     input rv32i_types_pkg::word_t [NUM_HARTS-1:0] pc,
-    input rv32i_types_pkg::opcode_t opcode [NUM_HARTS-1:0],
+    input rv32i_types_pkg::opcode_t [NUM_HARTS-1:0] opcode,
     input logic [NUM_HARTS-1:0] [2:0] funct3,
     input logic [NUM_HARTS-1:0] [11:0] funct12,
     input logic [NUM_HARTS-1:0] [4:0] rs1,
@@ -50,12 +50,12 @@ module cpu_tracker #(
     import rv32m_pkg::*;
 
     integer fptr;
-    string instr_mnemonic [];
-    string src1 [];
-    string src2 [];
-    string dest [];
-    string operands [];
-    string csr [];
+    string instr_mnemonic [NUM_HARTS];
+    string src1 [NUM_HARTS];
+    string src2 [NUM_HARTS];
+    string dest [NUM_HARTS];
+    string operands [NUM_HARTS];
+    string csr [NUM_HARTS];
     string temp_str;
     string output_str;
     logic [NUM_HARTS-1:0] [63:0] pc64;

@@ -52,7 +52,7 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [4:0] rs2;
     logic [NUM_HARTS-1:0] [4:0] rd;
     logic [NUM_HARTS-1:0] instr_30;
-    rv32i_types_pkg::opcode_t opcode [NUM_HARTS-1:0];
+    rv32i_types_pkg::opcode_t [NUM_HARTS-1:0] opcode;
     logic [NUM_HARTS-1:0] [12:0] imm_SB;
     logic [NUM_HARTS-1:0] [11:0] imm_S;
     logic [NUM_HARTS-1:0] [11:0] imm_I;
@@ -89,25 +89,25 @@ module multicore_wrapper #(
                 .abort_bus(abort_bus[HART_ID*2])
             );
 
-            // always_comb begin
-            //     wb_stall[HART_ID] = hart.pipeline.mem_stage_i.wb_stall || pipeline_halts[HART_ID];
-            //     instr[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr;
-            //     pc[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.pc;
-            //     funct3[HART_ID] = hart.pipeline.mem_stage_i.funct3;
-            //     funct12[HART_ID] = hart.pipeline.mem_stage_i.funct12;
-            //     rs1[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[19:15];
-            //     rs2[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[24:20];
-            //     rd[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.rd_m;
-            //     instr_30[HART_ID] = hart.pipeline.mem_stage_i.instr_30;
-            //     opcode[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.opcode;
-            //     imm_SB[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_SB;
-            //     imm_S[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_S;
-            //     imm_I[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_I;
-            //     imm_UJ[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_UJ;
-            //     imm_U[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_U;
-            // end
+            always_comb begin
+                wb_stall[HART_ID] = hart.pipeline.mem_stage_i.wb_stall || pipeline_halts[HART_ID];
+                instr[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr;
+                pc[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.pc;
+                funct3[HART_ID] = hart.pipeline.mem_stage_i.funct3;
+                funct12[HART_ID] = hart.pipeline.mem_stage_i.funct12;
+                rs1[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[19:15];
+                rs2[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[24:20];
+                rd[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.rd_m;
+                instr_30[HART_ID] = hart.pipeline.mem_stage_i.instr_30;
+                opcode[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.opcode;
+                imm_SB[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_SB;
+                imm_S[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_S;
+                imm_I[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_I;
+                imm_UJ[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_UJ;
+                imm_U[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_U;
+            end
 
-            // assign x28s[HART_ID] = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] == 32'b1;
+            assign x28s[HART_ID] = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] == 32'b1;
         end
     endgenerate
 
