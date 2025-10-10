@@ -142,8 +142,6 @@ def add_custom_instruction_header(name, encoding, length, opcode, fptr):
       funct = format(i, '010b')
       fptr.write("GENERATE_CUSTOM_INSTRUCTION_R_TYPE(" +
         name + "," + opcode + "," + str(i) + "," + funct[0:7] + "," + funct[7:10] + ")\n")
-  elif encoding in RISC_MGMT_PARAMS['nonstandard_extensions']['encoding']:
-    print("Warning: Generation of C Macros for the encoding " + encoding + " is not supported.")
   else:
     err = "Error: Invalid custom instruction encoding: " + encoding
     sys.exit(err)
@@ -331,9 +329,9 @@ def create_include(config):
   include_file.write(bus_define)
 
   total_exts = reduce(lambda x, y: x + (y == True), riscv_ext.values())
-  include_file.write('\n// RISC-MGMT Extensions:\n') 
+  include_file.write('\n// RISC-V Extensions:\n') 
   include_file.write('`define NUM_EXTENSIONS ' + str(total_exts) + '\n')
-  include_file.write('`define RISC_MGMT_EXTENSIONS\t\\\n')
+  include_file.write('`define RISCV_EXTENSIONS\t\\\n')
   ext_num = 0
   nonstandard_num = 0
   for extension in riscv_ext:
