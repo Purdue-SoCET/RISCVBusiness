@@ -12,7 +12,6 @@ filesets:
             - "socet:riscv:stage3"
             - "socet:riscv:priv"
             - "socet:riscv:caches"
-            #- "socet:riscv:risc_mgmt"
             - "socet:riscv:riscv_standard"
             - "socet:riscv:riscv_include"
             - "socet:riscv:rv32a"
