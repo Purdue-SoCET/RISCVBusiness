@@ -39,6 +39,7 @@ void __attribute__((noinline)) __attribute__((naked)) foo() {
         "add zero, zero, zero\n"
         "add zero, zero, zero\n"
         "add zero, zero, zero\n"
+        "csrsi mstatus, 0x8\n"
         "ret\n"
         "sw t1, %0\n"
         "ret\n"
@@ -54,9 +55,9 @@ int main() {
     uint32_t mstatus_value = 0x8;
     uint32_t mie_value = 0x80;
     uint32_t mtvec_value = (uint32_t)handler;
-    asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
-    asm volatile("csrw mie, %0" : : "r"(mie_value));
     asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
+    asm volatile("csrw mie, %0" : : "r"(mie_value));
+    //asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
 
     foo();
 }
