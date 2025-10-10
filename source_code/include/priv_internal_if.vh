@@ -119,7 +119,7 @@ interface priv_internal_if;
 
     modport pipe_ctrl (
         input intr, intr_to_s, pipe_clear, mret, sret, curr_mtvec, curr_mepc, next_mcause,
-            curr_stvec, curr_sepc, next_scause,
+            curr_stvec, curr_sepc, next_scause, ex_mem_stall,
         output insert_pc, priv_pc
     );
 
