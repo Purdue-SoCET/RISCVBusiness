@@ -393,8 +393,10 @@ int main(int argc, char **argv) {
         std::cout << "Test TIMED OUT" << std::endl;
     } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
-    } else {
+    } else if(use_tohost) {
         std::cout << "Test FAILED: Test " << memory.read(tohost_address) << std::endl;
+    } else {
+        std::cout << "Test FAILED: Test " << dut.top_core->get_x28() << std::endl;
     }
 
     auto tend = std::chrono::high_resolution_clock::now();
