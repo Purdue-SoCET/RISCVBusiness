@@ -28,7 +28,6 @@
 `include "generic_bus_if.vh"
 `include "prv_pipeline_if.vh"
 `include "cache_control_if.vh"
-`include "rv32c_if.vh"
 
 module stage3 #(
     RESET_PC = 32'h80000000
@@ -41,8 +40,7 @@ module stage3 #(
     generic_bus_if.cpu dgen_bus_if,
     prv_pipeline_if prv_pipe_if,
     predictor_pipeline_if predict_if,
-    cache_control_if cc_if,
-    rv32c_if rv32cif
+    cache_control_if cc_if
 );
     //interface instantiations
     stage3_fetch_execute_if fetch_ex_if();
