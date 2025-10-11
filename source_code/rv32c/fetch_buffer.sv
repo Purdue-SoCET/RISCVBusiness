@@ -42,12 +42,17 @@ module fetch_buffer (
         end
     end
 
+    always_comb begin : FETCH_ADDR
+        if(pc_aligned) fetch_addr = pc;
+        else if(!pc_aligned && fb.valid) fetch_addr = pc + 2;
+        else fetch_addr = {pc[31:2], 2'b00};
+    end
+
+    assign want_fetch = pc_aligned || !fb.valid || !is_compressed(fb.data) && fb.valid;
 
     always_comb begin : BUFFER_UPDATE
         fb_next = fb;
-        fetch_addr = pc;
         insn_out = 32'h0; // TODO: better default for less logic
-        want_fetch = 1'b0;
         insn_valid = 1'b0;
         insn_compressed = 1'b0;
         if(invalidate) begin
@@ -58,7 +63,6 @@ module fetch_buffer (
             // Additionally, if we somehow get into the bad state,
             // this allows us to recover by always prioritizing I$.
             if(pc_aligned) begin
-                want_fetch = 1'b1;
                 if(!icache.busy) begin
                     if(is_compressed(icache.rdata[15:0])) begin
                         insn_out = icache.rdata;
@@ -80,11 +84,9 @@ module fetch_buffer (
                     insn_valid = 1'b1;
                     fb_next.valid = 1'b0;
                 end else begin
-                    want_fetch = 1'b1;
                     // PC is misaligned, we have half a 32b
                     // insn in FB, need to fetch next word
                     // for rest.
-                    fetch_addr = pc + 2;
                     if(!icache.busy) begin
                         fb_next.valid = 1'b1;
                         fb_next.data = icache.rdata[31:16];
@@ -95,10 +97,8 @@ module fetch_buffer (
                 end
             end else begin
                 // !pc_aligned && !fb.valid
-                want_fetch = 1'b1;
                 // PC is misaligned, want to fetch
                 // the *current* word pointed to
-                fetch_addr = {pc[31:2], 2'b00};
                 if(!icache.busy) begin
                     if(is_compressed(icache.rdata[31:16])) begin
                         // TODO: upper bits here don't matter,
