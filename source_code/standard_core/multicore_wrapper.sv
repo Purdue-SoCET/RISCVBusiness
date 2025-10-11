@@ -2,7 +2,6 @@
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
 `include "core_interrupt_if.vh"
-`include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
 
 module multicore_wrapper #(

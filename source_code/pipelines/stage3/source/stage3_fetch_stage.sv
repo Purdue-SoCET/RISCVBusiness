@@ -47,7 +47,7 @@ module stage3_fetch_stage (
 
     word_t pc, pc4or2, npc, instr;
     logic ireq;
-    logic insn_ready, ibus_fault;
+    logic insn_ready, insn_compressed, ibus_fault;
     word_t instr_to_ex;
     word_t insn_addr;
     
@@ -66,8 +66,7 @@ module stage3_fetch_stage (
         end
     end
     
-    // TODO: Fix for RV32C
-    assign pc4or2 = pc + 4;
+    assign pc4or2 = insn_compressed ? pc + 2 : pc + 4;
     
     //Branch Predictor logic
     sbtype_t instr_sb;
@@ -80,21 +79,31 @@ module stage3_fetch_stage (
     assign predict_if.is_branch = (instr_sb.opcode == BRANCH) ? 1 : 0;
     assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR)) ? 1:0;
 
+    // pc_redirect used to invalidate fetch buffer for RV32C
+    assign pc_redirect = hazard_if.insert_priv_pc || hazard_if.rollback || hazard_if.npc_sel || predict_if.predict_taken;
     assign npc = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
-                 : (hazard_if.rollback        ? mem_fetch_if.pc4
+                 : (hazard_if.rollback       ? mem_fetch_if.pc4
                  : (hazard_if.npc_sel        ? mem_fetch_if.brj_addr
                  : (predict_if.predict_taken ? predict_if.target_addr
                  : pc4or2)));
 
     // Instruction Access logic
-
     assign ireq = hazard_if.iren && !hazard_if.suppress_iren;
-    fetch_unit FETCHER(
+
+`ifdef RV32C_SUPPORTED
+    localparam int RVC = 1;
+`else
+    localparam int RVC = 0;
+`endif
+
+    fetch_unit #(.RVC_ENABLED(RVC)) FETCHER(
         .CLK,
         .nRST,
         .ireq,
+        .pc_redirect,
         .pc,
         .insn_ready,
+        .insn_compressed,
         .insn_fault(ibus_fault),
         .mal_addr,
         .insn_out(instr_to_ex),
@@ -111,7 +120,6 @@ module stage3_fetch_stage (
     assign fault_insn = prv_pipe_if.prot_fault_i || ibus_fault; // TODO: Set this up to fault on bus error
     assign mal_insn = mal_addr;
     assign hazard_if.pc_f = pc;
-    assign hazard_if.rv32c_ready = insn_ready;
 
     //Fetch Execute Pipeline Signals
     always_ff @(posedge CLK, negedge nRST) begin

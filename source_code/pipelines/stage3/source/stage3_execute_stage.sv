@@ -29,8 +29,6 @@
 `include "component_selection_defines.vh"
 `include "rv32i_reg_file_if.vh"
 `include "alu_if.vh"
-//`include "prv_pipeline_if.vh"
-`include "rv32c_if.vh"
 
 module stage3_execute_stage (
     input CLK,
@@ -39,7 +37,6 @@ module stage3_execute_stage (
     stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hazard_unit_if.execute hazard_if,
     stage3_forwarding_unit_if.execute fw_if,
-    rv32c_if.execute rv32cif,
     prv_pipeline_if.cu prv_pipe_if
 );
     import rv32i_types_pkg::*;
@@ -56,13 +53,22 @@ module stage3_execute_stage (
     /**********************
     * Decode/Register Read
     ***********************/
+    logic [31:0] decompressor_out;
+    logic [31:0] instr_to_cu;
+    logic is_compressed;
 
-    // RV32C inputs
-    assign rv32cif.inst16 = fetch_ex_if.fetch_ex_reg.instr[15:0];
-    assign rv32cif.halt = 1'b0; // TODO: Is this signal necessary? Can't get it right on decode of a halt instruction
-    assign rv32cif.ex_busy = hazard_if.ex_mem_stall; //cu_if.dren | cu_if.dwen;
-    assign cu_if.instr = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
-    //assign rm_if.insn = rv32cif.c_ena ? rv32cif.inst32 : fetch_ex_if.fetch_ex_reg.instr;
+    // RV32C handling -- TODO: Disable-ability
+    decompressor DECOMPRESSOR(
+        .compressed(fetch_ex_if.fetch_ex_reg.instr[15:0]),
+        .decompressed(decompressor_out)
+    );
+
+    // All full-size instructions end with 0b11
+    assign is_compressed = fetch_ex_if.fetch_ex_reg.instr[1:0] != 2'b11;
+    assign cu_if.instr =
+            is_compressed ? 
+            decompressor_out
+            : fetch_ex_if.fetch_ex_reg.instr;
 
     // Control unit, inputs are post-decompression
     control_unit cu (
@@ -287,7 +293,7 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.mret_insn      <= cu_if.mret_insn;
                     ex_mem_if.ex_mem_reg.sret_insn      <= cu_if.sret_insn;
                     ex_mem_if.ex_mem_reg.wfi_insn       <= cu_if.wfi;
-                    ex_mem_if.ex_mem_reg.was_compressed <= 1'b0; // TODO: RV32C support
+                    ex_mem_if.ex_mem_reg.was_compressed <= is_compressed;
                     ex_mem_if.ex_mem_reg.reserve        <= cu_if.reserve;
                     ex_mem_if.ex_mem_reg.exclusive      <= cu_if.exclusive;
                 end

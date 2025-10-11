@@ -9,11 +9,7 @@ filesets:
         files:
             - rv32c_pkg.sv
             - decompressor.sv
-            - decompressor_wrapper.sv
-            - rv32c_disabled.sv
-            - rv32c_enabled.sv
             - fetch_buffer.sv
-            - rv32c_wrapper.sv
         file_type: systemVerilogSource
 
     decompressor-test:
