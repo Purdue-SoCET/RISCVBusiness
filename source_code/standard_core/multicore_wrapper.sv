@@ -4,7 +4,6 @@
 `include "tspp_fetch_execute_if.vh"
 `include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
-`include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
 
 module multicore_wrapper #(
