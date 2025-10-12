@@ -1,5 +1,5 @@
 # List of test directories
-TEST_DIRS := interrupts-exceptions
+TEST_DIRS := interrupts-exceptions pma-tests pmp-tests u-mode s-mode
 
 # Compiler and tools
 CROSS := riscv64-unknown-elf-

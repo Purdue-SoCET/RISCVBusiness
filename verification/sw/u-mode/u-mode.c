@@ -1,8 +1,6 @@
 #include <stdint.h>
+#include <stdnoreturn.h>
 #include "utility.h"
-
-extern volatile int flag;
-extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     uint32_t mepc, mtval;
@@ -41,7 +39,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
 }
 
 
-void __attribute__((noreturn)) user_main(void) {
+noreturn void user_main(void) {
     print("A"); // MMIO region is not allowed in PMP, should fail
 
     flag = 0; // Flag is protected, should fail

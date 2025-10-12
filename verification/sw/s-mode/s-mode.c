@@ -1,8 +1,6 @@
 #include <stdint.h>
+#include <stdnoreturn.h>
 #include "utility.h"
-
-extern volatile int flag;
-extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
     // Trivial M-mode call to demonstrate that we can
@@ -76,7 +74,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
     asm volatile("sret");
 }
 
-void __attribute__((noreturn)) user_main(void) {
+noreturn void user_main(void) {
     print("A"); // MMIO region is not allowed in PMP, should fail
 
     // flag = 0; // Flag is protected, should fail

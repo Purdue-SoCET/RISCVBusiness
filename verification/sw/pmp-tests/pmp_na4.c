@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "utility.h"
-
-extern volatile int flag;
+#include "pmp_util.h"
 
 #define BAD_PMP_ADDR 0x40000000 // This is a 32-bit address
 volatile uint32_t *bad_pmp_addr = (uint32_t*) BAD_PMP_ADDR;

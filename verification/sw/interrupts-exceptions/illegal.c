@@ -2,8 +2,6 @@
 #include <stdint.h>
 #include "utility.h"
 
-extern volatile int flag;
-
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     uint32_t mepc_value;
     asm volatile("csrr %0, mepc" : "=r"(mepc_value));

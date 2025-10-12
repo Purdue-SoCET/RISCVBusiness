@@ -1,12 +1,9 @@
 #include <stdint.h>
 #include "utility.h"
+#include "pmp_util.h"
 
-extern volatile int flag;
-
-#define BAD_PMP_BOT 0x40000000 // This is a 32-bit address
+#define BAD_PMP_BOT 0x40000000
 #define BAD_PMP_TOP ((ADDR_G(0x40000020, G + 1) + 1) << 2)
-volatile uint32_t *bad_pmp_addr_top = (uint32_t*) BAD_PMP_TOP;
-volatile uint32_t *bad_pmp_addr_bot = (uint32_t*) BAD_PMP_BOT;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     // In a real program, a fault should be handled differently
@@ -24,6 +21,10 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
 }
 
 int main() {
+    // PMP range
+    volatile uint32_t *bad_pmp_addr_bot = (uint32_t*) BAD_PMP_BOT;
+    volatile uint32_t *bad_pmp_addr_top = (uint32_t*) BAD_PMP_TOP;
+
     uint32_t mtvec_value = (uint32_t) handler;
     asm volatile("csrw mtvec, %0" : : "r" (mtvec_value));
 

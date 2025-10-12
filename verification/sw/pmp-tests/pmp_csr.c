@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include "utility.h"
-
-extern volatile int flag;
+#include "pmp_util.h"
 
 int main() {
     flag = 9;

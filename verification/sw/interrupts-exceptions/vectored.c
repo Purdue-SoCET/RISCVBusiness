@@ -2,9 +2,6 @@
 #include <stdint.h>
 #include "utility.h"
 
-extern volatile int flag;
-extern void done();
-
 volatile uint32_t *mtime        = (uint32_t *)MTIME_ADDR;
 volatile uint32_t *mtimecmp     = (uint32_t *)MTIMECMP_ADDR;
 volatile uint32_t *mtimecmph    = (uint32_t *)MTIMECMPH_ADDR;
