@@ -1,8 +1,6 @@
 #include <stdint.h>
+#include <stdnoreturn.h>
 #include "utility.h"
-
-extern volatile int flag;
-extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     uint32_t mepc, mtval, icache_misses, dcache_misses;
@@ -50,7 +48,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     asm volatile("csrw mepc, %0" : : "r"(mepc));
 }
 
-void __attribute__((noreturn)) user_main(void) {
+noreturn void user_main(void) {
     uint32_t csr_val;
 
     asm volatile("csrr %0, cycle" : "=r"(csr_val));
@@ -60,7 +58,6 @@ void __attribute__((noreturn)) user_main(void) {
     asm volatile("ecall"); // ends user_main
 
     __builtin_unreachable();
-
 }
 
 int main(void) {

@@ -1,8 +1,6 @@
 #include <stdint.h>
+#include <stdnoreturn.h>
 #include "utility.h"
-
-extern volatile int flag;
-extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
   uint32_t mepc, mtval;
@@ -46,7 +44,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
   asm volatile("mret");
 }
 
-void __attribute__((noreturn)) __attribute__((aligned(4))) supervisor_main(void) {
+noreturn void __attribute__((aligned(4))) supervisor_main(void) {
 
   // TVM tests
   asm volatile("csrw satp, %0" : : "r"(0x8000FFFF)); // cannot write to satp

@@ -1,13 +1,15 @@
 #include <stdint.h>
 #include "utility.h"
 
-extern volatile int flag;
-
 #define PMA_ROM_ADDR 0x100
 #define PMA_RAM_ADDR 0x20000000
 volatile uint32_t *pma_rom_addr = (uint32_t*) PMA_ROM_ADDR;
 volatile uint32_t *pma_ram_addr = (uint32_t*) PMA_RAM_ADDR;
 
+/**
+ * Note: This test is only valid if PMA_ROM_ADDR does not have write
+ * attribute!
+ */
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     // In a real program, a fault should be handled differently
     uint32_t mepc_value;
@@ -15,7 +17,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     mepc_value += 4;
     asm volatile("csrw mepc, %0" : : "r"(mepc_value));
 
-    print("PMA Checker failed (expected)\n");
+    print("PMA Check failed successfully\n");
     flag = 2;
 }
 

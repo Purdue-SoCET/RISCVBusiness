@@ -1,13 +1,11 @@
 #include <stdint.h>
+#include <stdnoreturn.h>
 #include "utility.h"
-
-extern volatile int flag;
-extern volatile int done;
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler (void);
 void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler (void);
-void __attribute__((noreturn)) user_main (void);
-void __attribute__((noreturn)) __attribute__((aligned(4))) setup_s_mode (void);
+noreturn void user_main (void);
+noreturn void __attribute__((aligned(4))) setup_s_mode (void);
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
     uint32_t mepc, mtval, cycle, time, icache_misses, dcache_misses;
@@ -124,7 +122,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
 }
 
 // U-mode calls M-mode exception handler
-void __attribute__((noreturn)) user_main(void) {
+noreturn void user_main(void) {
     uint32_t csr_val;
 
     asm volatile("csrr %0, cycle" : "=r"(csr_val));
@@ -211,6 +209,7 @@ int main(void) {
     uint32_t medeleg = 0xFFFFFFFF;
     uint32_t medelegh = 0xFFFFFFFF;
     asm volatile("csrw medeleg, %0" : : "r"(medeleg));
+    (void)medelegh;
     // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
 
     // Jump to user program by using sret to return from a S-mode trap

@@ -1,9 +1,6 @@
 #include <stdint.h>
 #include "utility.h"
 
-extern volatile int flag;
-extern void done();
-
 #define PMA_ROM_ADDR 0x100
 #define PMA_RAM_ADDR 0x20000000
 volatile uint32_t *pma_rom_addr = (uint32_t*) PMA_ROM_ADDR;

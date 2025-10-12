@@ -13,7 +13,6 @@
 //     `foo`.
 //     4) If it does not line up, adjust the value of `mtimecmp` in `main` to trigger the interrupt
 //     earlier or later depending on what is needed.
-
 #include "utility.h"
 #include <stdint.h>
 

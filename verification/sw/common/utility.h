@@ -24,4 +24,6 @@ typedef struct {
     int interrupt : 1;
 } mcause_t;
 
+typedef mcause_t scause_t;
+
 #endif
