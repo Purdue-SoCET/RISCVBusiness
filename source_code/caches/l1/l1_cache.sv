@@ -268,7 +268,7 @@ module l1_cache #(
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
-                if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
+                if((!bus_ctrl_if.ccwait || ren) && sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
                     sc_valid_block = addr_is_reserved;
                     coherence_hit = sramRead.frames[i].tag.dirty || sramRead.frames[i].tag.exclusive;
                     //Read or write hit
