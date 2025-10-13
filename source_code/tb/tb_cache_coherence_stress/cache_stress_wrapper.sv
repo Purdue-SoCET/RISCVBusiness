@@ -32,7 +32,10 @@ module cache_stress_wrapper (
     generic_bus_if cache1_proc_gen_bus_if();
     cache_control_if c0c_if();
     cache_control_if c1c_if();
-    bus_ctrl_if bus_ctrl_if();
+    front_side_bus_if front_side_bus [1:0] ();
+    back_side_bus_if #(.CPUS(2)) ccif(
+        .front_side(front_side_bus)
+    );
     prv_pipeline_if cache0_prv_pipe_if();
     prv_pipeline_if cache1_prv_pipe_if();
     generic_bus_if cache0_pw_gen_bus_if();
@@ -85,13 +88,13 @@ module cache_stress_wrapper (
         cache1_rdata = cache1_proc_gen_bus_if.rdata;
         cache1_busy = cache1_proc_gen_bus_if.busy;
 
-        out_gen_bus_if.addr = bus_ctrl_if.l2addr;
-        out_gen_bus_if.ren = bus_ctrl_if.l2REN;
-        out_gen_bus_if.wen = bus_ctrl_if.l2WEN;
-        out_gen_bus_if.wdata = bus_ctrl_if.l2store;
+        out_gen_bus_if.addr = ccif.l2addr;
+        out_gen_bus_if.ren = ccif.l2REN;
+        out_gen_bus_if.wen = ccif.l2WEN;
+        out_gen_bus_if.wdata = ccif.l2store;
 
-        bus_ctrl_if.l2load = out_gen_bus_if.rdata;
-        bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+        ccif.l2load = out_gen_bus_if.rdata;
+        ccif.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
 
         memory_addr = out_gen_bus_if.addr;
         memory_wdata = out_gen_bus_if.wdata;
@@ -108,14 +111,13 @@ module cache_stress_wrapper (
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
         .ASSOC(1),
-        .IS_ICACHE(0),
-        .HART_ID(0)
+        .IS_ICACHE(0)
     ) cache0 (
         .CLK(CLK),
         .nRST(nRST),
         .proc_gen_bus_if(cache0_proc_gen_bus_if),
         .pw_gen_bus_if(cache0_pw_gen_bus_if),
-        .bus_ctrl_if(bus_ctrl_if),
+        .bus_ctrl_if(front_side_bus[0]),
         .flush(c0c_if.dcache_flush),
         .clear(c0c_if.dcache_clear),
         .reserve(c0c_if.dcache_reserve),
@@ -133,14 +135,13 @@ module cache_stress_wrapper (
         .CACHE_SIZE(1024),
         .BLOCK_SIZE(2),
         .ASSOC(1),
-        .IS_ICACHE(0),
-        .HART_ID(1)
+        .IS_ICACHE(0)
     ) cache1 (
         .CLK(CLK),
         .nRST(nRST),
         .proc_gen_bus_if(cache1_proc_gen_bus_if),
         .pw_gen_bus_if(cache0_pw_gen_bus_if),
-        .bus_ctrl_if(bus_ctrl_if),
+        .bus_ctrl_if(front_side_bus[1]),
         .flush(c1c_if.dcache_flush),
         .clear(c1c_if.dcache_clear),
         .reserve(c1c_if.dcache_reserve),
@@ -159,7 +160,7 @@ module cache_stress_wrapper (
     ) bus (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(bus_ctrl_if)
+        .ccif(ccif)
     );
 
     generic_bus_if out_gen_bus_if();
