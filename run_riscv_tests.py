@@ -1,24 +1,37 @@
 #! /usr/bin/env python3
-import os
 import argparse
+import io
+import os
+import queue
 import sys
 import subprocess
+import threading
 import pathlib
 
 class Colors:
     RED = '\033[1;31;48m'
     YELLOW = '\033[1;33;48m'
     GREEN = '\033[1;32;48m'
+    CYAN = '\033[1;36;48m'
     END = '\033[1;37;0m'
 
 # RISCV ISA supported
 supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
 
-# For now, only support 'p' environment. TODO: Add pm and pt environments.
+# For now, only support 'p' & 'v' environments. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
 verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
 test_base_dir = pathlib.Path("./riscv-tests/isa")
 benchmark_base_dir = pathlib.Path("./riscv-tests/benchmarks")
+
+# Environments
+# Technically, the benchmarks are not part of envs.
+# Special functionality is required for these, so they are treated as envs.
+ENV_P = 'p'
+ENV_PM = 'pm'
+ENV_PT = 'pt'
+ENV_V = 'v'
+ENV_BENCHMARK = 'benchmark'
 
 skip_list = [
     'rv32ui-p-ma_data.bin', # requires misaligned load/store, which is optional.
@@ -35,7 +48,10 @@ def apply_skips(test):
     
     return True
 
-def get_hostaddress(fname):
+def get_hostaddress(fname, is_benchmark=False):
+    # always going to be at address 0x80001000 if using a benchmark
+    if is_benchmark:
+        return 2147487744  # address 0x80001000
     # Get binary name
     binary = pathlib.Path(fname).with_suffix("")
     with open(binary, "rb") as fp:
@@ -98,39 +114,80 @@ def get_hostaddress(fname):
                 tohost_address = st_value
     return tohost_address
 
-def run_test(fname, env):
-    tohost_address = get_hostaddress(fname)
+def run_test(fname, env, output=None):
+    tohost_address = get_hostaddress(fname, env == ENV_BENCHMARK)
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--notrace']
-    if env == 'v':
+    if env == ENV_V:
         run_cmd.extend(['--max-sim-time', '1000000'])
-    if env == 'bench':
+    if env == ENV_BENCHMARK:
         run_cmd.extend(['--max-sim-time', '100000000', '--debug'])
     run_cmd.append(fname)
-    res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, errors='replace')
 
-    print(f'\t{fname}: ', end="")
+    print(f'\t{fname}: ', end="", file=output)
     status = ('PASSED' in res.stdout)
     if status:
-        print(f'{Colors.GREEN}[PASSED]{Colors.END}')
+        print(f'{Colors.GREEN}[PASSED]{Colors.END}', file=output)
     else:
-        print(f"{Colors.RED}[FAILED]{Colors.END}")
-        print(res.stdout)
+        print(f"{Colors.RED}[FAILED]{Colors.END}", file=output)
+        print(res.stdout, file=output)
 
     if res.returncode != 0:
-        print('Verilator failed to run, exiting: ')
-        print(res.stderr)
-        exit(1)
+        print('Verilator failed to run, exiting: ', file=output)
+        print(res.stderr, file=output)
+        sys.exit(1)
 
     return status
 
-def _run_tests(tests, total_count, pass_count, env):
-    for test in filter(apply_skips, tests):
-        total_count += 1
-        if run_test(test, env):
-            pass_count += 1
+def run_threads(test, env, data_collect_q):
+    output = io.StringIO()
+    status = run_test(test, env, output)
+    data_collect_q.put_nowait([test, status, output])
+
+def _run_tests(tests, total_count, pass_count, env, sim_parallel):
+    filtered_tests = list(filter(apply_skips, tests))
+
+    # If parallel simulation is enabled
+    if sim_parallel:
+        # increase the total test count
+        total_count += len(filtered_tests)
+        
+        # begin a queue to collect test statuses and list to store current threads
+        collect_data_q = queue.Queue()
+        test_threads = list()
+
+        # launch threads
+        for test in filtered_tests:
+            curr_thread = threading.Thread(target=run_threads, args=(test, env, collect_data_q))
+            test_threads.append(curr_thread)
+            curr_thread.start()
+
+        # join each thread
+        for thread in test_threads:
+            thread.join()
+        
+        # dump data
+        while not collect_data_q.empty():
+            [test, status, output] = collect_data_q.get()
+            print(output.getvalue(), end='')
+            output.close()
+            if status:
+                pass_count += 1
+    else:
+        for test in filtered_tests:
+            total_count += 1
+            if run_test(test, env):
+                pass_count += 1
     return total_count, pass_count
 
-def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests, benchmark_tests):
+def run_selected_tests(args):
+    isa = args.isa
+    envs = args.environment
+    machine_mode_tests = args.machine
+    supervisor_mode_tests = args.supervisor
+    benchmark_tests = args.benchmarks
+    sim_parallel = args.sim_parallel
+
     pass_count = 0
     total_count = 0
     
@@ -141,7 +198,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests, ben
 
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             total_count, pass_count = _run_tests(
-                tests, total_count, pass_count, env
+                tests, total_count, pass_count, env, sim_parallel
             )
 
         # machine-mode tests
@@ -149,7 +206,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests, ben
             print(f"Machine Mode tests")
             tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
             total_count, pass_count = _run_tests(
-                tests, total_count, pass_count, env
+                tests, total_count, pass_count, env, sim_parallel
             )
 
         # supervisor-mode tests
@@ -157,7 +214,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests, ben
             print(f"Supervisor Mode tests")
             tests = test_base_dir.glob(f'rv32si-{env}*.bin')
             total_count, pass_count = _run_tests(
-                tests, total_count, pass_count, env
+                tests, total_count, pass_count, env, sim_parallel
             )
 
         # benchmarks
@@ -165,7 +222,7 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests, ben
             print(f"Benchmark Tests")
             tests = benchmark_base_dir.glob(f'*.bin')
             total_count, pass_count = _run_tests(
-                tests, total_count, pass_count, 'bench'
+                tests, total_count, pass_count, ENV_BENCHMARK, sim_parallel
             )
         
     if pass_count == total_count:
@@ -181,10 +238,10 @@ def main():
     )
     parser.add_argument(
         '--environment',
-        choices=['p', 'pm', 'pt', 'v'],
+        choices=[ENV_P, ENV_PM, ENV_PT, ENV_V],
         nargs='*',
-        help='riscv-tests "TVM" option. Only \'p\' and \'v\' are supported at this time.',
-        default=['p']
+        help=f'riscv-tests "TVM" option. Only \'{ENV_P}\' and \'{ENV_V}\' are supported at this time.',
+        default=[ENV_P]
     )
     parser.add_argument(
         '--isa',
@@ -207,9 +264,14 @@ def main():
         action='store_true',
         help='Enable running benchmarks.'
     )
+    parser.add_argument(
+        '--sim-parallel',
+        action='store_true',
+        help='Enable parallel simulation of tests.'
+    )
     args = parser.parse_args()
 
-    if not args.machine and not args.isa and not args.supervisor:
+    if not args.isa and not args.machine and not args.supervisor and not args.benchmarks:
         print("Must supply at least one of --isa, --machine, or --supervisor")
         exit(1)
 
@@ -218,7 +280,7 @@ def main():
         exit(1)
     
     print("Running selected tests...")
-    run_selected_tests(args.isa, args.environment, args.machine, args.supervisor, args.benchmarks)
+    run_selected_tests(args)
 
 if __name__ == "__main__":
     main()
