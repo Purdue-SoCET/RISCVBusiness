@@ -262,7 +262,7 @@ module priv_pmp (
       default: i_match_found = 1'b0;
     endcase
 
-    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
+    if (!prv_intern_if.isMMode) begin  // Core is in an unprivileged state or needs privilege checks
       if (~i_match_found) begin
         i_prot_fault = 1'b1;
       end else begin
@@ -271,7 +271,7 @@ module priv_pmp (
         end
       end
     end else begin // Core is in M_MODE with no privilege check requirements
-      if (d_match_found & i_match.L) begin
+      if (i_match_found & i_match.L) begin
         if (prv_intern_if.xen & ~i_match.X) begin
           i_prot_fault = 1'b1;
         end

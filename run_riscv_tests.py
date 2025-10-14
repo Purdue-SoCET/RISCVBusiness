@@ -18,6 +18,7 @@ supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
 # No support for 'm' privilege tests
 verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
 test_base_dir = pathlib.Path("./riscv-tests/isa")
+benchmark_base_dir = pathlib.Path("./riscv-tests/benchmarks")
 
 skip_list = [
     'rv32ui-p-ma_data.bin', # requires misaligned load/store, which is optional.
@@ -102,6 +103,8 @@ def run_test(fname, env):
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--notrace']
     if env == 'v':
         run_cmd.extend(['--max-sim-time', '1000000'])
+    if env == 'bench':
+        run_cmd.extend(['--max-sim-time', '100000000', '--debug'])
     run_cmd.append(fname)
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
@@ -127,7 +130,7 @@ def _run_tests(tests, total_count, pass_count, env):
             pass_count += 1
     return total_count, pass_count
 
-def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
+def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests, benchmark_tests):
     pass_count = 0
     total_count = 0
     
@@ -156,6 +159,14 @@ def run_selected_tests(isa, envs, machine_mode_tests, supervisor_mode_tests):
             total_count, pass_count = _run_tests(
                 tests, total_count, pass_count, env
             )
+
+        # benchmarks
+        if benchmark_tests:
+            print(f"Benchmark Tests")
+            tests = benchmark_base_dir.glob(f'*.bin')
+            total_count, pass_count = _run_tests(
+                tests, total_count, pass_count, 'bench'
+            )
         
     if pass_count == total_count:
         print(f"{Colors.GREEN}[All {pass_count} tests passed.]{Colors.END}")
@@ -179,17 +190,22 @@ def main():
         '--isa',
         choices=supported_isa,
         nargs='*',
-        help='RISC-V ISA extensions to test. Only user-level ISA supported at this time.',
+        help='RISC-V ISA extensions to test. Supports i, m, zba, zbb, zbs for `p` and `v`. Additionally a for `p`.',
         default=[])
     parser.add_argument(
         '--machine',
         action='store_true',
-        help='Enable M-mode tests. Not currently supported.'
+        help='Enable M-mode tests.'
     )
     parser.add_argument(
         '--supervisor',
         action='store_true',
-        help='Enable S-mode tests. Not currently supported.'
+        help='Enable S-mode tests.'
+    )
+    parser.add_argument(
+        '--benchmarks',
+        action='store_true',
+        help='Enable running benchmarks.'
     )
     args = parser.parse_args()
 
@@ -202,7 +218,7 @@ def main():
         exit(1)
     
     print("Running selected tests...")
-    run_selected_tests(args.isa, args.environment, args.machine, args.supervisor)
+    run_selected_tests(args.isa, args.environment, args.machine, args.supervisor, args.benchmarks)
 
 if __name__ == "__main__":
     main()
