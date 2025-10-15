@@ -22,6 +22,7 @@
 #define EXT_ADDR_SET    0xFFFFFFF4
 #define EXT_ADDR_CLEAR  0xFFFFFFF8
 #define MAGIC_ADDR      0xFFFFFFFC
+#define FROMHOST_ADDR   0x80001040 // TODO(anyone): determine if this needs to be a parameter?
 #define BUS_ERROR_TOP   0x20000000
 
 // Inclusive range of memory-mapped peripherals
@@ -155,6 +156,15 @@ public:
 
     // TODO: Add simulation for SWI/mtime?
     uint32_t read(uint32_t addr) {
+        // Used by riscv-tests benchmarks in system calls.
+        // Only found call to FROMHOST_ADDR checks to see if
+        // the host writes a non-zero value.
+        // If different functionality is needed, this is
+        // the place to do it.
+        if (addr == FROMHOST_ADDR) {
+            return 1;
+        }
+
         auto it = mmap.find(addr);
         if(it != mmap.end()) {
             return it->second;

@@ -1,5 +1,5 @@
 diff --git a/p/riscv_test.h b/p/riscv_test.h
-index 7bf35cf..52bb51a 100644
+index 7bf35cf..dfa5867 100644
 --- a/p/riscv_test.h
 +++ b/p/riscv_test.h
 @@ -154,7 +154,7 @@
@@ -20,7 +20,7 @@ index 7bf35cf..52bb51a 100644
  trap_vector:                                                            \
          /* test whether the test came from pass/fail */                 \
          csrr t5, mcause;                                                \
-@@ -200,6 +202,7 @@ handle_exception:                                                       \
+@@ -200,11 +202,11 @@ handle_exception:                                                       \
    write_tohost:                                                         \
          sw TESTNUM, tohost, t5;                                         \
          sw zero, tohost + 4, t5;                                        \
@@ -28,7 +28,12 @@ index 7bf35cf..52bb51a 100644
          j write_tohost;                                                 \
  reset_vector:                                                           \
          INIT_XREG;                                                      \
-@@ -277,4 +280,11 @@ reset_vector:                                                           \
+         RISCV_MULTICORE_DISABLE;                                        \
+-        INIT_RNMI;                                                      \
+         INIT_SATP;                                                      \
+         INIT_PMP;                                                       \
+         DELEGATE_NO_TRAPS;                                              \
+@@ -277,4 +279,11 @@ reset_vector:                                                           \
  
  #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
  
@@ -40,10 +45,9 @@ index 7bf35cf..52bb51a 100644
 +    li sp, 0x90000000;                                                                            \
 +
  #endif
-
 diff --git a/v/amo_emu.c b/v/amo_emu.c
 new file mode 100644
-index 0000000..c432389
+index 0000000..2d2db27
 --- /dev/null
 +++ b/v/amo_emu.c
 @@ -0,0 +1,250 @@
@@ -298,7 +302,7 @@ index 0000000..c432389
 +    __builtin_unreachable();
 +}
 diff --git a/v/vm.c b/v/vm.c
-index 178d90b..3148bc6 100644
+index 178d90b..d087cd2 100644
 --- a/v/vm.c
 +++ b/v/vm.c
 @@ -22,8 +22,6 @@ extern volatile uint64_t fromhost;
@@ -320,10 +324,9 @@ index 178d90b..3148bc6 100644
  static void cputstring(const char* s)
  {
 -  while (*s)
--    cputchar(*s++);
 +  size_t len = strlen(s);
 +  for (size_t i = 0; i < len; i++) {
-+    cputchar(*s++);
+     cputchar(*s++);
 +  }
 +  cputchar('\n');
  }
