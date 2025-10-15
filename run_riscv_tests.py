@@ -16,7 +16,7 @@ class Colors:
     END = '\033[1;37;0m'
 
 # RISCV ISA supported
-supported_isa = ['i', 'm', 'a', 'c', 'f', 'd', 'zba', 'zbb', 'zbs', 'zfh']
+supported_isa = ['i', 'm', 'a', 'c', 'zba', 'zbb', 'zbs']
 
 # For now, only support 'p' & 'v' environments. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
@@ -180,13 +180,14 @@ def _run_tests(tests, total_count, pass_count, env, sim_parallel):
                 pass_count += 1
     return total_count, pass_count
 
-def run_selected_tests(args):
-    isa = args.isa
-    envs = args.environment
-    machine_mode_tests = args.machine
-    supervisor_mode_tests = args.supervisor
-    benchmark_tests = args.benchmarks
-    sim_parallel = args.sim_parallel
+def run_selected_tests(
+        isa=[],
+        envs=['p'],
+        machine_mode_tests=False,
+        supervisor_mode_tests=False,
+        benchmark_tests=False,
+        sim_parallel=False,
+    ):
 
     pass_count = 0
     total_count = 0
@@ -280,7 +281,14 @@ def main():
         exit(1)
     
     print("Running selected tests...")
-    run_selected_tests(args)
+    run_selected_tests(
+        isa=args.isa,
+        envs=args.envs,
+        machine_mode_tests=args.machine,
+        supervisor_mode_tests=args.supervisor,
+        benchmark_tests=args.benchmarks,
+        sim_parallel=args.sim_parallel,
+    )
 
 if __name__ == "__main__":
     main()

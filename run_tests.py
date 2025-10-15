@@ -1,55 +1,12 @@
 
 import argparse
 from run_riscv_tests import Colors
+from run_riscv_tests import run_selected_tests
 import subprocess
 import sys
 import yaml
 
 CONFIG_PATH = 'example.yml'
-
-# Commands to run for riscv-tests
-RISCV_TESTS_BASE = [
-    'python3',
-    'run_riscv_tests.py',
-]
-RISCV_TESTS_ARGS = [
-    # Priv Tests
-    [
-        '--machine',
-        '--supervisor',
-    ],
-
-    # Physical Tests
-    [
-        '--environment', 
-        'p',
-        '--isa',
-        'i',
-        'm',
-        'a',
-        'zba',
-        'zbb',
-        'zbs',
-    ],
-
-    # Virtual Tests
-    [
-        '--environment',
-        'v',
-        '--isa',
-        'i',
-        'm',
-        'zba',
-        'zbb',
-        'zbs',
-    ],  # virtual has no A ext. support because of atomic emulation.
-]
-RISCV_TESTS_ARGS_SINGLE_CORE = [
-    # Benchmarks
-    [
-        '--benchmarks',
-    ],
-]
 
 
 def parse_args():
@@ -185,18 +142,28 @@ def config_maxed_core(config_path, num_harts=2):
     sys.exit(1)
 
 
-def run_test(run_cmd):
-  return subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-
-
-def run_tests(prefix, test_args, test_name, runtime_args=[]):
-  """Runs the specified commands."""
-  print(f'Testing {test_name}')
-  for test_arg in test_args:
-    run_cmd = prefix + runtime_args + test_arg
-    status_print(run_cmd, color=Colors.YELLOW)
-    res = run_test(run_cmd)
-    print(res.stdout)
+def riscv_tests_runner(num_harts, sim_parallel=False):
+  """Wrapper for running riscv-tests."""
+  run_selected_tests(
+      machine_mode_tests=True,
+      supervisor_mode_tests=True,
+      sim_parallel=sim_parallel,
+  )
+  run_selected_tests(
+      isa=['i', 'm', 'a', 'c', 'zba', 'zbb', 'zbs'],
+      envs=['p'],
+      sim_parallel=sim_parallel,
+  )
+  run_selected_tests(
+      isa=['i', 'm', 'c', 'zba', 'zbb', 'zbs'],  # currently, 'a' is not supported in env 'v'
+      envs=['v'],
+      sim_parallel=sim_parallel,
+  )
+  if num_harts == 1:
+    run_selected_tests(
+        benchmark_tests=True,
+        sim_parallel=sim_parallel,
+    )
 
 
 def main():
@@ -204,31 +171,18 @@ def main():
   args = parse_args()
 
   if args.riscv_tests:
-    runtime_args = []
-    if args.sim_parallel:
-      runtime_args.append('--sim-parallel')
-
     # 1-hart tests
     # benchmarks are only supported in single core
     status_print("1-hart riscv-tests")
     config_maxed_core(CONFIG_PATH, num_harts=1)
-    run_tests(
-        prefix=RISCV_TESTS_BASE,
-        test_args=RISCV_TESTS_ARGS.copy() + RISCV_TESTS_ARGS_SINGLE_CORE.copy(),
-        test_name="riscv-tests",
-        runtime_args=runtime_args
-    )
+    riscv_tests_runner(num_harts=1, sim_parallel=args.sim_parallel)
 
     # do another test run with the specifed number of harts
     if args.num_harts > 1:
       status_print(f"{args.num_harts}-hart riscv-tests")
       config_maxed_core(CONFIG_PATH, num_harts=args.num_harts)
-      run_tests(
-          prefix=RISCV_TESTS_BASE,
-          test_args=RISCV_TESTS_ARGS.copy(),
-          test_name="riscv-tests",
-          runtime_args=runtime_args
-      )
+      riscv_tests_runner(num_harts=args.num_harts, sim_parallel=args.sim_parallel)
+      
 
   
   if args.embench:
