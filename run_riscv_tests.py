@@ -283,7 +283,7 @@ def main():
     print("Running selected tests...")
     run_selected_tests(
         isa=args.isa,
-        envs=args.envs,
+        envs=args.environment,
         machine_mode_tests=args.machine,
         supervisor_mode_tests=args.supervisor,
         benchmark_tests=args.benchmarks,
