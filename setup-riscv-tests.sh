@@ -6,6 +6,9 @@ git apply ../riscv-tests-isa.patch
 pushd env
 git apply ../../riscv-tests-env.patch
 popd
+pushd benchmarks
+git apply ../../riscv-tests-benchmarks.patch
+popd
 autoconf
 ./configure
 make $1
