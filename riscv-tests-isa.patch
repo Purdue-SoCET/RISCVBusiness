@@ -1,5 +1,5 @@
 diff --git a/isa/Makefile b/isa/Makefile
-index bf85e1f..1e68ca1 100644
+index bf85e1f..a0c3544 100644
 --- a/isa/Makefile
 +++ b/isa/Makefile
 @@ -45,7 +45,7 @@ default: all
@@ -11,28 +11,214 @@ index bf85e1f..1e68ca1 100644
  RISCV_OBJDUMP ?= $(RISCV_PREFIX)objdump --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.text.init --section=.data
  RISCV_SIM ?= spike
  
-@@ -66,7 +66,7 @@ vpath %.S $(src_dir)
+@@ -66,9 +66,25 @@ vpath %.S $(src_dir)
  define compile_template
  
  $$($(1)_p_tests): $(1)-p-%: $(1)/%.S
--	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@
++ifeq ($(1), rv32mi)
+ 	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@
++else ifeq ($(1), rv32si)
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@
++else
 +	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< $(src_dir)/../env/v/amo_emu.c -o $$@
++endif
  $(1)_tests += $$($(1)_p_tests)
  
- $$($(1)_v_tests): $(1)-v-%: $(1)/%.S
-diff --git a/isa/rv64si/dirty.S b/isa/rv64si/dirty.S
-index 15f3163..73c8adf 100644
---- a/isa/rv64si/dirty.S
-+++ b/isa/rv64si/dirty.S
-@@ -17,6 +17,8 @@
- RVTEST_RV64M
- RVTEST_CODE_BEGIN
- 
-+  li sp, DRAM_BASE + 0x20000000
++$$($(1)_pm_tests): $(1)-pm-%: $(1)/%.S
++ifeq ($(1), rv32mi)
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/pm -I$(src_dir)/macros/scalar -T$(src_dir)/../env/pm/link.ld $$< -o $$@
++else ifeq ($(1), rv32si)
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/pm -I$(src_dir)/macros/scalar -T$(src_dir)/../env/pm/link.ld $$< -o $$@
++else
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/pm -I$(src_dir)/macros/scalar -T$(src_dir)/../env/pm/link.ld $$< $(src_dir)/../env/v/amo_emu.c -o $$@
++endif
++$(1)_tests += $$($(1)_pm_tests)
 +
-   # Turn on VM
-   li a0, (SATP_MODE & ~(SATP_MODE<<1)) * SATP_MODE_SV39
-   la a1, page_table_1
+ $$($(1)_v_tests): $(1)-v-%: $(1)/%.S
+ 	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -DENTROPY=0x$$(shell echo \$$@ | md5sum | cut -c 1-7) -std=gnu99 -O2 -I$(src_dir)/../env/v -I$(src_dir)/macros/scalar -T$(src_dir)/../env/v/link.ld $(src_dir)/../env/v/entry.S $(src_dir)/../env/v/*.c $$< -o $$@
+ $(1)_tests += $$($(1)_v_tests)
+diff --git a/isa/rv32mi/Makefrag b/isa/rv32mi/Makefrag
+index d871990..0302ba4 100644
+--- a/isa/rv32mi/Makefrag
++++ b/isa/rv32mi/Makefrag
+@@ -19,3 +19,4 @@ rv32mi_sc_tests = \
+ 	zicntr \
+ 
+ rv32mi_p_tests = $(addprefix rv32mi-p-, $(rv32mi_sc_tests))
++rv32mi_pm_tests = $(addprefix rv32mi-pm-, $(rv32mi_sc_tests))
+diff --git a/isa/rv32si/Makefrag b/isa/rv32si/Makefrag
+index 1392c24..5506ee5 100644
+--- a/isa/rv32si/Makefrag
++++ b/isa/rv32si/Makefrag
+@@ -11,3 +11,4 @@ rv32si_sc_tests = \
+ 	wfi \
+ 
+ rv32si_p_tests = $(addprefix rv32si-p-, $(rv32si_sc_tests))
++rv32si_pm_tests = $(addprefix rv32si-pm-, $(rv32si_sc_tests))
+diff --git a/isa/rv32ua/Makefrag b/isa/rv32ua/Makefrag
+index 3f35810..c77b92a 100644
+--- a/isa/rv32ua/Makefrag
++++ b/isa/rv32ua/Makefrag
+@@ -7,4 +7,5 @@ rv32ua_sc_tests = \
+ 	lrsc \
+ 
+ rv32ua_p_tests = $(addprefix rv32ua-p-, $(rv32ua_sc_tests))
++rv32ua_pm_tests = $(addprefix rv32ua-pm-, $(rv32ua_sc_tests))
+ rv32ua_v_tests = $(addprefix rv32ua-v-, $(rv32ua_sc_tests))
+diff --git a/isa/rv32uc/Makefrag b/isa/rv32uc/Makefrag
+index 674ece8..045eff7 100644
+--- a/isa/rv32uc/Makefrag
++++ b/isa/rv32uc/Makefrag
+@@ -6,4 +6,5 @@ rv32uc_sc_tests = \
+ 	rvc \
+ 
+ rv32uc_p_tests = $(addprefix rv32uc-p-, $(rv32uc_sc_tests))
++rv32uc_pm_tests = $(addprefix rv32uc-pm-, $(rv32uc_sc_tests))
+ rv32uc_v_tests = $(addprefix rv32uc-v-, $(rv32uc_sc_tests))
+diff --git a/isa/rv32ud/Makefrag b/isa/rv32ud/Makefrag
+index 1a38cec..c261468 100644
+--- a/isa/rv32ud/Makefrag
++++ b/isa/rv32ud/Makefrag
+@@ -10,4 +10,5 @@ rv32ud_sc_tests = \
+ #        ldst move structural recoding \
+ 
+ rv32ud_p_tests = $(addprefix rv32ud-p-, $(rv32ud_sc_tests))
++rv32ud_pm_tests = $(addprefix rv32ud-pm-, $(rv32ud_sc_tests))
+ rv32ud_v_tests = $(addprefix rv32ud-v-, $(rv32ud_sc_tests))
+diff --git a/isa/rv32uf/Makefrag b/isa/rv32uf/Makefrag
+index e82705f..cebc3e7 100644
+--- a/isa/rv32uf/Makefrag
++++ b/isa/rv32uf/Makefrag
+@@ -7,4 +7,5 @@ rv32uf_sc_tests = \
+ 	ldst move recoding \
+ 
+ rv32uf_p_tests = $(addprefix rv32uf-p-, $(rv32uf_sc_tests))
++rv32uf_pm_tests = $(addprefix rv32uf-pm-, $(rv32uf_sc_tests))
+ rv32uf_v_tests = $(addprefix rv32uf-v-, $(rv32uf_sc_tests))
+diff --git a/isa/rv32ui/Makefrag b/isa/rv32ui/Makefrag
+index b7d85e1..ff6f5ca 100644
+--- a/isa/rv32ui/Makefrag
++++ b/isa/rv32ui/Makefrag
+@@ -23,4 +23,5 @@ rv32ui_sc_tests = \
+ 	xor xori \
+ 
+ rv32ui_p_tests = $(addprefix rv32ui-p-, $(rv32ui_sc_tests))
++rv32ui_pm_tests = $(addprefix rv32ui-pm-, $(rv32ui_sc_tests))
+ rv32ui_v_tests = $(addprefix rv32ui-v-, $(rv32ui_sc_tests))
+diff --git a/isa/rv32um/Makefrag b/isa/rv32um/Makefrag
+index 688cb5a..c86e411 100644
+--- a/isa/rv32um/Makefrag
++++ b/isa/rv32um/Makefrag
+@@ -8,4 +8,5 @@ rv32um_sc_tests = \
+ 	rem remu \
+ 
+ rv32um_p_tests = $(addprefix rv32um-p-, $(rv32um_sc_tests))
++rv32um_pm_tests = $(addprefix rv32um-pm-, $(rv32um_sc_tests))
+ rv32um_v_tests = $(addprefix rv32um-v-, $(rv32um_sc_tests))
+diff --git a/isa/rv32uzba/Makefrag b/isa/rv32uzba/Makefrag
+index 39a2c99..0db1113 100644
+--- a/isa/rv32uzba/Makefrag
++++ b/isa/rv32uzba/Makefrag
+@@ -8,6 +8,7 @@ rv32uzba_sc_tests = \
+ 	sh3add \
+ 
+ rv32uzba_p_tests = $(addprefix rv32uzba-p-, $(rv32uzba_sc_tests))
++rv32uzba_pm_tests = $(addprefix rv32uzba-pm-, $(rv32uzba_sc_tests))
+ rv32uzba_v_tests = $(addprefix rv32uzba-v-, $(rv32uzba_sc_tests))
+ rv32uzba_ps_tests = $(addprefix rv32uzba-ps-, $(rv32uzba_sc_tests))
+ 
+diff --git a/isa/rv32uzbb/Makefrag b/isa/rv32uzbb/Makefrag
+index 752f8d0..d070694 100644
+--- a/isa/rv32uzbb/Makefrag
++++ b/isa/rv32uzbb/Makefrag
+@@ -20,6 +20,7 @@ rv32uzbb_sc_tests = \
+ 	zext_h \
+ 
+ rv32uzbb_p_tests = $(addprefix rv32uzbb-p-, $(rv32uzbb_sc_tests))
++rv32uzbb_pm_tests = $(addprefix rv32uzbb-pm-, $(rv32uzbb_sc_tests))
+ rv32uzbb_v_tests = $(addprefix rv32uzbb-v-, $(rv32uzbb_sc_tests))
+ rv32uzbb_ps_tests = $(addprefix rv32uzbb-ps-, $(rv32uzbb_sc_tests))
+ 
+diff --git a/isa/rv32uzbc/Makefrag b/isa/rv32uzbc/Makefrag
+index 7dcf6d5..654a804 100644
+--- a/isa/rv32uzbc/Makefrag
++++ b/isa/rv32uzbc/Makefrag
+@@ -8,6 +8,7 @@ rv32uzbc_sc_tests = \
+ 	clmulr \
+ 
+ rv32uzbc_p_tests = $(addprefix rv32uzbc-p-, $(rv32uzbc_sc_tests))
++rv32uzbc_pm_tests = $(addprefix rv32uzbc-pm-, $(rv32uzbc_sc_tests))
+ rv32uzbc_v_tests = $(addprefix rv32uzbc-v-, $(rv32uzbc_sc_tests))
+ rv32uzbc_ps_tests = $(addprefix rv32uzbc-ps-, $(rv32uzbc_sc_tests))
+ 
+diff --git a/isa/rv32uzbs/Makefrag b/isa/rv32uzbs/Makefrag
+index 7af7c42..4b02c89 100644
+--- a/isa/rv32uzbs/Makefrag
++++ b/isa/rv32uzbs/Makefrag
+@@ -9,6 +9,7 @@ rv32uzbs_sc_tests = \
+ 	bset bseti \
+ 
+ rv32uzbs_p_tests = $(addprefix rv32uzbs-p-, $(rv32uzbs_sc_tests))
++rv32uzbs_pm_tests = $(addprefix rv32uzbs-pm-, $(rv32uzbs_sc_tests))
+ rv32uzbs_v_tests = $(addprefix rv32uzbs-v-, $(rv32uzbs_sc_tests))
+ rv32uzbs_ps_tests = $(addprefix rv32uzbs-ps-, $(rv32uzbs_sc_tests))
+ 
+diff --git a/isa/rv32uzfh/Makefrag b/isa/rv32uzfh/Makefrag
+index f24cdf2..b201e51 100644
+--- a/isa/rv32uzfh/Makefrag
++++ b/isa/rv32uzfh/Makefrag
+@@ -7,4 +7,5 @@ rv32uzfh_sc_tests = \
+ 	ldst move recoding \
+ 
+ rv32uzfh_p_tests = $(addprefix rv32uzfh-p-, $(rv32uzfh_sc_tests))
++rv32uzfh_pm_tests = $(addprefix rv32uzfh-pm-, $(rv32uzfh_sc_tests))
+ rv32uzfh_v_tests = $(addprefix rv32uzfh-v-, $(rv32uzfh_sc_tests))
+diff --git a/isa/rv64mi/Makefrag b/isa/rv64mi/Makefrag
+index a6f23e4..efd5fee 100644
+--- a/isa/rv64mi/Makefrag
++++ b/isa/rv64mi/Makefrag
+@@ -21,3 +21,4 @@ rv64mi_sc_tests = \
+ 	zicntr \
+ 
+ rv64mi_p_tests = $(addprefix rv64mi-p-, $(rv64mi_sc_tests))
++rv64mi_pm_tests = $(addprefix rv64mi-pm-, $(rv64mi_sc_tests))
+diff --git a/isa/rv64mzicbo/Makefrag b/isa/rv64mzicbo/Makefrag
+index a002cc9..f92f927 100644
+--- a/isa/rv64mzicbo/Makefrag
++++ b/isa/rv64mzicbo/Makefrag
+@@ -6,3 +6,4 @@ rv64mzicbo_sc_tests = \
+ 	zero \
+ 
+ rv64mzicbo_p_tests = $(addprefix rv64mzicbo-p-, $(rv64mzicbo_sc_tests))
++rv64mzicbo_pm_tests = $(addprefix rv64mzicbo-pm-, $(rv64mzicbo_sc_tests))
+diff --git a/isa/rv64si/Makefrag b/isa/rv64si/Makefrag
+index 604005c..5ed6d90 100644
+--- a/isa/rv64si/Makefrag
++++ b/isa/rv64si/Makefrag
+@@ -12,3 +12,4 @@ rv64si_sc_tests = \
+ 	sbreak \
+ 
+ rv64si_p_tests = $(addprefix rv64si-p-, $(rv64si_sc_tests))
++rv64si_pm_tests = $(addprefix rv64si-pm-, $(rv64si_sc_tests))
+diff --git a/isa/rv64ssvnapot/Makefrag b/isa/rv64ssvnapot/Makefrag
+index 79e1f2a..61368a2 100644
+--- a/isa/rv64ssvnapot/Makefrag
++++ b/isa/rv64ssvnapot/Makefrag
+@@ -6,3 +6,4 @@ rv64ssvnapot_sc_tests = \
+ 	napot \
+ 
+ rv64ssvnapot_p_tests = $(addprefix rv64ssvnapot-p-, $(rv64ssvnapot_sc_tests))
++rv64ssvnapot_pm_tests = $(addprefix rv64ssvnapot-pm-, $(rv64ssvnapot_sc_tests))
+diff --git a/isa/rv64ua/Makefrag b/isa/rv64ua/Makefrag
+index f0e8ad6..9796363 100644
+--- a/isa/rv64ua/Makefrag
++++ b/isa/rv64ua/Makefrag
+@@ -8,4 +8,5 @@ rv64ua_sc_tests = \
+ 	lrsc \
+ 
+ rv64ua_p_tests = $(addprefix rv64ua-p-, $(rv64ua_sc_tests))
++rv64ua_pm_tests = $(addprefix rv64ua-pm-, $(rv64ua_sc_tests))
+ rv64ua_v_tests = $(addprefix rv64ua-v-, $(rv64ua_sc_tests))
 diff --git a/isa/rv64ua/amoadd_w.S b/isa/rv64ua/amoadd_w.S
 index d076d45..05e28b8 100644
 --- a/isa/rv64ua/amoadd_w.S
@@ -153,3 +339,111 @@ index 39fb156..93e2e4c 100644
  
  # get a unique core id
  la a0, coreid
+diff --git a/isa/rv64uc/Makefrag b/isa/rv64uc/Makefrag
+index 557ca6c..7718f4a 100644
+--- a/isa/rv64uc/Makefrag
++++ b/isa/rv64uc/Makefrag
+@@ -6,4 +6,5 @@ rv64uc_sc_tests = \
+ 	rvc \
+ 
+ rv64uc_p_tests = $(addprefix rv64uc-p-, $(rv64uc_sc_tests))
++rv64uc_pm_tests = $(addprefix rv64uc-pm-, $(rv64uc_sc_tests))
+ rv64uc_v_tests = $(addprefix rv64uc-v-, $(rv64uc_sc_tests))
+diff --git a/isa/rv64ud/Makefrag b/isa/rv64ud/Makefrag
+index de456cd..3563a0c 100644
+--- a/isa/rv64ud/Makefrag
++++ b/isa/rv64ud/Makefrag
+@@ -7,4 +7,5 @@ rv64ud_sc_tests = \
+ 	ldst move structural recoding \
+ 
+ rv64ud_p_tests = $(addprefix rv64ud-p-, $(rv64ud_sc_tests))
++rv64ud_pm_tests = $(addprefix rv64ud-pm-, $(rv64ud_sc_tests))
+ rv64ud_v_tests = $(addprefix rv64ud-v-, $(rv64ud_sc_tests))
+diff --git a/isa/rv64uf/Makefrag b/isa/rv64uf/Makefrag
+index 2b67905..d92f49e 100644
+--- a/isa/rv64uf/Makefrag
++++ b/isa/rv64uf/Makefrag
+@@ -7,4 +7,5 @@ rv64uf_sc_tests = \
+ 	ldst move recoding \
+ 
+ rv64uf_p_tests = $(addprefix rv64uf-p-, $(rv64uf_sc_tests))
++rv64uf_pm_tests = $(addprefix rv64uf-pm-, $(rv64uf_sc_tests))
+ rv64uf_v_tests = $(addprefix rv64uf-v-, $(rv64uf_sc_tests))
+diff --git a/isa/rv64ui/Makefrag b/isa/rv64ui/Makefrag
+index d90347c..7a2e87b 100644
+--- a/isa/rv64ui/Makefrag
++++ b/isa/rv64ui/Makefrag
+@@ -23,4 +23,5 @@ rv64ui_sc_tests = \
+ 	xor xori \
+ 
+ rv64ui_p_tests = $(addprefix rv64ui-p-, $(rv64ui_sc_tests))
++rv64ui_pm_tests = $(addprefix rv64ui-pm-, $(rv64ui_sc_tests))
+ rv64ui_v_tests = $(addprefix rv64ui-v-, $(rv64ui_sc_tests))
+diff --git a/isa/rv64um/Makefrag b/isa/rv64um/Makefrag
+index 2a9e66d..459eb1c 100644
+--- a/isa/rv64um/Makefrag
++++ b/isa/rv64um/Makefrag
+@@ -8,4 +8,5 @@ rv64um_sc_tests = \
+ 	rem remu remuw remw \
+ 
+ rv64um_p_tests = $(addprefix rv64um-p-, $(rv64um_sc_tests))
++rv64um_pm_tests = $(addprefix rv64um-pm-, $(rv64um_sc_tests))
+ rv64um_v_tests = $(addprefix rv64um-v-, $(rv64um_sc_tests))
+diff --git a/isa/rv64uzba/Makefrag b/isa/rv64uzba/Makefrag
+index a2428f3..44de863 100644
+--- a/isa/rv64uzba/Makefrag
++++ b/isa/rv64uzba/Makefrag
+@@ -10,6 +10,7 @@ rv64uzba_sc_tests = \
+ 	slli_uw \
+ 
+ rv64uzba_p_tests = $(addprefix rv64uzba-p-, $(rv64uzba_sc_tests))
++rv64uzba_pm_tests = $(addprefix rv64uzba-pm-, $(rv64uzba_sc_tests))
+ rv64uzba_v_tests = $(addprefix rv64uzba-v-, $(rv64uzba_sc_tests))
+ rv64uzba_ps_tests = $(addprefix rv64uzba-ps-, $(rv64uzba_sc_tests))
+ 
+diff --git a/isa/rv64uzbb/Makefrag b/isa/rv64uzbb/Makefrag
+index 2e93897..6a31e65 100644
+--- a/isa/rv64uzbb/Makefrag
++++ b/isa/rv64uzbb/Makefrag
+@@ -20,6 +20,7 @@ rv64uzbb_sc_tests = \
+ 	zext_h \
+ 
+ rv64uzbb_p_tests = $(addprefix rv64uzbb-p-, $(rv64uzbb_sc_tests))
++rv64uzbb_pm_tests = $(addprefix rv64uzbb-pm-, $(rv64uzbb_sc_tests))
+ rv64uzbb_v_tests = $(addprefix rv64uzbb-v-, $(rv64uzbb_sc_tests))
+ rv64uzbb_ps_tests = $(addprefix rv64uzbb-ps-, $(rv64uzbb_sc_tests))
+ 
+diff --git a/isa/rv64uzbc/Makefrag b/isa/rv64uzbc/Makefrag
+index 01ce4e2..a4d3e29 100644
+--- a/isa/rv64uzbc/Makefrag
++++ b/isa/rv64uzbc/Makefrag
+@@ -8,6 +8,7 @@ rv64uzbc_sc_tests = \
+ 	clmulr \
+ 
+ rv64uzbc_p_tests = $(addprefix rv64uzbc-p-, $(rv64uzbc_sc_tests))
++rv64uzbc_pm_tests = $(addprefix rv64uzbc-pm-, $(rv64uzbc_sc_tests))
+ rv64uzbc_v_tests = $(addprefix rv64uzbc-v-, $(rv64uzbc_sc_tests))
+ rv64uzbc_ps_tests = $(addprefix rv64uzbc-ps-, $(rv64uzbc_sc_tests))
+ 
+diff --git a/isa/rv64uzbs/Makefrag b/isa/rv64uzbs/Makefrag
+index 3264b4d..2b34ef3 100644
+--- a/isa/rv64uzbs/Makefrag
++++ b/isa/rv64uzbs/Makefrag
+@@ -9,6 +9,7 @@ rv64uzbs_sc_tests = \
+ 	bset bseti \
+ 
+ rv64uzbs_p_tests = $(addprefix rv64uzbs-p-, $(rv64uzbs_sc_tests))
++rv64uzbs_pm_tests = $(addprefix rv64uzbs-pm-, $(rv64uzbs_sc_tests))
+ rv64uzbs_v_tests = $(addprefix rv64uzbs-v-, $(rv64uzbs_sc_tests))
+ rv64uzbs_ps_tests = $(addprefix rv64uzbs-ps-, $(rv64uzbs_sc_tests))
+ 
+diff --git a/isa/rv64uzfh/Makefrag b/isa/rv64uzfh/Makefrag
+index af247fd..02ddb7b 100644
+--- a/isa/rv64uzfh/Makefrag
++++ b/isa/rv64uzfh/Makefrag
+@@ -7,4 +7,5 @@ rv64uzfh_sc_tests = \
+ 	ldst move recoding \
+ 
+ rv64uzfh_p_tests = $(addprefix rv64uzfh-p-, $(rv64uzfh_sc_tests))
++rv64uzfh_pm_tests = $(addprefix rv64uzfh-pm-, $(rv64uzfh_sc_tests))
+ rv64uzfh_v_tests = $(addprefix rv64uzfh-v-, $(rv64uzfh_sc_tests))
