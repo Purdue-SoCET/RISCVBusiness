@@ -144,6 +144,10 @@ def config_maxed_core(config_path, num_harts=2):
 
 def riscv_tests_runner(num_harts, sim_parallel=False):
   """Wrapper for running riscv-tests."""
+  physical_env = 'p'
+  if num_harts > 1:
+    physical_env = 'pm'
+
   run_selected_tests(
       machine_mode_tests=True,
       supervisor_mode_tests=True,
@@ -151,7 +155,7 @@ def riscv_tests_runner(num_harts, sim_parallel=False):
   )
   run_selected_tests(
       isa=['i', 'm', 'a', 'c', 'zba', 'zbb', 'zbs'],
-      envs=['p'],
+      envs=[physical_env],
       sim_parallel=sim_parallel,
   )
   run_selected_tests(

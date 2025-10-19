@@ -35,10 +35,11 @@ ENV_BENCHMARK = 'benchmark'
 
 skip_list = [
     'rv32ui-p-ma_data.bin', # requires misaligned load/store, which is optional.
+    'rv32ui-pm-ma_data.bin', # requires misaligned load/store, which is optional.
+    'rv32ui-v-ma_data.bin', # requires misaligned load/store, which is optional.
     'rv32mi-p-illegal.bin', # requires RV32C illegal instruction detection, which we have not implemented
     'rv32mi-p-breakpoint.bin', # requires some parts of debug spec implemented.
     'rv32mi-p-shamt.bin', # requires full detection of illegal instructions (including RV32 SLL with shamt[5] set)
-    'rv32ui-v-ma_data.bin', # requires misaligned load/store, which is optional.
 ]
 
 def apply_skips(test):
@@ -205,7 +206,7 @@ def run_selected_tests(
         # machine-mode tests
         if machine_mode_tests:
             print(f"Machine Mode tests")
-            tests = test_base_dir.glob(f'rv32mi-{env}*.bin')
+            tests = test_base_dir.glob(f'rv32mi-{env}-*.bin')
             total_count, pass_count = _run_tests(
                 tests, total_count, pass_count, env, sim_parallel
             )
@@ -213,7 +214,7 @@ def run_selected_tests(
         # supervisor-mode tests
         if supervisor_mode_tests:
             print(f"Supervisor Mode tests")
-            tests = test_base_dir.glob(f'rv32si-{env}*.bin')
+            tests = test_base_dir.glob(f'rv32si-{env}-*.bin')
             total_count, pass_count = _run_tests(
                 tests, total_count, pass_count, env, sim_parallel
             )
@@ -276,9 +277,9 @@ def main():
         print("Must supply at least one of --isa, --machine, or --supervisor")
         exit(1)
 
-    if 'pm' in args.environment or 'pt' in args.environment:
-        print("Environments 'pt' and 'pm' are not yet supported.")
-        exit(1)
+    # if 'pm' in args.environment or 'pt' in args.environment:
+    #     print("Environments 'pt' and 'pm' are not yet supported.")
+    #     exit(1)
     
     print("Running selected tests...")
     run_selected_tests(
