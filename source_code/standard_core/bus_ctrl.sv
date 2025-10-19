@@ -113,8 +113,8 @@ module bus_ctrl #(
             TRANSFER_RX:        nstate = BUS_TO_CACHE;
             READ_L2:            nstate = ccif.l2error ? IDLE :
                                          block_count_done ? BUS_TO_CACHE : state;
-            WRITEBACK_MS:       nstate = block_count_done ? IDLE : state;
-            WRITEBACK:          nstate = block_count_done ? IDLE : state;
+            WRITEBACK_MS:       nstate = ccif.l2error || block_count_done ? IDLE : state;
+            WRITEBACK:          nstate = ccif.l2error || block_count_done ? IDLE : state;
             BUS_TO_CACHE:       nstate = IDLE;
             INVALIDATE:         nstate = IDLE;
         endcase
@@ -232,7 +232,9 @@ module bus_ctrl #(
 
                 ccif.l2WEN = !block_count_done;
                 nblock_count = block_count;
-                if (ccif.l2state == L2_ACCESS) begin
+                if (ccif.l2error) begin
+                    ccif.derror[requester_cpu] = 1;
+                end else if (ccif.l2state == L2_ACCESS) begin
                     ccif.l2WEN = 0;
                     nblock_count = block_count + 1;
                     if (block_count < BLOCK_SIZE - 1) begin
@@ -246,7 +248,9 @@ module bus_ctrl #(
                 nblock_count = block_count;
                 ccif.dwait[requester_cpu] = !block_count_done; //Writeback complete
 
-                if (ccif.l2state == L2_ACCESS) begin
+                if (ccif.l2error) begin
+                    ccif.derror[requester_cpu] = 1;
+                end else if (ccif.l2state == L2_ACCESS) begin
                     ccif.l2WEN = 0;
                     nblock_count = block_count + 1;
                     if (!pass_through && block_count < BLOCK_SIZE - 1) begin

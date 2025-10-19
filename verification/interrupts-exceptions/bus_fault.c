@@ -27,7 +27,7 @@ int main() {
     asm volatile("csrw mtvec, %0" : : "r" (mtvec_value));
 
     print("Read 0x0\n");
-    int x = *(volatile int *)(0x4);
+    int x = *(volatile int *)(0x1FFFFFFC);
 
     if(flag != 1) {
         print("Failed!\n");
