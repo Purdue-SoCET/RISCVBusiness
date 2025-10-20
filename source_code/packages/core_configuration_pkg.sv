@@ -2,9 +2,6 @@ package core_configuration_pkg;
 
 localparam NUM_HARTS = 2;
     
-// ISA extensions
-localparam string BASE_ISA[NUM_HARTS] = {"RV32E", "RV32E"};
-
 // Packed struct is MSB - LSB
 typedef struct packed {
     bit RV32ZICSR;
@@ -26,6 +23,9 @@ typedef enum int {
     ZICSR
 } extension_idx_t;
 
+// ISA extensions
+localparam string BASE_ISA[NUM_HARTS] = {"RV32E", "RV32E"};
+
 localparam isa_extension_t CORE_CONFIG[NUM_HARTS] = '{
     '{RV32M: 0, RV32A: 1, RV32C: 0, RV32B: 0, RV32ZICOND: 0, RV32ZIFENCEI: 0, RV32ZICSR: 0},
     '{RV32M: 0, RV32A: 1, RV32C: 0, RV32B: 0, RV32ZICOND: 0, RV32ZIFENCEI: 0, RV32ZICSR: 0}
@@ -46,12 +46,13 @@ localparam string ICACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
 localparam ICACHE_SIZE[NUM_HARTS] = {1024, 1024};
 localparam ICACHE_BLOCK_SIZE[NUM_HARTS] = {2, 2};
 localparam ICACHE_ASSOC[NUM_HARTS] = {1, 1};
-localparam TLB_ENTRIES[NUM_HARTS] = {16, 16};
-
-localparam NONCACHE_START_ADDR = 32'hF000_0000;
 
 // Multiplier settings
 localparam string MULTIPLIER_TYPE[NUM_HARTS] = {"shift_add_multiplier", "shift_add_multiplier"};
+
+// Supervisor settings
+localparam string SUPERVISOR_ENABLED[NUM_HARTS] = {"disabled","disabled"};
+localparam string ADDRESS_TRANSLATION_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 
 //For bus_ctrl
 localparam CPUS = NUM_HARTS * 2;
