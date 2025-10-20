@@ -116,7 +116,7 @@ def create_pkg(config):
         br_pred, btb_sizes, use_ras = [], [], []
         cache_config, dcache_type, dcache_size, dcache_block_size, dcache_assoc = [], [], [], [], []
         icache_type, icache_size, icache_block_size, icache_assoc = [], [], [], []
-        tlb_entries, mults, smode, sup, at = [], [], [], [], []
+        tlb_entries, mults, sup, at = [], [], [], []
 
         for i in range(num_harts):
             core = microarch[f"core{i}_params"]
@@ -141,7 +141,6 @@ def create_pkg(config):
             icache_block_size.append(str(core["icache_block_size"]))
             icache_assoc.append(str(core["icache_assoc"]))
             mults.append(f"\"{core['multiplier_params']['multiplier_select']}\"")
-            smode.append("1" if core["supervisor_enabled"] == "enabled" else "0")
             sup.append(f"\"{core['supervisor_enabled']}\"")
             at.append(f"\"{core['address_translation_enabled']}\"")
 
@@ -177,12 +176,15 @@ def create_pkg(config):
         pkg.write(arr("ICACHE_BLOCK_SIZE", icache_block_size))
         pkg.write(arr("ICACHE_ASSOC", icache_assoc))
 
-        pkg.write("// Multiplier settings\n")
+        pkg.write("\n// Multiplier settings\n")
         pkg.write(arr("MULTIPLIER_TYPE", mults, "string"))
         pkg.write("\n// Supervisor settings\n")
-        pkg.write(arr("SMODE_ENABLED", smode))
         pkg.write(arr("SUPERVISOR_ENABLED", sup, "string"))
         pkg.write(arr("ADDRESS_TRANSLATION_ENABLED", at, "string"))
+
+        pkg.write("\n//For bus_ctrl\n")
+        pkg.write("localparam CPUS = NUM_HARTS * 2;\n")
+        pkg.write("localparam DATA_WIDTH = ((DCACHE_BLOCK_SIZE[0] > ICACHE_BLOCK_SIZE[0]) ? DCACHE_BLOCK_SIZE[0] : ICACHE_BLOCK_SIZE[0]) * 32;\n    \n")
 
         pkg.write("\nendpackage\n")
 
