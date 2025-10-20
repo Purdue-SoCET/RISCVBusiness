@@ -1,7 +1,7 @@
 package core_configuration_pkg;
 
-localparam NUM_HARTS = 2; // Included to use it as array declaration
-
+localparam NUM_HARTS = 2;
+    
 // ISA extensions
 localparam string BASE_ISA[NUM_HARTS] = {"RV32E", "RV32E"};
 
@@ -53,9 +53,8 @@ localparam NONCACHE_START_ADDR = 32'hF000_0000;
 // Multiplier settings
 localparam string MULTIPLIER_TYPE[NUM_HARTS] = {"shift_add_multiplier", "shift_add_multiplier"};
 
-// Supervisor settings TODO - Not sure how this works yet
-localparam SMODE_ENABLED[NUM_HARTS] = {0, 0};
-localparam string SUPERVISOR_ENABLED[NUM_HARTS] = {"disabled", "disabled"};
-localparam string ADDRESS_TRANSLATION_ENABLED[NUM_HARTS] = {"disabled", "disabled"};
-
+//For bus_ctrl
+localparam CPUS = NUM_HARTS * 2;
+localparam DATA_WIDTH = ((DCACHE_BLOCK_SIZE[0] > ICACHE_BLOCK_SIZE[0]) ? DCACHE_BLOCK_SIZE[0] : ICACHE_BLOCK_SIZE[0]) * 32;
+    
 endpackage
