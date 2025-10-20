@@ -28,351 +28,247 @@ import sys
 from math import log2
 from functools import reduce
 
-VH_FILE = 'source_code/include/component_selection_defines.vh'
-C_FILE  = 'verification/c-firmware/custom_instruction_calls.h'
+VH_FILE  = 'source_code/include/component_selection_defines.vh'
+C_FILE   = 'verification/c-firmware/custom_instruction_calls.h'
+PKG_FILE = "source_code/packages/core_configuration_pkg.sv"
 
-# If running PMP tests, the macro G in verification/pmp-tests/utility.h will need to 
-# be updated to the corresponding value found in PMP_MINIMUM_GRANULARITY.
-PMP_MINIMUM_GRANULARITY = \
-  {
-    '4'    :  0,
-    '8'    :  1,
-    '16'   :  2,
-    '32'   :  3,
-    '64'   :  4,
-    '128'  :  5,
-    '256'  :  6,
-    '512'  :  7,
-    '1K'   :  8,
-    '2K'   :  9,
-    '4K'   : 10,
-    '8K'   : 11,
-    '16K'  : 12,
-    '32K'  : 13,
-    '64K'  : 14,
-    '128K' : 15,
-    '256K' : 16,
-    '512K' : 17,
-    '1M'   : 18,
-    '2M'   : 19,
-    '4M'   : 20,
-    '8M'   : 21,
-    '16M'  : 22,
-    '32M'  : 23,
-    '64M'  : 24,
-    '128M' : 25,
-    '256M' : 26,
-    '512M' : 27,
-    '1G'   : 28,
-    '2G'   : 29,
-    '4G'   : 30,
-  }
+# ---------------------------------------------------------------------
+# Legal value dictionaries
+# ---------------------------------------------------------------------
+PMP_MINIMUM_GRANULARITY = {
+  "4":0,"8":1,"16":2,"32":3,"64":4,"128":5,"256":6,"512":7,
+  "1K":8,"2K":9,"4K":10,"8K":11,"16K":12,"32K":13,"64K":14,"128K":15,
+  "256K":16,"512K":17,"1M":18,"2M":19,"4M":20,"8M":21,"16M":22,"32M":23,
+  "64M":24,"128M":25,"256M":26,"512M":27,"1G":28,"2G":29,"4G":30,
+}
 
-ISA_PARAMS = \
-  {
-    'xlen' : [32],
-    'pmp_minimum_granularity' : list(PMP_MINIMUM_GRANULARITY.keys()),
-    'supervisor_enabled' : [ 'enabled', 'disabled' ],
-    'address_translation_enabled' : [ 'enabled', 'disabled' ],
-    'isa' : []
-  }
+UARCH_PARAMS = {
+  "num_harts":[],
+  "br_predictor_type":["not_taken","btfnt","btb_1","btb_2","return","btb_ghr_pht"],
+  "use_ras":["true","false"],
+  "btb_size":[],
+  "cache_config":["separate"],
+  "dcache_type":["pass_through","direct_mapped_tpf","l1"],
+  "icache_type":["pass_through","direct_mapped_tpf","l1"],
+  "noncache_start_addr":[],
+  "dcache_size":[],"dcache_block_size":[],"dcache_assoc":[],
+  "icache_size":[],"icache_block_size":[],"icache_assoc":[],
+  "tlb_entries":[],
+  "bus_endianness":["big","little"],
+  "bus_interface_type":["ahb_if","generic_bus_if","apb_if"],
+  "sparce_enabled":["enabled","disabled"],
+  "infinite_loop_halts":["true","false"],
+}
 
-UARCH_PARAMS = \
-  {
-    # Multicore configurations
-    'num_harts' : [],
-    # Branch/Jump Configurations
-    'br_predictor_type' : ['not_taken', 'btfnt', 'btb_1', 'btb_2', 'return', 'btb_ghr_pht'],
-    'use_ras' : ['true', 'false'],
-    # btb has fixed block size of 4B
-    'btb_size' : [],
-    # Cache Configurations
-    'cache_config' : ['separate'],
-    'dcache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
-    'icache_type' : ['pass_through', 'direct_mapped_tpf', 'l1'],
-    # Cache Configurations (free_params)
-    'noncache_start_addr' : [],
-    # Cache Configurations (int_params)
-    'dcache_size' : [],
-    'dcache_block_size' : [],
-    'dcache_assoc' : [],
-    'icache_size' : [],
-    'icache_block_size' : [],
-    'icache_assoc' : [],
-    'tlb_entries' : [],
-    # Bus Configurations
-    'bus_endianness' : ['big', 'little'],
-    'bus_interface_type' : ['ahb_if', 'generic_bus_if', 'apb_if'],
-    # Sparisty Optimizations
-    'sparce_enabled' : [ 'enabled', 'disabled' ],
-
-    # Halt Enable -- Good for testing, not for tapeout
-    'infinite_loop_halts' : ['true', 'false'],
-  }
-
-
-# Multiplier to be used TODO: Make sure it works.
 MULTIPLIER_PARAMS = {
-  'multiplier_select' : ['pp_mul32', 'shift_add_multiplier'],
+  "multiplier_select":["pp_mul32","shift_add_multiplier"],
 }
 
-# Supported ISA extensions. Order matters and should reflect the proper order
-# of extensions in an ISA string
-RISCV_ISA = {
-    "m" : False,
-    "a" : False,
-    "c" : False,
-    "b" : False,
-    "zicond" : False,
-    "zifencei" : False,
-    "zicsr" : False
-}
+RISCV_ISA = {"m":False,"a":False,"c":False,"b":False,"zicond":False,"zifencei":False,"zicsr":False}
 
-# Returns an object containing the parsed configuration file.
-# Currently uses PyYAML and YAML format
+# ---------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------
 def load_configuration(file_name):
-  with open(file_name, 'r') as f:
-    try:
-      config = yaml.full_load(f)
-    except yaml.parser.ParserError:
-      sys.exit('Parse of '+ file_name + ' failed. Please check yml syntax')
-  return config
-
-def add_custom_instruction_header(name, encoding, length, opcode, fptr):
-  if encoding == 'R_TYPE':
-    for i in range(length):
-      funct = format(i, '010b')
-      fptr.write("GENERATE_CUSTOM_INSTRUCTION_R_TYPE(" +
-        name + "," + opcode + "," + str(i) + "," + funct[0:7] + "," + funct[7:10] + ")\n")
-  elif encoding in RISC_MGMT_PARAMS['nonstandard_extensions']['encoding']:
-    print("Warning: Generation of C Macros for the encoding " + encoding + " is not supported.")
-  else:
-    err = "Error: Invalid custom instruction encoding: " + encoding
-    sys.exit(err)
+    """Load YAML config safely."""
+    with open(file_name, "r") as f:
+        try:
+            return yaml.full_load(f)
+        except yaml.parser.ParserError:
+            sys.exit("Parse failed: invalid YAML syntax.")
 
 def parse_riscv_isa_string(string):
+    """Parse RV32I/E + extensions string."""
     string = string.lower()
     riscv_isa = RISCV_ISA.copy()
 
-    # Skip past rv32{i,e}
-    if string[0:4] != "rv32":
-        print("Error: 32-bit RISC-V ISA string must begin with rv32")
-    string = string[4:]
+    if not string.startswith("rv32"):
+        sys.exit("Error: ISA must start with rv32")
 
-    # Determine base ISA
+    string = string[4:]
     if string[0] == "i":
         base_isa = "RV32I"
     elif string[0] == "e":
         base_isa = "RV32E"
     else:
-        err = "Unknown base ISA " + string
-        sys.exit(err)
+        sys.exit("Unknown base ISA (must be i or e)")
     string = string[1:]
 
-    # Determine extensions
-    for ext in RISCV_ISA.keys():
-        if string[0:len(ext)] == ext:
-            riscv_isa[ext] = True
-            string = string[len(ext):]
-            # If we're at 'z' extensions, trim off the underscore if there's
-            # anything left in the string
-            if ext[0] == 'z' and string != "":
-                if string[0] == "_":
+    # Parse extensions
+    while string:
+        matched = False
+        for ext in RISCV_ISA.keys():
+            if string.startswith(ext):
+                riscv_isa[ext] = True
+                string = string[len(ext):]
+                if ext[0] == "z" and string and string[0] == "_":
                     string = string[1:]
-                else:
-                    err = "Error: Expected '_' between 'z' extensions! Found " + string
-                    sys.exit(err)
-    if string != "":
-        err = "Error: Unknown extension: " + string + ". Double check that your isa string is valid!"
-        sys.exit(err)
+                matched = True
+                break
+        if not matched:
+            sys.exit("Unknown extension substring: " + string)
 
-    require = ["zifencei", "zicsr"]
+    # Required extensions
+    for req in ["zifencei", "zicsr"]:
+        if not riscv_isa[req]:
+            sys.exit(f"Missing required extension {req}")
 
-    for ext in require:
-        if not riscv_isa[ext]:
-            err = "Error: Extension " + ext + " is a required extension. Please add it to your ISA string"
-            sys.exit(err)
     return base_isa, riscv_isa
 
-# Creates the include file from the config object
+# ---------------------------------------------------------------------
+# Create per-core package (core_configuration_pkg.sv)
+# ---------------------------------------------------------------------
+def create_pkg(config):
+    microarch = config["microarch_params"]
+    num_harts = microarch["num_harts"]
+
+    with open(PKG_FILE, "w") as pkg:
+        pkg.write("package core_configuration_pkg;\n\n")
+        pkg.write(f"localparam NUM_HARTS = {num_harts}; // Included to use it as array declaration\n\n")
+
+        # Base ISA array
+        base_isas, core_exts = [], []
+        br_pred, btb_sizes, use_ras = [], [], []
+        cache_config, dcache_type, dcache_size, dcache_block_size, dcache_assoc = [], [], [], [], []
+        icache_type, icache_size, icache_block_size, icache_assoc = [], [], [], []
+        tlb_entries, mults, sup, at = [], [], [], []
+
+        for i in range(num_harts):
+            core = microarch[f"core{i}_params"]
+            base, exts = parse_riscv_isa_string(core["isa"])
+
+            base_isas.append(f"\"{base}\"")
+            core_exts.append(
+                "'{RV32M:%d,RV32A:%d,RV32C:%d,RV32B:%d,RV32ZICOND:%d,RV32ZIFENCEI:%d,RV32ZICSR:%d}" %
+                (exts["m"], exts["a"], exts["c"], exts["b"], exts["zicond"], exts["zifencei"], exts["zicsr"])
+            )
+
+            br_pred.append(f"\"{core['br_predictor_type']}\"")
+            btb_sizes.append(str(core["btb_size"]))
+            use_ras.append(f"\"{core['use_ras']}\"")
+            cache_config.append(f"\"{core['cache_config']}\"")
+            dcache_type.append(f"\"{core['dcache_type']}\"")
+            dcache_size.append(str(core["dcache_size"]))
+            dcache_block_size.append(str(core["dcache_block_size"]))
+            dcache_assoc.append(str(core["dcache_assoc"]))
+            icache_type.append(f"\"{core['icache_type']}\"")
+            icache_size.append(str(core["icache_size"]))
+            icache_block_size.append(str(core["icache_block_size"]))
+            icache_assoc.append(str(core["icache_assoc"]))
+            mults.append(f"\"{core['multiplier_params']['multiplier_select']}\"")
+            sup.append(f"\"{core['supervisor_enabled']}\"")
+            at.append(f"\"{core['address_translation_enabled']}\"")
+
+        # Typedefs
+        pkg.write("// Packed struct is MSB - LSB\n")
+        pkg.write("typedef struct packed {\n")
+        pkg.write("    bit RV32ZICSR;\n    bit RV32ZIFENCEI;\n    bit RV32ZICOND;\n")
+        pkg.write("    bit RV32B;\n    bit RV32C;\n    bit RV32A;\n    bit RV32M;\n")
+        pkg.write("} isa_extension_t;\n\n")
+
+        pkg.write("typedef enum int {\n    M,\n    A,\n    C,\n    B,\n    ZICOND,\n    ZIFENCEI,\n    ZICSR\n} extension_idx_t;\n\n")
+
+        def arr(name, vals, typ="int"):
+            inner = ",".join(vals)
+            return f"localparam {typ} {name}[NUM_HARTS] = {{{inner}}};\n"
+
+        # Emit arrays matching your new order
+        pkg.write(f"// ISA extensions\nlocalparam string BASE_ISA[NUM_HARTS] = {{{','.join(base_isas)}}};\n\n")
+        pkg.write(f"localparam isa_extension_t CORE_CONFIG[NUM_HARTS] = '{{{','.join(core_exts)}}};\n\n")
+
+        pkg.write("// Branch configurations\n")
+        pkg.write(arr("BR_PREDICTOR_TYPE", br_pred, "string"))
+        pkg.write(arr("BTB_SIZE", btb_sizes))
+        pkg.write(arr("USE_RAS", use_ras, "string"))
+        pkg.write("\n// Cache configurations\n")
+        pkg.write(arr("CACHE_CONFIG", cache_config, "string"))
+        pkg.write(arr("DCACHE_TYPE", dcache_type, "string"))
+        pkg.write(arr("DCACHE_SIZE", dcache_size))
+        pkg.write(arr("DCACHE_BLOCK_SIZE", dcache_block_size))
+        pkg.write(arr("DCACHE_ASSOC", dcache_assoc))
+        pkg.write(arr("ICACHE_TYPE", icache_type, "string"))
+        pkg.write(arr("ICACHE_SIZE", icache_size))
+        pkg.write(arr("ICACHE_BLOCK_SIZE", icache_block_size))
+        pkg.write(arr("ICACHE_ASSOC", icache_assoc))
+
+        pkg.write("\n// Multiplier settings\n")
+        pkg.write(arr("MULTIPLIER_TYPE", mults, "string"))
+        pkg.write("\n// Supervisor settings\n")
+        pkg.write(arr("SUPERVISOR_ENABLED", sup, "string"))
+        pkg.write(arr("ADDRESS_TRANSLATION_ENABLED", at, "string"))
+
+        pkg.write("\n//For bus_ctrl\n")
+        pkg.write("localparam CPUS = NUM_HARTS * 2;\n")
+        pkg.write("localparam DATA_WIDTH = ((DCACHE_BLOCK_SIZE[0] > ICACHE_BLOCK_SIZE[0]) ? DCACHE_BLOCK_SIZE[0] : ICACHE_BLOCK_SIZE[0]) * 32;\n    \n")
+
+        pkg.write("\nendpackage\n")
+
+# ---------------------------------------------------------------------
+# Create include files (.vh + .h)
+# ---------------------------------------------------------------------
 def create_include(config):
-  include_file = open(VH_FILE, 'w')
-  c_file = open(C_FILE, 'w')
-  # Write include header to file
-  header = '/*\nWARNING: THIS FILE WAS AUTOMATICALLY GENERATED BY\n'
-  header += 'CONFIG_CORE. DO NOT MAKE CHANGES TO THIS FILE. ANY CHANGES\n'
-  header += 'MAY BE OVERWRITTEN. DO NOT VERSION CONTROL THIS FILE.\n*/\n'
-  header += '`ifndef COMPONENT_SELECTION_DEFINES_VH\n'
-  header += '`define COMPONENT_SELECTION_DEFINES_VH\n\n\n'
-  include_file.write(header)
- 
-  # Write include to c file
-  c_header = '/*\nWARNING: THIS FILE WAS AUTOMATICALLY GENERATED BY\n'
-  c_header += 'CONFIG_CORE. DO NOT MAKE CHANGES TO THIS FILE. ANY CHANGES\n'
-  c_header += 'MAY BE OVERWRITTEN. DO NOT VERSION CONTROL THIS FILE.\n*/\n'
-  c_header += '#ifndef CUSTOM_INSTRUCTION_CALLS_H\n'
-  c_header += '#define CUSTOM_INSTRUCTION_CALLS_H\n\n\n'
-  c_header += '#include "custom_instruction_macros.h"\n\n'
-  c_header += '// Custom Instruction Usage:\n// CALL_CUSTOM_INSTRUCTION_R_TYPE(<ext_name>, <insn_offset>, <operand_a>, <operand_b>, <result>)\n\n'
-  c_file.write(c_header)
+    uarch_params = config["microarch_params"]
+    globals_keep = ["num_harts", "xlen", "bus_endianness",
+                    "bus_interface_type", "infinite_loop_halts"]
 
-  # Handle localparam configurations
-  isa_params = config['isa_params']
-  free_params = ['isa', 'num_harts', 'noncache_start_addr', ]
-  int_params = ['num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
-  include_file.write('// ISA Params:\n') 
+    with open(VH_FILE, "w") as include_file, open(C_FILE, "w") as c_file:
+        # Headers
+        include_file.write("/*\nWARNING: Auto-generated. Do not edit.\n*/\n")
+        include_file.write("`ifndef COMPONENT_SELECTION_DEFINES_VH\n`define COMPONENT_SELECTION_DEFINES_VH\n\n")
+        include_file.write("// Global Microarch Params:\n")
 
-  base_isa = None
-  riscv_ext = None
-  for isa_param in ISA_PARAMS:
-    try:
-      if isa_param not in free_params and isa_params[isa_param] not in ISA_PARAMS[isa_param]:
-        err = 'Illegal configuration. ' + isa_params[isa_param]
-        err += ' is not a valid configuration for ' + isa_param
-        sys.exit(err)
-      else:
-        line = 'localparam '
-        # xlen & pmp_minimum_granularity will be an integer in include file, so no quotes needed
-        if 'xlen' == isa_param:
-          line += isa_param.upper() + ' = ' + str(isa_params[isa_param])
-        elif 'pmp_minimum_granularity' == isa_param:
-          line += isa_param.upper() + ' = ' + str(PMP_MINIMUM_GRANULARITY[isa_params[isa_param]])
-        elif 'supervisor_enabled' == isa_param and isa_params[isa_param] == 'enabled':
-          line  = '`define SMODE_SUPPORTED\n'
-          line += 'localparam ' + isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
-        elif 'address_translation_enabled' == isa_param:
-          # supervisor enabled should be enabled if address translation is on
-          if isa_params[isa_param] == 'enabled' and isa_params['supervisor_enabled'] == 'disabled':
-            err = 'Illegal configuration. ' + isa_param  + ' == ' + isa_params[isa_param]
-            err += ' is not a valid configuration with supervisor_enabled == disabled'
-            sys.exit(err)
-          line += isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor_enabled'] == 'enabled' else 'disabled') + '"'
-        elif 'isa' == isa_param:
-          base_isa, riscv_ext = parse_riscv_isa_string(isa_params[isa_param])
-          continue
-        else:
-          line += isa_param.upper() + ' = "' + isa_params[isa_param] + '"'
-        line += ';\n'
-      include_file.write(line)
-    except TypeError:
-      sys.exit('Type Error. Please check to make sure .yml file is correct.')
-  include_file.write('\n// Microarch Params:\n') 
-  uarch_params = config['microarch_params']
-  for uarch_param in uarch_params:
-    # errors
-    if uarch_param in int_params or uarch_param in free_params:
-      if uarch_param not in free_params and not isinstance(uarch_params[uarch_param], int):
-        err = 'Illegal configuration of incorrect type for ' + uarch_param
-        sys.exit(err)
-      if uarch_params['btb_size'] % 4 != 0:
-          err = 'Invalid btb size, not divisible by 4'
-          sys.exit(err)
-      if uarch_params['dcache_size'] % (uarch_params['dcache_block_size'] * uarch_params['dcache_assoc']) != 0:
-        err = 'Invalid dcache_size. Not divisible by block_size * assoc.'
-        sys.exit(err)
-      if uarch_params['icache_size'] % (uarch_params['icache_block_size'] * uarch_params['icache_assoc']) != 0:
-        err = 'Invalid icache_size. Not divisible by block_size * assoc.'
-        sys.exit(err)
-      if uarch_params['dcache_size'] / (8 * uarch_params['dcache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
-        err = 'Invalid dcache_size. Sets are not less than or equal to the virtual page size of 4KB.'
-        sys.exit(err)
-      if uarch_params['icache_size'] / (8 * uarch_params['icache_assoc']) > 4096 and isa_params['address_translation_enabled'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
-        err = 'Invalid icache_size. Sets are not less than or equal to the virtual page size of 4KB.'
-        sys.exit(err)
-      if riscv_ext["c"] & (uarch_params['br_predictor_type'] != 'not_taken'):
-        err = 'RV32C and advanced branch prediction cannot be enabled simultaneously.'
-        sys.exit(err)
-      if(uarch_params['br_predictor_type'] == 'btb_ghr_pht'):
-        print('Warning: GHR predictor is experimental and may not work as expected!',
-                'BTB parameters are currently ignored for this, using default size')
-      if uarch_params['tlb_entries'] not in [1, 2, 4, 8, 16, 32, 64]:
-        err = 'Invalid tlb_entries. Not a multiple of two and/or less than or equal to 64.'
-        sys.exit(err)
-    elif uarch_params[uarch_param] not in UARCH_PARAMS[uarch_param]:
-      err = 'Illegal configuration. ' + uarch_params[uarch_param]
-      err += ' is not a valid configuration for ' + uarch_param
-      sys.exit(err)
-    # write to parameter file
-    if uarch_param in free_params or uarch_param in int_params:
-      line = 'localparam ' + uarch_param.upper() + ' = ' + str(uarch_params[uarch_param]) + ';\n'
-    else:
-      line = 'localparam '
-      if isinstance(uarch_params[uarch_param], str): # deal with integer params
-        line += uarch_param.upper() + ' = "' + uarch_params[uarch_param] + '"'
-      else:
-        line += uarch_param.upper() + ' = ' + str(uarch_params[uarch_param])
-      line += ';\n'
-    include_file.write(line)
-  
-  # Multiplier parameters
-  include_file.write("// Multiplier parameters\n")
-  mul_params = config['multiplier_params']
-  multiplier_select = mul_params.get('multiplier_select', None)
-  if not multiplier_select or not (multiplier_select in MULTIPLIER_PARAMS['multiplier_select']):
-    err = "Invalid multiplier_select configuration."
-    sys.exit(err)
+        for g in globals_keep:
+            if g in uarch_params:
+                val = uarch_params[g]
+                if isinstance(val, int):
+                    include_file.write(f"localparam {g.upper()} = {val};\n")
+                else:
+                    include_file.write(f"localparam {g.upper()} = \"{val}\";\n")
 
-  if multiplier_select == 'pp_mul32':
-    include_file.write(f"`define PP_MUL32\n")
-  elif multiplier_select == 'shift_add_multiplier':
-    include_file.write(f"`define SHIFT_ADD_MULTIPLIER\n")
-  else:
-    err = "Invalid multiplier_select configuration. How did we get here?"
-    sys.exit(err)
+        # Add bus interface macro
+        if "bus_interface_type" in uarch_params:
+            bus_type = uarch_params["bus_interface_type"].split("_if")[0]
+            include_file.write(f"`define BUS_INTERFACE_{bus_type.upper()}\n")
+        
+        # Add additional global hardware parameters
+        if "tlb_entries" in uarch_params:
+            include_file.write(f"localparam int TLB_ENTRIES = {uarch_params['tlb_entries']};\n")
 
-  # Add base ISA
-  include_file.write(f"localparam BASE_ISA = \"{base_isa}\";\n")
+        if "noncache_start_addr" in uarch_params:
+            include_file.write(f"localparam int NONCACHE_START_ADDR = {uarch_params['noncache_start_addr']};\n")
 
-  # Handle bus interface define
-  # print("Handle bus interface define")
-  bus_type = uarch_params['bus_interface_type'].split('_if')[0]
-  bus_define = '`define BUS_INTERFACE_' + bus_type.upper() + '\n'
-  include_file.write(bus_define)
+        include_file.write("\n// RISC-MGMT Extensions:\n")
+        include_file.write("/*`define NUM_EXTENSIONS 6\n")
+        include_file.write("`define RISC_MGMT_EXTENSIONS\t\\\n")
+        include_file.write("    `ADD_EXTENSION(m,0) \\\n")
+        include_file.write("    `ADD_EXTENSION(a,1) \\\n")
+        include_file.write("    `ADD_EXTENSION(c,2) \\\n")
+        include_file.write("    `ADD_EXTENSION(zicond,3) \\\n")
+        include_file.write("    `ADD_EXTENSION(zifencei,4) \\\n")
+        include_file.write("    `ADD_EXTENSION(zicsr,5)*/\n")
 
-  total_exts = reduce(lambda x, y: x + (y == True), riscv_ext.values())
-  include_file.write('\n// RISC-MGMT Extensions:\n') 
-  include_file.write('`define NUM_EXTENSIONS ' + str(total_exts) + '\n')
-  include_file.write('`define RISC_MGMT_EXTENSIONS\t\\\n')
-  ext_num = 0
-  nonstandard_num = 0
-  for extension in riscv_ext:
-      if riscv_ext[extension]:
-        if(extension[0] != 'Z'):
-          include_file.write('\t`ADD_EXTENSION('+extension+','+str(ext_num)+")")
-        ext_num = ext_num + 1
-        if(ext_num != total_exts):
-          include_file.write('\t\\\n')
-        else:
-          include_file.write('\n')
+        include_file.write("\n`endif // COMPONENT_SELECTION_DEFINES_VH\n")
 
-  #set defines to indicate what ISA support is present
-  include_file.write('\n')
-  for extension in riscv_ext:
-    if riscv_ext[extension]:
-      include_file.write('`define RV32' + extension.upper() + '_SUPPORTED\t1\n')
+        # .h file
+        c_file.write("/* Auto-generated. Do not edit. */\n")
+        c_file.write("#ifndef CUSTOM_INSTRUCTION_CALLS_H\n#define CUSTOM_INSTRUCTION_CALLS_H\n\n")
+        c_file.write('#include "custom_instruction_macros.h"\n\n')
+        c_file.write("// CALL_CUSTOM_INSTRUCTION_R_TYPE(<ext_name>, <insn_offset>, <operand_a>, <operand_b>, <result>)\n")
+        c_file.write("\n#endif // CUSTOM_INSTRUCTION_CALLS_H\n")
 
-  # # set define to enable rv32m
-  # include_file.write('`define RV32M_SUPPORTED ' + u)
+# ---------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Generate multicore configuration files")
+    parser.add_argument("file_name", type=str, help="YAML configuration file")
+    args = parser.parse_args()
 
-  # Write include footer to file
-  footer = '\n`endif // COMPONENT_SELECTION_DEFINES_VH\n'
-  include_file.write(footer)
-  include_file.close()
+    config = load_configuration(args.file_name)
+    create_include(config)
+    create_pkg(config)
 
-  footer = '\n#endif // CUSTOM_INSTRUCTION_CALLS_H\n'
-  c_file.write(footer)
-  c_file.close()
-
-if __name__ == '__main__':
-  description = 'Configure a processor. This script takes a .yml'
-  description += ' configuration file as input and creates the file '
-  description += 'component_selection_defines.vh in source_code/include.'
-  description += 'Caution: if this file already exists, it is overwritten.'
-  parser = argparse.ArgumentParser(description=description)
-  parser.add_argument('file_name', metavar='file_name', type=str,
-                      help='The config file name')
-  args = parser.parse_args()
-
-  #TODO: Check for .yaml/.yml
-  config = load_configuration(args.file_name)
-  create_include(config)
+    print("Configuration files generated:")
+    print(f" - {VH_FILE}")
+    print(f" - {C_FILE}")
+    print(f" - {PKG_FILE}")
