@@ -25,8 +25,6 @@
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
-`include "tspp_fetch_execute_if.vh"
-`include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
@@ -43,8 +41,8 @@ module RISCVBusiness #(
     front_side_bus_if icache_bus_ctrl_if
 );
     // Interface instantiations
-    generic_bus_if tspp_icache_gen_bus_if ();
-    generic_bus_if tspp_dcache_gen_bus_if ();
+    generic_bus_if icache_gen_bus_if ();
+    generic_bus_if dcache_gen_bus_if ();
     generic_bus_if #(.BLOCK_SIZE(ICACHE_BLOCK_SIZE)) icache_mc_if ();
     generic_bus_if #(.BLOCK_SIZE(DCACHE_BLOCK_SIZE)) dcache_mc_if ();
     predictor_pipeline_if predict_if ();
@@ -52,17 +50,13 @@ module RISCVBusiness #(
     cache_control_if control_if ();
     rv32c_if rv32cif ();
 
-    //interface instantiations
-    tspp_fetch_execute_if fetch_ex_if ();
-    tspp_hazard_unit_if hazard_if ();
-
     logic pipeline_wfi;
 
     stage3 #(.RESET_PC(RESET_PC)) pipeline(
         .CLK(CLK),
         .nRST(nRST),
-        .igen_bus_if(tspp_icache_gen_bus_if),
-        .dgen_bus_if(tspp_dcache_gen_bus_if),
+        .igen_bus_if(icache_gen_bus_if),
+        .dgen_bus_if(dcache_gen_bus_if),
         .prv_pipe_if(prv_pipe_if),
         .predict_if(predict_if),
         .cc_if(control_if),
@@ -90,9 +84,9 @@ module RISCVBusiness #(
     caches_wrapper caches (
         .CLK(CLK),
         .nRST(nRST),
-        .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
+        .icache_proc_gen_bus_if(icache_gen_bus_if),
         .icache_mem_gen_bus_if(icache_mc_if),
-        .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
+        .dcache_proc_gen_bus_if(dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .cc_if(cc_if)
     );
@@ -101,9 +95,9 @@ module RISCVBusiness #(
     separate_caches sep_caches (
         .CLK(CLK),
         .nRST(nRST),
-        .icache_proc_gen_bus_if(tspp_icache_gen_bus_if),
+        .icache_proc_gen_bus_if(icache_gen_bus_if),
         .icache_mem_gen_bus_if(icache_mc_if),
-        .dcache_proc_gen_bus_if(tspp_dcache_gen_bus_if),
+        .dcache_proc_gen_bus_if(dcache_gen_bus_if),
         .dcache_mem_gen_bus_if(dcache_mc_if),
         .control_if(control_if),
         .prv_pipe_if(prv_pipe_if),

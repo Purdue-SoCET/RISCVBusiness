@@ -1,8 +1,6 @@
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
-`include "tspp_fetch_execute_if.vh"
-`include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
