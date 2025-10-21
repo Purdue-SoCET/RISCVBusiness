@@ -1,5 +1,5 @@
 diff --git a/isa/Makefile b/isa/Makefile
-index bf85e1f..a0c3544 100644
+index bf85e1f..0bd5ebc 100644
 --- a/isa/Makefile
 +++ b/isa/Makefile
 @@ -45,7 +45,7 @@ default: all
@@ -37,6 +37,39 @@ index bf85e1f..a0c3544 100644
  $$($(1)_v_tests): $(1)-v-%: $(1)/%.S
  	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -DENTROPY=0x$$(shell echo \$$@ | md5sum | cut -c 1-7) -std=gnu99 -O2 -I$(src_dir)/../env/v -I$(src_dir)/macros/scalar -T$(src_dir)/../env/v/link.ld $(src_dir)/../env/v/entry.S $(src_dir)/../env/v/*.c $$< -o $$@
  $(1)_tests += $$($(1)_v_tests)
+@@ -87,19 +103,19 @@ endif
+ 
+ endef
+ 
+-$(eval $(call compile_template,rv32ui,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32uc,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32um,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32ua,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32uf,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32ud,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32uzfh,-march=rv32g_zfh -mabi=ilp32))
+-$(eval $(call compile_template,rv32uzba,-march=rv32g_zba -mabi=ilp32))
+-$(eval $(call compile_template,rv32uzbb,-march=rv32g_zbb -mabi=ilp32))
+-$(eval $(call compile_template,rv32uzbc,-march=rv32g_zbc -mabi=ilp32))
+-$(eval $(call compile_template,rv32uzbs,-march=rv32g_zbs -mabi=ilp32))
+-$(eval $(call compile_template,rv32si,-march=rv32g -mabi=ilp32))
+-$(eval $(call compile_template,rv32mi,-march=rv32g -mabi=ilp32))
++$(eval $(call compile_template,rv32ui,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32uc,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32um,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32ua,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32uf,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32ud,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32uzfh,-march=rv32gc_zfh -mabi=ilp32))
++$(eval $(call compile_template,rv32uzba,-march=rv32gc_zba -mabi=ilp32))
++$(eval $(call compile_template,rv32uzbb,-march=rv32gc_zbb -mabi=ilp32))
++$(eval $(call compile_template,rv32uzbc,-march=rv32gc_zbc -mabi=ilp32))
++$(eval $(call compile_template,rv32uzbs,-march=rv32gc_zbs -mabi=ilp32))
++$(eval $(call compile_template,rv32si,-march=rv32gc -mabi=ilp32))
++$(eval $(call compile_template,rv32mi,-march=rv32gc -mabi=ilp32))
+ ifeq ($(XLEN),64)
+ $(eval $(call compile_template,rv64ui,-march=rv64g -mabi=lp64))
+ $(eval $(call compile_template,rv64uc,-march=rv64g -mabi=lp64))
 diff --git a/isa/rv32mi/Makefrag b/isa/rv32mi/Makefrag
 index d871990..0302ba4 100644
 --- a/isa/rv32mi/Makefrag
