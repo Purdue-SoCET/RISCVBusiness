@@ -115,7 +115,7 @@ module RISCVBusiness #(
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
 
-    rv32c_wrapper rv32c #(.HART_ID(HART_ID)) (
+    rv32c_wrapper #(.HART_ID(HART_ID)) rv32c (
         .CLK(CLK),
         .nRST(nRST),
         .rv32cif(rv32cif)
