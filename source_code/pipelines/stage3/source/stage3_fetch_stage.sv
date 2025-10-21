@@ -100,6 +100,7 @@ module stage3_fetch_stage (
         .CLK,
         .nRST,
         .ireq,
+        .stall(hazard_if.if_ex_stall),
         .pc_redirect,
         .pc,
         .insn_ready,

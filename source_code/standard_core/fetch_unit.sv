@@ -26,11 +26,12 @@
 module fetch_unit #(
     parameter int RVC_ENABLED = 0
 )(
-    input CLK,
-    input nRST,
-    input ireq,
-    input pc_redirect,
-    input [31:0] pc,
+    input logic CLK,
+    input logic nRST,
+    input logic ireq,
+    input logic stall,
+    input logic pc_redirect,
+    input logic [31:0] pc,
     output logic insn_ready,
     output logic insn_compressed,
     output logic insn_fault,
@@ -47,6 +48,7 @@ module fetch_unit #(
                 .nRST,
                 .ren(ireq),
                 .invalidate(pc_redirect),
+                .stall(stall),
                 .pc(pc),
                 .insn_valid(insn_ready),
                 .insn_compressed,

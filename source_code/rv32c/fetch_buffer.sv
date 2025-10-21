@@ -1,11 +1,12 @@
 `include "generic_bus_if.vh"
 
 module fetch_buffer (
-    input CLK,
-    input nRST,
+    input logic CLK,
+    input logic nRST,
     input logic ren,
     input logic invalidate,
-    input [31:0] pc,
+    input logic stall,
+    input logic [31:0] pc,
     output logic insn_valid,
     output logic insn_compressed,
     output logic [31:0] insn_out,
@@ -89,7 +90,7 @@ module fetch_buffer (
                     // for rest.
                     if(!icache.busy) begin
                         fb_next.valid = 1'b1;
-                        fb_next.data = icache.rdata[31:16];
+                        fb_next.data = !stall ? icache.rdata[31:16] : fb.data;
                         insn_out = {icache.rdata[15:0], fb.data};
                         insn_compressed = 1'b0;
                         insn_valid = 1'b1;
