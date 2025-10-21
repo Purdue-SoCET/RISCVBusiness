@@ -29,7 +29,9 @@
 `include "prv_pipeline_if.vh"
 `include "address_translation_if.vh"
 
-module separate_caches(
+module separate_caches #(
+    parameter HART_ID
+) (
     input logic CLK,
     nRST,
     generic_bus_if.cpu icache_mem_gen_bus_if,
