@@ -51,6 +51,7 @@ localparam ICACHE_ASSOC[NUM_HARTS] = {1, 1};
 localparam string MULTIPLIER_TYPE[NUM_HARTS] = {"shift_add_multiplier", "shift_add_multiplier"};
 
 // Supervisor settings
+localparam SMODE_ENABLED[NUM_HARTS] = {0, 0};
 localparam string SUPERVISOR_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 localparam string ADDRESS_TRANSLATION_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 
