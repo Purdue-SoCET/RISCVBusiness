@@ -40,7 +40,6 @@ module RISCVBusiness #(
     front_side_bus_if dcache_bus_ctrl_if,
     front_side_bus_if icache_bus_ctrl_if
 );
-    import core_configuration_pkg::*;
     
     // Interface instantiations
     generic_bus_if icache_gen_bus_if ();
