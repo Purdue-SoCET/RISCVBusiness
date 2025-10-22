@@ -27,6 +27,11 @@
 
 `include "component_selection_defines.vh"
 
+// parameters
+parameter CPUS = NUM_HARTS * 2;
+parameter BLOCK_SIZE = DCACHE_BLOCK_SIZE > ICACHE_BLOCK_SIZE ? DCACHE_BLOCK_SIZE : ICACHE_BLOCK_SIZE;
+localparam DATA_WIDTH = 32 * BLOCK_SIZE; // 64 bit/clk memory bandwidth
+
 // coherence bus controller states
 typedef enum {
     GRANT_R, GRANT_RX, GRANT_EVICT, GRANT_INV,
@@ -56,10 +61,9 @@ typedef enum logic [1:0] {
 
 // taken from coherence_ctrl_if.vh
 typedef logic [31:0] bus_word_t;
+typedef logic [DATA_WIDTH-1:0] transfer_width_t;
 
-interface front_side_bus_if #(parameter int DATA_WIDTH = 32) ();
-    typedef logic [DATA_WIDTH-1:0] transfer_width_t;
-
+interface front_side_bus_if();
     logic            dREN, dWEN, dwait, derror;
     transfer_width_t dload, dstore, snoop_dstore, driver_dstore;
     bus_word_t       daddr;
@@ -82,14 +86,11 @@ interface front_side_bus_if #(parameter int DATA_WIDTH = 32) ();
     );
 endinterface
 
-interface back_side_bus_if #(
-    parameter int CPUS       = 1,
-    parameter int DATA_WIDTH = 32
+interface back_side_bus_if#(
+    parameter int CPUS
 )(
-    front_side_bus_if #(.DATA_WIDTH(DATA_WIDTH)) front_side [CPUS-1:0]
+    front_side_bus_if front_side [CPUS-1:0]
 );
-    typedef logic [DATA_WIDTH-1:0] transfer_width_t;
-
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait, derror;
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
