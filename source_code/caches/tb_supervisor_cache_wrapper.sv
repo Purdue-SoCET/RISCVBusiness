@@ -34,7 +34,6 @@
 
 import rv32i_types_pkg::*;
 import priv_isa_types_pkg::*;
-import core_configuration_pkg::*;
 
 `timescale 1ns/10ps
 
@@ -46,6 +45,7 @@ module supervisor_cache_wrapper(
   cache_control_if control_if,
   generic_bus_if out_gen_bus_if
 );
+
   logic abort_bus, fence, fence_done, tlb_miss;
   logic fault_load_page, fault_store_page, fault_insn_page;
 
@@ -53,8 +53,8 @@ module supervisor_cache_wrapper(
   generic_bus_if #(.BLOCK_SIZE(2)) icache_mem_gen_bus_if();
   generic_bus_if #(.BLOCK_SIZE(2)) dcache_mem_gen_bus_if();
 
-  front_side_bus_if #(.DATA_WIDTH(DATA_WIDTH)) front_side_bus [1:0] ();
-  back_side_bus_if  #(.CPUS(2), .DATA_WIDTH(DATA_WIDTH)) bus_ctrl_if(
+  front_side_bus_if front_side_bus [1:0] ();
+  back_side_bus_if #(.CPUS(2)) bus_ctrl_if(
       .front_side(front_side_bus)
   );
 
