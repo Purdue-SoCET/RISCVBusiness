@@ -1,13 +1,9 @@
 `include "generic_bus_if.vh"
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
-`include "tspp_fetch_execute_if.vh"
-`include "tspp_hazard_unit_if.vh"
 `include "core_interrupt_if.vh"
 `include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
-
-import core_configuration_pkg::*;
 
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
@@ -26,11 +22,10 @@ module multicore_wrapper #(
     apb_if.requester apb_requester
 `endif
 );
-   front_side_bus_if #(.DATA_WIDTH(DATA_WIDTH)) front_side_bus [NUM_HARTS*2-1:0] ();
-    back_side_bus_if  #(.CPUS(NUM_HARTS*2), .DATA_WIDTH(DATA_WIDTH)) bus_ctrl_if(
+    front_side_bus_if front_side_bus [NUM_HARTS*2-1:0] ();
+    back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if(
         .front_side(front_side_bus)
     );
-
     generic_bus_if pipeline_trans_if ();
     assign bus_ctrl_if.l2load = pipeline_trans_if.rdata;
     assign bus_ctrl_if.l2state = pipeline_trans_if.busy ? L2_BUSY : L2_ACCESS;
