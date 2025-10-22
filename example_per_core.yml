@@ -12,7 +12,10 @@ microarch_params:
 
   noncache_start_addr: 32'hF000_0000
   tlb_entries: 16
-
+  
+  icache_block_size: 2
+  dcache_block_size: 2
+  
   # Per-core configurations 
   core0_params:
     # ISA Configuration
@@ -30,11 +33,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
  
     # Multiplier settings
@@ -52,11 +53,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -72,11 +71,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -92,11 +89,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -112,11 +107,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -132,11 +125,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -152,11 +143,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
@@ -172,11 +161,9 @@ microarch_params:
     cache_config: "separate"
     dcache_type: "l1"
     dcache_size: 1024
-    dcache_block_size: 2
     dcache_assoc: 1
     icache_type: "l1"
     icache_size: 1024
-    icache_block_size: 2
     icache_assoc: 1
     multiplier_params:
       multiplier_select: "shift_add_multiplier"
