@@ -40,11 +40,9 @@ localparam string USE_RAS[NUM_HARTS] = {"false", "false"};
 localparam string CACHE_CONFIG[NUM_HARTS] = {"separate", "separate"};
 localparam string DCACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
 localparam DCACHE_SIZE[NUM_HARTS] = {1024, 1024};
-localparam DCACHE_BLOCK_SIZE[NUM_HARTS] = {2, 2};
 localparam DCACHE_ASSOC[NUM_HARTS] = {1, 1};
 localparam string ICACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
 localparam ICACHE_SIZE[NUM_HARTS] = {1024, 1024};
-localparam ICACHE_BLOCK_SIZE[NUM_HARTS] = {2, 2};
 localparam ICACHE_ASSOC[NUM_HARTS] = {1, 1};
 
 // Multiplier settings
@@ -55,8 +53,4 @@ localparam SMODE_ENABLED[NUM_HARTS] = {0, 0};
 localparam string SUPERVISOR_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 localparam string ADDRESS_TRANSLATION_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 
-//For bus_ctrl
-localparam CPUS = NUM_HARTS * 2;
-localparam DATA_WIDTH = ((DCACHE_BLOCK_SIZE[0] > ICACHE_BLOCK_SIZE[0]) ? DCACHE_BLOCK_SIZE[0] : ICACHE_BLOCK_SIZE[0]) * 32;
-    
 endpackage
