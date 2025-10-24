@@ -278,9 +278,6 @@ def create_include(config):
       if uarch_params['icache_size'] / (8 * uarch_params['icache_assoc']) > 4096 and isa_params['address_translation'] == 'enabled': # will need to change if we adjust cache_size to be in bytes rather than bits
         err = 'Invalid icache_size. Sets are not less than or equal to the virtual page size of 4KB.'
         sys.exit(err)
-      if riscv_ext["c"] & (uarch_params['br_predictor_type'] != 'not_taken'):
-        err = 'RV32C and advanced branch prediction cannot be enabled simultaneously.'
-        sys.exit(err)
       if(uarch_params['br_predictor_type'] == 'btb_ghr_pht'):
         print('Warning: GHR predictor is experimental and may not work as expected!',
                 'BTB parameters are currently ignored for this, using default size')
