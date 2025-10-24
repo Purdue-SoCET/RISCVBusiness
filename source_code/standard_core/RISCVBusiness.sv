@@ -26,7 +26,6 @@
 `include "component_selection_defines.vh"
 `include "cache_control_if.vh"
 `include "core_interrupt_if.vh"
-`include "rv32c_if.vh"
 `include "bus_ctrl_if.vh"
 
 module RISCVBusiness #(
@@ -48,7 +47,6 @@ module RISCVBusiness #(
     predictor_pipeline_if predict_if ();
     prv_pipeline_if prv_pipe_if ();
     cache_control_if control_if ();
-    rv32c_if rv32cif ();
 
     logic pipeline_wfi;
 
@@ -60,7 +58,6 @@ module RISCVBusiness #(
         .prv_pipe_if(prv_pipe_if),
         .predict_if(predict_if),
         .cc_if(control_if),
-        .rv32cif(rv32cif),
         .halt(halt),
         .wfi(wfi)
     );
@@ -108,9 +105,4 @@ module RISCVBusiness #(
         .dcache_miss(prv_pipe_if.dcache_miss)
     );
 
-    rv32c_wrapper rv32c (
-        .CLK(CLK),
-        .nRST(nRST),
-        .rv32cif(rv32cif)
-    );
 endmodule

@@ -30,7 +30,7 @@ module decompressor #(
     parameter bit ZCMP = 0,
     parameter bit ZCMT = 0
 )(
-    input [15:0] compressed,
+    input logic [15:0] compressed,
     output logic [31:0] decompressed
 );
 

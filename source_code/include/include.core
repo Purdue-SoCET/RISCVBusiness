@@ -10,7 +10,6 @@ filesets:
             - cache_control_if.vh : {is_include_file: true}
             - component_selection_defines.vh : {is_include_file: true}
             - generic_bus_if.vh : {is_include_file: true}
-            - rv32c_if.vh : {is_include_file: true}
             - control_unit_if.vh : {is_include_file: true}
             - jump_calc_if.vh : {is_include_file: true}
             - priv_internal_if.vh : {is_include_file: true}

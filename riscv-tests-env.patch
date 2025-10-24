@@ -1,5 +1,5 @@
 diff --git a/p/riscv_test.h b/p/riscv_test.h
-index 7bf35cf..dfa5867 100644
+index 7bf35cf..4741c40 100644
 --- a/p/riscv_test.h
 +++ b/p/riscv_test.h
 @@ -154,7 +154,7 @@
@@ -11,16 +11,17 @@ index 7bf35cf..dfa5867 100644
  
  #define EXTRA_TVEC_USER
  #define EXTRA_TVEC_MACHINE
-@@ -175,6 +175,8 @@ _start:                                                                 \
+@@ -175,6 +175,9 @@ _start:                                                                 \
          /* reset vector */                                              \
          j reset_vector;                                                 \
          .align 2;                                                       \
 +_halt:                                                                  \
 +        j _halt;                                                        \
++        .align 4;                                                       \
  trap_vector:                                                            \
          /* test whether the test came from pass/fail */                 \
          csrr t5, mcause;                                                \
-@@ -200,11 +202,11 @@ handle_exception:                                                       \
+@@ -200,11 +203,11 @@ handle_exception:                                                       \
    write_tohost:                                                         \
          sw TESTNUM, tohost, t5;                                         \
          sw zero, tohost + 4, t5;                                        \
@@ -33,7 +34,7 @@ index 7bf35cf..dfa5867 100644
          INIT_SATP;                                                      \
          INIT_PMP;                                                       \
          DELEGATE_NO_TRAPS;                                              \
-@@ -277,4 +279,11 @@ reset_vector:                                                           \
+@@ -277,4 +280,11 @@ reset_vector:                                                           \
  
  #define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
  

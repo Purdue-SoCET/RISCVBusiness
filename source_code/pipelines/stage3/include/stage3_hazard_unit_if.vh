@@ -61,9 +61,6 @@ interface stage3_hazard_unit_if();
   logic token_ex;
   logic token_mem;
 
-  // RV32C
-  logic rv32c_ready;
-
   modport hazard_unit (
     input   rs1_e, rs2_e, rd_m,
             reg_write, csr_read,
@@ -71,7 +68,7 @@ interface stage3_hazard_unit_if();
             jump, branch, fence_stall, mispredict, halt, pc_f, pc_e, pc_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
             fault_addr, ifence, sfence, fault_load_page, fault_store_page, fault_insn_page,
-            token_ex, token_mem, rv32c_ready,
+            token_ex, token_mem,
             valid_e, valid_m, ex_busy,
     output  pc_en, npc_sel,
             if_ex_flush, ex_mem_flush,
@@ -82,7 +79,7 @@ interface stage3_hazard_unit_if();
 
   modport fetch (
     input   pc_en, npc_sel, if_ex_stall, if_ex_flush, priv_pc, insert_priv_pc, iren, suppress_iren, rollback,
-    output  i_mem_busy, rv32c_ready, pc_f, fault_addr_fetch
+    output  i_mem_busy, pc_f, fault_addr_fetch
   );
 
   modport execute (
