@@ -18,7 +18,7 @@ a dual-core big/little design is planned.
 - [ ] 2 stage pipeline RV32EAC little core
 
 ## Current architecture plan for the Dual-core processor with MESI Coherence
-![Plan](../fig/mc_arch_idea.png)
+![Plan](./fig/mc_arch_idea.png)
 ## Cache coherence
 
 Incoherency can arise when programs acting on shared memory execute on a system
@@ -34,7 +34,7 @@ of processors 1 and 2 because the value in processor 2's cache is still 100.
 Processor 2 then loads the value of 100 from its cache into its `a0` register.
 It then adds 100 to it, and again stores it back to memory.
 
-![Cache Incoherence](../fig/cache_incoherence.png)
+![Cache Incoherence](./fig/cache_incoherence.png)
 
 An example of coherent system running the same program is shown below. The
 runtime state is mostly the same until total program order 3 in which processor
@@ -43,7 +43,7 @@ processor 2's cache to 200. Then, when it loads the value from memory in total
 program order 4, it loads the updated value of 200 to its `a0` register. Then,
 when it adds 100 to it and stores it, it stores the correct value of 300.
 
-![Cache Coherence](../fig/cache_coherence.png)
+![Cache Coherence](./fig/cache_coherence.png)
 
 ## Cache Modifications
 
