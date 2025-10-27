@@ -33,23 +33,23 @@ localparam isa_extension_t CORE_CONFIG[NUM_HARTS] = '{
 
 // Branch configurations
 localparam string BR_PREDICTOR_TYPE[NUM_HARTS] = {"not_taken", "not_taken"};
-localparam BTB_SIZE[NUM_HARTS] = {128, 128};
+localparam int BTB_SIZE[NUM_HARTS] = {128, 128};
 localparam string USE_RAS[NUM_HARTS] = {"false", "false"};
 
 // Cache configurations
-localparam string CACHE_CONFIG[NUM_HARTS] = {"separate", "separate"};
-localparam string DCACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
-localparam DCACHE_SIZE[NUM_HARTS] = {1024, 1024};
-localparam DCACHE_ASSOC[NUM_HARTS] = {1, 1};
-localparam string ICACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
-localparam ICACHE_SIZE[NUM_HARTS] = {1024, 1024};
-localparam ICACHE_ASSOC[NUM_HARTS] = {1, 1};
+// localparam string CACHE_CONFIG[NUM_HARTS] = {"separate", "separate"};
+// localparam string DCACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
+// localparam int DCACHE_SIZE[NUM_HARTS] = {1024, 1024};
+// localparam int DCACHE_ASSOC[NUM_HARTS] = {1, 1};
+// localparam string ICACHE_TYPE[NUM_HARTS] = {"l1", "l1"};
+// localparam int ICACHE_SIZE[NUM_HARTS] = {1024, 1024};
+// localparam int ICACHE_ASSOC[NUM_HARTS] = {1, 1};
 
 // Multiplier settings
 localparam string MULTIPLIER_TYPE[NUM_HARTS] = {"shift_add_multiplier", "shift_add_multiplier"};
 
 // Supervisor settings
-localparam SMODE_ENABLED[NUM_HARTS] = {0, 0};
+localparam int SMODE_ENABLED[NUM_HARTS] = {0, 0};
 localparam string SUPERVISOR_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 localparam string ADDRESS_TRANSLATION_ENABLED[NUM_HARTS] = {"disabled","disabled"};
 
