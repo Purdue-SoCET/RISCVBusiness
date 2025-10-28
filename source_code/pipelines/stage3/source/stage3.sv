@@ -50,7 +50,7 @@ module stage3 #(
     stage3_forwarding_unit_if fw_if();
 
     //module instantiations
-    stage3_fetch_stage fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
+    stage3_fetch_stage #(.RESET_PC(RESET_PC)) fetch_stage_i(.mem_fetch_if(mem_pipe_if), .*);
     stage3_execute_stage #(.HART_ID(HART_ID)) execute_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_mem_stage mem_stage_i(.ex_mem_if(mem_pipe_if), .*);
     stage3_hazard_unit hazard_unit_i(.*);
