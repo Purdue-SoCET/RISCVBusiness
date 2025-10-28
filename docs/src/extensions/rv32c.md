@@ -14,7 +14,7 @@ The fetch buffer sits in front of the I$. It has 2 functions:
 2. Buffer unused data. If an I$ fetch yields a compressed instruction, the remaining 16b are buffered as they belong to either another compressed instruction, or are part of a full-size instruction.
 
 The fetch buffer forms an FSM (Mealy) from the PC alignment (`pc[1]`) and the fetch buffer valid bit (`fb.valid`). The state transition diagram is as follows:
-![Fetch Buffer state diagram](../fig/rv32c/fsm.png)
+![Fetch Buffer state diagram](./fig/rv32c/fsm.png)
 
 In this diagram, "read compressed" indicates the next instruction is a compressed instruction read from the I$. "FB compressed" means the next instruction is a compressed instruction that was held in the fetch buffer.
 
@@ -23,4 +23,4 @@ Note that the 4th combination, a valid fetch buffer and aligned PC, is not possi
 ## Decompressor
 As all implemented instructions are 1:1 with full-sized instructions, the decompressor simply sits in front of the normal decoder. The decompressor takes in 16b of an instruction and outputs the corresponding 32b instruction.
 
-![Decompressor](../fig/rv32c/decompressor.png)
+![Decompressor](./fig/rv32c/decompressor.png)

@@ -294,8 +294,35 @@ Add your control signal bundle:
 ```systemverilog
 rv32delay_pkg::rv32delay_decode_t rv32delay_control;
 ```
+### Step 9: Add a `.core` file
+**File: `source_code/rv32delay/rv32delay.core`
+```yaml
+CAPI=2:
+name: socet:riscv:rv32m:0.1.0
+description: RV32M Extension for RISCVBusiness
 
-### Step 9: Update core configuration
+filesets:
+    rtl:
+        depend:
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:packages"
+        files:
+            - rv32delay_decode.sv
+            - rv32delay_enabled.sv
+            - rv32delay_disabled.sv
+            - rv32delay_wrapper.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: rv32delay_wrapper
+
+```
+At a minimum, your core file needs to have a default target listing all the files needed. You may have additional filesets and simulation targets for individual testing as well.
+
+### Step 10: Update core configuration
 **File: `scripts/config_core.py`**
 Finally, you need to add your extension to `config_core.py` so that it can be parsed from the YAML file and generate the correct preprocessor definitions to include in `component_selection_defines.vh`. If you are using a standard extension, it should suffice to add your extension to the list in the `RISCV_ISA` variable. Custom extensions will need to add a new key to the YAML file, check for it in `config_core.py`, and generate the appropriate preprocessor defines.
 
