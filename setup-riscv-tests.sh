@@ -9,6 +9,6 @@ pushd benchmarks
 make clean
 popd
 autoconf
-./configure
+./configure --with-xlen 32
 make $1
 popd
