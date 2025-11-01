@@ -96,6 +96,6 @@ system_fpga.summary
 *vsim*
 
 # locally built mdbook
-doc/book/**
+docs/book/**
 *.txt
 *.dump

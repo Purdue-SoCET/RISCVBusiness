@@ -1,0 +1,27 @@
+digraph rv32cfsm {
+    rankdir=LR;
+    //node [shape=circle, width=1.0, height=1.0, fixedsize=true, fontsize=10];
+    overlap=false;
+    node [shape=circle, fontname="Verdana"];
+    edge [fontname="Verdana"];
+
+    start [shape=point];
+    start -> ai;
+
+    // states
+    // a = aligned, m = misaligned
+    // v = fb valid, i = fb invalid
+    ai [label="PC Aligned\nFB Invalid"];
+    mv [label="PC Misaligned\nFB Valid"];
+    mi [label="PC Misaligned\nFB Invalid"];
+
+    // transitions
+    ai -> ai [label="Read not compressed /\n Redir. to aligned"];
+    ai -> mv [label="Read compressed"];
+    ai -> mi [label="Branch to misaligned"];
+    mv -> ai [label="FB compressed"];
+    mv -> mv [label="FB not compressed"];
+    mv -> mi [label="Branch to misaligned"];
+    mi -> ai [label="Read compressed /\n Redir. to aligned"];
+    mi -> mv [label="Read not compressed"];
+}

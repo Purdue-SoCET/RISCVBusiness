@@ -1,6 +1,10 @@
 # Summary
 
 [Overview](./overview.md)
+- [Privileged Architecture]()
+    - [Supervisor](./supervisor/supervisor_overview.md)
+        - [Supervisor Tests](./supervisor/supervisor_tests.md)
 - [Multicore](./multicore.md)
-- [Extensions]()
-    - [RV32C](./rv32c/rv32c.md)
+- [Extensions](./extensions.md)
+    - [RV32A](./extensions/rv32a.md)
+    - [RV32C](./extensions/rv32c.md)
