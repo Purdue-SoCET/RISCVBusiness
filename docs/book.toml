@@ -1,6 +1,5 @@
 [book]
-authors = ["Max Michalec"]
+authors = ["Max Michalec", "Devin Singh", "William Cunningham", "Cole Nelson"]
 language = "en"
-multilingual = false
 src = "src"
 title = "RISCVBusiness Documentation"
