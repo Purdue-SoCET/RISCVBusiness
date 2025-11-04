@@ -1,3 +1,3 @@
 [submodule "riscv-tests"]
 	path = riscv-tests
-	url = https://github.com/riscv-software-src/riscv-tests
+	url = https://github.com/Purdue-SoCET/riscv-tests
