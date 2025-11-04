@@ -33,7 +33,7 @@ module page_walker #(
 )
 (
     input logic CLK, nRST,
-    input logic itlb_miss, dtlb_miss,
+    input logic itlb_miss, dtlb_miss, abort,
     output logic fault_load_page, fault_store_page, fault_insn_page,
     generic_bus_if.cpu mem_gen_bus_if,
     generic_bus_if.generic_bus itlb_gen_bus_if,
@@ -54,7 +54,7 @@ module page_walker #(
     localparam SV64_LEVELS = 6;
 
     // state logic
-    typedef enum {
+    typedef enum logic [1:0] {
         IDLE, WALK, FAULT
     } pw_fsm_t;
 
@@ -262,15 +262,15 @@ module page_walker #(
 
         casez(state)
             IDLE: begin
-                if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) ||
-                    (itlb_miss && (itlb_gen_bus_if.ren)))
+                if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) ||  // we always want to service a dTLB miss
+                    (itlb_miss && (itlb_gen_bus_if.ren) && ~abort))                 // we don't service the iTLB miss if we are aborting the walk
                     next_state = WALK;
 
                 if (~data_at_if.addr_trans_on)
                     next_state = IDLE;
             end
             WALK: begin
-                next_state = fault_insn_page | fault_load_page | fault_store_page ? FAULT : leaf_pte ? IDLE : WALK;
+                next_state = fault_insn_page | fault_load_page | fault_store_page ? FAULT : leaf_pte | (abort & access == ACCESS_INSN) ? IDLE : WALK;
             end
             FAULT: begin
                 next_state = IDLE;
