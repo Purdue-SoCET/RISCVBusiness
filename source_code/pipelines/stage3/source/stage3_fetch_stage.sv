@@ -150,6 +150,7 @@ module stage3_fetch_stage (
     assign prv_pipe_if.iren = ~prv_pipe_if.itlb_miss & hazard_if.iren;
     assign prv_pipe_if.iaddr = insn_addr;
     assign prv_pipe_if.i_acc_width = WordAcc;
+    assign prv_pipe_if.pc_redirect = pc_redirect;
 
     // Choose the endianness of the data coming into the processor
     generate

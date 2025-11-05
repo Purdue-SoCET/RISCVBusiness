@@ -112,6 +112,7 @@ module separate_caches(
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(data_at_if),
                 .tlb_miss(dtlb_miss),
+                .tlb_abort(tlb_abort),
                 .ppn_tag(dtlb_hit_data[PPNLEN + 10 - 1:10])
             );
         endcase
@@ -168,6 +169,7 @@ module separate_caches(
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(insn_at_if),
                 .tlb_miss(itlb_miss),
+                .tlb_abort(tlb_abort),
                 .ppn_tag(itlb_hit_data[PPNLEN + 10 - 1:10])
             );
         endcase
@@ -249,7 +251,7 @@ module separate_caches(
         prv_pipe_if.fault_load_page  = 0;
         prv_pipe_if.fault_store_page = 0;
         prv_pipe_if.fault_insn_page  = 0;
-        tlb_abort = prv_pipe_if.intr;  // if there is an exception, we don't want the INSN page.
+        tlb_abort = prv_pipe_if.pc_redirect & itlb_miss;  // if we are redirecting the PC, we do NOT want an outdated iTLB miss to complete.
 
         // Order goes
         // 1. PW data access fault
@@ -286,6 +288,7 @@ module separate_caches(
     // zero tlb misses
     assign itlb_miss = 0;
     assign dtlb_miss = 0;
+    assign tlb_abort = 0;
 
     // zero hit data
     assign itlb_hit_data = '0;

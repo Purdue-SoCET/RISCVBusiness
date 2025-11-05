@@ -336,7 +336,7 @@ module tlb #(
                         mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                         mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                         mem_gen_bus_if.addr = proc_gen_bus_if.addr;
-                        tlb_miss = 1;
+                        tlb_miss = IS_ITLB ? 1 : prv_pipe_if.ex_mem_ren | prv_pipe_if.ex_mem_wen;
                         next_decoded_req_addr = decoded_addr;
                     end
                 end
