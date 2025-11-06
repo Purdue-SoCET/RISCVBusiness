@@ -7,7 +7,7 @@
 
 #define ARRAY_SIZE 512
 
-#define NUM_HART 1
+#define NUM_HART 8
 
 #define REPEATS 4
 
@@ -66,11 +66,12 @@ static void verify_all(void) {
 }
 
 void hart0_main() {
-    warmup();
     init_data();
-    start_flag = 1;
+    warmup();
+    
 
     uint32_t begin = get_cycles();
+    start_flag = 1;
     vecadd_interleaved(0, NUM_HART);
     hart_done = 1;
     wait_for_all_harts_done(NUM_HART);
@@ -81,9 +82,11 @@ void hart0_main() {
     verify_all();
 
     print("hart0 done\n");
-    print("Took %u cycles (NUM_HART=%d, ARRAY_SIZE=%d, REPEATS=%d)\n",
-          (unsigned)cycles, NUM_HART, ARRAY_SIZE, REPEATS);
+    // print("Took %d cycles (NUM_HART=%d, ARRAY_SIZE=%d, REPEATS=%d)\n",
+    //       cycles, NUM_HART, ARRAY_SIZE, REPEATS);
+    print("Took %d cycles\n", cycles);
     flag = 1;
+    return;
 }
 
 #define HARTN_WAIT_START(n)        \
