@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 
-#define ARRAY_SIZE 216
+#define ARRAY_SIZE 512
 
 #define NUM_HART 1
 

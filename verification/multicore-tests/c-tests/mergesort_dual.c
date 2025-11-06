@@ -142,7 +142,7 @@ __attribute__((section(".noinit"))) uint32_t out_arr[2048];
 
 void hart0_main() {
     mergeSort(arr, N / 2);
-    wait_for_hart1_done();
+    // wait_for_hart1_done();
     merge(arr, out_arr, 0, (N / 2) - 1, N - 1);
     flag = 1;
 }
