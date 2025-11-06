@@ -112,6 +112,7 @@ module separate_caches(
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(data_at_if),
                 .tlb_miss(dtlb_miss),
+                .tlb_abort(tlb_abort),
                 .ppn_tag(dtlb_hit_data[PPNLEN + 10 - 1:10])
             );
         endcase
@@ -168,6 +169,7 @@ module separate_caches(
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(insn_at_if),
                 .tlb_miss(itlb_miss),
+                .tlb_abort(tlb_abort),
                 .ppn_tag(itlb_hit_data[PPNLEN + 10 - 1:10])
             );
         endcase
@@ -182,6 +184,7 @@ module separate_caches(
     logic itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
     logic dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
     logic pw_fault_load_page, pw_fault_store_page, pw_fault_insn_page;
+    logic tlb_abort;
 
     // DTLB
     tlb #(.IS_ITLB(0)) dtlb (
@@ -191,6 +194,7 @@ module separate_caches(
         .proc_gen_bus_if(dcache_proc_gen_bus_if),
         .tlb_hit_data(dtlb_hit_data),
         .fence(control_if.dtlb_fence),
+        .abort(0), // abort only needed for iTLB. We want dTLB to be serviced always (except for page faults ofc)
         .page_fault(prv_pipe_if.fault_load_page | prv_pipe_if.fault_store_page | prv_pipe_if.fault_insn_page),
         .fence_done(control_if.dtlb_fence_done),
         .prv_pipe_if(prv_pipe_if),
@@ -209,6 +213,7 @@ module separate_caches(
         .proc_gen_bus_if(icache_proc_gen_bus_if),
         .tlb_hit_data(itlb_hit_data),
         .fence(control_if.itlb_fence),
+        .abort(tlb_abort),
         .page_fault(prv_pipe_if.fault_load_page | prv_pipe_if.fault_store_page | prv_pipe_if.fault_insn_page),
         .fence_done(control_if.itlb_fence_done),
         .prv_pipe_if(prv_pipe_if),
@@ -225,6 +230,7 @@ module separate_caches(
         .nRST(nRST),
         .itlb_miss(itlb_miss),
         .dtlb_miss(dtlb_miss),
+        .abort(tlb_abort),
         .fault_load_page(pw_fault_load_page),
         .fault_store_page(pw_fault_store_page),
         .fault_insn_page(pw_fault_insn_page),
@@ -240,10 +246,12 @@ module separate_caches(
     assign prv_pipe_if.dtlb_miss = dtlb_miss;
 
     // arbitrate between pw, dtlb, or itlb for page faults
+    // handle TLB abort signal
     always_comb begin
         prv_pipe_if.fault_load_page  = 0;
         prv_pipe_if.fault_store_page = 0;
         prv_pipe_if.fault_insn_page  = 0;
+        tlb_abort = prv_pipe_if.pc_redirect & itlb_miss;  // if we are redirecting the PC, we do NOT want an outdated iTLB miss to complete.
 
         // Order goes
         // 1. PW data access fault
@@ -280,8 +288,7 @@ module separate_caches(
     // zero tlb misses
     assign itlb_miss = 0;
     assign dtlb_miss = 0;
-    // assign prv_pipe_if.itlb_miss = 0;
-    // assign prv_pipe_if.dtlb_miss = 0;
+    assign tlb_abort = 0;
 
     // zero hit data
     assign itlb_hit_data = '0;
@@ -290,10 +297,5 @@ module separate_caches(
     // zero address translation
     assign insn_at_if.addr_trans_on = '0;
     assign data_at_if.addr_trans_on = '0;
-
-    // zero page fault signals
-    // assign prv_pipe_if.fault_load_page  = 0;
-    // assign prv_pipe_if.fault_store_page = 0;
-    // assign prv_pipe_if.fault_insn_page  = 0;
 `endif
 endmodule

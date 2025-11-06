@@ -63,6 +63,7 @@ interface prv_pipeline_if();
   priv_level_t curr_privilege_level;
   word_t fence_va;
   logic [ASID_LENGTH-1:0] fence_asid;
+  logic pc_redirect;  // prevents bad page walks from occuring
 
   // performance signals
   logic wb_enable, instr;
@@ -94,7 +95,7 @@ interface prv_pipeline_if();
 
   modport fetch (
     input prot_fault_i, itlb_miss,
-    output iren, iaddr, i_acc_width
+    output iren, iaddr, i_acc_width, pc_redirect
   );
 
   modport caches (
@@ -103,7 +104,7 @@ interface prv_pipeline_if();
   );
 
   modport cache (
-    input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
+    input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen, intr, pc_redirect,
           fault_insn_page, fault_load_page, fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
   );
 

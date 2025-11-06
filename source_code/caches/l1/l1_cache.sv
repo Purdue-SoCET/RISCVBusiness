@@ -46,7 +46,7 @@ module l1_cache #(
 )
 (
     input logic CLK, nRST,
-    input logic clear, flush, reserve, tlb_miss,
+    input logic clear, flush, reserve, tlb_miss, tlb_abort,
     input logic [PPNLEN-1:0] ppn_tag,
     output logic clear_done, flush_done, abort_bus,
     generic_bus_if.generic_bus proc_gen_bus_if,
@@ -156,6 +156,7 @@ module l1_cache #(
     logic addr_is_reserved;
     // Request tracking
     cache_request_t request, next_request;
+    logic abort_pw_request;
     generic_bus_if #(.BLOCK_SIZE(BLOCK_SIZE)) request_bus ();
 
     //Snooping signals
@@ -163,6 +164,8 @@ module l1_cache #(
 
     // error handling
     assign proc_gen_bus_if.error = bus_ctrl_if.derror;
+
+    assign prevent_pw_request = pw_gen_bus_if.ren & ~tlb_miss & tlb_abort;
 
     // determine physical tag for fetch if address translation is on
     assign decoded_read_addr = decoded_cache_addr_t'(read_addr);
@@ -215,7 +218,7 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
-            abort_bus <= (!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen && next_state != FLUSH_CACHE) || next_state == CANCEL_REQ; // no flush cache check will cause fence.i to stall processor
+            abort_bus <= (!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen && next_state != FLUSH_CACHE) || next_state == CANCEL_REQ || tlb_abort; // no flush cache check will cause fence.i to stall processor
             reservation_set <= next_reservation_set;
             request <= next_request;
         end
@@ -608,7 +611,7 @@ module l1_cache #(
                     next_state = SNOOP;
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;
-                else if (pw_gen_bus_if.ren && ~hit)
+                else if (pw_gen_bus_if.ren && ~hit && ~prevent_pw_request)  // last clause: if we don't have a tlb-miss and we are aborting, then it is an iTLB miss
                     next_state = FETCH;
                 else if (tlb_miss) // don't ever fetch if we have a TLB miss & no current page walk request
                     next_state = state;
@@ -621,7 +624,7 @@ module l1_cache #(
                 if (flush || flush_req)
                     next_state = FLUSH_CACHE;
 
-                next_request = next_state == FETCH || next_state == WB ? pw_gen_bus_if.ren ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC : CACHE_REQUEST_NONE;
+                next_request = next_state == FETCH || next_state == WB ? pw_gen_bus_if.ren && ~prevent_pw_request ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC : CACHE_REQUEST_NONE;
 	        end
 	        FETCH: begin
                 if (bus_ctrl_if.derror || !bus_ctrl_if.dwait) begin

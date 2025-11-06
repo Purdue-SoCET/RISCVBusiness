@@ -104,6 +104,7 @@ def config_maxed_core(config_path, num_harts=2):
   # - 2 harts minimum
   microarch_params = config['microarch_params']
   microarch_params['num_harts'] = num_harts
+  microarch_params['br_predictor_type'] = 'btb_1'
   config['microarch_params'] = microarch_params
 
   # save the config

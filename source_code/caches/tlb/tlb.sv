@@ -42,7 +42,7 @@ module tlb #(
 )
 (
     input logic CLK, nRST,
-    input logic fence, page_fault,
+    input logic fence, abort, page_fault,
     output logic fence_done, tlb_miss,
     output logic fault_load_page, fault_store_page, fault_insn_page,
     output word_t tlb_hit_data,
@@ -117,7 +117,7 @@ module tlb #(
         logic [N_FRAME_BITS-1:0] frame_num; // TLB_ASSOC
     } fence_idx_t; // fence counter type
 
-    typedef enum {
+    typedef enum logic [1:0] {
         IDLE, HIT, FETCH, FENCE_TLB
     } tlb_fsm_t; // tlb state machine
 
@@ -319,21 +319,26 @@ module tlb #(
                 end
             end
             HIT: begin
-                // tlb hit on a processor read/write
-                if (at_if.addr_trans_on && hit && !fence) begin
-                    proc_gen_bus_if.busy = 0;
-                    tlb_hit_data = hit_data;
-                    next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
+                // don't do anything on a fence
+                if (fence) begin
+                    tlb_miss = 1;
                 end
-                // tlb miss on a clean block
-                else if(at_if.addr_trans_on && ~hit && activate_hit) begin
-                    mem_gen_bus_if.wen = proc_gen_bus_if.wen;
-                    mem_gen_bus_if.ren = proc_gen_bus_if.ren;
-                    mem_gen_bus_if.addr = proc_gen_bus_if.addr;
-                    tlb_miss = 1;
-                    next_decoded_req_addr = decoded_addr;
-                end else if (fence) begin
-                    tlb_miss = 1;
+                // able to use the TLB properly
+                else if (activate_hit) begin
+                    // tlb hit on a processor read/write
+                    if (hit) begin
+                        proc_gen_bus_if.busy = 0;
+                        tlb_hit_data = hit_data;
+                        next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
+                    end
+                    // tlb miss on a clean block
+                    else if(~hit) begin
+                        mem_gen_bus_if.wen = proc_gen_bus_if.wen;
+                        mem_gen_bus_if.ren = proc_gen_bus_if.ren;
+                        mem_gen_bus_if.addr = proc_gen_bus_if.addr;
+                        tlb_miss = IS_ITLB ? 1 : prv_pipe_if.ex_mem_ren | prv_pipe_if.ex_mem_wen;
+                        next_decoded_req_addr = decoded_addr;
+                    end
                 end
             end
             FETCH: begin
@@ -390,13 +395,13 @@ module tlb #(
                     next_state = HIT;
             end
             HIT: begin
-                if (at_if.addr_trans_on && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit)
+                if (activate_hit && ~hit && (proc_gen_bus_if.ren || proc_gen_bus_if.wen))
                     next_state = FETCH;
                 if (fence)
                     next_state = FENCE_TLB;
             end
             FETCH: begin
-                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error || page_fault)
+                if (!mem_gen_bus_if.busy || mem_gen_bus_if.error || page_fault || abort)
                     next_state = HIT;
             end
             FENCE_TLB: begin
