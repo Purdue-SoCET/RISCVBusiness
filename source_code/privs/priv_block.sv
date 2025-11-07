@@ -50,44 +50,44 @@ module priv_block #(
     priv_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
     // assign hpm counter increments (csr mapping: mhpmcounter3..31 / hpmcounter3..31)
-    // 3: I$ misses, 4: D$ misses (existing)
+
+    // Cache group: 3-6
+    // 3: I$ misses, 4: D$ misses
     assign prv_intern_if.hpm_inc[3]  = prv_pipe_if.icache_miss; // I$ miss
     assign prv_intern_if.hpm_inc[4]  = prv_pipe_if.dcache_miss; // D$ miss
 
-    // 5: valid csr writes
-    assign prv_intern_if.hpm_inc[5]  = prv_pipe_if.valid_write; // csr valid write
+    // 5-6: I$/D$ hits
+    assign prv_intern_if.hpm_inc[5]  = 1'b0; // I$ hit (TODO)
+    assign prv_intern_if.hpm_inc[6]  = 1'b0; // D$ hit (TODO)
 
-    // 6-7: TLB misses
-    assign prv_intern_if.hpm_inc[6]  = prv_pipe_if.itlb_miss; // iTLB miss
-    assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.dtlb_miss; // dTLB miss
-
-    // 8-9: I$/D$ hits
-    assign prv_intern_if.hpm_inc[8]  = 1'b0; // I$ hit (TODO)
-    assign prv_intern_if.hpm_inc[9]  = 1'b0; // D$ hit (TODO)
-
-    // 10-11: iTLB/dTLB hits
-    assign prv_intern_if.hpm_inc[10] = 1'b0; // iTLB hit (TODO)
-    assign prv_intern_if.hpm_inc[11] = 1'b0; // dTLB hit (TODO)
-
-    // 12-13: page walker: miss/hit/fault, number of page walks
-    assign prv_intern_if.hpm_inc[12] = 1'b0; // page walker miss/fault (TODO)
-    assign prv_intern_if.hpm_inc[13] = 1'b0; // Page walk count (TODO)
-
-    // 14-16: core stalls (fetch, execute, mem). We only have ex/mem stall exposed; others TODO
-    assign prv_intern_if.hpm_inc[14] = 1'b0; // Fetch stall cycles (TODO)
-    assign prv_intern_if.hpm_inc[15] = 1'b0; // Execute stall cycles (TODO)
-    assign prv_intern_if.hpm_inc[16] = prv_pipe_if.ex_mem_stall; // mem stage stall
+    // 7-8: iTLB/dTLB misses
+    assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.itlb_miss; // iTLB miss
+    assign prv_intern_if.hpm_inc[8]  = prv_pipe_if.dtlb_miss; // dTLB miss
     
-    // 17-19: D$ snoops: total, hits, misses (TODO)
-    assign prv_intern_if.hpm_inc[17] = 1'b0; // D$ snoops (TODO)
-    assign prv_intern_if.hpm_inc[18] = 1'b0; // D$ snoop hits (TODO)
-    assign prv_intern_if.hpm_inc[19] = 1'b0; // D$ snoop misses (TODO)
+    // 9-10: iTLB/dTLB hits
+    assign prv_intern_if.hpm_inc[9]  = 1'b0; // iTLB hit (TODO)
+    assign prv_intern_if.hpm_inc[10] = 1'b0; // dTLB hit (TODO)
 
-    // 20-21: branch: mispredicts and predictions (TODO)
-    assign prv_intern_if.hpm_inc[20] = 1'b0; // branch mispredict (TODO)
-    assign prv_intern_if.hpm_inc[21] = 1'b0; // branch predictions (TODO)
+    // 11-12: page walker: miss/hit/fault, number of page walks
+    assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO)
+    assign prv_intern_if.hpm_inc[12] = 1'b0; // Page walk count (TODO)
 
-    // 22-31: currently for future expansion
+    // 13-15: core stalls (fetch, execute, mem). We only have ex/mem stall exposed; others TODO
+    assign prv_intern_if.hpm_inc[13] = 1'b0; // Fetch stall cycles (TODO)
+    assign prv_intern_if.hpm_inc[14] = 1'b0; // Execute stall cycles (TODO)
+    assign prv_intern_if.hpm_inc[15] = prv_pipe_if.ex_mem_stall; // mem stage stall
+    
+    // 16-18: D$ snoops: total, hits, misses (TODO)
+    assign prv_intern_if.hpm_inc[16] = 1'b0; // D$ snoops (TODO)
+    assign prv_intern_if.hpm_inc[17] = 1'b0; // D$ snoop hits (TODO)
+    assign prv_intern_if.hpm_inc[18] = 1'b0; // D$ snoop misses (TODO)
+
+    // 19-20: branch: mispredicts and predictions (TODO)
+    assign prv_intern_if.hpm_inc[19] = 1'b0; // branch mispredict (TODO)
+    assign prv_intern_if.hpm_inc[20] = 1'b0; // branch predictions (TODO)
+
+    // 21-31: currently for future expansion
+    assign prv_intern_if.hpm_inc[21] = 1'b0;
     assign prv_intern_if.hpm_inc[22] = 1'b0;
     assign prv_intern_if.hpm_inc[23] = 1'b0;
     assign prv_intern_if.hpm_inc[24] = 1'b0;
