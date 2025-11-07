@@ -9,6 +9,7 @@ filesets:
             - branch_res.sv
             - dmem_extender.sv
             - endian_swapper.sv
+            - bus_connector.sv
             - bus_ctrl.sv
             - memory_controller.sv
             - multicore_wrapper.sv

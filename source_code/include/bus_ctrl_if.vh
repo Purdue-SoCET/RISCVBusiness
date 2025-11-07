@@ -84,13 +84,17 @@ interface front_side_bus_if();
         input dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
         output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
     );
+   
+    // connection to back-side bus
+    modport bsb(
+        output dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
+        input dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
+    );
 endinterface
 
-interface back_side_bus_if#(
-    parameter int CPUS
-)(
-    front_side_bus_if front_side [CPUS-1:0]
-);
+interface back_side_bus_if #(
+    parameter int CPUS = 2
+)();
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait, derror;
     transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
@@ -115,34 +119,6 @@ interface back_side_bus_if#(
     // Core outputs
     logic               [CPUS-1:0] ccabort;
 
-`define MAP_FRONT_TO_BACK(sig) \
-    assign sig[i] = front_side[i].sig;
-
-`define MAP_BACK_TO_FRONT(sig) \
-    assign front_side[i].sig = sig[i];
-
-    genvar i;
-    generate
-        for (i = 0; i < CPUS; i++)  begin : GEN_BUS_MAP
-            `MAP_FRONT_TO_BACK(dREN)
-            `MAP_FRONT_TO_BACK(dWEN)
-            `MAP_FRONT_TO_BACK(daddr)
-            `MAP_FRONT_TO_BACK(dstore)
-            `MAP_FRONT_TO_BACK(dbyte_en)
-            `MAP_FRONT_TO_BACK(ccwrite)
-            `MAP_FRONT_TO_BACK(ccsnoophit)
-            `MAP_FRONT_TO_BACK(ccdirty)
-            `MAP_FRONT_TO_BACK(ccsnoopdone)
-            `MAP_BACK_TO_FRONT(dwait)
-            `MAP_BACK_TO_FRONT(dload)
-            `MAP_BACK_TO_FRONT(derror)
-            `MAP_BACK_TO_FRONT(ccwait)
-            `MAP_BACK_TO_FRONT(ccinv)
-            `MAP_BACK_TO_FRONT(ccsnoopaddr)
-            `MAP_BACK_TO_FRONT(ccexclusive)
-        end
-    endgenerate
-
     // modports
     modport cc(
         input   dREN, dWEN, daddr, dstore, dbyte_en,
@@ -153,8 +129,8 @@ interface back_side_bus_if#(
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en
     ); 
 
-    modport tb(
-        input   dwait, dload,
+    modport fsb(
+        input   dwait, dload, derror,
                 ccwait, ccinv, ccsnoopaddr, ccexclusive,
                 l2addr, l2store, l2REN, l2WEN, l2_byte_en,
         output  dREN, dWEN, daddr, dstore, dbyte_en,
