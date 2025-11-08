@@ -38,7 +38,7 @@ module btb #(
     localparam N_SETS       = NFRAMES / ASSOC;
     localparam N_TAG_BITS   = 8 - PRED_BITS;
     localparam N_SET_BITS   = $clog2(N_SETS) + (N_SETS == 1);
-    localparam N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 2;
+    localparam N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 1;
 
     typedef struct packed {
         logic [N_TAG_BITS-1:0] tag;
@@ -50,7 +50,7 @@ module btb #(
         logic [N_IGNORE_BITS-1:0] ignore_bits;
         logic [N_TAG_BITS-1:0] tag_bits;
         logic [N_SET_BITS-1:0] idx_bits;
-        logic [1:0] byte_bits;
+        logic byte_bits; // PC is 2B-aligned
     } btb_addr_t;       // decoded curr PC type
 
     btb_frame_t [N_SETS-1:0] buffer;
