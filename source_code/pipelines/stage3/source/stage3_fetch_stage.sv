@@ -57,6 +57,10 @@ module stage3_fetch_stage (
     logic mal_insn;
     word_t fault_addr;
 
+    // predictor
+    logic is_branch, is_compressed_branch;
+
+
     //PC logic
     always_ff @(posedge CLK, negedge nRST) begin
         if (~nRST) begin
@@ -69,14 +73,16 @@ module stage3_fetch_stage (
     assign pc4or2 = insn_compressed ? pc + 2 : pc + 4;
     
     //Branch Predictor logic
+    localparam logic [15:0] CBRANCH_MASK = 16'hc001;
     sbtype_t instr_sb;
+    assign is_branch = !insn_compressed && instr_sb.opcode == BRANCH;
+    assign is_compressed_branch = insn_compressed && ((instr_to_ex[15:0] & CBRANCH_MASK) == CBRANCH_MASK);
     assign predict_if.current_pc = pc;
-    assign predict_if.is_rv32c = '0; // TODO: Fix for RV32C
-    // TODO: duplicating control unit. Not right for compressed instruction, decompression happens in EX stage
+    assign predict_if.is_rv32c = insn_compressed;
     assign instr_sb = sbtype_t'(instr_to_ex);
     assign predict_if.instr = instr_to_ex;
     assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
-    assign predict_if.is_branch = (instr_sb.opcode == BRANCH) ? 1 : 0;
+    assign predict_if.is_branch = is_branch || is_compressed_branch;
     assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR)) ? 1:0;
 
     // pc_redirect used to invalidate fetch buffer for RV32C
