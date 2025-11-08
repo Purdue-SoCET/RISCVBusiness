@@ -40,31 +40,29 @@ module branch_predictor_wrapper (
     always_comb begin
         predict_temp1.current_pc = predict_if.current_pc;
         predict_temp1.update_predictor = predict_if.update_predictor;
-        predict_temp1.prediction = predict_if.prediction;
         predict_temp1.branch_result = predict_if.branch_result;
         predict_temp1.update_addr = predict_if.update_addr;
-        predict_temp1.is_rv32c = predict_if.is_rv32c;
         predict_temp1.imm_sb = predict_if.imm_sb;
         predict_temp1.pc_to_update = predict_if.pc_to_update;
         predict_temp1.is_branch = predict_if.is_branch;
         predict_temp1.is_jump = predict_if.is_jump;
-        predict_temp1.direction = predict_if.direction;
         predict_temp1.instr = predict_if.instr;
         predict_temp1.is_jalr = predict_if.is_jalr;
+        predict_temp1.prediction = predict_if.prediction;
+        predict_temp1.direction = predict_if.direction;
 
         predict_temp2.current_pc = predict_if.current_pc;
         predict_temp2.update_predictor = predict_if.update_predictor;
-        predict_temp2.prediction = predict_if.prediction;
         predict_temp2.branch_result = predict_if.branch_result;
         predict_temp2.update_addr = predict_if.update_addr;
-        predict_temp2.is_rv32c = predict_if.is_rv32c;
         predict_temp2.imm_sb = predict_if.imm_sb;
         predict_temp2.pc_to_update = predict_if.pc_to_update;
         predict_temp2.is_branch = predict_if.is_branch;
         predict_temp2.is_jump = predict_if.is_jump;
-        predict_temp2.direction = predict_if.direction;
         predict_temp2.instr = predict_if.instr;
         predict_temp2.is_jalr = predict_if.is_jalr;
+        predict_temp2.prediction = predict_if.prediction;
+        predict_temp2.direction = predict_if.direction;
         
         if(predict_if.is_jalr) begin //might have to be is_jalr or is_jump
             predict_if.predict_taken = predict_temp2.predict_taken;
@@ -85,8 +83,6 @@ module branch_predictor_wrapper (
                 "btb_1"    : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_temp1); 
                 // BTB with 2b predictor
                 "btb_2"    : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_temp1);
-                // BTB with global history predictor
-                "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);
             endcase
     endgenerate
 

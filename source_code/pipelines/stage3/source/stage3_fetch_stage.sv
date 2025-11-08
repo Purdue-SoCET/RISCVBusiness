@@ -78,7 +78,6 @@ module stage3_fetch_stage (
     assign is_branch = !insn_compressed && instr_sb.opcode == BRANCH;
     assign is_compressed_branch = insn_compressed && ((instr_to_ex[15:0] & CBRANCH_MASK) == CBRANCH_MASK);
     assign predict_if.current_pc = pc;
-    assign predict_if.is_rv32c = insn_compressed;
     assign instr_sb = sbtype_t'(instr_to_ex);
     assign predict_if.instr = instr_to_ex;
     assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
