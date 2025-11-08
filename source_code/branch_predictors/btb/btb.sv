@@ -19,14 +19,15 @@
  *   Created by:   Yueting Zhao
  *   Email:        zhao979@purdue.edu
  *   Date Created: 07/07/2023
- *   Description:  Branch target buffer that caches target address and predicted branch direction. 
+ *   Description:  Branch target buffer that caches target address and predicted branch direction.
  */
 
 `include "predictor_pipeline_if.vh"
 
 module btb #(
     parameter int PRED_BITS = 1,
-    parameter int NFRAMES = 32
+    parameter int NFRAMES = 32, // Note: Requires power-of-two
+    parameter int N_TAG_BITS = 8
 )
 (
     input logic CLK, nRST,
@@ -34,15 +35,14 @@ module btb #(
 );
     import rv32i_types_pkg::*;
 
-    localparam N_SETS       = NFRAMES;
-    localparam N_TAG_BITS   = 8 - PRED_BITS;
-    localparam N_SET_BITS   = $clog2(N_SETS) + (N_SETS == 1);
-    localparam N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 1;
+    localparam int N_SETS        = NFRAMES;
+    localparam int N_SET_BITS    = $clog2(N_SETS) + (N_SETS == 1);
+    localparam int N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 1;
 
     typedef struct packed {
         logic [N_TAG_BITS-1:0] tag;
         word_t target;
-        logic [PRED_BITS-1:0]taken;
+        logic [PRED_BITS-1:0] taken;
     } btb_frame_t;      // BTB frame
 
     typedef struct packed {
@@ -55,19 +55,19 @@ module btb #(
     btb_frame_t [N_SETS-1:0] buffer;
     btb_addr_t curr_pc, update_pc;
     btb_frame_t selected_set, next_set, update_set;
-    btb_frame_t selected_frame; 
+    btb_frame_t selected_frame;
 
     assign curr_pc = predict_if.current_pc; // convert PC to decoded type
     assign update_pc = predict_if.pc_to_update;
     assign selected_set = buffer[curr_pc.idx_bits];
     assign selected_frame = selected_set;
     assign update_set = buffer[update_pc.idx_bits];
-    
+
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
             buffer <= '0;
         end else begin
-            buffer[update_pc.idx_bits] <= next_set; 
+            buffer[update_pc.idx_bits] <= next_set;
         end
     end
 
@@ -85,13 +85,17 @@ module btb #(
         if(predict_if.update_predictor) begin
             next_set.tag = update_pc.tag_bits;
             next_set.target = predict_if.update_addr;
-            case(update_set.taken) 
-                SNT: next_set.taken = predict_if.branch_result ? WNT : SNT; 
-                WNT: next_set.taken = predict_if.branch_result ? ST : SNT; 
-                ST: next_set.taken = predict_if.branch_result ? ST : WT; 
-                WT: next_set.taken = predict_if.branch_result ? ST : SNT; 
-                default: next_set.taken = SNT;
-            endcase
+            if(PRED_BITS == 2) begin
+                case(update_set.taken)
+                    SNT: next_set.taken = predict_if.branch_result ? WNT : SNT;
+                    WNT: next_set.taken = predict_if.branch_result ? ST : SNT;
+                    ST: next_set.taken = predict_if.branch_result ? ST : WT;
+                    WT: next_set.taken = predict_if.branch_result ? ST : SNT;
+                    default: next_set.taken = SNT;
+                endcase
+            end else begin // PRED_BITS == 1
+                next_set.taken = predict_if.branch_result;
+            end
         end
     end
 
