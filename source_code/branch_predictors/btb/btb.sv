@@ -34,8 +34,7 @@ module btb #(
 );
     import rv32i_types_pkg::*;
 
-    localparam ASSOC        = 2;
-    localparam N_SETS       = NFRAMES / ASSOC;
+    localparam N_SETS       = NFRAMES;
     localparam N_TAG_BITS   = 8 - PRED_BITS;
     localparam N_SET_BITS   = $clog2(N_SETS) + (N_SETS == 1);
     localparam N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 1;
@@ -99,17 +98,13 @@ module btb #(
     // get prediction
     always_comb begin : predict_logic
         if(selected_set.tag != curr_pc.tag_bits) begin
-            // current PC not in buffer: predict not taken, 
             predict_if.predict_taken = 0;
-            predict_if.target_addr = predict_if.is_rv32c ? predict_if.current_pc + 2 : predict_if.current_pc + 4;
-            end
-        else begin
+        end else begin
             // if using 2 bit predictor:
             // 00 - strongly NT, 01 - NT, 11 - strongly T, 10 - T
-            predict_if.predict_taken = (predict_if.is_branch)? selected_frame.taken[PRED_BITS-1] : 0;
-            predict_if.target_addr = predict_if.predict_taken ? selected_frame.target
-                                    : predict_if.is_rv32c ? predict_if.current_pc + 2
-                                    : predict_if.current_pc + 4;
-        end 
+            predict_if.predict_taken = predict_if.is_branch ? selected_frame.taken[PRED_BITS-1] : 0;
+        end
+
+        predict_if.target_addr = selected_frame.target;
     end
 endmodule
