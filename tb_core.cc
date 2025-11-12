@@ -40,6 +40,13 @@ bool tohost_break = false;
 bool debug_test = false;
 bool require_trace = true;
 
+uint32_t num_harts = 1;
+bool use_tohost_multi = false;
+uint32_t tohost_written_mask = 0;
+uint32_t tohost_stride = 8;
+std::vector<uint32_t> tohost_values;
+char extension;
+
 /*
  *  Emulate memory-mapped CSRs
  */
@@ -161,9 +168,9 @@ public:
         // the host writes a non-zero value.
         // If different functionality is needed, this is
         // the place to do it.
-        if (addr == FROMHOST_ADDR) {
-            return 1;
-        }
+        // if (addr == FROMHOST_ADDR) {
+        //     return 1;
+        // }
 
         auto it = mmap.find(addr);
         if(it != mmap.end()) {
@@ -189,6 +196,24 @@ public:
                 std::cout << static_cast<char>(value);
             else
                 tohost_break = true;
+        }
+
+        if(use_tohost_multi) {
+            if(tohost_address <= addr <= FROMHOST_ADDR && (addr - tohost_address) % tohost_stride == 0) {
+                uint32_t idx = (addr - tohost_address) / tohost_stride;
+                if(idx < num_harts) {
+                    tohost_values[idx] = value;
+                    tohost_written_mask |= (1 << idx);
+
+                    if(debug_test) {
+                        std::cout << "[tohost index " << idx << "] value:" << value << "\n"; 
+                    }
+
+                    if(tohost_written_mask == (1 << num_harts) - 1) {
+                        tohost_break = true;
+                    }
+                }
+            }
         }
     }
 
@@ -284,6 +309,8 @@ void print_help() {
     std::cout << "\t--max-sim-time <sim-time> : Maximum time to run simulation. Defaults to 100,000." << std::endl;
     std::cout << "\t--debug  : Allows debug strings to print from cores. Changes tohost-address functionality" << std::endl;
     std::cout << "\t--notrace: Indicate to not generate a waveform file. Speeds up simulation incredibly." << std::endl;
+    std::cout << "\t--num-harts : Number of cores for multicore test. Defaults to 1." << std::endl;
+    std::cout << "\t--extension : RISC-V extension required for the core to run the test. Running pm env tests require this flag to run correctly." << std::endl;
     std::cout << "\tfilename : An executable .bin file to run" << std::endl;
 }
 
@@ -330,6 +357,37 @@ int main(int argc, char **argv) {
             debug_test = true;
         } else if(strcmp(argv[i], "--notrace") == 0) {
             require_trace = false;
+        } else if(strcmp(argv[i], "--num-harts") == 0) {
+            if(i+1 < argc) {
+                try {
+                    num_harts = std::stoul(argv[i+1], nullptr, 0);
+                    if(num_harts > 1) {
+                        use_tohost_multi = true;
+                        use_tohost = false;
+                        tohost_values.assign(num_harts, 0);
+                    }
+                } catch (const std::exception& e) {
+                    std::cerr << "Could not convert " << argv[i+1] << " to U32" << std::endl;
+                    return 1;
+                }
+                i += 1;
+            } else {
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
+                print_help();
+            }
+        } else if(strcmp(argv[i], "--extension") == 0) {
+            if(i+1 < argc) {
+                std::string ext_str = argv[i + 1];
+                if (ext_str.size() != 1) {
+                    std::cerr << "Extension must be a single character\n";
+                    return 1;
+                }
+                extension = ext_str[0];
+                i+=1;
+            } else {
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
+                print_help();
+            }
         } else {
             fname = argv[i];
         }
@@ -354,6 +412,10 @@ int main(int argc, char **argv) {
 
     mtimecmp = 0xFFFFFFFFFFFFFFFF; // Default to a massive value
 
+    if(num_harts > 1) {
+        // write to memory about required extension info
+        memory.write(FROMHOST_ADDR, 1 << (extension - 'A'), 0xFF);
+    }
 
     dut_ptr = &dut;
     trace_ptr = &m_trace;
@@ -401,6 +463,42 @@ int main(int argc, char **argv) {
 
     if(sim_time >= max_sim_time) {
         std::cout << "Test TIMED OUT" << std::endl;
+        if(use_tohost_multi) {
+            for(uint32_t i = 0; i < num_harts; i++) {
+                std::cout << "core " << i << " = " << tohost_values[i] << std::endl;
+            }
+        }
+        std::cout << extension << std::endl;
+        std::cout << (1 << (extension - 'A')) << std::endl;
+    } else if(use_tohost_multi) {
+        bool tests_passed = true;
+        for(uint32_t i = 0; i < num_harts; i++) {
+            if((tohost_written_mask  & (1 << i)) == 0) {
+                tests_passed = false;
+                std::cout << "Hart " << i << " missing result\n";
+            } else if (tohost_values[i] != 1 && tohost_values[i] != 2) {
+                tests_passed = false;
+            }
+        }
+
+        if(tests_passed) {
+            std::cout << "Test PASSED" << std::endl;
+        }
+        else {
+            std::cout << "Test FAILED" << std::endl;
+        }
+
+        for(uint32_t i = 0; i < num_harts; i++) {
+            if(tohost_values[i] == 1) {
+                std::cout << "core " << i << " passed" << std::endl;
+            }
+            else if (tohost_values[i] == 2) {
+                std::cout << "core " << i << " skipped" << std::endl;
+            }
+            else {
+                std::cout << "core " << i  << " failed test: " << tohost_values[i] << std::endl;
+            }
+        }
     } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
         std::cout << "Test PASSED" << std::endl;
     } else if(use_tohost) {
