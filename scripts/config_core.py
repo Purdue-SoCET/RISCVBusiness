@@ -117,6 +117,8 @@ MULTIPLIER_PARAMS = {
 # Supported ISA extensions. Order matters and should reflect the proper order
 # of extensions in an ISA string
 RISCV_ISA = {
+    "i" : False,
+    "e" : False,
     "m" : False,
     "a" : False,
     "c" : False,
@@ -163,7 +165,6 @@ def parse_riscv_isa_string(string):
     else:
         err = "Unknown base ISA " + string
         sys.exit(err)
-    string = string[1:]
 
     # Determine extensions
     for ext in RISCV_ISA.keys():
