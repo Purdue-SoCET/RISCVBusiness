@@ -27,14 +27,15 @@
 module rv32i_reg_file #(
     parameter bit RV32E = 0
 )(
-    input CLK,
-    input nRST,
+    input logic CLK,
+    input logic nRST,
     rv32i_reg_file_if.rf rf_if
 );
 
     import rv32i_types_pkg::*;
 
     localparam int NUM_REGS = RV32E ? 16 : 32;
+    localparam int REG_BITS = $clog2(NUM_REGS);
 
     word_t [NUM_REGS-1 : 0] registers;
 
@@ -42,11 +43,11 @@ module rv32i_reg_file #(
         if (~nRST) begin
             registers <= '0;
         end else if (rf_if.wen && rf_if.rd != '0) begin
-            registers[rf_if.rd[$clog2(NUM_REGS)-1 : 0]] <= rf_if.w_data;
+            registers[rf_if.rd[REG_BITS-1 : 0]] <= rf_if.w_data;
         end
     end
 
-    assign rf_if.rs1_data = registers[rf_if.rs1[$clog2(NUM_REGS)-1 : 0]];
-    assign rf_if.rs2_data = registers[rf_if.rs2[$clog2(NUM_REGS)-1 : 0]];
+    assign rf_if.rs1_data = registers[rf_if.rs1[REG_BITS-1 : 0]];
+    assign rf_if.rs2_data = registers[rf_if.rs2[REG_BITS-1 : 0]];
 
 endmodule
