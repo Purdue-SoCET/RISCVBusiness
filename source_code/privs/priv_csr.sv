@@ -60,6 +60,7 @@ module priv_csr #(
 
   import priv_isa_types_pkg::*;
   import rv32i_types_pkg::*;
+  import core_configuration_pkg::*;
 
   /* Machine Information */
   csr_reg_t         mvendorid;
@@ -165,22 +166,23 @@ module priv_csr #(
   assign misa.zero = '0;
   assign misa.base = BASE_RV32;
   // NOTE: Per the v1.12 spec, both I and E CANNOT be high - If supporting E, I must be disabled
-  assign misa.extensions =      MISA_EXT_I
-                              | MISA_EXT_U
-                            `ifdef RV32C_SUPPORTED
-                                | MISA_EXT_C
-                             `endif `ifdef RV32E_SUPPORTED
-                                | MISA_EXT_E
-                            `endif `ifdef RV32F_SUPPORTED
-                                | MISA_EXT_F
-                            `endif `ifdef RV32M_SUPPORTED
-                                | MISA_EXT_M
-                            `endif `ifdef RV32V_SUPPORTED
-                                | MISA_EXT_V
-                            `endif `ifdef CUSTOM_SUPPORTED
-                                | MISA_EXT_X
-                            `endif;
+  localparam [25:0] MISA_ISA_MASK = (BASE_ISA[HART_ID] == "RV32I") ? MISA_EXT_I :
+                                    (BASE_ISA[HART_ID] == "RV32E") ? MISA_EXT_E : '0;
 
+  localparam [25:0] MISA_EXT_MASK = (CORE_CONFIG[HART_ID][C] ? MISA_EXT_C : '0) |
+                                    (CORE_CONFIG[HART_ID][M] ? MISA_EXT_M : '0) ;
+
+  localparam [25:0] MISA_BASE_MASK =  MISA_EXT_U
+                                     `ifdef RV32F_SUPPORTED
+                                      | MISA_EXT_F
+                                      `endif `ifdef RV32V_SUPPORTED
+                                      | MISA_EXT_V
+                                      `endif `ifdef CUSTOM_SUPPORTED
+                                      | MISA_EXT_X
+                                      `endif;
+
+  assign misa.extensions = MISA_ISA_MASK | MISA_EXT_MASK | MISA_BASE_MASK;
+                          
   assign mstatush.reserved_0 = '0;
   assign mstatush.sbe = 1'b0;
   assign mstatush.mbe = 1'b0;
