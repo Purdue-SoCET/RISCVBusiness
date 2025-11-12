@@ -165,20 +165,59 @@ module priv_csr #(
   assign misa.zero = '0;
   assign misa.base = BASE_RV32;
   // NOTE: Per the v1.12 spec, both I and E CANNOT be high - If supporting E, I must be disabled
-  assign misa.extensions =      MISA_EXT_I
-                              | MISA_EXT_U
-                            `ifdef RV32C_SUPPORTED
+  assign misa.extensions =   MISA_EXT_U  // TODO(anyone): change this to '0 when making U-mode togglable
+                            `ifdef RV32A_SUPPORTED
+                                | MISA_EXT_A
+                            `endif `ifdef RV32B_SUPPORTED
+                                | MISA_EXT_B
+                            `endif `ifdef RV32C_SUPPORTED
                                 | MISA_EXT_C
-                             `endif `ifdef RV32E_SUPPORTED
+                            `endif `ifdef RV32D_SUPPORTED
+                                | MISA_EXT_D
+                            `endif `ifdef RV32E_SUPPORTED
                                 | MISA_EXT_E
                             `endif `ifdef RV32F_SUPPORTED
                                 | MISA_EXT_F
+                            `endif `ifdef RV32G_SUPPORTED
+                                | MISA_EXT_G
+                            `endif `ifdef HMODE_SUPPORTED
+                                | MISA_EXT_H
+                            `endif `ifdef RV32I_SUPPORTED
+                                | MISA_EXT_I
+                            `endif `ifdef RV32J_SUPPORTED
+                                | MISA_EXT_J
+                            `endif `ifdef RV32K_SUPPORTED
+                                | MISA_EXT_K
+                            `endif `ifdef RV32L_SUPPORTED
+                                | MISA_EXT_L
                             `endif `ifdef RV32M_SUPPORTED
                                 | MISA_EXT_M
+                            `endif `ifdef RV32N_SUPPORTED
+                                | MISA_EXT_N
+                            `endif `ifdef RV32O_SUPPORTED
+                                | MISA_EXT_O
+                            `endif `ifdef RV32P_SUPPORTED
+                                | MISA_EXT_P
+                            `endif `ifdef RV32Q_SUPPORTED
+                                | MISA_EXT_Q
+                            `endif `ifdef RV32R_SUPPORTED
+                                | MISA_EXT_R
+                            `endif `ifdef SMODE_SUPPORTED
+                                | MISA_EXT_S
+                            `endif `ifdef RV32T_SUPPORTED
+                                | MISA_EXT_T
+                            `endif `ifdef RV32U_SUPPORTED
+                                | MISA_EXT_U
                             `endif `ifdef RV32V_SUPPORTED
                                 | MISA_EXT_V
+                            `endif `ifdef RV32W_SUPPORTED
+                                | MISA_EXT_W
                             `endif `ifdef CUSTOM_SUPPORTED
                                 | MISA_EXT_X
+                            `endif`ifdef RV32Y_SUPPORTED
+                                | MISA_EXT_Y
+                            `endif `ifdef RV32Z_SUPPORTED
+                                | MISA_EXT_Z
                             `endif;
 
   assign mstatush.reserved_0 = '0;
