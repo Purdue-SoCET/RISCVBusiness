@@ -19,3 +19,8 @@ of the register select is ignored entirely).**
 This should not cause a problem for normal software (as the compiler/assembler will not emit these instructions), 
 but has the potential to complicate debugging as attempting to execute binaries compiled for RV32I, or incorrectly
 executing a data region with data that appears to be encodings using x16 - x31 will cause silent failures.
+
+# Testing
+Currently, the TB check register x28 for the success/failure value in some tests. This register naturally aliases to x12
+when using RV32E as the base ISA. For tests targeting RV32E, the flag value should be loaded into x12 for compatibility
+with the TB.
