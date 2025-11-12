@@ -28,8 +28,6 @@ filesets:
             - source_code/branch_predictors/ghr_pht/ghr_pht.sv
             - source_code/branch_predictors/btb_ghr_pht/btb_ghr_pht.sv
             - source_code/bus_bridges/generic_nonpipeline.sv
-            - source_code/RV32E/rv32e_reg_file.sv
-            - source_code/RV32E/rv32e_wrapper.sv
         file_type: systemVerilogSource
 
     trackers:

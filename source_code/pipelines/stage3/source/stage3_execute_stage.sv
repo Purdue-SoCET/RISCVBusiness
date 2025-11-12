@@ -77,21 +77,11 @@ module stage3_execute_stage (
         .prv_pipe_if(prv_pipe_if)
     );
 
-    generate
-        if (BASE_ISA == "RV32E") begin : g_rfile_select
-            rv32e_reg_file rf (
-                .CLK,
-                .nRST,
-                .rf_if
-            );
-        end else begin : g_rfile_select
-            rv32i_reg_file rf (
-                .CLK,
-                .nRST,
-                .rf_if
-            );
-        end
-    endgenerate
+    rv32i_reg_file #(.RV32E(BASE_ISA == "RV32E")) rf (
+        .CLK,
+        .nRST,
+        .rf_if
+    );
 
     /******************
     * Functional Units

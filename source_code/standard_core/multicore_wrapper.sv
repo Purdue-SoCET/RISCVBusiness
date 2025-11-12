@@ -104,7 +104,7 @@ module multicore_wrapper #(
                 imm_U[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_U;
             end
 
-            assign x28s[HART_ID] = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] == 32'b1;
+            assign x28s[HART_ID] = hart.pipeline.execute_stage_i.rf.registers[28] == 32'b1;
         end
     endgenerate
 
