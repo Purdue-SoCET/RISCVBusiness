@@ -19,14 +19,15 @@
  *   Created by:   Yueting Zhao
  *   Email:        zhao979@purdue.edu
  *   Date Created: 07/07/2023
- *   Description:  Branch target buffer that caches target address and predicted branch direction. 
+ *   Description:  Branch target buffer that caches target address and predicted branch direction.
  */
 
 `include "predictor_pipeline_if.vh"
 
 module btb #(
     parameter int PRED_BITS = 1,
-    parameter int NFRAMES = 32
+    parameter int NFRAMES = 32, // Note: Requires power-of-two
+    parameter int N_TAG_BITS = 8
 )
 (
     input logic CLK, nRST,
@@ -34,41 +35,39 @@ module btb #(
 );
     import rv32i_types_pkg::*;
 
-    localparam ASSOC        = 2;
-    localparam N_SETS       = NFRAMES / ASSOC;
-    localparam N_TAG_BITS   = 8 - PRED_BITS;
-    localparam N_SET_BITS   = $clog2(N_SETS) + (N_SETS == 1);
-    localparam N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 2;
+    localparam int N_SETS        = NFRAMES;
+    localparam int N_SET_BITS    = $clog2(N_SETS) + (N_SETS == 1);
+    localparam int N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 1;
 
     typedef struct packed {
         logic [N_TAG_BITS-1:0] tag;
         word_t target;
-        logic [PRED_BITS-1:0]taken;
+        logic [PRED_BITS-1:0] taken;
     } btb_frame_t;      // BTB frame
 
     typedef struct packed {
         logic [N_IGNORE_BITS-1:0] ignore_bits;
         logic [N_TAG_BITS-1:0] tag_bits;
         logic [N_SET_BITS-1:0] idx_bits;
-        logic [1:0] byte_bits;
+        logic byte_bits; // PC is 2B-aligned
     } btb_addr_t;       // decoded curr PC type
 
     btb_frame_t [N_SETS-1:0] buffer;
     btb_addr_t curr_pc, update_pc;
     btb_frame_t selected_set, next_set, update_set;
-    btb_frame_t selected_frame; 
+    btb_frame_t selected_frame;
 
     assign curr_pc = predict_if.current_pc; // convert PC to decoded type
     assign update_pc = predict_if.pc_to_update;
     assign selected_set = buffer[curr_pc.idx_bits];
     assign selected_frame = selected_set;
     assign update_set = buffer[update_pc.idx_bits];
-    
+
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
             buffer <= '0;
         end else begin
-            buffer[update_pc.idx_bits] <= next_set; 
+            buffer[update_pc.idx_bits] <= next_set;
         end
     end
 
@@ -86,30 +85,30 @@ module btb #(
         if(predict_if.update_predictor) begin
             next_set.tag = update_pc.tag_bits;
             next_set.target = predict_if.update_addr;
-            case(update_set.taken) 
-                SNT: next_set.taken = predict_if.branch_result ? WNT : SNT; 
-                WNT: next_set.taken = predict_if.branch_result ? ST : SNT; 
-                ST: next_set.taken = predict_if.branch_result ? ST : WT; 
-                WT: next_set.taken = predict_if.branch_result ? ST : SNT; 
-                default: next_set.taken = SNT;
-            endcase
+            if(PRED_BITS == 2) begin
+                case(update_set.taken)
+                    SNT: next_set.taken = predict_if.branch_result ? WNT : SNT;
+                    WNT: next_set.taken = predict_if.branch_result ? ST : SNT;
+                    ST: next_set.taken = predict_if.branch_result ? ST : WT;
+                    WT: next_set.taken = predict_if.branch_result ? ST : SNT;
+                    default: next_set.taken = SNT;
+                endcase
+            end else begin // PRED_BITS == 1
+                next_set.taken = predict_if.branch_result;
+            end
         end
     end
 
     // get prediction
     always_comb begin : predict_logic
         if(selected_set.tag != curr_pc.tag_bits) begin
-            // current PC not in buffer: predict not taken, 
             predict_if.predict_taken = 0;
-            predict_if.target_addr = predict_if.is_rv32c ? predict_if.current_pc + 2 : predict_if.current_pc + 4;
-            end
-        else begin
+        end else begin
             // if using 2 bit predictor:
             // 00 - strongly NT, 01 - NT, 11 - strongly T, 10 - T
-            predict_if.predict_taken = (predict_if.is_branch)? selected_frame.taken[PRED_BITS-1] : 0;
-            predict_if.target_addr = predict_if.predict_taken ? selected_frame.target
-                                    : predict_if.is_rv32c ? predict_if.current_pc + 2
-                                    : predict_if.current_pc + 4;
-        end 
+            predict_if.predict_taken = predict_if.is_branch ? selected_frame.taken[PRED_BITS-1] : 0;
+        end
+
+        predict_if.target_addr = selected_frame.target;
     end
 endmodule
