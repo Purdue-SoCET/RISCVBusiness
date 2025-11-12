@@ -56,6 +56,8 @@ A predictor that does what it says on the box. This incurs timing/area overhead 
 ### BTB
 The BTB predictor is a simple branch target cache augmented with up to 2 bits of dynamic predictor. The diagram below shows the BTB structure and read path; the write path functions identically, only it writes values for tags, targets, and updates the predictor according to the FSM.
 
+The BTB size is parameterizable from the YAML file, which specifies the size of the BTB data in bytes. The BTB tag is also parameterizable, but is not yet exposed in the YAML file. It currently defaults to 8 bits of tag used to prevent aliasing.
+
 ![BTB Diagram](./fig/btb.png)
 
 The 2b predictor follows the classic state machine for simple dynamic prediction. The taken/not taken input comes from the `update` port and is the true branch outcome.
