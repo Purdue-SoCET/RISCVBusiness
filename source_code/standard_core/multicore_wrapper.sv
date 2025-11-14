@@ -30,7 +30,6 @@ module multicore_wrapper #(
     front_side_bus_if front_side_bus [NUM_HARTS*2-1:0] ();
     back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if();
 
-    // TODO(anyone): is there a better way to define this?
     genvar i;
     generate
         for (i = 0; i < (NUM_HARTS*2); i++)  begin : GEN_BUS_MAP
