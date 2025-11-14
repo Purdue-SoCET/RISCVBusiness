@@ -46,7 +46,7 @@ module ahb (
 
     always_comb begin
         if ((state == DATA) & !(ahb_m.HREADY)) n_state = state;
-        else n_state = out_gen_bus_if.ren | out_gen_bus_if.wen ? DATA : IDLE;
+        else n_state = ahb_m.HREADY && (out_gen_bus_if.ren | out_gen_bus_if.wen) ? DATA : IDLE;
     end
 
     always_comb begin
@@ -57,13 +57,13 @@ module ahb (
     end
 
     always_comb begin
-        if (out_gen_bus_if.ren) begin
+        if (out_gen_bus_if.ren && state == IDLE) begin
             ahb_m.HTRANS = 2'b10;
             ahb_m.HWRITE = 1'b0;
             ahb_m.HADDR = {out_gen_bus_if.addr[31:2], 2'b00};
             ahb_m.HWDATA = out_gen_bus_if.wdata;
             ahb_m.HWSTRB = out_gen_bus_if.byte_en;
-        end else if (out_gen_bus_if.wen) begin
+        end else if (out_gen_bus_if.wen && state == IDLE) begin
             ahb_m.HTRANS = 2'b10;
             ahb_m.HWRITE = 1'b1;
             ahb_m.HADDR = {out_gen_bus_if.addr[31:2], 2'b00};
