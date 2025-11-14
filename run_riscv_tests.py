@@ -10,11 +10,33 @@ import threading
 import pathlib
 
 class Colors:
-    RED = '\033[1;31;48m'
-    YELLOW = '\033[1;33;48m'
-    GREEN = '\033[1;32;48m'
-    CYAN = '\033[1;36;48m'
-    END = '\033[1;37;0m'
+    class Regular:
+        BLACK = '\033[0;30m'
+        RED = '\033[0;31m'
+        GREEN = '\033[0;32m'
+        YELLOW = '\033[0;33m'
+        BLUE = '\033[0;34m'
+        PURPLE = '\033[0;35m'
+        CYAN = '\033[0;36m'
+        WHITE = '\033[0;37m'
+
+    class Bold:
+        BLACK = '\033[1;30m'
+        RED = '\033[1;31m'
+        GREEN = '\033[1;32m'
+        YELLOW = '\033[1;33m'
+        BLUE = '\033[1;34m'
+        PURPLE = '\033[1;35m'
+        CYAN = '\033[1;36m'
+        WHITE = '\033[1;37m'
+
+def status_print(out, end='\n', color=Colors.Bold.WHITE, file=None):
+    """Status printer wrapper."""
+    print(f'{color}{out}{Colors.Regular.WHITE}', end=end, file=file)
+
+def info_print(out, end='\n', color=Colors.Bold.WHITE, file=None):
+    """Info printer wrapper"""
+    status_print('[INFO] ' + out, end=end, color=color, file=file)
 
 # RISCV ISA supported
 supported_isa = ['i', 'm', 'a', 'c', 'zba', 'zbb', 'zbs']
@@ -45,7 +67,7 @@ skip_list = [
 
 def apply_skips(test):
     if test.name in skip_list:
-        print(f"Skipping {test} (skip_list)")
+        info_print(f"Skipping {test} (skip_list)", color=Colors.Bold.YELLOW)
         return False
     
     return True
@@ -126,21 +148,24 @@ def run_test(fname, env, output=None):
     run_cmd.append(fname)
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, errors='replace')
 
-    print(f'\t{fname}: ', end="", file=output)
     stdout_str = res.stdout
     status = ('PASSED' in stdout_str)
     if status:
-        print(f'{Colors.GREEN}[PASSED]{Colors.END}', file=output)
+        status_print('\t[PASSED]', color=Colors.Bold.GREEN, end=' ', file=output)
+        status_print(f'{fname}', file=output)
     else:
-        print(f"{Colors.RED}[FAILED]{Colors.END}", file=output)
+        status_print('\t[FAILED]', color=Colors.Bold.RED, end=' ', file=output)
+        status_print(f'{fname}', file=output)
         print(stdout_str, file=output)
 
+    ipc = -1
     if env == ENV_BENCHMARK:
         elapsed_cycles = int(re.findall(r"^Total Cycles: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
         elapsed_instrs = int(re.findall(r"^Total Instructions: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
-        print(f'\t\tInstructions: {elapsed_instrs}', file=output)
-        print(f'\t\tClocks: {elapsed_cycles}', file=output)
-        print(f'\t\tIPC: {elapsed_instrs / elapsed_cycles}', file=output)
+        ipc = elapsed_instrs / elapsed_cycles
+        print(f'\t\t Instructions: {elapsed_instrs}', file=output)
+        print(f'\t\t Clocks: {elapsed_cycles}', file=output)
+        print(f'\t\t IPC: {ipc}', file=output)
     
 
     if res.returncode != 0:
@@ -150,15 +175,16 @@ def run_test(fname, env, output=None):
         sys.exit(1)
 
     print(output.getvalue(), end='')
-    return status
+    return status, ipc
 
 def run_threads(test, env, data_collect_q):
     output = io.StringIO()
-    status = run_test(test, env, output)
-    data_collect_q.put_nowait([test, status, output])
+    status, ipc = run_test(test, env, output)
+    data_collect_q.put_nowait([test, status, ipc, output])
 
 def _run_tests(tests, total_count, pass_count, env, sim_parallel):
     filtered_tests = list(filter(apply_skips, tests))
+    total_ipc = 0
 
     # If parallel simulation is enabled
     if sim_parallel:
@@ -181,15 +207,23 @@ def _run_tests(tests, total_count, pass_count, env, sim_parallel):
         
         # dump data
         while not collect_data_q.empty():
-            [test, status, output] = collect_data_q.get()
+            [test, status, ipc, output] = collect_data_q.get()
             output.close()
+            total_ipc += ipc
             if status:
                 pass_count += 1
     else:
         for test in filtered_tests:
             total_count += 1
-            if run_test(test, env):
+            status, ipc = run_test(test, env)
+            total_ipc += ipc
+            if status:
                 pass_count += 1
+
+    if env == ENV_BENCHMARK:
+        total_ipc /= total_count
+        info_print(f'Average Benchmark IPC: {total_ipc}')
+
     return total_count, pass_count
 
 def run_selected_tests(
@@ -205,9 +239,9 @@ def run_selected_tests(
     total_count = 0
     
     for env in envs:
-        print(f"Running '{env}' TVM tests...")
+        info_print(f"Running '{env}' TVM tests...")
         for ext in isa:
-            print(f"ISA: RV32{ext.capitalize()}")
+            info_print(f"ISA: RV32{ext.capitalize()}")
 
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             total_count, pass_count = _run_tests(
@@ -216,7 +250,7 @@ def run_selected_tests(
 
         # machine-mode tests
         if machine_mode_tests:
-            print(f"Machine Mode tests")
+            info_print(f"Machine Mode tests")
             tests = test_base_dir.glob(f'rv32mi-{env}-*.bin')
             total_count, pass_count = _run_tests(
                 tests, total_count, pass_count, env, sim_parallel
@@ -224,7 +258,7 @@ def run_selected_tests(
 
         # supervisor-mode tests
         if supervisor_mode_tests:
-            print(f"Supervisor Mode tests")
+            info_print(f"Supervisor Mode tests")
             tests = test_base_dir.glob(f'rv32si-{env}-*.bin')
             total_count, pass_count = _run_tests(
                 tests, total_count, pass_count, env, sim_parallel
@@ -232,16 +266,16 @@ def run_selected_tests(
 
         # benchmarks
         if benchmark_tests:
-            print(f"Benchmark Tests")
+            info_print(f"Benchmark Tests")
             tests = benchmark_base_dir.glob(f'*.bin')
             total_count, pass_count = _run_tests(
                 tests, total_count, pass_count, ENV_BENCHMARK, sim_parallel
             )
-        
+
     if pass_count == total_count:
-        print(f"{Colors.GREEN}[All {pass_count} tests passed.]{Colors.END}")
+        info_print(f'All {pass_count} tests passed.', color=Colors.Bold.GREEN, end='\n\n')
     else:
-        print(f"{Colors.YELLOW}[Passed {pass_count}/{total_count} tests.]{Colors.END}")
+        info_print(f'Failed {total_count - pass_count} tests.', color=Colors.Bold.RED, end='\n\n')
 
 
 def main():
@@ -286,13 +320,13 @@ def main():
 
     if not args.isa and not args.machine and not args.supervisor and not args.benchmarks:
         print("Must supply at least one of --isa, --machine, or --supervisor")
-        exit(1)
+        sys.exit(1)
 
-    # if 'pm' in args.environment or 'pt' in args.environment:
-    #     print("Environments 'pt' and 'pm' are not yet supported.")
-    #     exit(1)
+    if 'pt' in args.environment:
+        print("Environment 'pt' is not yet supported.")
+        sys.exit(1)
     
-    print("Running selected tests...")
+    info_print("Running selected tests...")
     run_selected_tests(
         isa=args.isa,
         envs=args.environment,
