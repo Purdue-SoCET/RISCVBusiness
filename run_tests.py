@@ -91,7 +91,7 @@ def config_maxed_core(config_path, num_harts=2):
   # - PMP granularity 4B
   # - Supervisor enabled
   # - Address translation enabled
-  # - ISA string to include M & A
+  # - ISA string to include M, A, B, Zifencei, and Zicsr
   isa_params = config['isa_params']
   isa_params['pmp_minimum_granularity'] = '4'
   isa_params['supervisor'] = 'enabled'
@@ -101,10 +101,11 @@ def config_maxed_core(config_path, num_harts=2):
 
   # Configuring Microarch Params
   # We want the following:
-  # - 2 harts minimum
+  # - configurable number of harts
+  # - 2-bit BTB
   microarch_params = config['microarch_params']
   microarch_params['num_harts'] = num_harts
-  microarch_params['br_predictor_type'] = 'btb_1'
+  microarch_params['br_predictor_type'] = 'btb_2'
   config['microarch_params'] = microarch_params
 
   # save the config
@@ -121,9 +122,9 @@ def config_maxed_core(config_path, num_harts=2):
         universal_newlines=True,
     )
     print(res.stdout)
-    status_print('Cleaning the core succeeded.', color=Colors.GREEN)
+    status_print('Cleaning the core succeeded.\n', color=Colors.GREEN)
   except Exception as e:
-    status_print('\nCleaning the core failed.', color=Colors.RED)
+    status_print('Cleaning the core failed.', color=Colors.RED)
     print(e)
     sys.exit(1)
 
@@ -131,15 +132,16 @@ def config_maxed_core(config_path, num_harts=2):
   try:
     status_print('Building the core...')
     res = subprocess.run(
-        ['make', 'verilate'],
+        'make verilate',
+        shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
     )
     print(res.stdout)
-    status_print('Building the core succeeded.', color=Colors.GREEN)
+    status_print('Building the core succeeded.\n', color=Colors.GREEN)
   except:
-    print('\nBuilding the core failed.', color=Colors.RED)
+    status_print('Building the core failed.', color=Colors.RED)
     sys.exit(1)
 
 
