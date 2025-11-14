@@ -108,6 +108,13 @@ def config_maxed_core(config_path, num_harts=2):
   microarch_params['br_predictor_type'] = 'btb_2'
   config['microarch_params'] = microarch_params
 
+  # Configuring Multiplier Params
+  # We want the following:
+  # - Wallace Tree Multiplier
+  multiplier_params = config['multiplier_params']
+  multiplier_params['multiplier_select'] = 'pp_mul32'
+  config['multiplier_params'] = multiplier_params
+
   # save the config
   save_configuration(config_path, config)
 
