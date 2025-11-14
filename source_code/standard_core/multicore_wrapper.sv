@@ -4,6 +4,12 @@
 `include "core_interrupt_if.vh"
 `include "bus_ctrl_if.vh"
 
+`define MAP_FRONT_TO_BACK(sig) \
+assign bus_ctrl_if.sig[i] = front_side_bus[i].sig;
+
+`define MAP_BACK_TO_FRONT(sig) \
+assign front_side_bus[i].sig = bus_ctrl_if.sig[i];
+
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
     parameter NUM_HARTS
@@ -22,9 +28,30 @@ module multicore_wrapper #(
 `endif
 );
     front_side_bus_if front_side_bus [NUM_HARTS*2-1:0] ();
-    back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if(
-        .front_side(front_side_bus)
-    );
+    back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if();
+
+    genvar i;
+    generate
+        for (i = 0; i < (NUM_HARTS*2); i++)  begin : GEN_BUS_MAP
+            `MAP_FRONT_TO_BACK(dREN)
+            `MAP_FRONT_TO_BACK(dWEN)
+            `MAP_FRONT_TO_BACK(daddr)
+            `MAP_FRONT_TO_BACK(dstore)
+            `MAP_FRONT_TO_BACK(dbyte_en)
+            `MAP_FRONT_TO_BACK(ccwrite)
+            `MAP_FRONT_TO_BACK(ccsnoophit)
+            `MAP_FRONT_TO_BACK(ccdirty)
+            `MAP_FRONT_TO_BACK(ccsnoopdone)
+            `MAP_BACK_TO_FRONT(dwait)
+            `MAP_BACK_TO_FRONT(dload)
+            `MAP_BACK_TO_FRONT(derror)
+            `MAP_BACK_TO_FRONT(ccwait)
+            `MAP_BACK_TO_FRONT(ccinv)
+            `MAP_BACK_TO_FRONT(ccsnoopaddr)
+            `MAP_BACK_TO_FRONT(ccexclusive)
+        end
+    endgenerate
+
     generic_bus_if pipeline_trans_if ();
     assign bus_ctrl_if.l2load = pipeline_trans_if.rdata;
     assign bus_ctrl_if.l2state = pipeline_trans_if.busy ? L2_BUSY : L2_ACCESS;

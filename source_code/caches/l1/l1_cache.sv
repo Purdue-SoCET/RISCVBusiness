@@ -139,6 +139,7 @@ module l1_cache #(
     logic [N_TAG_BITS-1:0] fetch_physical_tag;
     //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
+    logic ren, wen;
     logic hit, pass_through;
     word_t [BLOCK_SIZE-1:0] hit_data, bus_ctrl_hit_data;
     logic [N_FRAME_BITS-1:0] hit_idx;
@@ -161,6 +162,8 @@ module l1_cache #(
 
     //Snooping signals
     logic[N_TAG_BITS-1:0] bus_frame_tag; //Tag from bus to compare
+    logic coherence_hit, sc_valid_block;
+    logic snoop_hit;
 
     // error handling
     assign proc_gen_bus_if.error = bus_ctrl_if.derror;
@@ -258,12 +261,9 @@ module l1_cache #(
     // decoded address conversion
     assign decoded_addr = state == SNOOP ? snoop_decoded_addr : decoded_cache_addr_t'(phy_addr);
 
-    logic coherence_hit, sc_valid_block;
-
     // Hit logic with pass through
     // CPU and bus sram have different always_comb blocks to prevent false
     // circular logic
-    logic ren, wen;
     always_comb begin
         hit 	        = 0;
         hit_idx         = 0;
@@ -289,8 +289,6 @@ module l1_cache #(
             end
         end
     end
-
-    logic snoop_hit;
 
     always_comb begin
         snoop_hit  = 0;
