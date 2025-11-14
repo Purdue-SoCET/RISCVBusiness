@@ -3,6 +3,7 @@ import argparse
 import io
 import os
 import queue
+import re
 import sys
 import subprocess
 import threading
@@ -126,18 +127,29 @@ def run_test(fname, env, output=None):
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, errors='replace')
 
     print(f'\t{fname}: ', end="", file=output)
-    status = ('PASSED' in res.stdout)
+    stdout_str = res.stdout
+    status = ('PASSED' in stdout_str)
     if status:
         print(f'{Colors.GREEN}[PASSED]{Colors.END}', file=output)
     else:
         print(f"{Colors.RED}[FAILED]{Colors.END}", file=output)
-        print(res.stdout, file=output)
+        print(stdout_str, file=output)
+
+    if env == ENV_BENCHMARK:
+        elapsed_cycles = int(re.findall(r"^Total Cycles: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
+        elapsed_instrs = int(re.findall(r"^Total Instructions: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
+        print(f'\t\tInstructions: {elapsed_instrs}', file=output)
+        print(f'\t\tClocks: {elapsed_cycles}', file=output)
+        print(f'\t\tIPC: {elapsed_instrs / elapsed_cycles}', file=output)
+    
 
     if res.returncode != 0:
-        print('Verilator failed to run, exiting: ', file=output)
-        print(res.stderr, file=output)
+        print(output.getvalue(), end='')
+        print('Verilator failed to run, exiting: ')
+        print(res.stderr)
         sys.exit(1)
 
+    print(output.getvalue(), end='')
     return status
 
 def run_threads(test, env, data_collect_q):
@@ -170,7 +182,6 @@ def _run_tests(tests, total_count, pass_count, env, sim_parallel):
         # dump data
         while not collect_data_q.empty():
             [test, status, output] = collect_data_q.get()
-            print(output.getvalue(), end='')
             output.close()
             if status:
                 pass_count += 1
