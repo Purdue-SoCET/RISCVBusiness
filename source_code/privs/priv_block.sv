@@ -57,8 +57,8 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[4]  = prv_pipe_if.dcache_miss; // D$ miss
 
     // 5-6: I$/D$ hits
-    assign prv_intern_if.hpm_inc[5]  = 1'b0; // I$ hit (TODO)
-    assign prv_intern_if.hpm_inc[6]  = 1'b0; // D$ hit (TODO)
+    assign prv_intern_if.hpm_inc[5]  = prv_pipe_if.icache_hit; // I$ hit
+    assign prv_intern_if.hpm_inc[6]  = prv_pipe_if.dcache_hit; // D$ hit
 
     // 7-8: iTLB/dTLB misses
     assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.itlb_miss; // iTLB miss

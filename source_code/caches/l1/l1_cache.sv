@@ -54,6 +54,7 @@ module l1_cache #(
     front_side_bus_if.cache bus_ctrl_if,
     prv_pipeline_if.cache prv_pipe_if,
     address_translation_if.cache at_if,
+    output logic cache_hit,
     output logic cache_miss
 );
     import rv32i_types_pkg::*;
@@ -317,6 +318,7 @@ module l1_cache #(
         flush_done 	            = 0;
         idle_done               = 0;
         clear_done 	            = 0;
+        cache_hit               = 0;
         // This logic should not change as it may cause bizarre issues during
         // simulation. During testing it was found that this exact logic was
         // found in multiple places in the below `casez` statement, however,
@@ -374,6 +376,7 @@ module l1_cache #(
                         proc_gen_bus_if.busy = 0;
                         proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
                         next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                        cache_hit = 1'b1;
                         // Delay so we can set the reservation set
                         if (reserve && !addr_is_reserved) begin
                             proc_gen_bus_if.busy = 1;
@@ -399,6 +402,7 @@ module l1_cache #(
                         sramMask.frames[hit_idx].exclusive = 0;
                         next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
                         proc_gen_bus_if.rdata = 0;
+                        cache_hit = 1'b1;
                     end
                     // passthrough
                     else if(pass_through) begin

@@ -71,6 +71,7 @@ interface prv_pipeline_if();
   // performance signals
   logic wb_enable, instr;
   logic icache_miss, dcache_miss;
+  logic icache_hit, dcache_hit;
 
   // Memory protection signals
   logic iren, dwen, dren;
@@ -117,7 +118,7 @@ interface prv_pipeline_if();
           breakpoint, env, fault_insn_page, fault_load_page, fault_store_page,
       badaddr, swap, clr, set, read_only, wfi,
       wdata, csr_addr, valid_write, wb_enable, instr,
-      icache_miss, dcache_miss, itlb_miss, dtlb_miss,
+      icache_miss, dcache_miss, icache_hit, dcache_hit, itlb_miss, dtlb_miss,
           daddr, iaddr, ipaddr, dpaddr, dren, dwen, iren,
           d_acc_width, i_acc_width, ex_mem_stall,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,

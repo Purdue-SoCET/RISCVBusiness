@@ -72,7 +72,9 @@ module supervisor_cache_wrapper(
     .icache_bus_ctrl_if(front_side_bus[0]),
     .abort_bus(abort_bus),
     .icache_miss(prv_pipe_if.icache_miss),
-    .dcache_miss(prv_pipe_if.dcache_miss)
+    .dcache_miss(prv_pipe_if.dcache_miss),
+    .icache_hit(prv_pipe_if.icache_hit),
+    .dcache_hit(prv_pipe_if.dcache_hit)
   );
 
   assign bus_ctrl_if.ccabort = abort_bus;
