@@ -141,12 +141,14 @@ def run_test(fname, env, output=None):
     
 
     if res.returncode != 0:
-        print(output.getvalue(), end='')
+        if output:
+            print(output.getvalue(), end='')
         print('Verilator failed to run, exiting: ')
         print(res.stderr)
         sys.exit(1)
 
-    print(output.getvalue(), end='')
+    if output:
+        print(output.getvalue(), end='')
     return status, ipc
 
 def run_threads(test, env, data_collect_q):
