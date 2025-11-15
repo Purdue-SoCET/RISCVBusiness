@@ -1,7 +1,7 @@
-
+#! /usr/bin/env python3
 import argparse
-from run_riscv_tests import Colors
 from run_riscv_tests import run_selected_tests
+from scripts.test_utility import *
 import subprocess
 import sys
 import yaml
@@ -56,11 +56,6 @@ def parse_args():
   return args
 
 
-def status_print(out, end='\n', color=Colors.CYAN):
-  """Status printer wrapper."""
-  print(f'{color}{out}{Colors.END}', end=end)
-
-
 def load_configuration(file_name):
   """Loads the YAML file at the path in `file_name`."""
   with open(file_name, 'r') as f:
@@ -77,7 +72,7 @@ def save_configuration(file_name, config):
     try:
       yaml.dump(config, f, default_flow_style=False, sort_keys=False)
     except yaml.parser.ParserError as y:
-      status_print(y, color=Colors.RED)
+      info_print(y, color=Colors.Bold.RED)
       sys.exit('Write of '+ file_name + ' failed.')
 
 
@@ -120,7 +115,7 @@ def config_maxed_core(config_path, num_harts=2):
 
   # clean the core
   try:
-    status_print('Cleaning the core...')
+    info_print('Cleaning the core...')
     res = subprocess.run(
         'make clean && ccache -C',
         shell=True,
@@ -128,16 +123,16 @@ def config_maxed_core(config_path, num_harts=2):
         stderr=subprocess.PIPE,
         universal_newlines=True,
     )
-    print(res.stdout)
-    status_print('Cleaning the core succeeded.\n', color=Colors.GREEN)
+    print(res.stdout, end='')
+    info_print('Cleaning the core succeeded.', color=Colors.Bold.GREEN)
   except Exception as e:
-    status_print('Cleaning the core failed.', color=Colors.RED)
+    info_print('Cleaning the core failed.', color=Colors.Bold.RED)
     print(e)
     sys.exit(1)
 
   # build the core
   try:
-    status_print('Building the core...')
+    info_print('Building the core...')
     res = subprocess.run(
         'make verilate',
         shell=True,
@@ -145,10 +140,10 @@ def config_maxed_core(config_path, num_harts=2):
         stderr=subprocess.PIPE,
         universal_newlines=True,
     )
-    print(res.stdout)
-    status_print('Building the core succeeded.\n', color=Colors.GREEN)
+    print(res.stdout, end='')
+    info_print('Building the core succeeded.', color=Colors.Bold.GREEN)
   except:
-    status_print('Building the core failed.', color=Colors.RED)
+    info_print('Building the core failed.', color=Colors.Bold.RED)
     sys.exit(1)
 
 
@@ -187,18 +182,17 @@ def main():
   if args.riscv_tests:
     # 1-hart tests
     # benchmarks are only supported in single core
-    status_print("1-hart riscv-tests")
+    info_print("1-hart riscv-tests")
     config_maxed_core(CONFIG_PATH, num_harts=1)
     riscv_tests_runner(num_harts=1, sim_parallel=args.sim_parallel)
 
     # do another test run with the specifed number of harts
     if args.num_harts > 1:
-      status_print(f"{args.num_harts}-hart riscv-tests")
+      info_print(f"{args.num_harts}-hart riscv-tests")
       config_maxed_core(CONFIG_PATH, num_harts=args.num_harts)
       riscv_tests_runner(num_harts=args.num_harts, sim_parallel=args.sim_parallel)
       
 
-  
   if args.embench:
     """TODO(anyone): add in support for embench."""
 
