@@ -102,7 +102,9 @@ module RISCVBusiness #(
         .icache_bus_ctrl_if(icache_bus_ctrl_if),
         .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),
-        .dcache_miss(prv_pipe_if.dcache_miss)
+        .dcache_miss(prv_pipe_if.dcache_miss),
+        .icache_hit(prv_pipe_if.icache_hit),
+        .dcache_hit(prv_pipe_if.dcache_hit)
     );
 
 endmodule
