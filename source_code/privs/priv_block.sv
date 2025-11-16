@@ -87,7 +87,7 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[20] = 1'b0; // branch predictions (TODO)
 
     // 21-31: currently for future expansion
-    assign prv_intern_if.hpm_inc[21] = 1'b0;
+    assign prv_intern_if.hpm_inc[21] = prv_pipe_if.bus_busy; // bus busy cycles
     assign prv_intern_if.hpm_inc[22] = 1'b0;
     assign prv_intern_if.hpm_inc[23] = 1'b0;
     assign prv_intern_if.hpm_inc[24] = 1'b0;

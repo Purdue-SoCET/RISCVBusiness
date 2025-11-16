@@ -57,13 +57,16 @@ module multicore_wrapper #(
     assign bus_ctrl_if.l2state = pipeline_trans_if.busy ? L2_BUSY : L2_ACCESS;
     assign bus_ctrl_if.l2error = pipeline_trans_if.error;
 
+    logic bus_busy;
+
     memory_controller #(
         .NUM_HARTS(NUM_HARTS)
     ) mc (
         .CLK(CLK),
         .nRST(nRST),
         .out_gen_bus_if(pipeline_trans_if),
-        .bus_ctrl_if(bus_ctrl_if)
+        .bus_ctrl_if(bus_ctrl_if),
+        .bus_busy(bus_busy)
     );
 
     logic [NUM_HARTS-1:0] pipeline_halts;
@@ -110,7 +113,8 @@ module multicore_wrapper #(
                 .interrupt_if(interrupt_if),
                 .dcache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
                 .icache_bus_ctrl_if(front_side_bus[HART_ID*2]),
-                .abort_bus(abort_bus[HART_ID*2])
+                .abort_bus(abort_bus[HART_ID*2]),
+                .bus_busy(bus_busy)
             );
 
             always_comb begin

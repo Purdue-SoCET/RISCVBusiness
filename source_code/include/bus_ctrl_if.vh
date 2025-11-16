@@ -112,6 +112,8 @@ interface back_side_bus_if#(
     logic [3:0] l2_byte_en;
     // Core outputs
     logic               [CPUS-1:0] ccabort;
+    // HPM signals
+    logic bus_busy;
 
     // modports
     modport cc(
@@ -120,7 +122,8 @@ interface back_side_bus_if#(
                 l2load, l2state, l2error, ccabort,
         output  dwait, dload, derror,
                 ccwait, ccinv, ccsnoopaddr, ccexclusive, 
-                l2addr, l2store, l2REN, l2WEN, l2_byte_en
+                l2addr, l2store, l2REN, l2WEN, l2_byte_en,
+                bus_busy
     ); 
 
     modport tb(
