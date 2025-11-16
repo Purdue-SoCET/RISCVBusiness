@@ -51,7 +51,7 @@ module priv_block #(
 
     // assign hpm counter increments (csr mapping: mhpmcounter3..31 / hpmcounter3..31)
 
-    // Cache group: 3-6
+    // cache group: 3-6
     // 3: I$ misses, 4: D$ misses
     assign prv_intern_if.hpm_inc[3]  = prv_pipe_if.icache_miss; // I$ miss
     assign prv_intern_if.hpm_inc[4]  = prv_pipe_if.dcache_miss; // D$ miss
@@ -70,11 +70,11 @@ module priv_block #(
 
     // 11-12: page walker: miss/hit/fault, number of page walks
     assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO)
-    assign prv_intern_if.hpm_inc[12] = 1'b0; // Page walk count (TODO)
+    assign prv_intern_if.hpm_inc[12] = 1'b0; // page walk count (TODO)
 
-    // 13-15: core stalls (fetch, execute, mem). We only have ex/mem stall exposed; others TODO
-    assign prv_intern_if.hpm_inc[13] = 1'b0; // Fetch stall cycles (TODO)
-    assign prv_intern_if.hpm_inc[14] = 1'b0; // Execute stall cycles (TODO)
+    // 13-15: core stalls (fetch, execute, mem)
+    assign prv_intern_if.hpm_inc[13] = 1'b0; // fetch stall cycles (TODO)
+    assign prv_intern_if.hpm_inc[14] = 1'b0; // execute stall cycles (TODO)
     assign prv_intern_if.hpm_inc[15] = prv_pipe_if.ex_mem_stall; // mem stage stall
     
     // 16-18: D$ snoops: total, hits, misses (TODO)
