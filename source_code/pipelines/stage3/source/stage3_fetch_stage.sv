@@ -83,7 +83,7 @@ module stage3_fetch_stage (
     assign predict_if.instr = instr_to_ex;
     assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
     assign predict_if.is_branch = is_branch || is_compressed_branch;
-    assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR)) ? 1:0;
+    assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR));
 
     // pc_redirect used to invalidate fetch buffer for RV32C
     assign pc_redirect = hazard_if.insert_priv_pc || hazard_if.rollback || hazard_if.npc_sel || predict_if.predict_taken;

@@ -38,6 +38,7 @@ module btb #(
     localparam int N_SETS        = NFRAMES;
     localparam int N_SET_BITS    = $clog2(N_SETS) + (N_SETS == 1);
     localparam int N_IGNORE_BITS = WORD_SIZE - N_TAG_BITS - N_SET_BITS - 1;
+    localparam int LOWER_BITS    = PRED_BITS > 1 ? PRED_BITS - 1 : 1;
 
     typedef struct packed {
         logic [N_TAG_BITS-1:0] tag;
@@ -57,27 +58,19 @@ module btb #(
     btb_frame_t selected_set, next_set, update_set;
     btb_frame_t selected_frame;
 
-    assign curr_pc = predict_if.current_pc; // convert PC to decoded type
-    assign update_pc = predict_if.pc_to_update;
+    assign curr_pc = predict_if.current_pc; // fetch stage PC, convert PC to decoded type
+    assign update_pc = predict_if.pc_to_update; // memory stage PC
     assign selected_set = buffer[curr_pc.idx_bits];
     assign selected_frame = selected_set;
     assign update_set = buffer[update_pc.idx_bits];
 
     always_ff @(posedge CLK, negedge nRST) begin
         if(!nRST) begin
-            buffer <= '0;
+            buffer <= 0;
         end else begin
             buffer[update_pc.idx_bits] <= next_set;
         end
     end
-
-    // Struct defining 4 states for updates logic
-    typedef enum logic [1:0] {
-        SNT = 2'b00,//Strongly Not Taken
-        WNT = 2'b01, //Weakly Not Taken
-        ST = 2'b11, //Stronly Taken
-        WT = 2'b10 //Weakly Taken
-    } state_t;
 
     //BTB update logic WITH state machine implemented
     always_comb begin: update_logic
@@ -85,28 +78,58 @@ module btb #(
         if(predict_if.update_predictor) begin
             next_set.tag = update_pc.tag_bits;
             next_set.target = predict_if.update_addr;
-            if(PRED_BITS == 2) begin
-                case(update_set.taken)
-                    SNT: next_set.taken = predict_if.branch_result ? WNT : SNT;
-                    WNT: next_set.taken = predict_if.branch_result ? ST : SNT;
-                    ST: next_set.taken = predict_if.branch_result ? ST : WT;
-                    WT: next_set.taken = predict_if.branch_result ? ST : SNT;
-                    default: next_set.taken = SNT;
+
+            // if more than one bits and have a tag match, update the set accordingly
+            if (update_set.tag == update_pc.tag_bits) begin
+                //  Saturating counter with better hysteresis
+                case(update_set.taken[LOWER_BITS-1:0])
+                    // Either in weakest taken or strongest not taken.
+                    // For better hysteresis, we swap to strongest not taken if
+                    // we mispredict and are in weakest taken.
+                    '0 : next_set.taken = predict_if.branch_result ? update_set.taken + 1 : '0;
+
+                    // Either in strongest taken or weakest not taken.
+                    // For better hysteresis, we swap to strongest taken if
+                    // we mispredict and are in weakest not taken
+                    '1 : next_set.taken = predict_if.branch_result ? '1 : update_set.taken - 1;
+
+                    // default saturating counter update
+                    default: next_set.taken = predict_if.branch_result ? update_set.taken + 1 : update_set.taken - 1;
                 endcase
-            end else begin // PRED_BITS == 1
-                next_set.taken = predict_if.branch_result;
+
+                // // Normal saturating counter
+                // if (update_set.taken[PRED_BITS-1]) begin // if we predict taken
+                //     case(update_set.taken[LOWER_BITS-1:0])
+                //         // in strongest taken state.
+                //         // stay at all 1's if right, else decrement
+                //         '1 : next_set.taken = predict_if.branch_result ? '1 : update_set.taken - 1;
+
+                //         // default saturating counter update
+                //         default: next_set.taken = predict_if.branch_result ? update_set.taken + 1 : update_set.taken - 1;
+                //     endcase
+                // end else begin // if we predict not taken
+                //     case(update_set.taken[LOWER_BITS-1:0])
+                //         // in the strongest not taken state.
+                //         // stay at all 0's if right, else decrement
+                //         '0 : next_set.taken = predict_if.branch_result ? update_set.taken + 1 : '0;
+
+                //         // default saturating counter update
+                //         default: next_set.taken = predict_if.branch_result ? update_set.taken + 1 : update_set.taken - 1;
+                //     endcase
+                // end
+            end else begin
+                next_set.taken = predict_if.branch_result ? '1 : '0;
             end
         end
     end
 
     // get prediction
     always_comb begin : predict_logic
-        if(selected_set.tag != curr_pc.tag_bits) begin
-            predict_if.predict_taken = 0;
-        end else begin
-            // if using 2 bit predictor:
-            // 00 - strongly NT, 01 - NT, 11 - strongly T, 10 - T
-            predict_if.predict_taken = predict_if.is_branch ? selected_frame.taken[PRED_BITS-1] : 0;
+        predict_if.predict_taken = 0;
+
+        // If we have a tag match, 
+        if ((selected_set.tag == curr_pc.tag_bits) & (predict_if.is_branch || predict_if.is_jump)) begin
+            predict_if.predict_taken =  selected_frame.taken[PRED_BITS-1];
         end
 
         predict_if.target_addr = selected_frame.target;
