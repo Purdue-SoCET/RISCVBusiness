@@ -132,12 +132,15 @@ def run_test(fname, env, output=None):
 
     ipc = -1
     if env == ENV_BENCHMARK:
-        elapsed_cycles = int(re.findall(r"^Total Cycles: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
-        elapsed_instrs = int(re.findall(r"^Total Instructions: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
-        ipc = elapsed_instrs / elapsed_cycles
-        print(f'\t\t Instructions: {elapsed_instrs}', file=output)
-        print(f'\t\t Clocks: {elapsed_cycles}', file=output)
-        print(f'\t\t IPC: {ipc}', file=output)
+        try:
+            elapsed_cycles = int(re.findall(r"^Total Cycles: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
+            elapsed_instrs = int(re.findall(r"^Total Instructions: [0-9]+", stdout_str, re.MULTILINE)[0].split(" ")[2], 10)
+            ipc = elapsed_instrs / elapsed_cycles
+            print(f'\t\t Instructions: {elapsed_instrs}', file=output)
+            print(f'\t\t Clocks: {elapsed_cycles}', file=output)
+            print(f'\t\t IPC: {ipc}', file=output)
+        except Exception as e:
+            print(e)
     
 
     if res.returncode != 0:
