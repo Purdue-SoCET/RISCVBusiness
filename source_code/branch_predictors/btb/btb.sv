@@ -128,8 +128,11 @@ module btb #(
         predict_if.predict_taken = 0;
 
         // If we have a tag match, 
-        if ((selected_set.tag == curr_pc.tag_bits) & (predict_if.is_branch || predict_if.is_jump)) begin
-            predict_if.predict_taken =  selected_frame.taken[PRED_BITS-1];
+        if (selected_set.tag == curr_pc.tag_bits) begin
+            if (predict_if.is_branch)
+                predict_if.predict_taken = selected_frame.taken[PRED_BITS-1];
+            else if (predict_if.is_jump)
+                predict_if.predict_taken = 1;
         end
 
         predict_if.target_addr = selected_frame.target;

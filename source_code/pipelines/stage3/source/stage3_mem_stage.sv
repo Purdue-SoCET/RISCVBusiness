@@ -235,7 +235,7 @@ module stage3_mem_stage(
     assign hazard_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
-    assign hazard_if.mispredict = (ex_mem_if.ex_mem_reg.predicted_address != ex_mem_if.ex_mem_reg.brj_addr) || (ex_mem_if.ex_mem_reg.prediction ^ ex_mem_if.ex_mem_reg.branch_taken);
+    assign hazard_if.mispredict = (ex_mem_if.ex_mem_reg.predicted_address != ex_mem_if.ex_mem_reg.brj_addr) || (ex_mem_if.ex_mem_reg.prediction ^ predict_if.branch_result);
     assign hazard_if.update_predictor = predict_if.update_predictor;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
 
