@@ -51,6 +51,7 @@ module separate_caches(
 
     // TLB signals L1$ needs
     logic itlb_miss, dtlb_miss;
+    logic itlb_hit_sig, dtlb_hit_sig;
     word_t itlb_hit_data, dtlb_hit_data;
 
     generic_bus_if pw_gen_bus_if ();
@@ -188,6 +189,10 @@ module separate_caches(
     generic_bus_if itlb_gen_bus_if ();
     generic_bus_if dtlb_gen_bus_if ();
 
+    // TLB hit assignments
+    assign prv_pipe_if.itlb_hit = itlb_hit_sig;
+    assign prv_pipe_if.dtlb_hit = dtlb_hit_sig;
+
     // TLB/PW signals
     logic itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
     logic dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
@@ -208,6 +213,7 @@ module separate_caches(
         .prv_pipe_if(prv_pipe_if),
         .at_if(data_at_if),
         .tlb_miss(dtlb_miss),
+        .tlb_hit(dtlb_hit_sig),
         .fault_load_page(dtlb_fault_load_page),
         .fault_store_page(dtlb_fault_store_page),
         .fault_insn_page(dtlb_fault_insn_page)
@@ -227,6 +233,7 @@ module separate_caches(
         .prv_pipe_if(prv_pipe_if),
         .at_if(insn_at_if),
         .tlb_miss(itlb_miss),
+        .tlb_hit(itlb_hit_sig),
         .fault_load_page(itlb_fault_load_page),
         .fault_store_page(itlb_fault_store_page),
         .fault_insn_page(itlb_fault_insn_page)

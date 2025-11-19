@@ -42,6 +42,9 @@ interface prv_pipeline_if();
   // tlb miss signals
   logic itlb_miss, dtlb_miss;
 
+  // tlb hit signals
+  logic itlb_hit, dtlb_hit;
+
   // from ex_mem reg to tlb, will cause comb loop if this value is not used
   logic ex_mem_ren, ex_mem_wen;
 
@@ -100,17 +103,17 @@ interface prv_pipeline_if();
 
   modport fetch (
     input prot_fault_i, itlb_miss, fetch_fault_insn_page,
-    output iren, iaddr, i_acc_width, pc_redirect
+    output iren, iaddr, i_acc_width, pc_redirect, itlb_hit
   );
 
   modport caches (
     input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
-    output fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
+    output fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, itlb_miss, dtlb_miss, itlb_hit, dtlb_hit, ipaddr, dpaddr
   );
 
   modport cache (
     input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen, intr, pc_redirect,
-          fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
+          fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, itlb_miss, dtlb_miss, itlb_hit, dtlb_hit, ipaddr, dpaddr
   );
 
   modport priv_block (
@@ -119,7 +122,7 @@ interface prv_pipeline_if();
           breakpoint, env, fault_insn_page, fault_load_page, fault_store_page,
       badaddr, swap, clr, set, read_only, wfi,
       wdata, csr_addr, valid_write, wb_enable, instr,
-      icache_miss, dcache_miss, icache_hit, dcache_hit, itlb_miss, dtlb_miss,
+      icache_miss, dcache_miss, icache_hit, dcache_hit, itlb_miss, dtlb_miss, itlb_hit, dtlb_hit,
           daddr, iaddr, ipaddr, dpaddr, dren, dwen, iren,
           d_acc_width, i_acc_width, ex_mem_stall, bus_busy,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,

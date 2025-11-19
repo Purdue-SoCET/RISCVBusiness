@@ -65,8 +65,8 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[8]  = prv_pipe_if.dtlb_miss; // dTLB miss
     
     // 9-10: iTLB/dTLB hits
-    assign prv_intern_if.hpm_inc[9]  = 1'b0; // iTLB hit (TODO)
-    assign prv_intern_if.hpm_inc[10] = 1'b0; // dTLB hit (TODO)
+    assign prv_intern_if.hpm_inc[9]  = prv_pipe_if.itlb_hit; // iTLB hit
+    assign prv_intern_if.hpm_inc[10] = prv_pipe_if.dtlb_hit; // dTLB hit
 
     // 11-12: page walker: miss/hit/fault, number of page walks
     assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO)
