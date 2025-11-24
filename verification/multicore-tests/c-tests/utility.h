@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-extern int32_t flag;
+extern volatile int32_t flag;
+extern volatile uint32_t start_flag;
 
 extern volatile int32_t hart_done;
 extern volatile int32_t hart1_done;

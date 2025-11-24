@@ -4,12 +4,12 @@ isa_params:
   pmp_minimum_granularity : "64K"
   supervisor : "disabled"
   address_translation : "disabled"
-  isa: "rv32izifencei_zicsr"
+  isa: "rv32imaczifencei_zicsr"
 
 # Microarchitectural Configurations
 microarch_params:
   # Multicore configurations
-  num_harts : 1
+  num_harts : 2
 
   # Branch/Jump Configurations
   br_predictor_type : "not_taken"
@@ -19,11 +19,11 @@ microarch_params:
   # Cache configurations
   cache_config  : "separate"
   dcache_type   : "l1"
-  dcache_size : 1024
+  dcache_size : 2048
   dcache_block_size : 2
   dcache_assoc : 1
   icache_type   : "l1"
-  icache_size : 1024
+  icache_size : 2048
   icache_block_size : 2
   icache_assoc : 1
   noncache_start_addr : 32'hF000_0000

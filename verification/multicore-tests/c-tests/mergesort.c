@@ -6,10 +6,14 @@
 
 // In order to properly run with N >= 512, you need to bump the size of the stack for each hart in
 // start.S
-#define N 16
+#define N 256
 #include "merge.h"
 
+<<<<<<< Updated upstream
 #define NUM_HART 1
+=======
+#define NUM_HART 2
+>>>>>>> Stashed changes
 
 // #define WARMUP
 

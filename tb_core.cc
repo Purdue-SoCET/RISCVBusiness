@@ -12,7 +12,7 @@
 #include "Vtop_core.h"
 #include "Vtop_core_top_core.h"
 
-#define BASE_SIM_TIME    100000
+#define BASE_SIM_TIME    500000
 
 #define MTIME_ADDR      0xFFFFFFE0
 #define MTIMEH_ADDR     0xFFFFFFE4

@@ -2,7 +2,11 @@
 WANT_AMO_EMU_SUPPORT
 
 #ifndef NUM_CORE
+<<<<<<< Updated upstream
 #define NUM_CORE 1
+=======
+#define NUM_CORE 2
+>>>>>>> Stashed changes
 #endif
 
 .global _start
@@ -128,6 +132,9 @@ hart_wait_loop:
 .data
 .global flag
 flag: .word 0x00
+
+.global start_flag
+start_flag: .word 0x00
 
 .global bss_cleared
 bss_cleared: .word 0x00

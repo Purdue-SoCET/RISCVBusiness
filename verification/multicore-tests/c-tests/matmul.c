@@ -5,7 +5,11 @@
 #define ARRAY_SIZE 256
 #define DIM_SIZE 16
 
+<<<<<<< Updated upstream
 #define NUM_HART 1
+=======
+#define NUM_HART 2
+>>>>>>> Stashed changes
 
 static uint32_t input1_data[ARRAY_SIZE] = {
     0, 3, 2, 0, 3, 1, 0, 3, 2, 3, 2, 0, 3, 3, 1, 2, 3, 0, 0, 1, 1, 1, 2, 3,
@@ -49,7 +53,7 @@ static uint32_t verify_data[ARRAY_SIZE] = {
     41, 41, 37, 45, 45, 17, 34, 44, 46, 30, 43, 29, 31, 36, 37, 50, 54, 44, 28,
     40, 38, 22, 27, 28, 45, 32, 36, 22};
 
-uint32_t results[ARRAY_SIZE];
+__attribute__((section(".noinit"))) uint32_t results[ARRAY_SIZE];
 
 #pragma GCC optimize("unroll-loops")
 void matmul(const size_t coreid, const size_t ncores, const size_t lda,
@@ -79,6 +83,7 @@ void verifydata_per_core(int coreid, const size_t ncores, uint32_t results[], ui
     for(int i = start; i < end; i++) {
         if (results[i] != verify_data[i]) {
             print("Incorrect data at %d!\n", i);
+            print("incorrect data: %d expected data: %d\n", results[i], verify_data[i]);
             return;
         }
     }
@@ -118,6 +123,7 @@ void hart0_main() {
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     hart_done = 1;
     wait_for_all_harts_done(NUM_HART);
+<<<<<<< Updated upstream
 
     uint32_t ending_cycle = get_cycles();
     uint32_t cycle = ending_cycle - beginning_cycle;
@@ -125,6 +131,11 @@ void hart0_main() {
     verifydata_per_core(0, NUM_HART, results, verify_data);
     verifydata(results, verify_data);
 
+=======
+    verifydata();
+    print("Took %d cycles\n", cycle);
+    flag = 1;
+>>>>>>> Stashed changes
     print("hart0 done\n");
     print("Took %d cycles\n", cycle);
     return;
