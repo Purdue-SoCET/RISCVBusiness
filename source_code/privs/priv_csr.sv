@@ -33,7 +33,7 @@
 
 `define READ_HPM_COUNTER(hpm_id)                               \
   HPMCOUNTER``hpm_id``_ADDR : begin                            \
-    if (check_bad_mcounteren(mcounteren.hpm[hpm_id])) begin  \
+    if (check_bad_counteren(hpm_id)) begin  \
       invalid_csr_addr = 1'b1;                                 \
     end else begin                                             \
       prv_intern_if.old_csr_val = hpm[hpm_id];                 \
@@ -115,8 +115,9 @@ module priv_csr #(
   senvcfg_t         senvcfg, senvcfg_next; // unused, we zero it out. may be important for future!
   `endif // SMODE_SUPPORTED
 
-  logic isUSMode;
+  logic isUSMode, invalidMCounterAccess;
   assign isUSMode = prv_intern_if.isUMode | prv_intern_if.isSMode;
+  assign invalidMCounterAccess = (SUPERVISOR == "enabled" & csr_operation & prv_intern_if.isUMode);
 
   csr_reg_t nxt_csr_val;
 
@@ -364,7 +365,7 @@ module priv_csr #(
       sip <= '0;
       
       /* scounteren reset */
-      scounteren <= '0;
+      scounteren <= '1;
 
       /* senvcfg reset */
       senvcfg <= '0;
@@ -757,10 +758,22 @@ module priv_csr #(
       MIP_ADDR: prv_intern_if.old_csr_val = mip;
       MCOUNTEREN_ADDR: prv_intern_if.old_csr_val = mcounteren;
       MCOUNTINHIBIT_ADDR: prv_intern_if.old_csr_val = mcounterinhibit;
-      MCYCLE_ADDR: prv_intern_if.old_csr_val = mcycle;
-      MINSTRET_ADDR: prv_intern_if.old_csr_val = minstret;
-      MCYCLEH_ADDR: prv_intern_if.old_csr_val = mcycleh;
-      MINSTRETH_ADDR: prv_intern_if.old_csr_val = minstreth;
+      MCYCLE_ADDR,
+      MCYCLEH_ADDR: begin
+        if (invalidMCounterAccess | check_bad_mcounteren(mcounteren.cy)) begin
+          invalid_csr_addr = 1'b1;
+        end else begin
+          prv_intern_if.old_csr_val = prv_intern_if.csr_addr == MCYCLE_ADDR ? mcycle : mcycleh;
+        end
+      end
+      MINSTRET_ADDR,
+      MINSTRETH_ADDR: begin
+        if (invalidMCounterAccess | check_bad_mcounteren(mcounteren.ir)) begin
+          invalid_csr_addr = 1'b1;
+        end else begin
+          prv_intern_if.old_csr_val = prv_intern_if.csr_addr == MINSTRET_ADDR ? minstret : minstreth;
+        end
+      end
       `ifdef SMODE_SUPPORTED
       /* Supervisor Mode Addresses */
       SATP_ADDR: prv_intern_if.old_csr_val = satp;
@@ -775,46 +788,28 @@ module priv_csr #(
       SCOUNTEREN_ADDR: prv_intern_if.old_csr_val = scounteren;
       `endif // SMODE_SUPPORTED
       /* Unprivileged Addresses */
-      CYCLE_ADDR: begin
-        if (check_bad_mcounteren(mcounteren.cy)) begin
-          invalid_csr_addr = 1'b1;
-        end else begin
-          prv_intern_if.old_csr_val = mcycle;
-        end
-      end
+      CYCLE_ADDR,
       CYCLEH_ADDR: begin
-        if (check_bad_mcounteren(mcounteren.cy)) begin
+        if (check_bad_counteren(0)) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = mcycleh;
+          prv_intern_if.old_csr_val = prv_intern_if.csr_addr == CYCLE_ADDR ? mcycle : mcycleh;
         end
       end
-      INSTRET_ADDR: begin
-        if (check_bad_mcounteren(mcounteren.ir)) begin
-          invalid_csr_addr = 1'b1;
-        end else begin
-          prv_intern_if.old_csr_val = minstret;
-        end
-      end
+      INSTRET_ADDR,
       INSTRETH_ADDR: begin
-        if (check_bad_mcounteren(mcounteren.ir)) begin
+        if (check_bad_counteren(2)) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = minstreth;
+          prv_intern_if.old_csr_val = prv_intern_if.csr_addr == INSTRET_ADDR ? minstret : minstreth;
         end
       end
-      TIME_ADDR: begin
-        if (check_bad_mcounteren(mcounteren.tm)) begin
-          invalid_csr_addr = 1'b1;
-        end else begin
-          prv_intern_if.old_csr_val = /* TODO get mtime */ mtime[31:0];
-        end
-      end
+      TIME_ADDR,
       TIMEH_ADDR: begin
-        if (check_bad_mcounteren(mcounteren.tm)) begin
+        if (check_bad_counteren(1)) begin
           invalid_csr_addr = 1'b1;
         end else begin
-          prv_intern_if.old_csr_val = /* TODO get mtimeh */ mtime[63:32];
+          prv_intern_if.old_csr_val = prv_intern_if.csr_addr == TIME_ADDR ? mtime[31:0] : mtime[63:32];
         end
       end
       `READ_HPM_COUNTER(3)
@@ -855,10 +850,6 @@ module priv_csr #(
   end
 
   /* Priv control return */
-  `ifdef SMODE_SUPPORTED
-  assign prv_intern_if.curr_medeleg = medeleg;
-  assign prv_intern_if.curr_mideleg = mideleg;
-  `endif // SMODE_SUPPORTED
   assign prv_intern_if.curr_mip = mip; // reflects sip
   assign prv_intern_if.curr_mie = mie; // reflects sie
   assign prv_intern_if.curr_mcause = mcause;
@@ -866,21 +857,41 @@ module priv_csr #(
   assign prv_intern_if.curr_mstatus = mstatus; // reflects sstatus
   assign prv_intern_if.curr_mtvec = mtvec;
   `ifdef SMODE_SUPPORTED
+  assign prv_intern_if.curr_medeleg = medeleg;
+  assign prv_intern_if.curr_mideleg = mideleg;
   assign prv_intern_if.curr_scause = scause;
   assign prv_intern_if.curr_sepc = sepc;
   assign prv_intern_if.curr_stvec = stvec;
   assign prv_intern_if.curr_satp = satp;
   `endif // SMODE_SUPPORTED
 
-  // function to obtain all non requesters
+  // function to check for bad mcounteren bits
   function logic check_bad_mcounteren;
       input logic mcounteren_bit;
-      check_bad_mcounteren = (
-          (csr_operation) &
-          (
-              (isUSMode & ~mcounteren_bit) |
-              (SUPERVISOR == "enabled" & prv_intern_if.isUMode & mcounteren_bit)
-          )
+      // Raise error if in U/S mode and mcounteren bit is not set
+      check_bad_mcounteren = (csr_operation) & (isUSMode & ~mcounteren_bit);
+  endfunction
+
+  // function to check for bad scounteren bits
+  function logic check_bad_scounteren;
+      input logic scounteren_bit;
+      // Raise error if in U mode and scounteren bit is not set
+      // Note: Is not called if S-mode doesn't exist.
+      //       check_bad_mcounter is called instead.
+      check_bad_scounteren = (csr_operation) & (prv_intern_if.isUMode & ~scounteren_bit);
+  endfunction
+
+  // general function to check for bad counter enable bits
+  function logic check_bad_counteren;
+      input integer counteren_idx;
+      check_bad_counteren = (
+          `ifdef SMODE_SUPPORTED
+          // if S-mode is we check need to check scounteren
+          (check_bad_scounteren(scounteren[counteren_idx])) |
+          `endif
+          // we are in U/S/M mode, we need to check mcounteren
+          (check_bad_mcounteren(mcounteren[counteren_idx]))
       );
   endfunction
+
 endmodule
