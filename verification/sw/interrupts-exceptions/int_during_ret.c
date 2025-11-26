@@ -25,16 +25,22 @@ void exception_handler() {
     flag = 1;
 }
 
-void __attribute__((noinline)) __attribute__((naked)) foo() {
-    asm("li t1, 0xFF\n"
-        "add zero, zero, zero\n"
-        "add zero, zero, zero\n"
-        "add zero, zero, zero\n"
-        "add zero, zero, zero\n"
-        "csrsi mstatus, 0x8\n"
-        "ret\n"
+void __attribute__((noinline)) __attribute__((naked)) __attribute__((aligned(16)))
+foo() {
+    // This function is aligned to a 16B boundary.
+    // If the I$ block size exceeds 16B, this test may not work.
+    // we *must* be executing the csrsi and ret back-to-back for
+    // the interrupt to come in on the same cycle as the ret.
+    // The 'nop' allows this to work when block size is 8B.
+    asm(".option push\n"
+        ".option norvc\n"
+        "li t1, 0xFF\n" // offset 0x0
+        ".align 3\n" // alignment is 'size-log2', so this is aligning to 2^3 = 8B
+        "csrsi mstatus, 0x8\n" // offset 0x8
+        "ret\n" // offset 0xC
         "sw t1, %0\n"
         "ret\n"
+        ".option pop"
         :
         : "A"(flag));
 }
@@ -44,8 +50,7 @@ int main() {
     *MTIMECMP = 0x148;
 
     setup_interrupts_m(exception_handler, IE_MTIE);
-    enable_interrupts_m();
-
+    // Wait to enable interrupts until right before 'ret'
     foo();
 
     if (flag == 1) {

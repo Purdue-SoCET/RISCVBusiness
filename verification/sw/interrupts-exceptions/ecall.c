@@ -3,7 +3,11 @@
 #include "format.h"
 #include "utility.h"
 
+/*
+*  ecall.c - test ecall exception
+*/
 void exception_handler() {
+    // 'ecall' is always 4B
     advance_mepc(4);
     print("Made it to handler!\n");
     flag = 1;

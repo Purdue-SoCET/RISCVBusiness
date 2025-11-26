@@ -4,13 +4,11 @@
 #include "csr.h"
 #include "utility.h"
 
-void *resume_addr = NULL;
-
 void exception_handler() {
     exception_context_t exc;
     read_exception_context(&exc);
     print_exception_context(&exc);
-    set_mepc(resume_addr);
+    advance_mepc(4);
     flag -= 2;
 }
 
@@ -33,14 +31,12 @@ int main() {
     *MTIMECMPH = 0x00;
     *MTIMECMP = 0xFF;
     flag = 4;
-    resume_addr = &&there;
 
     setup_interrupt_m_vectored(vector_table, IE_MTIE);
     enable_interrupts_m();
 
     while((*MTIME) < 0xFF);
 
-there:
     ecall();
 
     if (flag == 1) {

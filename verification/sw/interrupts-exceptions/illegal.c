@@ -5,8 +5,8 @@
 #include "utility.h"
 
 void exception_handler() {
+    print("Made it to handler!\n");
     advance_mepc(4);
-    print("Made it to handler!");
     flag = 1;
 }
 
