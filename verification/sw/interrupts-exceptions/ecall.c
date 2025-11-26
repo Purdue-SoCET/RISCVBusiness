@@ -1,28 +1,25 @@
 #include <stdint.h>
+#include "csr.h"
+#include "format.h"
 #include "utility.h"
 
-void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
-    uint32_t mepc_value;
-    asm volatile("csrr %0, mepc" : "=r"(mepc_value));
-    mepc_value += 4;
-    asm volatile("csrw mepc, %0" : : "r"(mepc_value));
+void exception_handler() {
+    advance_mepc(4);
     print("Made it to handler!\n");
     flag = 1;
 }
 
 int main() {
-    uint32_t mtvec_value = (uint32_t)handler;
-    uint32_t mstatus_value = 0x8;
-
-    asm volatile("csrw mstatus, %0" : : "r" (mstatus_value));
-    asm volatile("csrw mtvec, %0" : : "r" (mtvec_value));
+    setup_interrupts_m(exception_handler, 0);
 
     print("Jumping to handler...\n");
-    asm volatile("ecall");
+    ecall();
 
-    print("Flag is 0x");
-    put_uint32_hex(flag);
-    print("\n");
+    if (flag == 1) {
+        test_pass("Ecall handled");
+    } else {
+        test_fail("Ecall not handled");
+    }
 
     return 0;
 }

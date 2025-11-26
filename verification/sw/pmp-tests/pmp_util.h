@@ -1,6 +1,8 @@
 #ifndef _PMP_UTIL_H_
 #define _PMP_UTIL_H_
 
+#include <stdint.h>
+
 #define G 14
 #define ADDR_G(addr, g) (pmp_addr_g(addr, g))
 #define ADDR_G_NO_SHIFT_2(addr, g) (pmp_addr_g_no_shift2(addr, g))

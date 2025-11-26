@@ -1,46 +1,71 @@
 #include <stdint.h>
 #include <stddef.h>
+#include "csr.h"
+#include "format.h"
 #include "utility.h"
 
-static void *resume_addr = NULL;
+void *return_addr = NULL;
 
-void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
+/*
+*  Triggers a store fault on the bus.
+*/
+
+void exception_handler() {
     print("Made it to handler!\n");
-    flag = 1;
-    // Write mepc = resume_addr
-    asm volatile("csrw mepc, %0" : : "r"((uint32_t)resume_addr));
+    exception_context_t exc;
+    read_exception_context(&exc);
+    flag &= ~(1 << exc.cause);
+    set_mepc(return_addr);
+}
+
+void __attribute__((naked)) __attribute__((noinline))
+trigger_fault(unsigned round __attribute__((unused))) {
+    __asm__ volatile(
+        // Save return address
+        "la t0, return_addr\n"
+        "sw ra, 0(t0)\n"
+        
+        // Check round value (passed in a0)
+        "li t1, 0\n"
+        "beq a0, t1, 1f\n"
+        "li t1, 1\n"
+        "beq a0, t1, 2f\n"
+        "j 3f\n"
+        
+        // round == 0: load fault
+        "1:\n"
+        "lw x0, 0(x0)\n"
+        "ret\n"
+        
+        // round == 1: store fault
+        "2:\n"
+        "sw x0, 0(x0)\n"
+        "ret\n"
+        
+        // round == 2: instruction fault
+        "3:\n"
+        "jr x0, 0x0\n"
+        "ret\n"
+    );
 }
 
 int main() {
-    /**
-     * Note: This uses GCC 'labels as values' feature
-     * to get the address to return from the interrupt.
-     * Can't always assume it will be a 4B instruction,
-     * as it could generate multiple instructions or even
-     * a 2B load.
-     */
-    // get the return address stored in global
-    resume_addr = &&resume_point;
-    uint32_t mtvec_value = (uint32_t)handler;
-    uint32_t mstatus_value = 0x8;
+    flag = 0x1 | (1 << EX_FAULT_INSN) | (1 << EX_FAULT_LOAD) | (1 << EX_FAULT_STORE);
+    setup_interrupts_m(exception_handler, 0);
 
-    asm volatile("csrw mstatus, %0" : : "r" (mstatus_value));
-    asm volatile("csrw mtvec, %0" : : "r" (mtvec_value));
+    for(int i = 0; i < 3; i++) {
+        trigger_fault(i);
+    }
 
-    print("Read 0x0\n");
-
-    // GCC doesn't like us trying to read 0x4
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-    int x = *(volatile int *)(0x4);
-#pragma GCC diagnostic pop
-    (void)x;
-
-resume_point:
-    if(flag != 1) {
-        print("Failed!\n");
+    if(flag == 1) {
+        test_pass("Bus fault handled");
     } else {
-        print("Bus fault, pass!\n");
+        test_fail("Unhandled bus faults");
+        print("Bus faults not handled: %s %s %s\n",
+            BIT_TEST(flag, EX_FAULT_LOAD) ? "load" : "",
+            BIT_TEST(flag, EX_FAULT_STORE) ? "store" : "",
+            BIT_TEST(flag, EX_FAULT_INSN) ? "fetch" : ""
+        );
     }
 
     return 0;

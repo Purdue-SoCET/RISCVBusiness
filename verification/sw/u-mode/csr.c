@@ -1,51 +1,21 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
+#include "csr.h"
+#include "format.h"
 #include "utility.h"
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
-    uint32_t mepc, mtval, icache_misses, dcache_misses;
-    mcause_t mcause;
-    asm volatile("csrr %0, mepc" : "=r"(mepc));
-    asm volatile("csrr %0, mtval" : "=r"(mtval));
-    asm volatile("csrr %0, mcause" : "=r"((mcause_t) mcause));
-    asm volatile("csrr %0, hpmcounter3" : "=r"(icache_misses));
-    asm volatile("csrr %0, hpmcounter4" : "=r"(dcache_misses));
+    exception_context_t ctx;
+    read_exception_context(&ctx);
+    print_exception_context(&ctx);
 
-    print("mepc: ");
-    put_uint32_hex(mepc);
-    print("\n");
-
-    print("mtval: ");
-    put_uint32_hex(mtval);
-    print("\n");
-
-    print("mcause: ");
-    put_uint32_hex(mcause.interrupt & 0x1);
-    print(" ");
-    put_uint32_hex(mcause.ex_code);
-    print("\n");
-
-    print("icache misses: ");
-    put_uint32_hex(icache_misses);
-    print("\n");
-
-    print("dcache misses: ");
-    put_uint32_hex(dcache_misses);
-    print("\n");
-
-    print("-----\n");
-
-    if (~mcause.interrupt && mcause.ex_code == 8){
-        uint32_t mstatus = 0x1800; // set mpp back to M_MODE
-        asm volatile("csrs mstatus, %0" : : "r"(mstatus));
-        mepc = (uint32_t) &done;
-    }
-    else
-    {
-        mepc += 4;
+    if (ctx.cause == EX_ECALL_UMODE) {
+        CSRS("mstatus", MSTATUS_MPP);
+        set_mepc(&done);
+    } else {
+        advance_mepc(4);
         flag -= 1;
     }
-    asm volatile("csrw mepc, %0" : : "r"(mepc));
 }
 
 noreturn void user_main(void) {
@@ -55,84 +25,55 @@ noreturn void user_main(void) {
 
     asm volatile("csrr %0, time" : "=r"(csr_val));
 
-    asm volatile("ecall"); // ends user_main
+    ecall();
 
     __builtin_unreachable();
 }
 
 int main(void) {
-    // check to see if s-mode is enabled
-    // easiest way is to set mstatus.mpp to S-mode and
-    // read it to see if its the expected value for S-mode
-    // S_MODE = 2'b01, mpp is bits [12:11]
-    uint32_t mstatus_value = 0b01 << 11;
-    asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-    asm volatile("csrr %0, mstatus" : "=r"(mstatus_value));
-
-    // If S-mode is not enabled
-    if ((mstatus_value & 0x1800) == 0) {
-        print("Supervisor is not enabled.\n");
-        print("Cycle and time CSR reads will not fault in user mode.\n");
-        flag = 3;
-    } else {
+    if (check_supervisor_mode_available()) {
         print("Supervisor is enabled.\n");
         print("Cycle and time CSR reads will fault in user mode.\n");
         print("Cycle and time CSR reads will not fault in superivsor mode.\n");
         flag = 5;
+    } else {
+        print("Supervisor is not enabled.\n");
+        print("Cycle and time CSR reads will not fault in user mode.\n");
+        flag = 3;
     }
-    print("Setting flag to ");
-    put_uint32_hex(flag);
-    print("\n");
-    // set mstatus value back to default
-    mstatus_value &= ~0x1800;
-    asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
+    print("Setting flag to %x\n", flag);
 
-    // Setup exceptions
-    uint32_t mtvec_value = (uint32_t) handler;
-    mstatus_value = 0x08;
-    asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-    asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
+    setup_interrupts_m(handler, 0);
 
-    // Setup PMP
-    uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2; // Protect flag
-    asm volatile("csrw pmpaddr0, %0" : : "r"(pmp_addr));
-    uint32_t actual_pmp_addr;
-    asm volatile("csrr %0, pmpaddr0" : "=r"(actual_pmp_addr));
+    uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2;
+    CSRW("pmpaddr0", pmp_addr);
+    uint32_t actual_pmp_addr = CSRR("pmpaddr0");
     if (actual_pmp_addr != pmp_addr) {
         print("Set PMP granularity down to 4 to run this test!\n");
-        mstatus_value = 0x1800; // set mpp back to M_MODE
-        asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-        asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
+        CSRS("mstatus", MSTATUS_MPP);
+        set_mepc(&done);
         asm volatile("mret");
     }
 
-    pmp_addr = 0x20001FFF; // Allows for the entire text, bss, stack section
-    asm volatile("csrw pmpaddr1, %0" : : "r"(pmp_addr));
-    uint32_t pmp_cfg = 0x00001F11; // [NAPOT, RWX, no L] [NA4, R, no L]
-    asm volatile("csrw pmpcfg0, %0" : : "r"(pmp_cfg));
+    pmp_addr = 0x20001FFF;
+    CSRW("pmpaddr1", pmp_addr);
+    uint32_t pmp_cfg = 0x00001F11;
+    CSRW("pmpcfg0", pmp_cfg);
 
-    // Test registers in M_MODE
-    uint32_t csr_val_0, csr_val_1;
-    csr_val_0 = 0x0;
-    asm volatile("csrw mcycle, %0" : : "r"(csr_val_0));
-    asm volatile("csrr %0, mcycle" : "=r"(csr_val_0));
+    uint32_t csr_val_0 = 0x0;
+    CSRW("mcycle", csr_val_0);
+    csr_val_0 = CSRR("mcycle");
     asm volatile("nop; nop; nop;");
-    asm volatile("csrr %0, cycle" : "=r"(csr_val_1));
+    uint32_t csr_val_1 = CSRR("cycle");
 
-    // TODO: This test is highly dependent on I-fetch speed
-    if (csr_val_1 - csr_val_0 < 30) // Are the two cycle counts close?
-    {
+    if (csr_val_1 - csr_val_0 < 30) {
         flag -= 1;
     }
 
-    asm volatile("csrw cycle, %0" : : "r"(csr_val_0)); // Trying to write to a R/O register
+    asm volatile("csrw cycle, %0" : : "r"(csr_val_0));
 
-
-    // Jump to user program
-    uint32_t mepc_value = (uint32_t) user_main;
-    asm volatile("csrw mepc, %0" : : "r"(mepc_value));
+    set_mepc(user_main);
     asm volatile("mret");
 
     __builtin_unreachable();
-
 }

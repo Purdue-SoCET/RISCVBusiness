@@ -1,5 +1,7 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
+#include "csr.h"
+#include "format.h"
 #include "utility.h"
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler (void);
@@ -7,216 +9,95 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler (void
 noreturn void user_main (void);
 noreturn void __attribute__((aligned(4))) setup_s_mode (void);
 
+/*
+*  csr.c - checks for access control of S-mode, U-mode CSRs.
+*  Tests interrupt delegation from M-mode.
+*/
+
 void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
-    uint32_t mepc, mtval, cycle, time, icache_misses, dcache_misses;
-    mcause_t mcause;
-    asm volatile("csrr %0, mepc" : "=r"(mepc));
-    asm volatile("csrr %0, mtval" : "=r"(mtval));
-    asm volatile("csrr %0, mcause" : "=r"((mcause_t) mcause));
-    asm volatile("csrr %0, cycle" : "=r"(cycle));
-    asm volatile("csrr %0, time" : "=r"(time));
-    asm volatile("csrr %0, hpmcounter3" : "=r"(icache_misses));
-    asm volatile("csrr %0, hpmcounter4" : "=r"(dcache_misses));
+    exception_context_t ctx;
+    read_exception_context(&ctx);
+    print_exception_context(&ctx);
 
-    print("mepc: ");
-    put_uint32_hex(mepc);
-    print("\n");
-
-    print("mtval: ");
-    put_uint32_hex(mtval);
-    print("\n");
-
-    print("mcause: ");
-    put_uint32_hex(mcause.interrupt & 0x1);
-    print(" ");
-    put_uint32_hex(mcause.ex_code);
-    print("\n");
-
-    print("cycles: ");
-    put_uint32_hex(cycle);
-    print("\n");
-
-    print("time: ");
-    put_uint32_hex(time);
-    print("\n");
-
-    print("icache misses: ");
-    put_uint32_hex(icache_misses);
-    print("\n");
-
-    print("dcache misses: ");
-    put_uint32_hex(dcache_misses);
-    print("\n");
-
-    print("-----\n");
-
-    if (~mcause.interrupt && mcause.ex_code == 8){
-        uint32_t mstatus = 0x1800; // set mpp back to M_MODE
-        asm volatile("csrs mstatus, %0" : : "r"(mstatus));
-        mepc = (uint32_t) &done;
-    }
-    else
-    {
-        mepc += 4;
+    if (ctx.cause == EX_ECALL_SMODE) {
+        CSRS("mstatus", MSTATUS_MPP);
+        set_mepc(&done);
+    } else {
+        advance_mepc(4);
         flag -= 1;
     }
-    asm volatile("csrw mepc, %0" : : "r"(mepc));
 }
 
 void __attribute__((interrupt)) __attribute__((aligned(4))) s_mode_handler() {
-    uint32_t sepc, stval, cycle, time, icache_misses, dcache_misses;
-    scause_t scause;
-    asm volatile("csrr %0, sepc" : "=r"(sepc));
-    asm volatile("csrr %0, stval" : "=r"(stval));
-    asm volatile("csrr %0, scause" : "=r"((scause_t) scause));
-    asm volatile("csrr %0, cycle" : "=r"(cycle));
-    asm volatile("csrr %0, time" : "=r"(time));
-    asm volatile("csrr %0, hpmcounter3" : "=r"(icache_misses));
-    asm volatile("csrr %0, hpmcounter4" : "=r"(dcache_misses));
+    exception_context_t ctx;
+    read_exception_context_s(&ctx);
+    print_exception_context(&ctx);
 
-    print("sepc: ");
-    put_uint32_hex(sepc);
-    print("\n");
-
-    print("stval: ");
-    put_uint32_hex(stval);
-    print("\n");
-
-    print("scause: ");
-    put_uint32_hex(scause.interrupt & 0x1);
-    print(" ");
-    put_uint32_hex(scause.ex_code);
-    print("\n");
-
-    print("cycles: ");
-    put_uint32_hex(cycle);
-    print("\n");
-
-    print("time: ");
-    put_uint32_hex(time);
-    print("\n");
-
-    print("icache misses: ");
-    put_uint32_hex(icache_misses);
-    print("\n");
-
-    print("dcache misses: ");
-    put_uint32_hex(dcache_misses);
-    print("\n");
-
-    print("-----\n");
-
-    if (~scause.interrupt && scause.ex_code == 8){
-        uint32_t sstatus = 0x0100; // set spp back to S_MODE
-        asm volatile("csrs sstatus, %0" : : "r"(sstatus));
-        sepc = (uint32_t) &done;
-    }
-    else
-    {
-        sepc += 4;
+    if (ctx.cause == EX_ECALL_UMODE) {
+        CSRS("sstatus", MSTATUS_SPP);
+        set_sepc(&done);
+    } else {
+        advance_sepc(4);
         flag -= 1;
     }
-    asm volatile("csrw sepc, %0" : : "r"(sepc));
 
     asm volatile("sret");
 }
 
-// U-mode calls M-mode exception handler
 noreturn void user_main(void) {
     uint32_t csr_val;
+    csr_val = CSRR("cycle");
+    csr_val = CSRR("time");
 
-    asm volatile("csrr %0, cycle" : "=r"(csr_val));
+    (void)csr_val;
 
-    asm volatile("csrr %0, time" : "=r"(csr_val));
-
-    asm volatile("ecall"); // ends user_main
+    ecall();
 
     __builtin_unreachable();
 }
 
 int main(void) {
-    // check to see if s-mode is enabled
-    // easiest way is to set mstatus.mpp to S-mode and
-    // read it to see if its the expected value for S-mode
-    // S_MODE = 2'b01, mpp is bits [12:11]
-    uint32_t mstatus_value = 0b01 << 11;
-    asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-    asm volatile("csrr %0, mstatus" : "=r"(mstatus_value));
+    require_supervisor_mode();
 
-    // If S-mode is not enabled
-    if ((mstatus_value & 0x1800) == 0) {
-        print("Enable the Supervisor to run this testbench!\n");
-        mstatus_value = 0x1800; // set mpp back to M_MODE
-        asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-        asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
-        asm volatile("mret");
-    }
-    // set mstatus value back to default
-    mstatus_value &= ~0x1800;
-    asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
+    CSRW("mtvec", (uint32_t) m_mode_handler);
+    CSRS("mstatus", MSTATUS_MIE);
 
-    // Setup exceptions for M-mode
-    uint32_t mtvec_value = (uint32_t) m_mode_handler;
-    mstatus_value = 0x08;
-    asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-    asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
+    CSRW("stvec", (uint32_t) s_mode_handler);
+    CSRS("sstatus", 0x08);
 
-    // Setup exceptions for S-mode
-    uint32_t stvec_value = (uint32_t) s_mode_handler;
-    uint32_t sstatus_value = 0x08;
-    asm volatile("csrs sstatus, %0" : : "r"(sstatus_value));
-    asm volatile("csrw stvec, %0" : : "r"(stvec_value));
-
-    // Setup PMP
-    uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2; // Protect flag
-    asm volatile("csrw pmpaddr0, %0" : : "r"(pmp_addr));
-    uint32_t actual_pmp_addr;
-    asm volatile("csrr %0, pmpaddr0" : "=r"(actual_pmp_addr));
+    uint32_t pmp_addr = ((uint32_t) (&flag)) >> 2;
+    CSRW("pmpaddr0", pmp_addr);
+    uint32_t actual_pmp_addr = CSRR("pmpaddr0");
     if (actual_pmp_addr != pmp_addr) {
         print("Set PMP granularity down to 4 to run this test!\n");
-        mstatus_value = 0x1800; // set mpp back to M_MODE
-        asm volatile("csrs mstatus, %0" : : "r"(mstatus_value));
-        asm volatile("csrw mepc, %0" : : "r"((uint32_t) &done));
+        CSRS("mstatus", MSTATUS_MPP);
+        set_mepc(&done);
         asm volatile("mret");
     }
-    pmp_addr = 0xFFFFFFFF; // Allows for the entire text, bss, stack section
-    asm volatile("csrw pmpaddr1, %0" : : "r"(pmp_addr));
-    uint32_t pmp_cfg = 0x00001F17; // [NAPOT, RWX, no L] [NA4, R, no L]
-    asm volatile("csrw pmpcfg0, %0" : : "r"(pmp_cfg));
+    pmp_addr = 0xFFFFFFFF;
+    CSRW("pmpaddr1", pmp_addr);
+    uint32_t pmp_cfg = 0x00001F17;
+    CSRW("pmpcfg0", pmp_cfg);
 
     flag = 5;
 
-    // Test registers in M_MODE
-    uint32_t csr_val_0, csr_val_1;
-    csr_val_0 = 0x0;
-    asm volatile("csrw mcycle, %0" : : "r"(csr_val_0));
-    asm volatile("csrr %0, mcycle" : "=r"(csr_val_0));
+    uint32_t csr_val_0 = 0x0;
+    CSRW("mcycle", csr_val_0);
+    csr_val_0 = CSRR("mcycle");
     asm volatile("nop; nop; nop;");
-    asm volatile("csrr %0, cycle" : "=r"(csr_val_1));
+    uint32_t csr_val_1 = CSRR("cycle");
 
-    // TODO: This test is highly dependent on I-fetch speed
-    if (csr_val_1 - csr_val_0 < 30) // Are the two cycle counts close?
-    {
+    if (csr_val_1 - csr_val_0 < 30) {
         flag -= 1;
     }
 
-    asm volatile("csrw cycle, %0" : : "r"(csr_val_0)); // Trying to write to a R/O register
+    CSRW("cycle", csr_val_0);
 
-
-    // Jump to user program by using mret to return from an M-mode trap
-
-    // Set delegation register to use S-mode handler
     uint32_t medeleg = 0xFFFFFFFF;
-    uint32_t medelegh = 0xFFFFFFFF;
-    asm volatile("csrw medeleg, %0" : : "r"(medeleg));
-    (void)medelegh;
-    // asm volatile("csrw medelegh, %0" : : "r"(medelegh));
+    CSRW("medeleg", medeleg);
 
-    // Jump to user program by using sret to return from a S-mode trap
-    uint32_t sepc_value = (uint32_t) user_main;
-    asm volatile("csrw sepc, %0" : : "r"(sepc_value));
+    set_sepc(user_main);
     asm volatile("sret");
 
     __builtin_unreachable();
-
 }

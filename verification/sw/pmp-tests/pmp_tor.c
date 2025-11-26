@@ -1,68 +1,67 @@
 #include <stdint.h>
+#include "csr.h"
+#include "format.h"
 #include "utility.h"
 #include "pmp_util.h"
 
 #define BAD_PMP_BOT 0x40000000
 #define BAD_PMP_TOP ((ADDR_G(0x40000020, G + 1) + 1) << 2)
 
+/*
+*  Validate PMP TOR (Top-of-Range) mode. 
+*/
+
 void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
-    // In a real program, a fault should be handled differently
-    uint32_t mepc_value;
-    asm volatile("csrr %0, mepc" : "=r"(mepc_value));
-    mepc_value += 4;
-    asm volatile("csrw mepc, %0" : : "r"(mepc_value));
+    advance_mepc(4);
 
-    uint32_t mtval;
-    asm volatile("csrr %0, mtval" : "=r"(mtval));
-
-    print("PMP Unit Handler tripped: ");
-    put_uint32_hex(mtval >> 2);
+    uint32_t mtval = CSRR("mtval");
+    print("PMP Unit Handler tripped: %x\n", mtval >> 2);
     flag -= 1;
 }
 
 int main() {
-    // PMP range
     volatile uint32_t *bad_pmp_addr_bot = (uint32_t*) BAD_PMP_BOT;
     volatile uint32_t *bad_pmp_addr_top = (uint32_t*) BAD_PMP_TOP;
 
-    uint32_t mtvec_value = (uint32_t) handler;
-    asm volatile("csrw mtvec, %0" : : "r" (mtvec_value));
+    setup_interrupts_m(handler, 0);
 
     flag = 7;
 
-    // 0. Setup the instruction/stack/MMIO regions
     uint32_t pmp_cfg = 0x1F1F0000;
-    asm volatile("csrw pmpcfg0, %0" : : "r" (pmp_cfg));
+    CSRW("pmpcfg0", pmp_cfg);
     uint32_t pmp_addr = ADDR_G(0x80000000, 14);
-    asm volatile("csrw pmpaddr2, %0" : : "r" (pmp_addr));
+    CSRW("pmpaddr2", pmp_addr);
     pmp_addr = ADDR_G(0xFFFFFFE0, 4);
-    asm volatile("csrw pmpaddr3, %0" : : "r" (pmp_addr));
+    CSRW("pmpaddr3", pmp_addr);
 
-    // 1. Test PMP, TOR in M Mode
-    pmp_cfg = 0x00000800; // set pmpcfg0.pmp1cfg to (no L, TOR, no RWX)
-    asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
-    pmp_addr = (BAD_PMP_TOP >> 2); // set pmpaddr1 to the top of range address
-    asm volatile("csrw pmpaddr1, %0" : : "r" (pmp_addr));
-    pmp_addr = (BAD_PMP_BOT >> 2); // set pmpaddr0 to the bottom of range address
-    asm volatile("csrw pmpaddr0, %0" : : "r" (pmp_addr));
-    *(bad_pmp_addr_bot + 4) = 0xDEADBEEF; // should succeed
+    pmp_cfg = 0x00000800;
+    CSRS("pmpcfg0", pmp_cfg);
+    pmp_addr = (BAD_PMP_TOP >> 2);
+    CSRW("pmpaddr1", pmp_addr);
+    pmp_addr = (BAD_PMP_BOT >> 2);
+    CSRW("pmpaddr0", pmp_addr);
+    *(bad_pmp_addr_bot + 4) = 0xDEADBEEF;
     flag -= 1;
-    *(bad_pmp_addr_top) = 0xDEADBEEF; // should succeed
+    *(bad_pmp_addr_top) = 0xDEADBEEF;
     flag -= 1;
 
-    // 2. Test PMP, TOR with MPRV
-    uint32_t mstatus = 0x20000; // set mstatus.mprv, mpp should be 2'b00
-    asm volatile("csrw mstatus, %0" : : "r" (mstatus));
-    *(bad_pmp_addr_bot + 4) = 0xABCD1234; // should fail
-    *(bad_pmp_addr_top) = 0xABCD1234; // should fail
+    uint32_t mstatus = 0x20000;
+    CSRW("mstatus", mstatus);
+    *(bad_pmp_addr_bot + 4) = 0xABCD1234;
+    *(bad_pmp_addr_top) = 0xABCD1234;
 
-    // 3. Test PMP, TOR with L register
-    asm volatile("csrc mstatus, %0" : : "r" (mstatus)); // clear mstatus.mprv
-    pmp_cfg = 0x00008000; // set pmpcfg0.pmp0cfg to (L, TOR, no RWX)
-    asm volatile("csrs pmpcfg0, %0" : : "r" (pmp_cfg));
-    *(bad_pmp_addr_bot + 4) = 0x0987FEDC; // should fail
-    *(bad_pmp_addr_top) = 0x0987FEDC; // should succeed
+    CSRC("mstatus", mstatus);
+    pmp_cfg = 0x00008000;
+    CSRS("pmpcfg0", pmp_cfg);
+    *(bad_pmp_addr_bot + 4) = 0x0987FEDC;
+    *(bad_pmp_addr_top) = 0x0987FEDC;
     flag -= 1;
+
+    if (flag == 1) {
+        test_pass("PMP TOR test");
+    } else {
+        test_fail("PMP TOR test");
+    }
 
     return 0;
 }

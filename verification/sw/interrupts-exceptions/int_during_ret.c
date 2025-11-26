@@ -13,19 +13,14 @@
 //     `foo`.
 //     4) If it does not line up, adjust the value of `mtimecmp` in `main` to trigger the interrupt
 //     earlier or later depending on what is needed.
-#include "utility.h"
 #include <stdint.h>
+#include "csr.h"
+#include "format.h"
+#include "utility.h"
 
-volatile uint32_t *mtime = (uint32_t *)MTIME_ADDR;
-volatile uint32_t *mtimecmp = (uint32_t *)MTIMECMP_ADDR;
-volatile uint32_t *mtimecmph = (uint32_t *)MTIMECMPH_ADDR;
-volatile uint32_t *msip = (uint32_t *)MSIP_ADDR;
-volatile uint32_t *ext_trigger = (uint32_t *)EXT_ADDR_SET;
-volatile uint32_t *ext_clear = (uint32_t *)EXT_ADDR_CLEAR;
 
-void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
-    uint32_t mie_value = 0x00;
-    asm volatile("csrw mie, %0" : : "r"(mie_value));
+void exception_handler() {
+    CSRW("mie", 0x0);
     print("Made it to handler!\n");
     flag = 1;
 }
@@ -45,16 +40,19 @@ void __attribute__((noinline)) __attribute__((naked)) foo() {
 }
 
 int main() {
-    // set mtimecmp away so interrupt doesn't fire immediately
-    *mtimecmph = 0x00;
-    *mtimecmp = 0x148;
+    *MTIMECMPH = 0x00;
+    *MTIMECMP = 0x148;
 
-    uint32_t mstatus_value = 0x8;
-    uint32_t mie_value = 0x80;
-    uint32_t mtvec_value = (uint32_t)handler;
-    asm volatile("csrw mtvec, %0" : : "r"(mtvec_value));
-    asm volatile("csrw mie, %0" : : "r"(mie_value));
-    //asm volatile("csrw mstatus, %0" : : "r"(mstatus_value));
+    setup_interrupts_m(exception_handler, IE_MTIE);
+    enable_interrupts_m();
 
     foo();
+
+    if (flag == 1) {
+        test_pass("Interrupt during return handled");
+    } else {
+        test_fail("Interrupt during return not handled correctly");
+    }
+
+    return 0;
 }
