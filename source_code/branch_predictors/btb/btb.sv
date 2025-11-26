@@ -96,27 +96,6 @@ module btb #(
                     // default saturating counter update
                     default: next_set.taken = predict_if.branch_result ? update_set.taken + 1 : update_set.taken - 1;
                 endcase
-
-                // // Normal saturating counter
-                // if (update_set.taken[PRED_BITS-1]) begin // if we predict taken
-                //     case(update_set.taken[LOWER_BITS-1:0])
-                //         // in strongest taken state.
-                //         // stay at all 1's if right, else decrement
-                //         '1 : next_set.taken = predict_if.branch_result ? '1 : update_set.taken - 1;
-
-                //         // default saturating counter update
-                //         default: next_set.taken = predict_if.branch_result ? update_set.taken + 1 : update_set.taken - 1;
-                //     endcase
-                // end else begin // if we predict not taken
-                //     case(update_set.taken[LOWER_BITS-1:0])
-                //         // in the strongest not taken state.
-                //         // stay at all 0's if right, else decrement
-                //         '0 : next_set.taken = predict_if.branch_result ? update_set.taken + 1 : '0;
-
-                //         // default saturating counter update
-                //         default: next_set.taken = predict_if.branch_result ? update_set.taken + 1 : update_set.taken - 1;
-                //     endcase
-                // end
             end else begin
                 next_set.taken = predict_if.branch_result ? '1 : '0;
             end
