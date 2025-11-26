@@ -17,7 +17,7 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) handler() {
     uint32_t mtval_value = CSRR("mtval");
     set_mepc(&done);
 
-    print("PMA Checker failed (expected)\n");
+    print("PMA Check failed (expected)\n");
     print("MTVAL: %x\n", mtval_value);
     flag = 1;
 }

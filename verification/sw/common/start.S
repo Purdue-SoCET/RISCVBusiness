@@ -78,6 +78,8 @@ init_arr_calls:
 enter_main:
     jal main
 
+.global done
+done:
 check_flag:
     la x27, flag
     lw x28, 0(x27)
@@ -85,9 +87,7 @@ check_flag:
     sw x28, 0(x27)
 
 .global __sim_halt
-.global done
 __sim_halt:
-done:
     j __sim_halt
 
 .data
