@@ -54,6 +54,7 @@ module stage3_fetch_stage (
     //Send exceptions through pipeline
     logic mal_addr;
     logic fault_insn;
+    logic fault_insn_page;
     logic mal_insn;
     word_t fault_addr;
 
@@ -121,9 +122,10 @@ module stage3_fetch_stage (
     // not the address of the instruction (may be different
     // for C-extension)
     assign fault_addr = insn_addr;
-    assign hazard_if.i_mem_busy = !insn_ready && !fault_insn;
+    assign hazard_if.i_mem_busy = !insn_ready && !fault_insn && !fault_insn_page;
     assign hazard_if.fault_addr_fetch = fault_addr; // used for instruction page fault handling
     assign fault_insn = prv_pipe_if.prot_fault_i || ibus_fault; // TODO: Set this up to fault on bus error
+    assign fault_insn_page = prv_pipe_if.fetch_fault_insn_page;
     assign mal_insn = mal_addr;
     assign hazard_if.pc_f = pc;
 
@@ -132,21 +134,22 @@ module stage3_fetch_stage (
         if (!nRST) fetch_ex_if.fetch_ex_reg <= '0;
         else if (hazard_if.if_ex_flush && !hazard_if.if_ex_stall) fetch_ex_if.fetch_ex_reg <= '0;
         else if (!hazard_if.if_ex_stall) begin
-            if(mal_insn || fault_insn) begin
+            if(mal_insn || fault_insn || fault_insn_page) begin
                 // Squash to NOP if exception
                 // Still valid for exception handling
                 fetch_ex_if.fetch_ex_reg.instr <= '0;
             end else begin
                 fetch_ex_if.fetch_ex_reg.instr      <= instr_to_ex;
             end
-            fetch_ex_if.fetch_ex_reg.valid      <= 1'b1;
-            fetch_ex_if.fetch_ex_reg.token      <= 1'b1;
-            fetch_ex_if.fetch_ex_reg.mal_insn   <= mal_insn;
-            fetch_ex_if.fetch_ex_reg.fault_insn <= fault_insn;
-            fetch_ex_if.fetch_ex_reg.fault_addr <= fault_addr;
-            fetch_ex_if.fetch_ex_reg.pc         <= pc;
-            fetch_ex_if.fetch_ex_reg.pc4        <= pc4or2;
-            fetch_ex_if.fetch_ex_reg.prediction <= predict_if.predict_taken; // TODO: This is just wrong...
+            fetch_ex_if.fetch_ex_reg.valid             <= 1'b1;
+            fetch_ex_if.fetch_ex_reg.token             <= 1'b1;
+            fetch_ex_if.fetch_ex_reg.mal_insn          <= mal_insn;
+            fetch_ex_if.fetch_ex_reg.fault_insn        <= fault_insn;
+            fetch_ex_if.fetch_ex_reg.fault_insn_page   <= fault_insn_page;
+            fetch_ex_if.fetch_ex_reg.fault_addr        <= fault_addr;
+            fetch_ex_if.fetch_ex_reg.pc                <= pc;
+            fetch_ex_if.fetch_ex_reg.pc4               <= pc4or2;
+            fetch_ex_if.fetch_ex_reg.prediction        <= predict_if.predict_taken; // TODO: This is just wrong...
             fetch_ex_if.fetch_ex_reg.predicted_address <= predict_if.target_addr;
         end
     end

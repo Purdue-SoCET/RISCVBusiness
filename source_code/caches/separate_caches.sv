@@ -248,9 +248,9 @@ module separate_caches(
     // arbitrate between pw, dtlb, or itlb for page faults
     // handle TLB abort signal
     always_comb begin
-        prv_pipe_if.fault_load_page  = 0;
-        prv_pipe_if.fault_store_page = 0;
-        prv_pipe_if.fault_insn_page  = 0;
+        prv_pipe_if.mem_fault_load_page  = 0;
+        prv_pipe_if.mem_fault_store_page = 0;
+        prv_pipe_if.fetch_fault_insn_page  = 0;
         tlb_abort = prv_pipe_if.pc_redirect & itlb_miss;  // if we are redirecting the PC, we do NOT want an outdated iTLB miss to complete.
 
         // Order goes
@@ -259,28 +259,28 @@ module separate_caches(
         // 3. PW insn access fault
         // 4. itlb access fault
         if (dtlb_miss && (prv_pipe_if.ex_mem_ren || prv_pipe_if.ex_mem_wen)) begin
-            prv_pipe_if.fault_load_page  = pw_fault_load_page;
-            prv_pipe_if.fault_store_page = pw_fault_store_page;
-            prv_pipe_if.fault_insn_page  = pw_fault_insn_page;
+            prv_pipe_if.mem_fault_load_page  = pw_fault_load_page;
+            prv_pipe_if.mem_fault_store_page = pw_fault_store_page;
+            prv_pipe_if.fetch_fault_insn_page  = pw_fault_insn_page;
         end
         else if (dtlb_fault_load_page  | 
                  dtlb_fault_store_page | 
                  dtlb_fault_insn_page) begin
-            prv_pipe_if.fault_load_page  = dtlb_fault_load_page;
-            prv_pipe_if.fault_store_page = dtlb_fault_store_page;
-            prv_pipe_if.fault_insn_page  = dtlb_fault_insn_page;
+            prv_pipe_if.mem_fault_load_page  = dtlb_fault_load_page;
+            prv_pipe_if.mem_fault_store_page = dtlb_fault_store_page;
+            prv_pipe_if.fetch_fault_insn_page  = dtlb_fault_insn_page;
         end
         else if (itlb_miss) begin
-            prv_pipe_if.fault_load_page  = pw_fault_load_page;
-            prv_pipe_if.fault_store_page = pw_fault_store_page;
-            prv_pipe_if.fault_insn_page  = pw_fault_insn_page;
+            prv_pipe_if.mem_fault_load_page  = pw_fault_load_page;
+            prv_pipe_if.mem_fault_store_page = pw_fault_store_page;
+            prv_pipe_if.fetch_fault_insn_page  = pw_fault_insn_page;
         end
         else if (itlb_fault_load_page  | 
                  itlb_fault_store_page | 
                  itlb_fault_insn_page) begin
-            prv_pipe_if.fault_load_page  = itlb_fault_load_page;
-            prv_pipe_if.fault_store_page = itlb_fault_store_page;
-            prv_pipe_if.fault_insn_page  = itlb_fault_insn_page;
+            prv_pipe_if.mem_fault_load_page  = itlb_fault_load_page;
+            prv_pipe_if.mem_fault_store_page = itlb_fault_store_page;
+            prv_pipe_if.fetch_fault_insn_page  = itlb_fault_insn_page;
         end
     end
 `else

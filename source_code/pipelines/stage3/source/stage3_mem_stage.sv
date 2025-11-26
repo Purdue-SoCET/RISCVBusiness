@@ -268,10 +268,10 @@ module stage3_mem_stage(
     assign hazard_if.mret = ex_mem_if.ex_mem_reg.mret_insn;
     assign hazard_if.sret = ex_mem_if.ex_mem_reg.sret_insn & SUPERVISOR == "enabled";
     assign hazard_if.wfi = ex_mem_if.ex_mem_reg.wfi_insn;
-    assign hazard_if.fault_insn_page = prv_pipe_if.fault_insn_page;
-    assign hazard_if.fault_load_page = prv_pipe_if.fault_load_page;
-    assign hazard_if.fault_store_page = prv_pipe_if.fault_store_page;
-    assign hazard_if.fault_addr = (hazard_if.fault_insn || hazard_if.mal_insn) ? ex_mem_if.ex_mem_reg.fault_addr : (prv_pipe_if.fault_insn_page ? hazard_if.fault_addr_fetch : dgen_bus_if.addr);
+    assign hazard_if.fault_insn_page = ex_mem_if.ex_mem_reg.fault_insn_page;
+    assign hazard_if.fault_load_page = prv_pipe_if.mem_fault_load_page;
+    assign hazard_if.fault_store_page = prv_pipe_if.mem_fault_store_page;
+    assign hazard_if.fault_addr = (hazard_if.fault_insn || hazard_if.mal_insn || hazard_if.fault_insn_page) ? ex_mem_if.ex_mem_reg.fault_addr : dgen_bus_if.addr;
 
     // NEW
     assign hazard_if.pc_m = ex_mem_if.ex_mem_reg.pc;
