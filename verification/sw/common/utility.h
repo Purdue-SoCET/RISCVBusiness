@@ -13,17 +13,23 @@
 #define EXT_ADDR_CLEAR  0xFFFFFFF8
 #define MAGIC_ADDR      0xFFFFFFFC
 
+#define MTIME           (volatile uint32_t *)(MTIME_ADDR)
+#define MTIMEH          (volatile uint32_t *)(MTIMEH_ADDR)
+#define MTIMECMP        (volatile uint32_t *)(MTIMECMP_ADDR)
+#define MTIMECMPH       (volatile uint32_t *)(MTIMECMPH_ADDR)
+#define MSIP            (volatile uint32_t *)(MSIP_ADDR)
+#define EXT_SET         (volatile uint32_t *)(EXT_ADDR_SET)
+#define EXT_CLEAR       (volatile uint32_t *)(EXT_ADDR_CLEAR)
+#define MAGIC           (volatile uint32_t *)(MAGIC_ADDR)
+
+#define BIT_TEST(x, n)  (((x) >> n) & 0x1)
+
 extern volatile int flag;
-
 noreturn void done();
-void print(char *string);
-void put_uint32_hex(uint32_t hex);
-
-typedef struct {
-    int ex_code : 31;
-    int interrupt : 1;
-} mcause_t;
-
-typedef mcause_t scause_t;
+void test_pass(const char *msg);
+void test_fail(const char *msg);
+static inline void ecall() {
+    asm volatile("ecall");
+}
 
 #endif

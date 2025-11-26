@@ -1,5 +1,5 @@
 # List of test directories
-TEST_DIRS := interrupts-exceptions pma-tests pmp-tests u-mode s-mode
+TEST_DIRS := interrupts-exceptions u-mode pma-tests pmp-tests s-mode
 
 # Compiler and tools
 CROSS := riscv64-unknown-elf-
@@ -10,9 +10,9 @@ OBJDUMP := $(CROSS)objdump
 # Flags
 CFLAGS := -O2 -I./common -T./common/link.ld \
 		  -Wall -Wextra -Werror \
-		  -march=rv32i_zicsr -mabi=ilp32 -mcmodel=medany \
+		  -march=rv32imc_zicsr -mabi=ilp32 -mcmodel=medany \
 		  -static -nostartfiles -nostdlib -ffreestanding \
-		  -ffunction-sections -fdata-sections -Wl,--gc-sections
+		  -ffunction-sections -fdata-sections# -Wl,--gc-sections
 
 # Common directory
 COMMON_DIR := common

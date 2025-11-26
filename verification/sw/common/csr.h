@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdnoreturn.h>
 
 // Read CSR
 #define CSRR(csr) ({ \
@@ -126,6 +127,12 @@ typedef enum {
     MSTATUS_MPP = (0b11 << 11),
 } mstatus_fields_t;
 
+typedef enum {
+    SSTATUS_SIE = (1 << 1),
+    SSTATUS_SPIE = (1 << 5),
+    SSTATUS_SPP = (0b1 << 8)
+} sstatus_fields_t;
+
 typedef struct {
     uint32_t epc;
     uint32_t tval;
@@ -138,16 +145,16 @@ typedef struct {
 
 // Interrupt functions
 extern uint32_t vector_table[] __attribute__((aligned(256)));
-void default_handler();
-void exception_handler __attribute__((weak, alias(default_handler)));
-void ssip_handler __attribute__((weak, alias(default_handler)));
-void msip_handler __attribute__((weak, alias(default_handler)));
-void stip_handler __attribute__((weak, alias(default_handler)));
-void mtip_handler __attribute__((weak, alias(default_handler)));
-void seip_handler __attribute__((weak, alias(default_handler)));
-void meip_handler __attribute__((weak, alias(default_handler)));
-void lcofip_handler __attribute__((weak, alias(default_handler)));
-void unreachable_handler();
+void default_handler()   __attribute__((interrupt)) __attribute__((aligned(4)));
+void exception_handler() __attribute__((interrupt)) __attribute__((aligned(4)));
+void ssip_handler()      __attribute__((interrupt)) __attribute__((aligned(4)));
+void msip_handler()      __attribute__((interrupt)) __attribute__((aligned(4)));
+void stip_handler()      __attribute__((interrupt)) __attribute__((aligned(4)));
+void mtip_handler()      __attribute__((interrupt)) __attribute__((aligned(4)));
+void seip_handler()      __attribute__((interrupt)) __attribute__((aligned(4)));
+void meip_handler()      __attribute__((interrupt)) __attribute__((aligned(4)));
+void lcofip_handler()    __attribute__((interrupt)) __attribute__((aligned(4)));
+noreturn void unreachable_handler();
 
 void read_exception_context(exception_context_t *);
 void read_exception_context_s(exception_context_t*);
@@ -155,6 +162,8 @@ void print_exception_context(exception_context_t *);
 
 void advance_mepc(uint32_t by);
 void set_mepc(void *address);
+void advance_sepc(uint32_t by);
+void set_sepc(void *address);
 void setup_interrupts_m(void *handler_addr, uint32_t mie_value);
 void setup_interrupt_m_vectored(void *table_addr, uint32_t mie_value);
 
@@ -164,6 +173,6 @@ void enable_interrupts_save_m(uint32_t restore);
 uint32_t disable_interrupts_save_m();
 
 bool check_supervisor_mode_available();
-void require_supervior_mode();
+void require_supervisor_mode();
 
 #endif

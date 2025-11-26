@@ -1,5 +1,5 @@
 .text
-.globl boot
+.global boot
 .section .text.boot
 boot:
     # Zero-out regs

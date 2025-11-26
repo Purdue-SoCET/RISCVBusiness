@@ -5,7 +5,7 @@
 
 void print_string(char *str) {
     for(int i = 0; str[i]; i++) {
-        *MAGIC_ADDR = str[i];
+        *MAGIC = str[i];
     }
 }
 
