@@ -23,7 +23,7 @@ module rv32m_wrapper #(
 
     generate
         if(CORE_CONFIG[HART_ID][M]) begin
-            rv32m_enabled RV32M(.*);
+            rv32m_enabled #(.HART_ID(HART_ID)) RV32M(.*);
         end
         else begin
             rv32m_disabled RV32M(.*);
