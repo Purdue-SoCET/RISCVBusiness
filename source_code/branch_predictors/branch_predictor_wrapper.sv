@@ -27,11 +27,15 @@
 `include "component_selection_defines.vh"
 `include "fetch_buffer_if.vh"
 
-module branch_predictor_wrapper (
+module branch_predictor_wrapper #(
+    parameter HART_ID
+) (
     input logic CLK,
     nRST,
     predictor_pipeline_if.predictor predict_if
 );
+    import core_configuration_pkg::*;
+
     // Predictor used based on the BR_PREDICTOR_TYPE definition
 
     predictor_pipeline_if predict_temp1();
@@ -76,22 +80,22 @@ module branch_predictor_wrapper (
         end
     end
     generate
-            case (BR_PREDICTOR_TYPE)
+            case (BR_PREDICTOR_TYPE[HART_ID])
                 // static not taken predictor
                 "not_taken": nottaken_predictor predictor (CLK, nRST, predict_temp1);
                 // static backward taken/forward not taken predictor
                 "btfnt"    : btfnt_predictor predictor (CLK, nRST, predict_temp1);
                 // BTB with 1b predictor
-                "btb_1"    : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_temp1); 
+                "btb_1"    : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE[HART_ID] / 4)) predictor (CLK, nRST, predict_temp1); 
                 // BTB with 2b predictor
-                "btb_2"    : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_temp1);
+                "btb_2"    : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE[HART_ID] / 4)) predictor (CLK, nRST, predict_temp1);
                 // BTB with global history predictor
                 "btb_ghr_pht" : btb_ghr_pht predictor (CLK, nRST, predict_temp1);
             endcase
     endgenerate
 
     generate
-        if(USE_RAS == "true")
+        if(USE_RAS[HART_ID] == "true")
             return_predictor #(.entries(4)) ret_predictor (CLK, nRST, predict_temp2);
         else // 'no-op' predictor
             nottaken_predictor nt_predictor(CLK, nRST, predict_temp2);

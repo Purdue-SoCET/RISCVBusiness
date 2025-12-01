@@ -65,7 +65,7 @@ module RISCVBusiness #(
     );
 
     // Module Instantiations
-    branch_predictor_wrapper branch_predictor_i (
+    branch_predictor_wrapper #(.HART_ID(HART_ID)) branch_predictor_i (
         .CLK(CLK),
         .nRST(nRST),
         .predict_if(predict_if)
