@@ -94,9 +94,9 @@ module separate_caches #(
             end
             "l1":
             l1_cache #(
-                .CACHE_SIZE(DCACHE_SIZE),
+                .CACHE_SIZE(DCACHE_SIZES[HART_ID]),
                 .BLOCK_SIZE(DCACHE_BLOCK_SIZE),
-                .ASSOC(DCACHE_ASSOC),
+                .ASSOC(DCACHE_ASSOCS[HART_ID]),
                 .IS_ICACHE(0)
             )
             dcache (
@@ -150,9 +150,9 @@ module separate_caches #(
             end
             "l1":
             l1_cache #(
-                .CACHE_SIZE(ICACHE_SIZE),
+                .CACHE_SIZE(ICACHE_SIZES[NUM_HARTS]),
                 .BLOCK_SIZE(ICACHE_BLOCK_SIZE),
-                .ASSOC(ICACHE_ASSOC),
+                .ASSOC(ICACHE_ASSOCS[NUM_HARTS]),
                 .IS_ICACHE(1)
             )
             icache (
