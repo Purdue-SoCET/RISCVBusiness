@@ -2,11 +2,7 @@
 WANT_AMO_EMU_SUPPORT
 
 #ifndef NUM_CORE
-<<<<<<< Updated upstream
-#define NUM_CORE 1
-=======
 #define NUM_CORE 2
->>>>>>> Stashed changes
 #endif
 
 .global _start

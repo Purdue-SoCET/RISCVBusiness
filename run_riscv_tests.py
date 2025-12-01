@@ -7,6 +7,7 @@ import sys
 import subprocess
 import threading
 import pathlib
+import re
 
 class Colors:
     RED = '\033[1;31;48m'
@@ -14,6 +15,15 @@ class Colors:
     GREEN = '\033[1;32;48m'
     CYAN = '\033[1;36;48m'
     END = '\033[1;37;0m'
+
+    @staticmethod
+    def get_status_color(status):
+        if status == "passed":
+            return Colors.GREEN
+        if status == "skipped":
+            return Colors.CYAN
+        if "failed" in status:
+            return Colors.RED
 
 # RISCV ISA supported
 supported_isa = ['i', 'm', 'a', 'c', 'zba', 'zbb', 'zbs']
@@ -115,23 +125,58 @@ def get_hostaddress(fname, is_benchmark=False):
                 tohost_address = st_value
     return tohost_address
 
-def run_test(fname, env, output=None):
+def print_core_result(stdout, output=None):
+    pattern = r"core\s+(\d+)\s+(\w+)(?:\s+test:\s*(\d+))?"
+
+    for m in re.finditer(pattern, stdout):
+        core = int(m.group(1))
+        status = m.group(2).lower()
+        test = m.group(3)
+
+        if test is not None:
+            if test == '0':
+                test = "TIMED OUT"
+            status += " TEST " + test
+
+        print(f"CORE {core}: {Colors.get_status_color(status)}{status.upper()}{Colors.END}", file=output)
+
+def run_test(fname, env, output=None, num_harts=1, ext='i'):
     tohost_address = get_hostaddress(fname, env == ENV_BENCHMARK)
     run_cmd = [verilator_binary, '--tohost-address', str(tohost_address), '--notrace']
     if env == ENV_V:
         run_cmd.extend(['--max-sim-time', '1000000'])
     if env == ENV_BENCHMARK:
         run_cmd.extend(['--max-sim-time', '100000000', '--debug'])
+    if num_harts > 1:
+        run_cmd.extend(['--num-harts', str(num_harts)])
+        extension = ''
+        if ext == 'i':
+            extension = 'I'
+        elif ext == 'm':
+            extension = 'M'
+        elif ext == 'a':
+            extension = 'A'
+        elif ext == 'c':
+            extension = 'C'
+        elif ext == 'zba' or ext == 'zbb' or ext == 'zbs' :
+            extension = 'B'
+        run_cmd.extend(['--extension', extension])
+        
     run_cmd.append(fname)
     res = subprocess.run(run_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, errors='replace')
 
     print(f'\t{fname}: ', end="", file=output)
-    status = ('PASSED' in res.stdout)
-    if status:
+    status = ('PASSED' in res.stdout or 'SKIPPED' in res.stdout)
+    if ('SKIPPED' in res.stdout):
+        print(f'{Colors.CYAN}[SKIPPED]{Colors.END}', file=output)
+    elif ('PASSED' in res.stdout):
         print(f'{Colors.GREEN}[PASSED]{Colors.END}', file=output)
+        if num_harts > 1 and 'skipped' in res.stdout:
+            print_core_result(res.stdout, output)        
     else:
         print(f"{Colors.RED}[FAILED]{Colors.END}", file=output)
-        print(res.stdout, file=output)
+        if num_harts > 1:
+            print_core_result(res.stdout, output)
 
     if res.returncode != 0:
         print('Verilator failed to run, exiting: ', file=output)
@@ -140,12 +185,12 @@ def run_test(fname, env, output=None):
 
     return status
 
-def run_threads(test, env, data_collect_q):
+def run_threads(test, env, data_collect_q, num_harts=1, ext='i'):
     output = io.StringIO()
-    status = run_test(test, env, output)
+    status = run_test(test, env, output, num_harts, ext)
     data_collect_q.put_nowait([test, status, output])
 
-def _run_tests(tests, total_count, pass_count, env, sim_parallel):
+def _run_tests(tests, total_count, pass_count, env, sim_parallel, num_harts=1, ext='i'):
     filtered_tests = list(filter(apply_skips, tests))
 
     # If parallel simulation is enabled
@@ -159,7 +204,7 @@ def _run_tests(tests, total_count, pass_count, env, sim_parallel):
 
         # launch threads
         for test in filtered_tests:
-            curr_thread = threading.Thread(target=run_threads, args=(test, env, collect_data_q))
+            curr_thread = threading.Thread(target=run_threads, args=(test, env, collect_data_q, num_harts, ext))
             test_threads.append(curr_thread)
             curr_thread.start()
 
@@ -177,7 +222,7 @@ def _run_tests(tests, total_count, pass_count, env, sim_parallel):
     else:
         for test in filtered_tests:
             total_count += 1
-            if run_test(test, env):
+            if run_test(test, env, num_harts=num_harts, ext=ext):
                 pass_count += 1
     return total_count, pass_count
 
@@ -188,6 +233,7 @@ def run_selected_tests(
         supervisor_mode_tests=False,
         benchmark_tests=False,
         sim_parallel=False,
+        num_harts=1,
     ):
 
     pass_count = 0
@@ -200,7 +246,7 @@ def run_selected_tests(
 
             tests = test_base_dir.glob(f"rv32u{ext}-{env}-*.bin")
             total_count, pass_count = _run_tests(
-                tests, total_count, pass_count, env, sim_parallel
+                tests, total_count, pass_count, env, sim_parallel, num_harts=num_harts, ext=ext
             )
 
         # machine-mode tests
@@ -208,7 +254,7 @@ def run_selected_tests(
             print(f"Machine Mode tests")
             tests = test_base_dir.glob(f'rv32mi-{env}-*.bin')
             total_count, pass_count = _run_tests(
-                tests, total_count, pass_count, env, sim_parallel
+                tests, total_count, pass_count, env, sim_parallel, num_harts=num_harts
             )
 
         # supervisor-mode tests
@@ -271,6 +317,14 @@ def main():
         action='store_true',
         help='Enable parallel simulation of tests.'
     )
+    parser.add_argument(
+        '--num-harts',
+        type=int,
+        metavar='N',
+        default=1,
+        help='Number of harts (cores) to use for testing. Default: 1.'
+    )
+
     args = parser.parse_args()
 
     if not args.isa and not args.machine and not args.supervisor and not args.benchmarks:
@@ -289,6 +343,7 @@ def main():
         supervisor_mode_tests=args.supervisor,
         benchmark_tests=args.benchmarks,
         sim_parallel=args.sim_parallel,
+        num_harts=args.num_harts
     )
 
 if __name__ == "__main__":

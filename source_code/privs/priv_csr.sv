@@ -170,7 +170,9 @@ module priv_csr #(
                                     (BASE_ISA[HART_ID] == "RV32E") ? MISA_EXT_E : '0;
 
   localparam [25:0] MISA_EXT_MASK = (CORE_CONFIG[HART_ID][C] ? MISA_EXT_C : '0) |
-                                    (CORE_CONFIG[HART_ID][M] ? MISA_EXT_M : '0) ;
+                                    (CORE_CONFIG[HART_ID][M] ? MISA_EXT_M : '0) |
+                                    (CORE_CONFIG[HART_ID][A] ? MISA_EXT_A : '0) |
+                                    (CORE_CONFIG[HART_ID][B] ? MISA_EXT_B : '0) ;
 
   localparam [25:0] MISA_BASE_MASK =  MISA_EXT_U
                                      `ifdef RV32F_SUPPORTED

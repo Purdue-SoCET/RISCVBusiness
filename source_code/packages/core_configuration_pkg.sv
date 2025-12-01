@@ -24,11 +24,11 @@ typedef enum int {
 } extension_idx_t;
 
 // ISA extensions
-localparam string BASE_ISA[NUM_HARTS] = {"RV32E", "RV32I"};
+localparam string BASE_ISA[NUM_HARTS] = {"RV32I", "RV32I"};
 
 localparam isa_extension_t CORE_CONFIG[NUM_HARTS] = '{
-    '{RV32M: 1, RV32A: 1, RV32C: 0, RV32B: 0, RV32ZICOND: 0, RV32ZIFENCEI: 0, RV32ZICSR: 0},
-    '{RV32M: 0, RV32A: 1, RV32C: 0, RV32B: 0, RV32ZICOND: 0, RV32ZIFENCEI: 0, RV32ZICSR: 0}
+    '{RV32M: 1, RV32A: 1, RV32C: 1, RV32B: 1, RV32ZICOND: 0, RV32ZIFENCEI: 1, RV32ZICSR: 1},
+    '{RV32M: 1, RV32A: 1, RV32C: 1, RV32B: 1, RV32ZICOND: 0, RV32ZIFENCEI: 1, RV32ZICSR: 1} 
     };
 
 // Branch configurations

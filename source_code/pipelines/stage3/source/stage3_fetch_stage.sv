@@ -30,7 +30,7 @@
 `include "cache_control_if.vh"
 `include "prv_pipeline_if.vh"
 
-module stage3_fetch_stage (
+module stage3_fetch_stage #(parameter HART_ID) (
     input logic CLK,
     nRST,
     stage3_fetch_execute_if.fetch fetch_ex_if,
@@ -42,6 +42,7 @@ module stage3_fetch_stage (
 );
     import rv32i_types_pkg::*;
     import pma_types_pkg::*;
+    import core_configuration_pkg::*;
 
     parameter logic [31:0] RESET_PC = 32'h80000000;
 
@@ -90,13 +91,7 @@ module stage3_fetch_stage (
     // Instruction Access logic
     assign ireq = hazard_if.iren && !hazard_if.suppress_iren;
 
-`ifdef RV32C_SUPPORTED
-    localparam int RVC = 1;
-`else
-    localparam int RVC = 0;
-`endif
-
-    fetch_unit #(.RVC_ENABLED(RVC)) FETCHER(
+    fetch_unit #(.RVC_ENABLED(CORE_CONFIG[HART_ID][C])) FETCHER(
         .CLK,
         .nRST,
         .ireq,

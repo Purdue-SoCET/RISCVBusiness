@@ -5,11 +5,7 @@
 #define ARRAY_SIZE 256
 #define DIM_SIZE 16
 
-<<<<<<< Updated upstream
-#define NUM_HART 1
-=======
 #define NUM_HART 2
->>>>>>> Stashed changes
 
 static uint32_t input1_data[ARRAY_SIZE] = {
     0, 3, 2, 0, 3, 1, 0, 3, 2, 3, 2, 0, 3, 3, 1, 2, 3, 0, 0, 1, 1, 1, 2, 3,
@@ -123,19 +119,12 @@ void hart0_main() {
     matmul(mhartid, NUM_HART, DIM_SIZE, input1_data, input2_data, results);
     hart_done = 1;
     wait_for_all_harts_done(NUM_HART);
-<<<<<<< Updated upstream
 
     uint32_t ending_cycle = get_cycles();
     uint32_t cycle = ending_cycle - beginning_cycle;
 
     verifydata_per_core(0, NUM_HART, results, verify_data);
     verifydata(results, verify_data);
-
-=======
-    verifydata();
-    print("Took %d cycles\n", cycle);
-    flag = 1;
->>>>>>> Stashed changes
     print("hart0 done\n");
     print("Took %d cycles\n", cycle);
     return;

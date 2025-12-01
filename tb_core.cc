@@ -29,6 +29,8 @@
 #define MMIO_RANGE_BEGIN (MTIME_ADDR)
 #define MMIO_RANGE_END   (MAGIC_ADDR)
 
+#define FROMHOST_OFFSET 0x40
+
 // doubles as mtime counter
 vluint64_t sim_time = 0;
 Vtop_core *dut_ptr;
@@ -199,7 +201,7 @@ public:
         }
 
         if(use_tohost_multi) {
-            if(tohost_address <= addr <= FROMHOST_ADDR && (addr - tohost_address) % tohost_stride == 0) {
+            if(tohost_address <= addr <= tohost_address + FROMHOST_OFFSET && (addr - tohost_address) % tohost_stride == 0) {
                 uint32_t idx = (addr - tohost_address) / tohost_stride;
                 if(idx < num_harts) {
                     tohost_values[idx] = value;
@@ -414,7 +416,7 @@ int main(int argc, char **argv) {
 
     if(num_harts > 1) {
         // write to memory about required extension info
-        memory.write(FROMHOST_ADDR, 1 << (extension - 'A'), 0xFF);
+        memory.write(tohost_address + 64, 1 << (extension - 'A'), 0xFF);
     }
 
     dut_ptr = &dut;
@@ -465,23 +467,37 @@ int main(int argc, char **argv) {
         std::cout << "Test TIMED OUT" << std::endl;
         if(use_tohost_multi) {
             for(uint32_t i = 0; i < num_harts; i++) {
-                std::cout << "core " << i << " = " << tohost_values[i] << std::endl;
+                if(tohost_values[i] == 1) {
+                    std::cout << "core " << i << " passed" << std::endl;
+                }
+                else if (tohost_values[i] == 2) {
+                    std::cout << "core " << i << " skipped" << std::endl;
+                }
+                else {
+                    std::cout << "core " << i  << " failed test: " << (tohost_values[i]) << std::endl;
+                }
             }
         }
-        std::cout << extension << std::endl;
-        std::cout << (1 << (extension - 'A')) << std::endl;
     } else if(use_tohost_multi) {
         bool tests_passed = true;
+        bool tests_skipped = true;
         for(uint32_t i = 0; i < num_harts; i++) {
             if((tohost_written_mask  & (1 << i)) == 0) {
                 tests_passed = false;
                 std::cout << "Hart " << i << " missing result\n";
-            } else if (tohost_values[i] != 1 && tohost_values[i] != 2) {
-                tests_passed = false;
+            }
+            if(tohost_values[i] != 2) {
+                tests_skipped = false;
+                if(tohost_values[i] != 1) {
+                    tests_passed = false;
+                }
             }
         }
-
-        if(tests_passed) {
+        
+        if(tests_skipped) {
+            std::cout << "Test SKIPPED" << std::endl;
+        }
+        else if(tests_passed) {
             std::cout << "Test PASSED" << std::endl;
         }
         else {
@@ -496,7 +512,7 @@ int main(int argc, char **argv) {
                 std::cout << "core " << i << " skipped" << std::endl;
             }
             else {
-                std::cout << "core " << i  << " failed test: " << tohost_values[i] << std::endl;
+                std::cout << "core " << i  << " failed test: " << (tohost_values[i] >> 1) << std::endl;
             }
         }
     } else if(use_tohost && memory.read(tohost_address) == 1 || !use_tohost && dut.top_core->get_x28() == 1) {
