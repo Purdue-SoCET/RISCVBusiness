@@ -51,19 +51,53 @@ module priv_block #(
 
     // assign hpm counter increments (csr mapping: mhpmcounter3..31 / hpmcounter3..31)
 
+    // Edge detectors for miss/hit counting
+    logic icache_miss_q, dcache_miss_q, itlb_miss_q, dtlb_miss_q;
+    logic iren_q, dren_q, dwen_q;
+
+    always_ff @(posedge CLK or negedge nRST) begin
+        if (!nRST) begin
+            icache_miss_q <= 1'b0;
+            dcache_miss_q <= 1'b0;
+            itlb_miss_q <= 1'b0;
+            dtlb_miss_q <= 1'b0;
+            iren_q <= 1'b0;
+            dren_q <= 1'b0;
+            dwen_q <= 1'b0;
+        end else begin
+            icache_miss_q <= prv_pipe_if.icache_miss;
+            dcache_miss_q <= prv_pipe_if.dcache_miss;
+            itlb_miss_q <= prv_pipe_if.itlb_miss;
+            dtlb_miss_q <= prv_pipe_if.dtlb_miss;
+            iren_q <= prv_pipe_if.iren;
+            dren_q <= prv_pipe_if.dren;
+            dwen_q <= prv_pipe_if.dwen;
+        end
+    end
+
+    // Falling edge detect for miss signals: prev=1 and current=0
+    wire icache_miss_fall = icache_miss_q & ~prv_pipe_if.icache_miss;
+    wire dcache_miss_fall = dcache_miss_q & ~prv_pipe_if.dcache_miss;
+    wire itlb_miss_fall   = itlb_miss_q   & ~prv_pipe_if.itlb_miss;
+    wire dtlb_miss_fall   = dtlb_miss_q   & ~prv_pipe_if.dtlb_miss;
+
+    // Access qualifiers
+    wire dacc_en   = prv_pipe_if.dren | prv_pipe_if.dwen; // (dwen v dren)
+    wire x_memstall_n = ~prv_pipe_if.ex_mem_stall; // (-(x_memstall))
+
     // cache group: 3-6
-    // 3: I$ misses, 4: D$ misses
-    assign prv_intern_if.hpm_inc[3]  = prv_pipe_if.icache_miss; // I$ miss
-    assign prv_intern_if.hpm_inc[4]  = prv_pipe_if.dcache_miss; // D$ miss
+    // 3: I$ misses (falling edge), 4: D$ misses
+    assign prv_intern_if.hpm_inc[3]  = icache_miss_fall; // I$ miss falling edge
+    assign prv_intern_if.hpm_inc[4]  = dcache_miss_fall; // D$ miss falling edge
 
-    // 5-6: I$/D$ hits
-    assign prv_intern_if.hpm_inc[5]  = prv_pipe_if.icache_hit; // I$ hit
-    assign prv_intern_if.hpm_inc[6]  = prv_pipe_if.dcache_hit; // D$ hit
+    // 5-6: I$/D$ hits: (access) ^ (hit) ^ (not stalled)
+    assign prv_intern_if.hpm_inc[5]  = prv_pipe_if.iren & prv_pipe_if.icache_hit & x_memstall_n;
+    assign prv_intern_if.hpm_inc[6]  = dacc_en & prv_pipe_if.dcache_hit & x_memstall_n;
 
-    // 7-8: iTLB/dTLB misses
-    assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.itlb_miss; // iTLB miss
-    assign prv_intern_if.hpm_inc[8]  = prv_pipe_if.dtlb_miss; // dTLB miss
-    
+    // 7-8: iTLB/dTLB misses (falling edge)
+    assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.iren & itlb_miss_fall; // iTLB miss gated by access
+    assign prv_intern_if.hpm_inc[8]  = dacc_en & dtlb_miss_fall; // dTLB miss gated by access
+
     // 9-10: iTLB/dTLB hits
     assign prv_intern_if.hpm_inc[9]  = prv_pipe_if.itlb_hit; // iTLB hit
     assign prv_intern_if.hpm_inc[10] = prv_pipe_if.dtlb_hit; // dTLB hit
