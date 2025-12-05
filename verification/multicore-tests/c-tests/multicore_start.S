@@ -2,7 +2,7 @@
 WANT_AMO_EMU_SUPPORT
 
 #ifndef NUM_CORE
-#define NUM_CORE 2
+#define NUM_CORE 8
 #endif
 
 .global _start
@@ -129,9 +129,6 @@ hart_wait_loop:
 .global flag
 flag: .word 0x00
 
-.global start_flag
-start_flag: .word 0x00
-
 .global bss_cleared
 bss_cleared: .word 0x00
 
@@ -158,6 +155,18 @@ hart6_done: .word 0x00
 
 .global hart7_done
 hart7_done: .word 0x00
+
+.global hart1_ready_for_initial_sleep
+hart1_ready_for_initial_sleep: .word 0x00
+
+.global hart1_awake_and_worked
+hart1_awake_and_worked: .word 0x00
+
+.global hart1_sleep_again_request
+hart1_sleep_again_request: .word 0x00
+
+.global hart1_sleeping_again
+hart1_sleeping_again: .word 0x00
 
 .global main_array
 main_array:
