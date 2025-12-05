@@ -14,6 +14,10 @@ extern volatile int32_t hart4_done;
 extern volatile int32_t hart5_done;
 extern volatile int32_t hart6_done;
 extern volatile int32_t hart7_done;
+extern volatile uint32_t hart1_ready_for_initial_sleep;
+extern volatile uint32_t hart1_awake_and_worked;
+extern volatile uint32_t hart1_sleep_again_request;
+extern volatile uint32_t hart1_sleeping_again;
 
 #define MTIME_ADDR 0xFFFFFFE0
 #define MTIMEH_ADDR 0xFFFFFFE4
