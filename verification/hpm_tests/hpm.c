@@ -32,44 +32,44 @@ void __attribute__((interrupt)) __attribute__((aligned(4))) m_mode_handler() {
 
         // Counters 0..2: cycle, time, instret
         asm volatile("csrr %0, cycle" : "=r"(val));
-        print("  cnt 0 (cycle): "); put_uint32_hex(val); print("\n");
+        print("  cnt  0 (cycle):           "); put_uint32_hex(val); print("\n");
 
         asm volatile("csrr %0, time" : "=r"(val));
-        print("  cnt 1 (time) : "); put_uint32_hex(val); print("\n");
+        print("  cnt  1 (time):            "); put_uint32_hex(val); print("\n");
 
         asm volatile("csrr %0, instret" : "=r"(val));
-        print("  cnt 2 (instret): "); put_uint32_hex(val); print("\n"); // retired instructions
+        print("  cnt  2 (instret):         "); put_uint32_hex(val); print("\n");
 
-        // Counters 3..30: hpmcounter3 .. hpmcounter31 (placeholder)
-        asm volatile("csrr %0, hpmcounter3"  : "=r"(val));  print("  cnt 3 (icache miss): ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter4"  : "=r"(val));  print("  cnt 4 (dcache miss) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter5"  : "=r"(val));  print("  cnt 5 (icache hit) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter6"  : "=r"(val));  print("  cnt 6 (dcache hit) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter7"  : "=r"(val));  print("  cnt 7 (itlb miss) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter8"  : "=r"(val));  print("  cnt 8 (dtlb miss) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter9"  : "=r"(val));  print("  cnt 9 (itlb hit) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter10" : "=r"(val));  print("  cnt 10 (dtlb hit) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter11" : "=r"(val));  print("  cnt 11 (page walk miss) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter12" : "=r"(val));  print("  cnt 12 (page walk count) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter13" : "=r"(val));  print("  cnt 13 (fetch stall cycle) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter14" : "=r"(val));  print("  cnt 14 (execute stall cycle) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter15" : "=r"(val));  print("  cnt 15 (mem stage stall) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter16" : "=r"(val));  print("  cnt 16 (d snoop) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter17" : "=r"(val));  print("  cnt 17 (d snoop hit) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter18" : "=r"(val));  print("  cnt 18 (d snoop miss) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter19" : "=r"(val));  print("  cnt 19 (branch mispredict) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter20" : "=r"(val));  print("  cnt 20 (branch condition) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter21" : "=r"(val));  print("  cnt 21 (bus busy cycle) : ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter22" : "=r"(val));  print("  cnt 22: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter23" : "=r"(val));  print("  cnt 23: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter24" : "=r"(val));  print("  cnt 24: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter25" : "=r"(val));  print("  cnt 25: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter26" : "=r"(val));  print("  cnt 26: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter27" : "=r"(val));  print("  cnt 27: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter28" : "=r"(val));  print("  cnt 28: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter29" : "=r"(val));  print("  cnt 29: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter30" : "=r"(val));  print("  cnt 30: ");  put_uint32_hex(val); print("\n");
-        asm volatile("csrr %0, hpmcounter31" : "=r"(val));  print("  cnt 31: ");  put_uint32_hex(val); print("\n");
+        // Counters 3..31: hpmcounter3 .. hpmcounter31
+        asm volatile("csrr %0, hpmcounter3"  : "=r"(val));  print("  cnt  3 (icache miss):     "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter4"  : "=r"(val));  print("  cnt  4 (dcache miss):     "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter5"  : "=r"(val));  print("  cnt  5 (icache hit):      "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter6"  : "=r"(val));  print("  cnt  6 (dcache hit):      "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter7"  : "=r"(val));  print("  cnt  7 (itlb miss):       "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter8"  : "=r"(val));  print("  cnt  8 (dtlb miss):       "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter9"  : "=r"(val));  print("  cnt  9 (itlb hit):        "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter10" : "=r"(val));  print("  cnt 10 (dtlb hit):        "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter11" : "=r"(val));  print("  cnt 11 (page walk miss):  "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter12" : "=r"(val));  print("  cnt 12 (page walk count): "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter13" : "=r"(val));  print("  cnt 13 (fetch stall):     "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter14" : "=r"(val));  print("  cnt 14 (execute stall):   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter15" : "=r"(val));  print("  cnt 15 (mem stall):       "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter16" : "=r"(val));  print("  cnt 16 (d snoop):         "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter17" : "=r"(val));  print("  cnt 17 (d snoop hit):     "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter18" : "=r"(val));  print("  cnt 18 (d snoop miss):    "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter19" : "=r"(val));  print("  cnt 19 (branch miss):     "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter20" : "=r"(val));  print("  cnt 20 (branch cond):     "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter21" : "=r"(val));  print("  cnt 21 (bus busy):        "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter22" : "=r"(val));  print("  cnt 22:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter23" : "=r"(val));  print("  cnt 23:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter24" : "=r"(val));  print("  cnt 24:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter25" : "=r"(val));  print("  cnt 25:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter26" : "=r"(val));  print("  cnt 26:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter27" : "=r"(val));  print("  cnt 27:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter28" : "=r"(val));  print("  cnt 28:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter29" : "=r"(val));  print("  cnt 29:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter30" : "=r"(val));  print("  cnt 30:                   "); put_uint32_hex(val); print("\n");
+        asm volatile("csrr %0, hpmcounter31" : "=r"(val));  print("  cnt 31:                   "); put_uint32_hex(val); print("\n");
 
         print("-----\n");
     }
