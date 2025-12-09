@@ -30,7 +30,7 @@
 
 module RISCVBusiness #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter HART_ID
+    parameter HART_ID = 0
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
@@ -50,7 +50,7 @@ module RISCVBusiness #(
 
     logic pipeline_wfi;
 
-    stage3 #(.RESET_PC(RESET_PC)) pipeline(
+    stage3 #(.RESET_PC(RESET_PC), .HART_ID(HARD_ID)) pipeline(
         .CLK(CLK),
         .nRST(nRST),
         .igen_bus_if(icache_gen_bus_if),
