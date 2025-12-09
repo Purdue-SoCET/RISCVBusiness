@@ -54,7 +54,6 @@ module priv_block #(
     // edge detectors for miss/hit counting
     logic icache_miss_q, dcache_miss_q, itlb_miss_q, dtlb_miss_q;
     logic iren_q, dren_q, dwen_q;
-    logic icache_miss_fall, dcache_miss_fall, itlb_miss_fall, dtlb_miss_fall;
 
     always_ff @(posedge CLK or negedge nRST) begin
         if (!nRST) begin
@@ -65,10 +64,6 @@ module priv_block #(
             iren_q <= 1'b0;
             dren_q <= 1'b0;
             dwen_q <= 1'b0;
-            icache_miss_fall <= 1'b0;
-            dcache_miss_fall <= 1'b0;
-            itlb_miss_fall <= 1'b0;
-            dtlb_miss_fall <= 1'b0;
         end else begin
             icache_miss_q <= prv_pipe_if.icache_miss;
             dcache_miss_q <= prv_pipe_if.dcache_miss;
@@ -77,13 +72,14 @@ module priv_block #(
             iren_q <= prv_pipe_if.iren;
             dren_q <= prv_pipe_if.dren;
             dwen_q <= prv_pipe_if.dwen;
-            // falling edge detect for miss signals: prev=1 and current=0
-            icache_miss_fall <= icache_miss_q & ~prv_pipe_if.icache_miss;
-            dcache_miss_fall <= dcache_miss_q & ~prv_pipe_if.dcache_miss;
-            itlb_miss_fall <= itlb_miss_q & ~prv_pipe_if.itlb_miss;
-            dtlb_miss_fall <= dtlb_miss_q & ~prv_pipe_if.dtlb_miss;
         end
     end
+`
+    // falling edge detect for miss signals: prev=1 and current=0
+    wire icache_miss_fall = icache_miss_q & ~prv_pipe_if.icache_miss;
+    wire dcache_miss_fall = dcache_miss_q & ~prv_pipe_if.dcache_miss;
+    wire itlb_miss_fall   = itlb_miss_q   & ~prv_pipe_if.itlb_miss;
+    wire dtlb_miss_fall   = dtlb_miss_q   & ~prv_pipe_if.dtlb_miss;
 
     // access qualifiers
     wire dacc_en   = prv_pipe_if.dren | prv_pipe_if.dwen; // (dwen v dren)
