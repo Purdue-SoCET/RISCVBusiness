@@ -74,7 +74,7 @@ module priv_block #(
             dwen_q <= prv_pipe_if.dwen;
         end
     end
-`
+
     // falling edge detect for miss signals: prev=1 and current=0
     wire icache_miss_fall = icache_miss_q & ~prv_pipe_if.icache_miss;
     wire dcache_miss_fall = dcache_miss_q & ~prv_pipe_if.dcache_miss;
