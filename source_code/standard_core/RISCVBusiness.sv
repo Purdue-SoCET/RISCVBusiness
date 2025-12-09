@@ -48,10 +48,25 @@ module RISCVBusiness #(
     prv_pipeline_if prv_pipe_if ();
     cache_control_if control_if ();
 
-    logic pipeline_wfi;
+    // Clock-gating signals
+    logic core_clk_en;
+    logic pipeline_clk;
+    logic soft_irq;
+
+    assign soft_irq = interrupt_if.soft_int[HART_ID];
+
+    core_clk_gating core_clk_gating_i (
+        .clk        (CLK),
+        .rst_n      (nRST),
+        .wfi_in     (wfi), //takes wfi from stage3 mem stage
+        .irq_in     (soft_irq),
+        .core_clk_en(core_clk_en)
+    );
+
+    assign pipeline_clk = CLK & core_clk_en;
 
     stage3 #(.RESET_PC(RESET_PC), .HART_ID(HARD_ID)) pipeline(
-        .CLK(CLK),
+        .CLK(pipeline_clk),
         .nRST(nRST),
         .igen_bus_if(icache_gen_bus_if),
         .dgen_bus_if(dcache_gen_bus_if),
