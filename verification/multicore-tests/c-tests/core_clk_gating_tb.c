@@ -21,12 +21,6 @@ void clear_msip(void) {
     MSIP = 0;
 }
 
-//----SHARED-----
-volatile uint32_t hart1_ready_for_initial_sleep = 0;
-volatile uint32_t hart1_awake_and_worked       = 0;
-volatile uint32_t hart1_sleep_again_request    = 0;
-volatile uint32_t hart1_sleeping_again         = 0;
-
 //----WORK FUNC----
 void do_some_work(int id) {
     volatile uint32_t x = 0;
