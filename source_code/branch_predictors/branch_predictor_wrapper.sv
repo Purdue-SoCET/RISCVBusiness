@@ -28,7 +28,7 @@
 `include "fetch_buffer_if.vh"
 
 module branch_predictor_wrapper #(
-    parameter HART_ID
+    parameter HART_ID = 0
 ) (
     input logic CLK,
     nRST,
