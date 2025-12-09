@@ -54,6 +54,7 @@ module priv_block #(
     // edge detectors for miss/hit counting
     logic icache_miss_q, dcache_miss_q, itlb_miss_q, dtlb_miss_q;
     logic iren_q, dren_q, dwen_q;
+    logic icache_miss_fall, dcache_miss_fall, itlb_miss_fall, dtlb_miss_fall;
 
     always_ff @(posedge CLK or negedge nRST) begin
         if (!nRST) begin
@@ -64,6 +65,10 @@ module priv_block #(
             iren_q <= 1'b0;
             dren_q <= 1'b0;
             dwen_q <= 1'b0;
+            icache_miss_fall <= 1'b0;
+            dcache_miss_fall <= 1'b0;
+            itlb_miss_fall <= 1'b0;
+            dtlb_miss_fall <= 1'b0;
         end else begin
             icache_miss_q <= prv_pipe_if.icache_miss;
             dcache_miss_q <= prv_pipe_if.dcache_miss;
@@ -72,14 +77,13 @@ module priv_block #(
             iren_q <= prv_pipe_if.iren;
             dren_q <= prv_pipe_if.dren;
             dwen_q <= prv_pipe_if.dwen;
+            // falling edge detect for miss signals: prev=1 and current=0
+            icache_miss_fall <= icache_miss_q & ~prv_pipe_if.icache_miss;
+            dcache_miss_fall <= dcache_miss_q & ~prv_pipe_if.dcache_miss;
+            itlb_miss_fall <= itlb_miss_q & ~prv_pipe_if.itlb_miss;
+            dtlb_miss_fall <= dtlb_miss_q & ~prv_pipe_if.dtlb_miss;
         end
     end
-`
-    // falling edge detect for miss signals: prev=1 and current=0
-    wire icache_miss_fall = icache_miss_q & ~prv_pipe_if.icache_miss;
-    wire dcache_miss_fall = dcache_miss_q & ~prv_pipe_if.dcache_miss;
-    wire itlb_miss_fall   = itlb_miss_q   & ~prv_pipe_if.itlb_miss;
-    wire dtlb_miss_fall   = dtlb_miss_q   & ~prv_pipe_if.dtlb_miss;
 
     // access qualifiers
     wire dacc_en   = prv_pipe_if.dren | prv_pipe_if.dwen; // (dwen v dren)
@@ -103,22 +107,22 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[10] = prv_pipe_if.dtlb_hit; // dTLB hit
 
     // 11-12: page walker: miss/hit/fault, number of page walks
-    assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO)
-    assign prv_intern_if.hpm_inc[12] = 1'b0; // page walk count (TODO)
+    assign prv_intern_if.hpm_inc[11] = prv_pipe_if.page_walker_fault; // page walker miss/fault
+    assign prv_intern_if.hpm_inc[12] = prv_pipe_if.page_walk_count; // page walk count
 
     // 13-15: core stalls (fetch, execute, mem)
-    assign prv_intern_if.hpm_inc[13] = 1'b0; // fetch stall cycles (TODO)
-    assign prv_intern_if.hpm_inc[14] = 1'b0; // execute stall cycles (TODO)
+    assign prv_intern_if.hpm_inc[13] = prv_pipe_if.fetch_stall; // fetch stall cycles
+    assign prv_intern_if.hpm_inc[14] = prv_pipe_if.execute_stall; // execute stall cycles
     assign prv_intern_if.hpm_inc[15] = prv_pipe_if.ex_mem_stall; // mem stage stall
     
-    // 16-18: D$ snoops: total, hits, misses (TODO)
-    assign prv_intern_if.hpm_inc[16] = 1'b0; // D$ snoops (TODO)
-    assign prv_intern_if.hpm_inc[17] = 1'b0; // D$ snoop hits (TODO)
-    assign prv_intern_if.hpm_inc[18] = 1'b0; // D$ snoop misses (TODO)
+    // 16-18: D$ snoops: total, hits, misses
+    assign prv_intern_if.hpm_inc[16] = prv_pipe_if.dcache_snoop; // D$ snoops
+    assign prv_intern_if.hpm_inc[17] = prv_pipe_if.dcache_snoop_hit; // D$ snoop hits
+    assign prv_intern_if.hpm_inc[18] = prv_pipe_if.dcache_snoop_miss; // D$ snoop misses
 
-    // 19-20: branch: mispredicts and predictions (TODO)
-    assign prv_intern_if.hpm_inc[19] = 1'b0; // branch mispredict (TODO)
-    assign prv_intern_if.hpm_inc[20] = 1'b0; // branch predictions (TODO)
+    // 19-20: branch: mispredicts and predictions
+    assign prv_intern_if.hpm_inc[19] = prv_pipe_if.branch_mispredict; // branch mispredict
+    assign prv_intern_if.hpm_inc[20] = prv_pipe_if.branch_predict; // branch predictions
 
     // 21-31: currently for future expansion
     assign prv_intern_if.hpm_inc[21] = prv_pipe_if.bus_busy; // bus busy cycles
