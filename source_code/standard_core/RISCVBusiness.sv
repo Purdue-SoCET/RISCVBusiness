@@ -28,7 +28,6 @@
 `include "core_interrupt_if.vh"
 `include "bus_ctrl_if.vh"
 
-
 module RISCVBusiness #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
     parameter HART_ID
@@ -40,7 +39,6 @@ module RISCVBusiness #(
     front_side_bus_if dcache_bus_ctrl_if,
     front_side_bus_if icache_bus_ctrl_if
 );
-    
     // Interface instantiations
     generic_bus_if icache_gen_bus_if ();
     generic_bus_if dcache_gen_bus_if ();
@@ -50,26 +48,10 @@ module RISCVBusiness #(
     prv_pipeline_if prv_pipe_if ();
     cache_control_if control_if ();
 
-    //Clock-gating signals and logic
-    logic core_clk_en;
-    logic pipeline_clk;
     logic pipeline_wfi;
 
-    core_clk_gating #(
-      .HART_ID(HART_ID)
-    ) core_clk_gating_i (
-      .clk        (CLK),
-      .rst_n      (nRST),
-      .wfi_in     (pipeline_wfi),
-      .irqif      (interrupt_if),
-      .core_clk_en(core_clk_en)
-    );
-
-    assign pipeline_clk = CLK & core_clk_en;
-    assign wfi = pipeline_wfi;
-    
-    stage3 #(.RESET_PC(RESET_PC), .HART_ID(HART_ID)) pipeline(
-        .CLK(pipeline_clk),
+    stage3 #(.RESET_PC(RESET_PC)) pipeline(
+        .CLK(CLK),
         .nRST(nRST),
         .igen_bus_if(icache_gen_bus_if),
         .dgen_bus_if(dcache_gen_bus_if),
@@ -77,7 +59,7 @@ module RISCVBusiness #(
         .predict_if(predict_if),
         .cc_if(control_if),
         .halt(halt),
-        .wfi(pipeline_wfi)
+        .wfi(wfi)
     );
 
     // Module Instantiations
@@ -107,7 +89,7 @@ module RISCVBusiness #(
     );
     */
 
-    separate_caches #(.HART_ID(HART_ID)) sep_caches (
+    separate_caches sep_caches (
         .CLK(CLK),
         .nRST(nRST),
         .icache_proc_gen_bus_if(icache_gen_bus_if),
