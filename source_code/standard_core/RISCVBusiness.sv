@@ -65,7 +65,7 @@ module RISCVBusiness #(
 
     assign pipeline_clk = CLK & core_clk_en;
 
-    stage3 #(.RESET_PC(RESET_PC), .HART_ID(HARD_ID)) pipeline(
+    stage3 #(.RESET_PC(RESET_PC), .HART_ID(HART_ID)) pipeline(
         .CLK(pipeline_clk),
         .nRST(nRST),
         .igen_bus_if(icache_gen_bus_if),
