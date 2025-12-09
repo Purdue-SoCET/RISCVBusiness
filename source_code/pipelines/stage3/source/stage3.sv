@@ -31,7 +31,7 @@
 
 module stage3 #(
     RESET_PC = 32'h80000000,
-    parameter HART_ID
+    parameter HART_ID = 0
 )(
     input CLK,
     input nRST,
