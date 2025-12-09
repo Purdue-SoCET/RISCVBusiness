@@ -30,7 +30,7 @@
 `include "address_translation_if.vh"
 
 module separate_caches #(
-    parameter HART_ID
+    parameter HART_ID = 0
 ) (
     input logic CLK,
     nRST,
