@@ -1,21 +1,18 @@
-`include "control_unit_if.vh"
-`include "core_interrupt_if.vh"
-
 module core_clk_gating #(
-  parameter int HART_ID = 0
 )(
-  input  logic                 clk,
-  input  logic                 rst_n,
+  input  logic clk,
+  input  logic rst_n,
 
-  control_unit_if.core         cuif,    //wfi
-  core_interrupt_if.core       irqif,   //interrupt
+  input  logic wfi_in,
+  input  logic irq_soft,
 
-  output logic                 core_clk_en
+  output logic core_clk_en
 );
 
   typedef enum logic [1:0] {RUN, REQ_SLEEP, SLEEP} state_t;
   state_t state, next_state;
 
+  // State register
   always_ff @(posedge clk or negedge rst_n) begin
     if (!rst_n)
       state <= RUN;
@@ -23,13 +20,14 @@ module core_clk_gating #(
       state <= next_state;
   end
 
+  // Next-state + output logic
   always_comb begin
     next_state  = state;
     core_clk_en = 1'b1;
 
     unique case (state)
       RUN: begin
-        if (cuif.wfi && !(irqif.soft_int[HART_ID])) begin
+        if (wfi_in && !irq_soft) begin
           next_state = REQ_SLEEP;
         end
       end
@@ -41,8 +39,7 @@ module core_clk_gating #(
 
       SLEEP: begin
         core_clk_en = 1'b0;
-
-        if ((irqif.soft_int[HART_ID]) || !rst_n) begin
+        if (irq_soft || !rst_n) begin
           core_clk_en = 1'b1;
           next_state  = RUN;
         end
