@@ -59,7 +59,7 @@ module RISCVBusiness #(
         .clk        (CLK),
         .rst_n      (nRST),
         .wfi_in     (wfi), //takes wfi from stage3 mem stage
-        .irq_in     (soft_irq),
+        .irq_soft     (soft_irq),
         .core_clk_en(core_clk_en)
     );
 
