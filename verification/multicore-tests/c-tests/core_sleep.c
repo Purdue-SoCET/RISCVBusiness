@@ -10,16 +10,6 @@ void wfi(void) {
     __asm__ volatile("wfi");
 }
 
-//----SHARED-----
-//handshake flags (volitile cause they might change between cores)
-extern volatile uint32_t hart1_ready_for_initial_sleep = 0;
-extern volatile uint32_t hart1_awake_and_worked       = 0;
-extern volatile uint32_t hart1_sleep_again_request    = 0;
-extern volatile uint32_t hart1_sleeping_again         = 0;
-
-//provided by runtime
-extern volatile uint32_t flag;
-
 void do_some_work(int id) {
     volatile uint32_t x = 0;
     for (int i = 0; i < 1000; i++) {
