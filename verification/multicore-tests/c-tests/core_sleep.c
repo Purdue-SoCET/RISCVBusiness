@@ -35,10 +35,12 @@ void hart0_main(void) {
     print("hart0: waiting for hart1 to signal ready_for_initial_sleep\n");
     while (!hart1_ready_for_initial_sleep) {
     }
-
+    do_some_work(0);
+    
     print("hart0: hart1 is ready; requesting it to enter WFI\n");
     hart1_sleep_again_request = 1;
-
+    do_some_work(0);
+    
     print("hart0: waiting for hart1 to report it is sleeping (in WFI)\n");
     while (!hart1_sleeping_again) {
     }
