@@ -395,6 +395,8 @@ module priv_csr #(
     sip_next = sip;
     scounteren_next = scounteren;
     senvcfg_next = senvcfg;
+    medeleg_next = medeleg;
+    mideleg_next = mideleg;
     `endif // SMODE_SUPPORTED
 
     inject_mcycle = 1'b0;

@@ -42,7 +42,9 @@ module page_perm_check (
     address_translation_if.cache at_if
 );
 
-pte_perms_t pte_perms = pte_sv32.perms;
+pte_perms_t pte_perms;
+
+assign pte_perms = pte_sv32.perms;
 
 // leaf page permission checking
 always_comb begin    

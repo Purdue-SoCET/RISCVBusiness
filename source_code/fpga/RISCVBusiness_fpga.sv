@@ -63,10 +63,20 @@ module RISCVBusiness_fpga
   //portmap
   generic_bus_if gen_bus_if();
   logic halt;
-  RISCVBusiness proc (
+  // RISCVBusiness proc (
+  //   .CLK(CLOCK_50),
+  //   .nRST(nRST),
+  //   .halt(halt),
+  //   .gen_bus_if(gen_bus_if)
+  // );
+
+  multicore_wrapper proc (
     .CLK(CLOCK_50),
     .nRST(nRST),
+    .mtime(),
+    .wfi(),
     .halt(halt),
+    .interrupt_if(),
     .gen_bus_if(gen_bus_if)
   );
 
