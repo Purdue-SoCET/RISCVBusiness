@@ -14,7 +14,7 @@ void wfi(void) {
 }
 
 void set_msip(void) {
-    MSIP = 1;
+    MSIP = 1 << 1;
 }
 
 void clear_msip(void) {
@@ -57,7 +57,7 @@ void hart0_main(void) {
 
     do_some_work(0);
 
-    while (!hart1_sleeping_again) {
+    while (hart1_sleeping_again) {
         // spin
     }
 
