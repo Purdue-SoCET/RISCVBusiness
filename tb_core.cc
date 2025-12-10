@@ -244,8 +244,8 @@ public:
 };
 
 void update_interrupt_signals(Vtop_core& dut) {
-    if(msip & 0x1) {
-        dut.soft_int = 1;
+    if(msip) {
+        dut.soft_int = msip;
     } else if(dut.soft_int) {
         dut.soft_int = 0;
         dut.soft_int_clear = 1;

@@ -39,7 +39,7 @@ module core_clk_gating #(
 
       SLEEP: begin
         core_clk_en = 1'b0;
-        if (irq_soft || !rst_n) begin
+        if (irq_soft) begin
           core_clk_en = 1'b1;
           next_state  = RUN;
         end

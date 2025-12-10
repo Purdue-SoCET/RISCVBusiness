@@ -29,7 +29,7 @@ module top_core #(
     // core_interrupt_if
     input ext_int,
     ext_int_clear,
-    input soft_int,
+    input [NUM_HARTS-1:0] soft_int,
     soft_int_clear,
     input timer_int,
     timer_int_clear

@@ -53,13 +53,13 @@ module RISCVBusiness #(
     logic pipeline_clk;
     logic soft_irq;
 
-    assign soft_irq = interrupt_if.soft_int[HART_ID];
+    //assign soft_irq = interrupt_if.soft_int[HART_ID];
 
     core_clk_gating core_clk_gating_i (
         .clk        (CLK),
         .rst_n      (nRST),
         .wfi_in     (wfi), //takes wfi from stage3 mem stage
-        .irq_soft     (soft_irq),
+        .irq_soft     (interrupt_if.soft_int[HART_ID]),
         .core_clk_en(core_clk_en)
     );
 
