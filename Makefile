@@ -21,7 +21,7 @@ config:
 	@echo "----------------------"
 	@echo " Running config_core"
 	@echo "----------------------"
-	@python3 scripts/config_core.py example.yml
+	@python3 scripts/hetero_config_core.py core_configuration.yml
 
 verilate: config
 	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'

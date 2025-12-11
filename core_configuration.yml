@@ -23,7 +23,7 @@ microarch_params:
   # Per-core configurations 
   core0_params:
     # ISA Configuration
-    isa: "rv32izifencei_zicsr"
+    isa: "rv32eaczifencei_zicsr"
 
     # Branch/Jump Configurations
     br_predictor_type: "not_taken"
