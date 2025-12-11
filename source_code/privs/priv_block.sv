@@ -85,12 +85,6 @@ module priv_block #(
         end
     end
 
-    // falling edge detect for miss signals: prev=1 and current=0
-    wire icache_miss_fall = icache_miss_q & ~prv_pipe_if.icache_miss;
-    wire dcache_miss_fall = dcache_miss_q & ~prv_pipe_if.dcache_miss;
-    wire itlb_miss_fall   = itlb_miss_q   & ~prv_pipe_if.itlb_miss;
-    wire dtlb_miss_fall   = dtlb_miss_q   & ~prv_pipe_if.dtlb_miss;
-
     // access qualifiers
     wire dacc_en   = prv_pipe_if.dren | prv_pipe_if.dwen; // (dwen v dren)
     wire x_memstall_n = ~prv_pipe_if.ex_mem_stall; // (-(x_memstall))
