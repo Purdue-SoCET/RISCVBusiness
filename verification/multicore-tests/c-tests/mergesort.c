@@ -9,11 +9,7 @@
 #define N 256
 #include "merge.h"
 
-<<<<<<< Updated upstream
 #define NUM_HART 1
-=======
-#define NUM_HART 2
->>>>>>> Stashed changes
 
 // #define WARMUP
 

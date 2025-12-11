@@ -176,6 +176,48 @@ uint32_t get_mhartid() {
     return mhartid_value;
 }
 
+void wait_for_hart1_done() {
+    while (hart1_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart2_done() {
+    while (hart2_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart3_done() {
+    while (hart3_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart4_done() {
+    while (hart4_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart5_done() {
+    while (hart5_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart6_done() {
+    while (hart6_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
+void wait_for_hart7_done() {
+    while (hart7_done == 0) {
+        __asm__ volatile("");
+    }
+}
+
 void wait_for_all_harts_done(int num_harts) {
     switch (num_harts) {
         case 1:

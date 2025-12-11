@@ -285,18 +285,6 @@ module control_unit #(
     assign cu_if.zimm         = cu_if.instr[19:15];
 
     // Extension decoding
-
-    // `ifdef RV32M_SUPPORTED
-    // rv32m_decode RV32M_DECODE(
-    //     .insn(cu_if.instr),
-    //     .claim(rv32m_claim),
-    //     .rv32m_control(cu_if.rv32m_control)
-    // );
-    // `else
-    // assign cu_if.rv32m_control = {1'b0, rv32m_op_t'(0)};
-    // assign rv32m_claim = 1'b0;
-    // `endif // RV32M_SUPPORTED
-
     // RV32M
     generate
         if(CORE_CONFIG[HART_ID][M]) begin
@@ -311,27 +299,6 @@ module control_unit #(
             assign rv32m_claim = 1'b0;
         end
     endgenerate
-
-    // `ifdef RV32A_SUPPORTED
-    // rv32a_decode RV32A_DECODE(
-    //     .insn(cu_if.instr),
-    //     .claim(rv32a_claim),
-    //     .rv32a_control(cu_if.rv32a_control)
-    // );
-    // assign rv32a_lr = rv32a_claim && cu_if.rv32a_control.op == AMO_LR;
-    // assign rv32a_sc = rv32a_claim && cu_if.rv32a_control.op == AMO_SC;
-    // assign rv32a_amo = rv32a_claim && ~(rv32a_lr || rv32a_sc);
-    // assign cu_if.reserve = rv32a_lr || rv32a_sc || rv32a_amo;
-    // assign cu_if.exclusive = rv32a_amo;
-    // `else
-    // assign cu_if.rv32a_control = {1'b0, rv32a_op_e'(0)};
-    // assign rv32a_claim = 1'b0;
-    // assign rv32a_lr = 1'b0;
-    // assign rv32a_sc = 1'b0;
-    // assign rv32a_amo = 1'b0;
-    // assign cu_if.reserve = 1'b0;
-    // assign cu_if.exclusive = 1'b0;
-    // `endif // RV32M_SUPPORTED
 
     // RV32A
     generate
@@ -358,17 +325,6 @@ module control_unit #(
         end
     endgenerate
 
-    // `ifdef RV32B_SUPPORTED
-    // rv32b_decode RV32B_DECODE(
-    //     .insn(cu_if.instr),
-    //     .claim(rv32b_claim),
-    //     .rv32b_control(cu_if.rv32b_control)
-    // );
-    // `else
-    // assign cu_if.rv32b_control = {1'b0, rv32b_op_t'(0)};
-    // assign rv32b_claim = 1'b0;
-    // `endif
-
     // RV32B
     generate
         if(CORE_CONFIG[HART_ID][B]) begin
@@ -383,17 +339,6 @@ module control_unit #(
             assign rv32b_claim = 1'b0;
         end
     endgenerate
-
-    // `ifdef RV32ZICOND_SUPPORTED
-    // rv32zc_decode RV32ZC_DECODE(
-    //     .insn(cu_if.instr),
-    //     .claim(rv32zc_claim),
-    //     .rv32zc_control(cu_if.rv32zc_control)
-    // );
-    // `else
-    // assign cu_if.rv32zc_control = {1'b0, rv32zc_op_t'(0)};
-    // assign rv32zc_claim = 1'b0;
-    // `endif
 
     // RV32ZICOND
     generate

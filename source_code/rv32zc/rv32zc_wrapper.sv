@@ -11,12 +11,6 @@ module rv32zc_wrapper #(
 );
     import core_configuration_pkg::*;
 
-    // `ifdef RV32ZICOND_SUPPORTED
-    //     rv32zc_enabled RV32ZC(.*);
-    // `else
-    //     rv32zc_disabled RV32ZC(.*);
-    // `endif
-
     generate
         if(CORE_CONFIG[HART_ID][ZICOND]) begin
             rv32zc_enabled RV32ZC(.*);

@@ -76,32 +76,6 @@ module rv32m_enabled #(
     assign multiplier   = op_b;
     assign mul_start    = operand_diff && is_multiply && rv32m_start;
 
-    // Module instantiations
-    // `ifdef PP_MUL32
-    //     pp_mul32 mult_i (
-    //         .CLK(CLK),
-    //         .nRST(nRST),
-    //         .multiplicand(multiplicand),
-    //         .multiplier(multiplier),
-    //         .product(product),
-    //         .is_signed(is_signed),
-    //         .start(mul_start),
-    //         .finished(mul_finished)
-    //     );
-    // `elsif SHIFT_ADD_MULTIPLIER
-    //     shift_add_multiplier mult_i (
-    //         .CLK(CLK),
-    //         .nRST(nRST),
-    //         .multiplicand(multiplicand),
-    //         .multiplier(multiplier),
-    //         .is_signed(is_signed),
-    //         .start(mul_start),
-    //         .product(product),
-    //         .finished(mul_finished)
-    //     );
-    // `else
-    //     assert(0); // Build error
-    // `endif
     generate
         if(MULTIPLIER_TYPE[HART_ID] == "pp_mul32") begin
             pp_mul32 mult_i (

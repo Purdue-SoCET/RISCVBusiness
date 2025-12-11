@@ -10,12 +10,6 @@ module rv32b_wrapper #(
     output logic [31:0] rv32b_out
 );
     import core_configuration_pkg::*;
-    
-    // `ifdef RV32B_SUPPORTED
-    //     rv32b_enabled RV32B(.*);
-    // `else
-    //     rv32b_disabled RV32B(.*);
-    // `endif
 
     generate
         if(CORE_CONFIG[HART_ID][B]) begin
