@@ -3,6 +3,8 @@ Auto-generates:
   - component_selection_defines.vh (global params)
   - custom_instruction_calls.h     (C firmware macros)
   - core_configuration_pkg.sv      (per-core arrays)
+
+Supervisor per core configuration is commented out and instead generated into VH_FILE since it is not supported.
 """
 
 import yaml
@@ -115,9 +117,7 @@ def create_pkg(config):
         # Base ISA array
         base_isas, core_exts = [], []
         br_pred, btb_sizes, use_ras = [], [], []
-        # cache_config, dcache_type, dcache_size, dcache_block_size, dcache_assoc = [], [], [], [], []
         cache_config, dcache_type, dcache_size, dcache_assoc = [], [], [], []
-        # icache_type, icache_size, icache_block_size, icache_assoc = [], [], [], []
         icache_type, icache_size, icache_assoc = [], [], []
         tlb_entries, mults, sup, at, pmp_minimum_granularity = [], [], [], [], []
 
@@ -137,11 +137,9 @@ def create_pkg(config):
             cache_config.append(f"\"{core['cache_config']}\"")
             dcache_type.append(f"\"{core['dcache_type']}\"")
             dcache_size.append(str(core["dcache_size"]))
-            # dcache_block_size.append(str(core["dcache_block_size"]))
             dcache_assoc.append(str(core["dcache_assoc"]))
             icache_type.append(f"\"{core['icache_type']}\"")
             icache_size.append(str(core["icache_size"]))
-            # icache_block_size.append(str(core["icache_block_size"]))
             icache_assoc.append(str(core["icache_assoc"]))
             mults.append(f"\"{core['multiplier_params']['multiplier_select']}\"")
             # sup.append(f"\"{core['supervisor_enabled']}\"")
@@ -173,11 +171,9 @@ def create_pkg(config):
         pkg.write(arr("CACHE_CONFIG", cache_config, "string"))
         pkg.write(arr("DCACHE_TYPE", dcache_type, "string"))
         pkg.write(arr("DCACHE_SIZE", dcache_size))
-        # pkg.write(arr("DCACHE_BLOCK_SIZE", dcache_block_size))
         pkg.write(arr("DCACHE_ASSOC", dcache_assoc))
         pkg.write(arr("ICACHE_TYPE", icache_type, "string"))
         pkg.write(arr("ICACHE_SIZE", icache_size))
-        # pkg.write(arr("ICACHE_BLOCK_SIZE", icache_block_size))
         pkg.write(arr("ICACHE_ASSOC", icache_assoc))
 
         pkg.write("\n// Multiplier settings\n")
