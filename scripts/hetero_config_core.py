@@ -43,6 +43,7 @@ UARCH_PARAMS = {
   "bus_interface_type":["ahb_if","generic_bus_if","apb_if"],
   "sparce_enabled":["enabled","disabled"],
   "infinite_loop_halts":["true","false"],
+  "pmp_minimum_granularity":list(PMP_MINIMUM_GRANULARITY.keys()),
 }
 
 MULTIPLIER_PARAMS = {
@@ -114,9 +115,11 @@ def create_pkg(config):
         # Base ISA array
         base_isas, core_exts = [], []
         br_pred, btb_sizes, use_ras = [], [], []
-        cache_config, dcache_type, dcache_size, dcache_block_size, dcache_assoc = [], [], [], [], []
-        icache_type, icache_size, icache_block_size, icache_assoc = [], [], [], []
-        tlb_entries, mults, sup, at = [], [], [], []
+        # cache_config, dcache_type, dcache_size, dcache_block_size, dcache_assoc = [], [], [], [], []
+        cache_config, dcache_type, dcache_size, dcache_assoc = [], [], [], []
+        # icache_type, icache_size, icache_block_size, icache_assoc = [], [], [], []
+        icache_type, icache_size, icache_assoc = [], [], []
+        tlb_entries, mults, sup, at, pmp_minimum_granularity = [], [], [], [], []
 
         for i in range(num_harts):
             core = microarch[f"core{i}_params"]
@@ -134,15 +137,16 @@ def create_pkg(config):
             cache_config.append(f"\"{core['cache_config']}\"")
             dcache_type.append(f"\"{core['dcache_type']}\"")
             dcache_size.append(str(core["dcache_size"]))
-            dcache_block_size.append(str(core["dcache_block_size"]))
+            # dcache_block_size.append(str(core["dcache_block_size"]))
             dcache_assoc.append(str(core["dcache_assoc"]))
             icache_type.append(f"\"{core['icache_type']}\"")
             icache_size.append(str(core["icache_size"]))
-            icache_block_size.append(str(core["icache_block_size"]))
+            # icache_block_size.append(str(core["icache_block_size"]))
             icache_assoc.append(str(core["icache_assoc"]))
             mults.append(f"\"{core['multiplier_params']['multiplier_select']}\"")
-            sup.append(f"\"{core['supervisor_enabled']}\"")
-            at.append(f"\"{core['address_translation_enabled']}\"")
+            # sup.append(f"\"{core['supervisor_enabled']}\"")
+            # at.append(f"\"{core['address_translation_enabled']}\"")
+            # pmp_minimum_granularity.append(f"{PMP_MINIMUM_GRANULARITY[core['pmp_minimum_granularity']]}")
 
         # Typedefs
         pkg.write("// Packed struct is MSB - LSB\n")
@@ -155,10 +159,10 @@ def create_pkg(config):
 
         def arr(name, vals, typ="int"):
             inner = ",".join(vals)
-            return f"localparam {typ} {name}[NUM_HARTS] = {{{inner}}};\n"
+            return f"localparam {typ} {name}[NUM_HARTS] = '{{{inner}}};\n"
 
         # Emit arrays matching your new order
-        pkg.write(f"// ISA extensions\nlocalparam string BASE_ISA[NUM_HARTS] = {{{','.join(base_isas)}}};\n\n")
+        pkg.write(f"// ISA extensions\nlocalparam string BASE_ISA[NUM_HARTS] = '{{{','.join(base_isas)}}};\n\n")
         pkg.write(f"localparam isa_extension_t CORE_CONFIG[NUM_HARTS] = '{{{','.join(core_exts)}}};\n\n")
 
         pkg.write("// Branch configurations\n")
@@ -169,18 +173,19 @@ def create_pkg(config):
         pkg.write(arr("CACHE_CONFIG", cache_config, "string"))
         pkg.write(arr("DCACHE_TYPE", dcache_type, "string"))
         pkg.write(arr("DCACHE_SIZE", dcache_size))
-        pkg.write(arr("DCACHE_BLOCK_SIZE", dcache_block_size))
+        # pkg.write(arr("DCACHE_BLOCK_SIZE", dcache_block_size))
         pkg.write(arr("DCACHE_ASSOC", dcache_assoc))
         pkg.write(arr("ICACHE_TYPE", icache_type, "string"))
         pkg.write(arr("ICACHE_SIZE", icache_size))
-        pkg.write(arr("ICACHE_BLOCK_SIZE", icache_block_size))
+        # pkg.write(arr("ICACHE_BLOCK_SIZE", icache_block_size))
         pkg.write(arr("ICACHE_ASSOC", icache_assoc))
 
         pkg.write("\n// Multiplier settings\n")
         pkg.write(arr("MULTIPLIER_TYPE", mults, "string"))
-        pkg.write("\n// Supervisor settings\n")
-        pkg.write(arr("SUPERVISOR_ENABLED", sup, "string"))
-        pkg.write(arr("ADDRESS_TRANSLATION_ENABLED", at, "string"))
+        # pkg.write("\n// Supervisor settings\n")
+        # pkg.write(arr("PMP_MINIMUM_GRANULARITY", pmp_minimum_granularity))
+        # pkg.write(arr("SUPERVISOR_ENABLED", sup, "string"))
+        # pkg.write(arr("ADDRESS_TRANSLATION_ENABLED", at, "string"))
 
         pkg.write("\n//For bus_ctrl\n")
         pkg.write("localparam CPUS = NUM_HARTS * 2;\n")
@@ -194,7 +199,9 @@ def create_pkg(config):
 def create_include(config):
     uarch_params = config["microarch_params"]
     globals_keep = ["num_harts", "xlen", "bus_endianness",
-                    "bus_interface_type", "infinite_loop_halts"]
+                    "bus_interface_type", "infinite_loop_halts",
+                    "icache_block_size", "dcache_block_size",
+                    "pmp_minimum_granularity", "supervisor", "address_translation"]
 
     with open(VH_FILE, "w") as include_file, open(C_FILE, "w") as c_file:
         # Headers
@@ -205,7 +212,9 @@ def create_include(config):
         for g in globals_keep:
             if g in uarch_params:
                 val = uarch_params[g]
-                if isinstance(val, int):
+                if g == "pmp_minimum_granularity" :
+                    include_file.write(f"localparam {g.upper()} = {PMP_MINIMUM_GRANULARITY[val]};\n")
+                elif isinstance(val, int):
                     include_file.write(f"localparam {g.upper()} = {val};\n")
                 else:
                     include_file.write(f"localparam {g.upper()} = \"{val}\";\n")
