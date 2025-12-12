@@ -135,7 +135,7 @@ multipliers.
 The heterogeneous multicore flow follows a 
 YAML → Python parser → generated packages workflow.
 
-### Step 1: Edit the YAML Configuration
+#### Step 1: Edit the YAML Configuration
 Each core is configured through the YAML configuration file
 `core_configuration.yml`.
 1. Set `num_harts` to the number of cores you want.
@@ -156,7 +156,7 @@ Each core is configured through the YAML configuration file
   - Cache block sizes
   - Supervisor and address translation settings
  
-### Step 2: Run the Python Configuration Parser
+#### Step 2: Run the Python Configuration Parser
 ```make config``` parses the configuration file and auto generates 3 files for 
 building the core using the `scripts/hetero_config_core.py` python parser:
  - `source_code/packages/core_configuration_pkg.sv`
@@ -213,7 +213,7 @@ software-based mechanism to model MSIP behavior. Specifically, writes by one
 core to `MSIP_ADDR` are treated as software interrupts that wake other cores
 from the `wfi` state.
 
-## Running C-tests for Multicore
+### Running C-tests for Multicore
 Core functionality can be tested with custom C tests. Current tests are written 
 for homogeneous multicores.
 
@@ -221,7 +221,7 @@ To test homogeneous multicore scalability, a bootup file and 3 tests are written
 to support 1 to 8 cores. The 3 tests that can be ran with 8 cores are 
 mergesort.c, matmul.c, and vector_add.c. 
 
-### C-test structure 
+#### C-test structure 
 `verification/multicore-tests/c-tests/multicore_start.S` is the boot file 
 for multicore C tests. In multicore_start.S file, after bss clear, each core is 
 directed to its corresponding main function.
@@ -233,14 +233,14 @@ has passed. Once core 0 returns from the main function, `flag` and `hartx_done`
 variable values are loaded to each core's x28 register, which is checked 
 for the test result. 
 
-### Running the test
+#### Running the test
 To build and run the test, run `/.build_and_run.sh [testname]` in the 
 verification/multicore-tests/c-tests directory.
 
 To run the test without building the core, run `./run.sh [testname]`. `[testname]` 
 should only include the test name and exclude `.c`.
 
-## Future works
+### Future works
 - Improve power management
     - Current clock gating implementation provides basic power management. Further
       power gating techniques can be implemented.
