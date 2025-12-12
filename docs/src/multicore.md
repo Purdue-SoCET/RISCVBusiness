@@ -124,68 +124,127 @@ atomics is completed.
 
 ## Heterogenous Multicore
 
-A heterogenous multicore system uses disparate core designs and features to
-provide multiprocessing. This allows for greater task level parallelism without
-the power and area overhead that a homogenous design requires. Current RISCVBusiness allows configurable RISC-V extensions, caches, branch predictor, and multipliers for heterogeneous core designs.
+A heterogeneous multicore system uses disparate core designs and features to
+enable multiprocessing. This allows for greater task level parallelism without
+the power and area overhead required by a homogeneous design. The current
+RISCVBusiness framework supports heterogeneous core designs by allowing
+per-core configuration of RISC-V extensions, caches, branch predictors, and
+multipliers.
 
 ### Heterogeneous Multicore Build Framework
-Each core can be configured in the YAML configuration file. Per core configurable settings are Extensions, Branch predictor, Caches, and Multipliers. Global configurations include num_harts, xlen, bus type, cache block sizes, and supervisor settings. 
+The heterogeneous multicore flow follows a 
+YAML → Python parser → generated packages workflow.
 
-```make config``` parses the configuration file to generate 3 files for building the core.
+### Step 1: Edit the YAML Configuration
+Each core is configured through the YAML configuration file
+`core_configuration.yml`.
+1. Set `num_harts` to the number of cores you want.
+2. Define one `coreX_params` block per core (e.g., `core0_params`,
+  `core1_params`, etc.).
+3. Edit global and per-core configuration parameters for each hart.
+   
+- Per-core configurable settings include:
+  - ISA extensions
+  - Branch predictor
+  - Cache hierarchy, size, and associativity
+  - Multiplier implementation
+
+- Global configurations include:
+  - `num_harts`
+  - `xlen`
+  - Bus type and endianness
+  - Cache block sizes
+  - Supervisor and address translation settings
+ 
+### Step 2: Run the Python Configuration Parser
+```make config``` parses the configuration file and auto generates 3 files for 
+building the core using the `scripts/hetero_config_core.py` python parser:
  - `source_code/packages/core_configuration_pkg.sv`
-    - Contains per core configurations.
-    - Configurable modules are determined during compile time using generate block with `CORE_CONFIG[HART_ID]` in core_configuration_pkg.sv file.  
+    - Contains per-core configuration parameters.
+    - Configurable modules are determined during compile time using generate blocks
+      indexed by `CORE_CONFIG[HART_ID]` in the core_configuration_pkg.sv file.  
  - `source_code/include/component_selection_defines.vh`
-    - Contains global configurations for all cores.
+    - Contains global configuration parameters shared across all cores.
  - `verification/c-firmware/custom_instruction_calls.h`
     - Contains firmware instruction macros.
 
-To add more core configurations, refer to above 3 files and `scripts/hetero_config_core.py` for YAML configuration file parsing.
+To build the core with selected configurations using verilator, run ```make verilate```.
 
-To build the core with configurations using verilator, run ```make verilate```.
 
 ### Heterogeneous Multicore Verification
-[riscv-tests](../../riscv-tests/), an open source RISC-V extension unit tests provided by RISC-V International is used to verify extension functionality. 
+[riscv-tests](../../riscv-tests/), an open source RISC-V extension unit tests provided 
+by RISC-V International is used to verify extension functionality. 
 
 #### Running riscv-tests for multicore
 To run extension unit tests with the multicore, run the following command after build. 
 
 `./run_riscv_tests.py --environment pm --isa [extension] --num-harts [N]`.
 
-In order to test multiple cores, the `--environment` flag must be set to `pm` for multicore and `--num-harts` flag must be set. 
+In order to test multiple cores, the `--environment` flag must be set to `pm` 
+for multicore and `--num-harts` flag must be set. 
 
 For heterogeneous multicore, `run_tests.py` is not supported yet.
 
 #### How it works
-For pm environment, required extension information is written to fromhost address from the testbench. Each core compares required extension with its misa register and skips the test if it is missing the extension. 
+For pm environment, required extension information is written to fromhost address 
+from the testbench. Each core compares required extension with its misa register 
+and skips the test if it is missing the extension. 
 
-Once the test completes, results are displayed to the terminal and shows the per core result if any one core skips or fails the unit test. 
+Once the test completes, results are displayed to the terminal and shows the 
+per core result if any one core skips or fails the unit test. 
 
-Due to how riscv-tests are written for multiple cores to read and write to same address and compare its result to some fixed value, tests in C and A extensions will fail. Currently, C extension tests that fail for pm environment are disabled.
+Due to how riscv-tests are written for multiple cores to read and write to same 
+address and compare its result to some fixed value, tests in C and A extensions will 
+fail. Currently, C extension tests that fail for pm environment are disabled.
 
 ### Clock Gating
-To improve power efficiency, the core currently has simple clock gating module that cuts the clock to the pipeline when the core recieves a wfi instruction and wakes up when another core sends an interrupt through msip. This requires software to be programmed so that at least one core is always awake to send an interrupt to wake up sleeping cores. 
+To improve power efficiency, the core includes a simple clock-gating module
+implemented in  
+`source_code/standard_core/core_clk_gating.sv`.  
+This module gates the pipeline clock when the core executes a `wfi` instruction
+and re-enables the clock when the core receives a software interrupt via MSIP.
+As a result, software must be written such that at least one core remains awake
+at all times to generate interrupts that can wake sleeping cores.
 
-Since RISCVBusiness does not have CLINT module, the testbench needs to emulate inter-processor interrupt. To do so, tb_core.cc employs a fake software interrupt that treats core write to `MSIP_ADDR` as a software interrupt. 
+Since RISCVBusiness does not currently include a CLINT module, the testbench
+must emulate inter-processor interrupts. This behavior is implemented in  
+`verification/multicore-tests/c-tests/core_clk_gating_tb.c`, which uses a
+software-based mechanism to model MSIP behavior. Specifically, writes by one
+core to `MSIP_ADDR` are treated as software interrupts that wake other cores
+from the `wfi` state.
 
 ## Running C-tests for Multicore
-Core functionality can be tested with custom C tests. Current tests are written for homogeneous multicores.
+Core functionality can be tested with custom C tests. Current tests are written 
+for homogeneous multicores.
 
-To test homogeneous multicore scalability, a bootup file and 3 tests are written to support 1 to 8 cores. The 3 tests that can be ran with 8 cores are mergesort.c, matmul.c, and vector_add.c. 
+To test homogeneous multicore scalability, a bootup file and 3 tests are written 
+to support 1 to 8 cores. The 3 tests that can be ran with 8 cores are 
+mergesort.c, matmul.c, and vector_add.c. 
 
 ### C-test structure 
-`verification/multicore-tests/c-tests/multicore_start.S` is the boot file for multicore C tests. In multicore_start.S file, after bss clear, each core is directed to its corresponding main function.
+`verification/multicore-tests/c-tests/multicore_start.S` is the boot file 
+for multicore C tests. In multicore_start.S file, after bss clear, each core is 
+directed to its corresponding main function.
 
-`verification/multicore-tests/c-tests/(test_name).c` file contains hartx_main functions for each core. After all cores finishes its test, `hartx_done` and `flag` variables needs be set to 1 for `tb_core.cc` testbench to check whether the test has passed. Once core 0 returns from the main function, `flag` and `hartx_done` variable values are loaded to each core's x28 register, which is checked for the test result. 
+`verification/multicore-tests/c-tests/(test_name).c` file contains hartx_main 
+functions for each core. After all cores finishes its test, `hartx_done` and `flag` 
+variables needs be set to 1 for `tb_core.cc` testbench to check whether the test 
+has passed. Once core 0 returns from the main function, `flag` and `hartx_done` 
+variable values are loaded to each core's x28 register, which is checked 
+for the test result. 
 
 ### Running the test
-To build and run the test, run `/.build_and_run.sh [testname]` in the verification/multicore-tests/c-tests directory.
+To build and run the test, run `/.build_and_run.sh [testname]` in the 
+verification/multicore-tests/c-tests directory.
 
-To run the test without building the core, run `./run.sh [testname]`. `[testname]` should only include the test name and exclude `.c`.
+To run the test without building the core, run `./run.sh [testname]`. `[testname]` 
+should only include the test name and exclude `.c`.
 
 ## Future works
 - Improve power management
-    - Current clock gating implementation provides basic power management. Further power gating techniques can be implemented.
+    - Current clock gating implementation provides basic power management. Further
+      power gating techniques can be implemented.
 - Expand heterogeneity
-    - Multiple pipeline stages, supervisor settings, and more extensions can be implemented as configurable features.
+    - Multiple pipeline stages, supervisor settings, and more extensions can be
+      implemented as configurable features.
 - AFT-dev integration and application
