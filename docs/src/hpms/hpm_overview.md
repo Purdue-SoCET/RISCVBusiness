@@ -34,9 +34,9 @@ RISCVBusiness event mapping (default):
 - `hpmcounter19`: branch mispredicts
 - `hpmcounter20`: branch predictions (conditional)
 - `hpmcounter21`: bus busy cycles
-- `hpmcounter22`..`hpmcounter31`: reserved for future vendor events or expanded telemetry
+- `hpmcounter22`..`hpmcounter31`: reserved for future expansion
 
-Note: Event assignments are an implementation choice. The CSR interface is standard so software that reads the counters is portable, but the meaning of each `hpmcounterN` is vendor-defined and must be documented (this file).
+Note: Event assignments are an implementation choice. The CSR interface is standard so software that reads the counters is portable, but the meaning of each `hpmcounterN` is documented here.
 
 ## Falling-edge Detector for Miss Events
 
@@ -45,7 +45,7 @@ Cache and TLB miss signals remain asserted for multiple cycles while the miss is
 - A one-cycle delayed register samples the miss signal (`miss_q`).
 - The falling edge is detected as `miss_q & ~miss_now` and generates a single-cycle pulse fed into the `hpm_inc[]` array.
 
-This approach yields one count per miss event (discrete miss counting), which is the metric software engineers expect when reporting miss rates.
+This approach yields one count per miss event (discrete miss counting).
 
 ## Privilege, Sampling, and Atomicity
 
@@ -55,8 +55,7 @@ This approach yields one count per miss event (discrete miss counting), which is
 ## Post-silicon Use Cases
 
 - Performance characterization (miss rates, stall breakdowns) for real workloads
-- Regression testing and firmware validation during bring-up
-- Security monitoring (anomaly detection via unexpected counter spikes)
+- Testing and firmware validation during bring-up
 - Workload profiling for performance tuning and compiler validation
 
 ## Status
