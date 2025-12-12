@@ -129,7 +129,7 @@ provide multiprocessing. This allows for greater task level parallelism without
 the power and area overhead that a homogenous design requires. Current RISCVBusiness allows configurable RISC-V extensions, caches, branch predictor, and multipliers for heterogeneous core designs.
 
 ### Heterogeneous Multicore Build Framework
-Each core can be configured in YAML configuration file. Per core configurable settings are Extensions, Branch predictor, Caches, and Multipliers. Global configurations include num_harts, xlen, bus type, cache block sizes, and supervisor settings. 
+Each core can be configured in the YAML configuration file. Per core configurable settings are Extensions, Branch predictor, Caches, and Multipliers. Global configurations include num_harts, xlen, bus type, cache block sizes, and supervisor settings. 
 
 ```make config``` parses the configuration file to generate 3 files for building the core.
  - `source_code/packages/core_configuration_pkg.sv`
@@ -140,7 +140,7 @@ Each core can be configured in YAML configuration file. Per core configurable se
  - `verification/c-firmware/custom_instruction_calls.h`
     - Contains firmware instruction macros.
 
-To add more core configuration, refer to above 3 files and `scripts/hetero_config_core.py` for YAML configuration file parsing.
+To add more core configurations, refer to above 3 files and `scripts/hetero_config_core.py` for YAML configuration file parsing.
 
 To build the core with configurations using verilator, run ```make verilate```.
 
@@ -148,30 +148,30 @@ To build the core with configurations using verilator, run ```make verilate```.
 [riscv-tests](../../riscv-tests/), an open source RISC-V extension unit tests provided by RISC-V International is used to verify extension functionality. 
 
 #### Running riscv-tests for multicore
-To run extension unit test with the multicore, run the following command after build. 
+To run extension unit tests with the multicore, run the following command after build. 
 
 `./run_riscv_tests.py --environment pm --isa [extension] --num-harts [N]`.
 
-In order to test multiple cores, `--environment` flag must be set to `pm` for multicore and `--num-harts` flag must be set. 
+In order to test multiple cores, the `--environment` flag must be set to `pm` for multicore and `--num-harts` flag must be set. 
 
 For heterogeneous multicore, `run_tests.py` is not supported yet.
 
 #### How it works
 For pm environment, required extension information is written to fromhost address from the testbench. Each core compares required extension with its misa register and skips the test if it is missing the extension. 
 
-Once the test completes, results are displayed to terminal and shows per core result if any one core skips or fails the unit test. 
+Once the test completes, results are displayed to the terminal and shows the per core result if any one core skips or fails the unit test. 
 
 Due to how riscv-tests are written for multiple cores to read and write to same address and compare its result to some fixed value, tests in C and A extensions will fail. Currently, C extension tests that fail for pm environment are disabled.
 
 ### Clock Gating
-To improve power efficiency, the core currently has simple clock gating module that cuts the clock to the pipeline when the core recieves wfi instruction and wakes up when another core sends interrupt through msip. This requires software to be programmed so that least one core is always awake to send interrupt to wake up sleeping cores. 
+To improve power efficiency, the core currently has simple clock gating module that cuts the clock to the pipeline when the core recieves a wfi instruction and wakes up when another core sends an interrupt through msip. This requires software to be programmed so that at least one core is always awake to send an interrupt to wake up sleeping cores. 
 
-Since RISCVBusiness does not have CLINT module, testbench needs to emulate inter-processor interrupt. To do so, tb_core.cc employs fake software interrupt that treats core write to `MSIP_ADDR` as software interrupt. 
+Since RISCVBusiness does not have CLINT module, the testbench needs to emulate inter-processor interrupt. To do so, tb_core.cc employs a fake software interrupt that treats core write to `MSIP_ADDR` as a software interrupt. 
 
 ## Running C-tests for Multicore
 Core functionality can be tested with custom C tests. Current tests are written for homogeneous multicores.
 
-To test homogeneous multicore scalability, bootup file and 3 tests are written to support 1 to 8 cores. 3 tests that can be ran with 8 cores are mergesort.c, matmul.c, and vector_add.c. 
+To test homogeneous multicore scalability, a bootup file and 3 tests are written to support 1 to 8 cores. The 3 tests that can be ran with 8 cores are mergesort.c, matmul.c, and vector_add.c. 
 
 ### C-test structure 
 `verification/multicore-tests/c-tests/multicore_start.S` is the boot file for multicore C tests. In multicore_start.S file, after bss clear, each core is directed to its corresponding main function.
