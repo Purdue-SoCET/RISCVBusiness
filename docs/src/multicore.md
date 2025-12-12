@@ -5,18 +5,6 @@ used to run programs in parallel. This is sometimes referred to as chip
 multiprocessing (CMP). Multicore designs generally offer greater performance at
 the cost of power and area.
 
-## Heterogenous Multicore
-
-A heterogenous multicore system uses disparate core designs and features to
-provide multiprocessing. This allows for greater task level parallelism without
-the power and area overhead that a homogenous design requires. Currently,
-a dual-core big/little design is planned.
-
-### Planned heterogenous core features
-
-- [ ] 3 stage pipeline RV32IMACV big core
-- [ ] 2 stage pipeline RV32EAC little core
-
 ## Current architecture plan for the Dual-core processor with MESI Coherence
 ![Plan](../fig/mc_arch_idea.png)
 ## Cache coherence
@@ -133,3 +121,49 @@ C runtime including setting up the stack and exception handler. This allows for
 trapping any encountered atomic instructions and emulating them using `LR`/`SC`
 loops. This can be used as a stopgap until the hardware implementation of
 atomics is completed.
+
+## Heterogenous Multicore
+
+A heterogenous multicore system uses disparate core designs and features to
+provide multiprocessing. This allows for greater task level parallelism without
+the power and area overhead that a homogenous design requires. Current RISCVBusiness allows configurable RISC-V extensions, caches, branch predictor, and multipliers.
+
+### Heterogeneous Multicore Build Framework
+Each core can be configured in YAML configuration file. Per core configurable settings are Extensions, Branch predictor, Caches, and Multipliers. Global configurations include num_harts, xlen, bus type, cache block sizes, and supervisor settings. 
+```make config``` parses the configuration file to generate 3 files for building the core.
+ - `source_code/packages/core_configuration_pkg.sv`
+    - Contains per core configurations.
+    - Configurable modules are determined during compile time using generate block with `CORE_CONFIG[HART_ID]` in core_configuration_pkg.sv file.  
+ - `source_code/include/component_selection_defines.vh`
+    - Contains global configurations for all cores.
+ - `verification/c-firmware/custom_instruction_calls.h`
+    - Contains firmware instruction macros.
+
+To add more core configuration, refer to above 3 files and `scripts/hetero_config_core.py` for YAML configuration file parsing.
+
+To build the core with configurations using verilator, run ```make verilate```.
+
+### Heterogeneous Multicore Verification
+[riscv-tests](../../riscv-tests/), an open source RISC-V extension unit tests provided by RISC-V International is used to verify extension functionality. To run extension unit test with heterogeneous multicore, run the following command. 
+
+`./run_riscv_tests.py --environment pm --isa [extension] --num-harts [N]`.
+
+`--environment` flag must be set to `pm` for multicore with virtual memory disabled and `--num-harts` flag must be set in order to test multiple cores. For heterogeneous multicore, `run_tests.py` is not supported yet.
+
+For pm environment, required extension information is written to fromhost address from the testbench. Each core compares required extension with its misa register and skips the test if it is missing the extension. Results are displayed to terminal and shows per core result if any one core skips or fails the unit test. Due to how riscv-tests are written for multiple cores to read and write to same address and compare its result to some fixed value, tests in C and A extensions will fail. Currently, C extension tests that fail for pm environment are disabled.
+
+### Clock Gating
+To improve power efficiency, the core currently has simple clock gating module that cuts the clock to the pipeline when the core recieves wfi instruction and wakes up when another core sends interrupt through msip. This requires software to be programmed so that least one core is always awake to send interrupt to wake up sleeping cores. Since RISCVBusiness does not have CLINT module, to emulate inter-processor interrupt, tb_core.cc employs fake software interrupt that treats core write to `MSIP_ADDR` as software interrupt. 
+
+## Running C-tests for Multicore
+Core functionality can be tested with custom C tests. Current tests are written for homogeneous multicores. Tests that support up to 8 cores are mergesort.c, matmul.c, and vector_add.c. 
+
+### C-test structure 
+`verification/multicore-tests/c-tests/multicore_start.S` is the boot file for multicore C tests. In multicore_start.S file, after bss clear, each core is directed to its corresponding main function.
+
+`verification/multicore-tests/c-tests/(test_name).c` file contains hartx_main functions for each core. After all cores finishes its test, `hartx_done` and `flag` variables needs be set to 1 for `tb_core.cc` testbench to check whether the test has passed. Once core 0 returns from the main function, `flag` and `hartx_done` variable values are loaded to each core's x28 register, which is checked for the test result. 
+
+### Running the test
+To build and run the test, run `/.build_and_run.sh [testname]` in the verification/multicore-tests/c-tests directory.
+
+To run the test without building the core, run `./run.sh [testname]`. `[testname]` should only include the test name and exclude `.c`.
