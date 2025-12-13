@@ -107,22 +107,22 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[10] = prv_pipe_if.dtlb_hit; // dTLB hit
 
     // 11-12: page walker: miss/hit/fault, number of page walks
-    assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO: needs page walker signals)
-    assign prv_intern_if.hpm_inc[12] = 1'b0; // page walk count (TODO: needs page walker signals)
+    assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO)
+    assign prv_intern_if.hpm_inc[12] = 1'b0; // page walk count (TODO)
 
     // 13-15: core stalls (fetch, execute, mem)
-    assign prv_intern_if.hpm_inc[13] = prv_pipe_if.if_ex_stall; // fetch/execute stall cycles
-    assign prv_intern_if.hpm_inc[14] = prv_pipe_if.if_ex_stall & prv_pipe_if.ex_mem_stall; // both stages stalled
+    assign prv_intern_if.hpm_inc[13] = 1'b0; // fetch stall cycles (TODO)
+    assign prv_intern_if.hpm_inc[14] = 1'b0; // execute stall cycles (TODO)
     assign prv_intern_if.hpm_inc[15] = prv_pipe_if.ex_mem_stall; // mem stage stall
     
     // 16-18: D$ snoops: total, hits, misses (TODO)
-    assign prv_intern_if.hpm_inc[16] = 1'b0; // D$ snoops (TODO: needs cache coherency support)
-    assign prv_intern_if.hpm_inc[17] = 1'b0; // D$ snoop hits (TODO: needs cache coherency support)
-    assign prv_intern_if.hpm_inc[18] = 1'b0; // D$ snoop misses (TODO: needs cache coherency support)
+    assign prv_intern_if.hpm_inc[16] = 1'b0; // D$ snoops (TODO)
+    assign prv_intern_if.hpm_inc[17] = 1'b0; // D$ snoop hits (TODO)
+    assign prv_intern_if.hpm_inc[18] = 1'b0; // D$ snoop misses (TODO)
 
-    // 19-20: branch: mispredicts and predictions
-    assign prv_intern_if.hpm_inc[19] = prv_pipe_if.branch_mispredict; // branch mispredict
-    assign prv_intern_if.hpm_inc[20] = prv_pipe_if.branch_predict; // branch predictions
+    // 19-20: branch: mispredicts and predictions (TODO)
+    assign prv_intern_if.hpm_inc[19] = 1'b0; // branch mispredict (TODO)
+    assign prv_intern_if.hpm_inc[20] = 1'b0; // branch predictions (TODO)
 
     // 21-31: currently for future expansion
     assign prv_intern_if.hpm_inc[21] = prv_pipe_if.bus_busy; // bus busy cycles

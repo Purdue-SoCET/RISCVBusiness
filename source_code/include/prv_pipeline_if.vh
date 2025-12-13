@@ -76,9 +76,6 @@ interface prv_pipeline_if();
   logic icache_miss, dcache_miss;
   logic icache_hit, dcache_hit;
   logic bus_busy;
-  logic branch_mispredict;
-  logic branch_predict;
-  logic if_ex_stall;
 
   // Memory protection signals
   logic iren, dwen, dren;
@@ -128,7 +125,6 @@ interface prv_pipeline_if();
       icache_miss, dcache_miss, icache_hit, dcache_hit, itlb_miss, dtlb_miss, itlb_hit, dtlb_hit,
           daddr, iaddr, ipaddr, dpaddr, dren, dwen, iren,
           d_acc_width, i_acc_width, ex_mem_stall, bus_busy,
-          branch_mispredict, branch_predict, if_ex_stall,
     output priv_pc, insert_pc, intr, rdata, invalid_priv_isn,
             prot_fault_s, prot_fault_l, prot_fault_i,
             satp, mstatus, curr_privilege_level
