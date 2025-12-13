@@ -116,6 +116,8 @@ module stage3_hazard_unit (
     assign prv_pipe_if.fault_insn_page = ~branch_jump & hazard_if.fault_insn_page;
     assign prv_pipe_if.fault_load_page = hazard_if.fault_load_page;
     assign prv_pipe_if.fault_store_page = hazard_if.fault_store_page;
+    assign prv_pipe_if.if_ex_stall = hazard_if.if_ex_stall;
+    assign prv_pipe_if.branch_mispredict = hazard_if.mispredict;
 
     assign prv_pipe_if.epc = epc;
     assign prv_pipe_if.badaddr = hazard_if.fault_addr;
