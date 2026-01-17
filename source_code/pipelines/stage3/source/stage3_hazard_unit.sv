@@ -102,8 +102,8 @@ module stage3_hazard_unit (
                                     hazard_if.jump |
                                     hazard_if.branch; //Because 2 stages
 
-    assign prv_pipe_if.fault_insn = hazard_if.fault_insn;// | prv_pipe_if.prot_fault_i;
-    assign prv_pipe_if.mal_insn = hazard_if.mal_insn;
+    assign prv_pipe_if.fault_insn = ~branch_jump & hazard_if.fault_insn;// | prv_pipe_if.prot_fault_i;
+    assign prv_pipe_if.mal_insn = ~branch_jump & hazard_if.mal_insn;
     assign prv_pipe_if.illegal_insn = hazard_if.illegal_insn;
     assign prv_pipe_if.fault_l = hazard_if.fault_l | prv_pipe_if.prot_fault_l;
     assign prv_pipe_if.mal_l = hazard_if.mal_l;
@@ -113,6 +113,9 @@ module stage3_hazard_unit (
     assign prv_pipe_if.env = hazard_if.env;
     assign prv_pipe_if.wfi = hazard_if.wfi;
     assign prv_pipe_if.ex_mem_stall = hazard_if.ex_mem_stall;
+    assign prv_pipe_if.fault_insn_page = ~branch_jump & hazard_if.fault_insn_page;
+    assign prv_pipe_if.fault_load_page = hazard_if.fault_load_page;
+    assign prv_pipe_if.fault_store_page = hazard_if.fault_store_page;
 
     assign prv_pipe_if.epc = epc;
     assign prv_pipe_if.badaddr = hazard_if.fault_addr;

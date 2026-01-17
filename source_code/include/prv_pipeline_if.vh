@@ -36,6 +36,9 @@ interface prv_pipeline_if();
   logic fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s,
         breakpoint, env, fault_insn_page, fault_load_page, fault_store_page, mret, sret, wfi;
 
+  // from separate_caches, pipeline/hazard unit will handle these
+  logic fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page;
+
   // tlb miss signals
   logic itlb_miss, dtlb_miss;
 
@@ -78,15 +81,15 @@ interface prv_pipeline_if();
 
   modport hazard (
     input priv_pc, insert_pc, intr, prot_fault_s, prot_fault_l, prot_fault_i,
-          fault_insn_page, fault_load_page, fault_store_page,
     output pipe_clear, mret, sret, epc, fault_insn, mal_insn,
+            fault_insn_page, fault_load_page, fault_store_page,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
             breakpoint, env, wfi, badaddr, wb_enable, ex_mem_stall
   );
 
   modport pipe (
     output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
-    input  rdata, invalid_priv_isn, fault_insn_page, fault_load_page, fault_store_page, dtlb_miss, mstatus, curr_privilege_level
+    input  rdata, invalid_priv_isn, fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, dtlb_miss, mstatus, curr_privilege_level
   );
 
   modport cu (
@@ -94,18 +97,18 @@ interface prv_pipeline_if();
   );
 
   modport fetch (
-    input prot_fault_i, itlb_miss,
+    input prot_fault_i, itlb_miss, fetch_fault_insn_page,
     output iren, iaddr, i_acc_width, pc_redirect
   );
 
   modport caches (
     input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
-    output fault_insn_page, fault_load_page, fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
+    output fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
   );
 
   modport cache (
     input satp, mstatus, curr_privilege_level, fence_va, fence_asid, ex_mem_ren, ex_mem_wen, intr, pc_redirect,
-          fault_insn_page, fault_load_page, fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
+          fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, itlb_miss, dtlb_miss, ipaddr, dpaddr
   );
 
   modport priv_block (

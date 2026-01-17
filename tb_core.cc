@@ -13,6 +13,7 @@
 #include "Vtop_core_top_core.h"
 
 #define BASE_SIM_TIME    100000
+#define BASE_MEM_LATENCY      0 // in cycles
 
 #define MTIME_ADDR      0xFFFFFFE0
 #define MTIMEH_ADDR     0xFFFFFFE4
@@ -36,6 +37,7 @@ VerilatedFstC *trace_ptr;
 bool use_tohost = false;
 uint32_t tohost_address = 0;
 uint64_t max_sim_time = BASE_SIM_TIME;
+uint64_t mem_latency = BASE_MEM_LATENCY;
 bool tohost_break = false;
 bool debug_test = false;
 bool require_trace = true;
@@ -282,6 +284,7 @@ void print_help() {
     std::cout << "\t--help   : Print this" << std::endl;
     std::cout << "\t--tohost-address <address>: address for tohost checking functionality. A write to this address will end the program if --debug is not set." << std::endl;
     std::cout << "\t--max-sim-time <sim-time> : Maximum time to run simulation. Defaults to 100,000." << std::endl;
+    std::cout << "\t--memlat <mem-latency>    : Memory Latency in cycles. Defaults to 0." << std::endl;
     std::cout << "\t--debug  : Allows debug strings to print from cores. Changes tohost-address functionality" << std::endl;
     std::cout << "\t--notrace: Indicate to not generate a waveform file. Speeds up simulation incredibly." << std::endl;
     std::cout << "\tfilename : An executable .bin file to run" << std::endl;
@@ -330,6 +333,20 @@ int main(int argc, char **argv) {
             debug_test = true;
         } else if(strcmp(argv[i], "--notrace") == 0) {
             require_trace = false;
+        } else if(strcmp(argv[i], "--memlat") == 0) {
+            if(i+1 < argc) {
+                try {
+                    mem_latency = std::stoul(argv[i+1], nullptr, 0);
+                } catch (const std::exception& e) {
+                    std::cerr << "Could not convert " << argv[i+1] << " to U64" << std::endl;
+                    return 1;
+                }
+
+                i += 1;
+            } else {
+                std::cerr << "Not enough args: " << argv[i] << std::endl;
+                print_help();
+            }
         } else {
             fname = argv[i];
         }
@@ -365,8 +382,11 @@ int main(int argc, char **argv) {
     reset(dut, m_trace);
     while(!dut.halt && !tohost_break && sim_time < max_sim_time) {
         dut.error = 0;
-        // TODO: Variable latency
         if((dut.ren || dut.wen) && dut.busy) {
+            for (int stall = 0; stall < mem_latency; stall++) {
+                dut.mtime = sim_time;
+                tick(dut, m_trace);
+            }
             dut.busy = 0;
             if(dut.ren) {
                 uint32_t addr = dut.addr & 0xFFFFFFFC;
