@@ -47,6 +47,7 @@ module cpu_tracker #(
 );
     import rv32i_types_pkg::*;
     import priv_isa_types_pkg::*;
+    import pmp_types_pkg::*;
     import rv32m_pkg::*;
 
     integer fptr;
@@ -196,9 +197,10 @@ module cpu_tracker #(
                                 ECALL:  instr_mnemonic[i] = "ecall";
                                 EBREAK: instr_mnemonic[i] = "ebreak";
                                 MRET:   instr_mnemonic[i] = "mret";
+                                SRET:   instr_mnemonic[i] = "sret";
+                                {SFENCE_VMA, 5'b0}: instr_mnemonic[i] = "sfence.vma";
                                 default: begin
                                     instr_mnemonic[i] = "errr";
-                                    $display("%b", priv_insn_t'(funct12));
                                 end
                             endcase
                         end
@@ -257,22 +259,258 @@ module cpu_tracker #(
 
     function string csrRegisterAssign(input logic [11:0] csr_register);
         case (csr_addr_t'(csr_register))
-            MVENDORID_ADDR: csrRegisterAssign = "mvendorid";
-            MARCHID_ADDR:   csrRegisterAssign = "marchid";
-            MIMPID_ADDR:    csrRegisterAssign = "mimpid";
-            MHARTID_ADDR:   csrRegisterAssign = "mhartid";
-            MSTATUS_ADDR:   csrRegisterAssign = "mstatus";
-            MISA_ADDR:      csrRegisterAssign = "misa";
-            MEDELEG_ADDR:   csrRegisterAssign = "medeleg";
-            MIDELEG_ADDR:   csrRegisterAssign = "mideleg";
-            MTVEC_ADDR:     csrRegisterAssign = "mtvec";
-            MIE_ADDR:       csrRegisterAssign = "mie";
-            MSCRATCH_ADDR:  csrRegisterAssign = "mscratch";
-            MEPC_ADDR:      csrRegisterAssign = "mepc";
-            MCAUSE_ADDR:    csrRegisterAssign = "mcause";
-            MTVAL_ADDR:     csrRegisterAssign = "mtval";
-            MIP_ADDR:       csrRegisterAssign = "mip";
-            default:        csrRegisterAssign = "csr register not tracked";
+            // Machine Information Registers
+            MVENDORID_ADDR     : csrRegisterAssign = "mvendorid";
+            MARCHID_ADDR       : csrRegisterAssign = "marchid";
+            MIMPID_ADDR        : csrRegisterAssign = "mimpid";
+            MHARTID_ADDR       : csrRegisterAssign = "mhartid";
+            MCONFIGPTR_ADDR    : csrRegisterAssign = "mconfigptr";
+
+            // Machine Trap Setup
+            MSTATUS_ADDR       : csrRegisterAssign = "mstatus";
+            MISA_ADDR          : csrRegisterAssign = "misa";
+            MEDELEG_ADDR       : csrRegisterAssign = "medeleg";
+            MIDELEG_ADDR       : csrRegisterAssign = "mideleg";
+            MIE_ADDR           : csrRegisterAssign = "mie";
+            MTVEC_ADDR         : csrRegisterAssign = "mtvec";
+            MCOUNTEREN_ADDR    : csrRegisterAssign = "mcounteren";
+            MSTATUSH_ADDR      : csrRegisterAssign = "mstatush";
+            MEDELEGH_ADDR      : csrRegisterAssign = "medelegh";
+
+            // Machine Trap Handling
+            MSCRATCH_ADDR      : csrRegisterAssign = "mscratch";
+            MEPC_ADDR          : csrRegisterAssign = "mepc";
+            MCAUSE_ADDR        : csrRegisterAssign = "mcause";
+            MTVAL_ADDR         : csrRegisterAssign = "mtval";
+            MIP_ADDR           : csrRegisterAssign = "mip";
+            MTINST_ADDR        : csrRegisterAssign = "mtinst";
+            MTVAL2_ADDR        : csrRegisterAssign = "mtval2";
+
+            // Machine Configuration
+            MENVCFG_ADDR       : csrRegisterAssign = "menvcfg";
+            MENVCFGH_ADDR      : csrRegisterAssign = "menvcfgh";
+            MSECCFG_ADDR       : csrRegisterAssign = "mseccfg";
+            MSECCFGH_ADDR      : csrRegisterAssign = "mseccfgh";
+
+            // Machine HPMs
+            MCYCLE_ADDR        : csrRegisterAssign = "mcycle";
+            MTIME_ADDR         : csrRegisterAssign = "mtime";
+            MINSTRET_ADDR      : csrRegisterAssign = "minstret";
+            MHPMCOUNTER3_ADDR  : csrRegisterAssign = "mhpmcounter3";
+            MHPMCOUNTER4_ADDR  : csrRegisterAssign = "mhpmcounter4";
+            MHPMCOUNTER5_ADDR  : csrRegisterAssign = "mhpmcounter5";
+            MHPMCOUNTER6_ADDR  : csrRegisterAssign = "mhpmcounter6";
+            MHPMCOUNTER7_ADDR  : csrRegisterAssign = "mhpmcounter7";
+            MHPMCOUNTER8_ADDR  : csrRegisterAssign = "mhpmcounter8";
+            MHPMCOUNTER9_ADDR  : csrRegisterAssign = "mhpmcounter9";
+            MHPMCOUNTER10_ADDR : csrRegisterAssign = "mhpmcounter10";
+            MHPMCOUNTER11_ADDR : csrRegisterAssign = "mhpmcounter11";
+            MHPMCOUNTER12_ADDR : csrRegisterAssign = "mhpmcounter12";
+            MHPMCOUNTER13_ADDR : csrRegisterAssign = "mhpmcounter13";
+            MHPMCOUNTER14_ADDR : csrRegisterAssign = "mhpmcounter14";
+            MHPMCOUNTER15_ADDR : csrRegisterAssign = "mhpmcounter15";
+            MHPMCOUNTER16_ADDR : csrRegisterAssign = "mhpmcounter16";
+            MHPMCOUNTER17_ADDR : csrRegisterAssign = "mhpmcounter17";
+            MHPMCOUNTER18_ADDR : csrRegisterAssign = "mhpmcounter18";
+            MHPMCOUNTER19_ADDR : csrRegisterAssign = "mhpmcounter19";
+            MHPMCOUNTER20_ADDR : csrRegisterAssign = "mhpmcounter20";
+            MHPMCOUNTER21_ADDR : csrRegisterAssign = "mhpmcounter21";
+            MHPMCOUNTER22_ADDR : csrRegisterAssign = "mhpmcounter22";
+            MHPMCOUNTER23_ADDR : csrRegisterAssign = "mhpmcounter23";
+            MHPMCOUNTER24_ADDR : csrRegisterAssign = "mhpmcounter24";
+            MHPMCOUNTER25_ADDR : csrRegisterAssign = "mhpmcounter25";
+            MHPMCOUNTER26_ADDR : csrRegisterAssign = "mhpmcounter26";
+            MHPMCOUNTER27_ADDR : csrRegisterAssign = "mhpmcounter27";
+            MHPMCOUNTER28_ADDR : csrRegisterAssign = "mhpmcounter28";
+            MHPMCOUNTER29_ADDR : csrRegisterAssign = "mhpmcounter29";
+            MHPMCOUNTER30_ADDR : csrRegisterAssign = "mhpmcounter30";
+            MHPMCOUNTER31_ADDR : csrRegisterAssign = "mhpmcounter31";
+            MCYCLEH_ADDR       : csrRegisterAssign = "mcycleh";
+            MTIMEH_ADDR        : csrRegisterAssign = "mtimeh";
+            MINSTRETH_ADDR     : csrRegisterAssign = "minstreth";
+            MHPMCOUNTER3H_ADDR : csrRegisterAssign = "mhpmcounter3h";
+            MHPMCOUNTER4H_ADDR : csrRegisterAssign = "mhpmcounter4h";
+            MHPMCOUNTER5H_ADDR : csrRegisterAssign = "mhpmcounter5h";
+            MHPMCOUNTER6H_ADDR : csrRegisterAssign = "mhpmcounter6h";
+            MHPMCOUNTER7H_ADDR : csrRegisterAssign = "mhpmcounter7h";
+            MHPMCOUNTER8H_ADDR : csrRegisterAssign = "mhpmcounter8h";
+            MHPMCOUNTER9H_ADDR : csrRegisterAssign = "mhpmcounter9h";
+            MHPMCOUNTER10H_ADDR: csrRegisterAssign = "mhpmcounter10h";
+            MHPMCOUNTER11H_ADDR: csrRegisterAssign = "mhpmcounter11h";
+            MHPMCOUNTER12H_ADDR: csrRegisterAssign = "mhpmcounter12h";
+            MHPMCOUNTER13H_ADDR: csrRegisterAssign = "mhpmcounter13h";
+            MHPMCOUNTER14H_ADDR: csrRegisterAssign = "mhpmcounter14h";
+            MHPMCOUNTER15H_ADDR: csrRegisterAssign = "mhpmcounter15h";
+            MHPMCOUNTER16H_ADDR: csrRegisterAssign = "mhpmcounter16h";
+            MHPMCOUNTER17H_ADDR: csrRegisterAssign = "mhpmcounter17h";
+            MHPMCOUNTER18H_ADDR: csrRegisterAssign = "mhpmcounter18h";
+            MHPMCOUNTER19H_ADDR: csrRegisterAssign = "mhpmcounter19h";
+            MHPMCOUNTER20H_ADDR: csrRegisterAssign = "mhpmcounter20h";
+            MHPMCOUNTER21H_ADDR: csrRegisterAssign = "mhpmcounter21h";
+            MHPMCOUNTER22H_ADDR: csrRegisterAssign = "mhpmcounter22h";
+            MHPMCOUNTER23H_ADDR: csrRegisterAssign = "mhpmcounter23h";
+            MHPMCOUNTER24H_ADDR: csrRegisterAssign = "mhpmcounter24h";
+            MHPMCOUNTER25H_ADDR: csrRegisterAssign = "mhpmcounter25h";
+            MHPMCOUNTER26H_ADDR: csrRegisterAssign = "mhpmcounter26h";
+            MHPMCOUNTER27H_ADDR: csrRegisterAssign = "mhpmcounter27h";
+            MHPMCOUNTER28H_ADDR: csrRegisterAssign = "mhpmcounter28h";
+            MHPMCOUNTER29H_ADDR: csrRegisterAssign = "mhpmcounter29h";
+            MHPMCOUNTER30H_ADDR: csrRegisterAssign = "mhpmcounter30h";
+            MHPMCOUNTER31H_ADDR: csrRegisterAssign = "mhpmcounter31h";
+
+            // Machine Counter Setup
+            MCOUNTINHIBIT_ADDR :  csrRegisterAssign = "mcountinhibit";
+            MHPMEVENT3_ADDR    :  csrRegisterAssign = "mhpmevent3";
+            MHPMEVENT4_ADDR    :  csrRegisterAssign = "mhpmevent4";
+            MHPMEVENT5_ADDR    :  csrRegisterAssign = "mhpmevent5";
+            MHPMEVENT6_ADDR    :  csrRegisterAssign = "mhpmevent6";
+            MHPMEVENT7_ADDR    :  csrRegisterAssign = "mhpmevent7";
+            MHPMEVENT8_ADDR    :  csrRegisterAssign = "mhpmevent8";
+            MHPMEVENT9_ADDR    :  csrRegisterAssign = "mhpmevent9";
+            MHPMEVENT10_ADDR   :  csrRegisterAssign = "mhpmevent10";
+            MHPMEVENT11_ADDR   :  csrRegisterAssign = "mhpmevent11";
+            MHPMEVENT12_ADDR   :  csrRegisterAssign = "mhpmevent12";
+            MHPMEVENT13_ADDR   :  csrRegisterAssign = "mhpmevent13";
+            MHPMEVENT14_ADDR   :  csrRegisterAssign = "mhpmevent14";
+            MHPMEVENT15_ADDR   :  csrRegisterAssign = "mhpmevent15";
+            MHPMEVENT16_ADDR   :  csrRegisterAssign = "mhpmevent16";
+            MHPMEVENT17_ADDR   :  csrRegisterAssign = "mhpmevent17";
+            MHPMEVENT18_ADDR   :  csrRegisterAssign = "mhpmevent18";
+            MHPMEVENT19_ADDR   :  csrRegisterAssign = "mhpmevent19";
+            MHPMEVENT20_ADDR   :  csrRegisterAssign = "mhpmevent20";
+            MHPMEVENT21_ADDR   :  csrRegisterAssign = "mhpmevent21";
+            MHPMEVENT22_ADDR   :  csrRegisterAssign = "mhpmevent22";
+            MHPMEVENT23_ADDR   :  csrRegisterAssign = "mhpmevent23";
+            MHPMEVENT24_ADDR   :  csrRegisterAssign = "mhpmevent24";
+            MHPMEVENT25_ADDR   :  csrRegisterAssign = "mhpmevent25";
+            MHPMEVENT26_ADDR   :  csrRegisterAssign = "mhpmevent26";
+            MHPMEVENT27_ADDR   :  csrRegisterAssign = "mhpmevent27";
+            MHPMEVENT28_ADDR   :  csrRegisterAssign = "mhpmevent28";
+            MHPMEVENT29_ADDR   :  csrRegisterAssign = "mhpmevent29";
+            MHPMEVENT30_ADDR   :  csrRegisterAssign = "mhpmevent30";
+            MHPMEVENT31_ADDR   :  csrRegisterAssign = "mhpmevent31";
+
+            // Supervisor Protection and Translation
+            SATP_ADDR          : csrRegisterAssign = "satp";
+
+            // Supervisor debug/trace registers
+            SCONTEXT_ADDR      : csrRegisterAssign = "scontext";
+
+            // Supervisor Stage Enable Registers
+            SSTATEEN0_ADDR     : csrRegisterAssign = "stateen0";
+            SSTATEEN1_ADDR     : csrRegisterAssign = "stateen1";
+            SSTATEEN2_ADDR     : csrRegisterAssign = "stateen2";
+            SSTATEEN3_ADDR     : csrRegisterAssign = "stateen3";
+
+            // Supervisor CSRs
+            SSTATUS_ADDR       : csrRegisterAssign = "sstatus";
+            SIE_ADDR           : csrRegisterAssign = "sie";
+            STVEC_ADDR         : csrRegisterAssign = "stvec";
+            SCOUNTEREN_ADDR    : csrRegisterAssign = "scounteren";
+
+            // Supervisor Trap Setup
+            SSCRATCH_ADDR      : csrRegisterAssign = "sscratch";
+            SEPC_ADDR          : csrRegisterAssign = "sepc";
+            SCAUSE_ADDR        : csrRegisterAssign = "scause";
+            STVAL_ADDR         : csrRegisterAssign = "stval";
+            SIP_ADDR           : csrRegisterAssign = "sip";
+            SCOUNTOVF_ADDR     : csrRegisterAssign = "scountovf";
+
+            // Supervisor Configuration
+            SENVCFG_ADDR       : csrRegisterAssign = "senvcfg";
+
+            // Supervisor Counter Setup
+            SCOUNTINHIBIT_ADDR : csrRegisterAssign = "scountinhibit";
+
+            // PMPs
+            PMPCFG0_ADDR       : csrRegisterAssign = "pmpcfg0";
+            PMPCFG1_ADDR       : csrRegisterAssign = "pmpcfg1";
+            PMPCFG2_ADDR       : csrRegisterAssign = "pmpcfg2";
+            PMPCFG3_ADDR       : csrRegisterAssign = "pmpcfg3";
+            PMPADDR0_ADDR      : csrRegisterAssign = "pmpaddr0";
+            PMPADDR1_ADDR      : csrRegisterAssign = "pmpaddr1";
+            PMPADDR2_ADDR      : csrRegisterAssign = "pmpaddr2";
+            PMPADDR3_ADDR      : csrRegisterAssign = "pmpaddr3";
+            PMPADDR4_ADDR      : csrRegisterAssign = "pmpaddr4";
+            PMPADDR5_ADDR      : csrRegisterAssign = "pmpaddr5";
+            PMPADDR6_ADDR      : csrRegisterAssign = "pmpaddr6";
+            PMPADDR7_ADDR      : csrRegisterAssign = "pmpaddr7";
+            PMPADDR8_ADDR      : csrRegisterAssign = "pmpaddr8";
+            PMPADDR9_ADDR      : csrRegisterAssign = "pmpaddr9";
+            PMPADDR10_ADDR     : csrRegisterAssign = "pmpaddr10";
+            PMPADDR11_ADDR     : csrRegisterAssign = "pmpaddr11";
+            PMPADDR12_ADDR     : csrRegisterAssign = "pmpaddr12";
+            PMPADDR13_ADDR     : csrRegisterAssign = "pmpaddr13";
+            PMPADDR14_ADDR     : csrRegisterAssign = "pmpaddr14";
+            PMPADDR15_ADDR     : csrRegisterAssign = "pmpaddr15";
+
+            // HPMs
+            CYCLE_ADDR         : csrRegisterAssign = "cycle";
+            TIME_ADDR          : csrRegisterAssign = "instret";
+            INSTRET_ADDR       : csrRegisterAssign = "time";
+            HPMCOUNTER3_ADDR   : csrRegisterAssign = "hpmcounter3";
+            HPMCOUNTER4_ADDR   : csrRegisterAssign = "hpmcounter4";
+            HPMCOUNTER5_ADDR   : csrRegisterAssign = "hpmcounter5";
+            HPMCOUNTER6_ADDR   : csrRegisterAssign = "hpmcounter6";
+            HPMCOUNTER7_ADDR   : csrRegisterAssign = "hpmcounter7";
+            HPMCOUNTER8_ADDR   : csrRegisterAssign = "hpmcounter8";
+            HPMCOUNTER9_ADDR   : csrRegisterAssign = "hpmcounter9";
+            HPMCOUNTER10_ADDR  : csrRegisterAssign = "hpmcounter10";
+            HPMCOUNTER11_ADDR  : csrRegisterAssign = "hpmcounter11";
+            HPMCOUNTER12_ADDR  : csrRegisterAssign = "hpmcounter12";
+            HPMCOUNTER13_ADDR  : csrRegisterAssign = "hpmcounter13";
+            HPMCOUNTER14_ADDR  : csrRegisterAssign = "hpmcounter14";
+            HPMCOUNTER15_ADDR  : csrRegisterAssign = "hpmcounter15";
+            HPMCOUNTER16_ADDR  : csrRegisterAssign = "hpmcounter16";
+            HPMCOUNTER17_ADDR  : csrRegisterAssign = "hpmcounter17";
+            HPMCOUNTER18_ADDR  : csrRegisterAssign = "hpmcounter18";
+            HPMCOUNTER19_ADDR  : csrRegisterAssign = "hpmcounter19";
+            HPMCOUNTER20_ADDR  : csrRegisterAssign = "hpmcounter20";
+            HPMCOUNTER21_ADDR  : csrRegisterAssign = "hpmcounter21";
+            HPMCOUNTER22_ADDR  : csrRegisterAssign = "hpmcounter22";
+            HPMCOUNTER23_ADDR  : csrRegisterAssign = "hpmcounter23";
+            HPMCOUNTER24_ADDR  : csrRegisterAssign = "hpmcounter24";
+            HPMCOUNTER25_ADDR  : csrRegisterAssign = "hpmcounter25";
+            HPMCOUNTER26_ADDR  : csrRegisterAssign = "hpmcounter26";
+            HPMCOUNTER27_ADDR  : csrRegisterAssign = "hpmcounter27";
+            HPMCOUNTER28_ADDR  : csrRegisterAssign = "hpmcounter28";
+            HPMCOUNTER29_ADDR  : csrRegisterAssign = "hpmcounter29";
+            HPMCOUNTER30_ADDR  : csrRegisterAssign = "hpmcounter30";
+            HPMCOUNTER31_ADDR  : csrRegisterAssign = "hpmcounter31";
+            CYCLEH_ADDR        : csrRegisterAssign = "cycleh";
+            TIMEH_ADDR         : csrRegisterAssign = "timeh";
+            INSTRETH_ADDR      : csrRegisterAssign = "instreth";
+            HPMCOUNTER3H_ADDR  : csrRegisterAssign = "hpmcounter3h";
+            HPMCOUNTER4H_ADDR  : csrRegisterAssign = "hpmcounter4h";
+            HPMCOUNTER5H_ADDR  : csrRegisterAssign = "hpmcounter5h";
+            HPMCOUNTER6H_ADDR  : csrRegisterAssign = "hpmcounter6h";
+            HPMCOUNTER7H_ADDR  : csrRegisterAssign = "hpmcounter7h";
+            HPMCOUNTER8H_ADDR  : csrRegisterAssign = "hpmcounter8h";
+            HPMCOUNTER9H_ADDR  : csrRegisterAssign = "hpmcounter9h";
+            HPMCOUNTER10H_ADDR : csrRegisterAssign = "hpmcounter10h";
+            HPMCOUNTER11H_ADDR : csrRegisterAssign = "hpmcounter11h";
+            HPMCOUNTER12H_ADDR : csrRegisterAssign = "hpmcounter12h";
+            HPMCOUNTER13H_ADDR : csrRegisterAssign = "hpmcounter13h";
+            HPMCOUNTER14H_ADDR : csrRegisterAssign = "hpmcounter14h";
+            HPMCOUNTER15H_ADDR : csrRegisterAssign = "hpmcounter15h";
+            HPMCOUNTER16H_ADDR : csrRegisterAssign = "hpmcounter16h";
+            HPMCOUNTER17H_ADDR : csrRegisterAssign = "hpmcounter17h";
+            HPMCOUNTER18H_ADDR : csrRegisterAssign = "hpmcounter18h";
+            HPMCOUNTER19H_ADDR : csrRegisterAssign = "hpmcounter19h";
+            HPMCOUNTER20H_ADDR : csrRegisterAssign = "hpmcounter20h";
+            HPMCOUNTER21H_ADDR : csrRegisterAssign = "hpmcounter21h";
+            HPMCOUNTER22H_ADDR : csrRegisterAssign = "hpmcounter22h";
+            HPMCOUNTER23H_ADDR : csrRegisterAssign = "hpmcounter23h";
+            HPMCOUNTER24H_ADDR : csrRegisterAssign = "hpmcounter24h";
+            HPMCOUNTER25H_ADDR : csrRegisterAssign = "hpmcounter25h";
+            HPMCOUNTER26H_ADDR : csrRegisterAssign = "hpmcounter26h";
+            HPMCOUNTER27H_ADDR : csrRegisterAssign = "hpmcounter27h";
+            HPMCOUNTER28H_ADDR : csrRegisterAssign = "hpmcounter28h";
+            HPMCOUNTER29H_ADDR : csrRegisterAssign = "hpmcounter29h";
+            HPMCOUNTER30H_ADDR : csrRegisterAssign = "hpmcounter30h";
+            HPMCOUNTER31H_ADDR : csrRegisterAssign = "hpmcounter31h";
+
+            default: $sformat(csrRegisterAssign, "0x%h", csr_register);
         endcase
     endfunction
 
