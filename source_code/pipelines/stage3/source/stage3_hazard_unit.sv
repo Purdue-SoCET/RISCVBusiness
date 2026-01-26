@@ -112,7 +112,21 @@ module stage3_hazard_unit (
     assign prv_pipe_if.breakpoint = hazard_if.breakpoint;
     assign prv_pipe_if.env = hazard_if.env;
     assign prv_pipe_if.wfi = hazard_if.wfi;
-    assign prv_pipe_if.ex_mem_stall = hazard_if.ex_mem_stall;
+
+    // When imem is waiting, we're stalling in only the fetch stage
+    assign prv_pipe_if.fetch_stall = wait_for_imem;
+
+    // Should be the only case where execute is busy & we're doing something useful
+    assign prv_pipe_if.ex_stall = (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump);
+
+    // When dmem is waiting, flushing, or if halted
+    assign prv_pipe_if.mem_stall = hazard_if.ex_mem_stall;
+
+    // branch prediction signals
+    assign prv_pipe_if.bp_update = hazard_if.update_predictor;
+    assign prv_pipe_if.bp_mispredict = hazard_if.mispredict;
+
+    // page fault exceptions
     assign prv_pipe_if.fault_insn_page = ~branch_jump & hazard_if.fault_insn_page;
     assign prv_pipe_if.fault_load_page = hazard_if.fault_load_page;
     assign prv_pipe_if.fault_store_page = hazard_if.fault_store_page;

@@ -5,6 +5,7 @@
 - [Privileged Architecture]()
     - [Supervisor](./supervisor/supervisor_overview.md)
         - [Supervisor Tests](./supervisor/supervisor_tests.md)
+    - [Hardware Performance Monitors](./hpms/hpm_overview.md)
 - [Multicore](./multicore.md)
 - [Extensions](./extensions.md)
     - [RV32A](./extensions/rv32a.md)

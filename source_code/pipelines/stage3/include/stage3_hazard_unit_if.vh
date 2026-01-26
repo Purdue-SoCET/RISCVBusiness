@@ -34,7 +34,7 @@ interface stage3_hazard_unit_if();
   logic reg_write, csr_read;
   logic i_mem_busy, d_mem_busy, dren, dwen, reserve, mret, sret, suppress_data;
   logic jump, branch, fence_stall;
-  logic mispredict, halt;
+  logic update_predictor, mispredict, halt;
   word_t pc_f, pc_e, pc_m;
   logic valid_e, valid_m; // f always valid since it's the PC
   logic ifence, sfence;
@@ -65,7 +65,7 @@ interface stage3_hazard_unit_if();
     input   rs1_e, rs2_e, rd_m,
             reg_write, csr_read,
             i_mem_busy, d_mem_busy, dren, dwen, reserve, mret, sret,
-            jump, branch, fence_stall, mispredict, halt, pc_f, pc_e, pc_m,
+            jump, branch, fence_stall, update_predictor, mispredict, halt, pc_f, pc_e, pc_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
             fault_addr, ifence, sfence, fault_load_page, fault_store_page, fault_insn_page,
             token_ex, token_mem,
@@ -91,7 +91,7 @@ interface stage3_hazard_unit_if();
     input   ex_mem_stall, ex_mem_flush, suppress_data, fault_addr_fetch,
     output  rd_m, reg_write, csr_read,
             d_mem_busy, dren, dwen, reserve, mret, sret,
-            jump, branch, fence_stall, mispredict, halt, pc_m, valid_m,
+            jump, branch, fence_stall, update_predictor, mispredict, halt, pc_m, valid_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env,
             fault_addr, ifence, sfence, wfi, fault_load_page, fault_store_page, fault_insn_page,
             token_mem

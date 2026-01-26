@@ -49,83 +49,90 @@ module priv_block #(
     priv_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
     priv_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
-    // assign hpm counter increments (csr mapping: mhpmcounter3..31 / hpmcounter3..31)
-
     // edge detectors for miss/hit counting
-    logic icache_miss_q, dcache_miss_q, itlb_miss_q, dtlb_miss_q;
-    logic iren_q, dren_q, dwen_q;
-    logic icache_miss_fall, dcache_miss_fall, itlb_miss_fall, dtlb_miss_fall;
+    logic icache_miss_neg_edge, dcache_miss_neg_edge;
+    logic itlb_miss_neg_edge, dtlb_miss_neg_edge;
+    logic dren_dwen, insn_miss, data_miss;
 
-    always_ff @(posedge CLK or negedge nRST) begin
-        if (!nRST) begin
-            icache_miss_q <= 1'b0;
-            dcache_miss_q <= 1'b0;
-            itlb_miss_q <= 1'b0;
-            dtlb_miss_q <= 1'b0;
-            iren_q <= 1'b0;
-            dren_q <= 1'b0;
-            dwen_q <= 1'b0;
-            icache_miss_fall <= 1'b0;
-            dcache_miss_fall <= 1'b0;
-            itlb_miss_fall <= 1'b0;
-            dtlb_miss_fall <= 1'b0;
-        end else begin
-            icache_miss_q <= prv_pipe_if.icache_miss;
-            dcache_miss_q <= prv_pipe_if.dcache_miss;
-            itlb_miss_q <= prv_pipe_if.itlb_miss;
-            dtlb_miss_q <= prv_pipe_if.dtlb_miss;
-            iren_q <= prv_pipe_if.iren;
-            dren_q <= prv_pipe_if.dren;
-            dwen_q <= prv_pipe_if.dwen;
-            // falling edge detect for miss signals: prev=1 and current=0
-            icache_miss_fall <= icache_miss_q & ~prv_pipe_if.icache_miss;
-            dcache_miss_fall <= dcache_miss_q & ~prv_pipe_if.dcache_miss;
-            itlb_miss_fall <= itlb_miss_q & ~prv_pipe_if.itlb_miss;
-            dtlb_miss_fall <= dtlb_miss_q & ~prv_pipe_if.dtlb_miss;
-        end
-    end
+    socetlib_edge_detector ICACHE_MISS (
+        .CLK(CLK),
+        .nRST(nRST),
+        .signal(prv_pipe_if.icache_miss),
+        .pos_edge(),
+        .neg_edge(icache_miss_neg_edge)
+    );
+
+    socetlib_edge_detector DCACHE_MISS (
+        .CLK(CLK),
+        .nRST(nRST),
+        .signal(prv_pipe_if.dcache_miss),
+        .pos_edge(),
+        .neg_edge(dcache_miss_neg_edge)
+    );
+
+    
+    socetlib_edge_detector ITLB_MISS (
+        .CLK(CLK),
+        .nRST(nRST),
+        .signal(prv_pipe_if.itlb_miss),
+        .pos_edge(),
+        .neg_edge(itlb_miss_neg_edge)
+    );
+
+    socetlib_edge_detector DTLB_MISS (
+        .CLK(CLK),
+        .nRST(nRST),
+        .signal(prv_pipe_if.dtlb_miss),
+        .pos_edge(),
+        .neg_edge(dtlb_miss_neg_edge)
+    );
 
     // access qualifiers
-    wire dacc_en   = prv_pipe_if.dren | prv_pipe_if.dwen; // (dwen v dren)
-    wire x_memstall_n = ~prv_pipe_if.ex_mem_stall; // (-(x_memstall))
+    // memory stage is accessing memory
+    assign dren_dwen = prv_pipe_if.dren | prv_pipe_if.dwen;
 
+    // current iTLB/i$ miss
+    assign insn_miss = prv_pipe_if.iren & (prv_pipe_if.itlb_miss | prv_pipe_if.icache_miss);
+
+    // current dTLB/d$ miss
+    assign data_miss = dren_dwen & (prv_pipe_if.dtlb_miss | prv_pipe_if.dcache_miss);
+
+    // assign hpm counter increments (csr mapping: mhpmcounter3..31 / hpmcounter3..31)
     // cache group: 3-6
     // 3: I$ misses (falling edge), 4: D$ misses
-    assign prv_intern_if.hpm_inc[3]  = icache_miss_fall; // I$ miss falling edge
-    assign prv_intern_if.hpm_inc[4]  = dcache_miss_fall; // D$ miss falling edge
+    assign prv_intern_if.hpm_inc[3]  = prv_pipe_if.iren & icache_miss_neg_edge; // I$ miss falling edge
+    assign prv_intern_if.hpm_inc[4]  = dren_dwen & dcache_miss_neg_edge; // D$ miss falling edge
 
-    // 5-6: I$/D$ hits: (access) ^ (hit) ^ (not stalled)
-    assign prv_intern_if.hpm_inc[5]  = prv_pipe_if.iren & prv_pipe_if.icache_hit & x_memstall_n;
-    assign prv_intern_if.hpm_inc[6]  = dacc_en & prv_pipe_if.dcache_hit & x_memstall_n;
+    // 5-6: I$/D$ hits: (access) & (hit) & (not stalled)
+    assign prv_intern_if.hpm_inc[5]  = prv_pipe_if.iren & prv_pipe_if.icache_hit & ~prv_pipe_if.fetch_stall;
+    assign prv_intern_if.hpm_inc[6]  = dren_dwen & prv_pipe_if.dcache_hit & ~prv_pipe_if.mem_stall;
 
     // 7-8: iTLB/dTLB misses (falling edge)
-    assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.iren & itlb_miss_fall; // iTLB miss gated by access
-    assign prv_intern_if.hpm_inc[8]  = dacc_en & dtlb_miss_fall; // dTLB miss gated by access
+    assign prv_intern_if.hpm_inc[7]  = prv_pipe_if.iren & itlb_miss_neg_edge; // iTLB miss gated by access
+    assign prv_intern_if.hpm_inc[8]  = dren_dwen & dtlb_miss_neg_edge; // dTLB miss gated by access
 
     // 9-10: iTLB/dTLB hits
-    assign prv_intern_if.hpm_inc[9]  = prv_pipe_if.itlb_hit; // iTLB hit
-    assign prv_intern_if.hpm_inc[10] = prv_pipe_if.dtlb_hit; // dTLB hit
+    assign prv_intern_if.hpm_inc[9]  = prv_pipe_if.itlb_hit & ~prv_pipe_if.fetch_stall; // iTLB hit
+    assign prv_intern_if.hpm_inc[10] = prv_pipe_if.dtlb_hit & ~prv_pipe_if.mem_stall; // dTLB hit
 
-    // 11-12: page walker: miss/hit/fault, number of page walks
-    assign prv_intern_if.hpm_inc[11] = 1'b0; // page walker miss/fault (TODO)
-    assign prv_intern_if.hpm_inc[12] = 1'b0; // page walk count (TODO)
+    // 11: bus busy: counts cycles where the bus is not IDLE & we're servicing any miss
+    assign prv_intern_if.hpm_inc[13] = prv_pipe_if.bus_busy & (insn_miss | data_miss);
 
-    // 13-15: core stalls (fetch, execute, mem)
-    assign prv_intern_if.hpm_inc[13] = 1'b0; // fetch stall cycles (TODO)
-    assign prv_intern_if.hpm_inc[14] = 1'b0; // execute stall cycles (TODO)
-    assign prv_intern_if.hpm_inc[15] = prv_pipe_if.ex_mem_stall; // mem stage stall
-    
-    // 16-18: D$ snoops: total, hits, misses (TODO)
-    assign prv_intern_if.hpm_inc[16] = 1'b0; // D$ snoops (TODO)
-    assign prv_intern_if.hpm_inc[17] = 1'b0; // D$ snoop hits (TODO)
-    assign prv_intern_if.hpm_inc[18] = 1'b0; // D$ snoop misses (TODO)
+    // 12-13: branch: update and mispredict
+    assign prv_intern_if.hpm_inc[11] = prv_pipe_if.bp_update; // branch predictor update
+    assign prv_intern_if.hpm_inc[12] = prv_pipe_if.bp_update & prv_pipe_if.bp_mispredict; // branch predictor mispredictions
 
-    // 19-20: branch: mispredicts and predictions (TODO)
-    assign prv_intern_if.hpm_inc[19] = 1'b0; // branch mispredict (TODO)
-    assign prv_intern_if.hpm_inc[20] = 1'b0; // branch predictions (TODO)
+    // 14-16: core stalls (fetch, execute, mem)
+    assign prv_intern_if.hpm_inc[14] = prv_pipe_if.fetch_stall; // fetch stall cycles
+    assign prv_intern_if.hpm_inc[15] = prv_pipe_if.ex_stall; // execute stall cycles
+    assign prv_intern_if.hpm_inc[16] = prv_pipe_if.mem_stall; // mem stage stall
 
-    // 21-31: currently for future expansion
-    assign prv_intern_if.hpm_inc[21] = prv_pipe_if.bus_busy; // bus busy cycles
+    // 17-31: for future expansion
+    assign prv_intern_if.hpm_inc[17] = 1'b0;
+    assign prv_intern_if.hpm_inc[18] = 1'b0;
+    assign prv_intern_if.hpm_inc[19] = 1'b0;
+    assign prv_intern_if.hpm_inc[20] = 1'b0;
+    assign prv_intern_if.hpm_inc[21] = 1'b0;
     assign prv_intern_if.hpm_inc[22] = 1'b0;
     assign prv_intern_if.hpm_inc[23] = 1'b0;
     assign prv_intern_if.hpm_inc[24] = 1'b0;
@@ -136,6 +143,7 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[29] = 1'b0;
     assign prv_intern_if.hpm_inc[30] = 1'b0;
     assign prv_intern_if.hpm_inc[31] = 1'b0;
+
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.csr_addr;
     assign prv_intern_if.csr_write = prv_pipe_if.swap;
@@ -192,7 +200,7 @@ module priv_block #(
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
     assign prv_intern_if.mret              = prv_pipe_if.mret & prv_intern_if.isMMode;
     assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.isSMode | prv_intern_if.isMMode) && (SUPERVISOR == "enabled");
-    assign prv_intern_if.ex_mem_stall      = prv_pipe_if.ex_mem_stall;
+    assign prv_intern_if.ex_mem_stall      = prv_pipe_if.mem_stall;
 
     // from priv unit to pipeline
     assign prv_pipe_if.priv_pc   = prv_intern_if.priv_pc;

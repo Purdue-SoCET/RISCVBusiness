@@ -4,6 +4,8 @@ description: Privileged Architecture for RISCVBusiness
 
 filesets:
     rtl:
+        depend:
+            - socet:digital-lib:edge_detector:0.0.4
         files:
             - priv_wrapper.sv
             - priv_int_ex_handler.sv

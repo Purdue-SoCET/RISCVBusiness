@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document describes the Hardware Performance Monitor (HPM) implementation in RISCVBusiness. The project implements the RISC‑V Privileged Spec (v1.13) counter set: `mcycle`, `minstret`, and `hpmcounter3` through `hpmcounter31`. The HPMs provide standard CSR access for post‑silicon performance characterization, regression tests, and lightweight telemetry for debug and security analysis.
+This document describes the Hardware Performance Monitor (HPM) implementation in RISCVBusiness. The project implements the RISC‑V Privileged Spec (v1.13) counter set: `cycle`, `instret`, and `hpmcounter3` through `hpmcounter31`. The HPMs provide standard CSR access for post‑silicon performance characterization, regression tests, and lightweight telemetry for debug and security analysis.
 
 ## Background
 
@@ -10,9 +10,9 @@ HPM counters are a standardized set of machine-level CSRs that count cycles, ins
 
 ## HPM Counters and Mapping
 
-- `mcycle` (cnt 0): wall-clock cycle counter (64-bit)
-- `minstret` (cnt 2): retired instruction counter (64-bit)
-- `hpmcounter3`..`hpmcounter31` (cnt 3..31): vendor event counters (64-bit each)
+- `cycle` (idx 0): clock cycle counter (64-bit)
+- `instret` (idx 2): retired instruction counter (64-bit)
+- `hpmcounter3`..`hpmcounter31` (idx 3..31): vendor event counters (64-bit each)
 
 RISCVBusiness event mapping (default):
 - `hpmcounter3`: I$ miss (counts discrete I-cache misses)
@@ -23,33 +23,24 @@ RISCVBusiness event mapping (default):
 - `hpmcounter8`: dTLB miss
 - `hpmcounter9`: iTLB hit
 - `hpmcounter10`: dTLB hit
-- `hpmcounter11`: page walker miss/fault
-- `hpmcounter12`: page walk count
-- `hpmcounter13`: fetch stall cycles
-- `hpmcounter14`: execute stall cycles
-- `hpmcounter15`: mem stage stall cycles
-- `hpmcounter16`: D$ snoop total
-- `hpmcounter17`: D$ snoop hits
-- `hpmcounter18`: D$ snoop misses
-- `hpmcounter19`: branch mispredicts
-- `hpmcounter20`: branch predictions (conditional)
-- `hpmcounter21`: bus busy cycles
-- `hpmcounter22`..`hpmcounter31`: reserved for future expansion
+- `hpmcounter11`: bus busy cycles
+- `hpmcounter12`: branch mispredicts
+- `hpmcounter13`: branch predictions
+- `hpmcounter14`: fetch stall cycles
+- `hpmcounter15`: execute stall cycles
+- `hpmcounter16`: mem stage stall cycles
+- `hpmcounter17`..`hpmcounter31`: reserved for future expansion
 
 Note: Event assignments are an implementation choice. The CSR interface is standard so software that reads the counters is portable, but the meaning of each `hpmcounterN` is documented here.
 
 ## Falling-edge Detector for Miss Events
 
-Cache and TLB miss signals remain asserted for multiple cycles while the miss is being resolved (page walk, refill). Counting the raw signal would over-count (one miss producing many cycles of high level). RISCVBusiness therefore uses a falling‑edge detector to produce a single pulse when a miss completes:
-
-- A one-cycle delayed register samples the miss signal (`miss_q`).
-- The falling edge is detected as `miss_q & ~miss_now` and generates a single-cycle pulse fed into the `hpm_inc[]` array.
-
-This approach yields one count per miss event (discrete miss counting).
+Cache and TLB miss signals remain asserted for multiple cycles while the miss is being resolved (due to bus requests and/or page walks). Counting the raw signal would over-count (one miss producing many cycles of high level). RISCVBusiness therefore uses a falling‑edge detector to produce a single pulse when a miss completes. This approach yields one count per miss event.
 
 ## Privilege, Sampling, and Atomicity
 
-- `mcounteren`: machine-only CSR that gates S/U reads of each counter. If a corresponding bit is clear, S/U read attempts trap to M-mode.
+- `mcounteren`: M-Mode only CSR that gates S/U-mode reads of each counter. If a corresponding bit is clear, S/U-mode read attempts trap to M-mode.
+- `scounteren`: M/S-mode CSR that gates U-mode reads of each counter. If a corresponding bit is clear, U-mode read attempts trap to M-mode.
 - `mcountinhibit`: machine-only CSR used to pause/resume counters (per-bit). Use it to atomically sample multiple counters: pause all required counters, read values, then resume.
 
 ## Post-silicon Use Cases
@@ -60,19 +51,13 @@ This approach yields one count per miss event (discrete miss counting).
 
 ## Status
 
-Core HPM CSR logic and a default event mapping are implemented in `priv_csr.sv` and `priv_block.sv`. A verification test harness (`verification/hpm_tests/hpm.c`) exists to sample and print aligned counter values for demo and CI use.
+Core HPM CSR logic and a default event mapping are implemented in `priv_csr.sv` and `priv_block.sv`. The piping of HPM events can be found in `stage3_hazard_unit.sv` and `stage3_mem_stage.sv` A verification test harness (`verification/hpm_tests/hpm.c`) exists to sample and print aligned counter values for demo and CI use.
 
 ## Future Work
 
-- Expand `hpmcounter22..31` mappings to include predictors, branch queues, etc.
+- Expand `hpmcounter17..31` mappings to include predictors, branch queues, etc.
 - Write software for selective instantiation of hpmcounters, reducing area and ower for unused events
 - Capture waveform examples and integrate HPM screenshots into the documentation.
-
-## Demo Checklist
-
-- Configure `mcounteren` appropriately (M-mode) so the demo environment can read the counters from S-mode if intended.
-- Use `mcountinhibit` to pause counters for atomic snapshots: pause → read all counters → resume.
-- Show aligned output from `verification/hpm_tests/hpm.c` so audiences can easily compare samples.
 
 
 ## Contributors
