@@ -133,6 +133,7 @@ package priv_isa_types_pkg;
 
     /* Machine Counter/Timers */
     MCYCLE_ADDR         = 12'hB00,
+    MTIME_ADDR          = 12'hB01,
     MINSTRET_ADDR       = 12'hB02,
     MHPMCOUNTER3_ADDR   = 12'hB03,
     MHPMCOUNTER4_ADDR   = 12'hB04,
@@ -164,6 +165,7 @@ package priv_isa_types_pkg;
     MHPMCOUNTER30_ADDR  = 12'hB1E,
     MHPMCOUNTER31_ADDR  = 12'hB1F,
     MCYCLEH_ADDR        = 12'hB80,
+    MTIMEH_ADDR         = 12'hB81,
     MINSTRETH_ADDR      = 12'hB82,
     MHPMCOUNTER3H_ADDR  = 12'hB83,
     MHPMCOUNTER4H_ADDR  = 12'hB84,
@@ -298,8 +300,8 @@ package priv_isa_types_pkg;
     HPMCOUNTER30_ADDR  = 12'hC1E,
     HPMCOUNTER31_ADDR  = 12'hC1F,
     CYCLEH_ADDR        = 12'hC80,
-    INSTRETH_ADDR      = 12'hC81,
-    TIMEH_ADDR         = 12'hC82,
+    TIMEH_ADDR         = 12'hC81,
+    INSTRETH_ADDR      = 12'hC82,
     HPMCOUNTER3H_ADDR  = 12'hC83,
     HPMCOUNTER4H_ADDR  = 12'hC84,
     HPMCOUNTER5H_ADDR  = 12'hC85,

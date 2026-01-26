@@ -64,6 +64,7 @@ module bus_ctrl #(
             block_count <= 0;
             block_count_done <= 0;
             hit_delay <= '0;
+            ccif.bus_busy <= 0;
         end
         else begin
             requester_cpu <= nrequester_cpu;        // requester
@@ -77,6 +78,7 @@ module bus_ctrl #(
             block_count <= nblock_count;            // temp to deal with current cache block setup
             block_count_done <= nblock_count_done;
             hit_delay <= ccif.l2state == L2_ACCESS;
+            ccif.bus_busy <= (state != IDLE);       // HPM: track when bus is active
         end
     end
 

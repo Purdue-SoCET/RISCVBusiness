@@ -42,13 +42,16 @@ module separate_caches(
     front_side_bus_if.cache icache_bus_ctrl_if,
     output logic abort_bus,
     output logic icache_miss,
-    output logic dcache_miss
+    output logic dcache_miss,
+    output logic icache_hit,
+    output logic dcache_hit
 );
     import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
     // TLB signals L1$ needs
     logic itlb_miss, dtlb_miss;
+    logic itlb_hit_sig, dtlb_hit_sig;
     word_t itlb_hit_data, dtlb_hit_data;
 
     generic_bus_if pw_gen_bus_if ();
@@ -75,6 +78,7 @@ module separate_caches(
                 assign control_if.dclear_done = 1'b1;
                 assign control_if.dflush_done = 1'b1;
                 assign dcache_miss = 0;
+                assign dcache_hit  = 0;
             end
             "direct_mapped_tpf": begin : g_dcache_directmapped
                 direct_mapped_tpf_cache dcache (
@@ -88,6 +92,7 @@ module separate_caches(
                     .clear_done(control_if.dclear_done)
                 );
                 assign dcache_miss = 0;
+                assign dcache_hit  = 0;
             end
             "l1":
             l1_cache #(
@@ -108,6 +113,7 @@ module separate_caches(
                 .flush_done(control_if.dflush_done),
                 .abort_bus(),
                 .clear_done(control_if.dclear_done),
+                .cache_hit(dcache_hit),
                 .cache_miss(dcache_miss),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(data_at_if),
@@ -132,6 +138,7 @@ module separate_caches(
                 assign control_if.iclear_done = 1'b1;
                 assign control_if.iflush_done = 1'b1;
                 assign icache_miss = 0;
+                assign icache_hit  = 0;
             end
             "direct_mapped_tpf": begin : g_icache_directmapped
                 direct_mapped_tpf_cache icache (
@@ -145,6 +152,7 @@ module separate_caches(
                     .clear_done(control_if.iclear_done)
                 );
                 assign icache_miss = 0;
+                assign icache_hit  = 0;
             end
             "l1":
             l1_cache #(
@@ -165,6 +173,7 @@ module separate_caches(
                 .flush_done(control_if.iflush_done),
                 .clear_done(control_if.iclear_done),
                 .abort_bus(abort_bus),
+                .cache_hit(icache_hit),
                 .cache_miss(icache_miss),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(insn_at_if),
@@ -179,6 +188,10 @@ module separate_caches(
     // TLB busses
     generic_bus_if itlb_gen_bus_if ();
     generic_bus_if dtlb_gen_bus_if ();
+
+    // TLB hit assignments
+    assign prv_pipe_if.itlb_hit = itlb_hit_sig;
+    assign prv_pipe_if.dtlb_hit = dtlb_hit_sig;
 
     // TLB/PW signals
     logic itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
@@ -200,6 +213,7 @@ module separate_caches(
         .prv_pipe_if(prv_pipe_if),
         .at_if(data_at_if),
         .tlb_miss(dtlb_miss),
+        .tlb_hit(dtlb_hit_sig),
         .fault_load_page(dtlb_fault_load_page),
         .fault_store_page(dtlb_fault_store_page),
         .fault_insn_page(dtlb_fault_insn_page)
@@ -219,6 +233,7 @@ module separate_caches(
         .prv_pipe_if(prv_pipe_if),
         .at_if(insn_at_if),
         .tlb_miss(itlb_miss),
+        .tlb_hit(itlb_hit_sig),
         .fault_load_page(itlb_fault_load_page),
         .fault_store_page(itlb_fault_store_page),
         .fault_insn_page(itlb_fault_insn_page)

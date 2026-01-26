@@ -72,7 +72,9 @@ module supervisor_cache_wrapper(
     .icache_bus_ctrl_if(front_side_bus[0]),
     .abort_bus(abort_bus),
     .icache_miss(prv_pipe_if.icache_miss),
-    .dcache_miss(prv_pipe_if.dcache_miss)
+    .dcache_miss(prv_pipe_if.dcache_miss),
+    .icache_hit(prv_pipe_if.icache_hit),
+    .dcache_hit(prv_pipe_if.dcache_hit)
   );
 
   assign bus_ctrl_if.ccabort = abort_bus;
@@ -80,13 +82,17 @@ module supervisor_cache_wrapper(
   assign bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
   assign bus_ctrl_if.l2error = out_gen_bus_if.error;
 
+  logic bus_busy;
+  assign prv_pipe_if.bus_busy = bus_busy;
+
   memory_controller #(
     .NUM_HARTS(1)
   ) MC (
     .CLK(CLK),
     .nRST(nRST),
     .out_gen_bus_if(out_gen_bus_if),
-    .bus_ctrl_if(bus_ctrl_if)
+    .bus_ctrl_if(bus_ctrl_if),
+    .bus_busy(bus_busy)
   );
   
 endmodule

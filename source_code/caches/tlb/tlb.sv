@@ -43,7 +43,7 @@ module tlb #(
 (
     input logic CLK, nRST,
     input logic fence, abort, page_fault,
-    output logic fence_done, tlb_miss,
+    output logic fence_done, tlb_miss, tlb_hit,
     output logic fault_load_page, fault_store_page, fault_insn_page,
     output word_t tlb_hit_data,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
@@ -293,6 +293,7 @@ module tlb #(
         clear_fence_count       = 0;
         fence_done 	            = 0;
         tlb_miss                = 0;
+        tlb_hit                 = 0;
         idle_done               = 0;
         next_read_addr          = proc_gen_bus_if.addr;
         next_decoded_req_addr   = decoded_req_addr;
@@ -329,6 +330,7 @@ module tlb #(
                     if (hit) begin
                         proc_gen_bus_if.busy = 0;
                         tlb_hit_data = hit_data;
+                        tlb_hit = 1'b1;
                         next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                     end
                     // tlb miss on a clean block
