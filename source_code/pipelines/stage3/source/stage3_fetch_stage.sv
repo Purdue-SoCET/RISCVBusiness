@@ -60,7 +60,9 @@ module stage3_fetch_stage (
 
     // predictor
     logic is_branch, is_compressed_branch;
-
+    logic is_jump, is_compressed_jump;
+    logic [4:0] compressed_func3_op;
+    logic [5:0] compressed_func4_op;
 
     //PC logic
     always_ff @(posedge CLK, negedge nRST) begin
@@ -75,15 +77,34 @@ module stage3_fetch_stage (
     
     //Branch Predictor logic
     localparam logic [15:0] CBRANCH_MASK = 16'hc001;
+    localparam logic [4:0] RVC_FUNC_J = 5'b001_01;
+    localparam logic [4:0] RVC_FUNC_JAL = 5'b101_01;
+    localparam logic [5:0] RVC_FUNC_JR = 6'b1000_01;
+    localparam logic [5:0] RVC_FUNC_JALR = 6'b1001_01;
+
     sbtype_t instr_sb;
+    assign compressed_func3_op = {instr_to_ex[15:13], instr_to_ex[1:0]};
+    assign compressed_func4_op = {instr_to_ex[15:12], instr_to_ex[1:0]};
+
     assign is_branch = !insn_compressed && instr_sb.opcode == BRANCH;
     assign is_compressed_branch = insn_compressed && ((instr_to_ex[15:0] & CBRANCH_MASK) == CBRANCH_MASK);
+
+    assign is_jump = !insn_compressed && ((instr_sb.opcode == JAL));
+    assign is_compressed_jump = (
+            insn_compressed && (
+                (compressed_func3_op == RVC_FUNC_J) 
+                || (compressed_func3_op == RVC_FUNC_JAL)
+                // || (compressed_func4_op == RVC_FUNC_JR)
+                // || (compressed_func4_op == RVC_FUNC_JALR)
+            )
+        );
+
     assign predict_if.current_pc = pc;
     assign instr_sb = sbtype_t'(instr_to_ex);
     assign predict_if.instr = instr_to_ex;
     assign predict_if.imm_sb = {instr_sb.imm12, instr_sb.imm11, instr_sb.imm10_05, instr_sb.imm04_01, 1'b0};
     assign predict_if.is_branch = is_branch || is_compressed_branch;
-    assign predict_if.is_jump = ((instr_sb.opcode == JAL) || (instr_sb.opcode == JALR)) ? 1:0;
+    assign predict_if.is_jump = is_jump || is_compressed_jump;
 
     // pc_redirect used to invalidate fetch buffer for RV32C
     assign pc_redirect = hazard_if.insert_priv_pc || hazard_if.rollback || hazard_if.npc_sel || predict_if.predict_taken;

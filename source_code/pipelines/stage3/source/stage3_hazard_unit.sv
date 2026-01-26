@@ -57,7 +57,7 @@ module stage3_hazard_unit (
     assign cannot_forward = (hazard_if.dren || (hazard_if.dwen && hazard_if.reserve) || hazard_if.csr_read); // cannot forward outputs generated in mem stage
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
-    assign branch_jump = hazard_if.jump || (hazard_if.branch && hazard_if.mispredict);
+    assign branch_jump = (hazard_if.jump || hazard_if.branch) && hazard_if.mispredict;
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren;
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
     assign hazard_if.mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
