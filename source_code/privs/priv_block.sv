@@ -49,6 +49,8 @@ module priv_block #(
     priv_pmp pmp (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pmp_if));
     priv_mode mode (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
 
+    logic tvm_trap, tw_trap, tsr_trap, disabled_smode_trap;
+
     // edge detectors for miss/hit counting
     logic icache_miss_neg_edge, dcache_miss_neg_edge;
     logic itlb_miss_neg_edge, dtlb_miss_neg_edge;
@@ -144,6 +146,22 @@ module priv_block #(
     assign prv_intern_if.hpm_inc[30] = 1'b0;
     assign prv_intern_if.hpm_inc[31] = 1'b0;
 
+    // This logic got moved from the control unit. It is a lot better of an idea to check this when committing an instruction
+    // Used in illegal instruction check from priv unit
+    // Trap VM if TVM is set, privilege level is S-Mode and either an sfence or csr R/W to SATP
+    assign tvm_trap = (prv_pipe_if.sfence || ((prv_pipe_if.swap | prv_pipe_if.set | prv_pipe_if.clr) && prv_pipe_if.csr_addr == SATP_ADDR))
+                    && prv_pipe_if.mstatus.tvm
+                    && prv_pipe_if.curr_privilege_level == S_MODE;
+
+    // Raise illegal instruction on WFI if Timer Wait is set, and privilege mode is not M-Mode
+    assign tw_trap  = prv_pipe_if.wfi && prv_pipe_if.mstatus.tw && prv_pipe_if.curr_privilege_level != M_MODE;
+
+    // Trap Supervisor Returns if SRET instruction, TSR is set, and current privilege level is S-Mode
+    assign tsr_trap = prv_pipe_if.sret && prv_pipe_if.mstatus.tsr && prv_pipe_if.curr_privilege_level == S_MODE;
+
+    // Trap when we have a supervisor instruction and the Supervisor Extension is disabled
+    assign disabled_smode_trap = (prv_pipe_if.sfence || prv_pipe_if.sret) && SUPERVISOR == "disabled";
+
     assign prv_intern_if.inst_ret = prv_pipe_if.wb_enable & prv_pipe_if.instr;
     assign prv_intern_if.csr_addr = prv_pipe_if.csr_addr;
     assign prv_intern_if.csr_write = prv_pipe_if.swap;
@@ -154,7 +172,8 @@ module priv_block #(
     assign prv_pipe_if.rdata = prv_intern_if.old_csr_val;
     assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.mret & !prv_intern_if.isMMode) 
                                             | (prv_pipe_if.sret & !prv_intern_if.isMMode & !prv_intern_if.isSMode & (SUPERVISOR == "enabled"))
-                                            | (prv_pipe_if.wfi & prv_intern_if.isUMode & (prv_intern_if.curr_mstatus.tw));
+                                            | (prv_pipe_if.wfi & prv_intern_if.isUMode & (prv_intern_if.curr_mstatus.tw))
+                                            | tvm_trap | tw_trap | tsr_trap | disabled_smode_trap;
 
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;

@@ -70,6 +70,7 @@ interface prv_pipeline_if();
   word_t fence_va;
   logic [ASID_LENGTH-1:0] fence_asid;
   logic pc_redirect;  // prevents bad page walks from occuring
+  logic sfence;
 
   // performance signals
   logic wb_enable, instr;
@@ -91,16 +92,13 @@ interface prv_pipeline_if();
             fault_insn_page, fault_load_page, fault_store_page,
             illegal_insn, fault_l, mal_l, fault_s, mal_s,
             breakpoint, env, wfi, badaddr, wb_enable,
-            fetch_stall, ex_stall, mem_stall, bp_update, bp_mispredict
+            fetch_stall, ex_stall, mem_stall, bp_update, bp_mispredict,
+            sfence
   );
 
   modport pipe (
-    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid, ex_mem_ren, ex_mem_wen,
+    output swap, clr, set, read_only, wdata, csr_addr, valid_write, instr, dren, dwen, daddr, d_acc_width, fence_va, fence_asid, ex_mem_ren, ex_mem_wen, sfence,
     input  rdata, invalid_priv_isn, fetch_fault_insn_page, mem_fault_load_page, mem_fault_store_page, dtlb_miss, mstatus, curr_privilege_level
-  );
-
-  modport cu (
-    input mstatus, curr_privilege_level
   );
 
   modport fetch (
@@ -123,7 +121,7 @@ interface prv_pipeline_if();
           illegal_insn, fault_l, mal_l, fault_s, mal_s,
           breakpoint, env, fault_insn_page, fault_load_page, fault_store_page,
           badaddr, swap, clr, set, read_only, wfi,
-          wdata, csr_addr, valid_write, wb_enable, instr,
+          wdata, csr_addr, valid_write, wb_enable, instr, sfence,
           icache_miss, dcache_miss, icache_hit, dcache_hit, itlb_miss, dtlb_miss, itlb_hit, dtlb_hit,
           daddr, iaddr, ipaddr, dpaddr, dren, dwen, iren,
           d_acc_width, i_acc_width, fetch_stall, ex_stall, mem_stall, bp_update, bp_mispredict, bus_busy,

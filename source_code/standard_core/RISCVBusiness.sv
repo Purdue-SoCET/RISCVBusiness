@@ -51,6 +51,7 @@ module RISCVBusiness #(
 
     logic pipeline_wfi;
 
+    `ifdef PIPELINE_STAGE3
     stage3 #(.RESET_PC(RESET_PC)) pipeline(
         .CLK(CLK),
         .nRST(nRST),
@@ -62,6 +63,21 @@ module RISCVBusiness #(
         .halt(halt),
         .wfi(wfi)
     );
+
+    `elsif PIPELINE_STAGE5
+    stage5 #(.RESET_PC(RESET_PC)) pipeline(
+        .CLK(CLK),
+        .nRST(nRST),
+        .igen_bus_if(icache_gen_bus_if),
+        .dgen_bus_if(dcache_gen_bus_if),
+        .prv_pipe_if(prv_pipe_if),
+        .predict_if(predict_if),
+        .cc_if(control_if),
+        .halt(halt),
+        .wfi(wfi)
+    );
+
+    `endif
 
     // Module Instantiations
     branch_predictor_wrapper branch_predictor_i (

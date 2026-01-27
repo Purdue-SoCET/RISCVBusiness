@@ -79,6 +79,8 @@ ISA_PARAMS = \
 
 UARCH_PARAMS = \
   {
+    # Pipeline stages
+    'pipeline_stage' : [3, 5],
     # Multicore configurations
     'num_harts' : [],
     # Branch/Jump Configurations
@@ -216,7 +218,7 @@ def create_include(config):
   # Handle localparam configurations
   isa_params = config['isa_params']
   free_params = ['isa', 'num_harts', 'noncache_start_addr', ]
-  int_params = ['num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
+  int_params = ['pipeline_stage', 'num_harts', 'btb_size', 'dcache_size', 'dcache_block_size', 'dcache_assoc', 'icache_size', 'icache_block_size', 'icache_assoc', 'tlb_entries']
   include_file.write('// ISA Params:\n') 
 
   base_isa = None
@@ -291,7 +293,10 @@ def create_include(config):
       sys.exit(err)
     # write to parameter file
     if uarch_param in free_params or uarch_param in int_params:
-      line = 'localparam ' + uarch_param.upper() + ' = ' + str(uarch_params[uarch_param]) + ';\n'
+      if uarch_param == 'pipeline_stage':
+        line = '`define ' + uarch_param.upper() + str(uarch_params[uarch_param]) + '\n'
+      else:
+        line = 'localparam ' + uarch_param.upper() + ' = ' + str(uarch_params[uarch_param]) + ';\n'
     else:
       line = 'localparam '
       if isinstance(uarch_params[uarch_param], str): # deal with integer params

@@ -112,6 +112,7 @@ module stage3_hazard_unit (
     assign prv_pipe_if.breakpoint = hazard_if.breakpoint;
     assign prv_pipe_if.env = hazard_if.env;
     assign prv_pipe_if.wfi = hazard_if.wfi;
+    assign prv_pipe_if.sfence = hazard_if.sfence;
 
     // When imem is waiting, we're stalling in only the fetch stage
     assign prv_pipe_if.fetch_stall = wait_for_imem;

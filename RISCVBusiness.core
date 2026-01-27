@@ -10,6 +10,7 @@ filesets:
             - "socet:bus-components:apb_if"
             - "socet:riscv:packages"
             - "socet:riscv:stage3"
+            - "socet:riscv:stage5"
             - "socet:riscv:priv"
             - "socet:riscv:caches"
             - "socet:riscv:riscv_standard"

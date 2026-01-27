@@ -8,6 +8,9 @@ isa_params:
 
 # Microarchitectural Configurations
 microarch_params:
+  # Pipeline stages
+  pipeline_stage : 3
+
   # Multicore configurations
   num_harts : 1
 

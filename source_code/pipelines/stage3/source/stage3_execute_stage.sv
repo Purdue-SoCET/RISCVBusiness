@@ -36,8 +36,7 @@ module stage3_execute_stage (
     stage3_fetch_execute_if.execute fetch_ex_if,
     stage3_mem_pipe_if.execute ex_mem_if,
     stage3_hazard_unit_if.execute hazard_if,
-    stage3_forwarding_unit_if.execute fw_if,
-    prv_pipeline_if.cu prv_pipe_if
+    stage3_forwarding_unit_if.execute fw_if
 );
     import rv32i_types_pkg::*;
     import pma_types_pkg::*;
@@ -73,8 +72,7 @@ module stage3_execute_stage (
     // Control unit, inputs are post-decompression
     control_unit cu (
         .cu_if(cu_if),
-        .rf_if(rf_if),
-        .prv_pipe_if(prv_pipe_if)
+        .rf_if(rf_if)
     );
 
     rv32i_reg_file #(.RV32E(BASE_ISA == "RV32E")) rf (
