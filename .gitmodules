@@ -1,3 +1,6 @@
 [submodule "riscv-tests"]
 	path = riscv-tests
 	url = https://github.com/Purdue-SoCET/riscv-tests
+[submodule "gpos-dev"]
+	path = gpos-dev
+	url = https://github.com/Purdue-SoCET/gpos-dev.git
