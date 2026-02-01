@@ -32,7 +32,7 @@ interface stage5_hazard_unit_if();
   // Pipeline status signals (inputs)
   logic [4:0] rs1_d, rs2_d, rs1_e, rs2_e, rd_e, rd_m;
   logic cannot_forward_e, cannot_forward_m;
-  logic reg_write_m, csr_read;
+  logic reg_write_e, reg_write_m, csr_read;
   logic i_mem_busy, d_mem_busy, dren, dwen, reserve, mret, sret, suppress_data;
   logic jump, branch, fence_stall;
   logic update_predictor, mispredict, halt;
@@ -65,7 +65,7 @@ interface stage5_hazard_unit_if();
   modport hazard_unit (
     input   rs1_d, rs2_d, rs1_e, rs2_e, rd_e, rd_m,
             cannot_forward_e, cannot_forward_m,
-            reg_write_m, csr_read,
+            reg_write_e, reg_write_m, csr_read,
             i_mem_busy, d_mem_busy, dren, dwen, reserve, mret, sret,
             jump, branch, fence_stall, update_predictor, mispredict, halt, pc_f, pc_e, pc_m,
             fault_insn, mal_insn, illegal_insn, fault_l, mal_l, fault_s, mal_s, breakpoint, env, wfi,
@@ -91,7 +91,7 @@ interface stage5_hazard_unit_if();
 
   modport execute (
     input  ex_mem_stall, ex_mem_flush, npc_sel,
-    output token_ex, rs1_e, rs2_e, rd_e, pc_e, valid_e, ex_busy, cannot_forward_e
+    output token_ex, rs1_e, rs2_e, rd_e, pc_e, valid_e, ex_busy, cannot_forward_e, reg_write_e
   );
 
   modport mem (

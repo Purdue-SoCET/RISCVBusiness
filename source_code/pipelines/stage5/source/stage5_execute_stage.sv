@@ -213,6 +213,7 @@ module stage5_execute_stage (
     assign hazard_if.rs2_e = decode_ex_if.decode_ex_reg.rs2;
     assign hazard_if.rd_e = decode_ex_if.decode_ex_reg.rd;
     assign hazard_if.pc_e = decode_ex_if.decode_ex_reg.pc;
+    assign hazard_if.reg_write_e = decode_ex_if.decode_ex_reg.reg_write;
     assign hazard_if.cannot_forward_e = decode_ex_if.decode_ex_reg.dren || (decode_ex_if.decode_ex_reg.dwen && decode_ex_if.decode_ex_reg.reserve) || csr_read;
     assign hazard_if.ex_busy = (!rv32m_done && decode_ex_if.decode_ex_reg.rv32m_control.select)
                             || (!rv32b_done && decode_ex_if.decode_ex_reg.rv32b_control.select)

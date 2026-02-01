@@ -42,6 +42,7 @@ module stage5_hazard_unit (
     logic rs1_match_de, rs2_match_de;
     logic rs_match_dm, rs_match_de;
     logic cannot_forward_e, cannot_forward_m;
+    logic mem_use_stall_de, mem_use_stall_dm;
     logic fetch_busy;
     logic execute_busy;
     logic mem_busy;
@@ -55,8 +56,8 @@ module stage5_hazard_unit (
     // Hazard detection
     assign rs1_match_dm = (hazard_if.rs1_d == hazard_if.rd_m) && (hazard_if.rd_m != 0);
     assign rs2_match_dm = (hazard_if.rs2_d == hazard_if.rd_m) && (hazard_if.rd_m != 0);
-    assign rs1_match_de = (hazard_if.rs1_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
-    assign rs2_match_de = (hazard_if.rs2_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
+    assign rs1_match_de = (hazard_if.rs1_d == hazard_if.rd_e) && (hazard_if.rd_e != 0);
+    assign rs2_match_de = (hazard_if.rs2_d == hazard_if.rd_e) && (hazard_if.rd_e != 0);
     assign rs_match_dm = rs1_match_dm || rs2_match_dm;
     assign rs_match_de = rs1_match_de || rs2_match_de;
 
@@ -64,7 +65,9 @@ module stage5_hazard_unit (
     assign branch_jump = (hazard_if.jump || hazard_if.branch) && hazard_if.mispredict;
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren;
     assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
-    assign hazard_if.mem_use_stall = hazard_if.reg_write_m && ((hazard_if.cannot_forward_m && rs_match_dm) || (hazard_if.cannot_forward_e && rs_match_de)); // gross: cannot forward loads in Ex to Dc, need to stall until we have the value written back
+    assign mem_use_stall_de = (hazard_if.reg_write_e && hazard_if.cannot_forward_e && rs_match_de);
+    assign mem_use_stall_dm = (hazard_if.reg_write_m && hazard_if.cannot_forward_m && rs_match_dm);
+    assign hazard_if.mem_use_stall =  mem_use_stall_de || mem_use_stall_dm;
 
     assign hazard_if.npc_sel = branch_jump;
 
@@ -152,9 +155,10 @@ module stage5_hazard_unit (
     /*
     * Pipeline control signals
     *
-    * Control hazard (Exception, Jump, Mispredict): F/E -> Flush, E/M -> Flush
-    *     - Special case: interrupt. Async, don't know where the oldest insn is. Interrupts must assume the memory op will go through, so flush only I/F
-    * Data hazard (unforwardable, load/CSR read): F/E -> Stall, E/M -> Flush
+    * Control hazard (Exception/Interrupt, Jump, Mispredict): F/D -> Flush, D/E -> Flush, E/M -> Flush
+    * Data hazard (unforwardable, load/CSR read):
+    *   - in D to E: F/D -> Stall, D/E -> Flush
+    *   - in D to M: F/D -> Stall, D/E -> Flush
     * Waiting (i.e. slow dmem access, fence, etc.):
     *     - If fetch stage slow, flush if_ex so in-flight instructions may finish (insert bubbles)
     *     - If ex stage slow, flush ex_mem so in-flight instruction may finish (insert bubbles). Stall if_ex
@@ -167,41 +171,6 @@ module stage5_hazard_unit (
     *   - fetch is not stalling
     *   - there is a forced redirect
     */
-
-    // Unforunately, pc_en is negative logic of stalling
-//     assign hazard_if.pc_en = (!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
-//                             || branch_jump
-//                             || ex_flush_hazard
-//                             || prv_pipe_if.insert_pc
-//                             || prv_pipe_if.mret
-//                             || prv_pipe_if.sret;//) //&& !wait_for_imem;
-
-//     assign hazard_if.if_ex_flush  = ex_flush_hazard // control hazard
-//                                   || branch_jump    // control hazard
-//                                   || (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
-
-//     assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
-//                                   || branch_jump     // Control hazard
-//                                   //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
-//                                   || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
-
-
-//   assign hazard_if.if_ex_stall  = !intr && (hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
-//                                   // || (wait_for_imem && !dmem_access) // ???
-//                                   //& (~ex_flush_hazard | e_ex_stage) // ???
-//                                   //|| rm_if.execute_stall //
-//                                   || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump) // Ugly case -- need to flush for control hazards when X busy, but other cases require stalling to take priority to prevent data loss (e.g. slow instruction fetch, valid insn in X, load in M --> giving flush priority would destroy insn in X)
-//                                   || hazard_if.mem_use_stall 
-//                                   || hazard_if.fence_stall); // Data hazard -- stall until dependency clears (from E/M flush after writeback)
-//      // TODO: Exceptions
-//     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
-//                                   || hazard_if.fence_stall
-//                                   || hazard_if.halt;
-//                                   //|| branch_jump && wait_for_imem; // This can be removed once there is I$. Solves problem where
-//                                                                    // stale I-request returns after PC is redirected
-//     // TODO: Enforce mutual exclusivity of these signals with assertion
-
-
 
     // Unforunately, pc_en is negative logic of stalling
     assign hazard_if.pc_en = (!hazard_if.if_dc_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
@@ -226,7 +195,7 @@ module stage5_hazard_unit (
     // - Load-Use hazard & the match is not in the excute stage
     assign hazard_if.dc_ex_flush = exception || intr
                                 || branch_jump
-                                || (hazard_if.mem_use_stall) // && !rs_match_de)
+                                || hazard_if.mem_use_stall
                                 || ex_flush_hazard;
 
     // Execute/Memory Flush on:
@@ -238,18 +207,16 @@ module stage5_hazard_unit (
                                  || (!hazard_if.ex_mem_stall & hazard_if.dc_ex_stall)
                                  || ex_flush_hazard;
 
-    // Memory/Write Back Flush
-
     // Fetch/Decode Stall
     // Should only stall if there is an interrupt and Decode/Execute is stalled
-    assign hazard_if.if_dc_stall = !intr && (hazard_if.dc_ex_stall);
+    assign hazard_if.if_dc_stall = !intr && (hazard_if.dc_ex_stall)
+                                || hazard_if.mem_use_stall && !ex_flush_hazard && !branch_jump;
 
     // Decode/Execute Stall
     // Should only stall if Execute/Memory is stalled
     // or there is a Load-Use condition
     // or need to flush for control hazards when X busy, but other cases require stalling to take priority to prevent data loss (e.g. slow instruction fetch, valid insn in X, load in M --> giving flush priority would destroy insn in X)
     assign hazard_if.dc_ex_stall = hazard_if.ex_mem_stall
-                                || hazard_if.mem_use_stall
                                 || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump);
 
     // Execute/Memory Stall

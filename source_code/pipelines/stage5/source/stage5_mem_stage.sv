@@ -322,6 +322,15 @@ module stage5_mem_stage(
             W_SEL_FROM_PRIV_PIPE : reg_wdata = prv_pipe_if.rdata;
             default: reg_wdata = '0;
         endcase
+
+        // Forwarding unit
+        case (ex_mem_if.ex_mem_reg.w_sel)
+            W_SEL_FROM_PC        : fw_if.rd_m_data = ex_mem_if.ex_mem_reg.pc4;
+            W_SEL_FROM_IMM_U     : fw_if.rd_m_data = ex_mem_if.ex_mem_reg.imm_U;
+            W_SEL_FROM_ALU       : fw_if.rd_m_data = ex_mem_if.ex_mem_reg.port_out;
+            W_SEL_FROM_PRIV_PIPE : fw_if.rd_m_data = prv_pipe_if.rdata;
+            default: fw_if.rd_m_data = '0;
+        endcase
     end
 
     always_ff @( posedge CLK, negedge nRST ) begin : blockName
@@ -341,7 +350,6 @@ module stage5_mem_stage(
     assign fw_if.rs1_m = ex_mem_if.ex_mem_reg.rs1;
     assign fw_if.rs2_m = ex_mem_if.ex_mem_reg.rs2;
     assign fw_if.rd_m = ex_mem_if.ex_mem_reg.rd;
-    assign fw_if.rd_m_data = reg_wdata;
 
     assign fw_if.reg_write_wb = mem_wb_if.mem_wb_reg.reg_write;
     assign fw_if.rd_wb = mem_wb_if.mem_wb_reg.rd;
