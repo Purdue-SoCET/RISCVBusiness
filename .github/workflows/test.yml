@@ -15,6 +15,7 @@ jobs:
         uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
           targets: | # List all FuseSoC Test Targets
+            mkdir -p ~/.ssh && ssh-keyscan github.com >>~/.ssh/known_hosts
             ./setup.sh
             make config
             make verilate
