@@ -15,6 +15,7 @@ jobs:
         uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
           targets: | # List all FuseSoC Test Targets
+            ./setup.sh
             make config
             make verilate
             riscv64-unknown-elf-gcc --version
