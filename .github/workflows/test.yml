@@ -12,8 +12,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3 # required
       - name: Run Regression Tests
-        uses: Purdue-SoCET/SoCET-CI@main # core usage
+        uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
           targets: | # List all FuseSoC Test Targets
             make config
             make verilate
+            riscv64-unknown-elf-gcc --version
