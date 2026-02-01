@@ -17,6 +17,7 @@ jobs:
           targets: | # List all FuseSoC Test Targets
             ls -al
             ls -al ..
+            ls -al /home/runner/work/_actions/Purdue-SoCET/RISC-V-CI/main
             riscv64-unknown-elf-gcc --version
             make config
             make verilate
