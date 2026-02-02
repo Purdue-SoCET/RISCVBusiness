@@ -18,4 +18,4 @@ jobs:
           targets: | # List all FuseSoC Test Targets
             make config
             make verilate
-            python3 run_tests.py --sim-parallel --num-harts 2
+            python3 -u run_tests.py --sim-parallel --num-harts 2
