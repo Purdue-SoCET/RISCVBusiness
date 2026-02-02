@@ -14,10 +14,11 @@ jobs:
       - name: Run Regression Tests
         uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
-          context: .
           targets: | # List all FuseSoC Test Targets
             ls -al
-            ls -al ..
-            ls -alR /github
+            ls -al riscv-tests
+            ls -al riscv-tests/isa
+            ls -al riscv-tests/benchmarks
             make config
             make verilate
+            python run_tests.py --sim-parallel --num-harts 2
