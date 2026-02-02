@@ -15,7 +15,7 @@ jobs:
         uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
           targets: | # List all FuseSoC Test Targets
-            ls -al
+            ls -al /work
             ls -al riscv-tests
             ls -al riscv-tests/isa
             ls -al riscv-tests/benchmarks
