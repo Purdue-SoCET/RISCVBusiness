@@ -35,14 +35,15 @@ module tb_bus_ctrl ();
       .BLOCK_SIZE(dut_params::BLOCK_SIZE_WORDS),
       .CPUS(dut_params::NUM_CPUS_USED)
   ) bus_ctrl_mod (
-      bus_ctrl_if.clk,
-      bus_ctrl_if.nRST,
-      bus_ctrl_if
+      .CLK(bus_ctrl_if.clk),
+      .nRST(bus_ctrl_if.nRST),
+      .ccif(bus_ctrl_if)
   );
 
   initial begin
+    // configure the interface into the database, so that it can be accessed throughout the hierachy
     uvm_config_db#(virtual bus_ctrl_if)::set(null, "", "bus_ctrl_vif",
-                                             bus_ctrl_if); // configure the interface into the database, so that it can be accessed throughout the hierachy
+                                             bus_ctrl_if);
     run_test("test_basic");
   end
 endmodule

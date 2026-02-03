@@ -73,7 +73,7 @@ module tb_caches_top ();
   cache_if d_cif (clk);  // holds flush, clear signals for d cache
   cache_if l2_cif (clk);  // holds flush, clear signals for l2 cache
 
-  if (`INTERFACE_CHECKER == 1) begin
+  if (`INTERFACE_CHECKER == 1) begin : g_int_checker
     interface_checker if_check (  //FIXME: THIS NEEDS TO BE UPDATED WITH PROPER INTERFACES
         .d_cif(d_cif.cache),
         .i_cif(i_cif.cache),
