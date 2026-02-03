@@ -15,7 +15,7 @@ jobs:
         uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
           targets: | # List all FuseSoC Test Targets
-            ls -al /opt/riscv
+            ls -al /opt/riscv/share
             make config
             make verilate
             python3 -u run_tests.py --num-harts 2
