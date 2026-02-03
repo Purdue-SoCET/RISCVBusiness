@@ -7,7 +7,6 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6 # required
@@ -19,3 +18,26 @@ jobs:
             make verilate
             python3 -u run_tests.py --riscv-tests --num-harts 1
             python3 -u run_tests.py --riscv-tests --num-harts 2
+
+  lint-pr:
+    name: PR Linter
+    if: ${{ github.event.pull_request }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: chipsalliance/verible-linter-action@main
+      with:
+        fail_on_error: true
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    name: Commit Linter
+    if: ${{ !github.event.pull_request }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: chipsalliance/verible-linter-action@main
+      with:
+        reviewdog_reporter: github-check
+        fail_on_error: true
+        github_token: ${{ secrets.GITHUB_TOKEN }}
