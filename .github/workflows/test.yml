@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.event.head_commit.message, 'BUILD') }}
+    if: ${{ github.event.pull_request || contains(github.event.head_commit.message, 'BUILD') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6 # required
@@ -19,7 +19,7 @@ jobs:
 
   test-suite:
     name: PR Tests & Benchmarks
-    if: ${{ contains(github.event.head_commit.message, 'TEST') }}
+    if: ${{ github.event.pull_request || contains(github.event.head_commit.message, 'TEST') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -44,7 +44,7 @@ jobs:
 
   lint:
     name: Commit Linter
-    if: ${{ contains(github.event.head_commit.message, 'LINT') }}
+    if: ${{ !github.event.pull_request && contains(github.event.head_commit.message, 'LINT') }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
