@@ -180,18 +180,11 @@ def main():
   args = parse_args()
 
   if args.riscv_tests:
-    # 1-hart tests
+    # N-hart tests
     # benchmarks are only supported in single core
-    info_print("1-hart riscv-tests")
-    config_maxed_core(CONFIG_PATH, num_harts=1)
-    riscv_tests_runner(num_harts=1, sim_parallel=args.sim_parallel)
-
-    # do another test run with the specifed number of harts
-    if args.num_harts > 1:
-      info_print(f"{args.num_harts}-hart riscv-tests")
-      config_maxed_core(CONFIG_PATH, num_harts=args.num_harts)
-      riscv_tests_runner(num_harts=args.num_harts, sim_parallel=args.sim_parallel)
-      
+    info_print(f"{args.num_harts}-hart riscv-tests")
+    config_maxed_core(CONFIG_PATH, num_harts=args.num_harts)
+    riscv_tests_runner(num_harts=args.num_harts, sim_parallel=args.sim_parallel)
 
   if args.embench:
     """TODO(anyone): add in support for embench."""

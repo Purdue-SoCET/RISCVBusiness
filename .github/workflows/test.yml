@@ -2,7 +2,7 @@ name: Test
 on:
   push:
   pull_request: 
-    branches: [main]
+    branches: [master]
 
 jobs:
   ci:
@@ -17,4 +17,5 @@ jobs:
           targets: | # List all FuseSoC Test Targets
             make config
             make verilate
-            python3 -u run_tests.py --num-harts 2
+            python3 -u run_tests.py --riscv-tests --num-harts 1
+            python3 -u run_tests.py --riscv-tests --num-harts 2
