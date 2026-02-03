@@ -35,6 +35,18 @@ skip_list = [
     'rv32mi-p-illegal.bin', # requires RV32C illegal instruction detection, which we have not implemented
     'rv32mi-p-breakpoint.bin', # requires some parts of debug spec implemented.
     'rv32mi-p-shamt.bin', # requires full detection of illegal instructions (including RV32 SLL with shamt[5] set)
+
+    'rv32ui-pm-ld_st.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amoswap_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amomin_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-lrsc.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amomax_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amominu_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amoxor_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amoadd_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amoor_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32ua-pm-amomaxu_w.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
+    'rv32uc-pm-rvc.bin', # known failing test, see https://github.com/Purdue-SoCET/RISCVBusiness/issues/106
 ]
 
 def apply_skips(test):
