@@ -66,7 +66,7 @@ module stage3_execute_stage (
     // All full-size instructions end with 0b11
     assign is_compressed = fetch_ex_if.fetch_ex_reg.instr[1:0] != 2'b11;
     assign cu_if.instr =
-            is_compressed ? 
+            is_compressed ?
             decompressor_out
             : fetch_ex_if.fetch_ex_reg.instr;
 
@@ -201,7 +201,9 @@ module stage3_execute_stage (
     *************************/
     assign rf_if.w_data = ex_mem_if.reg_wdata;
     assign rf_if.rd = ex_mem_if.rd_m;
-    assign rf_if.wen = ex_mem_if.reg_write && !hazard_if.ex_mem_stall; // TODO: The second signal only matters for some miniscule power reduction by not writing each cycle. This is correct with only the wen signal due to no loop from reg read to reg write
+    // TODO: The second signal only matters for some miniscule power reduction by not writing each cycle.
+    // This is correct with only the wen signal due to no loop from reg read to reg write
+    assign rf_if.wen = ex_mem_if.reg_write && !hazard_if.ex_mem_stall;
 
     /***********************************************
     * Branch Target Resolution and Associated Logic
@@ -239,7 +241,8 @@ module stage3_execute_stage (
     assign fw_if.rs2_e = rf_if.rs2;
 
     assign hazard_if.pc_e = fetch_ex_if.fetch_ex_reg.pc;
-    assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select); // Add & conditions here for other FUs that can stall
+    // Add & conditions here for other FUs that can stall
+    assign hazard_if.ex_busy = (!rv32m_done && cu_if.rv32m_control.select);
     assign hazard_if.valid_e = fetch_ex_if.fetch_ex_reg.valid;
 
     // CSR Read-only determination
@@ -287,12 +290,12 @@ module stage3_execute_stage (
                     ex_mem_if.ex_mem_reg.reserve        <= cu_if.reserve;
                     ex_mem_if.ex_mem_reg.exclusive      <= cu_if.exclusive;
                 end
-                ex_mem_if.ex_mem_reg.illegal_insn              <= cu_if.illegal_insn;
-                ex_mem_if.ex_mem_reg.fault_addr                <= fetch_ex_if.fetch_ex_reg.fault_addr;
-                ex_mem_if.ex_mem_reg.mal_insn                  <= fetch_ex_if.fetch_ex_reg.mal_insn;
-                ex_mem_if.ex_mem_reg.fault_insn                <= fetch_ex_if.fetch_ex_reg.fault_insn;
-                ex_mem_if.ex_mem_reg.fault_insn_page           <= fetch_ex_if.fetch_ex_reg.fault_insn_page;
-                ex_mem_if.ex_mem_reg.predicted_address	       <= fetch_ex_if.fetch_ex_reg.predicted_address;
+                ex_mem_if.ex_mem_reg.illegal_insn       <= cu_if.illegal_insn;
+                ex_mem_if.ex_mem_reg.fault_addr         <= fetch_ex_if.fetch_ex_reg.fault_addr;
+                ex_mem_if.ex_mem_reg.mal_insn           <= fetch_ex_if.fetch_ex_reg.mal_insn;
+                ex_mem_if.ex_mem_reg.fault_insn         <= fetch_ex_if.fetch_ex_reg.fault_insn;
+                ex_mem_if.ex_mem_reg.fault_insn_page    <= fetch_ex_if.fetch_ex_reg.fault_insn_page;
+                ex_mem_if.ex_mem_reg.predicted_address  <= fetch_ex_if.fetch_ex_reg.predicted_address;
 
                 // Bit vectors
                 ex_mem_if.ex_mem_reg.w_sel      <= cu_if.w_sel;

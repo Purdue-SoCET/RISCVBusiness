@@ -1,3 +1,10 @@
 parameter-name-style=localparam_style:CamelCase|ALL_CAPS
+line-length=length:120
+undersized-binary-literal=bin:false
+-case-missing-default
 -explicit-function-lifetime
+-explicit-parameter-storage-type
 -explicit-task-lifetime
+-invalid-system-task-function
+-typedef-structs-unions
+-unpacked-dimensions-range-ordering

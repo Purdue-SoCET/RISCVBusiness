@@ -18,14 +18,14 @@ module rv32zc_decode(
         claim = 1'b1;
         operation = EQZ;
 
-        if (insn_split.opcode_major == REGREG && insn_split.opcode_minor == RV32ZC_OPCODE_MINOR) begin 
-            casez(insn_split.funct)  
-                3'b111  : operation = NEZ; 
-                3'b101  : operation = EQZ; 
-                default: claim = 1'b0; 
+        if (insn_split.opcode_major == REGREG && insn_split.opcode_minor == RV32ZC_OPCODE_MINOR) begin
+            casez(insn_split.funct)
+                3'b111  : operation = NEZ;
+                3'b101  : operation = EQZ;
+                default: claim = 1'b0;
             endcase
-        end else begin 
-            claim = 1'b0; 
+        end else begin
+            claim = 1'b0;
         end
 
     end

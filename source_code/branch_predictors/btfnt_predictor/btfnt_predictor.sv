@@ -35,7 +35,8 @@ module btfnt_predictor (
     word_t offset;
 
     assign offset = $signed(predict_if.imm_sb);
-    assign predict_if.predict_taken = predict_if.is_branch && offset[WORD_SIZE-1];      // offset < 0 taken; otherwise not taken
+    // offset < 0 taken; otherwise not taken
+    assign predict_if.predict_taken = predict_if.is_branch && offset[WORD_SIZE-1];
     assign predict_if.target_addr   = predict_if.current_pc + offset;
 
 endmodule

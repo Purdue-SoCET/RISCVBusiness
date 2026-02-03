@@ -16,7 +16,7 @@
 *
 *   Filename:     rv32m_pkg.sv
 *
-*   Created by:   Cole Nelson 
+*   Created by:   Cole Nelson
 *   Email:        nelso345@purdue.edu
 *   Date Created: 04/04/2024
 *   Description:  Types for the Bitmanipulation standard extension

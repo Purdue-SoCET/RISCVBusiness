@@ -34,7 +34,7 @@ package rv32zc_pkg;
     } rv32zc_insn_t;
 
     typedef enum logic [2:0] {
-        NEZ, 
+        NEZ,
         EQZ
     } rv32zc_op_t /*verilator public*/;
 

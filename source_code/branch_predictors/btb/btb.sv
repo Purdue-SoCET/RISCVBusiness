@@ -106,7 +106,7 @@ module btb #(
     always_comb begin : predict_logic
         predict_if.predict_taken = 0;
 
-        // If we have a tag match, 
+        // If we have a tag match,
         if (selected_set.tag == curr_pc.tag_bits) begin
             if (predict_if.is_branch)
                 predict_if.predict_taken = selected_frame.taken[PRED_BITS-1];

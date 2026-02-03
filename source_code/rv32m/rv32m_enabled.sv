@@ -50,7 +50,8 @@ module rv32m_enabled (
     assign is_divide   = (operation == DIV) || (operation == DIVU) || (operation == REM) || (operation == REMU);
     assign op_a = operand_diff ? rv32m_a : op_a_save;
     assign op_b = operand_diff ? rv32m_b : op_b_save;
-    assign operand_diff = rv32m_start && ((op_a_save != rv32m_a) || (op_b_save != rv32m_b) || (operation_save != operation));
+    assign operand_diff = rv32m_start
+                            && ((op_a_save != rv32m_a) || (op_b_save != rv32m_b) || (operation_save != operation));
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
@@ -118,7 +119,8 @@ module rv32m_enabled (
         .nRST(nRST),
         .divisor(divisor),
         .dividend(dividend),
-        .is_signed(is_signed[0]), // For division, only 00 or 11, input is 1 bit, so take one of the bits for "is_signed" (arbitrary)
+        // For division, only 00 or 11, input is 1 bit, so take one of the bits for "is_signed" (arbitrary)
+        .is_signed(is_signed[0]),
         .start(div_start),
         .remainder(remainder),
         .quotient(quotient),

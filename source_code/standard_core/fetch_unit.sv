@@ -59,7 +59,7 @@ module fetch_unit #(
             assign insn_addr = igen_bus_if.addr;
             assign mal_addr = 1'b0;
             assign insn_fault = igen_bus_if.error;
-        end else begin
+        end else begin : g_rvc_nofetchbuffer
             assign igen_bus_if.ren = ireq;
             assign igen_bus_if.byte_en = 4'hF;
             assign igen_bus_if.wen = 1'b0;

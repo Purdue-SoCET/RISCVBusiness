@@ -36,13 +36,13 @@ module branch_predictor_wrapper (
     generate
             case (BR_PREDICTOR_TYPE)
                 // static not taken predictor
-                "not_taken": nottaken_predictor predictor (CLK, nRST, predict_if);
+                "not_taken": nottaken_predictor predictor (.CLK, .nRST, .predict_if);
                 // static backward taken/forward not taken predictor
-                "btfnt"    : btfnt_predictor predictor (CLK, nRST, predict_if);
+                "btfnt"    : btfnt_predictor predictor (.CLK, .nRST, .predict_if);
                 // BTB with 1b predictor
-                "btb_1"    : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_if); 
+                "btb_1"    : btb #(.PRED_BITS(1), .NFRAMES(BTB_SIZE / 4)) predictor (.CLK, .nRST, .predict_if);
                 // BTB with 2b predictor
-                "btb_2"    : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4)) predictor (CLK, nRST, predict_if);
+                "btb_2"    : btb #(.PRED_BITS(2), .NFRAMES(BTB_SIZE / 4)) predictor (.CLK, .nRST, .predict_if);
             endcase
     endgenerate
 

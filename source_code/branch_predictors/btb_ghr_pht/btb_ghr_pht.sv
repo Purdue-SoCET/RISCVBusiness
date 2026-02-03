@@ -7,7 +7,7 @@ module btb_ghr_pht #(
 (
     input logic CLK, nRST,
     predictor_pipeline_if.predictor predict_if
-);  
+);
 
     import rv32i_types_pkg::*;
 
@@ -28,7 +28,7 @@ module btb_ghr_pht #(
     typedef struct packed {
         btb_frame_t [ASSOC-1:0] frames;
     } btb_set_t;        // BTB set
-    
+
     typedef struct packed {
         logic [N_IGNORE_BITS-1:0] ignore_bits;
         logic [N_TAG_BITS-1:0] tag_bits;
@@ -39,21 +39,22 @@ module btb_ghr_pht #(
     btb_set_t [N_SETS-1:0] buffer;
     btb_addr_t curr_pc, update_pc;
     btb_set_t selected_set, next_set, update_set;
-    btb_frame_t selected_frame; 
+    btb_frame_t selected_frame;
     logic GHR_taken;
     //logic BTB_hit;
 
     assign curr_pc = predict_if.current_pc; // convert PC to decoded type
     assign update_pc = predict_if.pc_to_update;
     assign selected_set = buffer[curr_pc.idx_bits];
-    assign selected_frame = (selected_set.frames[0].tag == curr_pc.tag_bits)? selected_set.frames[0] : selected_set.frames[1];
+    assign selected_frame = (selected_set.frames[0].tag == curr_pc.tag_bits)
+                            ? selected_set.frames[0] : selected_set.frames[1];
     assign update_set = buffer[update_pc.idx_bits];
 
      // Instantiate ghr_pht
     ghr_pht # (.SIZE(SIZE), .PRED_BITS(PRED_BITS)) ghr_pht (
-        .CLK(CLK), 
-        .nRST(nRST), 
-        .predict_if(predict_if), 
+        .CLK(CLK),
+        .nRST(nRST),
+        .predict_if(predict_if),
         .GHR_taken(GHR_taken)
     );
 
@@ -61,7 +62,7 @@ module btb_ghr_pht #(
         if(!nRST) begin
             buffer <= '0;
         end else begin
-            buffer[update_pc.idx_bits] <= next_set; 
+            buffer[update_pc.idx_bits] <= next_set;
         end
     end
 
@@ -87,7 +88,7 @@ module btb_ghr_pht #(
     // get prediction
     always_comb begin   :   predict_logic
         if(selected_set.frames[0].tag != curr_pc.tag_bits && selected_set.frames[1].tag != curr_pc.tag_bits) begin
-            // current PC not in buffer: predict not taken, 
+            // current PC not in buffer: predict not taken,
             predict_if.predict_taken = 0;
             predict_if.target_addr = predict_if.is_rv32c ? predict_if.current_pc + 2 : predict_if.current_pc + 4;
         end
@@ -98,7 +99,7 @@ module btb_ghr_pht #(
             predict_if.target_addr = predict_if.predict_taken ? selected_frame.target
                                      : predict_if.is_rv32c ? predict_if.current_pc + 2
                                      : predict_if.current_pc + 4;
-        end 
+        end
     end
 
 endmodule

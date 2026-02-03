@@ -122,13 +122,17 @@ module priv_pmp (
             //    pmpcfg(i) might be TOR, which means it uses both pmpaddr(i) and pmpaddr(i-1)
             //    pg 60 of the v1.12 specification for more info
             if (priv_ext_if.csr_addr[3:0] != 15) begin // 15 is the last valid register, can't check the one above it
-              if ((pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A != TOR) || // If not TOR, everything is good
-                  (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L)) begin   // It was TOR, and is not locked
+                   // If not TOR, everything is good
+              if ((pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].A != TOR)
+                  // It was TOR, and is not locked
+                  || (~pmp_cfg_regs[pmp_cfg_addr_add_one_reg][pmp_cfg_addr_add_one_cfg].L)) begin
                 // If NA4 is allowed or if lower bits are all 1's
                 if (PMP_MINIMUM_GRANULARITY == 0 || (&priv_ext_if.value_in[(NAPOT_ADDR_BITS-1):0]))
                   nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = priv_ext_if.value_in; // keep address as is
                 else begin
-                  nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] = (priv_ext_if.value_in & ~((32'b1 << NAPOT_ADDR_BITS) - 1)) | ((32'b1 << (NAPOT_ADDR_BITS - 1)) - 1); // change to lowest granularity
+                  // change to lowest granularity
+                  nxt_pmp_addr[priv_ext_if.csr_addr[3:0]] =
+                    (priv_ext_if.value_in & ~((32'b1 << NAPOT_ADDR_BITS) - 1)) | ((32'b1 << (NAPOT_ADDR_BITS - 1)) - 1);
               end
               end
             end
@@ -164,11 +168,11 @@ module priv_pmp (
   generate
     for (i=0; i<16; i++) begin : g_dpmp_match
       priv_pmp_matcher matcher (
-        {2'b00, prv_intern_if.daddr[31:2]},
-        pmp_cfg_regs[i>>2][i & 3],
-        pmp_addr_regs[i],
-        i == 0 ? '0 : pmp_addr_regs[i-1],
-        d_cfg_match[i]
+        .phys_addr({2'b00, prv_intern_if.daddr[31:2]}),
+        .check_cfg(pmp_cfg_regs[i>>2][i & 3]),
+        .cfg_addr(pmp_addr_regs[i]),
+        .cfg_addr_before(i == 0 ? '0 : pmp_addr_regs[i-1]),
+        .match(d_cfg_match[i])
       );
     end
   endgenerate
@@ -201,7 +205,8 @@ module priv_pmp (
       default: d_match_found = 1'b0;
     endcase
 
-    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin  // Core is in an unprivileged state or needs privilege checks
+    // Core is in an unprivileged state or needs privilege checks
+    if (!prv_intern_if.isMMode || (prv_intern_if.curr_mstatus.mprv && prv_intern_if.curr_mstatus.mpp != M_MODE)) begin
       if (~d_match_found) begin
         d_prot_fault = 1'b1;
       end else begin
@@ -225,11 +230,11 @@ module priv_pmp (
   generate
     for (j=0; j<16; j++) begin : g_ipmp_matchers
       priv_pmp_matcher matcher (
-        {2'b00, prv_intern_if.iaddr[31:2]},
-        pmp_cfg_regs[j>>2][j%4],
-        pmp_addr_regs[j],
-        j == 0 ? '0 : pmp_addr_regs[j-1],
-        i_cfg_match[j]
+        .phys_addr({2'b00, prv_intern_if.iaddr[31:2]}),
+        .check_cfg(pmp_cfg_regs[j>>2][j%4]),
+        .cfg_addr(pmp_addr_regs[j]),
+        .cfg_addr_before(j == 0 ? '0 : pmp_addr_regs[j-1]),
+        .match(i_cfg_match[j])
       );
     end
   endgenerate

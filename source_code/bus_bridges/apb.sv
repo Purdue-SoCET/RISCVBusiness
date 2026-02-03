@@ -73,7 +73,7 @@ module apb (
     always_comb begin
         if(state == IDLE) begin
             apbif.PADDR = '0;
-            apbif.PSEL = '0; 
+            apbif.PSEL = '0;
             apbif.PPROT = '0;
             apbif.PENABLE = '0;
             apbif.PWRITE = '0;

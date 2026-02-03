@@ -173,16 +173,27 @@ module tlb #(
 
     // sram instance
     assign sramSEL = (state == FENCE_TLB || state == IDLE) ? fence_idx.set_num : decoded_addr.vpn.idx_bits;
-    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS)) 
-        CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
+    sram #(
+        .SRAM_WR_SIZE(SRAM_W),
+        .SRAM_HEIGHT(N_SETS)
+    ) CPU_SRAM (
+        .CLK(CLK),
+        .nRST(nRST),
+        .wVal(sramWrite),
+        .rVal(sramRead),
+        .REN(1'b1),
+        .WEN(sramWEN),
+        .SEL(sramSEL),
+        .wMask(sramMask)
+    );
 
     // setting permissions signals
     assign pte_sv32 = pte_sv32_t'(hit_data);
-    
+
     generate
-        if (IS_ITLB) begin
+        if (IS_ITLB) begin : g_is_itlb
             assign access = ACCESS_INSN;
-        end else begin
+        end else begin : g_is_not_itlb
             assign access = prv_pipe_if.ex_mem_wen ? ACCESS_STORE : prv_pipe_if.ex_mem_ren ? ACCESS_LOAD : ACCESS_NONE;
         end
     endgenerate
@@ -254,7 +265,7 @@ module tlb #(
     // CPU and bus sram have different always_comb blocks to prevent false
     // circular logic
     always_comb begin
-        hit 	        = 0;
+        hit             = 0;
         hit_idx         = 0;
         hit_data        = 0;
 
@@ -284,14 +295,14 @@ module tlb #(
         proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
-        mem_gen_bus_if.addr     = 0; 
-        mem_gen_bus_if.wdata    = 0; 
+        mem_gen_bus_if.addr     = 0;
+        mem_gen_bus_if.wdata    = 0;
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         tlb_hit_data            = '0;
         enable_fence_count      = 0;
         enable_fence_count_nowb = 0;
         clear_fence_count       = 0;
-        fence_done 	            = 0;
+        fence_done              = 0;
         tlb_miss                = 0;
         tlb_hit                 = 0;
         idle_done               = 0;
@@ -315,7 +326,7 @@ module tlb #(
                 // flag the completion of fence
                 if (fence_idx.finish) begin
                     clear_fence_count  = 1;
-                    idle_done 	       = 1;
+                    idle_done          = 1;
                     fence_done = 1; //HACK: Remove if this causes bugs, used for testbench
                 end
             end
@@ -370,9 +381,12 @@ module tlb #(
                 // fence if valid and
                 // rs1 == 0 or sram.vpn == fence_va.vpn and
                 // rs2 == 0 or (sram.asid == fence_asid and is not a global page)
-                if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid &&
-                    (~|decoded_fence_va | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, sramSEL} == decoded_fence_va.vpn)) && 
-                    (~|fence_asid | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid && ~sramRead.frames[fence_idx.frame_num].pte.perms.global_page))) begin
+                if (!fence_idx.finish && sramRead.frames[fence_idx.frame_num].tag.valid
+                    && (~|decoded_fence_va
+                        | ({sramRead.frames[fence_idx.frame_num].tag.vpn_tag, sramSEL} == decoded_fence_va.vpn))
+                    && (~|fence_asid
+                        | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid
+                            && ~sramRead.frames[fence_idx.frame_num].pte.perms.global_page))) begin
                     // clears entry when fenceed
                     sramWEN = 1;
                     sramWrite.frames[fence_idx.frame_num] = 0;
@@ -382,7 +396,7 @@ module tlb #(
                 // flag the completion of fence
                 if (fence_idx.finish) begin
                     clear_fence_count  = 1;
-                    fence_done 	       = 1;
+                    fence_done         = 1;
                 end
             end
         endcase

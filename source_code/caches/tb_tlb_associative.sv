@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,9 +56,9 @@ module tb_tlb_associative();
   logic clear, fence, page_fault, clear_done, fence_done, tlb_miss;
   logic fault_load_page, fault_store_page, fault_insn_page;
   word_t tlb_hit_data;
-  
+
   // clock
-  always #(PERIOD/2) CLK++; 
+  always #(PERIOD/2) CLK++;
 
   // test signals
   generic_bus_if         proc_gen_bus_if(); // Processor to TLB
@@ -67,15 +67,23 @@ module tb_tlb_associative();
   address_translation_if at_if ();          // Cache to TLB
 
   // test program
-  test_tlb_associative PROG (CLK, nRST,
-    clear_done, fence_done, tlb_miss,
-    fault_load_page, fault_store_page, fault_insn_page,
-    tlb_hit_data,
-    clear, fence, page_fault,
-    proc_gen_bus_if,
-    mem_gen_bus_if,
-    prv_pipe_if,
-    at_if
+  test_tlb_associative PROG (
+    .CLK,
+    .nRST,
+    .clear_done,
+    .fence_done,
+    .tlb_miss,
+    .fault_load_page,
+    .fault_store_page,
+    .fault_insn_page,
+    .tlb_hit_data,
+    .clear,
+    .fence,
+    .page_fault,
+    .gbif(proc_gen_bus_if),
+    .mbif(mem_gen_bus_if),
+    .prv_pipe_if,
+    .at_if
   );
 
   // DUT
@@ -87,8 +95,8 @@ module tb_tlb_associative();
     .page_fault(page_fault),
     .fence_done(fence_done),
     .tlb_miss(tlb_miss),
-    .fault_load_page(fault_load_page), 
-    .fault_store_page(fault_store_page), 
+    .fault_load_page(fault_load_page),
+    .fault_store_page(fault_store_page),
     .fault_insn_page(fault_insn_page),
     .tlb_hit_data(tlb_hit_data),
     .mem_gen_bus_if(mem_gen_bus_if),
@@ -103,7 +111,9 @@ module tb_tlb_associative();
   assign at_if.sv48 = 0; // prv_pipe_if.satp.mode == 9
   assign at_if.sv57 = 0; // prv_pipe_if.satp.mode == 10
   assign at_if.sv64 = 0; // prv_pipe_if.satp.mode == 11
-  assign at_if.addr_trans_on = (at_if.sv32 | at_if.sv39 | at_if.sv48 | at_if.sv57 | at_if.sv64) && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
+  assign at_if.addr_trans_on = (at_if.sv32 | at_if.sv39 | at_if.sv48 | at_if.sv57 | at_if.sv64)
+                                && (prv_pipe_if.curr_privilege_level == S_MODE
+                                    || prv_pipe_if.curr_privilege_level == U_MODE);
 
 
 endmodule
@@ -150,7 +160,7 @@ initial begin : MAIN
   reset_gbif();
   reset_mbif();
   reset_priv();
-  
+
   // Setup seed
   error_cnt = 0;
   seed = SEED;
@@ -175,17 +185,17 @@ initial begin : MAIN
   @(posedge CLK);
 
   /**************************
-  
+
   Begin testing!
-  
+
   **************************/
   $display("\n---------- Beginning Basic Test Cases ---------\n");
 
 
   /**************************
-  
+
   Address translation off (M-mode and S-Mode Bare addressing)
-  
+
   **************************/
   begin_test("Address translation off (M-mode and S-Mode Bare addressing)");
 
@@ -223,9 +233,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Compulsory TLB miss (empty set)
-  
+
   **************************/
   begin_test("Compulsory TLB miss (empty set)");
   set_priv_level(S_MODE);
@@ -237,9 +247,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Half-full set, TLB Hit
-  
+
   **************************/
   begin_test("Half-full set, TLB Hit");
   complete_read_check(32'h10001000, 32'hFFFFFC00);
@@ -247,9 +257,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Half-full set, TLB Miss
-  
+
   **************************/
   begin_test("Half-full set, TLB Miss");
   complete_read_check(32'h80001000, 32'hAAAAAC00);
@@ -257,9 +267,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Full set, TLB Hits
-  
+
   **************************/
   begin_test("Full set, TLB Hits");
   complete_read_check(32'h10001000, 32'hFFFFFC00);
@@ -268,9 +278,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Full set,  TLB Eviction (conflict miss)
-  
+
   **************************/
   begin_test("Full set,  TLB Eviction (conflict miss)");
   complete_read_check(32'hA0001000, 32'hEEEEEC00); // knock out frame 0
@@ -281,9 +291,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Mismatch ASID miss
-  
+
   **************************/
   begin_test("Mismatch ASID miss");
   set_satp(1, 9'h100, 22'hFFFF); // new asid 0x100
@@ -292,9 +302,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Invalidate TLB entry, by VA & ASID
-  
+
   **************************/
   begin_test("Invalidate TLB entry, by VA & ASID");
   // generate a random tag and asid to fill cache with
@@ -321,9 +331,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Invalidate TLB entry, by VA
-  
+
   **************************/
   begin_test("Invalidate TLB entry, by VA");
   // generate a random tag and set test_asid = 0 to fill cache with
@@ -350,9 +360,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Invalidate TLB entry, by ASID
-  
+
   **************************/
   begin_test("Invalidate TLB entry, by ASID");
   // generate a random asid and set test_tag = 0 to fill cache with
@@ -378,9 +388,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Invalidate TLB entry, all entries
-  
+
   **************************/
   begin_test("Invalidate TLB entry, all entries");
   // set test_tag and test_asid = 0 to fill cache with
@@ -406,9 +416,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Address translation off (again)
-  
+
   **************************/
   begin_test("Address translation off (again)");
   // attempt a read in M-mode
@@ -445,9 +455,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Testing Completed
-  
+
   **************************/
   $display("\n---------- Testing Completed ---------\n");
 
@@ -616,7 +626,7 @@ task complete_read;
 
   // will manage a TLB miss if it happens
   handle_tlb_miss(expected_rdata);
-  
+
   // go a clock cycle, definitely in a hit at this point
   @(posedge CLK);
 
@@ -645,8 +655,8 @@ task complete_read_check;
   complete_read(expected_rdata, actual_rdata);
 
   if (expected_rdata !== actual_rdata) begin
-    $display("\nData Mismatch \nAddr: 0x%08h\nExpected: 0x%08h\nReceived: 0x%08h\n", 
-      read_addr, expected_rdata, actual_rdata); 
+    $display("\nData Mismatch \nAddr: 0x%08h\nExpected: 0x%08h\nReceived: 0x%08h\n",
+      read_addr, expected_rdata, actual_rdata);
     error_cnt = error_cnt + 1;
     #(DELAY);
     $finish;
@@ -913,11 +923,13 @@ task verify_tlb_fence;
     initiate_read({tlb_ppn[i], 12'h000});
 
     // check for TLB miss
-    if (tlb_miss) begin 
-      // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid 
-      if (!(tlb_rdata[i] & PAGE_PERM_GLOBAL) && ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0))) begin
-        $display("Invalid fence, data mismatch - tlb_ppn[%3d]: 0x%06h, test_ppn: 0x%06h - tlb_asid[%3d]: 0x%03h, test_asid: 0x%03h\n", 
-          i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid); 
+    if (tlb_miss) begin
+      // verify tlb_ppn[i] matches test_ppn and tlb_asid[i] matches test_asid
+      if (!(tlb_rdata[i] & PAGE_PERM_GLOBAL)
+            && ((tlb_ppn[i] !== test_ppn && test_ppn !== '0) || (tlb_asid[i] !== test_asid && test_asid !== '0))) begin
+        $display({"Invalid fence, data mismatch - tlb_ppn[%3d]: 0x%06h, test_ppn: 0x%06h - tlb_asid[%3d]: 0x%03h,",
+                    "test_asid: 0x%03h\n"},
+          i, tlb_ppn[i], test_ppn, i, tlb_asid[i], test_asid);
         error_cnt = error_cnt + 1;
       end else begin
         $display("Valid fence - tlb_ppn[%3d]: 0x%06h - tlb_asid[%3d]: 0x%03h\n", i, tlb_ppn[i], i, tlb_asid[i]);

@@ -32,7 +32,8 @@ module priv_pipe_control (
     import priv_isa_types_pkg::*;
     import rv32i_types_pkg::*;
 
-    assign prv_intern_if.insert_pc = prv_intern_if.mret | prv_intern_if.sret | (prv_intern_if.intr && !prv_intern_if.ex_mem_stall);
+    assign prv_intern_if.insert_pc = prv_intern_if.mret | prv_intern_if.sret
+                                        | (prv_intern_if.intr && !prv_intern_if.ex_mem_stall);
 
     always_comb begin
         prv_intern_if.priv_pc = '0;

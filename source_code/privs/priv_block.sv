@@ -42,7 +42,16 @@ module priv_block #(
     priv_ext_if priv_ext_pma_if();
     priv_ext_if priv_ext_pmp_if();
 
-    priv_csr #(.HART_ID(HART_ID)) csr (.CLK(CLK), .nRST(nRST), .mtime(mtime), .prv_intern_if(prv_intern_if), .priv_ext_pma_if(priv_ext_pma_if), .priv_ext_pmp_if(priv_ext_pmp_if));
+    priv_csr #(
+        .HART_ID(HART_ID)
+    ) csr (
+        .CLK(CLK),
+        .nRST(nRST),
+        .mtime(mtime),
+        .prv_intern_if(prv_intern_if),
+        .priv_ext_pma_if(priv_ext_pma_if),
+        .priv_ext_pmp_if(priv_ext_pmp_if)
+    );
     priv_int_ex_handler int_ex_handler (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if));
     priv_pipe_control pipe_ctrl (.prv_intern_if(prv_intern_if));
     priv_pma pma (.CLK(CLK), .nRST(nRST), .prv_intern_if(prv_intern_if), .priv_ext_if(priv_ext_pma_if));
@@ -70,7 +79,7 @@ module priv_block #(
         .neg_edge(dcache_miss_neg_edge)
     );
 
-    
+
     socetlib_edge_detector ITLB_MISS (
         .CLK(CLK),
         .nRST(nRST),
@@ -120,7 +129,8 @@ module priv_block #(
 
     // 12-13: branch: update and mispredict
     assign prv_intern_if.hpm_inc[11] = prv_pipe_if.bp_update; // branch predictor update
-    assign prv_intern_if.hpm_inc[12] = prv_pipe_if.bp_update & prv_pipe_if.bp_mispredict; // branch predictor mispredictions
+    // branch predictor mispredictions
+    assign prv_intern_if.hpm_inc[12] = prv_pipe_if.bp_update & prv_pipe_if.bp_mispredict;
 
     // 14-16: core stalls (fetch, execute, mem)
     assign prv_intern_if.hpm_inc[14] = prv_pipe_if.fetch_stall; // fetch stall cycles
@@ -152,9 +162,11 @@ module priv_block #(
     assign prv_intern_if.csr_read_only = prv_pipe_if.read_only;
     assign prv_intern_if.new_csr_val = prv_pipe_if.wdata;
     assign prv_pipe_if.rdata = prv_intern_if.old_csr_val;
-    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.mret & !prv_intern_if.isMMode) 
-                                            | (prv_pipe_if.sret & !prv_intern_if.isMMode & !prv_intern_if.isSMode & (SUPERVISOR == "enabled"))
-                                            | (prv_pipe_if.wfi & prv_intern_if.isUMode & (prv_intern_if.curr_mstatus.tw));
+    assign prv_pipe_if.invalid_priv_isn = prv_intern_if.invalid_csr | (prv_pipe_if.mret & !prv_intern_if.isMMode)
+                                            | (prv_pipe_if.sret & !prv_intern_if.isMMode & !prv_intern_if.isSMode
+                                                & (SUPERVISOR == "enabled"))
+                                            | (prv_pipe_if.wfi & prv_intern_if.isUMode
+                                                & (prv_intern_if.curr_mstatus.tw));
 
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;
@@ -169,13 +181,16 @@ module priv_block #(
 
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;
-    assign prv_intern_if.clear_timer_int_s = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isSMode; // find references, are these needed for s-mode?
+    // find references, are these needed for s-mode?
+    assign prv_intern_if.clear_timer_int_s = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isSMode;
     assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.clear_soft_int_u = 1'b0;
-    assign prv_intern_if.clear_soft_int_s = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isSMode; // find references, are these needed for s-mode?
+    // find references, are these needed for s-mode?
+    assign prv_intern_if.clear_soft_int_s = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isSMode;
     assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.clear_ext_int_u = 1'b0;
-    assign prv_intern_if.clear_ext_int_s = interrupt_if.ext_int_clear && prv_intern_if.isSMode; // find references, are these needed for s-mode?
+    // find references, are these needed for s-mode?
+    assign prv_intern_if.clear_ext_int_s = interrupt_if.ext_int_clear && prv_intern_if.isSMode;
     assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear && prv_intern_if.isMMode;
 
     // from pipeline to the priv unit
@@ -199,7 +214,8 @@ module priv_block #(
     assign prv_intern_if.curr_stval        = prv_pipe_if.badaddr;
     assign prv_intern_if.valid_write       = prv_pipe_if.valid_write;
     assign prv_intern_if.mret              = prv_pipe_if.mret & prv_intern_if.isMMode;
-    assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.isSMode | prv_intern_if.isMMode) && (SUPERVISOR == "enabled");
+    assign prv_intern_if.sret              = prv_pipe_if.sret & (prv_intern_if.isSMode | prv_intern_if.isMMode)
+                                                && (SUPERVISOR == "enabled");
     assign prv_intern_if.ex_mem_stall      = prv_pipe_if.mem_stall;
 
     // from priv unit to pipeline

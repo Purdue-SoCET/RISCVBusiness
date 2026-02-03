@@ -41,6 +41,7 @@ jobs:
       with:
         fail_on_error: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        config_file: '.rules.verible_lint'
 
   lint:
     name: Commit Linter
@@ -53,3 +54,4 @@ jobs:
         reviewdog_reporter: github-check
         fail_on_error: true
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        config_file: '.rules.verible_lint'

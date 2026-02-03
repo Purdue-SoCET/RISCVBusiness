@@ -1,25 +1,25 @@
 /*
-*	Copyright 2022 Purdue University
-*		
-*	Licensed under the Apache License, Version 2.0 (the "License");
-*	you may not use this file except in compliance with the License.
-*	You may obtain a copy of the License at
-*		
-*	    http://www.apache.org/licenses/LICENSE-2.0
-*		
-*	Unless required by applicable law or agreed to in writing, software
-*	distributed under the License is distributed on an "AS IS" BASIS,
-*	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*	See the License for the specific language governing permissions and
-*	limitations under the License.
+*    Copyright 2022 Purdue University
+*
+*    Licensed under the Apache License, Version 2.0 (the "License");
+*    you may not use this file except in compliance with the License.
+*    You may obtain a copy of the License at
+*
+*        http://www.apache.org/licenses/LICENSE-2.0
+*
+*    Unless required by applicable law or agreed to in writing, software
+*    distributed under the License is distributed on an "AS IS" BASIS,
+*    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*    See the License for the specific language governing permissions and
+*    limitations under the License.
 *
 *
-*	Filename:     bus_ctrl.sv
+*    Filename:     bus_ctrl.sv
 *
-*	Created by:   Jimmy Mingze Jin
-*	Email:        jin357@purdue.edu
-*	Date Created: 10/24/2022
-*	Description:  Bus controller for MESI cache coherence
+*    Created by:   Jimmy Mingze Jin
+*    Email:        jin357@purdue.edu
+*    Date Created: 10/24/2022
+*    Description:  Bus controller for MESI cache coherence
 */
 
 `include "component_selection_defines.vh"
@@ -102,8 +102,10 @@ module bus_ctrl #(
             GRANT_RX:           nstate = SNOOP_RX;
             GRANT_EVICT:        nstate = WRITEBACK;
             GRANT_INV:          nstate = SNOOP_INV;
-            SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
-            SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
+            SNOOP_R:            nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone)
+                                            ? (|ccif.ccsnoophit ? TRANSFER_R : READ_L2) : state;
+            SNOOP_RX:           nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone)
+                                            ? (|ccif.ccsnoophit ? TRANSFER_RX : READ_L2) : state;
             SNOOP_INV:          nstate = snoopStatus(requester_cpu, ccif.ccsnoopdone) ? INVALIDATE : state;
             // TRANSFER_R:         nstate = ccif.ccdirty[supplier_cpu] ? WRITEBACK_MS : BUS_TO_CACHE;
             // TRANSFER_RX:        nstate = BUS_TO_CACHE;
@@ -168,7 +170,7 @@ module bus_ctrl #(
                 nl2_addr = pass_through ? ccif.daddr[requester_cpu] : ccif.daddr[requester_cpu] & ~(CLEAR_LENGTH'('1));
                 //Cache waits until its block is completely written back
                 //Could optimize to have bus latch cache value and let the cache run?
-                ccif.dwait[requester_cpu] = 1; 
+                ccif.dwait[requester_cpu] = 1;
 
                 nl2_store = ccif.dstore[requester_cpu][31:0];
             end
@@ -313,3 +315,4 @@ module bus_ctrl #(
         state == SNOOP_RX;
     endfunction
 endmodule
+

@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@
 *   Description:  Testbench for the full separate cache structure I/D VIPT + TLB + PW
 *
 *                 Test cases include:
-*                 - 
+*                 -
 */
 
 `include "component_selection_defines.vh"
@@ -37,7 +37,7 @@ import priv_isa_types_pkg::*;
 
 `timescale 1ns/10ps
 
-module supervisor_cache_wrapper(
+module tb_supervisor_cache_wrapper(
   input logic CLK, nRST,
   generic_bus_if icache_proc_gen_bus_if,
   generic_bus_if dcache_proc_gen_bus_if,
@@ -94,5 +94,5 @@ module supervisor_cache_wrapper(
     .bus_ctrl_if(bus_ctrl_if),
     .bus_busy(bus_busy)
   );
-  
+
 endmodule

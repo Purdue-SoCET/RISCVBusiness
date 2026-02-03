@@ -19,7 +19,7 @@
 *   Created by:   William Cunningham
 *   Email:        wrcunnin@purdue.edu
 *   Date Created: 10/13/2024
-*   Description: Automatically load virtual-to-physical translations into 
+*   Description: Automatically load virtual-to-physical translations into
 *                the Translation Lookaside Buffer (TLB) when queued.
 *                Logic for RV64 paging not fully implemented, needs support.
 */
@@ -60,7 +60,7 @@ module page_walker #(
 
     // address signals
     logic [33:0] page_address, next_page_address; // will need to change num bits if not using sv32
-    
+
     // sv32
     va_sv32_t decoded_daddr_sv32, decoded_iaddr_sv32, decoded_addr_sv32;
     pte_sv32_t pte_sv32;
@@ -82,14 +82,19 @@ module page_walker #(
     assign insn_at_if.sv48 = 0; // prv_pipe_if.satp.mode == SV48_MODE
     assign insn_at_if.sv57 = 0; // prv_pipe_if.satp.mode == SV57_MODE
     assign insn_at_if.sv64 = 0; // prv_pipe_if.satp.mode == SV64_MODE
-    assign insn_at_if.addr_trans_on = (insn_at_if.sv32 | insn_at_if.sv39 | insn_at_if.sv48 | insn_at_if.sv57 | insn_at_if.sv64) && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
+    assign insn_at_if.addr_trans_on =
+        (insn_at_if.sv32 | insn_at_if.sv39 | insn_at_if.sv48 | insn_at_if.sv57 | insn_at_if.sv64)
+        && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
 
     assign data_at_if.sv32 = prv_pipe_if.satp.mode == SV32_MODE;
     assign data_at_if.sv39 = 0; // prv_pipe_if.satp.mode == SV39_MODE
     assign data_at_if.sv48 = 0; // prv_pipe_if.satp.mode == SV48_MODE
     assign data_at_if.sv57 = 0; // prv_pipe_if.satp.mode == SV57_MODE
     assign data_at_if.sv64 = 0; // prv_pipe_if.satp.mode == SV64_MODE
-    assign data_at_if.addr_trans_on = insn_at_if.addr_trans_on | (prv_pipe_if.mstatus.mprv & (prv_pipe_if.mstatus.mpp == S_MODE || prv_pipe_if.mstatus.mpp == U_MODE)); // MPRV allows M-mode loads/stores to be translated using previous privilege level privileges.
+    // MPRV allows M-mode loads/stores to be translated using previous privilege level privileges.
+    assign data_at_if.addr_trans_on =
+        insn_at_if.addr_trans_on
+        | (prv_pipe_if.mstatus.mprv & (prv_pipe_if.mstatus.mpp == S_MODE || prv_pipe_if.mstatus.mpp == U_MODE));
 
     assign decoded_daddr_sv32 = va_sv32_t'(dtlb_gen_bus_if.addr);
     assign decoded_iaddr_sv32 = va_sv32_t'(itlb_gen_bus_if.addr);
@@ -157,12 +162,14 @@ module page_walker #(
         itlb_gen_bus_if.rdata   = 0;
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
-        mem_gen_bus_if.addr     = 0; 
-        mem_gen_bus_if.wdata    = 0; 
+        mem_gen_bus_if.addr     = 0;
+        mem_gen_bus_if.wdata    = 0;
         mem_gen_bus_if.byte_en  = '1; // set this to all 1s for evictions
         next_page_address       = page_address;
         next_access             = access;
-        decoded_addr_sv32       = access == ACCESS_LOAD || access == ACCESS_STORE ? decoded_daddr_sv32 : access == ACCESS_INSN ? decoded_iaddr_sv32 : '0;
+        decoded_addr_sv32       = access == ACCESS_LOAD || access == ACCESS_STORE
+                                    ? decoded_daddr_sv32
+                                    : access == ACCESS_INSN ? decoded_iaddr_sv32 : '0;
 
         casez(state)
             IDLE: begin
@@ -181,7 +188,8 @@ module page_walker #(
                         decoded_addr_sv32 = decoded_iaddr_sv32;
                     end
 
-                    if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) || (itlb_miss && itlb_gen_bus_if.ren)) begin
+                    if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen))
+                        || (itlb_miss && itlb_gen_bus_if.ren)) begin
                         if (data_at_if.sv32)
                             next_page_address = {prv_pipe_if.satp.ppn, decoded_addr_sv32.vpn[1], 2'b00};
                         else if (data_at_if.sv39)
@@ -208,13 +216,15 @@ module page_walker #(
                         itlb_gen_bus_if.busy = ~(access == ACCESS_INSN);
                         casez({data_at_if.sv64, data_at_if.sv57, data_at_if.sv48, data_at_if.sv39, data_at_if.sv32})
                             5'b????1: begin
-                                dtlb_gen_bus_if.rdata = access == ACCESS_STORE || access ==  ACCESS_LOAD ? word_t'(pte_sv32) : '0;
+                                dtlb_gen_bus_if.rdata = access == ACCESS_STORE || access ==  ACCESS_LOAD
+                                                        ? word_t'(pte_sv32)
+                                                        : '0;
                                 itlb_gen_bus_if.rdata = access == ACCESS_INSN ? word_t'(pte_sv32) : '0;
                             end
                             5'b???10: begin
                                 dtlb_gen_bus_if.rdata = '0;
                                 itlb_gen_bus_if.rdata = '0;
-                            end 
+                            end
                             5'b??100: begin
                                 dtlb_gen_bus_if.rdata = '0;
                                 itlb_gen_bus_if.rdata = '0;
@@ -262,15 +272,19 @@ module page_walker #(
 
         casez(state)
             IDLE: begin
-                if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) ||  // we always want to service a dTLB miss
-                    (itlb_miss && (itlb_gen_bus_if.ren) && ~abort))                 // we don't service the iTLB miss if we are aborting the walk
+                    // we always want to service a dTLB miss
+                if ((dtlb_miss && (dtlb_gen_bus_if.ren || dtlb_gen_bus_if.wen)) ||
+                    // we don't service the iTLB miss if we are aborting the walk
+                    (itlb_miss && (itlb_gen_bus_if.ren) && ~abort))
                     next_state = WALK;
 
                 if (~data_at_if.addr_trans_on)
                     next_state = IDLE;
             end
             WALK: begin
-                next_state = fault_insn_page | fault_load_page | fault_store_page ? FAULT : leaf_pte | (abort & access == ACCESS_INSN) ? IDLE : WALK;
+                next_state = fault_insn_page | fault_load_page | fault_store_page
+                                ? FAULT
+                                : leaf_pte | (abort & access == ACCESS_INSN) ? IDLE : WALK;
             end
             FAULT: begin
                 next_state = IDLE;

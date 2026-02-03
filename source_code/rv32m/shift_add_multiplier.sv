@@ -36,8 +36,8 @@ module shift_add_multiplier #(
     output logic finished
 );
 
-    typedef enum logic {SAM_IDLE, SAM_BUSY} sam_state;
-    sam_state state, nxt_state;
+    typedef enum logic {SAM_IDLE, SAM_BUSY} sam_state_t;
+    sam_state_t state, nxt_state;
 
     logic [(N*2)-1:0] multiplier_reg, multiplicand_reg;
     logic [(N*2)-1:0] multiplier_ext, multiplicand_ext;

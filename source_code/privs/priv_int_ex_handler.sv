@@ -136,11 +136,13 @@ module priv_int_ex_handler (
     assign prv_intern_if.intr = exception | interrupt_fired | interrupt_fired_s;
 
     // if not m-mode intr and (deleg ex or deleg int and has right conditions to go to S-Mode)
-    assign prv_intern_if.intr_to_s = SUPERVISOR == "enabled" & !interrupt_fired & 
+    assign prv_intern_if.intr_to_s = SUPERVISOR == "enabled" & !interrupt_fired &
                                         ((|{prv_intern_if.curr_medeleg[30:0] & ex_src_bit} & exception) |
-                                            ((|{prv_intern_if.curr_mideleg[30:0] & int_src_bit & SIE_MASK}) & interrupt_fired_s &
-                                                ((prv_intern_if.curr_privilege_level == S_MODE & prv_intern_if.curr_mstatus.sie) |
-                                                 (prv_intern_if.curr_privilege_level < S_MODE))));
+                                            ((|{prv_intern_if.curr_mideleg[30:0] & int_src_bit & SIE_MASK})
+                                                & interrupt_fired_s
+                                                & ((prv_intern_if.curr_privilege_level == S_MODE
+                                                        & prv_intern_if.curr_mstatus.sie)
+                                                    | (prv_intern_if.curr_privilege_level < S_MODE))));
 
     // Only output an interrupt if said interrupt is enabled
     assign interrupt_fired = (prv_intern_if.curr_mstatus.mie &
@@ -199,7 +201,8 @@ module priv_int_ex_handler (
         `endif // SMODE_SUPPORTED
     end
 
-    assign prv_intern_if.inject_mstatus = (prv_intern_if.intr | prv_intern_if.mret | prv_intern_if.sret) && !prv_intern_if.ex_mem_stall;
+    assign prv_intern_if.inject_mstatus = (prv_intern_if.intr | prv_intern_if.mret | prv_intern_if.sret)
+                                            && !prv_intern_if.ex_mem_stall;
 
     // xstatus injections
     always_comb begin
@@ -287,7 +290,7 @@ module priv_int_ex_handler (
                                         & prv_intern_if.pipe_clear;
             prv_intern_if.next_mtval = prv_intern_if.curr_mtval;
         end
-        
+
     end
 
 endmodule

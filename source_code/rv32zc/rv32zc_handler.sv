@@ -4,18 +4,18 @@ module rv32zc_handler(
     input rv32zc_pkg::rv32zc_op_t aluop,
     output logic [31:0] y
 );
-   
+
     import rv32zc_pkg::*;
     logic [31:0] rd_temp;
 
     always_comb begin
         casez(aluop)
-            NEZ: begin 
+            NEZ: begin
                 y = (b != 0) ? 0 : a;
-            end 
-            EQZ: begin 
+            end
+            EQZ: begin
                 y = (b == 0) ? 0 : a;
-            end 
+            end
         endcase
     end
 
