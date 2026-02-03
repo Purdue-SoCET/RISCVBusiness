@@ -1,21 +1,32 @@
 name: Test
 on:
   push:
-  pull_request: 
-    branches: [master]
+  pull_request:
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6 # required
-      - name: Run Regression Tests
+      - name: Build the core
         uses: Purdue-SoCET/RISC-V-CI@main # core usage
         with:
-          targets: | # List all FuseSoC Test Targets
+          targets: |
             make config
             make verilate
+
+  tests-pr:
+    name: PR Tests & Benchmarks
+    if: ${{ github.event.pull_request }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6 # required
+      - name: Run the regression tests
+        uses: Purdue-SoCET/RISC-V-CI@main # core usage
+        with:
+          targets: |
             python3 -u run_tests.py --riscv-tests --num-harts 1
             python3 -u run_tests.py --riscv-tests --num-harts 2
 
