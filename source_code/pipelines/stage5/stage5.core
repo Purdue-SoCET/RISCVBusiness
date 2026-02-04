@@ -1,0 +1,39 @@
+CAPI=2:
+name: socet:riscv:stage5:0.1.0
+description: Two-stage pipeline
+
+filesets:
+    rtl:
+        files:
+            - source/stage5_types_pkg.sv
+            - include/stage5_fetch_decode_if.vh : {is_include_file: true}
+            - include/stage5_decode_execute_if.vh : {is_include_file: true}
+            - include/stage5_execute_mem_if.vh : {is_include_file: true}
+            - include/stage5_mem_wb_if.vh : {is_include_file: true}
+            - include/stage5_hazard_unit_if.vh : {is_include_file: true}
+            - include/stage5_forwarding_unit_if.vh : {is_include_file: true}
+            - source/stage5_fetch_stage.sv
+            - source/stage5_decode_stage.sv
+            - source/stage5_execute_stage.sv
+            - source/stage5_mem_stage.sv
+            - source/stage5_hazard_unit.sv
+            - source/stage5_forwarding_unit.sv
+            - source/stage5.sv
+        file_type: systemVerilogSource
+
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: stage5
+
+    lint:
+        <<: *default
+        description: Linting
+        default_tool: veriblelint
+        toplevel: stage5
+        tools:
+            veriblelint:
+                verible_lint_args: ['--autofix=inplace-interactive', '--rules_config_search', '--waiver_files=stage5.waiver']
+

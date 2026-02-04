@@ -31,8 +31,7 @@
 
 module control_unit (
     control_unit_if.control_unit       cu_if,
-    rv32i_reg_file_if.cu               rf_if,
-    prv_pipeline_if.cu                 prv_pipe_if
+    rv32i_reg_file_if.cu               rf_if
 );
     import alu_types_pkg::*;
     import rv32i_types_pkg::*;
@@ -213,20 +212,8 @@ module control_unit (
         endcase
     end
 
-    // Trap VM if TVM is set, privilege level is S-Mode and either an sfence or csr R/W to SATP
-    assign tvm_trap = ((cu_if.sfence) || (cu_if.csr_rw_valid && cu_if.csr_addr == SATP_ADDR)) && prv_pipe_if.mstatus.tvm && prv_pipe_if.curr_privilege_level == S_MODE;
-
-    // Raise illegal instruction on WFI if Timer Wait is set, and privilege mode is not M-Mode
-    assign tw_trap  = cu_if.wfi && prv_pipe_if.mstatus.tw && prv_pipe_if.curr_privilege_level != M_MODE;
-
-    // Trap Supervisor Returns if SRET instruction, TSR is set, and current privilege level is S-Mode
-    assign tsr_trap = cu_if.sret_insn && prv_pipe_if.mstatus.tsr && prv_pipe_if.curr_privilege_level == S_MODE;
-
-    // Trap when we have a supervisor instruction and the Supervisor Extension is disabled
-    assign disabled_smode_trap = (cu_if.sfence || cu_if.sret_insn) && SUPERVISOR == "disabled";
-
     // Illegal instruction logic
-    assign cu_if.illegal_insn = (maybe_illegal && !claimed) || tvm_trap || tw_trap || tsr_trap || disabled_smode_trap;
+    assign cu_if.illegal_insn = (maybe_illegal && !claimed);
     assign claimed = rv32m_claim || rv32a_claim || rv32b_claim || rv32zc_claim; // Add OR conditions for new extensions
 
     //Decoding of System Priv Instructions
@@ -277,7 +264,6 @@ module control_unit (
         end
     end
     assign cu_if.csr_rw_valid = (cu_if.csr_swap | cu_if.csr_set | cu_if.csr_clr);
-
     assign cu_if.csr_addr     = csr_addr_t'(instr_i.imm11_00);
     assign cu_if.zimm         = cu_if.instr[19:15];
 
