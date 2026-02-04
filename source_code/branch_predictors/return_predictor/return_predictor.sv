@@ -1,9 +1,9 @@
 `include "predictor_pipeline_if.vh"
 
 module return_predictor #(
-    parameter entries=4
+    parameter ENTRIES=4
 )(
-    input logic CLK, nRST, 
+    input logic CLK, nRST,
     predictor_pipeline_if.predictor predict_if
 );
 
@@ -14,7 +14,7 @@ module return_predictor #(
     logic [5:0] nxt_ras[entries-1:0];
     logic link1, link2;
     integer i;
-    
+
     always_ff@(posedge CLK, negedge nRST) begin
         if (!nRST) begin
             pointer <= 0;
@@ -49,7 +49,7 @@ module return_predictor #(
         else if(inst[6:0] == JALR) begin
             case({link1, link2, inst[19:15]==inst[11:7]})
                 3'b010, 3'b011: begin //pop
-                    predict_if.predict_taken = 1;                    
+                    predict_if.predict_taken = 1;
                     if(pointer == 0) begin
                         nxt_pointer = 0;
                         predict_if.target_addr = nxt_ras[pointer];
@@ -65,7 +65,7 @@ module return_predictor #(
                     else nxt_pointer = pointer+1;
                 end
                 3'b110: begin //push and pop
-                    predict_if.predict_taken = 1;                    
+                    predict_if.predict_taken = 1;
                     if(pointer != 0) begin
                         predict_if.target_addr = nxt_ras[pointer-1];
                         nxt_ras[pointer-1] = inst[11:7];
@@ -75,7 +75,7 @@ module return_predictor #(
                         nxt_ras[pointer] = inst[11:7];
                     end
                 end
-            endcase 
+            endcase
         end
     end
 endmodule

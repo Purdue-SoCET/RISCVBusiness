@@ -50,7 +50,7 @@ module stage3_fetch_stage (
     logic insn_ready, insn_compressed, ibus_fault;
     word_t instr_to_ex;
     word_t insn_addr;
-    
+
     //Send exceptions through pipeline
     logic mal_addr;
     logic fault_insn;
@@ -72,9 +72,9 @@ module stage3_fetch_stage (
             pc <= npc;
         end
     end
-    
+
     assign pc4or2 = insn_compressed ? pc + 2 : pc + 4;
-    
+
     //Branch Predictor logic
     localparam logic [15:0] CBRANCH_MASK = 16'hc001;
     localparam logic [4:0] RVC_FUNC_J = 5'b001_01;
@@ -92,7 +92,7 @@ module stage3_fetch_stage (
     assign is_jump = !insn_compressed && ((instr_sb.opcode == JAL));
     assign is_compressed_jump = (
             insn_compressed && (
-                (compressed_func3_op == RVC_FUNC_J) 
+                (compressed_func3_op == RVC_FUNC_J)
                 || (compressed_func3_op == RVC_FUNC_JAL)
                 // || (compressed_func4_op == RVC_FUNC_JR)
                 // || (compressed_func4_op == RVC_FUNC_JALR)
@@ -107,7 +107,10 @@ module stage3_fetch_stage (
     assign predict_if.is_jump = is_jump || is_compressed_jump;
 
     // pc_redirect used to invalidate fetch buffer for RV32C
-    assign pc_redirect = hazard_if.insert_priv_pc || hazard_if.rollback || hazard_if.npc_sel || predict_if.predict_taken;
+    assign pc_redirect = hazard_if.insert_priv_pc
+                        || hazard_if.rollback
+                        || hazard_if.npc_sel
+                        || predict_if.predict_taken;
     assign npc = hazard_if.insert_priv_pc    ? hazard_if.priv_pc
                  : (hazard_if.rollback       ? mem_fetch_if.pc4
                  : (hazard_if.npc_sel        ? mem_fetch_if.brj_addr
@@ -139,7 +142,7 @@ module stage3_fetch_stage (
         .igen_bus_if
     );
 
-    // protection faults require the actual address, 
+    // protection faults require the actual address,
     // not the address of the instruction (may be different
     // for C-extension)
     assign fault_addr = insn_addr;

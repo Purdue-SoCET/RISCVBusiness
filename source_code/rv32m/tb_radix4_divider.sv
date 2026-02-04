@@ -2,22 +2,22 @@
 module tb_radix4_divider ();
   parameter CLOCK_PERIOD = 10ns;
 
-	logic tb_CLK, tb_nRST;
-	logic tb_start, tb_finished;
-	logic [(XLEN-1):0] tb_operand_a;
-	logic [(XLEN-1):0] tb_operand_b;
-	logic [(XLEN-1):0] tb_quotient, tb_remainder;
-	logic [1:0] tb_is_signed;
-	logic [(XLEN-1):0] tb_expected_quotient, tb_expected_remainder;
-	integer tb_test_case_num;
-	
-	typedef struct {
-		string test_name;
-		logic [(XLEN-1):0] test_operand_a;
-		logic [(XLEN-1):0] test_operand_b;
-		logic [1:0] test_is_signed;
-	} testvector;
-	testvector tb_test_case [];
+    logic tb_CLK, tb_nRST;
+    logic tb_start, tb_finished;
+    logic [(XLEN-1):0] tb_operand_a;
+    logic [(XLEN-1):0] tb_operand_b;
+    logic [(XLEN-1):0] tb_quotient, tb_remainder;
+    logic [1:0] tb_is_signed;
+    logic [(XLEN-1):0] tb_expected_quotient, tb_expected_remainder;
+    integer tb_test_case_num;
+
+    typedef struct {
+        string test_name;
+        logic [(XLEN-1):0] test_operand_a;
+        logic [(XLEN-1):0] test_operand_b;
+        logic [1:0] test_is_signed;
+    } testvector_t;
+    testvector_t tb_test_case [];
   /*  Module Instantiations */
   radix4_divider #(XLEN) DUT (
       .CLK(tb_CLK),
@@ -32,104 +32,104 @@ module tb_radix4_divider ();
   );
 
   /*  CLK generation */
-	always begin
-		tb_CLK=0;
-		#(CLOCK_PERIOD/2.0);
-		tb_CLK=1;
-		#(CLOCK_PERIOD/2.0);
-	end
+    always begin
+        tb_CLK=0;
+        #(CLOCK_PERIOD/2.0);
+        tb_CLK=1;
+        #(CLOCK_PERIOD/2.0);
+    end
 
-	task reset_dut();
-		@(negedge tb_CLK);
-		tb_nRST = 0;
-		@(posedge tb_CLK);
-		@(posedge tb_CLK);
-		#(CLOCK_PERIOD/4.0);
-		tb_nRST = 1;
-	endtask
+    task reset_dut();
+        @(negedge tb_CLK);
+        tb_nRST = 0;
+        @(posedge tb_CLK);
+        @(posedge tb_CLK);
+        #(CLOCK_PERIOD/4.0);
+        tb_nRST = 1;
+    endtask
 
-	initial begin
-		tb_test_case = new[10];
-		
-		tb_test_case[0].test_name = "Basic signed division. Positive & Positive.";
-		tb_test_case[0].test_operand_a = 32'h0000_0080;
-		tb_test_case[0].test_operand_b = 32'h0000_0002;
-		tb_test_case[0].test_is_signed = '1;
+    initial begin
+        tb_test_case = new[10];
 
-		tb_test_case[1].test_name = "Basic signed division. Positive & Negative.";
-		tb_test_case[1].test_operand_a = 32'h0000_0080;
-		tb_test_case[1].test_operand_b = 32'hFFFF_FFFE;
-		tb_test_case[1].test_is_signed = '1;
+        tb_test_case[0].test_name = "Basic signed division. Positive & Positive.";
+        tb_test_case[0].test_operand_a = 32'h0000_0080;
+        tb_test_case[0].test_operand_b = 32'h0000_0002;
+        tb_test_case[0].test_is_signed = '1;
 
-		tb_test_case[2].test_name = "Basic signed division. Negative & Negative.";
-		tb_test_case[2].test_operand_a = 32'hFFFF_FFB0;
-		tb_test_case[2].test_operand_b = 32'hFFFF_FFFE;
-		tb_test_case[2].test_is_signed = '1;
+        tb_test_case[1].test_name = "Basic signed division. Positive & Negative.";
+        tb_test_case[1].test_operand_a = 32'h0000_0080;
+        tb_test_case[1].test_operand_b = 32'hFFFF_FFFE;
+        tb_test_case[1].test_is_signed = '1;
 
-		tb_test_case[3].test_name = "Basic signed division. Negative & Positive.";
-		tb_test_case[3].test_operand_a = 32'hFFFF_FFB0;
-		tb_test_case[3].test_operand_b = 32'h0000_0002;
-		tb_test_case[3].test_is_signed = '1;
+        tb_test_case[2].test_name = "Basic signed division. Negative & Negative.";
+        tb_test_case[2].test_operand_a = 32'hFFFF_FFB0;
+        tb_test_case[2].test_operand_b = 32'hFFFF_FFFE;
+        tb_test_case[2].test_is_signed = '1;
 
-		tb_test_case[4].test_name = "Signed divide by 0.";
-		tb_test_case[4].test_operand_a = 32'hFFFF_FFB0;
-		tb_test_case[4].test_operand_b = 32'h0000_0000;
-		tb_test_case[4].test_is_signed = '1;
+        tb_test_case[3].test_name = "Basic signed division. Negative & Positive.";
+        tb_test_case[3].test_operand_a = 32'hFFFF_FFB0;
+        tb_test_case[3].test_operand_b = 32'h0000_0002;
+        tb_test_case[3].test_is_signed = '1;
 
-		tb_test_case[5].test_name = "Basic unsigned division. Positive & Positive.";
-		tb_test_case[5].test_operand_a = 32'h0000_0080;
-		tb_test_case[5].test_operand_b = 32'h0000_0002;
-		tb_test_case[5].test_is_signed = '0;
+        tb_test_case[4].test_name = "Signed divide by 0.";
+        tb_test_case[4].test_operand_a = 32'hFFFF_FFB0;
+        tb_test_case[4].test_operand_b = 32'h0000_0000;
+        tb_test_case[4].test_is_signed = '1;
 
-		tb_test_case[6].test_name = "Basic unsigned division. Positive & (signed) Negative.";
-		tb_test_case[6].test_operand_a = 32'h0000_0080;
-		tb_test_case[6].test_operand_b = 32'hFFFF_FFFE;
-		tb_test_case[6].test_is_signed = '0;
+        tb_test_case[5].test_name = "Basic unsigned division. Positive & Positive.";
+        tb_test_case[5].test_operand_a = 32'h0000_0080;
+        tb_test_case[5].test_operand_b = 32'h0000_0002;
+        tb_test_case[5].test_is_signed = '0;
 
-		tb_test_case[7].test_name = "Basic unsigned division. (signed) Negative & (signed) Negative.";
-		tb_test_case[7].test_operand_a = 32'hFFFF_FFB0;
-		tb_test_case[7].test_operand_b = 32'hFFFF_FFFE;
-		tb_test_case[7].test_is_signed = '0;
+        tb_test_case[6].test_name = "Basic unsigned division. Positive & (signed) Negative.";
+        tb_test_case[6].test_operand_a = 32'h0000_0080;
+        tb_test_case[6].test_operand_b = 32'hFFFF_FFFE;
+        tb_test_case[6].test_is_signed = '0;
 
-		tb_test_case[8].test_name = "Basic unsigned division. (signed) Negative & Positive.";
-		tb_test_case[8].test_operand_a = 32'hFFFF_FFB0;
-		tb_test_case[8].test_operand_b = 32'h0000_0002;
-		tb_test_case[8].test_is_signed = '0;
+        tb_test_case[7].test_name = "Basic unsigned division. (signed) Negative & (signed) Negative.";
+        tb_test_case[7].test_operand_a = 32'hFFFF_FFB0;
+        tb_test_case[7].test_operand_b = 32'hFFFF_FFFE;
+        tb_test_case[7].test_is_signed = '0;
 
-		tb_test_case[9].test_name = "Unsigned divide by 0.";
-		tb_test_case[9].test_operand_a = 32'hFFFF_FFB0;
-		tb_test_case[9].test_operand_b = 32'h0000_0000;
-		tb_test_case[9].test_is_signed = '0;
-	end
-	initial begin
-		tb_operand_b = '0;
-		tb_operand_a = '0;
-		tb_is_signed = '0;
-		tb_start = 0;
-		tb_nRST = 1;		
-		for (tb_test_case_num = 0; tb_test_case_num < tb_test_case.size(); tb_test_case_num++) begin
-			$info (
-					"TEST CASE %0d - %s",
-					tb_test_case_num,
-					tb_test_case[tb_test_case_num].test_name
-			);
-			reset_dut();
+        tb_test_case[8].test_name = "Basic unsigned division. (signed) Negative & Positive.";
+        tb_test_case[8].test_operand_a = 32'hFFFF_FFB0;
+        tb_test_case[8].test_operand_b = 32'h0000_0002;
+        tb_test_case[8].test_is_signed = '0;
 
-			// Align inputs to change @ CLK/4
-			@(posedge tb_CLK);
-			#(CLOCK_PERIOD/4.0);
+        tb_test_case[9].test_name = "Unsigned divide by 0.";
+        tb_test_case[9].test_operand_a = 32'hFFFF_FFB0;
+        tb_test_case[9].test_operand_b = 32'h0000_0000;
+        tb_test_case[9].test_is_signed = '0;
+    end
+    initial begin
+        tb_operand_b = '0;
+        tb_operand_a = '0;
+        tb_is_signed = '0;
+        tb_start = 0;
+        tb_nRST = 1;
+        for (tb_test_case_num = 0; tb_test_case_num < tb_test_case.size(); tb_test_case_num++) begin
+            $info (
+                    "TEST CASE %0d - %s",
+                    tb_test_case_num,
+                    tb_test_case[tb_test_case_num].test_name
+            );
+            reset_dut();
 
-			// drive inputs to DUT
-			tb_operand_a = tb_test_case[tb_test_case_num].test_operand_a;
-			tb_operand_b = tb_test_case[tb_test_case_num].test_operand_b;
-			tb_is_signed = tb_test_case[tb_test_case_num].test_is_signed;
+            // Align inputs to change @ CLK/4
+            @(posedge tb_CLK);
+            #(CLOCK_PERIOD/4.0);
 
-			// begin multiplication
-			@(negedge tb_CLK);	
-			tb_start = 1; 
-			@(negedge tb_CLK); // First Clock Cycle
+            // drive inputs to DUT
+            tb_operand_a = tb_test_case[tb_test_case_num].test_operand_a;
+            tb_operand_b = tb_test_case[tb_test_case_num].test_operand_b;
+            tb_is_signed = tb_test_case[tb_test_case_num].test_is_signed;
 
-			// Need to treat multiplication differently if signed or unsigned
+            // begin multiplication
+            @(negedge tb_CLK);
+            tb_start = 1;
+            @(negedge tb_CLK); // First Clock Cycle
+
+            // Need to treat multiplication differently if signed or unsigned
       if (tb_is_signed) begin
         tb_expected_quotient = signed'(tb_operand_a) / signed'(tb_operand_b);
         tb_expected_remainder = signed'(tb_operand_a) % signed'(tb_operand_b);
@@ -146,35 +146,35 @@ module tb_radix4_divider ();
         tb_expected_remainder = '0;
       end
 
-			// wait for multiplication to finish
-			while(tb_finished == 1'b0) @(posedge tb_CLK);
+            // wait for multiplication to finish
+            while(tb_finished == 1'b0) @(posedge tb_CLK);
       tb_start = 1'b0;
-			#(CLOCK_PERIOD/4.0);
+            #(CLOCK_PERIOD/4.0);
 
-			assert(tb_quotient == tb_expected_quotient) begin
-				$info ("TEST PASS\n");
-			end else begin
-				$info ("IS SIGNED : %s", tb_is_signed ? "YES" : "NO");
-				$info ("DIVIDEND  : 0x%8h", tb_operand_a);
-				$info ("DIVISOR   : 0x%8h", tb_operand_b);
-				$info ("ACTUAL    : 0x%16h", tb_quotient);
-				$info ("EXPECTED  : 0x%16h", tb_expected_quotient);
-				$info ("TEST FAIL, INCORRECT QUOTIENT\n");
-				$stop;
-			end
+            assert(tb_quotient == tb_expected_quotient) begin
+                $info ("TEST PASS\n");
+            end else begin
+                $info ("IS SIGNED : %s", tb_is_signed ? "YES" : "NO");
+                $info ("DIVIDEND  : 0x%8h", tb_operand_a);
+                $info ("DIVISOR   : 0x%8h", tb_operand_b);
+                $info ("ACTUAL    : 0x%16h", tb_quotient);
+                $info ("EXPECTED  : 0x%16h", tb_expected_quotient);
+                $info ("TEST FAIL, INCORRECT QUOTIENT\n");
+                $stop;
+            end
 
       assert(tb_remainder == tb_expected_remainder) begin
-				$info ("TEST PASS\n");
-			end else begin
-				$info ("IS SIGNED : %s", tb_is_signed ? "YES" : "NO");
-				$info ("DIVIDEND  : 0x%8h", tb_operand_a);
-				$info ("DIVISOR   : 0x%8h", tb_operand_b);
-				$info ("ACTUAL    : 0x%16h", tb_remainder);
-				$info ("EXPECTED  : 0x%16h", tb_expected_remainder);
-				$info ("TEST FAIL, INCORRECT REMAINER\n");
-				$stop;
-			end
-		end
-		$finish;
-	end
+                $info ("TEST PASS\n");
+            end else begin
+                $info ("IS SIGNED : %s", tb_is_signed ? "YES" : "NO");
+                $info ("DIVIDEND  : 0x%8h", tb_operand_a);
+                $info ("DIVISOR   : 0x%8h", tb_operand_b);
+                $info ("ACTUAL    : 0x%16h", tb_remainder);
+                $info ("EXPECTED  : 0x%16h", tb_expected_remainder);
+                $info ("TEST FAIL, INCORRECT REMAINER\n");
+                $stop;
+            end
+        end
+        $finish;
+    end
 endmodule

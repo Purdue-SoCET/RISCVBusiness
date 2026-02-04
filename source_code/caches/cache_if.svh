@@ -37,13 +37,13 @@ interface cache_if(
         output nRST,
         output clear, flush,
         input CLK, clear_done, flush_done
-    ); 
-   
+    );
+
     modport cache
     (
         input clear, flush, CLK, nRST,
         output clear_done, flush_done
-    ); 
+    );
 endinterface
 
 `endif

@@ -35,7 +35,7 @@ module decompressor #(
 );
 
     assign decompressed = decompress(compressed);
-   
+
     // TODO: Create separate localparam for RESERVED,
     // allow configuration of how to treat them (NOP or UNIMP),
     // spec allows either. May have area advantage.

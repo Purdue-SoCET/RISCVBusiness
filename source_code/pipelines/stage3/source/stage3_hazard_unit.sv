@@ -54,7 +54,8 @@ module stage3_hazard_unit (
     // Hazard detection
     assign rs1_match = (hazard_if.rs1_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
     assign rs2_match  = (hazard_if.rs2_e == hazard_if.rd_m) && (hazard_if.rd_m != 0);
-    assign cannot_forward = (hazard_if.dren || (hazard_if.dwen && hazard_if.reserve) || hazard_if.csr_read); // cannot forward outputs generated in mem stage
+    // cannot forward outputs generated in mem stage
+    assign cannot_forward = (hazard_if.dren || (hazard_if.dwen && hazard_if.reserve) || hazard_if.csr_read);
 
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
     assign branch_jump = (hazard_if.jump || hazard_if.branch) && hazard_if.mispredict;
@@ -78,19 +79,37 @@ module stage3_hazard_unit (
 
     assign intr = ~exception & prv_pipe_if.intr;
 
-    assign prv_pipe_if.pipe_clear = 1'b1; // TODO: What is this for?//exception; //| ~(hazard_if.token_ex | rm_if.active_insn);
-    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem) || exception || prv_pipe_if.mret || prv_pipe_if.sret || (hazard_if.ifence && !hazard_if.fence_stall) || (hazard_if.sfence && !hazard_if.fence_stall); // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+                                         // TODO: What is this for?//exception;
+    assign prv_pipe_if.pipe_clear = 1'b1;//| ~(hazard_if.token_ex | rm_if.active_insn);
+    assign ex_flush_hazard = ((intr || exception) && !wait_for_dmem)
+                            || exception
+                            || prv_pipe_if.mret
+                            || prv_pipe_if.sret
+                            || (hazard_if.ifence && !hazard_if.fence_stall)
+                            // I-fence must flush to force re-fetch of in-flight instructions. Flush will happen after stallling for cache response.
+                            || (hazard_if.sfence && !hazard_if.fence_stall);
 
     assign hazard_if.insert_priv_pc = prv_pipe_if.insert_pc;
     assign hazard_if.priv_pc = prv_pipe_if.priv_pc;
 
     assign hazard_if.iren = 1'b1;
     // TODO: Removed intr as cause of suppression -- is this OK?
-    //assign hazard_if.suppress_iren = branch_jump || exception || prv_pipe_if.ret || prv_pipe_if.insert_pc;  // prevents a false instruction request from being sent when pipeline flush imminent
-    assign hazard_if.suppress_iren = branch_jump || ex_flush_hazard || prv_pipe_if.mret || prv_pipe_if.sret || prv_pipe_if.insert_pc;  // prevents a false instruction request from being sent when pipeline flush imminent
-    assign hazard_if.suppress_data = exception; // suppress data transfer on interrupt/exception. Exception case: prevent read/write of faulting location. Interrupt: make symmetric with exceptions for ease
+    // prevents a false instruction request from being sent when pipeline flush imminent
+    //assign hazard_if.suppress_iren = branch_jump || exception || prv_pipe_if.ret || prv_pipe_if.insert_pc;
+    // prevents a false instruction request from being sent when pipeline flush imminent
+    assign hazard_if.suppress_iren = branch_jump
+                                    || ex_flush_hazard
+                                    || prv_pipe_if.mret
+                                    || prv_pipe_if.sret
+                                    || prv_pipe_if.insert_pc;
+    // suppress data transfer on interrupt/exception.
+    // Exception case: prevent read/write of faulting location.
+    // Interrupt: make symmetric with exceptions for ease
+    assign hazard_if.suppress_data = exception;
 
-    assign hazard_if.rollback = (hazard_if.ifence && !hazard_if.fence_stall) || (hazard_if.sfence && !hazard_if.fence_stall); // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
+    // TODO: more cases for CSRs that affect I-fetch (PMA/PMP registers)
+    assign hazard_if.rollback = (hazard_if.ifence && !hazard_if.fence_stall)
+                                || (hazard_if.sfence && !hazard_if.fence_stall);
 
     // EPC priority logic
     assign epc = hazard_if.valid_m && (!intr || branch_jump) ? hazard_if.pc_m :
@@ -155,7 +174,8 @@ module stage3_hazard_unit (
     */
 
     // Unforunately, pc_en is negative logic of stalling
-    assign hazard_if.pc_en = (!hazard_if.if_ex_stall && !wait_for_imem) // Normal case: next stage free, not waiting for instruction
+                             // Normal case: next stage free, not waiting for instruction
+    assign hazard_if.pc_en = (!hazard_if.if_ex_stall && !wait_for_imem)
                             || branch_jump
                             || ex_flush_hazard
                             || prv_pipe_if.insert_pc
@@ -164,21 +184,29 @@ module stage3_hazard_unit (
 
     assign hazard_if.if_ex_flush  = ex_flush_hazard // control hazard
                                   || branch_jump    // control hazard
-                                  || (wait_for_imem && !hazard_if.ex_mem_stall); // Flush if fetch stage lagging, but ex/mem are moving
+                                  // Flush if fetch stage lagging, but ex/mem are moving
+                                  || (wait_for_imem && !hazard_if.ex_mem_stall);
 
     assign hazard_if.ex_mem_flush = ex_flush_hazard // Control hazard
                                   || branch_jump     // Control hazard
-                                  //|| (mem_use_stall && !hazard_if.d_mem_busy) // Data hazard -- flush once data memory is no longer busy (request complete)
-                                  || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall); // if_ex_stall covers mem_use stall condition
+                                  // Data hazard -- flush once data memory is no longer busy (request complete)
+                                  //|| (mem_use_stall && !hazard_if.d_mem_busy)
+                                  // if_ex_stall covers mem_use stall condition
+                                  || (hazard_if.if_ex_stall && !hazard_if.ex_mem_stall);
 
 
   assign hazard_if.if_ex_stall  = !intr && (hazard_if.ex_mem_stall // Stall this stage if next stage is stalled
                                   // || (wait_for_imem && !dmem_access) // ???
                                   //& (~ex_flush_hazard | e_ex_stage) // ???
                                   //|| rm_if.execute_stall //
-                                  || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump) // Ugly case -- need to flush for control hazards when X busy, but other cases require stalling to take priority to prevent data loss (e.g. slow instruction fetch, valid insn in X, load in M --> giving flush priority would destroy insn in X)
-                                  || hazard_if.mem_use_stall 
-                                  || hazard_if.fence_stall); // Data hazard -- stall until dependency clears (from E/M flush after writeback)
+                                  // Ugly case -- need to flush for control hazards when X busy, but other cases
+                                  // require stalling to take priority to prevent data loss (e.g. slow instruction
+                                  // fetch, valid insn in X, load in M --> giving flush priority would destroy insn
+                                  // in X)
+                                  || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump)
+                                  || hazard_if.mem_use_stall
+                                  // Data hazard -- stall until dependency clears (from E/M flush after writeback)
+                                  || hazard_if.fence_stall);
      // TODO: Exceptions
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
                                   || hazard_if.fence_stall

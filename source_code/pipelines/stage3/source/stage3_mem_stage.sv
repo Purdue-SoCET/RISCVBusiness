@@ -32,7 +32,8 @@ module stage3_mem_stage(
     assign predict_if.update_addr = ex_mem_if.ex_mem_reg.brj_addr;
     assign predict_if.pc_to_update = ex_mem_if.ex_mem_reg.pc;
     assign predict_if.direction = ex_mem_if.ex_mem_reg.instr[WORD_SIZE-1];
-    assign predict_if.is_jalr = (ex_mem_if.ex_mem_reg.instr[6:0] == JALR && (ex_mem_if.ex_mem_reg.instr[19:15] == 5'd5 || ex_mem_if.ex_mem_reg.instr[19:15] == 5'd1)) ? 1 : 0;
+    assign predict_if.is_jalr = ex_mem_if.ex_mem_reg.instr[6:0] == JALR &&
+                                (ex_mem_if.ex_mem_reg.instr[19:15] == 'd5 || ex_mem_if.ex_mem_reg.instr[19:15] == 'd1);
 
 
     /*************
@@ -213,7 +214,8 @@ module stage3_mem_stage(
             itlb_fenced_next = 1;
         if (cc_if.dtlb_fence_done)
             dtlb_fenced_next = 1;
-        if ((itlb_fenced_next && dtlb_fenced_next) || ADDRESS_TRANSLATION == "disabled") // hardwired TLB fences to be done if AT is disabled in ISA param
+        // hardwired TLB fences to be done if AT is disabled in ISA param
+        if ((itlb_fenced_next && dtlb_fenced_next) || ADDRESS_TRANSLATION == "disabled")
             itlb_fence_reg_next = 0;
     end
 
@@ -224,7 +226,8 @@ module stage3_mem_stage(
     assign hazard_if.d_mem_busy = dgen_bus_if.busy;
     assign hazard_if.ifence = ex_mem_if.ex_mem_reg.ifence;
     assign hazard_if.sfence = ex_mem_if.ex_mem_reg.sfence & SUPERVISOR == "enabled";
-    assign hazard_if.fence_stall = (ifence_reg && !(iflushed && dflushed)) || (itlb_fence_reg && !(itlb_fenced && dtlb_fenced));
+    assign hazard_if.fence_stall = (ifence_reg && !(iflushed && dflushed))
+                                    || (itlb_fence_reg && !(itlb_fenced && dtlb_fenced));
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
@@ -235,7 +238,8 @@ module stage3_mem_stage(
     assign hazard_if.reg_write = ex_mem_if.ex_mem_reg.reg_write;
     assign hazard_if.csr_read = prv_pipe_if.valid_write;
     assign hazard_if.token_mem = 0; // TODO: RISC-MGMT
-    assign hazard_if.mispredict = (ex_mem_if.ex_mem_reg.predicted_address != ex_mem_if.ex_mem_reg.brj_addr) || (ex_mem_if.ex_mem_reg.prediction ^ predict_if.branch_result);
+    assign hazard_if.mispredict = (ex_mem_if.ex_mem_reg.predicted_address != ex_mem_if.ex_mem_reg.brj_addr)
+                                    || (ex_mem_if.ex_mem_reg.prediction ^ predict_if.branch_result);
     assign hazard_if.update_predictor = predict_if.update_predictor;
     //assign hazard_if.pc = ex_mem_if.ex_mem_reg.pc;
 
@@ -251,7 +255,8 @@ module stage3_mem_stage(
     assign prv_pipe_if.clr = ex_mem_if.ex_mem_reg.csr_clr;
     assign prv_pipe_if.set = ex_mem_if.ex_mem_reg.csr_set;
     assign prv_pipe_if.read_only = ex_mem_if.ex_mem_reg.csr_read_only;
-    assign prv_pipe_if.wdata = ex_mem_if.ex_mem_reg.csr_imm ? {27'h0, ex_mem_if.ex_mem_reg.zimm} : ex_mem_if.ex_mem_reg.rs1_data;
+    assign prv_pipe_if.wdata = ex_mem_if.ex_mem_reg.csr_imm
+                                ? {27'h0, ex_mem_if.ex_mem_reg.zimm} : ex_mem_if.ex_mem_reg.rs1_data;
     assign prv_pipe_if.csr_addr = ex_mem_if.ex_mem_reg.csr_addr;
     assign prv_pipe_if.valid_write = (prv_pipe_if.swap | prv_pipe_if.clr
                                         | prv_pipe_if.set) & ~hazard_if.ex_mem_stall;
@@ -272,7 +277,8 @@ module stage3_mem_stage(
     assign hazard_if.fault_insn_page = ex_mem_if.ex_mem_reg.fault_insn_page;
     assign hazard_if.fault_load_page = prv_pipe_if.mem_fault_load_page;
     assign hazard_if.fault_store_page = prv_pipe_if.mem_fault_store_page;
-    assign hazard_if.fault_addr = (hazard_if.fault_insn || hazard_if.mal_insn || hazard_if.fault_insn_page) ? ex_mem_if.ex_mem_reg.fault_addr : dgen_bus_if.addr;
+    assign hazard_if.fault_addr = (hazard_if.fault_insn || hazard_if.mal_insn || hazard_if.fault_insn_page)
+                                    ? ex_mem_if.ex_mem_reg.fault_addr : dgen_bus_if.addr;
 
     // NEW
     assign hazard_if.pc_m = ex_mem_if.ex_mem_reg.pc;
@@ -291,7 +297,8 @@ module stage3_mem_stage(
     * Writeback
     ************/
     assign ex_mem_if.brj_addr = ex_mem_if.ex_mem_reg.brj_addr;
-    assign ex_mem_if.reg_write = ex_mem_if.ex_mem_reg.reg_write  && !hazard_if.suppress_data; // suppress reg write if load suppressed
+    // suppress reg write if load suppressed
+    assign ex_mem_if.reg_write = ex_mem_if.ex_mem_reg.reg_write  && !hazard_if.suppress_data;
     assign ex_mem_if.rd_m = ex_mem_if.ex_mem_reg.rd_m;
 
     always_comb begin

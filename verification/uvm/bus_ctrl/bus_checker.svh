@@ -39,9 +39,9 @@ class bus_checker extends uvm_scoreboard;
   endfunction
 
   function void connect_phase(uvm_phase phase);
-   l2_export.connect(l2_fifo.analysis_export); 
-   l1_req_export.connect(l1_req_fifo.analysis_export); 
-   snp_rsp_export.connect(snp_rsp_fifo.analysis_export); 
+   l2_export.connect(l2_fifo.analysis_export);
+   l1_req_export.connect(l1_req_fifo.analysis_export);
+   snp_rsp_export.connect(snp_rsp_fifo.analysis_export);
   endfunction
 
   task run_phase(uvm_phase phase);
@@ -73,7 +73,7 @@ class bus_checker extends uvm_scoreboard;
         snp_rsp_fifo.get(snpRspTx);
         //`uvm_info(this.get_name(), $sformatf("Received new snpRsp trans:\n%s", snpRspTx.sprint()), UVM_DEBUG);
       end
-      
+
 
       if((snpRspPresent && snpRspTx.snoopRspType != 1) || (reqTx.procReqType == 2)) begin // If the snoop was dirty then the L2 happens after the L1 gets low dwait, we must wait for the L2 trans to happen before checking everything or if we have a processor write
        while(timeout < dut_params::BUS_CHECKER_TIMEOUT && l2_fifo.is_empty()) begin
@@ -83,7 +83,7 @@ class bus_checker extends uvm_scoreboard;
        end
       end
 
-      // Now get the l2 response! 
+      // Now get the l2 response!
       // done with similar logic to the above snoop response
       if(l2_fifo.is_empty()) begin
         l2TxPresent = 0;
@@ -121,11 +121,11 @@ class bus_checker extends uvm_scoreboard;
                end
              end
           2: begin
-               uvm_report_error("Checker", "Snoop request on a busWrite request!"); 
+               uvm_report_error("Checker", "Snoop request on a busWrite request!");
                errorFlag = 1;
              end
         endcase
-      end else begin 
+      end else begin
         case(reqTx.procReqType)
           0: begin
                uvm_report_error("Checker", "No snoop request on busRead!");
@@ -174,7 +174,7 @@ class bus_checker extends uvm_scoreboard;
             uvm_report_error("Checker", "L2 read on a processor write request");
             errorFlag = 1;
           end
-          
+
           if(l2Tx.l2StoreData != reqTx.procReq_dstore) begin
             uvm_report_error("Checker", "L2 store data doesn't match data being stored by L1 requester");
             errorFlag = 1;
@@ -225,7 +225,7 @@ class bus_checker extends uvm_scoreboard;
           endcase
       end
 
-    if(errorFlag) begin 
+    if(errorFlag) begin
       `uvm_info("Checker", "Error flag seen!\n", UVM_DEBUG);
       `uvm_info("Checker", $sformatf("L1 req trans is %s\n", reqTx.sprint()), UVM_DEBUG);
       if(snpRspPresent) begin `uvm_info("Checker", $sformatf("Snp trans is %s\n", snpRspTx.sprint()), UVM_DEBUG); end
@@ -245,3 +245,4 @@ class bus_checker extends uvm_scoreboard;
 endclass : bus_checker
 
 `endif
+

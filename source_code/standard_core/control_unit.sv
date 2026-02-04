@@ -214,7 +214,8 @@ module control_unit (
     end
 
     // Trap VM if TVM is set, privilege level is S-Mode and either an sfence or csr R/W to SATP
-    assign tvm_trap = ((cu_if.sfence) || (cu_if.csr_rw_valid && cu_if.csr_addr == SATP_ADDR)) && prv_pipe_if.mstatus.tvm && prv_pipe_if.curr_privilege_level == S_MODE;
+    assign tvm_trap = ((cu_if.sfence) || (cu_if.csr_rw_valid && cu_if.csr_addr == SATP_ADDR))
+                    && prv_pipe_if.mstatus.tvm && prv_pipe_if.curr_privilege_level == S_MODE;
 
     // Raise illegal instruction on WFI if Timer Wait is set, and privilege mode is not M-Mode
     assign tw_trap  = cu_if.wfi && prv_pipe_if.mstatus.tw && prv_pipe_if.curr_privilege_level != M_MODE;

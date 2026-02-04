@@ -32,7 +32,7 @@ module multicore_wrapper #(
 
     genvar i;
     generate
-        for (i = 0; i < (NUM_HARTS*2); i++)  begin : GEN_BUS_MAP
+        for (i = 0; i < (NUM_HARTS*2); i++)  begin : g_bus_map
             `MAP_FRONT_TO_BACK(dREN)
             `MAP_FRONT_TO_BACK(dWEN)
             `MAP_FRONT_TO_BACK(daddr)
@@ -98,7 +98,7 @@ module multicore_wrapper #(
 
     genvar HART_ID;
     generate
-        for (HART_ID = 0; HART_ID < NUM_HARTS; HART_ID = HART_ID + 1) begin : GEN_HART
+        for (HART_ID = 0; HART_ID < NUM_HARTS; HART_ID = HART_ID + 1) begin : g_hart
             logic pipeline_wfi;
 
             RISCVBusiness #(

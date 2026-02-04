@@ -52,7 +52,8 @@ module top_core #(
         .rs1(rs1),
         .rs2(rs2),
         .rd(rd),
-        .imm_S(imm_S), // TODO: Extract constants. Maybe we could pass these in the pipeline and they'd be removed by synthesis?
+        // TODO: Extract constants. Maybe we could pass these in the pipeline and they'd be removed by synthesis?
+        .imm_S(imm_S),
         .imm_I(imm_I),
         .imm_U(imm_U),
         .imm_UJ(imm_UJ),
@@ -93,7 +94,10 @@ module top_core #(
     // TODO
 
 `elsif BUS_INTERFACE_APB
-    apb_if apb_requester (CLK, nRST);
+    apb_if apb_requester (
+        .CLK,
+        .nRST
+    );
 `else
 
 `endif

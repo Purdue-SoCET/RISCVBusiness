@@ -23,7 +23,7 @@
 *                   - Cache Size
 *                   - Non-Cacheable start address
 *                   - Block Size | max 8
-*	            - ASSOC | either 1 or 2
+*                   - ASSOC | either 1 or 2
 */
 
 `include "component_selection_defines.vh"
@@ -58,7 +58,7 @@ module l1_cache #(
     output logic cache_miss
 );
     import rv32i_types_pkg::*;
-    
+
     // local parameters
     localparam N_TOTAL_BYTES      = CACHE_SIZE;
     localparam N_TOTAL_WORDS      = N_TOTAL_BYTES / 4;
@@ -118,7 +118,7 @@ module l1_cache #(
         decoded_cache_idx_t idx;
         logic reserved;
     } reservation_set_t;
-    
+
     typedef enum logic [1:0] {
         CACHE_REQUEST_NONE, CACHE_REQUEST_PW, CACHE_REQUEST_PROC
     } cache_request_t;
@@ -178,7 +178,9 @@ module l1_cache #(
 
     assign decoded_pw_addr = decoded_cache_addr_t'(pw_gen_bus_if.addr);
 
-    assign sv32_addr = |ppn_tag[9:0] ? {ppn_tag[19:0], proc_gen_bus_if.addr[11:0]} : {ppn_tag[19:10], proc_gen_bus_if.addr[21:0]}; // superpaging support
+    assign sv32_addr = |ppn_tag[9:0]
+                        ? {ppn_tag[19:0], proc_gen_bus_if.addr[11:0]}
+                        : {ppn_tag[19:10], proc_gen_bus_if.addr[21:0]}; // superpaging support
 
     assign request_addr = pw_gen_bus_if.ren ? pw_gen_bus_if.addr : sv32_addr;
 
@@ -192,10 +194,32 @@ module l1_cache #(
                    : decoded_addr.idx.idx_bits;
     assign sramSNOOPSEL = tagWEN ? sramSEL
                         : snoop_decoded_addr.idx.idx_bits;
-    sram #(.SRAM_WR_SIZE(SRAM_W), .SRAM_HEIGHT(N_SETS))
-        CPU_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramWrite), .rVal(sramRead), .REN(1'b1), .WEN(sramWEN), .SEL(sramSEL), .wMask(sramMask));
-    sram #(.SRAM_WR_SIZE(SRAM_TAG_W), .SRAM_HEIGHT(N_SETS))
-        BUS_SRAM(.CLK(CLK), .nRST(nRST), .wVal(sramTags), .rVal(read_tag_bits), .REN(1'b1), .WEN(tagWEN), .SEL(sramSNOOPSEL), .wMask(sramTagsMask));
+    sram #(
+        .SRAM_WR_SIZE(SRAM_W),
+        .SRAM_HEIGHT(N_SETS)
+    ) CPU_SRAM (
+        .CLK(CLK),
+        .nRST(nRST),
+        .wVal(sramWrite),
+        .rVal(sramRead),
+        .REN(1'b1),
+        .WEN(sramWEN),
+        .SEL(sramSEL),
+        .wMask(sramMask)
+    );
+    sram #(
+        .SRAM_WR_SIZE(SRAM_TAG_W),
+        .SRAM_HEIGHT(N_SETS)
+    ) BUS_SRAM (
+        .CLK(CLK),
+        .nRST(nRST),
+        .wVal(sramTags),
+        .rVal(read_tag_bits),
+        .REN(1'b1),
+        .WEN(tagWEN),
+        .SEL(sramSNOOPSEL),
+        .wMask(sramTagsMask)
+    );
 
     assign bus_frame_tag = snoop_decoded_addr.idx.tag_bits;
 
@@ -222,7 +246,10 @@ module l1_cache #(
             read_addr <= next_read_addr;                // cache address to provide to memory
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
-            abort_bus <= (!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen && next_state != FLUSH_CACHE) || next_state == CANCEL_REQ || tlb_abort; // no flush cache check will cause fence.i to stall processor
+            // no flush cache check will cause fence.i to stall processor
+            abort_bus <= (!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen
+                            && next_state != FLUSH_CACHE)
+                        || next_state == CANCEL_REQ || tlb_abort;
             reservation_set <= next_reservation_set;
             request <= next_request;
         end
@@ -266,14 +293,16 @@ module l1_cache #(
     // CPU and bus sram have different always_comb blocks to prevent false
     // circular logic
     always_comb begin
-        hit 	        = 0;
+        hit             = 0;
         hit_idx         = 0;
         hit_data        = 0;
         pass_through    = phy_addr >= NONCACHE_START_ADDR;
         coherence_hit   = 0;
         sc_valid_block  = 0;
-        ren = IS_ICACHE ? proc_gen_bus_if.ren : prv_pipe_if.ex_mem_ren; // HACK: prevents comb loop in D$, find a better fix?
-        wen = IS_ICACHE ?                   0 : prv_pipe_if.ex_mem_wen; // HACK: prevents comb loop in D$, find a better fix?
+        // HACK: prevents comb loop in D$, find a better fix?
+        ren = IS_ICACHE ? proc_gen_bus_if.ren : prv_pipe_if.ex_mem_ren;
+        // HACK: prevents comb loop in D$, find a better fix?
+        wen = IS_ICACHE ?                   0 : prv_pipe_if.ex_mem_wen;
 
         if (!pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
@@ -281,7 +310,8 @@ module l1_cache #(
                     sc_valid_block = addr_is_reserved;
                     coherence_hit = sramRead.frames[i].dirty || sramRead.frames[i].exclusive;
                     //Read or write hit
-                    if((state == HIT && (pw_gen_bus_if.ren || ((ren || (wen && coherence_hit)) && ~pw_gen_bus_if.ren))) || state == SNOOP) begin
+                    if((state == HIT && (pw_gen_bus_if.ren || ((ren || (wen && coherence_hit)) && ~pw_gen_bus_if.ren)))
+                        || state == SNOOP) begin
                         hit       = 1'b1;
                         hit_data  = sramRead.frames[i].data;
                         hit_idx   = i;
@@ -315,9 +345,9 @@ module l1_cache #(
         enable_flush_count      = 0;
         enable_flush_count_nowb = 0;
         clear_flush_count       = 0;
-        flush_done 	            = 0;
+        flush_done              = 0;
         idle_done               = 0;
-        clear_done 	            = 0;
+        clear_done              = 0;
         cache_hit               = 0;
         // This logic should not change as it may cause bizarre issues during
         // simulation. During testing it was found that this exact logic was
@@ -353,7 +383,7 @@ module l1_cache #(
                 // flag the completion of flush
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
-                    idle_done 	       = 1;
+                    idle_done          = 1;
                     flush_done = 1; //HACK: Remove if this causes bugs, used for testbench
                 end
             end
@@ -429,20 +459,26 @@ module l1_cache #(
                         proc_gen_bus_if.rdata = 32'b1;
                     end
                     // cache miss on a clean block
-                    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through) begin
+                    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty
+                            && ~pass_through) begin
                         next_decoded_req_addr = decoded_addr;
                     end
                     // cache miss on a dirty block
-                    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through) begin
+                    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty
+                            && ~pass_through) begin
                         next_decoded_req_addr = decoded_addr;
-                        next_read_addr        =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                        next_read_addr =
+                            {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS('0), 2'b00};
                     end
                 end
             end
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
                 bus_ctrl_if.ccwrite =  request == CACHE_REQUEST_PW ? 0 : proc_gen_bus_if.wen;
-                bus_ctrl_if.dREN = (request == CACHE_REQUEST_PW ? pw_gen_bus_if.ren : proc_gen_bus_if.ren || proc_gen_bus_if.wen) || !abort_bus;
+                bus_ctrl_if.dREN = (request == CACHE_REQUEST_PW
+                                        ? pw_gen_bus_if.ren
+                                        : proc_gen_bus_if.ren || proc_gen_bus_if.wen)
+                                    || !abort_bus;
                 bus_ctrl_if.daddr = read_addr;
 
                 // only modify cache if its a processor request
@@ -510,7 +546,8 @@ module l1_cache #(
                 // flush to memory if valid & dirty
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].dirty) begin
                     bus_ctrl_if.dWEN    = 1'b1;
-                    bus_ctrl_if.daddr   = {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, {N_BLOCK_BITS{1'b0}}, 2'b00};
+                    bus_ctrl_if.daddr   =
+                        {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, N_BLOCK_BITS('0), 2'b00};
                     bus_ctrl_if.dstore  = sramRead.frames[flush_idx.frame_num].data;
                     if (!bus_ctrl_if.dwait) begin
                         enable_flush_count = 1;
@@ -532,7 +569,7 @@ module l1_cache #(
                 // flag the completion of flush
                 if (flush_idx.finish) begin
                     clear_flush_count  = 1;
-                    flush_done 	       = 1;
+                    flush_done         = 1;
                 end
             end
             CANCEL_REQ: begin
@@ -607,28 +644,35 @@ module l1_cache #(
             IDLE: begin
                 if (idle_done) //Used when flushing
                     next_state = HIT;
-	        end
-	        HIT: begin
+            end
+            HIT: begin
                 if (snoop_hit)
                     next_state = SNOOP;
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;
-                else if (pw_gen_bus_if.ren && ~hit && ~prevent_pw_request)  // last clause: if we don't have a tlb-miss and we are aborting, then it is an iTLB miss
+                // last clause: if we don't have a tlb-miss and we are aborting, then it is an iTLB miss
+                else if (pw_gen_bus_if.ren && ~hit && ~prevent_pw_request)
                     next_state = FETCH;
-                else if (tlb_miss) // don't ever fetch if we have a TLB miss & no current page walk request
+                // don't ever fetch if we have a TLB miss & no current page walk request
+                else if (tlb_miss)
                     next_state = state;
-                else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) // Don't transition on a failed sc
+                // Don't transition on a failed sc
+                else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through)
                     next_state = state;
-                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty && ~pass_through)
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit
+                        && sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = WB;
-                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty && ~pass_through)
+                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit
+                        && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
                 if (flush || flush_req)
                     next_state = FLUSH_CACHE;
 
-                next_request = next_state == FETCH || next_state == WB ? pw_gen_bus_if.ren && ~prevent_pw_request ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC : CACHE_REQUEST_NONE;
-	        end
-	        FETCH: begin
+                next_request = next_state == FETCH || next_state == WB
+                                ? (pw_gen_bus_if.ren && ~prevent_pw_request ? CACHE_REQUEST_PW : CACHE_REQUEST_PROC)
+                                : CACHE_REQUEST_NONE;
+            end
+            FETCH: begin
                 if (bus_ctrl_if.derror || !bus_ctrl_if.dwait) begin
                     cache_miss = 1;
                     next_state = HIT;
@@ -644,7 +688,7 @@ module l1_cache #(
                     next_state = HIT;
                 else if (snoop_hit && !tagWEN)
                     next_state = SNOOP;
-                
+
                 next_request = next_state == state ? request : CACHE_REQUEST_NONE;
             end
             SNOOP: begin
@@ -664,7 +708,7 @@ module l1_cache #(
                     next_state = SNOOP;
                 end
             end
-	    endcase
+        endcase
     end
 
     // flush saver

@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,15 +27,15 @@
 *                   - constrained random testing of read and write xactions
 */
 
-`include "generic_bus_if.vh" 
+`include "generic_bus_if.vh"
 
 module tb_caches ();
-  
+
   import rv32i_types_pkg::*;
 
   parameter NUM_TESTS = 1000;
   parameter NUM_ADDRS = 20;
-  parameter PERIOD = 20; 
+  parameter PERIOD = 20;
   parameter DELAY = 5;
   parameter CACHE_SELECT = "direct_mapped_tpf";// "pass_through";
 
@@ -51,9 +51,9 @@ module tb_caches ();
 
   // -- TB Variables -- //
 
-  logic CLK, nRST; 
+  logic CLK, nRST;
   integer seed;
-  
+
   logic   [RAM_ADDR_SIZE-1:0] tb_addr;
   word_t  tb_wdata;
   logic   [3:0] tb_byte_sel;
@@ -72,15 +72,15 @@ module tb_caches ();
   generic_bus_if cache_2_ram_if();
   logic DUT_flush, DUT_clear;
 
-  generate 
-    if (CACHE_SELECT == "pass_through") begin
+  generate
+    if (CACHE_SELECT == "pass_through") begin : g_cache_pt
       pass_through_cache DUT (
         .CLK(CLK),
         .nRST(nRST),
         .proc_gen_bus_if(DUT_bus_if),
         .mem_gen_bus_if(cache_2_ram_if)
       );
-    end else if (CACHE_SELECT == "direct_mapped_tpf") begin
+    end else if (CACHE_SELECT == "direct_mapped_tpf") begin : g_cache_dm_tpf
       direct_mapped_tpf_cache DUT (
         .CLK(CLK),
         .nRST(nRST),
@@ -95,12 +95,12 @@ module tb_caches ();
   // multiplexor for testbench cache bypass to memory
   assign DUT_ram_if.addr      = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.addr :
                                 tb_bus_if.addr;
-  assign DUT_ram_if.wdata     = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.wdata : 
+  assign DUT_ram_if.wdata     = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.wdata :
                                 tb_bus_if.wdata;
   assign DUT_ram_if.ren       = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.ren :
                                 tb_bus_if.ren;
   assign DUT_ram_if.wen       = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.wen :
-                                tb_bus_if.wen; 
+                                tb_bus_if.wen;
   assign DUT_ram_if.byte_en   = (mem_ctrl == CACHE_CONTROL) ? cache_2_ram_if.byte_en :
                                 tb_bus_if.byte_en;
   assign cache_2_ram_if.rdata = DUT_ram_if.rdata;
@@ -134,15 +134,15 @@ module tb_caches ();
     #(PERIOD/2) CLK = ~CLK;
   end : CLK_GEN
 
-  
+
   // -- Testing -- //
 
   initial begin : MAIN
-     
-    //-- Initial reset --// 
+
+    //-- Initial reset --//
     nRST = 0;
     DUT_flush = 0;
-    DUT_clear = 0; 
+    DUT_clear = 0;
     set_mem_ctrl(CACHE_CONTROL);
     set_ren(1'b0);
     set_wen(1'b0);
@@ -184,8 +184,8 @@ module tb_caches ();
     read_cache_check(tb_addr);
 
     tb_addr = tb_addr + 4;
-    write_cache(tb_addr, tb_wdata, 4'hc);  
-    read_cache_check(tb_addr); 
+    write_cache(tb_addr, tb_wdata, 4'hc);
+    read_cache_check(tb_addr);
 
     // write quarterwords to cache
 
@@ -228,7 +228,7 @@ module tb_caches ();
         read_cache_check(tb_addr);
       end
     end
-   
+
     // -- Random Testing -- //
 
     $info("---------- Beginning Random Testing of %0d Xactions %0d Unique Addrs ----------", NUM_TESTS, NUM_ADDRS);
@@ -245,9 +245,9 @@ module tb_caches ();
       tb_xaction_type = $urandom%2;
       j = $urandom%NUM_ADDRS;
       tb_addr         = tb_addr_array[j];
-      tb_wdata        = $urandom; 
+      tb_wdata        = $urandom;
       case ($urandom%7)
-        0 : tb_byte_sel = 4'hf; 
+        0 : tb_byte_sel = 4'hf;
         1 : tb_byte_sel = 4'h1;
         2 : tb_byte_sel = 4'h2;
         3 : tb_byte_sel = 4'h3;
@@ -263,16 +263,16 @@ module tb_caches ();
             i, tb_addr, tb_wdata, tb_byte_sel);
         end
         write_cache(tb_addr, tb_wdata, tb_byte_sel);
-      end else begin // read  
+      end else begin // read
         if(VERBOSE) begin
           $info("\nXaction %0d -- Read --  Addr: %0h", i, tb_addr);
         end
         read_cache_check(tb_addr);
       end
     end
-    
+
     // -- Cache Clear -- //
-    
+
     $info("---------- Beginning Cache Clear Testing ----------");
 
     tb_addr = 0;
@@ -298,8 +298,8 @@ module tb_caches ();
 
     // flush cache
     flush_cache();
- 
-    // Read to dummy addr to ensure flushing is completed 
+
+    // Read to dummy addr to ensure flushing is completed
     tb_addr = '1;
     read_cache_check(tb_addr);
 
@@ -323,7 +323,7 @@ module tb_caches ();
         read_cache_check(tb_addr);
       end
     end
-    
+
 
     $info("\n---------- Testing Completed Successfully---------\n", error_cnt);
 
@@ -346,7 +346,7 @@ module tb_caches ();
     set_wen(1'b0);
     set_addr(read_addr);
     set_byte_en(4'b1111);
-  
+
     @(posedge CLK);
 
     while (caches_busy())
@@ -367,8 +367,8 @@ module tb_caches ();
     read_cache(read_addr, DUT_rdata, gold_rdata);
 
     if (DUT_rdata !== gold_rdata) begin
-      $info("\nData Mismatch \nAddr: 0x%0h\nExpected: 0x%0h\nReceived: 0x%0h\n", 
-        read_addr, gold_rdata, DUT_rdata); 
+      $info("\nData Mismatch \nAddr: 0x%0h\nExpected: 0x%0h\nReceived: 0x%0h\n",
+        read_addr, gold_rdata, DUT_rdata);
       error_cnt = error_cnt + 1;
       #(DELAY);
       $finish;
@@ -382,7 +382,7 @@ module tb_caches ();
     input [RAM_ADDR_SIZE-1:0] write_addr;
     input word_t write_data;
     input logic [3:0] write_byte_en;
-    
+
     set_mem_ctrl(CACHE_CONTROL);
     set_ren(1'b0);
     set_wen(1'b1);
@@ -394,7 +394,7 @@ module tb_caches ();
 
     while (caches_busy())
       @(posedge CLK);
-    
+
   endtask
 
   // write_mem
@@ -416,14 +416,14 @@ module tb_caches ();
 
     while (mem_busy())
       @(posedge CLK);
-    
+
   endtask
 
   // clear_line
   // Sends the request to clear a cache line to the cache
   task clear_line;
     input logic [RAM_ADDR_SIZE-1:0] clear_addr;
-    
+
     DUT_clear = 1'b1;
     set_addr(clear_addr);
     @(posedge CLK);
@@ -451,7 +451,7 @@ module tb_caches ();
   endfunction
 
   // set_addr
-  // Sets the address to the DUT and gold model 
+  // Sets the address to the DUT and gold model
   task set_addr;
     input logic [RAM_ADDR_SIZE-1:0] new_addr;
 
@@ -506,7 +506,7 @@ module tb_caches ();
   // access to memory.
   task set_mem_ctrl;
     input logic new_mem_ctrl;
-    
+
     mem_ctrl = new_mem_ctrl;
   endtask
 

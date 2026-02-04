@@ -36,7 +36,7 @@ module sram #(
     input logic [SRAM_WR_SIZE-1:0] wMask
 );
     typedef logic [SRAM_WR_SIZE-1:0] sram_entry_size_t;
-    sram_entry_size_t [SRAM_HEIGHT-1:0] sramMemory; 
+    sram_entry_size_t [SRAM_HEIGHT-1:0] sramMemory;
     sram_entry_size_t [SRAM_HEIGHT-1:0] n_sramMemory;
 
     always_ff @(posedge CLK) begin

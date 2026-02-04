@@ -29,9 +29,9 @@ class l1_snoopresp_bfm extends uvm_component;
     @(posedge vif.clk);
     #2; // propogation delay
     zero_all_sigs();
-    snoop_bus(); 
+    snoop_bus();
    end
- endtask : run_phase 
+ endtask : run_phase
 
  virtual task snoop_bus();
   bit hit;
@@ -75,7 +75,7 @@ class l1_snoopresp_bfm extends uvm_component;
      // Wait a random amount of time
      wait_new_time();
 
-     // Set the hit/dirty values 
+     // Set the hit/dirty values
      vif.ccsnoophit[i] = hitVals[i];
      vif.ccIsPresent[i] = hitVals[i];
      vif.ccdirty[i] = dirtyVals[i];
@@ -84,10 +84,10 @@ class l1_snoopresp_bfm extends uvm_component;
      if(hitVals[i]) vif.snoop_dstore[i] = {32'hbbbbbbbb, vif.ccsnoopaddr[i]};
      else vif.snoop_dstore[i] = {32'hbbbbbbbb, 32'hdeadbeef};
      vif.ccsnoopdone[i] = 1; //check this part again
-   end 
+   end
    else if(vif.ccwait[i] == 1) begin
      vif.ccsnoopdone[i] = 1; //check this part again
-   end 
+   end
    else begin
      zeroSigsForIndex(i);
    end
@@ -98,11 +98,12 @@ class l1_snoopresp_bfm extends uvm_component;
  virtual function logic [CPUS-1:0] generate_hit(logic [CPUS-1:0] waitVals);
     logic [CPUS-1:0] tempHitArray = '0;
     for(int i = 0; i < CPUS; i++) begin
-        tempHitArray[i] = (logic'($urandom() % 2)) & waitVals[i]; // generae a random val between 0 and 1 and only set hit if this cache is being snooped into
+        // generae a random val between 0 and 1 and only set hit if this cache is being snooped into
+        tempHitArray[i] = (logic'($urandom() % 2)) & waitVals[i];
     end
 
     return tempHitArray;
- endfunction 
+ endfunction
 
 
  virtual function logic [CPUS-1:0] generate_ccdirty(logic [CPUS-1:0] snoophit);
@@ -116,9 +117,9 @@ class l1_snoopresp_bfm extends uvm_component;
     // Also fit up the position array with all of the hit indexes
     // We will pick a random number and choose from the hitPosArray for which person gets a dirty if any
     for(int i = 0; i < CPUS; i++) begin
-        if(snoophit[i] == 1'b1) begin 
+        if(snoophit[i] == 1'b1) begin
             hitPosArray[numHit] = i;
-            numHit = numHit + 1; 
+            numHit = numHit + 1;
         end
     end
 
@@ -163,3 +164,4 @@ class l1_snoopresp_bfm extends uvm_component;
 
 endclass : l1_snoopresp_bfm
 `endif
+

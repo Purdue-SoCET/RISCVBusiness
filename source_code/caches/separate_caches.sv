@@ -266,7 +266,8 @@ module separate_caches(
         prv_pipe_if.mem_fault_load_page  = 0;
         prv_pipe_if.mem_fault_store_page = 0;
         prv_pipe_if.fetch_fault_insn_page  = 0;
-        tlb_abort = prv_pipe_if.pc_redirect & itlb_miss;  // if we are redirecting the PC, we do NOT want an outdated iTLB miss to complete.
+        // if we are redirecting the PC, we do NOT want an outdated iTLB miss to complete.
+        tlb_abort = prv_pipe_if.pc_redirect & itlb_miss;
 
         // Order goes
         // 1. PW data access fault
@@ -278,8 +279,8 @@ module separate_caches(
             prv_pipe_if.mem_fault_store_page = pw_fault_store_page;
             prv_pipe_if.fetch_fault_insn_page  = pw_fault_insn_page;
         end
-        else if (dtlb_fault_load_page  | 
-                 dtlb_fault_store_page | 
+        else if (dtlb_fault_load_page  |
+                 dtlb_fault_store_page |
                  dtlb_fault_insn_page) begin
             prv_pipe_if.mem_fault_load_page  = dtlb_fault_load_page;
             prv_pipe_if.mem_fault_store_page = dtlb_fault_store_page;
@@ -290,8 +291,8 @@ module separate_caches(
             prv_pipe_if.mem_fault_store_page = pw_fault_store_page;
             prv_pipe_if.fetch_fault_insn_page  = pw_fault_insn_page;
         end
-        else if (itlb_fault_load_page  | 
-                 itlb_fault_store_page | 
+        else if (itlb_fault_load_page  |
+                 itlb_fault_store_page |
                  itlb_fault_insn_page) begin
             prv_pipe_if.mem_fault_load_page  = itlb_fault_load_page;
             prv_pipe_if.mem_fault_store_page = itlb_fault_store_page;

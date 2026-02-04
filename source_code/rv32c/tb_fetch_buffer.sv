@@ -8,29 +8,29 @@ module tb_fetch_buffer();
     typedef struct {
         logic [31:0] data;
         logic compressed;
-    } ExpectedValue;
+    } expected_value_t;
 
     typedef struct {
         logic [31:0] addr;
         logic inv;
         logic read;
-    } InsnVector;
+    } insn_vector_t;
 
     typedef struct {
         logic [31:0] memory [];
-        InsnVector istream [];
-        ExpectedValue expected[];
-    } TestVector;
+        insn_vector_t istream [];
+        expected_value_t expected[];
+    } test_vector_t;
 
-    function automatic string format_expected(ExpectedValue e);
+    function automatic string format_expected(expected_value_t e);
         return $sformatf("Expected (%s) %x", e.compressed ? "C" : "F", e.data);
     endfunction
 
-    function automatic string format_insn(InsnVector iv);
+    function automatic string format_insn(insn_vector_t iv);
         return $sformatf("%s @ %x", iv.read ? "Read" : (iv.inv ? "Inv" : "Stall"), iv.addr);
     endfunction
 
-    function automatic string format_failure(InsnVector iv, ExpectedValue ev, logic [31:0] actual);
+    function automatic string format_failure(insn_vector_t iv, expected_value_t ev, logic [31:0] actual);
         string istring = format_insn(iv);
         string estring = format_expected(ev);
 
@@ -46,9 +46,9 @@ module tb_fetch_buffer();
     logic [31:0] insn_out;
 
     logic [31:0] memory [];
-    InsnVector istream [];
-    ExpectedValue expected[];
-    TestVector tv [];
+    insn_vector_t istream [];
+    expected_value_t expected[];
+    test_vector_t tv [];
 
     fetch_buffer DUT(
         .CLK(clk),
@@ -100,7 +100,7 @@ module tb_fetch_buffer();
         end
     endtask
 
-    task automatic send_request(InsnVector vec);
+    task automatic send_request(insn_vector_t vec);
         pc = vec.addr;
         ren = vec.read;
         invalidate = vec.inv;
@@ -114,7 +114,7 @@ module tb_fetch_buffer();
         invalidate = 1'b0;
     endtask
 
-    task automatic await_insn(InsnVector insn, ExpectedValue expected);
+    task automatic await_insn(insn_vector_t insn, expected_value_t expected);
         while(!insn_valid) begin
             #(1);
         end
@@ -262,7 +262,7 @@ module tb_fetch_buffer();
         test_num++;
         tv[test_num].memory = new[3];
         tv[test_num].memory = '{
-            {16'h0004, 16'h0002}, 
+            {16'h0004, 16'h0002},
             {16'h0003, 16'h2221},
             {16'hABCD, 16'h3330}
         };

@@ -348,22 +348,22 @@ module priv_csr #(
       /* stvec reset */
       stvec.mode <= DIRECT;
       stvec.base <= '0;
-      
+
       /* sscratch reset */
       sscratch <= '0;
-      
+
       /* sepc reset */
       sepc <= '0;
-      
+
       /* scause reset */
       scause <= '0;
-      
+
       /* stval reset */
       stval <= '0;
-      
+
       /* sip reset */
       sip <= '0;
-      
+
       /* scounteren reset */
       scounteren <= '1;
 
@@ -456,7 +456,8 @@ module priv_csr #(
       if (prv_intern_if.valid_write) begin
         casez(prv_intern_if.csr_addr)
           MSTATUS_ADDR: begin
-            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR == "disabled")) begin
+            if (prv_intern_if.new_csr_val[12:11] == RESERVED_MODE
+                || (prv_intern_if.new_csr_val[12:11] == S_MODE && SUPERVISOR == "disabled")) begin
               assert(SUPERVISOR == "enabled");
               mstatus_next.mpp = U_MODE; // If invalid privilege level, dump at 0
             end else begin
@@ -471,9 +472,10 @@ module priv_csr #(
             mstatus_next.sum = nxt_csr_val[18] && SUPERVISOR == "enabled" && ADDRESS_TRANSLATION == "enabled";
             mstatus_next.mxr = nxt_csr_val[19] && SUPERVISOR == "enabled";
             mstatus_next.tvm = nxt_csr_val[20] && SUPERVISOR == "enabled";
-            mstatus_next.tw = nxt_csr_val[21]; // RO-zero if no less privileged modes other than M-mode (we have U-mode regardless!)
+            // RO-zero if no less privileged modes other than M-mode (we have U-mode regardless!)
+            mstatus_next.tw = nxt_csr_val[21];
             mstatus_next.tsr = nxt_csr_val[22] && SUPERVISOR == "enabled";
-            
+
             `ifdef SMODE_SUPPORTED
             // Update sstatus
             sstatus_next.sie = mstatus_next.sie;
@@ -595,7 +597,7 @@ module priv_csr #(
             sstatus_next.spp = nxt_csr_val[8];
             sstatus_next.sum = nxt_csr_val[18];
             sstatus_next.mxr = nxt_csr_val[19];
-            
+
             // Update mstatus
             mstatus_next.sie = sstatus_next.sie;
             mstatus_next.spie = sstatus_next.spie;
@@ -660,7 +662,7 @@ module priv_csr #(
     //       see priv_int_ex_handler for why
     if (prv_intern_if.inject_mstatus) begin
       mstatus_next = prv_intern_if.next_mstatus;
-      
+
       `ifdef SMODE_SUPPORTED
       sstatus_next = sstatus_t'(prv_intern_if.next_mstatus & SSTATUS_MASK);
       `endif
@@ -693,7 +695,7 @@ module priv_csr #(
     `endif // SMODE_SUPPORTED
 
     mstatus_next.sd = &(mstatus_next.vs) | &(mstatus_next.fs) | &(mstatus_next.xs);
-    
+
     `ifdef SMODE_SUPPORTED
     sstatus_next.sd = mstatus_next.sd;
     `endif
@@ -949,3 +951,4 @@ module priv_csr #(
   endfunction
 
 endmodule
+

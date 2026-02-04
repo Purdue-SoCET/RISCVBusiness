@@ -4,7 +4,7 @@ module rv32b_alu(
     input rv32b_pkg::rv32b_op_t aluop,
     output logic [31:0] y
 );
-   
+
     import rv32b_pkg::*;
     logic [5:0] acc;
 

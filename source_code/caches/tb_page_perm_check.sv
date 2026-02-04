@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,7 +127,9 @@ assign at_if.sv39 = 0; // prv_pipe_if.satp.mode == 8
 assign at_if.sv48 = 0; // prv_pipe_if.satp.mode == 9
 assign at_if.sv57 = 0; // prv_pipe_if.satp.mode == 10
 assign at_if.sv64 = 0; // prv_pipe_if.satp.mode == 11
-assign at_if.addr_trans_on = (at_if.sv32 | at_if.sv39 | at_if.sv48 | at_if.sv57 | at_if.sv64) && (prv_pipe_if.curr_privilege_level == S_MODE || prv_pipe_if.curr_privilege_level == U_MODE);
+assign at_if.addr_trans_on = (at_if.sv32 | at_if.sv39 | at_if.sv48 | at_if.sv57 | at_if.sv64)
+                            && (prv_pipe_if.curr_privilege_level == S_MODE
+                                || prv_pipe_if.curr_privilege_level == U_MODE);
 
 endmodule
 
@@ -1005,9 +1007,10 @@ task set_pte (
   input logic set_accessed = 1,
   input logic set_dirty = 1
 );
-  
+
   pte_sv32.ppn = new_ppn;
-  pte_sv32.perms = pte_perms_t'(new_perms | (set_accessed ? PAGE_PERM_ACCESSED : 0) | (set_dirty ? PAGE_PERM_DIRTY : 0));
+  pte_sv32.perms = pte_perms_t'(new_perms | (set_accessed ? PAGE_PERM_ACCESSED : 0)
+                    | (set_dirty ? PAGE_PERM_DIRTY : 0));
 endtask
 
 task set_priv_level;
@@ -1083,10 +1086,10 @@ endtask
 task check_all_fault;
   // test loads
   check_load_fault();
-  
+
   // test stores
   check_store_fault();
-  
+
   // test instructions
   check_insn_fault();
 endtask
@@ -1112,10 +1115,10 @@ endtask
 task check_all_nofault;
   // test loads
   check_load_nofault();
-  
+
   // test stores
   check_store_nofault();
-  
+
   // test instructions
   check_insn_nofault();
 endtask

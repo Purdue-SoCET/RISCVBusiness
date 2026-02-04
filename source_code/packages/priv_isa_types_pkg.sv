@@ -31,7 +31,7 @@ package priv_isa_types_pkg;
   parameter int UXLEN  = 32;
   parameter int VSXLEN = 32;
   parameter int HSXLEN = 32;
-  
+
   // Address Translation Constants
   parameter int SV32_MODE   = 1;
   parameter int SV39_MODE   = 8;
@@ -266,7 +266,7 @@ package priv_isa_types_pkg;
   } saddr_t;
 
   /* User Mode Addresses */
-  typedef enum logic [11:0] { 
+  typedef enum logic [11:0] {
     CYCLE_ADDR         = 12'hC00,
     TIME_ADDR          = 12'hC01,
     INSTRET_ADDR       = 12'hC02,

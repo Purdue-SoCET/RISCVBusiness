@@ -17,7 +17,7 @@
 *
 *   Filename:     decompressor.sv
 *
-*   Created by:   Cole Nelson 
+*   Created by:   Cole Nelson
 *   Email:        nelso345@purdue.edu
 *   Date Created: 5/21/2025
 *   Description:  Temporary wrapper to test new decompressor with old plumbing.
@@ -25,7 +25,7 @@
 module decompressor_wrapper(
     decompressor_if.dcpr dcpr_if
 );
-    
+
     decompressor DECOMPRESSOR(
         .compressed(dcpr_if.inst16),
         .decompressed(dcpr_if.inst32)

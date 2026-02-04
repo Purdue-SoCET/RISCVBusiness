@@ -30,7 +30,7 @@ module rv32m_decode (
     import rv32m_pkg::*;
 
     rv32m_insn_t insn_split;
-    
+
     assign insn_split = rv32m_insn_t'(insn);
     assign claim = (insn_split.opcode_major == RV32M_OPCODE)
                     && (insn_split.opcode_minor == RV32M_OPCODE_MINOR);

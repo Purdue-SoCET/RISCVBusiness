@@ -15,7 +15,7 @@
 
 `timescale 1ns/100ps
 
-module cache_coh_wrapper(
+module tb_cache_coh_wrapper(
     input logic CLK, nRST,
     generic_bus_if proc_gen_bus_if, //Processor to cache
     cache_control_if cc_if, //Processor to cache

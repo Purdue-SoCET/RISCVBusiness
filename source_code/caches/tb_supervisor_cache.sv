@@ -1,12 +1,12 @@
 /*
 *   Copyright 2016 Purdue University
-*   
+*
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
 *   You may obtain a copy of the License at
-*   
+*
 *       http://www.apache.org/licenses/LICENSE-2.0
-*   
+*
 *   Unless required by applicable law or agreed to in writing, software
 *   distributed under the License is distributed on an "AS IS" BASIS,
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,9 +62,9 @@ module tb_supervisor_cache();
   logic CLK = 0, nRST;
   logic clear, fence, clear_done, fence_done, tlb_miss;
   logic fault_load_page, fault_store_page, fault_insn_page;
-  
+
   // clock
-  always #(PERIOD/2) CLK++; 
+  always #(PERIOD/2) CLK++;
 
   // test signals
   generic_bus_if         icache_proc_gen_bus_if (); // Fetch Stage to I$/iTLB
@@ -85,7 +85,7 @@ module tb_supervisor_cache();
   );
 
   // DUT
-  supervisor_cache_wrapper DUT (
+  tb_supervisor_cache_wrapper DUT (
     .CLK(CLK),
     .nRST(nRST),
     .icache_proc_gen_bus_if(icache_proc_gen_bus_if),
@@ -94,7 +94,7 @@ module tb_supervisor_cache();
     .control_if(control_if),
     .out_gen_bus_if(out_gen_bus_if)
   );
-  
+
 endmodule
 
 program test_id_tlb_vipt_pw
@@ -136,7 +136,8 @@ logic check;
 initial begin : MAIN
 
   assert (SUPERVISOR == "enabled" && ADDRESS_TRANSLATION == "enabled") else begin
-    $error ("Please enable both the Supervisor and Address Translation to run this test in your core yml, run `make verilate`, and try again.");
+    $error ({"Please enable both the Supervisor and Address Translation to run this test in your",
+            "core yml, run `make verilate`, and try again."});
   end
 
   $dumpfile("waveform.fst");
@@ -173,17 +174,17 @@ initial begin : MAIN
   @(posedge CLK);
 
   /**************************
-  
+
   Begin testing!
-  
+
   **************************/
   $display("\n---------- Beginning Basic Test Cases ---------\n");
 
 
   /**************************
-  
+
   Instruction: L1 + TLB Miss -> Page Walk -> Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 + TLB Miss -> Page Walk -> Memory Access");
 
@@ -203,11 +204,11 @@ initial begin : MAIN
 
   complete_test();
 
-  
+
   /**************************
-  
+
   Instruction: L1 Miss, TLB Hit -> No Page Walk -> Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 Miss, TLB Hit -> No Page Walk -> Memory Access");
 
@@ -223,9 +224,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction: L1 + TLB Hit -> No Page Walk -> No Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 + TLB Hit -> No Page Walk -> No Memory Access");
 
@@ -244,9 +245,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction: L1 Hit, TLB Miss -> Page Walk -> No Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 Hit, TLB Miss -> Page Walk -> No Memory Access");
 
@@ -277,9 +278,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction: L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access");
 
@@ -303,9 +304,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction: L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access");
 
@@ -329,9 +330,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction: L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access
-  
+
   **************************/
   begin_test("Instruction", "L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access");
 
@@ -357,7 +358,7 @@ initial begin : MAIN
   set_priv_level(U_MODE);
 
   initiate_read(32'h80200000, ICACHE);
-  
+
   // instruction page fault
   @(posedge CLK);
   if (prv_pipe_if.fault_insn_page != 1) begin
@@ -369,16 +370,16 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 + TLB Miss -> Page Walk -> Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 + TLB Miss -> Page Walk -> Memory Access");
 
   set_satp(1, 1, 'h80000);
   set_priv_level(S_MODE);
 
-  // begin write 
+  // begin write
   initiate_write(32'h00200400, 32'h98765432, DCACHE);
 
   // first level page walk
@@ -403,9 +404,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 Miss, TLB Hit -> No Page Walk -> Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 Miss, TLB Hit -> No Page Walk -> Memory Access");
 
@@ -431,9 +432,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 + TLB Hit -> No Page Walk -> No Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 + TLB Hit -> No Page Walk -> No Memory Access");
 
@@ -459,9 +460,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 Hit, TLB Miss -> Page Walk -> No Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 Hit, TLB Miss -> Page Walk -> No Memory Access");
 
@@ -488,9 +489,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 + TLB Miss, Faulty Address -> Page Walk Fault -> No Memory Access");
 
@@ -527,9 +528,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 + TLB Miss, Bad Permissions -> Page Walk Fault -> No Memory Access");
 
@@ -566,9 +567,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Data: L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access
-  
+
   **************************/
   begin_test("Data", "L1 + TLB Hit, Bad Permissions -> No Page Walk -> No Memory Access");
 
@@ -601,7 +602,7 @@ initial begin : MAIN
   set_priv_level(U_MODE);
 
   initiate_read(32'h80200040, DCACHE);
-  
+
   // load page fault
   @(posedge CLK);
   if (prv_pipe_if.fault_load_page != 1) begin
@@ -622,9 +623,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction + Data: I/D L1 + TLB Miss -> 2 Page Walks -> 2 Memory Accesses
-  
+
   **************************/
   begin_test("Instruction + Data", "I/D L1 + TLB Miss -> 2 Page Walks -> 2 Memory Accesses");
 
@@ -650,7 +651,7 @@ initial begin : MAIN
 
   // second level page walk, ICACHE
   complete_read(('h80040000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
-  
+
   // instruction read from cache, DCACHE
   complete_write('h98765432, DCACHE);
 
@@ -667,9 +668,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction + Data: I/D L1 Miss, TLB Hit -> No Page Walks -> 2 Memory Accesses
-  
+
   **************************/
   begin_test("Instruction + Data", "I/D L1 Miss, TLB Hit -> No Page Walks -> 2 Memory Accesses");
 
@@ -696,9 +697,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction + Data: I/D L1 + TLB Hit -> No Page Walks -> No Memory Accesses
-  
+
   **************************/
   begin_test("Instruction + Data", "I/D L1 + TLB Hit -> No Page Walks -> No Memory Accesses");
 
@@ -708,7 +709,7 @@ initial begin : MAIN
   // initiate the reads
   initiate_write(32'h40200050, 32'hBEEFDEAD, DCACHE);
   initiate_read(32'h30200030, ICACHE);
-  
+
   // instruction read from cache, DCACHE
   @(posedge CLK);
 
@@ -725,9 +726,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Instruction + Data: I/D L1 + TLB Miss -> 2 Page Walks -> No Memory Access
-  
+
   **************************/
   begin_test("Instruction + Data", "I/D L1 + TLB Miss -> 2 Page Walks -> No Memory Access");
 
@@ -743,14 +744,14 @@ initial begin : MAIN
   // initiate the reads
   initiate_write(32'h40200050, 32'hBEEFDEAD, DCACHE);
   initiate_read(32'h30200030, ICACHE);
-  
+
   // first level page walk, DCACHE
   complete_read(('h80010000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
 
   // second level page walk, DCACHE
   complete_read(('h80020000 >> 2) | RWXV_PERMS | AD_PERMS, PAGEWALK);
 
-  
+
   // first level page walk, ICACHE
   complete_read(('h80030000 >> 2) | PAGE_PERM_VALID | AD_PERMS, PAGEWALK);
 
@@ -773,9 +774,9 @@ initial begin : MAIN
 
 
   /**************************
-  
+
   Testing Completed
-  
+
   **************************/
   $display("\n---------- Testing Completed ---------\n");
 
@@ -1044,8 +1045,8 @@ task automatic complete_read_check;
 
   @(posedge CLK);
   if (expected_rdata !== actual_rdata) begin
-    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
-      expected_rdata, actual_rdata); 
+    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n",
+      expected_rdata, actual_rdata);
     error_cnt = error_cnt + 1;
   end
 endtask
@@ -1099,14 +1100,14 @@ task automatic complete_writeback_check;
   check = 0;
 
   if (expected_wdata[0] !== out_wdata[0]) begin
-    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
-      expected_wdata[0], out_wdata[0]); 
+    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n",
+      expected_wdata[0], out_wdata[0]);
     error_cnt = error_cnt + 1;
   end
 
   if (expected_wdata[1] !== out_wdata[1]) begin
-    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n", 
-      expected_wdata[1], out_wdata[1]); 
+    $display("\nData Mismatch \nExpected: 0x%08h\nReceived: 0x%08h\n",
+      expected_wdata[1], out_wdata[1]);
     error_cnt = error_cnt + 1;
   end
 endtask
