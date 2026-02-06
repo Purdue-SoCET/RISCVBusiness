@@ -6,7 +6,7 @@
 
 module multicore_wrapper #(
     parameter logic [31:0] RESET_PC = 32'h80000000,
-    parameter NUM_HARTS
+    parameter int NUM_HARTS
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
@@ -22,9 +22,35 @@ module multicore_wrapper #(
 `endif
 );
     front_side_bus_if front_side_bus [NUM_HARTS*2-1:0] ();
-    back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if(
-        .front_side(front_side_bus)
-    );
+    back_side_bus_if #(.CPUS(NUM_HARTS*2)) bus_ctrl_if();
+`define MAP_FRONT_TO_BACK(sig) \
+    assign bus_ctrl_if.sig[i] = front_side_bus[i].sig;
+
+`define MAP_BACK_TO_FRONT(sig) \
+    assign front_side_bus[i].sig = bus_ctrl_if.sig[i];
+
+    genvar i;
+    generate
+        for (i = 0; i < (NUM_HARTS*2); i++)  begin : GEN_BUS_MAP
+            `MAP_FRONT_TO_BACK(dREN)
+            `MAP_FRONT_TO_BACK(dWEN)
+            `MAP_FRONT_TO_BACK(daddr)
+            `MAP_FRONT_TO_BACK(dstore)
+            `MAP_FRONT_TO_BACK(dbyte_en)
+            `MAP_FRONT_TO_BACK(ccwrite)
+            `MAP_FRONT_TO_BACK(ccsnoophit)
+            `MAP_FRONT_TO_BACK(ccdirty)
+            `MAP_FRONT_TO_BACK(ccsnoopdone)
+            `MAP_BACK_TO_FRONT(dwait)
+            `MAP_BACK_TO_FRONT(dload)
+            `MAP_BACK_TO_FRONT(derror)
+            `MAP_BACK_TO_FRONT(ccwait)
+            `MAP_BACK_TO_FRONT(ccinv)
+            `MAP_BACK_TO_FRONT(ccsnoopaddr)
+            `MAP_BACK_TO_FRONT(ccexclusive)
+        end
+    endgenerate
+
     generic_bus_if pipeline_trans_if ();
     assign bus_ctrl_if.l2load = pipeline_trans_if.rdata;
     assign bus_ctrl_if.l2state = pipeline_trans_if.busy ? L2_BUSY : L2_ACCESS;
@@ -86,25 +112,25 @@ module multicore_wrapper #(
                 .abort_bus(abort_bus[HART_ID*2])
             );
 
-            always_comb begin
-                wb_stall[HART_ID] = hart.pipeline.mem_stage_i.wb_stall || pipeline_halts[HART_ID];
-                instr[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr;
-                pc[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.pc;
-                funct3[HART_ID] = hart.pipeline.mem_stage_i.funct3;
-                funct12[HART_ID] = hart.pipeline.mem_stage_i.funct12;
-                rs1[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[19:15];
-                rs2[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[24:20];
-                rd[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.rd_m;
-                instr_30[HART_ID] = hart.pipeline.mem_stage_i.instr_30;
-                opcode[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.opcode;
-                imm_SB[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_SB;
-                imm_S[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_S;
-                imm_I[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_I;
-                imm_UJ[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_UJ;
-                imm_U[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_U;
-            end
+            // always_comb begin
+            //     wb_stall[HART_ID] = hart.pipeline.mem_stage_i.wb_stall || pipeline_halts[HART_ID];
+            //     instr[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr;
+            //     pc[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.pc;
+            //     funct3[HART_ID] = hart.pipeline.mem_stage_i.funct3;
+            //     funct12[HART_ID] = hart.pipeline.mem_stage_i.funct12;
+            //     rs1[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[19:15];
+            //     rs2[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr[24:20];
+            //     rd[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.rd_m;
+            //     instr_30[HART_ID] = hart.pipeline.mem_stage_i.instr_30;
+            //     opcode[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.opcode;
+            //     imm_SB[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_SB;
+            //     imm_S[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_S;
+            //     imm_I[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_I;
+            //     imm_UJ[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_UJ;
+            //     imm_U[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.tracker_signals.imm_U;
+            // end
 
-            assign x28s[HART_ID] = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] == 32'b1;
+            // assign x28s[HART_ID] = hart.pipeline.execute_stage_i.g_rfile_select.rf.registers[28] == 32'b1;
         end
     endgenerate
 

@@ -32,16 +32,16 @@ filesets:
             - source_code/RV32E/rv32e_wrapper.sv
         file_type: systemVerilogSource
 
-    trackers:
-        files:
-            - source_code/trackers/branch_tracker.sv
-            - source_code/trackers/cpu_tracker.sv
-        file_type: systemVerilogSource
+    # trackers:
+    #     files:
+    #         - source_code/trackers/branch_tracker.sv
+    #         - source_code/trackers/cpu_tracker.sv
+    #     file_type: systemVerilogSource
 
     buses:
         files:
-            - "!tool_verilator? (source_code/bus_bridges/ahb.sv)"
-            - "!tool_verilator? (source_code/bus_bridges/apb.sv)"
+            - "source_code/bus_bridges/ahb.sv"
+            - "source_code/bus_bridges/apb.sv"
         file_type: systemVerilogSource
 
     fpga_wrapper:
@@ -74,7 +74,7 @@ targets:
         filesets:
             - rtl
             - buses
-            - trackers
+            # - trackers
         toplevel: RISCVBusiness
 
     sim:
@@ -121,7 +121,7 @@ targets:
     lint:
         filesets:
             - rtl
-            - trackers
+            # - trackers
         description: Linting
         default_tool: veriblelint
         toplevel: top_core
