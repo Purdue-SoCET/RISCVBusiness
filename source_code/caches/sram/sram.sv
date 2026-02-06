@@ -47,12 +47,12 @@ module sram #(
 // input CLK;
 
     cache_1k sram_cache(
-        .Q(rVal),
+        .Q(rVal[63:0]),
         .ADR(SEL),
-        .D(wVal),
-        .WEM(~wMask),
+        .D(wVal[63:0]),
+        .WEM(~wMask[63:0]),
         .WE(WEN),
-        .RE(REN),
+        .OE(REN),
         .ME(WEN | REN),
         .CLK(CLK)
     );
