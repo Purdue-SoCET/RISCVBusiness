@@ -37,20 +37,20 @@ module sram #(
 );
 `ifdef SRAM_CACHE
 
-    /*output  [31:0] Q;
-    input  [10:0] ADR;
-    input  [31:0] D;
-    input WE;
-    input OE;
-    input ME;
-    input CLK; 
-    */
+// output  [63:0] Q;
+// input  [6:0] ADR;
+// input  [63:0] D;
+// input  [63:0] WEM;
+// input WE;
+// input OE;
+// input ME;
+// input CLK;
 
-    //NOT CORRECT MANY ERRORS
-    sram_8k sram_cache(
+    cache_1k sram_cache(
         .Q(rVal),
         .ADR(SEL),
         .D(wVal),
+        .WEM(~wMask),
         .WE(WEN),
         .RE(REN),
         .ME(WEN | REN),
