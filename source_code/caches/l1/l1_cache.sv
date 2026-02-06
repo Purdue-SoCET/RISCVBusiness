@@ -547,7 +547,7 @@ module l1_cache #(
                 if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].dirty) begin
                     bus_ctrl_if.dWEN    = 1'b1;
                     bus_ctrl_if.daddr   =
-                        {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, N_BLOCK_BITS'('0), 2'b00};
+                        {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, N_BLOCK_BITS'('0), 2'b0};
                     bus_ctrl_if.dstore  = sramRead.frames[flush_idx.frame_num].data;
                     if (!bus_ctrl_if.dwait) begin
                         enable_flush_count = 1;
