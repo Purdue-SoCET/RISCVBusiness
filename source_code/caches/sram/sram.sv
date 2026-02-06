@@ -55,7 +55,7 @@ module sram #(
         .RE(REN),
         .ME(WEN | REN),
         .CLK(CLK)
-    )
+    );
 
 `else
     typedef logic [SRAM_WR_SIZE-1:0] sram_entry_size_t;
