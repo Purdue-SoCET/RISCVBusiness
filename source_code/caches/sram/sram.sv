@@ -35,6 +35,29 @@ module sram #(
     input logic [$clog2(SRAM_HEIGHT)-1:0] SEL,
     input logic [SRAM_WR_SIZE-1:0] wMask
 );
+`ifdef SRAM_CACHE
+
+    /*output  [31:0] Q;
+    input  [10:0] ADR;
+    input  [31:0] D;
+    input WE;
+    input OE;
+    input ME;
+    input CLK; 
+    */
+
+    //NOT CORRECT MANY ERRORS
+    sram_8k sram_cache(
+        .Q(rVal),
+        .ADR(SEL),
+        .D(wVal),
+        .WE(WEN),
+        .RE(REN),
+        .ME(WEN | REN),
+        .CLK(CLK)
+    )
+
+`else
     typedef logic [SRAM_WR_SIZE-1:0] sram_entry_size_t;
     sram_entry_size_t [SRAM_HEIGHT-1:0] sramMemory; 
     sram_entry_size_t [SRAM_HEIGHT-1:0] n_sramMemory;
@@ -51,4 +74,5 @@ module sram #(
         if (REN)
             rVal = sramMemory[SEL];
     end
+`endif
 endmodule
