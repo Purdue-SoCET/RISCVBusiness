@@ -46,16 +46,14 @@ module sram #(
 // input ME;
 // input CLK;
 
-    cache_1k sram_cache(
-        .Q(rVal[63:0]),
-        .ADR(SEL),
-        .D(wVal[63:0]),
-        .WEM(~wMask[63:0]),
-        .WE(WEN),
-        .OE(REN),
-        .ME(WEN | REN),
-        .CLK(CLK)
-    );
+    generate
+        if (SRAM_WR_SIZE == 64 && SRAM_HEIGHT == 128)
+            cache_128x64 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+        else if (SRAM_WR_SIZE == 26 && SRAM_HEIGHT == 128)
+            cache_128x26 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+        else 
+            cache_128x64 sram_cache(.Q(rVal[63:0]), .ADR(SEL[6:0]), .D(wVal[63:0]), .WEM(~wMask[63:0]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+    endgenerate
 
 `else
     typedef logic [SRAM_WR_SIZE-1:0] sram_entry_size_t;
