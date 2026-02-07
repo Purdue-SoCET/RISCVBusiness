@@ -64,7 +64,7 @@ module sram #(
         
         // evil and strange sizes go here
         else if (SRAM_WR_SIZE > 64 && SRAM_WR_SIZE < 128 && SRAM_HEIGHT == 64) begin
-            logic [127:0] full_q, full_d, full_wem;
+            logic [127:0] full_q, full_d, full_mask;
             assign rVal = full_q[SRAM_WR_SIZE - 1:0];
             assign full_d = wVal;
             assign full_mask = ~wMask;
