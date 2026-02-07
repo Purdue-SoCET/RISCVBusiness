@@ -68,7 +68,9 @@ module sram #(
             assign rVal = full_q[SRAM_WR_SIZE - 1:0];
             assign full_d = wVal;
             assign full_mask = ~wMask;
-            cache_128x128 sram_cache(.Q(full_q), .ADR(SEL), .D(full_d), .WEM(full_mask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_64x64 sram_cache_low(.Q(full_q[63:0]), .ADR(SEL), .D(full_d[63:0]), .WEM(full_mask[63:0]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_64x64 sram_cache_high(.Q(full_q[127:64]), .ADR(SEL), .D(full_d[127:64]), .WEM(full_mask[127:64]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+
         end else 
             cache_128x64 sram_cache(.Q(rVal[63:0]), .ADR(SEL[6:0]), .D(wVal[63:0]), .WEM(~wMask[63:0]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
     endgenerate
