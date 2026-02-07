@@ -46,19 +46,21 @@ module sram #(
 // input ME;
 // input CLK;
 
+`define SRAM_PORTS .Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK)
+
     generate
         if (SRAM_WR_SIZE == 64 && SRAM_HEIGHT == 128)
-            cache_128x64 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_128x64 sram_cache(`SRAM_PORTS);
         else if (SRAM_WR_SIZE == 32 && SRAM_HEIGHT == 128)
-            cache_128x32 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_128x32 sram_cache(`SRAM_PORTS);
         else if (SRAM_WR_SIZE == 26 && SRAM_HEIGHT == 128)
-            cache_128x26 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
-        if (SRAM_WR_SIZE == 64 && SRAM_HEIGHT == 64)
-            cache_64x64 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_128x26 sram_cache(`SRAM_PORTS);
+        else if (SRAM_WR_SIZE == 64 && SRAM_HEIGHT == 64)
+            cache_64x64 sram_cache(`SRAM_PORTS);
         else if (SRAM_WR_SIZE == 32 && SRAM_HEIGHT == 64)
-            cache_64x32 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_64x32 sram_cache(`SRAM_PORTS);
         else if (SRAM_WR_SIZE == 26 && SRAM_HEIGHT == 64)
-            cache_64x26 sram_cache(.Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_64x26 sram_cache(`SRAM_PORTS);
         else 
             cache_128x64 sram_cache(.Q(rVal[63:0]), .ADR(SEL[6:0]), .D(wVal[63:0]), .WEM(~wMask[63:0]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
     endgenerate
