@@ -37,16 +37,16 @@ module sram #(
 );
 `ifdef SRAM_CACHE
 
-// output  [63:0] Q;
-// input  [6:0] ADR;
-// input  [63:0] D;
-// input  [63:0] WEM;
-// input WE;
-// input OE;
-// input ME;
-// input CLK;
+    // output  [63:0] Q;
+    // input  [6:0] ADR;
+    // input  [63:0] D;
+    // input  [63:0] WEM;
+    // input WE;
+    // input OE;
+    // input ME;
+    // input CLK;
 
-`define SRAM_PORTS .Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK)
+    `define SRAM_PORTS .Q(rVal), .ADR(SEL), .D(wVal), .WEM(~wMask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK)
 
     generate
         if (SRAM_WR_SIZE == 64 && SRAM_HEIGHT == 128)
@@ -61,7 +61,15 @@ module sram #(
             cache_64x32 sram_cache(`SRAM_PORTS);
         else if (SRAM_WR_SIZE == 26 && SRAM_HEIGHT == 64)
             cache_64x26 sram_cache(`SRAM_PORTS);
-        else 
+        
+        // evil and strange sizes go here
+        else if (SRAM_WR_SIZE > 64 && SRAM_WR_SIZE < 128 && SRAM_HEIGHT == 64) begin
+            logic [127:0] full_q, full_d, full_wem;
+            assign rVal = full_q[SRAM_WR_SIZE - 1:0];
+            assign full_d = wVal;
+            assign full_mask = ~wMask;
+            cache_128x128 sram_cache(.Q(full_q), .ADR(SEL), .D(full_d), .WEM(full_mask), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+        end else 
             cache_128x64 sram_cache(.Q(rVal[63:0]), .ADR(SEL[6:0]), .D(wVal[63:0]), .WEM(~wMask[63:0]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
     endgenerate
 
