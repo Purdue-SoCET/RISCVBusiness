@@ -62,8 +62,14 @@ module sram #(
         else if (SRAM_WR_SIZE == 26 && SRAM_HEIGHT == 64)
             cache_64x26 sram_cache(`SRAM_PORTS);
         
-        // evil and strange sizes go here
-        else if (SRAM_WR_SIZE > 64 && SRAM_WR_SIZE < 128 && SRAM_HEIGHT == 64) begin
+        else if (SRAM_WR_SIZE == 90 && SRAM_HEIGHT == 64) begin
+            logic [89:0] full_q, full_d, full_mask;
+            assign rVal = full_q[SRAM_WR_SIZE - 1:0];
+            assign full_d = wVal;
+            assign full_mask = ~wMask;
+            cache_64x64 sram_cache_low(.Q(full_q[63:0]), .ADR(SEL), .D(full_d[63:0]), .WEM(full_mask[63:0]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+            cache_64x26 sram_cache_high(.Q(full_q[89:64]), .ADR(SEL), .D(full_d[89:64]), .WEM(full_mask[89:64]), .WE(WEN), .OE(REN), .ME(WEN | REN), .CLK(CLK));
+        end else if (SRAM_WR_SIZE > 64 && SRAM_WR_SIZE < 128 && SRAM_HEIGHT == 64) begin
             logic [127:0] full_q, full_d, full_mask;
             assign rVal = full_q[SRAM_WR_SIZE - 1:0];
             assign full_d = wVal;
