@@ -21,6 +21,8 @@
 *   Date Created: 09/26/2016
 *   Description:  Track performance stats associated with branch prediction
 */
+`ifndef SYNTHESIS
+
 `define STATS_FILE_NAME "stats.txt"
 module branch_tracker (
     input logic CLK,
@@ -173,3 +175,5 @@ module branch_tracker (
         nt_total: assert (prediction_count == pred_taken_count + pred_not_taken_count);
     end : OUTPUT_STATS
 endmodule
+
+`endif
