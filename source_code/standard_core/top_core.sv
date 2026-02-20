@@ -41,7 +41,7 @@ module top_core #(
         get_x28 = CORE.x28;
     endfunction
 
-    `ifndef SYNTHESIS
+`ifndef SYNTHESIS
     bind multicore_wrapper cpu_tracker #(.NUM_HARTS(NUM_HARTS)) cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),
@@ -71,7 +71,7 @@ module top_core #(
         .branch_result(predict_if.branch_result),
         .is_jalr(predict_if.is_jalr)
     );
-    `endif
+`endif
 
 
     core_interrupt_if interrupt_if ();
