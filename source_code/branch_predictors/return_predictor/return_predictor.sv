@@ -8,10 +8,10 @@ module return_predictor #(
 );
 
     import rv32i_types_pkg::*;
-    logic [$clog2(entries)-1:0] nxt_pointer, pointer;
+    logic [$clog2(ENTRIES)-1:0] nxt_pointer, pointer;
     logic [31:0] inst, nxt_inst;
-    logic [5:0] ras[entries-1:0];
-    logic [5:0] nxt_ras[entries-1:0];
+    logic [5:0] ras[ENTRIES-1:0];
+    logic [5:0] nxt_ras[ENTRIES-1:0];
     logic link1, link2;
     integer i;
 
@@ -19,7 +19,7 @@ module return_predictor #(
         if (!nRST) begin
             pointer <= 0;
             inst <= 0;
-            for (i=0; i<entries; i++) ras[i] <= 6'b0;
+            for (i=0; i<ENTRIES; i++) ras[i] <= 6'b0;
         end
         else begin
             pointer <= nxt_pointer;
@@ -43,7 +43,7 @@ module return_predictor #(
 
         if(inst[6:0] == JAL && link1) begin
             nxt_ras[pointer] = inst[11:7];// + 4;
-            if(pointer == entries-1) nxt_pointer = 0;
+            if(pointer == ENTRIES-1) nxt_pointer = 0;
             else nxt_pointer = pointer+1;
         end
         else if(inst[6:0] == JALR) begin

@@ -117,6 +117,7 @@ module priv_csr #(
 
   logic isUSMode, invalidMCounterAccess;
   assign isUSMode = prv_intern_if.isUMode | prv_intern_if.isSMode;
+  logic csr_operation;
   assign invalidMCounterAccess = (SUPERVISOR == "enabled" & csr_operation & prv_intern_if.isUMode);
 
   csr_reg_t nxt_csr_val;
@@ -126,7 +127,6 @@ module priv_csr #(
   assign prv_intern_if.invalid_csr = invalid_csr_priv | invalid_csr_addr;
 
   // csr operation flag
-  logic csr_operation;
   assign csr_operation = prv_intern_if.csr_write | prv_intern_if.csr_set | prv_intern_if.csr_clear;
 
   // Extension Broadcast Signals
