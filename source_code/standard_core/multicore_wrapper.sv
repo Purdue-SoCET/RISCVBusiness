@@ -117,6 +117,7 @@ module multicore_wrapper #(
                 .bus_busy(bus_busy)
             );
 
+`ifndef SYNTHESIS
             always_comb begin
                 wb_stall[HART_ID] = hart.pipeline.mem_stage_i.wb_stall || pipeline_halts[HART_ID];
                 instr[HART_ID] = hart.pipeline.mem_pipe_if.ex_mem_reg.instr;
@@ -136,6 +137,7 @@ module multicore_wrapper #(
             end
 
             assign x28s[HART_ID] = hart.pipeline.execute_stage_i.rf.registers[28] == 32'b1;
+`endif
         end
     endgenerate
 
