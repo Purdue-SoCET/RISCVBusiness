@@ -61,7 +61,7 @@ module return_predictor #(
                 end
                 3'b100, 3'b101, 3'b111: begin //push
                     nxt_ras[pointer] = inst[11:7];// + 4;
-                    if(pointer == entries-1) nxt_pointer = 0;
+                    if(pointer == ENTRIES-1) nxt_pointer = 0;
                     else nxt_pointer = pointer+1;
                 end
                 3'b110: begin //push and pop
