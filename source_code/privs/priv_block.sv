@@ -170,27 +170,27 @@ module priv_block #(
 
     // Disable interrupts that will not be used
     assign prv_intern_if.timer_int_u = 1'b0;
-    assign prv_intern_if.timer_int_s = interrupt_if.timer_int[HART_ID] && prv_intern_if.isSMode;
+    assign prv_intern_if.timer_int_s = interrupt_if.timer_int[HART_ID] && (prv_intern_if.isSMode || prv_intern_if.isUMode);
     assign prv_intern_if.timer_int_m = interrupt_if.timer_int[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.soft_int_u = 1'b0;
-    assign prv_intern_if.soft_int_s = interrupt_if.soft_int[HART_ID] && prv_intern_if.isSMode;
+    assign prv_intern_if.soft_int_s = interrupt_if.soft_int[HART_ID] && (prv_intern_if.isSMode || prv_intern_if.isUMode);
     assign prv_intern_if.soft_int_m = interrupt_if.soft_int[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.ext_int_u = 1'b0;
-    assign prv_intern_if.ext_int_s = interrupt_if.ext_int && prv_intern_if.isSMode;
+    assign prv_intern_if.ext_int_s = interrupt_if.ext_int && (prv_intern_if.isSMode || prv_intern_if.isUMode);
     assign prv_intern_if.ext_int_m = interrupt_if.ext_int && prv_intern_if.isMMode;
 
     // Disable clear interrupts that will not be used
     assign prv_intern_if.clear_timer_int_u = 1'b0;
     // find references, are these needed for s-mode?
-    assign prv_intern_if.clear_timer_int_s = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isSMode;
+    assign prv_intern_if.clear_timer_int_s = interrupt_if.timer_int_clear[HART_ID] && (prv_intern_if.isSMode || prv_intern_if.isUMode);
     assign prv_intern_if.clear_timer_int_m = interrupt_if.timer_int_clear[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.clear_soft_int_u = 1'b0;
     // find references, are these needed for s-mode?
-    assign prv_intern_if.clear_soft_int_s = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isSMode;
+    assign prv_intern_if.clear_soft_int_s = interrupt_if.soft_int_clear[HART_ID] && (prv_intern_if.isSMode || prv_intern_if.isUMode);
     assign prv_intern_if.clear_soft_int_m = interrupt_if.soft_int_clear[HART_ID] && prv_intern_if.isMMode;
     assign prv_intern_if.clear_ext_int_u = 1'b0;
     // find references, are these needed for s-mode?
-    assign prv_intern_if.clear_ext_int_s = interrupt_if.ext_int_clear && prv_intern_if.isSMode;
+    assign prv_intern_if.clear_ext_int_s = interrupt_if.ext_int_clear && (prv_intern_if.isSMode || prv_intern_if.isUMode);
     assign prv_intern_if.clear_ext_int_m = interrupt_if.ext_int_clear && prv_intern_if.isMMode;
 
     // from pipeline to the priv unit
