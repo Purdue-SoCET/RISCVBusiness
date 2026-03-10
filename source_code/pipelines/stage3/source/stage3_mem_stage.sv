@@ -309,6 +309,7 @@ module stage3_mem_stage(
             W_SEL_FROM_IMM_U     : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.imm_U;
             W_SEL_FROM_ALU       : ex_mem_if.reg_wdata = ex_mem_if.ex_mem_reg.port_out;
             W_SEL_FROM_PRIV_PIPE : ex_mem_if.reg_wdata = prv_pipe_if.rdata;
+            W_SEL_FROM_AMO       : ex_mem_if.reg_wdata = amo_prev_value;
             default: ex_mem_if.reg_wdata = '0;
         endcase
 
@@ -329,6 +330,26 @@ module stage3_mem_stage(
     logic [2:0] funct3;
     logic [11:0] funct12;
     logic instr_30;
+
+    /**************
+    * AMO Unit
+    ***************/
+    logic [31:0] amo_prev_value;
+
+    rv32a_wrapper AMO_UNIT (
+        .CLK(CLK),
+        .nRST(nRST),
+        .amo_en(ex_mem_if.ex_mem_reg.amo_en), 
+        .mem_ready(),
+        .alu_op(ex_mem_if.ex_mem_reg.insr[31:27]), //need to change to type
+        .mem_output(dload_ext), 
+        .rs2_data(ex_mem_if.ex_mem_reg.rs2_data),
+        .stall_amo_en(hazard_if.amo_stall), 
+        .read_mem_en(), 
+        .write_mem_en(), 
+        .mem_input(), 
+        .writeback_data(amo_prev_value)
+    );
 
     // TODO: Fix up hazard unit
     assign funct3 = ex_mem_if.ex_mem_reg.instr[14:12];

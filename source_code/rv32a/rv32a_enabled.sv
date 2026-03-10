@@ -1,11 +1,11 @@
 module rv32a_enabled(
     input CLK,
-    input nRST
+    input nRST,
     input logic amo_en, mem_ready,
     input logic [3:0] alu_op, //need to change to type
     input logic [31:0] mem_output, rs2_data,
     output logic stall_amo_en, read_mem_en, write_mem_en,
-    output logic [31:0] mem_input
+    output logic [31:0] mem_input, writeback_data
 );
 
     // State enumeration
@@ -17,8 +17,6 @@ module rv32a_enabled(
     } amo_fsm_state_t;
 
     amo_fsm_state_t current_state, next_state;
-
-    logic [31:0] amo_reg;
 
     // Sequential logic for state register
     always_ff @(posedge clk, negedge rst_n) begin
@@ -81,6 +79,10 @@ module rv32a_enabled(
         //.overflow,
         .output_port(mem_input)
     );
+
+    logic [31:0] amo_reg;
+
+    assign writeback_data = amo_reg;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
