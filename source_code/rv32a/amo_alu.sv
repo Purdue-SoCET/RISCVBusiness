@@ -1,7 +1,7 @@
 
 module amo_alu(
     input logic [31:0] portA, portB,
-    input logic [3:0] alu_op,
+    input logic [3:0] alu_op, //need to change to type
     output logic negative, zero, overflow,
     output logic [31:0] output_port
 ); 
