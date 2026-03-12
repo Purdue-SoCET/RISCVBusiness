@@ -191,7 +191,7 @@ module fetch_buffer (
     // Fetch address + request generation
     always_comb begin : FETCH_CONTROL
         // Note: state PC_ALIGNED_FB_VALID isn't possible.
-        assert(state != PC_ALIGNED_FB_VALID);
+        assert(!nRST || state != PC_ALIGNED_FB_VALID);
         // Determine fetch address based on current state
         case (state)
             PC_ALIGNED_FB_INVALID, PC_ALIGNED_FB_VALID: begin
