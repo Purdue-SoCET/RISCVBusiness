@@ -587,48 +587,50 @@ module l1_cache #(
     end
 
     always_comb begin
-        if (CLK == 1 && sramWEN) begin
-            for (int i = 0; i < ASSOC; i++) begin
-                if (!tagWEN && sramMask.frames[i].tag.valid == 0) begin
-                    $warning("WARNING: setting valid bit but not writing tag!");
+        if (CLK == 0 && state != IDLE) begin
+            if (sramWEN) begin
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (!tagWEN && sramMask.frames[i].tag.valid == 0) begin
+                        $warning("WARNING: setting valid bit but not writing tag!");
+                    end
                 end
             end
-        end
-        if (CLK == 1 && tagWEN) begin
-            if (sramSEL != sramSNOOPSEL) begin
-                $warning("WARNING: sram sels should be same %d", state);
-            end
-            if (!sramWEN) begin
-                $warning("WARNING: tagWEN && !sramWEN");
-            end
-            for (int i = 0; i < ASSOC; i++) begin
-                if (sramWrite.frames[i].tag != sramTags[i]) begin
-                    $warning("WARNING: sram tags are different while writing!");
+            if (tagWEN) begin
+                if (sramSEL != sramSNOOPSEL) begin
+                    $warning("WARNING: sram sels should be same %d", state);
+                end
+                if (!sramWEN) begin
+                    $warning("WARNING: tagWEN && !sramWEN");
+                end
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (sramWrite.frames[i].tag != sramTags[i]) begin
+                        $warning("WARNING: sram tags are different while writing!");
+                    end
                 end
             end
-        end
-        if (sramSNOOPSEL == sramSEL) begin
-            for (int i = 0; i < ASSOC; i++) begin
-                if (read_tag_bits[i] != sramRead.frames[i].tag) begin
-                    $warning("WARNING: sram tags are out of sync!");
+            if (sramSNOOPSEL == sramSEL) begin
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (read_tag_bits[i] != sramRead.frames[i].tag) begin
+                        $warning("WARNING: sram tags are out of sync!");
+                    end
                 end
             end
-        end
-        if (state == SNOOP) begin
-            if (sramSNOOPSEL != sramSEL) begin
-                $timeformat(-12, 2, " ps", 20);
-                $warning("WARNING: sram selection incorrect!");
-            end
-            if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
-                $timeformat(-12, 2, " ps", 20);
-                $warning("WARNING: returning incorrect hit_idx data!");
-                $warning(
-                    "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
-                    hit_idx,
-                    decoded_addr.idx.tag_bits,
-                    sramRead.frames[hit_idx].tag.tag_bits,
-                    bus_frame_tag
-                );
+            if (state == SNOOP) begin
+                if (sramSNOOPSEL != sramSEL) begin
+                    $timeformat(-12, 2, " ps", 20);
+                    $warning("WARNING: sram selection incorrect!");
+                end
+                if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
+                    $timeformat(-12, 2, " ps", 20);
+                    $warning("WARNING: returning incorrect hit_idx data!");
+                    $warning(
+                        "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
+                        hit_idx,
+                        decoded_addr.idx.tag_bits,
+                        sramRead.frames[hit_idx].tag.tag_bits,
+                        bus_frame_tag
+                    );
+                end
             end
         end
     end
