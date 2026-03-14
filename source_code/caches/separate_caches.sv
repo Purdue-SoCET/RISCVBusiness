@@ -327,13 +327,13 @@ module separate_caches(
 
     // zero address translation
     assign insn_at_if.addr_trans_on = '0;
-    assign insn_at_if.sv32 = 1;
+    assign insn_at_if.sv32 = 0;
     assign insn_at_if.sv39 = 0;
     assign insn_at_if.sv48 = 0;
     assign insn_at_if.sv57 = 0;
     assign insn_at_if.sv64 = 0;
     assign data_at_if.addr_trans_on = '0;
-    assign data_at_if.sv32 = 1;
+    assign data_at_if.sv32 = 0;
     assign data_at_if.sv39 = 0;
     assign data_at_if.sv48 = 0;
     assign data_at_if.sv57 = 0;
