@@ -35,7 +35,7 @@ module RISCVBusiness #(
     input logic CLK, nRST,
     input logic [63:0] mtime,
     input logic bus_busy,
-    output logic wfi, halt, abort_bus,
+    output logic wfi, halt,
     core_interrupt_if.core interrupt_if,
     front_side_bus_if dcache_bus_ctrl_if,
     front_side_bus_if icache_bus_ctrl_if
@@ -101,7 +101,6 @@ module RISCVBusiness #(
         .prv_pipe_if(prv_pipe_if),
         .dcache_bus_ctrl_if(dcache_bus_ctrl_if),
         .icache_bus_ctrl_if(icache_bus_ctrl_if),
-        .abort_bus(abort_bus),
         .icache_miss(prv_pipe_if.icache_miss),
         .dcache_miss(prv_pipe_if.dcache_miss),
         .icache_hit(prv_pipe_if.icache_hit),

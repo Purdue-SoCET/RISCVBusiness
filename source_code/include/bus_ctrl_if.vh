@@ -65,7 +65,7 @@ typedef logic [DATA_WIDTH-1:0] transfer_width_t;
 
 interface front_side_bus_if();
     logic            dREN, dWEN, dwait, derror;
-    transfer_width_t dload, dstore, snoop_dstore, driver_dstore;
+    transfer_width_t dload, dstore;
     bus_word_t       daddr;
     logic [3:0]      dbyte_en;
     // L1 coherence INPUTS to bus
@@ -82,7 +82,7 @@ interface front_side_bus_if();
 
     modport cache(
         input dwait, dload, derror, ccwait, ccinv, ccsnoopaddr, ccexclusive,
-        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone
+        output dREN, dWEN, daddr, dstore, dbyte_en, ccwrite, ccsnoophit, ccdirty, ccsnoopdone, ccabort
     );
 endinterface
 
@@ -91,7 +91,7 @@ interface back_side_bus_if#(
 )();
     // L1 generic control signals
     logic               [CPUS-1:0] dREN, dWEN, dwait, derror;
-    transfer_width_t    [CPUS-1:0] dload, dstore, snoop_dstore, driver_dstore;
+    transfer_width_t    [CPUS-1:0] dload, dstore;
     bus_word_t          [CPUS-1:0] daddr;
     logic         [CPUS-1:0] [3:0] dbyte_en;
     // L1 coherence INPUTS to bus

@@ -48,7 +48,7 @@ module l1_cache #(
     input logic CLK, nRST,
     input logic clear, flush, reserve, tlb_miss, tlb_abort,
     input logic [PPNLEN-1:0] ppn_tag,
-    output logic clear_done, flush_done, abort_bus,
+    output logic clear_done, flush_done,
     generic_bus_if.generic_bus proc_gen_bus_if,
     generic_bus_if.generic_bus pw_gen_bus_if,
     front_side_bus_if.cache bus_ctrl_if,
@@ -137,7 +137,6 @@ module l1_cache #(
     decoded_cache_addr_t decoded_req_addr, next_decoded_req_addr;
     decoded_cache_addr_t decoded_addr, decoded_read_addr, snoop_decoded_addr;
     decoded_cache_addr_t decoded_pw_addr;
-    logic [N_TAG_BITS-1:0] fetch_physical_tag;
     //decoded_cache_addr_t decoded_snoop_addr;
     // Cache Hit
     logic ren, wen;
@@ -158,7 +157,6 @@ module l1_cache #(
     logic addr_is_reserved;
     // Request tracking
     cache_request_t request, next_request;
-    logic abort_pw_request;
     generic_bus_if #(.BLOCK_SIZE(BLOCK_SIZE)) request_bus ();
 
     //Snooping signals
@@ -235,7 +233,7 @@ module l1_cache #(
             read_addr <= 0;
             decoded_req_addr <= 0;
             flush_req <= 0;
-            abort_bus <= 0;
+            bus_ctrl_if.ccabort <= 0;
             reservation_set <= 0;
             request <= CACHE_REQUEST_NONE;
         end
@@ -247,9 +245,9 @@ module l1_cache #(
             decoded_req_addr <= next_decoded_req_addr;  // cache address requested by core
             flush_req <= nflush_req;                    // flush requested by core
             // no flush cache check will cause fence.i to stall processor
-            abort_bus <= (!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen
-                            && next_state != FLUSH_CACHE)
-                        || next_state == CANCEL_REQ || tlb_abort;
+            bus_ctrl_if.ccabort <= IS_ICACHE && ((!pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen
+                                                        && next_state != FLUSH_CACHE)
+                                                || next_state == CANCEL_REQ || tlb_abort);
             reservation_set <= next_reservation_set;
             request <= next_request;
         end
@@ -372,7 +370,7 @@ module l1_cache #(
             ridx = last_used[decoded_addr.idx.idx_bits] + 1;
 
         // state dependent output logic
-        casez(state)
+        case (state)
             IDLE: begin
                 // clear out caches with flush
                 sramWEN = 1;
@@ -478,7 +476,7 @@ module l1_cache #(
                 bus_ctrl_if.dREN = (request == CACHE_REQUEST_PW
                                         ? pw_gen_bus_if.ren
                                         : proc_gen_bus_if.ren || proc_gen_bus_if.wen)
-                                    || !abort_bus;
+                                    || !bus_ctrl_if.ccabort;
                 bus_ctrl_if.daddr = read_addr;
 
                 // only modify cache if its a processor request
@@ -589,48 +587,50 @@ module l1_cache #(
     end
 
     always_comb begin
-        if (CLK == 1 && sramWEN) begin
-            for (int i = 0; i < ASSOC; i++) begin
-                if (!tagWEN && sramMask.frames[i].tag.valid == 0) begin
-                    $warning("WARNING: setting valid bit but not writing tag!");
+        if (CLK == 0 && state != IDLE) begin
+            if (sramWEN) begin
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (!tagWEN && sramMask.frames[i].tag.valid == 0) begin
+                        $warning("WARNING: setting valid bit but not writing tag!");
+                    end
                 end
             end
-        end
-        if (CLK == 1 && tagWEN) begin
-            if (sramSEL != sramSNOOPSEL) begin
-                $warning("WARNING: sram sels should be same %d", state);
-            end
-            if (!sramWEN) begin
-                $warning("WARNING: tagWEN && !sramWEN");
-            end
-            for (int i = 0; i < ASSOC; i++) begin
-                if (sramWrite.frames[i].tag != sramTags[i]) begin
-                    $warning("WARNING: sram tags are different while writing!");
+            if (tagWEN) begin
+                if (sramSEL != sramSNOOPSEL) begin
+                    $warning("WARNING: sram sels should be same %d", state);
+                end
+                if (!sramWEN) begin
+                    $warning("WARNING: tagWEN && !sramWEN");
+                end
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (sramWrite.frames[i].tag != sramTags[i]) begin
+                        $warning("WARNING: sram tags are different while writing!");
+                    end
                 end
             end
-        end
-        if (sramSNOOPSEL == sramSEL) begin
-            for (int i = 0; i < ASSOC; i++) begin
-                if (read_tag_bits[i] != sramRead.frames[i].tag) begin
-                    $warning("WARNING: sram tags are out of sync!");
+            if (sramSNOOPSEL == sramSEL) begin
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (read_tag_bits[i] != sramRead.frames[i].tag) begin
+                        $warning("WARNING: sram tags are out of sync!");
+                    end
                 end
             end
-        end
-        if (state == SNOOP) begin
-            if (sramSNOOPSEL != sramSEL) begin
-                $timeformat(-12, 2, " ps", 20);
-                $warning("WARNING: sram selection incorrect!");
-            end
-            if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
-                $timeformat(-12, 2, " ps", 20);
-                $warning("WARNING: returning incorrect hit_idx data!");
-                $warning(
-                    "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
-                    hit_idx,
-                    decoded_addr.idx.tag_bits,
-                    sramRead.frames[hit_idx].tag.tag_bits,
-                    bus_frame_tag
-                );
+            if (state == SNOOP) begin
+                if (sramSNOOPSEL != sramSEL) begin
+                    $timeformat(-12, 2, " ps", 20);
+                    $warning("WARNING: sram selection incorrect!");
+                end
+                if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
+                    $timeformat(-12, 2, " ps", 20);
+                    $warning("WARNING: returning incorrect hit_idx data!");
+                    $warning(
+                        "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
+                        hit_idx,
+                        decoded_addr.idx.tag_bits,
+                        sramRead.frames[hit_idx].tag.tag_bits,
+                        bus_frame_tag
+                    );
+                end
             end
         end
     end
@@ -678,7 +678,7 @@ module l1_cache #(
                     next_state = HIT;
                 end else if (snoop_hit && !tagWEN)
                     next_state = SNOOP;
-                else if (!abort_bus && !pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
+                else if (!bus_ctrl_if.ccabort && !pw_gen_bus_if.ren && !proc_gen_bus_if.ren && !proc_gen_bus_if.wen)
                     next_state = CANCEL_REQ;
 
                 next_request = next_state == state ? request : CACHE_REQUEST_NONE;

@@ -919,6 +919,13 @@ module priv_csr #(
   assign prv_intern_if.curr_sepc = sepc;
   assign prv_intern_if.curr_stvec = stvec;
   assign prv_intern_if.curr_satp = satp;
+  `else
+  assign prv_intern_if.curr_medeleg = '0;
+  assign prv_intern_if.curr_mideleg = '0;
+  assign prv_intern_if.curr_scause = '0;
+  assign prv_intern_if.curr_sepc = '0;
+  assign prv_intern_if.curr_stvec = '0;
+  assign prv_intern_if.curr_satp = '0;
   `endif // SMODE_SUPPORTED
 
   // function to check for bad mcounteren bits
