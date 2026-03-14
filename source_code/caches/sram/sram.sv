@@ -40,15 +40,13 @@ module sram #(
     sram_entry_size_t [SRAM_HEIGHT-1:0] n_sramMemory;
 
     always_ff @(posedge CLK) begin
+        rVal <= REN ? sramMemory[SEL] : 0;
         sramMemory <= n_sramMemory;
     end
 
     always_comb begin
         n_sramMemory = sramMemory;
-        rVal = 32'hBAD0BAD0;
         if (WEN)
             n_sramMemory[SEL] = (wVal & ~wMask) | (wMask & sramMemory[SEL]);
-        if (REN)
-            rVal = sramMemory[SEL];
     end
 endmodule

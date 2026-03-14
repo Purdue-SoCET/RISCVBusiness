@@ -73,7 +73,7 @@ module l1_cache #(
     localparam N_TAG_BITS         = N_PPNTAG_BITS > N_TAG_BITS_BARE ? N_PPNTAG_BITS : N_TAG_BITS_BARE;
     localparam FRAME_SIZE         = WORD_SIZE * BLOCK_SIZE + N_TAG_BITS + 2 + 1; // in bits (+1 for exclusive bit)
     localparam SRAM_W             = FRAME_SIZE * ASSOC;                      // sram parameters
-    localparam SRAM_TAG_W         = (N_TAG_BITS + 3) * ASSOC; // +3 for valid, dirty, and exclusive
+    localparam SRAM_TAG_W         = (N_TAG_BITS + 1) * ASSOC; // +1 for valid
     localparam CLEAR_LENGTH       = $clog2(BLOCK_SIZE) + 2;
     localparam BARE_PPN_TAG_DIFF  = N_TAG_BITS_BARE - N_PPNTAG_BITS;
 
@@ -148,8 +148,10 @@ module l1_cache #(
     cache_set_t sramWrite, sramRead, sramMask;
     cache_tag_t [ASSOC-1:0] sramTags, sramTagsMask;
     logic sramWEN, tagWEN; // no need for REN
-    logic [N_SET_BITS-1:0] sramSEL, sramSNOOPSEL;
+    logic [N_SET_BITS-1:0] sramSEL, prevSramSEL, sramSNOOPSEL, prevSramSNOOPSEL;
     cache_tag_t [ASSOC-1:0] read_tag_bits; //Tag coming from bus
+    logic sramREN, sramRENDone;
+    logic snoopREN, snoopRENDone;
     // flush reg
     logic flush_req, nflush_req;
     logic idle_done;
@@ -158,7 +160,7 @@ module l1_cache #(
     logic addr_is_reserved;
     // Request tracking
     cache_request_t request, next_request;
-    logic abort_pw_request;
+    logic prevent_pw_request, abort_pw_request;
     generic_bus_if #(.BLOCK_SIZE(BLOCK_SIZE)) request_bus ();
 
     //Snooping signals
@@ -189,7 +191,7 @@ module l1_cache #(
     assign bus_ctrl_hit_data = bus_ctrl_if.dload; // used in PW fetches
 
     // sram instance
-    assign sramSEL = (state == SNOOP) ? snoop_decoded_addr.idx.idx_bits
+    assign sramSEL = (next_state == SNOOP || state == SNOOP) ? snoop_decoded_addr.idx.idx_bits
                    : (state == FLUSH_CACHE || state == IDLE) ? flush_idx.set_num
                    : decoded_addr.idx.idx_bits;
     assign sramSNOOPSEL = tagWEN ? sramSEL
@@ -202,7 +204,7 @@ module l1_cache #(
         .nRST(nRST),
         .wVal(sramWrite),
         .rVal(sramRead),
-        .REN(1'b1),
+        .REN(sramREN),
         .WEN(sramWEN),
         .SEL(sramSEL),
         .wMask(sramMask)
@@ -215,15 +217,17 @@ module l1_cache #(
         .nRST(nRST),
         .wVal(sramTags),
         .rVal(read_tag_bits),
-        .REN(1'b1),
+        .REN(snoopREN),
         .WEN(tagWEN),
         .SEL(sramSNOOPSEL),
         .wMask(sramTagsMask)
     );
 
+    assign snoopREN = bus_ctrl_if.ccwait;
+
     assign bus_frame_tag = snoop_decoded_addr.idx.tag_bits;
 
-    assign bus_ctrl_if.ccsnoopdone = state == SNOOP || (bus_ctrl_if.ccwait && !snoop_hit && !tagWEN);
+    assign bus_ctrl_if.ccsnoopdone = state == SNOOP || (bus_ctrl_if.ccwait && snoopRENDone && !snoop_hit && !tagWEN);
     assign bus_ctrl_if.ccsnoophit = state == SNOOP;
 
     // flip flops
@@ -238,6 +242,10 @@ module l1_cache #(
             abort_bus <= 0;
             reservation_set <= 0;
             request <= CACHE_REQUEST_NONE;
+            prevSramSEL <= 0;
+            prevSramSNOOPSEL <= 0;
+            sramRENDone <= 0;
+            snoopRENDone <= 0;
         end
         else begin
             state <= next_state;                        // cache state machine
@@ -252,6 +260,10 @@ module l1_cache #(
                         || next_state == CANCEL_REQ || tlb_abort;
             reservation_set <= next_reservation_set;
             request <= next_request;
+            prevSramSEL <= sramSEL;
+            prevSramSNOOPSEL <= sramSNOOPSEL;
+            sramRENDone <= sramREN;
+            snoopRENDone <= snoopREN;
         end
     end
 
@@ -304,7 +316,7 @@ module l1_cache #(
         // HACK: prevents comb loop in D$, find a better fix?
         wen = IS_ICACHE ?                   0 : prv_pipe_if.ex_mem_wen;
 
-        if (!pass_through) begin
+        if (sramRENDone && !pass_through) begin
             for(int i = 0; i < ASSOC; i++) begin
                 if(sramRead.frames[i].tag.tag_bits == decoded_addr.idx.tag_bits && sramRead.frames[i].tag.valid) begin
                     sc_valid_block = addr_is_reserved;
@@ -325,7 +337,7 @@ module l1_cache #(
         snoop_hit  = 0;
 
         for(int i = 0; i < ASSOC; i++) begin
-            if (read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid) begin
+            if (snoopRENDone && read_tag_bits[i].tag_bits == bus_frame_tag && read_tag_bits[i].valid) begin
                 snoop_hit = bus_ctrl_if.ccwait;
             end
         end
@@ -334,6 +346,7 @@ module l1_cache #(
     // cache output logic
     // Outputs: counter control signals, cache, signals to memory, signals to processor
     always_comb begin
+        sramREN                 = 0;
         sramWEN                 = 0;
         tagWEN                  = 0;
         sramWrite               = 0;
@@ -354,9 +367,9 @@ module l1_cache #(
         // found in multiple places in the below `casez` statement, however,
         // it wouldn't execute correctly. For example, 0x80000510 would become
         // 0x80000500 for a block size of 2.
-        next_read_addr                   = phy_addr & ~{CLEAR_LENGTH{1'b1}};
-        next_decoded_req_addr            = decoded_req_addr;
-        next_last_used                   = last_used;
+        next_read_addr          = phy_addr & ~{CLEAR_LENGTH{1'b1}};
+        next_decoded_req_addr   = decoded_req_addr;
+        next_last_used          = last_used;
         bus_ctrl_if.dREN        = 1'b0;
         bus_ctrl_if.dWEN        = 1'b0;
         bus_ctrl_if.daddr       = 32'hBAD1BAD1;
@@ -390,85 +403,94 @@ module l1_cache #(
             HIT: begin
                 // Hit logic
                 bus_ctrl_if.daddr = phy_addr;
-                // cache hit on a page walker read
-                if(pw_gen_bus_if.ren && hit && !flush) begin
-                    pw_gen_bus_if.busy = 0;
-                    pw_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
-                    next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                end
-                else if (pw_gen_bus_if.ren && ~hit && !flush) begin
-                    next_decoded_req_addr = decoded_addr;
-                end
-                // don't do anything else on a TLB miss
-                else if (~tlb_miss) begin
-                    // cache hit on a processor read
-                    if(proc_gen_bus_if.ren && hit && !flush) begin
-                        proc_gen_bus_if.busy = 0;
-                        proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
+                sramREN = pw_gen_bus_if.ren || proc_gen_bus_if.ren || proc_gen_bus_if.wen;
+                if (sramRENDone) begin
+                    // cache hit on a page walker read
+                    if(pw_gen_bus_if.ren && hit && !flush) begin
+                        sramREN = 0;
+                        pw_gen_bus_if.busy = 0;
+                        pw_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
                         next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                        cache_hit = 1'b1;
-                        // Delay so we can set the reservation set
-                        if (reserve && !addr_is_reserved) begin
-                            proc_gen_bus_if.busy = 1;
+                    end
+                    else if (pw_gen_bus_if.ren && ~hit && !flush) begin
+                        sramREN = 0;
+                        next_decoded_req_addr = decoded_addr;
+                    end
+                    // don't do anything else on a TLB miss
+                    else if (~tlb_miss) begin
+                        // cache hit on a processor read
+                        if(proc_gen_bus_if.ren && hit && !flush) begin
+                            sramREN = 0;
+                            proc_gen_bus_if.busy = 0;
+                            proc_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
+                            next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                            cache_hit = 1'b1;
+                            // Delay so we can set the reservation set
+                            if (reserve && !addr_is_reserved) begin
+                                sramREN = 1;
+                                proc_gen_bus_if.busy = 1;
+                            end
                         end
-                    end
-                    // cache hit on a processor write
-                    else if(proc_gen_bus_if.wen && hit && (!reserve || (reserve && addr_is_reserved)) && !flush) begin
-                        proc_gen_bus_if.busy = 0;
-                        sramWEN = 1;
-                        casez (proc_gen_bus_if.byte_en)
-                            4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
-                            4'b0010:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF00FF;
-                            4'b0100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFF00FFFF;
-                            4'b1000:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h00FFFFFF;
-                            4'b0011:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF0000;
-                            4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0000FFFF;
-                            default:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0;
-                        endcase
-                        sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
-                        sramWrite.frames[hit_idx].dirty = 1;
-                        sramWrite.frames[hit_idx].exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
-                        sramMask.frames[hit_idx].dirty = 0;
-                        sramMask.frames[hit_idx].exclusive = 0;
-                        next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                        proc_gen_bus_if.rdata = 0;
-                        cache_hit = 1'b1;
-                    end
-                    // passthrough
-                    else if(pass_through) begin
-                        bus_ctrl_if.dWEN     = proc_gen_bus_if.wen;
-                        bus_ctrl_if.dREN     = proc_gen_bus_if.ren;
-                        bus_ctrl_if.dbyte_en = proc_gen_bus_if.byte_en;
-                        proc_gen_bus_if.busy          = bus_ctrl_if.dwait;
-                        proc_gen_bus_if.rdata         = bus_ctrl_if.dload;
-                        if(proc_gen_bus_if.wen) begin
+                        // cache hit on a processor write
+                        else if(proc_gen_bus_if.wen && hit && (!reserve || (reserve && addr_is_reserved)) && !flush) begin
+                            sramREN = 0;
+                            proc_gen_bus_if.busy = 0;
+                            sramWEN = 1;
                             casez (proc_gen_bus_if.byte_en)
-                                4'b0001: bus_ctrl_if.dstore = {24'd0, proc_gen_bus_if.wdata[7:0]};
-                                4'b0010: bus_ctrl_if.dstore = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
-                                4'b0100: bus_ctrl_if.dstore = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
-                                4'b1000: bus_ctrl_if.dstore = {proc_gen_bus_if.wdata[31:24], 24'd0};
-                                4'b0011: bus_ctrl_if.dstore = {16'd0, proc_gen_bus_if.wdata[15:0]};
-                                4'b1100: bus_ctrl_if.dstore = {proc_gen_bus_if.wdata[31:16],16'd0};
-                                default: bus_ctrl_if.dstore = proc_gen_bus_if.wdata;
+                                4'b0001:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFFFF00;
+                                4'b0010:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF00FF;
+                                4'b0100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFF00FFFF;
+                                4'b1000:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h00FFFFFF;
+                                4'b0011:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'hFFFF0000;
+                                4'b1100:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0000FFFF;
+                                default:    sramMask.frames[hit_idx].data[decoded_addr.idx.block_bits] = 32'h0;
                             endcase
+                            sramWrite.frames[hit_idx].data[decoded_addr.idx.block_bits] = proc_gen_bus_if.wdata;
+                            sramWrite.frames[hit_idx].dirty = 1;
+                            sramWrite.frames[hit_idx].exclusive = 0; //Set exclusive bit in tag to 0, E -> M case
+                            sramMask.frames[hit_idx].dirty = 0;
+                            sramMask.frames[hit_idx].exclusive = 0;
+                            next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                            proc_gen_bus_if.rdata = 0;
+                            cache_hit = 1'b1;
                         end
-                    end
-                    // Cache miss of sc
-                    else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) begin
-                        proc_gen_bus_if.busy = 0;
-                        proc_gen_bus_if.rdata = 32'b1;
-                    end
-                    // cache miss on a clean block
-                    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty
-                            && ~pass_through) begin
-                        next_decoded_req_addr = decoded_addr;
-                    end
-                    // cache miss on a dirty block
-                    else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty
-                            && ~pass_through) begin
-                        next_decoded_req_addr = decoded_addr;
-                        next_read_addr =
-                            {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                        // passthrough
+                        else if(pass_through) begin
+                            bus_ctrl_if.dWEN     = proc_gen_bus_if.wen;
+                            bus_ctrl_if.dREN     = proc_gen_bus_if.ren;
+                            bus_ctrl_if.dbyte_en = proc_gen_bus_if.byte_en;
+                            proc_gen_bus_if.busy          = bus_ctrl_if.dwait;
+                            proc_gen_bus_if.rdata         = bus_ctrl_if.dload;
+                            if(proc_gen_bus_if.wen) begin
+                                casez (proc_gen_bus_if.byte_en)
+                                    4'b0001: bus_ctrl_if.dstore = {24'd0, proc_gen_bus_if.wdata[7:0]};
+                                    4'b0010: bus_ctrl_if.dstore = {16'd0,proc_gen_bus_if.wdata[15:8],8'd0};
+                                    4'b0100: bus_ctrl_if.dstore = {8'd0, proc_gen_bus_if.wdata[23:16], 16'd0};
+                                    4'b1000: bus_ctrl_if.dstore = {proc_gen_bus_if.wdata[31:24], 24'd0};
+                                    4'b0011: bus_ctrl_if.dstore = {16'd0, proc_gen_bus_if.wdata[15:0]};
+                                    4'b1100: bus_ctrl_if.dstore = {proc_gen_bus_if.wdata[31:16],16'd0};
+                                    default: bus_ctrl_if.dstore = proc_gen_bus_if.wdata;
+                                endcase
+                            end
+                        end
+                        // Cache miss of sc
+                        else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through) begin
+                            sramREN = 0;
+                            proc_gen_bus_if.busy = 0;
+                            proc_gen_bus_if.rdata = 32'b1;
+                        end
+                        // cache miss on a clean block
+                        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && ~sramRead.frames[ridx].dirty
+                                && ~pass_through) begin
+                            next_decoded_req_addr = decoded_addr;
+                        end
+                        // cache miss on a dirty block
+                        else if((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit && sramRead.frames[ridx].dirty
+                                && ~pass_through) begin
+                            next_decoded_req_addr = decoded_addr;
+                            next_read_addr =
+                                {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                        end
                     end
                 end
             end
@@ -511,65 +533,78 @@ module l1_cache #(
             end
             WB: begin
                 // set stim for eviction
-                bus_ctrl_if.dWEN = 1'b1;
-                bus_ctrl_if.daddr = read_addr;
-                bus_ctrl_if.dstore = sramRead.frames[ridx].data;
-                next_read_addr =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
-                // increment eviction word counter
-                if(!bus_ctrl_if.dwait) begin
-                    // invalidate when eviction is complete
-                    sramWEN = 1;
-                    tagWEN  = 1;
-                    sramWrite.frames[ridx].dirty = 0;
-                    sramWrite.frames[ridx].tag.valid = 0;
-                    sramWrite.frames[ridx].exclusive = 0;
-                    sramMask.frames[ridx].dirty  = 0;
-                    sramMask.frames[ridx].tag.valid  = 0;
-                    sramMask.frames[ridx].exclusive  = 0;
+                sramREN = 1;
+                if (sramRENDone) begin
+                    bus_ctrl_if.dWEN = 1'b1;
+                    bus_ctrl_if.daddr = read_addr;
+                    bus_ctrl_if.dstore = sramRead.frames[ridx].data;
+                    next_read_addr =  {sramRead.frames[ridx].tag, decoded_addr.idx.idx_bits, N_BLOCK_BITS'('0), 2'b00};
+                    // increment eviction word counter
+                    if(!bus_ctrl_if.dwait) begin
+                        // invalidate when eviction is complete
+                        sramREN = 0;
+                        sramWEN = 1;
+                        tagWEN  = 1;
+                        sramWrite.frames[ridx].dirty = 0;
+                        sramWrite.frames[ridx].tag.valid = 0;
+                        sramWrite.frames[ridx].exclusive = 0;
+                        sramMask.frames[ridx].dirty  = 0;
+                        sramMask.frames[ridx].tag.valid  = 0;
+                        sramMask.frames[ridx].exclusive  = 0;
+                    end
                 end
             end
             SNOOP: begin
-                bus_ctrl_if.dstore  = sramRead.frames[hit_idx].data;
-                bus_ctrl_if.ccdirty = sramRead.frames[hit_idx].dirty;
-                if (!bus_ctrl_if.ccwait) begin
-                    sramWEN = 1;
-                    tagWEN  = 1;
-                    sramWrite.frames[hit_idx].dirty     = 0;
-                    sramWrite.frames[hit_idx].tag.valid = !bus_ctrl_if.ccinv;
-                    sramWrite.frames[hit_idx].exclusive = 0;
-                    sramMask.frames[hit_idx].dirty      = 0;
-                    sramMask.frames[hit_idx].tag.valid  = 0;
-                    sramMask.frames[hit_idx].exclusive  = 0;
+                sramREN = 1;
+                if (sramRENDone) begin
+                    bus_ctrl_if.dstore  = sramRead.frames[hit_idx].data;
+                    bus_ctrl_if.ccdirty = sramRead.frames[hit_idx].dirty;
+                    if (!bus_ctrl_if.ccwait) begin
+                        sramREN = 0;
+                        sramWEN = 1;
+                        tagWEN  = 1;
+                        sramWrite.frames[hit_idx].dirty     = 0;
+                        sramWrite.frames[hit_idx].tag.valid = !bus_ctrl_if.ccinv;
+                        sramWrite.frames[hit_idx].exclusive = 0;
+                        sramMask.frames[hit_idx].dirty      = 0;
+                        sramMask.frames[hit_idx].tag.valid  = 0;
+                        sramMask.frames[hit_idx].exclusive  = 0;
+                    end
                 end
             end
             FLUSH_CACHE: begin
-                // flush to memory if valid & dirty
-                if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].dirty) begin
-                    bus_ctrl_if.dWEN    = 1'b1;
-                    bus_ctrl_if.daddr   =
-                        {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, N_BLOCK_BITS'('0), 2'b0};
-                    bus_ctrl_if.dstore  = sramRead.frames[flush_idx.frame_num].data;
-                    if (!bus_ctrl_if.dwait) begin
-                        enable_flush_count = 1;
-                        // clears entry when flushed
+                sramREN = 1;
+                if (sramRENDone) begin
+                    // flush to memory if valid & dirty
+                    if (sramRead.frames[flush_idx.frame_num].tag.valid && sramRead.frames[flush_idx.frame_num].dirty) begin
+                        bus_ctrl_if.dWEN    = 1'b1;
+                        bus_ctrl_if.daddr   =
+                            {sramRead.frames[flush_idx.frame_num].tag.tag_bits, flush_idx.set_num, N_BLOCK_BITS'('0), 2'b0};
+                        bus_ctrl_if.dstore  = sramRead.frames[flush_idx.frame_num].data;
+                        if (!bus_ctrl_if.dwait) begin
+                            enable_flush_count = 1;
+                            // clears entry when flushed
+                            sramREN = 0;
+                            sramWEN = 1;
+                            tagWEN = 1;
+                            sramWrite.frames[flush_idx.frame_num] = 0;
+                            sramMask.frames[flush_idx.frame_num] = 0;
+                        end
+                    end
+                    // else clears entry, moves to next frame
+                    else begin
+                        sramREN = 0;
                         sramWEN = 1;
                         tagWEN = 1;
                         sramWrite.frames[flush_idx.frame_num] = 0;
                         sramMask.frames[flush_idx.frame_num] = 0;
+                        enable_flush_count_nowb = 1;
                     end
-                end
-                // else clears entry, moves to next frame
-                else begin
-                    sramWEN = 1;
-                    tagWEN = 1;
-                    sramWrite.frames[flush_idx.frame_num] = 0;
-                    sramMask.frames[flush_idx.frame_num] = 0;
-                    enable_flush_count_nowb = 1;
-                end
-                // flag the completion of flush
-                if (flush_idx.finish) begin
-                    clear_flush_count  = 1;
-                    flush_done         = 1;
+                    // flag the completion of flush
+                    if (flush_idx.finish) begin
+                        clear_flush_count  = 1;
+                        flush_done         = 1;
+                    end
                 end
             end
             CANCEL_REQ: begin
@@ -589,48 +624,50 @@ module l1_cache #(
     end
 
     always_comb begin
-        if (CLK == 1 && sramWEN) begin
-            for (int i = 0; i < ASSOC; i++) begin
-                if (!tagWEN && sramMask.frames[i].tag.valid == 0) begin
-                    $warning("WARNING: setting valid bit but not writing tag!");
+        if (sramRENDone && CLK == 0) begin
+            if (sramWEN) begin
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (!tagWEN && sramMask.frames[i].tag.valid == 0) begin
+                        $warning("WARNING: setting valid bit but not writing tag!");
+                    end
                 end
             end
-        end
-        if (CLK == 1 && tagWEN) begin
-            if (sramSEL != sramSNOOPSEL) begin
-                $warning("WARNING: sram sels should be same %d", state);
-            end
-            if (!sramWEN) begin
-                $warning("WARNING: tagWEN && !sramWEN");
-            end
-            for (int i = 0; i < ASSOC; i++) begin
-                if (sramWrite.frames[i].tag != sramTags[i]) begin
-                    $warning("WARNING: sram tags are different while writing!");
+            if (tagWEN) begin
+                if (sramSEL != sramSNOOPSEL) begin
+                    $warning("WARNING: sram sels should be same %d", state);
+                end
+                if (!sramWEN) begin
+                    $warning("WARNING: tagWEN && !sramWEN");
+                end
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (sramWrite.frames[i].tag != sramTags[i]) begin
+                        $warning("WARNING: sram tags are different while writing!");
+                    end
                 end
             end
-        end
-        if (sramSNOOPSEL == sramSEL) begin
-            for (int i = 0; i < ASSOC; i++) begin
-                if (read_tag_bits[i] != sramRead.frames[i].tag) begin
-                    $warning("WARNING: sram tags are out of sync!");
+            if (prevSramSNOOPSEL == prevSramSEL && sramRENDone && snoopRENDone) begin
+                for (int i = 0; i < ASSOC; i++) begin
+                    if (read_tag_bits[i] != sramRead.frames[i].tag) begin
+                        $warning("WARNING: sram tags are out of sync!");
+                    end
                 end
             end
-        end
-        if (state == SNOOP) begin
-            if (sramSNOOPSEL != sramSEL) begin
-                $timeformat(-12, 2, " ps", 20);
-                $warning("WARNING: sram selection incorrect!");
-            end
-            if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
-                $timeformat(-12, 2, " ps", 20);
-                $warning("WARNING: returning incorrect hit_idx data!");
-                $warning(
-                    "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
-                    hit_idx,
-                    decoded_addr.idx.tag_bits,
-                    sramRead.frames[hit_idx].tag.tag_bits,
-                    bus_frame_tag
-                );
+            if (state == SNOOP) begin
+                if (sramSNOOPSEL != sramSEL) begin
+                    $timeformat(-12, 2, " ps", 20);
+                    $warning("WARNING: sram selection incorrect!");
+                end
+                if (sramRead.frames[hit_idx].tag.tag_bits != bus_frame_tag) begin
+                    $timeformat(-12, 2, " ps", 20);
+                    $warning("WARNING: returning incorrect hit_idx data!");
+                    $warning(
+                        "hit_idx: %d, addr tag: %x, tag: %x, bus_frame: %x",
+                        hit_idx,
+                        decoded_addr.idx.tag_bits,
+                        sramRead.frames[hit_idx].tag.tag_bits,
+                        bus_frame_tag
+                    );
+                end
             end
         end
     end
@@ -651,7 +688,7 @@ module l1_cache #(
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;
                 // last clause: if we don't have a tlb-miss and we are aborting, then it is an iTLB miss
-                else if (pw_gen_bus_if.ren && ~hit && ~prevent_pw_request)
+                else if (sramRENDone && pw_gen_bus_if.ren && ~hit && ~prevent_pw_request)
                     next_state = FETCH;
                 // don't ever fetch if we have a TLB miss & no current page walk request
                 else if (tlb_miss)
@@ -659,10 +696,10 @@ module l1_cache #(
                 // Don't transition on a failed sc
                 else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through)
                     next_state = state;
-                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit
+                else if (sramRENDone && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit
                         && sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = WB;
-                else if ((proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit
+                else if (sramRENDone && (proc_gen_bus_if.ren || proc_gen_bus_if.wen) && ~hit
                         && ~sramRead.frames[ridx].dirty && ~pass_through)
                     next_state = FETCH;
                 if (flush || flush_req)

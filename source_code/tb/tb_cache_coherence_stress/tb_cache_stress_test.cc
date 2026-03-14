@@ -17,6 +17,8 @@ bool negedge = false;
 Vcache_stress_wrapper *dut;
 VerilatedFstC *trace;
 
+double sc_time_stamp() { return sim_time; }
+
 void print_help_exit() {
     std::cerr << "Usage: ./build.sh <num_transactions> <flags...>" << std::endl;
     std::cerr << "\t--help: Print this" << std::endl;
@@ -140,6 +142,8 @@ struct Ram {
             ss << "Couldn't open " << dump_file << std::endl;
             exit(1);
         }
+
+        std::erase_if(mmap, [](std::pair<uint32_t, uint32_t> x) { return x.second == 0; });
 
         for (auto p : mmap) {
             char buf[80];
@@ -430,16 +434,19 @@ void reset() {
 
 int main(int argc, char **argv) {
     uint32_t seed = time(NULL);
-    srand(seed);
-    printf("Seed value: %d\n", seed);
 
     uint32_t num_transactions = 1000000;
-    if (argc == 2) {
+    if (argc >= 2) {
         if (!strncmp("--help", argv[1], strlen("--help"))) {
             print_help_exit();
         }
         num_transactions = std::stoul(argv[1]);
+        if (!strncmp("--seed", argv[2], strlen("--seed"))) {
+            seed = std::stoul(argv[3]);
+        }
     }
+    printf("Seed value: %d\n", seed);
+    srand(seed);
 
     printf("Running with %d transactions\n", num_transactions);
 
@@ -468,13 +475,13 @@ int main(int argc, char **argv) {
 
     dut->final();
     trace->close();
+    epoch.sim_model.dump();
+    epoch.golden_model.dump();
     if (epoch.sim_model != epoch.golden_model) {
         std::cout << "\033[91m" << "MEMORY MAPS DO NOT MATCH!" << "\033[0m" << std::endl;
     } else {
         std::cout << "\033[92m" << "Memory maps match!" << "\033[0m" << std::endl;
     }
-    epoch.sim_model.dump();
-    epoch.golden_model.dump();
 
     return 0;
 }

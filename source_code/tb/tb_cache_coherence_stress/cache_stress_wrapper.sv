@@ -33,15 +33,35 @@ module cache_stress_wrapper (
     cache_control_if c0c_if();
     cache_control_if c1c_if();
     front_side_bus_if front_side_bus [1:0] ();
-    back_side_bus_if #(.CPUS(2)) ccif(
-        .front_side(front_side_bus)
-    );
+    back_side_bus_if #(.CPUS(2)) bus_ctrl_if();
     prv_pipeline_if cache0_prv_pipe_if();
     prv_pipeline_if cache1_prv_pipe_if();
     generic_bus_if cache0_pw_gen_bus_if();
     generic_bus_if cache1_pw_gen_bus_if();
     address_translation_if cache0_at_if();
     address_translation_if cache1_at_if();
+
+    genvar i;
+    generate
+        for (i = 0; i < (NUM_HARTS*2); i++)  begin : g_bus_map
+            `MAP_FRONT_TO_BACK(dREN)
+            `MAP_FRONT_TO_BACK(dWEN)
+            `MAP_FRONT_TO_BACK(daddr)
+            `MAP_FRONT_TO_BACK(dstore)
+            `MAP_FRONT_TO_BACK(dbyte_en)
+            `MAP_FRONT_TO_BACK(ccwrite)
+            `MAP_FRONT_TO_BACK(ccsnoophit)
+            `MAP_FRONT_TO_BACK(ccdirty)
+            `MAP_FRONT_TO_BACK(ccsnoopdone)
+            `MAP_BACK_TO_FRONT(dwait)
+            `MAP_BACK_TO_FRONT(dload)
+            `MAP_BACK_TO_FRONT(derror)
+            `MAP_BACK_TO_FRONT(ccwait)
+            `MAP_BACK_TO_FRONT(ccinv)
+            `MAP_BACK_TO_FRONT(ccsnoopaddr)
+            `MAP_BACK_TO_FRONT(ccexclusive)
+        end
+    endgenerate
 
 
     always_ff @(posedge CLK, negedge nRST) begin
@@ -88,13 +108,13 @@ module cache_stress_wrapper (
         cache1_rdata = cache1_proc_gen_bus_if.rdata;
         cache1_busy = cache1_proc_gen_bus_if.busy;
 
-        out_gen_bus_if.addr = ccif.l2addr;
-        out_gen_bus_if.ren = ccif.l2REN;
-        out_gen_bus_if.wen = ccif.l2WEN;
-        out_gen_bus_if.wdata = ccif.l2store;
+        out_gen_bus_if.addr = bus_ctrl_if.l2addr;
+        out_gen_bus_if.ren = bus_ctrl_if.l2REN;
+        out_gen_bus_if.wen = bus_ctrl_if.l2WEN;
+        out_gen_bus_if.wdata = bus_ctrl_if.l2store;
 
-        ccif.l2load = out_gen_bus_if.rdata;
-        ccif.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
+        bus_ctrl_if.l2load = out_gen_bus_if.rdata;
+        bus_ctrl_if.l2state = out_gen_bus_if.busy ? L2_BUSY : L2_ACCESS;
 
         memory_addr = out_gen_bus_if.addr;
         memory_wdata = out_gen_bus_if.wdata;
@@ -125,9 +145,11 @@ module cache_stress_wrapper (
         .clear_done(c0c_if.dclear_done),
         .abort_bus(),
         .cache_miss(),
+        .cache_hit(),
         .prv_pipe_if(cache0_prv_pipe_if),
         .at_if(cache0_at_if),
         .tlb_miss('0),
+        .tlb_abort('0),
         .ppn_tag('0)
     );
 
@@ -149,9 +171,11 @@ module cache_stress_wrapper (
         .clear_done(c1c_if.dclear_done),
         .abort_bus(),
         .cache_miss(),
+        .cache_hit(),
         .prv_pipe_if(cache1_prv_pipe_if),
         .at_if(cache1_at_if),
         .tlb_miss('0),
+        .tlb_abort('0),
         .ppn_tag('0)
     );
 
@@ -160,7 +184,7 @@ module cache_stress_wrapper (
     ) bus (
         .CLK(CLK),
         .nRST(nRST),
-        .ccif(ccif)
+        .ccif(bus_ctrl_if)
     );
 
     generic_bus_if out_gen_bus_if();
