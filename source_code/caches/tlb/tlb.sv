@@ -43,7 +43,7 @@ module tlb #(
 (
     input logic CLK, nRST,
     input logic fence, abort, page_fault,
-    output logic fence_done, tlb_miss, tlb_hit,
+    output logic fence_done, tlb_miss, tlb_hit, tlb_busy,
     output logic fault_load_page, fault_store_page, fault_insn_page,
     output word_t tlb_hit_data,
     generic_bus_if.cpu mem_gen_bus_if,          // to page walker
@@ -145,6 +145,7 @@ module tlb #(
     logic [N_FRAME_BITS-1:0] hit_idx;
 
     // sram signals
+    logic procWREN;
     tlb_set_t sramWrite, sramRead, sramMask;
     logic sramWEN; // no need for REN
     logic [N_SET_BITS-1:0] sramSEL;
@@ -291,6 +292,7 @@ module tlb #(
     // TLB output logic
     // Outputs: counter control signals, cache, signals to page walker, signals to processor
     always_comb begin
+        procWREN                = (IS_ITLB ? 1 : prv_pipe_if.ex_mem_ren | prv_pipe_if.ex_mem_wen);
         sramREN                 = 0;
         sramWEN                 = 0;
         sramWrite               = 0;
@@ -309,6 +311,7 @@ module tlb #(
         fence_done              = 0;
         tlb_miss                = 0;
         tlb_hit                 = 0;
+        tlb_busy                = activate_hit && procWREN;
         idle_done               = 0;
         next_read_addr          = proc_gen_bus_if.addr;
         next_decoded_req_addr   = decoded_req_addr;
@@ -335,7 +338,7 @@ module tlb #(
                 end
             end
             HIT: begin
-                sramREN = activate_hit && (proc_gen_bus_if.ren || proc_gen_bus_if.wen);
+                sramREN = activate_hit && procWREN;
                 // don't do anything on a fence
                 if (fence) begin
                     tlb_miss = 1;
@@ -345,10 +348,10 @@ module tlb #(
                     if (sramRENDone) begin
                         // tlb hit on a processor read/write
                         if (hit) begin
-                            sramREN = 0;
                             proc_gen_bus_if.busy = 0;
                             tlb_hit_data = hit_data;
                             tlb_hit = 1'b1;
+                            tlb_busy = 1'b0;
                             next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
                         end
                         // tlb miss on a clean block
@@ -356,7 +359,7 @@ module tlb #(
                             mem_gen_bus_if.wen = proc_gen_bus_if.wen;
                             mem_gen_bus_if.ren = proc_gen_bus_if.ren;
                             mem_gen_bus_if.addr = proc_gen_bus_if.addr;
-                            tlb_miss = IS_ITLB ? 1 : prv_pipe_if.ex_mem_ren | prv_pipe_if.ex_mem_wen;
+                            tlb_miss = procWREN;
                             next_decoded_req_addr = decoded_addr;
                         end
                     end
@@ -384,10 +387,12 @@ module tlb #(
                 end
             end
             FENCE_TLB: begin
-                enable_fence_count_nowb = 1;
                 tlb_miss = 1;
                 sramREN = 1;
                 if (sramRENDone) begin
+                    sramREN = 0;
+                    enable_fence_count_nowb = 1;
+
                     // fence if valid and
                     // rs1 == 0 or sram.vpn == fence_va.vpn and
                     // rs2 == 0 or (sram.asid == fence_asid and is not a global page)
@@ -397,7 +402,7 @@ module tlb #(
                         && (~|fence_asid
                             | (sramRead.frames[fence_idx.frame_num].tag.asid == fence_asid
                                 && ~sramRead.frames[fence_idx.frame_num].pte.perms.global_page))) begin
-                        // clears entry when fenceed
+                        // clears entry when fenced
                         sramWEN = 1;
                         sramWrite.frames[fence_idx.frame_num] = 0;
                         sramMask.frames[fence_idx.frame_num] = 0;

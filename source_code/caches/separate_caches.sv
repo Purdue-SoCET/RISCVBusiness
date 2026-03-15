@@ -51,6 +51,7 @@ module separate_caches(
 
     // TLB signals L1$ needs
     logic itlb_miss, dtlb_miss;
+    logic itlb_busy, dtlb_busy;
     logic itlb_hit_sig, dtlb_hit_sig;
     word_t itlb_hit_data, dtlb_hit_data;
 
@@ -117,7 +118,7 @@ module separate_caches(
                 .cache_miss(dcache_miss),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(data_at_if),
-                .tlb_miss(dtlb_miss),
+                .tlb_busy(dtlb_busy),
                 .tlb_abort(tlb_abort),
                 .ppn_tag(dtlb_hit_data[PPNLEN + 10 - 1:10])
             );
@@ -177,7 +178,7 @@ module separate_caches(
                 .cache_miss(icache_miss),
                 .prv_pipe_if(prv_pipe_if),
                 .at_if(insn_at_if),
-                .tlb_miss(itlb_miss),
+                .tlb_busy(itlb_busy),
                 .tlb_abort(tlb_abort),
                 .ppn_tag(itlb_hit_data[PPNLEN + 10 - 1:10])
             );
@@ -214,6 +215,7 @@ module separate_caches(
         .at_if(data_at_if),
         .tlb_miss(dtlb_miss),
         .tlb_hit(dtlb_hit_sig),
+        .tlb_busy(dtlb_busy),
         .fault_load_page(dtlb_fault_load_page),
         .fault_store_page(dtlb_fault_store_page),
         .fault_insn_page(dtlb_fault_insn_page)
@@ -234,6 +236,7 @@ module separate_caches(
         .at_if(insn_at_if),
         .tlb_miss(itlb_miss),
         .tlb_hit(itlb_hit_sig),
+        .tlb_busy(itlb_busy),
         .fault_load_page(itlb_fault_load_page),
         .fault_store_page(itlb_fault_store_page),
         .fault_insn_page(itlb_fault_insn_page)
@@ -257,8 +260,8 @@ module separate_caches(
         .data_at_if(data_at_if)
     );
 
-    assign prv_pipe_if.itlb_miss = itlb_miss;
-    assign prv_pipe_if.dtlb_miss = dtlb_miss;
+    assign prv_pipe_if.itlb_miss = itlb_miss | itlb_busy;
+    assign prv_pipe_if.dtlb_miss = dtlb_miss | dtlb_busy;
 
     // arbitrate between pw, dtlb, or itlb for page faults
     // handle TLB abort signal
@@ -304,6 +307,8 @@ module separate_caches(
     // zero tlb misses
     assign itlb_miss = 0;
     assign dtlb_miss = 0;
+    assign itlb_busy = 0;
+    assign dtlb_busy = 0;
     assign tlb_abort = 0;
 
     // zero hit data

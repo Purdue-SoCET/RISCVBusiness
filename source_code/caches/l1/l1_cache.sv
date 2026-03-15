@@ -46,7 +46,7 @@ module l1_cache #(
 )
 (
     input logic CLK, nRST,
-    input logic clear, flush, reserve, tlb_miss, tlb_abort,
+    input logic clear, flush, reserve, tlb_busy, tlb_abort,
     input logic [PPNLEN-1:0] ppn_tag,
     output logic clear_done, flush_done, abort_bus,
     generic_bus_if.generic_bus proc_gen_bus_if,
@@ -171,7 +171,7 @@ module l1_cache #(
     // error handling
     assign proc_gen_bus_if.error = bus_ctrl_if.derror;
 
-    assign prevent_pw_request = pw_gen_bus_if.ren & ~tlb_miss & tlb_abort;
+    assign prevent_pw_request = pw_gen_bus_if.ren & ~tlb_busy & tlb_abort;
 
     // determine physical tag for fetch if address translation is on
     assign decoded_read_addr = decoded_cache_addr_t'(read_addr);
@@ -405,19 +405,23 @@ module l1_cache #(
                 bus_ctrl_if.daddr = phy_addr;
                 sramREN = pw_gen_bus_if.ren || proc_gen_bus_if.ren || proc_gen_bus_if.wen;
                 if (sramRENDone) begin
-                    // cache hit on a page walker read
-                    if(pw_gen_bus_if.ren && hit && !flush) begin
-                        sramREN = 0;
-                        pw_gen_bus_if.busy = 0;
-                        pw_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
-                        next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
-                    end
-                    else if (pw_gen_bus_if.ren && ~hit && !flush) begin
-                        sramREN = 0;
-                        next_decoded_req_addr = decoded_addr;
+                    // if there is a request from the page walker and the previous SRAM
+                    // row selected matches the PW address bits
+                    if (pw_gen_bus_if.ren && !flush && (prevSramSEL == decoded_pw_addr.idx.idx_bits)) begin
+                        // cache hit on a page walker read
+                        if (hit) begin
+                            sramREN = 0;
+                            pw_gen_bus_if.busy = 0;
+                            pw_gen_bus_if.rdata = hit_data[decoded_addr.idx.block_bits];
+                            next_last_used[decoded_addr.idx.idx_bits] = hit_idx;
+                        end
+                        else if (~hit) begin
+                            sramREN = 0;
+                            next_decoded_req_addr = decoded_addr;
+                        end
                     end
                     // don't do anything else on a TLB miss
-                    else if (~tlb_miss) begin
+                    else if (~tlb_busy) begin
                         // cache hit on a processor read
                         if(proc_gen_bus_if.ren && hit && !flush) begin
                             sramREN = 0;
@@ -688,10 +692,10 @@ module l1_cache #(
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;
                 // last clause: if we don't have a tlb-miss and we are aborting, then it is an iTLB miss
-                else if (sramRENDone && pw_gen_bus_if.ren && ~hit && ~prevent_pw_request)
+                else if (sramRENDone && pw_gen_bus_if.ren && ~hit && ~prevent_pw_request && (prevSramSEL == decoded_pw_addr.idx.idx_bits))
                     next_state = FETCH;
                 // don't ever fetch if we have a TLB miss & no current page walk request
-                else if (tlb_miss)
+                else if (tlb_busy)
                     next_state = state;
                 // Don't transition on a failed sc
                 else if (proc_gen_bus_if.wen && reserve && !sc_valid_block && ~pass_through)
