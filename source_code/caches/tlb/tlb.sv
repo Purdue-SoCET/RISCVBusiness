@@ -291,8 +291,6 @@ module tlb #(
         sramWEN                 = 0;
         sramWrite               = 0;
         sramMask                = '1;
-        proc_gen_bus_if.busy    = 1;
-        proc_gen_bus_if.rdata   = 0; // TODO: Can this be optimized?
         mem_gen_bus_if.ren      = 0;
         mem_gen_bus_if.wen      = 0;
         mem_gen_bus_if.addr     = 0;
@@ -339,7 +337,6 @@ module tlb #(
                 else if (activate_hit) begin
                     // tlb hit on a processor read/write
                     if (hit) begin
-                        proc_gen_bus_if.busy = 0;
                         tlb_hit_data = hit_data;
                         tlb_hit = 1'b1;
                         next_last_used[decoded_addr.vpn.idx_bits] = hit_idx;
