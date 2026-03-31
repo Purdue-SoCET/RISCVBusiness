@@ -16,7 +16,7 @@ module multicore_wrapper #(
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
-    output logic wfi,
+    output logic [NUM_HARTS-1:0] wfi,
     halt,
     core_interrupt_if.core interrupt_if,
 `ifdef BUS_INTERFACE_GENERIC_BUS
@@ -108,7 +108,7 @@ module multicore_wrapper #(
                 .CLK(CLK),
                 .nRST(nRST),
                 .mtime(mtime),
-                .wfi(pipeline_wfi),
+                .wfi(wfi),
                 .halt(pipeline_halts[HART_ID]),
                 .interrupt_if(interrupt_if),
                 .dcache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
