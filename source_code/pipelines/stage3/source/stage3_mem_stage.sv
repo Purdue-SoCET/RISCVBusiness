@@ -44,12 +44,14 @@ module stage3_mem_stage(
     logic mal_addr;
     logic [1:0] byte_offset;
     logic [3:0] byte_en, byte_en_temp, byte_en_standard;
+    logic [31:0] amo_prev_value, amo_wdata;
+    logic amo_dren, amo_dwen;
 
     // TODO: RISC-MGMT
-    assign dgen_bus_if.ren = ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data;
-    assign dgen_bus_if.wen = ex_mem_if.ex_mem_reg.dwen && !hazard_if.suppress_data;
+    assign dgen_bus_if.ren = (ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data) || amo_dren;
+    assign dgen_bus_if.wen = (ex_mem_if.ex_mem_reg.dwen && !hazard_if.suppress_data) || amo_dwen;
     assign dgen_bus_if.byte_en = byte_en;
-    assign dgen_bus_if.addr = ex_mem_if.ex_mem_reg.port_out;
+    assign dgen_bus_if.addr = (ex_mem_if.ex_mem_reg.exclusive) ? ex_mem_if.ex_mem_reg.rs1 : ex_mem_if.ex_mem_reg.port_out; //address is rs1 if amo instruction
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
     assign prv_pipe_if.ex_mem_ren = ex_mem_if.ex_mem_reg.dren;
     assign prv_pipe_if.ex_mem_wen = ex_mem_if.ex_mem_reg.dwen;
@@ -114,7 +116,7 @@ module stage3_mem_stage(
         case(ex_mem_if.ex_mem_reg.load_type)
             LB: dgen_bus_if.wdata = {4{ex_mem_if.ex_mem_reg.rs2_data[7:0]}};
             LH: dgen_bus_if.wdata = {2{ex_mem_if.ex_mem_reg.rs2_data[15:0]}};
-            LW: dgen_bus_if.wdata = ex_mem_if.ex_mem_reg.rs2_data;
+            LW: dgen_bus_if.wdata = (ex_mem_if.ex_mem_reg.exclusive) ? amo_wdata : ex_mem_if.ex_mem_reg.rs2_data; //added amo write data to store
             default: dgen_bus_if.wdata = '0;
         endcase
     end : STORE_TYPE
@@ -334,20 +336,18 @@ module stage3_mem_stage(
     /**************
     * AMO Unit
     ***************/
-    logic [31:0] amo_prev_value;
-
     rv32a_wrapper AMO_UNIT (
         .CLK(CLK),
         .nRST(nRST),
-        .amo_en(ex_mem_if.ex_mem_reg.amo_en), 
-        .mem_ready(),
+        .amo_en(ex_mem_if.ex_mem_reg.exclusive), //exlusive is assigned to rv32a_amo in the control_unit (this is high when an amo instruction is present)
+        .mem_ready(!dgen_bus_if.busy), //dhit
         .alu_op(ex_mem_if.ex_mem_reg.insr[31:27]), //need to change to type
         .mem_output(dload_ext), 
         .rs2_data(ex_mem_if.ex_mem_reg.rs2_data),
         .stall_amo_en(hazard_if.amo_stall), 
-        .read_mem_en(), 
-        .write_mem_en(), 
-        .mem_input(), 
+        .read_mem_en(amo_dren), //dmemREN
+        .write_mem_en(amo_dwen), //dmemWEN
+        .mem_input(amo_wdata), //dmemstore
         .writeback_data(amo_prev_value)
     );
 

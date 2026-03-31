@@ -60,7 +60,7 @@ module stage3_hazard_unit (
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
     assign branch_jump = (hazard_if.jump || hazard_if.branch) && hazard_if.mispredict;
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren;
-    assign wait_for_dmem = dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data;
+    assign wait_for_dmem = (dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data) || hazard_if.amo_stall; //added amo stall
     assign hazard_if.mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
 
     assign hazard_if.npc_sel = branch_jump;

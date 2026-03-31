@@ -135,6 +135,7 @@ module control_unit (
             default:              cu_if.w_sel = W_SEL_FROM_DLOAD;
         endcase
         if (rv32a_lr || rv32a_sc) cu_if.w_sel = W_SEL_FROM_DLOAD;
+        if (rv32a_amo)            cu_if.w_sel = W_SEL_FROM_AMO;
     end
 
     // Assign register write enable
@@ -145,7 +146,8 @@ module control_unit (
             SYSTEM:                                     cu_if.wen = cu_if.csr_rw_valid;
             default:                                    cu_if.wen = 1'b0;
         endcase
-        if (rv32a_lr || rv32a_sc) cu_if.wen = 1'b1;
+        if (rv32a_lr || rv32a_sc)                       cu_if.wen = 1'b1;
+        if (rv32a_amo)                                  cu_if.wen = 1'b1;
     end
 
     // Assign alu opcode

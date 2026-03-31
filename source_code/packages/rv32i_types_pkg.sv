@@ -234,7 +234,8 @@ package rv32i_types_pkg;
       W_SEL_FROM_PC         = 3'b001,
       W_SEL_FROM_IMM_U      = 3'b010,
       W_SEL_FROM_ALU        = 3'b011,
-      W_SEL_FROM_PRIV_PIPE  = 3'b100
+      W_SEL_FROM_PRIV_PIPE  = 3'b100,
+      W_SEL_FROM_AMO        = 3'b101
   } w_sel_t;
 
 endpackage

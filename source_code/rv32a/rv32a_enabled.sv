@@ -38,6 +38,8 @@ module rv32a_enabled(
             IDLE: begin
                 //control unit signal rolled over through to mem stage rv32a_amo
                 next_state = (amo_en) ? AMO_FSM_READ : IDLE;
+
+                stall_amo_en = amo_en;
             end
 
             AMO_FSM_READ: begin
@@ -62,7 +64,7 @@ module rv32a_enabled(
                 next_state = (mem_ready) ? AMO_FSM_MODIFY : AMO_FSM_READ;
 
                 // keep pipeline stalled
-                stall_amo_en = 1'b1;
+                stall_amo_en = !mem_ready;
 
                 // write back to cache here
                 write_mem_en = 1'b1;
