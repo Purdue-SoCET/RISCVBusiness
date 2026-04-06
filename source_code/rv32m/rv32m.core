@@ -12,7 +12,7 @@ filesets:
             - full_adder.sv
             - flex_counter_mul.sv
             - pp_mul32.sv
-            - radix4_divider.sv
+            - srt_div.sv
             - rv32m_decode.sv
             - rv32m_disabled.sv
             - rv32m_enabled.sv
@@ -20,10 +20,19 @@ filesets:
             - shift_add_multiplier.sv
             - shift_test_restore_divider.sv
         file_type: systemVerilogSource
+
+    # keep legacy radix4 divider available for comparison testbench only
+    tb_radix4_rtl:
+        files:
+            - radix4_divider.sv
+        file_type: systemVerilogSource
+
     tb:
         files:
             - tb_pp_mul32.sv
+            - tb_compare_dividers.sv
             - tb_radix4_divider.sv
+            - tb_srt_divider.sv
             - tb_rv32m_enabled.sv
             - tb_shift_add_multiplier.sv
             - tb_shift_test_restore_divider.sv
@@ -60,7 +69,25 @@ targets:
     tb_radix4_divider:
         <<: *tb_default
         toplevel: tb_radix4_divider
+        filesets:
+            - rtl
+            - tb
+            - tb_radix4_rtl
         description: Simulate the Radix4 Divider TB
+
+    tb_compare_dividers:
+        <<: *tb_default
+        toplevel: tb_compare_dividers
+        filesets:
+            - rtl
+            - tb
+            - tb_radix4_rtl
+        description: Simulate radix4 and SRT divider side-by-side comparison
+
+    tb_srt_divider:
+        <<: *tb_default
+        toplevel: tb_srt_divider
+        description: Simulate the SRT Divider TB
 
     tb_rv32m_enabled:
         <<: *tb_default

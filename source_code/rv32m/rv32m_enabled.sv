@@ -104,8 +104,20 @@ module rv32m_enabled (
 
     /* DIVISION / REMAINDER */
     logic overflow, div_zero, div_finished;
-    word_t divisor, dividend, quotient, remainder, divisor_save, dividend_save;
-    logic div_operand_diff;
+    word_t divisor, dividend;
+    word_t quotient_signed, remainder_signed;
+    word_t quotient_unsigned, remainder_unsigned;
+    word_t quotient, remainder;
+    logic div_by_zero_signed, div_by_zero_unsigned;
+    logic div_valid_signed, div_valid_unsigned;
+    logic div_ready_signed, div_ready_unsigned;
+    logic div_start_signed, div_start_unsigned;
+    logic is_divide_signed;
+    logic div_inflight_q;
+    logic div_inflight_d;
+    logic div_mode_signed_q;
+    logic div_mode_signed_d;
+    logic div_resp_valid;
     logic div_start;
 
     assign divisor   = op_b;
@@ -113,19 +125,74 @@ module rv32m_enabled (
     assign overflow  = (dividend == 32'h8000_0000) && (divisor == 32'hffff_ffff) && is_signed[0];
     assign div_zero  = (divisor == 32'h0);
     assign div_start = operand_diff && is_divide && !overflow && !div_zero && rv32m_start;
+    assign is_divide_signed = (operation == DIV) || (operation == REM);
+    assign div_start_signed = div_start && !div_inflight_q && is_divide_signed;
+    assign div_start_unsigned = div_start && !div_inflight_q && !is_divide_signed;
 
-    radix4_divider div_i (
+    srt_div #(
+        .WIDTH(WORD_SIZE),
+        .SUPPORT_SIGNED(1'b1),
+        .BITS_PER_CYCLE(2)
+    ) div_signed_i (
         .CLK(CLK),
         .nRST(nRST),
-        .divisor(divisor),
+        .in_valid(div_start_signed),
+        .in_ready(div_ready_signed),
+        .out_valid(div_valid_signed),
+        .out_ready(1'b1),
         .dividend(dividend),
-        // For division, only 00 or 11, input is 1 bit, so take one of the bits for "is_signed" (arbitrary)
-        .is_signed(is_signed[0]),
-        .start(div_start),
-        .remainder(remainder),
-        .quotient(quotient),
-        .finished(div_finished)
+        .divisor(divisor),
+        .quotient(quotient_signed),
+        .remainder(remainder_signed),
+        .div_by_zero(div_by_zero_signed)
     );
+
+    srt_div #(
+        .WIDTH(WORD_SIZE),
+        .SUPPORT_SIGNED(1'b0),
+        .BITS_PER_CYCLE(2)
+    ) div_unsigned_i (
+        .CLK(CLK),
+        .nRST(nRST),
+        .in_valid(div_start_unsigned),
+        .in_ready(div_ready_unsigned),
+        .out_valid(div_valid_unsigned),
+        .out_ready(1'b1),
+        .dividend(dividend),
+        .divisor(divisor),
+        .quotient(quotient_unsigned),
+        .remainder(remainder_unsigned),
+        .div_by_zero(div_by_zero_unsigned)
+    );
+
+    assign div_resp_valid = div_mode_signed_q ? div_valid_signed : div_valid_unsigned;
+    assign div_finished = div_resp_valid;
+    assign quotient = div_mode_signed_q ? quotient_signed : quotient_unsigned;
+    assign remainder = div_mode_signed_q ? remainder_signed : remainder_unsigned;
+
+    always_comb begin
+        div_inflight_d = div_inflight_q;
+        div_mode_signed_d = div_mode_signed_q;
+
+        if (!div_inflight_q && ((div_start_signed && div_ready_signed) || (div_start_unsigned && div_ready_unsigned))) begin
+            div_inflight_d = 1'b1;
+            div_mode_signed_d = is_divide_signed;
+        end
+
+        if (div_resp_valid) begin
+            div_inflight_d = 1'b0;
+        end
+    end
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (!nRST) begin
+            div_inflight_q <= 1'b0;
+            div_mode_signed_q <= 1'b0;
+        end else begin
+            div_inflight_q <= div_inflight_d;
+            div_mode_signed_q <= div_mode_signed_d;
+        end
+    end
 
     /* Operation decoding */
     always_comb begin
