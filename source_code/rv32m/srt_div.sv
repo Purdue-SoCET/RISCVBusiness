@@ -15,6 +15,8 @@ module srt_div #(
     output logic [WIDTH-1:0] remainder,
     output logic div_by_zero
 );
+    import srt_qsel_rom_pkg::*;
+
     localparam int SRT_MAX_DIGIT = 1 << (BITS_PER_CYCLE - 1);
     localparam int QDIG_W = BITS_PER_CYCLE + 1;
     // number of SRT iterations needed to cover WIDTH bits
@@ -27,30 +29,6 @@ module srt_div #(
     localparam int QUOT_ACC_WIDTH = EVEN_WIDTH + BITS_PER_CYCLE + 3;
     // address width for the q selection table
     localparam int QSEL_ADDR_W = 2 * SRT_MAX_DIGIT;
-
-    function automatic logic signed [QDIG_W-1:0] srt_qsel_lookup(
-        input logic [QSEL_ADDR_W-1:0] addr
-    );
-        int qsel_idx;
-
-        for (qsel_idx = 0; qsel_idx < SRT_MAX_DIGIT; qsel_idx++) begin
-            if (addr[QSEL_ADDR_W-1-qsel_idx]) begin
-                return (SRT_MAX_DIGIT - qsel_idx);
-            end
-        end
-
-        if (addr[SRT_MAX_DIGIT-1]) begin
-            return '0;
-        end
-
-        for (qsel_idx = 1; qsel_idx < SRT_MAX_DIGIT; qsel_idx++) begin
-            if (addr[SRT_MAX_DIGIT-1-qsel_idx]) begin
-                return -qsel_idx;
-            end
-        end
-
-        return -SRT_MAX_DIGIT;
-    endfunction
 
     typedef enum logic [1:0] {
         S_IDLE,
@@ -181,7 +159,7 @@ module srt_div #(
                 d_mul_ext = $signed(threshold) * d_ext;
                 qsel_addr[SRT_MAX_DIGIT-1-idx] = (rem_x2 >= -d_mul_ext);
             end
-            q_digit = srt_qsel_lookup(qsel_addr);
+            q_digit = srt_qsel_lookup($unsigned(qsel_addr), SRT_MAX_DIGIT);
 
             d_mul_ext = d_ext * q_digit;
             rem_next = rem_shifted - d_mul_ext[REM_WIDTH-1:0];

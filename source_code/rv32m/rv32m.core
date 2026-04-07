@@ -12,6 +12,7 @@ filesets:
             - full_adder.sv
             - flex_counter_mul.sv
             - pp_mul32.sv
+            - srt_qsel_rom_pkg.sv
             - srt_div.sv
             - rv32m_decode.sv
             - rv32m_disabled.sv
