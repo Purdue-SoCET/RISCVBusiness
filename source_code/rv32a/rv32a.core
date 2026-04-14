@@ -12,6 +12,7 @@ filesets:
             - rv32a_disabled.sv
             - rv32a_enabled.sv
             - rv32a_wrapper.sv
+	    - amo_alu.sv
         file_type: systemVerilogSource
 
 targets:
