@@ -1,5 +1,5 @@
 CAPI=2:
-name: socet:riscv:rv32a:0.1.0
+name: socet:riscv:rv32a:0.1.1-0
 description: RV32A Extension for RISCVBusiness
 
 filesets:
