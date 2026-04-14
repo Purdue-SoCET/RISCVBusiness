@@ -20,7 +20,7 @@ module rv32a_enabled(
 
     // Sequential logic for state register
     always_ff @(posedge CLK, negedge nRST) begin
-        if (!rst_n)
+        if (!nRST)
             current_state <= AMO_FSM_READ;
         else
             current_state <= next_state;
