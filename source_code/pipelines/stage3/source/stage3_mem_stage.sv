@@ -51,7 +51,7 @@ module stage3_mem_stage(
     assign dgen_bus_if.ren = (ex_mem_if.ex_mem_reg.dren && !hazard_if.suppress_data) || amo_dren;
     assign dgen_bus_if.wen = (ex_mem_if.ex_mem_reg.dwen && !hazard_if.suppress_data) || amo_dwen;
     assign dgen_bus_if.byte_en = byte_en;
-    assign dgen_bus_if.addr = (ex_mem_if.ex_mem_reg.exclusive) ? ex_mem_if.ex_mem_reg.rs1 : ex_mem_if.ex_mem_reg.port_out; //address is rs1 if amo instruction
+    assign dgen_bus_if.addr = (ex_mem_if.ex_mem_reg.exclusive) ? ex_mem_if.ex_mem_reg.rs1_data : ex_mem_if.ex_mem_reg.port_out; //address is rs1 if amo instruction
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
     assign prv_pipe_if.ex_mem_ren = ex_mem_if.ex_mem_reg.dren;
     assign prv_pipe_if.ex_mem_wen = ex_mem_if.ex_mem_reg.dwen;
