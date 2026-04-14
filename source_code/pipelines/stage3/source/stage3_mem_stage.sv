@@ -341,7 +341,7 @@ module stage3_mem_stage(
         .nRST(nRST),
         .amo_en(ex_mem_if.ex_mem_reg.exclusive), //exlusive is assigned to rv32a_amo in the control_unit (this is high when an amo instruction is present)
         .mem_ready(!dgen_bus_if.busy), //dhit
-        .alu_op(ex_mem_if.ex_mem_reg.insr[31:27]), //need to change to type
+        .alu_op(ex_mem_if.ex_mem_reg.instr[31:27]), //need to change to type
         .mem_output(dload_ext), 
         .rs2_data(ex_mem_if.ex_mem_reg.rs2_data),
         .stall_amo_en(hazard_if.amo_stall), 
