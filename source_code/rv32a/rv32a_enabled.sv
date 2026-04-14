@@ -19,7 +19,7 @@ module rv32a_enabled(
     amo_fsm_state_t current_state, next_state;
 
     // Sequential logic for state register
-    always_ff @(posedge clk, negedge rst_n) begin
+    always_ff @(posedge CLK, negedge nRST) begin
         if (!rst_n)
             current_state <= AMO_FSM_READ;
         else
@@ -49,7 +49,7 @@ module rv32a_enabled(
                 stall_amo_en = 1'b1; //start the ALU and stall pipeline
 
                 // read from cache here
-                amoif.read_mem_en = 1'b1;
+                read_mem_en = 1'b1;
             end
 
             AMO_FSM_MODIFY: begin
