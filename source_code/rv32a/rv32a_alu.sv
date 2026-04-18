@@ -1,5 +1,5 @@
 
-module amo_alu(
+module rv32a_alu(
     input logic [31:0] portA, portB,
     input logic [3:0] alu_op, //need to change to type
     output logic [31:0] output_port

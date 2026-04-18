@@ -72,7 +72,7 @@ module rv32a_enabled(
         endcase
     end
 
-    amo_alu AMO_ALU (
+    rv32a_alu AMO_ALU (
         .portA(mem_output), 
         .portB(rs2_data),
         .alu_op(alu_op), //need to change to type
