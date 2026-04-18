@@ -16,8 +16,8 @@ module multicore_wrapper #(
 ) (
     input logic CLK, nRST,
     input logic [63:0] mtime,
-    output logic wfi,
-    halt,
+    output logic [NUM_HARTS-1:0] wfi,
+    output logic halt,
     core_interrupt_if.core interrupt_if,
 `ifdef BUS_INTERFACE_GENERIC_BUS
     generic_bus_if.cpu gen_bus_if
@@ -38,6 +38,7 @@ module multicore_wrapper #(
             `MAP_FRONT_TO_BACK(daddr)
             `MAP_FRONT_TO_BACK(dstore)
             `MAP_FRONT_TO_BACK(dbyte_en)
+            `MAP_FRONT_TO_BACK(ccabort)
             `MAP_FRONT_TO_BACK(ccwrite)
             `MAP_FRONT_TO_BACK(ccsnoophit)
             `MAP_FRONT_TO_BACK(ccdirty)
@@ -85,9 +86,6 @@ module multicore_wrapper #(
     logic [NUM_HARTS-1:0] [11:0] imm_I;
     logic [NUM_HARTS-1:0] [20:0] imm_UJ;
     logic [NUM_HARTS-1:0] [31:0] imm_U;
-    logic [(2*NUM_HARTS)-1:0] abort_bus;
-
-    assign bus_ctrl_if.ccabort = abort_bus;
 
     // This requires that all x28s are 1 in order to pass tests
     logic [31:0] x28;
@@ -108,12 +106,11 @@ module multicore_wrapper #(
                 .CLK(CLK),
                 .nRST(nRST),
                 .mtime(mtime),
-                .wfi(pipeline_wfi),
+                .wfi(wfi[HART_ID]),
                 .halt(pipeline_halts[HART_ID]),
                 .interrupt_if(interrupt_if),
                 .dcache_bus_ctrl_if(front_side_bus[HART_ID*2 + 1]),
                 .icache_bus_ctrl_if(front_side_bus[HART_ID*2]),
-                .abort_bus(abort_bus[HART_ID*2]),
                 .bus_busy(bus_busy)
             );
 

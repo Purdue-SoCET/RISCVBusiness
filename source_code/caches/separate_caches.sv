@@ -40,7 +40,6 @@ module separate_caches(
     prv_pipeline_if prv_pipe_if,
     front_side_bus_if.cache dcache_bus_ctrl_if,
     front_side_bus_if.cache icache_bus_ctrl_if,
-    output logic abort_bus,
     output logic icache_miss,
     output logic dcache_miss,
     output logic icache_hit,
@@ -50,6 +49,7 @@ module separate_caches(
     import rv32i_types_pkg::*;
 
     // TLB signals L1$ needs
+    logic tlb_abort;
     logic itlb_miss, dtlb_miss;
     logic itlb_hit_sig, dtlb_hit_sig;
     word_t itlb_hit_data, dtlb_hit_data;
@@ -63,6 +63,12 @@ module separate_caches(
     // assign physical addresses to pmp
     assign prv_pipe_if.ipaddr = icache_bus_ctrl_if.daddr;
     assign prv_pipe_if.dpaddr = dcache_bus_ctrl_if.daddr;
+
+    assign empty_gen_bus_if.addr = 0;
+    assign empty_gen_bus_if.byte_en = 0;
+    assign empty_gen_bus_if.ren = 0;
+    assign empty_gen_bus_if.wen = 0;
+    assign empty_gen_bus_if.wdata = 0;
 
     generate
         /* verilator lint_off width */
@@ -111,7 +117,6 @@ module separate_caches(
                 .clear(control_if.dcache_clear),
                 .reserve(control_if.dcache_reserve),
                 .flush_done(control_if.dflush_done),
-                .abort_bus(),
                 .clear_done(control_if.dclear_done),
                 .cache_hit(dcache_hit),
                 .cache_miss(dcache_miss),
@@ -172,7 +177,6 @@ module separate_caches(
                 .reserve(1'b0),
                 .flush_done(control_if.iflush_done),
                 .clear_done(control_if.iclear_done),
-                .abort_bus(abort_bus),
                 .cache_hit(icache_hit),
                 .cache_miss(icache_miss),
                 .prv_pipe_if(prv_pipe_if),
@@ -197,7 +201,6 @@ module separate_caches(
     logic itlb_fault_load_page, itlb_fault_store_page, itlb_fault_insn_page;
     logic dtlb_fault_load_page, dtlb_fault_store_page, dtlb_fault_insn_page;
     logic pw_fault_load_page, pw_fault_store_page, pw_fault_insn_page;
-    logic tlb_abort;
 
     // DTLB
     tlb #(.IS_ITLB(0)) dtlb (
@@ -305,13 +308,35 @@ module separate_caches(
     assign itlb_miss = 0;
     assign dtlb_miss = 0;
     assign tlb_abort = 0;
+    assign prv_pipe_if.itlb_hit = 0;
+    assign prv_pipe_if.dtlb_hit = 0;
+    assign prv_pipe_if.itlb_miss = 0;
+    assign prv_pipe_if.dtlb_miss = 0;
 
     // zero hit data
     assign itlb_hit_data = '0;
     assign dtlb_hit_data = '0;
+    assign pw_gen_bus_if.addr = 0;
+    assign pw_gen_bus_if.byte_en = 0;
+    assign pw_gen_bus_if.ren = 0;
+    assign pw_gen_bus_if.wen = 0;
+    assign pw_gen_bus_if.wdata = 0;
+    assign prv_pipe_if.mem_fault_load_page  = 0;
+    assign prv_pipe_if.mem_fault_store_page = 0;
+    assign prv_pipe_if.fetch_fault_insn_page  = 0;
 
     // zero address translation
     assign insn_at_if.addr_trans_on = '0;
+    assign insn_at_if.sv32 = 0;
+    assign insn_at_if.sv39 = 0;
+    assign insn_at_if.sv48 = 0;
+    assign insn_at_if.sv57 = 0;
+    assign insn_at_if.sv64 = 0;
     assign data_at_if.addr_trans_on = '0;
+    assign data_at_if.sv32 = 0;
+    assign data_at_if.sv39 = 0;
+    assign data_at_if.sv48 = 0;
+    assign data_at_if.sv57 = 0;
+    assign data_at_if.sv64 = 0;
 `endif
 endmodule
