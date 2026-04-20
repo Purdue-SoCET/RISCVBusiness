@@ -16,7 +16,7 @@ package rv32clmul_pkg;
     // Operation type
     typedef enum logic [2:0] {
         CLMUL = 3'b000
-    } rv32delay_op_t;
+    } rv32clmul_op_t;
 
     // Decoder output
     typedef struct packed {

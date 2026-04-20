@@ -1,0 +1,1 @@
+rv32clmul_pkg::rv32clmul_decode_t rv32clmul_control;

@@ -1,0 +1,22 @@
+CAPI=2:
+name: socet:riscv:rv32m:0.1.0
+description: RV32M Extension for RISCVBusiness CLMUL
+
+filesets:
+    rtl:
+        depend:
+            - "socet:riscv:riscv_include"
+            - "socet:riscv:packages"
+        files:
+            - rv32clmul_decode.sv
+            - rv32clmul_enabled.sv
+            - rv32clmul_disabled.sv
+            - rv32clmul_wrapper.sv
+        file_type: systemVerilogSource
+
+targets:
+    default: &default
+        filesets:
+            - rtl
+        toplevel: rv32clmul_wrapper
+
