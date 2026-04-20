@@ -50,6 +50,21 @@ proc run_one_top {top effort run_syn_opt} {
     }
 
     elaborate $top
+
+    # Genus keeps previously elaborated designs in memory; select the target
+    # design explicitly so commands like init_design/clock_ports are unambiguous.
+    set design_selected 0
+    foreach dpath [list "/designs/$top" "/design/$top" "$top"] {
+        if {![catch {cd $dpath}]} {
+            set design_selected 1
+            break
+        }
+    }
+    if {!$design_selected} {
+        puts "ERROR: Could not select design context for '$top'"
+        exit 3
+    }
+
     init_design
 
     set clk_ports [clock_ports]
@@ -81,6 +96,7 @@ proc run_one_top {top effort run_syn_opt} {
 
     puts "[clock format [clock seconds]] INFO: Reports generated for top=$top"
 
+    catch {cd /}
     if {[llength [info commands reset_design]] > 0} {
         reset_design
     }
