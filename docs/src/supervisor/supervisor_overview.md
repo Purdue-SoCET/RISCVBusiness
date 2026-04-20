@@ -13,7 +13,7 @@ The 32-bit RISC-V "S" Supervisor Extension adds 11 new Control and Status Regist
 ## Architecture
 
 ### Pipeline
-![3 stage pipeline featuring the supervisor hardware modifications](images/pipeline.png)
+![3 stage pipeline featuring the supervisor hardware modifications, described below](images/pipeline.png)
 
 It is based on the 3-stage pipeline from the multi-core branch, featuring the following stages:
 - Fetch
@@ -25,14 +25,14 @@ Visually, the decode and execute stages are made distinct, but occur in the same
 The supervisor implementation augments the 3-stage pipeline by adding instruction and data TLBs, which are tightly-coupled with the corresponding caches (accessed in parallel). The caches and TLBs are connected in turn to the bus controller to execute cache or TLB fills. The other major supervisor component, the Page Walker, connects to each of the TLBs to service TLB misses. New S-mode CSRs also connect to the page walker and TLBs to provide information such as page table base and current execution mode.
 
 ### Two Level Address Translation
-![Two-level address translation diagram](images/twoleveladdresstranslation.png)
+![Two-level address translation diagram, described below](images/twoleveladdresstranslation.png)
 
 Two-level address translation will operate as shown in the above image. It shows how a 32-bit virtual address is split up into two virtual page numbers (VPN[1] and VPN[0]), and offset. The first stage of address translation uses VPN[1] to index the base page table referenced in the `satp.ppn` control and status register. The result of this operation is getting a page table entry (PTE) that contains a physical page number to be used in the next level of address translation. VPN[0] indexes the physical page from the level 1 PTE, where the level 2 PTE contains the physical page number for the translated virtual address. This physical page number is prepended to the offset from the virtual address to create the physical address.
 
 Note that for 32-bit RISC-V, the physical address may be a maximum of 34 bits. While single programs are still limited to 4GB of virtual address space due to the 32-bit registers, the system can accommodate up to 16GB of address space. This could be leveraged by running, for example, 5 processes each using 3GB of memory.
 
 ### Virtually Indexed, Physically Tagged (VIPT) L1 TLB and Cache
-![TLB and L1 Cache block diagram, explanation below](images/tlbviptl1.png)
+![TLB and L1 Cache block diagram, described below](images/tlbviptl1.png)
 
 The L1 cache and Translation Lookaside Buffer (TLB) are accessed in parallel, opting for a virtually indexed, physically tagged (VIPT) cache design.
 
@@ -41,14 +41,14 @@ The L1 Cache and TLB are accessed with the same virtual address and control sign
 The total amount of data stored in a cache must not exceed the product of the cache associativity and page size (4KB) for a VIPT design to function without experiencing aliasing.
 
 ### Translation Lookaside Buffer
-![TLB block diagram](images/tlb.png)
+![TLB block diagram, described below](images/tlb.png)
 
 The TLB stores the physical page number for a virtual page alongside the permissions of the page and an Address Space Identifier (ASID). The incoming virtual address is split (LSB to MSB) as a 12-bit page offset (corresponding to 4KB pages), index bits (number based on number of entries), and tag bits (the remainder). The offset bits are not used for TLB access, and are identical in the virtual and physical address. The TLB entry is selected by the index bit, and a hit is determined based on whether the incoming tag bits match the tag bits of the selected entry.
 
 When the TLB is accessed, the page permissions and ASID from the selected entry are checked against the current state of the RISC-V processor (ASID, CPU mode) and the access type (Read, Write, Execute). If the ASID doesn't match or the valid bit is not set, a TLB miss is raised. If the permissions are not correct, a page fault is raised.
 
 ### Hardware Page Walker
-![Page walker flow chart](images/pagewalker.png)
+![Page walker flow chart, described below](images/pagewalker.png)
 
 A hardware page walker is used to walk pages without the extra bits software page walks would add. Here is the process that it follows:
 
