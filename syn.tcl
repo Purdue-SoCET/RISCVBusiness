@@ -39,6 +39,10 @@ proc run_one_top {top effort run_syn_opt} {
 
     puts "[clock format [clock seconds]] INFO: Running top=$top"
 
+    # Start each top from a clean in-memory design state so commands do not
+    # become ambiguous when multiple elaborated designs exist.
+    catch {reset_design}
+
     if {$top eq "srt_div"} {
         read_hdl -sv source_code/rv32m/srt_qsel_rom_pkg.sv
         read_hdl -sv source_code/rv32m/srt_div.sv
@@ -50,21 +54,6 @@ proc run_one_top {top effort run_syn_opt} {
     }
 
     elaborate $top
-
-    # Genus keeps previously elaborated designs in memory; select the target
-    # design explicitly so commands like init_design/clock_ports are unambiguous.
-    set design_selected 0
-    foreach dpath [list "/designs/$top" "/design/$top" "$top"] {
-        if {![catch {cd $dpath}]} {
-            set design_selected 1
-            break
-        }
-    }
-    if {!$design_selected} {
-        puts "ERROR: Could not select design context for '$top'"
-        exit 3
-    }
-
     init_design
 
     set clk_ports [clock_ports]
@@ -96,10 +85,7 @@ proc run_one_top {top effort run_syn_opt} {
 
     puts "[clock format [clock seconds]] INFO: Reports generated for top=$top"
 
-    catch {cd /}
-    if {[llength [info commands reset_design]] > 0} {
-        reset_design
-    }
+    catch {reset_design}
 }
 
 puts "[clock format [clock seconds]] INFO: Starting dual-top comparison"
