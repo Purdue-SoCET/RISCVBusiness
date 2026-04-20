@@ -63,7 +63,7 @@ proc run_one_top {top effort run_syn_opt} {
         set_input_delay -max 0 -clock clock1 $in_ports
     }
 
-    redirect -file [file join $rpt_dir check_summary.log] {check_design}
+    redirect [file join $rpt_dir check_summary.log] "check_design"
 
     syn_generic -effort $effort
     syn_map -effort $effort
@@ -73,11 +73,11 @@ proc run_one_top {top effort run_syn_opt} {
         puts "[clock format [clock seconds]] INFO: Skipping syn_opt for top=$top"
     }
 
-    redirect -file [file join $rpt_dir timing-lint.rpt] {report timing -lint}
-    redirect -file [file join $rpt_dir timing.rpt] {report timing -max_paths 20}
-    redirect -file [file join $rpt_dir gates.rpt] {report gates}
-    redirect -file [file join $rpt_dir power.rpt] {report power}
-    redirect -file [file join $rpt_dir area.rpt] {report area}
+    redirect [file join $rpt_dir timing-lint.rpt] "report timing -lint"
+    redirect [file join $rpt_dir timing.rpt] "report timing -max_paths 20"
+    redirect [file join $rpt_dir gates.rpt] "report gates"
+    redirect [file join $rpt_dir power.rpt] "report power"
+    redirect [file join $rpt_dir area.rpt] "report area"
 
     puts "[clock format [clock seconds]] INFO: Reports generated for top=$top"
 
