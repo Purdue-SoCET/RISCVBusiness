@@ -37,6 +37,11 @@ module rv32m_enabled (
     import rv32m_pkg::*;
     import rv32i_types_pkg::*;
 
+    function automatic word_t abs_word(input word_t v);
+        begin
+            abs_word = v[WORD_SIZE-1] ? (~v + 1'b1) : v;
+        end
+    endfunction
 
     /* Operand Saver to detect new request */
     word_t op_a, op_b, op_a_save, op_b_save;
@@ -105,78 +110,77 @@ module rv32m_enabled (
     /* DIVISION / REMAINDER */
     logic overflow, div_zero, div_finished;
     word_t divisor, dividend;
-    word_t quotient_signed, remainder_signed;
-    word_t quotient_unsigned, remainder_unsigned;
-    word_t quotient, remainder;
-    logic div_by_zero_signed, div_by_zero_unsigned;
-    logic div_valid_signed, div_valid_unsigned;
-    logic div_ready_signed, div_ready_unsigned;
-    logic div_start_signed, div_start_unsigned;
-    logic is_divide_signed;
+
+    word_t div_dividend_core;
+    word_t div_divisor_core;
+    word_t quotient_core;
+    word_t remainder_core;
+
+    logic div_valid_core, div_ready_core;
+    logic div_start_core;
+
     logic div_inflight_q;
     logic div_inflight_d;
-    logic div_mode_signed_q;
-    logic div_mode_signed_d;
+
+    logic div_signed_req;
+    logic div_signed_q;
+    logic div_signed_d;
+
+    logic div_q_neg_q;
+    logic div_q_neg_d;
+    logic div_r_neg_q;
+    logic div_r_neg_d;
+
     logic div_resp_valid;
-    logic div_start;
 
-    assign divisor   = op_b;
-    assign dividend  = op_a;
-    assign overflow  = (dividend == 32'h8000_0000) && (divisor == 32'hffff_ffff) && is_signed[0];
-    assign div_zero  = (divisor == 32'h0);
-    assign div_start = operand_diff && is_divide && !overflow && !div_zero && rv32m_start;
-    assign is_divide_signed = (operation == DIV) || (operation == REM);
-    assign div_start_signed = div_start && !div_inflight_q && is_divide_signed;
-    assign div_start_unsigned = div_start && !div_inflight_q && !is_divide_signed;
+    assign divisor  = op_b;
+    assign dividend = op_a;
 
-    srt_div #(
-        .WIDTH(WORD_SIZE),
-        .SUPPORT_SIGNED(1'b1),
-        .BITS_PER_CYCLE(2)
-    ) div_signed_i (
-        .CLK(CLK),
-        .nRST(nRST),
-        .in_valid(div_start_signed),
-        .in_ready(div_ready_signed),
-        .out_valid(div_valid_signed),
-        .out_ready(1'b1),
-        .dividend(dividend),
-        .divisor(divisor),
-        .quotient(quotient_signed),
-        .remainder(remainder_signed),
-        .div_by_zero(div_by_zero_signed)
-    );
+    assign overflow = (dividend == 32'h8000_0000) &&
+                      (divisor  == 32'hffff_ffff) &&
+                      is_signed[0];
+
+    assign div_zero = (divisor == 32'h0);
+
+    assign div_start_core = operand_diff && is_divide && !overflow && !div_zero && rv32m_start;
+
+    assign div_signed_req = (operation == DIV) || (operation == REM);
+
+    assign div_dividend_core = div_signed_req ? abs_word(dividend) : dividend;
+    assign div_divisor_core  = div_signed_req ? abs_word(divisor)  : divisor;
 
     srt_div #(
         .WIDTH(WORD_SIZE),
         .SUPPORT_SIGNED(1'b0),
-        .BITS_PER_CYCLE(2)
-    ) div_unsigned_i (
+        .BITS_PER_CYCLE(4)
+    ) div_core_i (
         .CLK(CLK),
         .nRST(nRST),
-        .in_valid(div_start_unsigned),
-        .in_ready(div_ready_unsigned),
-        .out_valid(div_valid_unsigned),
+        .in_valid(div_start_core && !div_inflight_q),
+        .in_ready(div_ready_core),
+        .out_valid(div_valid_core),
         .out_ready(1'b1),
-        .dividend(dividend),
-        .divisor(divisor),
-        .quotient(quotient_unsigned),
-        .remainder(remainder_unsigned),
-        .div_by_zero(div_by_zero_unsigned)
+        .dividend(div_dividend_core),
+        .divisor(div_divisor_core),
+        .quotient(quotient_core),
+        .remainder(remainder_core),
+        .div_by_zero()
     );
 
-    assign div_resp_valid = div_mode_signed_q ? div_valid_signed : div_valid_unsigned;
-    assign div_finished = div_resp_valid;
-    assign quotient = div_mode_signed_q ? quotient_signed : quotient_unsigned;
-    assign remainder = div_mode_signed_q ? remainder_signed : remainder_unsigned;
+    assign div_resp_valid = div_inflight_q && div_valid_core;
+    assign div_finished   = div_resp_valid;
 
     always_comb begin
         div_inflight_d = div_inflight_q;
-        div_mode_signed_d = div_mode_signed_q;
+        div_signed_d   = div_signed_q;
+        div_q_neg_d    = div_q_neg_q;
+        div_r_neg_d    = div_r_neg_q;
 
-        if (!div_inflight_q && ((div_start_signed && div_ready_signed) || (div_start_unsigned && div_ready_unsigned))) begin
+        if (!div_inflight_q && div_start_core && div_ready_core) begin
             div_inflight_d = 1'b1;
-            div_mode_signed_d = is_divide_signed;
+            div_signed_d   = div_signed_req;
+            div_q_neg_d    = div_signed_req && (dividend[31] ^ divisor[31]);
+            div_r_neg_d    = div_signed_req && dividend[31];
         end
 
         if (div_resp_valid) begin
@@ -187,10 +191,14 @@ module rv32m_enabled (
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
             div_inflight_q <= 1'b0;
-            div_mode_signed_q <= 1'b0;
+            div_signed_q   <= 1'b0;
+            div_q_neg_q    <= 1'b0;
+            div_r_neg_q    <= 1'b0;
         end else begin
             div_inflight_q <= div_inflight_d;
-            div_mode_signed_q <= div_mode_signed_d;
+            div_signed_q   <= div_signed_d;
+            div_q_neg_q    <= div_q_neg_d;
+            div_r_neg_q    <= div_r_neg_d;
         end
     end
 
@@ -206,11 +214,11 @@ module rv32m_enabled (
 
     /* Result */
     always_comb begin
-        if(rv32m_start) begin
+        if (rv32m_start) begin
             // Note: operand_diff on all these cases is to fix condition where
             // "done" flag asserted by FU due to previous op. RV32M will always
             // take at least 1 extra cycle if we aren't reusing a value.
-            casez(operation)
+            casez (operation)
                 MUL: begin
                     rv32m_done = !operand_diff || mul_finished;
                     rv32m_out  = product[WORD_SIZE-1:0];
@@ -221,30 +229,40 @@ module rv32m_enabled (
                     rv32m_out  = product[(WORD_SIZE*2)-1 : WORD_SIZE];
                 end
 
-                // TODO: Is there a better way to decode this? Lots of repetition.
                 DIV: begin
                     rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    rv32m_out  = div_zero ? 32'hffff_ffff :
+                                 (overflow ? 32'h8000_0000 :
+                                 (div_signed_q && div_q_neg_q ? (~quotient_core + 1'b1) : quotient_core));
                 end
 
                 DIVU: begin
                     rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? 32'hffff_ffff : (overflow ? 32'h8000_0000 : quotient);
+                    rv32m_out  = div_zero ? 32'hffff_ffff :
+                                 (overflow ? 32'h8000_0000 : quotient_core);
                 end
 
-                REM, REMU: begin
+                REM: begin
                     rv32m_done = !operand_diff || div_finished || div_zero || overflow;
-                    rv32m_out  = div_zero ? dividend : (overflow ? 32'h0000_0000 : remainder);
+                    rv32m_out  = div_zero ? dividend :
+                                 (overflow ? 32'h0000_0000 :
+                                 (div_signed_q && div_r_neg_q ? (~remainder_core + 1'b1) : remainder_core));
+                end
+
+                REMU: begin
+                    rv32m_done = !operand_diff || div_finished || div_zero || overflow;
+                    rv32m_out  = div_zero ? dividend :
+                                 (overflow ? 32'h0000_0000 : remainder_core);
                 end
 
                 default: begin
                     rv32m_done = 1'b1;
-                    rv32m_out = 32'b0; // TODO: Should this return BAD3?
+                    rv32m_out  = 32'b0;
                 end
             endcase
         end else begin
             rv32m_done = 1'b1;
-            rv32m_out = 32'b0;
+            rv32m_out  = 32'b0;
         end
     end
 
