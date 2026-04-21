@@ -1,6 +1,6 @@
 # Caches UVM Testbench Setup Guide
 
-### .bashrc
+## .bashrc
 > Note that there may be some env variables listed here that are not required.
 ```
 source ~/init_vlsi -p mitll90_Dec2019 -e all
@@ -29,7 +29,7 @@ export QUESTA_HOME=/package/eda/mg/questa10.6b/questasim
 module load git
 ```
 
-### Build/Run Params
+## Build/Run Params
 Everything related to building and running the uvm testbench is handled by the run.py script. To view the parameters:
 ```bash
 run.py -h

@@ -13,7 +13,6 @@
   - Invalidate TLB entries, by ASID
   - Invalidate TLB entries, all entries
   - Address translation off (again)
-<br></br>
 
 ### 2. TLB (2-Way Set Associative, only used in this test)
   - Address translation off (M-mode and S-mode Bare Addressing)
@@ -28,7 +27,6 @@
   - Invalidate TLB entries, by ASID
   - Invalidate TLB entries, all entries
   - Address translation off (again)
-<br></br>
 
 ### 3. Page Permission Checking
 All:
@@ -74,7 +72,6 @@ Instructions:
   - No Fault -> R = 1, W = 0, X = 1
   - Fault    -> R = 1, W = 1, X = 0
   - No Fault -> R = 1, W = 1, X = 1
-<br></br>
 
 ### 4. Page Walker
   - Walk to get page
@@ -90,7 +87,6 @@ Instructions:
   - Page walk fault, improper dirty permissions
   - Page walk fault, improper access permissions
   - Page walk fault, improper valid permissions
-<br></br>
 
 ### 5. TLB + Page Walker
   - TLB miss, walk to get page
@@ -101,7 +97,6 @@ Instructions:
   - TLB hit on all page types, no walk
   - TLB miss, page walk fault (page not allocated)
   - TLB miss, page walk fault (bad permissions)
-<br></br>
 
 ### 6. TLB + VIPT L1$ + Page Walker
   - Cache miss, TLB miss, walk to get page, handle cache miss
@@ -109,10 +104,8 @@ Instructions:
   - Cache hit, TLB hit, no walk
   - Invalidate TLB entry, Cache hit, TLB miss, walk to get page, cache hit
   - Invalidate TLB entry, change page mapping, Cache hit, TLB miss, walk to get page, cache miss
-<br></br>
 
 ### 7. I$/ITLB + D$/DTLB + Page Walker
   - Compulsory misses, Data walk, instruction walk, data memory access, instruction memory access
   - I/D $ misses, no page walk, data memory access, instruction memory access
   - Full hits, no page walk, no memory access 
-<br></br>
