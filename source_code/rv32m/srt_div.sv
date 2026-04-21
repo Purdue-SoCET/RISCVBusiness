@@ -78,17 +78,73 @@ module srt_div #(
     logic [REM_WIDTH-1:0] d_u;
     logic [REM_WIDTH-1:0] rem_abs_u;
     logic [REM_WIDTH-1:0] q_adjust_u;
+    logic [2*REM_WIDTH-1:0] divmod_u_res;
     logic [WIDTH-1:0] q_mag_u;
     logic [WIDTH-1:0] r_mag_u;
     int bit_hi;
     int idx;
     int threshold;
 
+    function automatic logic signed [REM_WIDTH+BITS_PER_CYCLE:0] mul_by_const(
+        input logic signed [REM_WIDTH-1:0] v,
+        input int unsigned k
+    );
+        logic signed [REM_WIDTH+BITS_PER_CYCLE:0] acc;
+        logic signed [REM_WIDTH+BITS_PER_CYCLE:0] v_ext;
+        int sh;
+        begin
+            acc = '0;
+            v_ext = {{(BITS_PER_CYCLE+1){v[REM_WIDTH-1]}}, v};
+            for (sh = 0; sh < BITS_PER_CYCLE; sh++) begin
+                if (k[sh]) begin
+                    acc = acc + (v_ext <<< sh);
+                end
+            end
+            mul_by_const = acc;
+        end
+    endfunction
+
+    function automatic logic signed [REM_WIDTH+BITS_PER_CYCLE:0] mul_by_qdigit(
+        input logic signed [REM_WIDTH-1:0] v,
+        input logic signed [QDIG_W-1:0] qd
+    );
+        logic qd_neg;
+        int unsigned qd_mag;
+        logic signed [REM_WIDTH+BITS_PER_CYCLE:0] mag_prod;
+        begin
+            qd_neg = qd[QDIG_W-1];
+            qd_mag = qd_neg ? $unsigned(-qd) : $unsigned(qd);
+            mag_prod = mul_by_const(v, qd_mag);
+            mul_by_qdigit = qd_neg ? -mag_prod : mag_prod;
+        end
+    endfunction
+
     function automatic logic [WIDTH-1:0] tc_abs(input logic [WIDTH-1:0] v);
         if (v[WIDTH-1]) begin
             tc_abs = (~v) + {{(WIDTH-1){1'b0}}, 1'b1};
         end else begin
             tc_abs = v;
+        end
+    endfunction
+
+    function automatic logic [2*REM_WIDTH-1:0] udivmod_shift_sub(
+        input logic [REM_WIDTH-1:0] num,
+        input logic [REM_WIDTH-1:0] den
+    );
+        logic [REM_WIDTH-1:0] q;
+        logic [REM_WIDTH-1:0] r;
+        int bi;
+        begin
+            q = '0;
+            r = '0;
+            for (bi = REM_WIDTH-1; bi >= 0; bi--) begin
+                r = {r[REM_WIDTH-2:0], num[bi]};
+                if (r >= den) begin
+                    r = r - den;
+                    q[bi] = 1'b1;
+                end
+            end
+            udivmod_shift_sub = {q, r};
         end
     endfunction
 
@@ -133,6 +189,7 @@ module srt_div #(
         d_u = {{(REM_WIDTH-WIDTH){1'b0}}, divisor_q};
         rem_abs_u = '0;
         q_adjust_u = '0;
+        divmod_u_res = '0;
         rem_corr = rem_q;
         qacc_corr = qacc_q;
         q_mag_u = qacc_q[WIDTH-1:0];
@@ -152,32 +209,41 @@ module srt_div #(
             // qsel address packs positive thresholds then negative thresholds
             for (idx = 0; idx < SRT_MAX_DIGIT; idx++) begin
                 threshold = (2 * SRT_MAX_DIGIT - 1) - idx;
-                d_mul_ext = $signed(threshold) * d_ext;
+                d_mul_ext = mul_by_const(d_ext, threshold);
                 qsel_addr[QSEL_ADDR_W-1-idx] = (rem_x2 >= d_mul_ext);
 
                 threshold = SRT_MAX_DIGIT + idx;
-                d_mul_ext = $signed(threshold) * d_ext;
+                d_mul_ext = mul_by_const(d_ext, threshold);
                 qsel_addr[SRT_MAX_DIGIT-1-idx] = (rem_x2 >= -d_mul_ext);
             end
             q_digit = srt_qsel_lookup($unsigned(qsel_addr), SRT_MAX_DIGIT);
 
-            d_mul_ext = d_ext * q_digit;
+            d_mul_ext = mul_by_qdigit(d_ext, q_digit);
             rem_next = rem_shifted - d_mul_ext[REM_WIDTH-1:0];
             qacc_next = (qacc_q <<< BITS_PER_CYCLE) + q_digit;
         end
 
         if (state_q == S_CORR) begin
-            // final result so 0 <= remainder < divisor
+            // Final one-pass correction so 0 <= remainder < divisor.
             if (rem_q < 0) begin
-                // q_adjust = ceil((-rem)/d), then rem += q_adjust*d
+                // q_adjust = ceil((-rem)/d), computed without / or % so its less fat
                 rem_abs_u = $unsigned(-rem_q);
-                q_adjust_u = (rem_abs_u + d_u - 1'b1) / d_u;
-                rem_corr = rem_q + $signed(q_adjust_u * d_u);
-                qacc_corr = qacc_q - $signed(q_adjust_u);
+                divmod_u_res = udivmod_shift_sub(rem_abs_u, d_u);
+                q_adjust_u = divmod_u_res[2*REM_WIDTH-1:REM_WIDTH];
+                if (divmod_u_res[REM_WIDTH-1:0] != '0) begin
+                    q_adjust_u = q_adjust_u + {{(REM_WIDTH-1){1'b0}}, 1'b1};
+                end
+                if (divmod_u_res[REM_WIDTH-1:0] == '0) begin
+                    rem_corr = '0;
+                end else begin
+                    rem_corr = $signed(d_u - divmod_u_res[REM_WIDTH-1:0]);
+                end
+                qacc_corr = qacc_q - $signed({{(QUOT_ACC_WIDTH-REM_WIDTH){1'b0}}, q_adjust_u});
             end else begin
-                q_adjust_u = $unsigned(rem_q) / d_u;
-                rem_corr = $signed($unsigned(rem_q) % d_u);
-                qacc_corr = qacc_q + $signed(q_adjust_u);
+                divmod_u_res = udivmod_shift_sub($unsigned(rem_q), d_u);
+                q_adjust_u = divmod_u_res[2*REM_WIDTH-1:REM_WIDTH];
+                rem_corr = $signed(divmod_u_res[REM_WIDTH-1:0]);
+                qacc_corr = qacc_q + $signed({{(QUOT_ACC_WIDTH-REM_WIDTH){1'b0}}, q_adjust_u});
             end
 
             q_mag_u = qacc_corr[WIDTH-1:0];

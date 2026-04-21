@@ -66,13 +66,15 @@ redirect [file join $rpt_dir area.rpt] "report area"
 set area [get_report_value [file join $rpt_dir area.rpt] {
     {Total\s+cell\s+area\s*:\s*([-+0-9.eE]+)}
     {Total\s+Area\s*:\s*([-+0-9.eE]+)}
+    {^\s*srt_div\s+\d+\s+[-+0-9.eE]+\s+[-+0-9.eE]+\s+([-+0-9.eE]+)}
 }]
 set power [get_report_value [file join $rpt_dir power.rpt] {
     {Total\s+Power\s*=\s*([-+0-9.eE]+)}
     {Total\s+power\s*=\s*([-+0-9.eE]+)}
+    {^\s*Subtotal\s+[-+0-9.eE]+\s+[-+0-9.eE]+\s+[-+0-9.eE]+\s+([-+0-9.eE]+)}
 }]
 set slack [get_report_value [file join $rpt_dir timing.rpt] {
-    {Slack\s*:?\s*([-+0-9.eE]+)}
+    {Slack\s*:?[=]?\s*([-+0-9.eE]+)}
     {slack\s*\(.*\)\s*([-+0-9.eE]+)}
 }]
 
