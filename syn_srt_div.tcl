@@ -7,7 +7,7 @@ set script_dir [file dirname [file normalize [info script]]]
 cd $script_dir
 
 set TOP_MODULE srt_div
-set SYN_EFFORT medium
+set SYN_EFFORT mediumsr
 set RUN_SYN_OPT 0
 
 proc get_report_value {file regex_list} {
@@ -31,6 +31,8 @@ set rpt_dir [file join reports $TOP_MODULE]
 file mkdir $rpt_dir
 
 puts "[clock format [clock seconds]] INFO: Starting synthesis for top=$TOP_MODULE"
+read_hdl -sv source_code/rv32m/full_adder.sv
+read_hdl -sv source_code/rv32m/carry_save_adder.sv
 read_hdl -sv source_code/rv32m/srt_qsel_rom_pkg.sv
 read_hdl -sv source_code/rv32m/srt_div.sv
 
@@ -42,9 +44,27 @@ if {[llength $clk_ports] > 0} {
     set clock1 [define_clock -period 666 -name clock1 $clk_ports]
 }
 
+# asynchronous reset should not be included in datapath timing closure
+set rst_ports [get_ports -quiet {nRST}]
+if {[llength $rst_ports] > 0} {
+    set_false_path -from $rst_ports
+}
+
 set in_ports [get_ports -quiet {in_valid dividend* divisor* out_ready}]
+set out_ports [get_ports -quiet {in_ready out_valid quotient* remainder* div_by_zero}]
 if {[info exists clock1] && [llength $in_ports] > 0} {
     set_input_delay -max 0 -clock clock1 $in_ports
+}
+if {[info exists clock1] && [llength $out_ports] > 0} {
+    set_output_delay -max 0 -clock clock1 $out_ports
+}
+
+# apply simple default IO assumptions for consistent estimates
+if {[llength $in_ports] > 0} {
+    set_input_transition 0.05 $in_ports
+}
+if {[llength $out_ports] > 0} {
+    set_load 0.01 $out_ports
 }
 
 redirect [file join $rpt_dir check_summary.log] "check_design"
