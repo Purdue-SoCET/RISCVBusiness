@@ -116,6 +116,7 @@ module separate_caches(
                 .flush(control_if.dcache_flush),
                 .clear(control_if.dcache_clear),
                 .reserve(control_if.dcache_reserve),
+                .exclusive(control_if.dcache_exclusive),
                 .flush_done(control_if.dflush_done),
                 .clear_done(control_if.dclear_done),
                 .cache_hit(dcache_hit),

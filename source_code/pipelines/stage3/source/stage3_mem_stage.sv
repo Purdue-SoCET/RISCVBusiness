@@ -53,8 +53,8 @@ module stage3_mem_stage(
     assign dgen_bus_if.byte_en = byte_en;
     assign dgen_bus_if.addr = (ex_mem_if.ex_mem_reg.exclusive) ? ex_mem_if.ex_mem_reg.rs1_data : ex_mem_if.ex_mem_reg.port_out; //address is rs1 if amo instruction
     assign byte_offset = ex_mem_if.ex_mem_reg.port_out[1:0];
-    assign prv_pipe_if.ex_mem_ren = ex_mem_if.ex_mem_reg.dren;
-    assign prv_pipe_if.ex_mem_wen = ex_mem_if.ex_mem_reg.dwen;
+    assign prv_pipe_if.ex_mem_ren = ex_mem_if.ex_mem_reg.dren || amo_dren;
+    assign prv_pipe_if.ex_mem_wen = ex_mem_if.ex_mem_reg.dwen || amo_dwen;
 
     // TODO: RISC-MGMT
     assign byte_en_temp = byte_en_standard;
@@ -233,6 +233,7 @@ module stage3_mem_stage(
     assign hazard_if.dren = ex_mem_if.ex_mem_reg.dren;
     assign hazard_if.dwen = ex_mem_if.ex_mem_reg.dwen;
     assign hazard_if.reserve = ex_mem_if.ex_mem_reg.reserve;
+    assign hazard_if.amo_complete = !hazard_if.amo_stall && ex_mem_if.ex_mem_reg.exclusive;
     assign hazard_if.jump = ex_mem_if.ex_mem_reg.jump;
     assign hazard_if.branch = ex_mem_if.ex_mem_reg.branch;
     assign hazard_if.halt = ex_mem_if.ex_mem_reg.halt;
@@ -267,10 +268,10 @@ module stage3_mem_stage(
     assign hazard_if.fault_insn = ex_mem_if.ex_mem_reg.fault_insn;
     assign hazard_if.mal_insn = ex_mem_if.ex_mem_reg.mal_insn;
     assign hazard_if.illegal_insn = ex_mem_if.ex_mem_reg.illegal_insn || prv_pipe_if.invalid_priv_isn;
-    assign hazard_if.fault_l = ex_mem_if.ex_mem_reg.dren && dgen_bus_if.error;
-    assign hazard_if.mal_l = ex_mem_if.ex_mem_reg.dren & mal_addr;
-    assign hazard_if.fault_s = ex_mem_if.ex_mem_reg.dwen && dgen_bus_if.error;
-    assign hazard_if.mal_s = ex_mem_if.ex_mem_reg.dwen & mal_addr;
+    assign hazard_if.fault_l = (ex_mem_if.ex_mem_reg.dren || amo_dren) && dgen_bus_if.error;
+    assign hazard_if.mal_l = (ex_mem_if.ex_mem_reg.dren || amo_dren) & mal_addr;
+    assign hazard_if.fault_s = (ex_mem_if.ex_mem_reg.dwen || amo_dwen) && dgen_bus_if.error;
+    assign hazard_if.mal_s = (ex_mem_if.ex_mem_reg.dwen || amo_dwen) & mal_addr;
     assign hazard_if.breakpoint = ex_mem_if.ex_mem_reg.breakpoint;
     assign hazard_if.env = ex_mem_if.ex_mem_reg.ecall_insn;
     assign hazard_if.mret = ex_mem_if.ex_mem_reg.mret_insn;
@@ -288,8 +289,8 @@ module stage3_mem_stage(
     assign ex_mem_if.pc4 = ex_mem_if.ex_mem_reg.pc4;
 
     // Memory protection (doesn't consider RISC-MGMT)
-    assign prv_pipe_if.dren  = ~prv_pipe_if.dtlb_miss & ex_mem_if.ex_mem_reg.dren;
-    assign prv_pipe_if.dwen  = ~prv_pipe_if.dtlb_miss & ex_mem_if.ex_mem_reg.dwen;
+    assign prv_pipe_if.dren = ~prv_pipe_if.dtlb_miss & (ex_mem_if.ex_mem_reg.dren || amo_dren);
+    assign prv_pipe_if.dwen = ~prv_pipe_if.dtlb_miss & (ex_mem_if.ex_mem_reg.dwen || amo_dwen);
     assign prv_pipe_if.daddr = dgen_bus_if.addr; // physical address
     assign prv_pipe_if.d_acc_width = WordAcc;
 

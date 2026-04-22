@@ -46,7 +46,7 @@ module l1_cache #(
 )
 (
     input logic CLK, nRST,
-    input logic clear, flush, reserve, tlb_miss, tlb_abort,
+    input logic clear, flush, reserve, exclusive, tlb_miss, tlb_abort,
     input logic [PPNLEN-1:0] ppn_tag,
     output logic clear_done, flush_done,
     generic_bus_if.generic_bus proc_gen_bus_if,
@@ -472,7 +472,7 @@ module l1_cache #(
             end
             FETCH: begin
                 // set cache to be invalid before cache completes fetch
-                bus_ctrl_if.ccwrite =  request == CACHE_REQUEST_PW ? 0 : proc_gen_bus_if.wen;
+                bus_ctrl_if.ccwrite =  request == CACHE_REQUEST_PW ? 0 : (proc_gen_bus_if.wen || exclusive); // treats as busRdx for amo load
                 bus_ctrl_if.dREN = (request == CACHE_REQUEST_PW
                                         ? pw_gen_bus_if.ren
                                         : proc_gen_bus_if.ren || proc_gen_bus_if.wen)
@@ -584,6 +584,8 @@ module l1_cache #(
             sramTags[i] = sramWrite.frames[i].tag;
             sramTagsMask[i] = sramMask.frames[i].tag;
         end
+
+        if (exclusive) pw_gen_bus_if.busy = 1; //force high during amo
     end
 
     always_comb begin
@@ -646,7 +648,7 @@ module l1_cache #(
                     next_state = HIT;
             end
             HIT: begin
-                if (snoop_hit)
+                if (snoop_hit && !exclusive)
                     next_state = SNOOP;
                 else if (pw_gen_bus_if.ren && hit)
                     next_state = state;

@@ -60,8 +60,8 @@ module stage3_hazard_unit (
     assign dmem_access = (hazard_if.dren || hazard_if.dwen);
     assign branch_jump = (hazard_if.jump || hazard_if.branch) && hazard_if.mispredict;
     assign wait_for_imem = hazard_if.iren && hazard_if.i_mem_busy && !hazard_if.suppress_iren;
-    assign wait_for_dmem = (dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data) || hazard_if.amo_stall; //added amo stall
-    assign hazard_if.mem_use_stall = hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match);
+    assign wait_for_dmem = (dmem_access && hazard_if.d_mem_busy && !hazard_if.suppress_data);
+    assign hazard_if.mem_use_stall = (hazard_if.reg_write && cannot_forward && (rs1_match || rs2_match));
 
     assign hazard_if.npc_sel = branch_jump;
 
@@ -206,11 +206,15 @@ module stage3_hazard_unit (
                                   || (hazard_if.ex_busy && !ex_flush_hazard && !branch_jump)
                                   || hazard_if.mem_use_stall
                                   // Data hazard -- stall until dependency clears (from E/M flush after writeback)
-                                  || hazard_if.fence_stall);
+                                  || hazard_if.fence_stall
+                                  // stall during amo and after to allow for wb value to return to the register
+                                  || hazard_if.amo_stall
+                                  || hazard_if.amo_complete);
      // TODO: Exceptions
     assign hazard_if.ex_mem_stall = wait_for_dmem // Second clause ensures we finish memory op on interrupt condition
                                   || hazard_if.fence_stall
-                                  || hazard_if.halt;
+                                  || hazard_if.halt
+                                  || hazard_if.amo_stall;
                                   //|| branch_jump && wait_for_imem; // This can be removed once there is I$. Solves problem where
                                                                    // stale I-request returns after PC is redirected
     // TODO: Enforce mutual exclusivity of these signals with assertion
