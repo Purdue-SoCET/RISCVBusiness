@@ -5,7 +5,7 @@ module rv32a_wrapper(
     input nRST,
     input logic amo_en,
     input logic mem_ready,
-    input logic [3:0] alu_op,
+    input logic [4:0] alu_op,
     input logic [31:0] mem_output, rs2_data,
     output logic stall_amo_en,
     output logic read_mem_en, 

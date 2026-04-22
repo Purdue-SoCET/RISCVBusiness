@@ -2,7 +2,7 @@ module rv32a_enabled(
     input CLK,
     input nRST,
     input logic amo_en, mem_ready,
-    input logic [3:0] alu_op, //need to change to type
+    input logic [4:0] alu_op, //need to change to type
     input logic [31:0] mem_output, rs2_data,
     output logic stall_amo_en, read_mem_en, write_mem_en,
     output logic [31:0] mem_input, writeback_data
@@ -18,10 +18,12 @@ module rv32a_enabled(
 
     amo_fsm_state_t current_state, next_state;
 
+    logic complete;
+
     // Sequential logic for state register
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST)
-            current_state <= AMO_FSM_READ;
+            current_state <= AMO_FSM_IDLE;
         else
             current_state <= next_state;
     end
@@ -30,16 +32,13 @@ module rv32a_enabled(
     always_comb begin
         next_state = current_state;
         stall_amo_en = 1'b0; // Default to no stall
-        read_mem_en = 1'b0;
-        write_mem_en = 1'b0;
-        // output port signal will need to be routed to caches and dealt with, look below for that
 
-        casez (current_state)
-            IDLE: begin
+        case (current_state)
+            AMO_FSM_IDLE: begin
                 //control unit signal rolled over through to mem stage rv32a_amo
-                next_state = (amo_en) ? AMO_FSM_READ : IDLE;
+                next_state = (amo_en && !complete) ? AMO_FSM_READ : AMO_FSM_IDLE;
 
-                stall_amo_en = amo_en;
+                stall_amo_en = amo_en && !complete;
             end
 
             AMO_FSM_READ: begin
@@ -47,9 +46,6 @@ module rv32a_enabled(
                 next_state = (mem_ready) ? AMO_FSM_MODIFY : AMO_FSM_READ;
 
                 stall_amo_en = 1'b1; //start the ALU and stall pipeline
-
-                // read from cache here
-                read_mem_en = 1'b1;
             end
 
             AMO_FSM_MODIFY: begin
@@ -61,19 +57,18 @@ module rv32a_enabled(
 
             AMO_FSM_WRITE: begin
                 //wait for memory response
-                next_state = (mem_ready) ? AMO_FSM_MODIFY : AMO_FSM_READ;
+                next_state = (mem_ready) ? AMO_FSM_IDLE : AMO_FSM_WRITE;
 
                 // keep pipeline stalled
-                stall_amo_en = !mem_ready;
-
-                // write back to cache here
-                write_mem_en = 1'b1;
+                stall_amo_en = 1'b1;
             end
         endcase
     end
 
+    logic [31:0] amo_reg;
+
     rv32a_alu AMO_ALU (
-        .portA(mem_output), 
+        .portA(amo_reg), 
         .portB(rs2_data),
         .alu_op(alu_op), //need to change to type
         //.negative, 
@@ -82,20 +77,54 @@ module rv32a_enabled(
         .output_port(mem_input)
     );
 
-    logic [31:0] amo_reg;
-
     assign writeback_data = amo_reg;
 
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
             amo_reg <= '0;
         end
-        else if (amo_en & mem_ready) begin
+        else if ((current_state == AMO_FSM_READ) & mem_ready) begin
             amo_reg <= mem_output;
         end
         else begin
             amo_reg <= amo_reg;
         end
     end
+
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (!nRST) begin
+            complete <= 0;
+        end
+        else if ((current_state == AMO_FSM_WRITE) && mem_ready) begin
+            complete <= 1;
+        end
+        else if (!amo_en) begin
+            complete <= 0;
+        end
+        else complete <= complete;
+    end
+
+    //read & write enable logic registered to remove circular loop that formed somehow
+    always_ff @(posedge CLK, negedge nRST) begin
+        if (!nRST) begin
+            read_mem_en  <= 1'b0;
+            write_mem_en <= 1'b0;
+        end else begin
+            read_mem_en <= (next_state == AMO_FSM_READ);
+            write_mem_en <= (next_state == AMO_FSM_WRITE);
+        end
+    end
+/*
+    always_ff @(posedge CLK, negedge nRST) begin
+        $display("t=%0t state=%0d amo_en=%b mem_ready=%b stall=%b read_en=%b write_en=%b complete=%b",
+            $time,
+            current_state,
+            amo_en,
+            mem_ready,
+            stall_amo_en,
+            read_mem_en,
+            write_mem_en,
+            complete);
+    end*/
 
 endmodule

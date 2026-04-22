@@ -89,7 +89,7 @@ module control_unit (
                             (instr_i.funct3 == SLLI || instr_i.funct3 == SRI));
 
     // Assign branch and load type
-    assign cu_if.load_type = rv32a_lr ? LW : load_t'(instr_i.funct3);
+    assign cu_if.load_type = (rv32a_lr || rv32a_amo) ? LW : load_t'(instr_i.funct3);
     assign cu_if.branch_type = branch_t'(instr_sb.funct3);
 
     // Assign memory read/write enables
@@ -304,7 +304,7 @@ module control_unit (
     assign rv32a_lr = rv32a_claim && cu_if.rv32a_control.op == AMO_LR;
     assign rv32a_sc = rv32a_claim && cu_if.rv32a_control.op == AMO_SC;
     assign rv32a_amo = rv32a_claim && ~(rv32a_lr || rv32a_sc);
-    assign cu_if.reserve = rv32a_lr || rv32a_sc || rv32a_amo;
+    assign cu_if.reserve = rv32a_lr || rv32a_sc;
     assign cu_if.exclusive = rv32a_amo;
     `else
     assign cu_if.rv32a_control = {1'b0, rv32a_op_e'(0)};
