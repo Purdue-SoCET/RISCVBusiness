@@ -31,11 +31,11 @@ module tb_srt_divider;
 
     srt_div #(
         .WIDTH(WIDTH),
-        .SUPPORT_SIGNED(TEST_SIGNED),
         .BITS_PER_CYCLE(2)
     ) DUT (
         .CLK(tb_CLK),
         .nRST(tb_nRST),
+        .is_signed(TEST_SIGNED),
         .in_valid(tb_in_valid),
         .dividend(tb_dividend),
         .divisor(tb_divisor),

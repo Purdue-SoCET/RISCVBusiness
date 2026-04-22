@@ -7,7 +7,7 @@ set script_dir [file dirname [file normalize [info script]]]
 cd $script_dir
 
 set TOP_MODULE srt_div
-set SYN_EFFORT mediumsr
+set SYN_EFFORT medium
 set RUN_SYN_OPT 0
 
 proc get_report_value {file regex_list} {
@@ -50,7 +50,7 @@ if {[llength $rst_ports] > 0} {
     set_false_path -from $rst_ports
 }
 
-set in_ports [get_ports -quiet {in_valid dividend* divisor* out_ready}]
+set in_ports [get_ports -quiet {in_valid is_signed dividend* divisor* out_ready}]
 set out_ports [get_ports -quiet {in_ready out_valid quotient* remainder* div_by_zero}]
 if {[info exists clock1] && [llength $in_ports] > 0} {
     set_input_delay -max 0 -clock clock1 $in_ports

@@ -1,26 +1,3 @@
-/*
-*   Copyright 2016 Purdue University
-*
-*   Licensed under the Apache License, Version 2.0 (the "License");
-*   you may not use this file except in compliance with the License.
-*   You may obtain a copy of the License at
-*
-*       http://www.apache.org/licenses/LICENSE-2.0
-*
-*   Unless required by applicable law or agreed to in writing, software
-*   distributed under the License is distributed on an "AS IS" BASIS,
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*   See the License for the specific language governing permissions and
-*   limitations under the License.
-*
-*
-*   Filename:     rv32m_execute.sv
-*
-*   Created by:   John Skubic
-*   Email:        jskubic@purdue.edu
-*   Date Created: 02/07/2017
-*   Description:  Execute stage for standard RV32M
-*/
 `include "component_selection_defines.vh"
 
 module rv32m_enabled (
@@ -36,12 +13,6 @@ module rv32m_enabled (
 
     import rv32m_pkg::*;
     import rv32i_types_pkg::*;
-
-    function automatic word_t abs_word(input word_t v);
-        begin
-            abs_word = v[WORD_SIZE-1] ? (~v + 1'b1) : v;
-        end
-    endfunction
 
     /* Operand Saver to detect new request */
     word_t op_a, op_b, op_a_save, op_b_save;
@@ -111,25 +82,17 @@ module rv32m_enabled (
     logic overflow, div_zero, div_finished;
     word_t divisor, dividend;
 
-    word_t div_dividend_core;
-    word_t div_divisor_core;
     word_t quotient_core;
     word_t remainder_core;
 
     logic div_valid_core, div_ready_core;
     logic div_start_core;
+    logic div_in_valid;
 
     logic div_inflight_q;
     logic div_inflight_d;
 
     logic div_signed_req;
-    logic div_signed_q;
-    logic div_signed_d;
-
-    logic div_q_neg_q;
-    logic div_q_neg_d;
-    logic div_r_neg_q;
-    logic div_r_neg_d;
 
     logic div_resp_valid;
 
@@ -143,25 +106,23 @@ module rv32m_enabled (
     assign div_zero = (divisor == 32'h0);
 
     assign div_start_core = operand_diff && is_divide && !overflow && !div_zero && rv32m_start;
+    assign div_in_valid = div_start_core && !div_inflight_q && div_ready_core;
 
     assign div_signed_req = (operation == DIV) || (operation == REM);
 
-    assign div_dividend_core = div_signed_req ? abs_word(dividend) : dividend;
-    assign div_divisor_core  = div_signed_req ? abs_word(divisor)  : divisor;
-
     srt_div #(
         .WIDTH(WORD_SIZE),
-        .SUPPORT_SIGNED(1'b0),
-        .BITS_PER_CYCLE(4)
+        .BITS_PER_CYCLE(3)
     ) div_core_i (
         .CLK(CLK),
         .nRST(nRST),
-        .in_valid(div_start_core && !div_inflight_q),
+        .is_signed(div_signed_req),
+        .in_valid(div_in_valid),
         .in_ready(div_ready_core),
         .out_valid(div_valid_core),
         .out_ready(1'b1),
-        .dividend(div_dividend_core),
-        .divisor(div_divisor_core),
+        .dividend(dividend),
+        .divisor(divisor),
         .quotient(quotient_core),
         .remainder(remainder_core),
         .div_by_zero()
@@ -172,15 +133,9 @@ module rv32m_enabled (
 
     always_comb begin
         div_inflight_d = div_inflight_q;
-        div_signed_d   = div_signed_q;
-        div_q_neg_d    = div_q_neg_q;
-        div_r_neg_d    = div_r_neg_q;
 
-        if (!div_inflight_q && div_start_core && div_ready_core) begin
+        if (div_in_valid) begin
             div_inflight_d = 1'b1;
-            div_signed_d   = div_signed_req;
-            div_q_neg_d    = div_signed_req && (dividend[31] ^ divisor[31]);
-            div_r_neg_d    = div_signed_req && dividend[31];
         end
 
         if (div_resp_valid) begin
@@ -191,14 +146,8 @@ module rv32m_enabled (
     always_ff @(posedge CLK, negedge nRST) begin
         if (!nRST) begin
             div_inflight_q <= 1'b0;
-            div_signed_q   <= 1'b0;
-            div_q_neg_q    <= 1'b0;
-            div_r_neg_q    <= 1'b0;
         end else begin
             div_inflight_q <= div_inflight_d;
-            div_signed_q   <= div_signed_d;
-            div_q_neg_q    <= div_q_neg_d;
-            div_r_neg_q    <= div_r_neg_d;
         end
     end
 
@@ -232,8 +181,7 @@ module rv32m_enabled (
                 DIV: begin
                     rv32m_done = !operand_diff || div_finished || div_zero || overflow;
                     rv32m_out  = div_zero ? 32'hffff_ffff :
-                                 (overflow ? 32'h8000_0000 :
-                                 (div_signed_q && div_q_neg_q ? (~quotient_core + 1'b1) : quotient_core));
+                                 (overflow ? 32'h8000_0000 : quotient_core);
                 end
 
                 DIVU: begin
@@ -245,8 +193,7 @@ module rv32m_enabled (
                 REM: begin
                     rv32m_done = !operand_diff || div_finished || div_zero || overflow;
                     rv32m_out  = div_zero ? dividend :
-                                 (overflow ? 32'h0000_0000 :
-                                 (div_signed_q && div_r_neg_q ? (~remainder_core + 1'b1) : remainder_core));
+                                 (overflow ? 32'h0000_0000 : remainder_core);
                 end
 
                 REMU: begin
