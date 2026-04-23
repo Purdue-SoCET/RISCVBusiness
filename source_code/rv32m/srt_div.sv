@@ -2,13 +2,13 @@ module srt_div #( // V72 S_CORR removed PASSES AGGRESSIVE TESTS
     parameter int WIDTH = 32,
     parameter int BITS_PER_CYCLE = 3
 ) (
-    input  logic CLK,
-    input  logic nRST,
-    input  logic in_valid,
-    input  logic is_signed,
-    input  logic [WIDTH-1:0] dividend,
-    input  logic [WIDTH-1:0] divisor,
-    input  logic out_ready,
+    input logic CLK,
+    input logic nRST,
+    input logic in_valid,
+    input logic is_signed,
+    input logic [WIDTH-1:0] dividend,
+    input logic [WIDTH-1:0] divisor,
+    input logic out_ready,
     output logic in_ready,
     output logic out_valid,
     output logic [WIDTH-1:0] quotient,
@@ -104,8 +104,7 @@ module srt_div #( // V72 S_CORR removed PASSES AGGRESSIVE TESTS
         rem_sum_shift = (rem_sum_q <<< BITS_PER_CYCLE) | {{(REM_WIDTH-BITS_PER_CYCLE){1'b0}}, next_bits};
         rem_carry_shift = rem_carry_q <<< BITS_PER_CYCLE;
 
-        rem_est_w = $signed({rem_sum_shift[REM_WIDTH-1], rem_sum_shift}) + 
-                    $signed({rem_carry_shift[REM_WIDTH-1], rem_carry_shift});
+        rem_est_w = $signed({rem_sum_shift[REM_WIDTH-1], rem_sum_shift}) + $signed({rem_carry_shift[REM_WIDTH-1], rem_carry_shift});
         rem_x2 = rem_est_w <<< 1;
 
         q_digit = 0;
