@@ -1,4 +1,4 @@
-module srt_div #( // genus run 58, reverted logic and removed bpc check and cleanup
+module srt_div #( // genus run 68 fml
     parameter int WIDTH = 32,
     parameter int BITS_PER_CYCLE = 3
 ) (
@@ -258,7 +258,7 @@ module srt_div #( // genus run 58, reverted logic and removed bpc check and clea
                         state_d = S_DONE;
                     end
                 end else begin
-                    // divisor zero is handled in idle; keep this safe path
+                    // divisor zero is handled in idle
                     quotient_d = quot_neg_q ? (~qacc_q[WIDTH-1:0] + {{(WIDTH-1){1'b0}}, 1'b1}) : qacc_q[WIDTH-1:0];
                     remainder_d = rem_neg_q ? (~corr_rem_q[WIDTH-1:0] + {{(WIDTH-1){1'b0}}, 1'b1}) : corr_rem_q[WIDTH-1:0];
                     state_d = S_DONE;

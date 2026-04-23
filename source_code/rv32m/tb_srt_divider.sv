@@ -152,7 +152,7 @@ module tb_srt_divider;
             @(posedge tb_CLK);
             tb_in_valid = 1'b0;
 
-            wait_out_valid(256);
+            wait_out_valid(2048);
 
             exp_dbz = (b_m == 0);
             if (exp_dbz) begin

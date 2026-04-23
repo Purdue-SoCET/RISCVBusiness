@@ -7,8 +7,8 @@ set script_dir [file dirname [file normalize [info script]]]
 cd $script_dir
 
 set TOP_MODULE srt_div
-set SYN_EFFORT medium
-set RUN_SYN_OPT 0
+set SYN_EFFORT high
+set RUN_SYN_OPT 1
 
 proc get_report_value {file regex_list} {
     if {![file exists $file]} {
@@ -41,7 +41,7 @@ init_design
 
 set clk_ports [clock_ports]
 if {[llength $clk_ports] > 0} {
-    set clock1 [define_clock -period 666 -name clock1 $clk_ports]
+    set clock1 [define_clock -period 500 -name clock1 $clk_ports]
 }
 
 # asynchronous reset should not be included in datapath timing closure
