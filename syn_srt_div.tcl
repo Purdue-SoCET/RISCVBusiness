@@ -7,7 +7,7 @@ set script_dir [file dirname [file normalize [info script]]]
 cd $script_dir
 
 set TOP_MODULE srt_div
-set SYN_EFFORT high
+set SYN_EFFORT medium
 set RUN_SYN_OPT 1
 
 proc get_report_value {file regex_list} {
