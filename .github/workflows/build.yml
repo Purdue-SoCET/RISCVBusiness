@@ -23,10 +23,8 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          if [ -n "$SOCET_DEPLOY_KEY" ]; then
-            echo "$SOCET_DEPLOY_KEY" > ~/.ssh/id_ed25519
-            chmod 600 ~/.ssh/id_ed25519
-          fi
+          echo "$SOCET_DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
 
           ssh-keyscan -H github.com >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
