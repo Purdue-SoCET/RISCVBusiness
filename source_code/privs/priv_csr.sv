@@ -947,14 +947,21 @@ module priv_csr #(
   // general function to check for bad counter enable bits
   function logic check_bad_counteren;
       input integer counteren_idx;
-      check_bad_counteren = (
+      logic bad_mcounteren;
+      `ifdef SMODE_SUPPORTED
+      logic bad_scounteren;
+      `endif
+
+      begin
+          bad_mcounteren = csr_operation & isUSMode & ~mcounteren[counteren_idx];
+
           `ifdef SMODE_SUPPORTED
-          // if S-mode is we check need to check scounteren
-          (check_bad_scounteren(scounteren[counteren_idx])) |
+          bad_scounteren = check_bad_scounteren(scounteren[counteren_idx]);
+          check_bad_counteren = bad_scounteren | bad_mcounteren;
+          `else
+          check_bad_counteren = bad_mcounteren;
           `endif
-          // we are in U/S/M mode, we need to check mcounteren
-          (check_bad_mcounteren(mcounteren[counteren_idx]))
-      );
+      end
   endfunction
 
 endmodule

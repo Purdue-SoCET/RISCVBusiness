@@ -114,6 +114,20 @@ targets:
             quartus:
                 family: Cyclone IV E
                 device: EP4CE115F29C7
+            yosys:
+                arch: intel
+
+
+    synth:
+        <<: *default
+        description: Open-source synthesis smoke test
+        default_tool: yosys
+        parameters:
+            - SYNTHESIS=true
+        toplevel: top_core
+        tools:
+            yosys:
+                arch: intel
 
 
     lint:
