@@ -1,11 +1,11 @@
-name: RISCVBusiness CI
+name: Lint
 
 on:
   push:
   pull_request:
 
 jobs:
-  build-test-lint:
+  lint:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/falcontron/socet-template-ci:latest
@@ -14,8 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Needed while digital-lib and bus-components are still private SSH repos.
-      # Once those repos are public and config.env uses HTTPS URLs, this block can be removed.
       - name: Configure SSH for private SoCET dependencies
         if: ${{ secrets.SOCET_DEPLOY_KEY != '' }}
         run: |
@@ -30,23 +28,14 @@ jobs:
       - name: Setup dependencies
         run: ./setup.sh
 
-      - name: Build Verilator simulator
-        run: ./build.sh
-
-      - name: Run RV32I smoke tests
-        run: ./test.sh
-
-      - name: Run lint
+      - name: Lint
         run: ./lint.sh
 
-      - name: Run synthesis placeholder
-        run: ./synth.sh
-
-      - name: Upload logs
+      - name: Upload lint logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: riscvbusiness-ci-logs
+          name: lint-logs
           path: |
             logs/
             rvb_out/
