@@ -1,0 +1,52 @@
+name: RISCVBusiness CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/falcontron/socet-template-ci:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Needed while digital-lib and bus-components are still private SSH repos.
+      # Once those repos are public and config.env uses HTTPS URLs, this block can be removed.
+      - name: Configure SSH for private SoCET dependencies
+        if: ${{ secrets.SOCET_DEPLOY_KEY != '' }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SOCET_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Mark repository as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Setup dependencies
+        run: ./setup.sh
+
+      - name: Build Verilator simulator
+        run: ./build.sh
+
+      - name: Run RV32I smoke tests
+        run: ./test.sh
+
+      - name: Run lint
+        run: ./lint.sh
+
+      - name: Run synthesis placeholder
+        run: ./synth.sh
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: riscvbusiness-ci-logs
+          path: |
+            logs/
+            rvb_out/

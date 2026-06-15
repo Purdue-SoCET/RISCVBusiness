@@ -99,3 +99,14 @@ system_fpga.summary
 docs/book/**
 *.txt
 *.dump
+
+# SoCET CI generated files
+fusesoc_libraries/
+fusesoc.conf
+rvb_out/
+logs/
+synth_out/
+
+# RISC-V test/benchmark generated dependencies
+riscv-tests/
+embench-1.0/
