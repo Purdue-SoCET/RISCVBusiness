@@ -27,6 +27,9 @@ jobs:
             ssh-keyscan github.com >> ~/.ssh/known_hosts
           fi
 
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
       - name: Pull CI image
         run: docker pull ghcr.io/falcontron/socet-template-ci:latest
 
