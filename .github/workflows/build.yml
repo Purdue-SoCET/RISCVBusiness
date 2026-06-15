@@ -38,10 +38,11 @@ jobs:
           docker run --rm \
             --user "$(id -u):$(id -g)" \
             -v "$GITHUB_WORKSPACE:/work" \
-            -v "$HOME/.ssh:/home/ubuntu/.ssh:ro" \
+            -e HOME=/tmp \
+            -v "$HOME/.ssh:/tmp/.ssh:ro" \
             -w /work \
             ghcr.io/falcontron/socet-template-ci:latest \
-            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ./setup.sh && ./build.sh && ./test.sh'
+            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ...'
 
       - name: Upload build/test logs
         if: always()
