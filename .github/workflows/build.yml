@@ -4,11 +4,13 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/falcontron/socet-template-ci:latest
 
     steps:
       - name: Checkout repository
@@ -17,24 +19,26 @@ jobs:
       - name: Configure SSH for private SoCET dependencies
         env:
           SOCET_DEPLOY_KEY: ${{ secrets.SOCET_DEPLOY_KEY }}
-        if: ${{ env.SOCET_DEPLOY_KEY != '' }}
         run: |
-          mkdir -p ~/.ssh
-          echo "$SOCET_DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          if [ -n "$SOCET_DEPLOY_KEY" ]; then
+            mkdir -p ~/.ssh
+            echo "$SOCET_DEPLOY_KEY" > ~/.ssh/id_ed25519
+            chmod 600 ~/.ssh/id_ed25519
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          fi
 
-      - name: Mark repository as safe
-        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Pull CI image
+        run: docker pull ghcr.io/falcontron/socet-template-ci:latest
 
-      - name: Setup dependencies
-        run: ./setup.sh
-
-      - name: Build
-        run: ./build.sh
-
-      - name: Test
-        run: ./test.sh
+      - name: Build and test
+        run: |
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            -v "$GITHUB_WORKSPACE:/work" \
+            -v "$HOME/.ssh:/home/ubuntu/.ssh:ro" \
+            -w /work \
+            ghcr.io/falcontron/socet-template-ci:latest \
+            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ./setup.sh && ./build.sh && ./test.sh'
 
       - name: Upload build/test logs
         if: always()
