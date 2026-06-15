@@ -15,10 +15,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure SSH for private SoCET dependencies
-        if: ${{ secrets.SOCET_DEPLOY_KEY != '' }}
+        env:
+          SOCET_DEPLOY_KEY: ${{ secrets.SOCET_DEPLOY_KEY }}
+        if: ${{ env.SOCET_DEPLOY_KEY != '' }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SOCET_DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+          echo "$SOCET_DEPLOY_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
