@@ -20,12 +20,16 @@ jobs:
         env:
           SOCET_DEPLOY_KEY: ${{ secrets.SOCET_DEPLOY_KEY }}
         run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
           if [ -n "$SOCET_DEPLOY_KEY" ]; then
-            mkdir -p ~/.ssh
             echo "$SOCET_DEPLOY_KEY" > ~/.ssh/id_ed25519
             chmod 600 ~/.ssh/id_ed25519
-            ssh-keyscan github.com >> ~/.ssh/known_hosts
           fi
+
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
@@ -40,7 +44,7 @@ jobs:
             -v "$HOME/.ssh:/root/.ssh:ro" \
             -w /work \
             ghcr.io/falcontron/socet-template-ci:latest \
-            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ./setup.sh && ./build.sh && ./test.sh'
+            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ./setup.sh && ./lint.sh'
 
       - name: Upload lint logs
         if: always()
