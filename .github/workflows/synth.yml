@@ -36,13 +36,11 @@ jobs:
       - name: Synthesis
         run: |
           docker run --rm \
-            --user "$(id -u):$(id -g)" \
-            -e HOME=/tmp \
             -v "$GITHUB_WORKSPACE:/work" \
-            -v "$HOME/.ssh:/tmp/.ssh:ro" \
+            -v "$HOME/.ssh:/root/.ssh:ro" \
             -w /work \
             ghcr.io/falcontron/socet-template-ci:latest \
-            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ./setup.sh && ./synth.sh'
+            bash -lc 'git config --global --add safe.directory /work && export PYTHONPATH="" && ./setup.sh && ./build.sh && ./test.sh'
 
       - name: Upload synthesis logs
         if: always()
