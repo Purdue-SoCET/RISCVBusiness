@@ -15,7 +15,7 @@ supported_isa = ['i', 'm', 'a', 'c', 'zba', 'zbb', 'zbs']
 
 # For now, only support 'p' & 'v' environments. TODO: Add pm and pt environments.
 # No support for 'm' privilege tests
-verilator_binary = "./rvb_out/socet_riscv_RISCVBusiness_0.1.1/sim-verilator/Vtop_core"
+verilator_binary = "./rvb_out/sim-verilator/Vtop_core"
 test_base_dir = pathlib.Path("./riscv-tests/isa")
 benchmark_base_dir = pathlib.Path("./riscv-tests/benchmarks")
 
