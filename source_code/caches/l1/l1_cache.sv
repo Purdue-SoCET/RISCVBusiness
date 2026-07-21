@@ -357,14 +357,11 @@ module l1_cache #(
         next_last_used                   = last_used;
         bus_ctrl_if.dREN        = 1'b0;
         bus_ctrl_if.dWEN        = 1'b0;
-        // Idle default must be the current fetch/access address, not a poison
-        // canary: prv_pipe_if.ipaddr is wired from icache bus_ctrl_if.daddr and
-        // feeds the PMP instruction checker, whose fault output is gated by xen
-        // (=iren, hardwired high) rather than by an actual bus access. A poison
-        // idle default therefore leaks into a live PMP i-check and raises a
-        // spurious instruction-access fault whenever the icache goes idle mid
-        // access (e.g. during a multi-cycle lr.w). phy_addr is the in-region PC.
-        bus_ctrl_if.daddr       = phy_addr;
+        // Poison canary: daddr is only meaningful when dREN/dWEN is asserted.
+        // Any consumer that reads it while the cache is idle is reading a value
+        // this module never promised, and 0xBAD1BAD1 is here to make that show
+        // up loudly rather than silently aliasing a plausible address.
+        bus_ctrl_if.daddr       = 32'hBAD1BAD1;
         bus_ctrl_if.dstore      = 32'hBAD1BAD1;
         bus_ctrl_if.ccwrite     = 1'b0;
         bus_ctrl_if.ccdirty     = 1'b0;

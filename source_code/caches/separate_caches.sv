@@ -60,9 +60,15 @@ module separate_caches(
     address_translation_if insn_at_if ();
     address_translation_if data_at_if ();
 
-    // assign physical addresses to pmp
-    assign prv_pipe_if.ipaddr = icache_bus_ctrl_if.daddr;
-    assign prv_pipe_if.dpaddr = dcache_bus_ctrl_if.daddr;
+    // PMP address inputs are assigned per translation mode -- see the
+    // `ifdef ADDRESS_TRANSLATION blocks at the bottom of this file.
+    //
+    // PMP must check the physical address of an *architectural access*
+    // (Priv. spec V20211203 s3.7). Do NOT wire these from bus_ctrl_if.daddr:
+    // that is the cache's memory-side transaction address, which carries a
+    // line-aligned fill base during a miss (l1_cache.sv:487,520) and an
+    // unrelated victim line address during writeback (l1_cache.sv:584). It is
+    // only equal to the access address on a hit.
 
     assign empty_gen_bus_if.addr = 0;
     assign empty_gen_bus_if.byte_en = 0;
@@ -189,6 +195,31 @@ module separate_caches(
     endgenerate
 
 `ifdef ADDRESS_TRANSLATION
+    // ------------------------------------------------------------------
+    // FIXME (PMP): KNOWN BUG, PENDING TLB WORK -- DO NOT ENABLE S-MODE
+    // ASSUMING THIS IS CORRECT.
+    //
+    // These wire the PMP checker to the cache's memory-side transaction
+    // address rather than the architectural access address, so PMP sees
+    // line-fill bases and writeback victim addresses. That raises spurious
+    // instruction/load/store access faults (originally observed as a
+    // spurious fault during a multi-cycle lr.w).
+    //
+    // The physical-only path below is fixed. This path is NOT, because the
+    // correct source here is the post-translation physical address
+    // (phy_addr, l1_cache.sv:185), which is not exposed as a port. The
+    // proper resolution is to cache PMP R/W/X permissions in the TLB entry
+    // at fill time -- see doc/src/design-notes/pmp_check_architecture.md in
+    // the aft-audit repo, and docs/src/supervisor/pmp_address_wiring.md here.
+    // ------------------------------------------------------------------
+    assign prv_pipe_if.ipaddr = icache_bus_ctrl_if.daddr;
+    assign prv_pipe_if.dpaddr = dcache_bus_ctrl_if.daddr;
+
+    // Elaboration-time (not `initial`) so this fires on compile/elaboration --
+    // including builds that are never simulated -- rather than only at time 0
+    // of a simulation run.
+    $warning("PMP ipaddr/dpaddr are wired from cache memory-side daddr (fill base / victim addr), NOT the architectural access address. Spurious faults possible. See docs/src/supervisor/pmp_address_wiring.md.");
+
     // TLB busses
     generic_bus_if itlb_gen_bus_if ();
     generic_bus_if dtlb_gen_bus_if ();
@@ -303,6 +334,15 @@ module separate_caches(
         end
     end
 `else
+    // PMP checks the physical address of the architectural access. With
+    // address translation disabled, addr_trans_on is tied low (below), so
+    // VA == PA and the processor-side request address IS the physical
+    // address. This is the address the fetch/mem stage is actually trying to
+    // access, and it stays valid while the cache stalls -- unlike
+    // bus_ctrl_if.daddr, which goes to its idle default mid-access.
+    assign prv_pipe_if.ipaddr = icache_proc_gen_bus_if.addr;
+    assign prv_pipe_if.dpaddr = dcache_proc_gen_bus_if.addr;
+
     // TODO:
     // zero tlb misses
     assign itlb_miss = 0;

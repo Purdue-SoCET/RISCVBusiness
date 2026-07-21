@@ -5,6 +5,7 @@
 - [Privileged Architecture]()
     - [Supervisor](./supervisor/supervisor_overview.md)
         - [Supervisor Tests](./supervisor/supervisor_tests.md)
+        - [PMP Address Wiring (known bug)](./supervisor/pmp_address_wiring.md)
     - [Hardware Performance Monitors](./hpms/hpm_overview.md)
 - [Multicore](./multicore.md)
 - [Extensions](./extensions.md)
