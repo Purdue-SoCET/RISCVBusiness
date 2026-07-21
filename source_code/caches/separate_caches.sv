@@ -218,7 +218,9 @@ module separate_caches(
     // Elaboration-time (not `initial`) so this fires on compile/elaboration --
     // including builds that are never simulated -- rather than only at time 0
     // of a simulation run.
-    $warning("PMP ipaddr/dpaddr are wired from cache memory-side daddr (fill base / victim addr), NOT the architectural access address. Spurious faults possible. See docs/src/supervisor/pmp_address_wiring.md.");
+    $warning("PMP ipaddr/dpaddr are wired from cache memory-side daddr (fill base / victim addr), \
+                NOT the architectural access address. Spurious faults possible. \
+                See docs/src/supervisor/pmp_address_wiring.md.");
 
     // TLB busses
     generic_bus_if itlb_gen_bus_if ();
