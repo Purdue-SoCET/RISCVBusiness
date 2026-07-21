@@ -24,26 +24,26 @@ config:
 	@python3 scripts/config_core.py example.yml
 
 verilate: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
+	@fusesoc --cores-root . run --setup --build --work-root rvb_out/sim-verilator --target sim --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
 	@echo "------------------------------------------------------------------"
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
 	@echo "------------------------------------------------------------------"
 
 no_mem: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target no_mc --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
+	@fusesoc --cores-root . run --setup --build --work-root rvb_out/no_mc-verilator --target no_mc --tool verilator socet:riscv:RISCVBusiness --make_options='-j'
 	@echo "------------------------------------------------------------------"
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
 	@echo "------------------------------------------------------------------"
 
 xcelium: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target sim --tool xcelium socet:riscv:RISCVBusiness
+	@fusesoc --cores-root . run --setup --build --work-root rvb_out/sim-xcelium --target sim --tool xcelium socet:riscv:RISCVBusiness
 	@echo "Build finished, you can run with 'fusesoc run', or by navigating"
 	@echo "to the build directory created by FuseSoC and using the Makefile there."
 
 lint: config
-	@fusesoc --cores-root . run --setup --build --build-root rvb_out --target lint --tool verilator socet:riscv:RISCVBusiness
+	@fusesoc --cores-root . run --setup --build --work-root rvb_out/lint-verilator --target lint --tool verilator socet:riscv:RISCVBusiness
 	@echo "Lint finished, no errors found"
 
 clean:
