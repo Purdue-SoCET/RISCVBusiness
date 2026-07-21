@@ -218,9 +218,20 @@ module separate_caches(
     // Elaboration-time (not `initial`) so this fires on compile/elaboration --
     // including builds that are never simulated -- rather than only at time 0
     // of a simulation run.
-    $warning("PMP ipaddr/dpaddr are wired from cache memory-side daddr (fill base / victim addr), \
-                NOT the architectural access address. Spurious faults possible. \
-                See docs/src/supervisor/pmp_address_wiring.md.");
+    //
+    // NOTE: warnings are fatal by default under Verilator, and run_tests.py
+    // builds this path on every regression run (it forces address_translation
+    // on), so USERWARN is suppressed for that tool only -- otherwise this
+    // $warning fails the build rather than annotating it. Other tools still
+    // report it, and config_core.py prints the same warning at configure time
+    // regardless. (This comment must not begin with the tool's name, or it is
+    // parsed as a directive.)
+    /* verilator lint_off USERWARN */
+    $warning({"PMP ipaddr/dpaddr are wired from cache memory-side daddr ",
+              "(fill base / victim addr), NOT the architectural access ",
+              "address. Spurious faults possible. See ",
+              "docs/src/supervisor/pmp_address_wiring.md."});
+    /* verilator lint_on USERWARN */
 
     // TLB busses
     generic_bus_if itlb_gen_bus_if ();
