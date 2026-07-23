@@ -357,6 +357,7 @@ module l1_cache #(
         next_last_used                   = last_used;
         bus_ctrl_if.dREN        = 1'b0;
         bus_ctrl_if.dWEN        = 1'b0;
+        // Poison canary: daddr is only meaningful when dREN/dWEN is asserted.
         bus_ctrl_if.daddr       = 32'hBAD1BAD1;
         bus_ctrl_if.dstore      = 32'hBAD1BAD1;
         bus_ctrl_if.ccwrite     = 1'b0;

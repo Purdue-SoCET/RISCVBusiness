@@ -245,6 +245,14 @@ def create_include(config):
             sys.exit(err)
           line = ''
           if isa_params[isa_param] == 'enabled' and isa_params['supervisor'] == 'enabled':
+            print('Warning: address_translation is enabled. PMP address wiring is',
+                  'KNOWN INCORRECT on the translated path: separate_caches.sv drives',
+                  'prv_pipe_if.ipaddr/dpaddr from the caches\' memory-side',
+                  'bus_ctrl_if.daddr (line-fill base during a miss, victim line',
+                  'address during writeback) instead of the architectural access',
+                  'address. This can raise spurious instruction/load/store access',
+                  'faults. Only the physical-only path is fixed.',
+                  'See docs/src/supervisor/pmp_address_wiring.md.', sep='\n  ')
             line = f'`define {isa_param.upper()}\n'
           line += 'localparam ' + isa_param.upper() + ' = "' + (str(isa_params[isa_param]) if isa_params['supervisor'] == 'enabled' else 'disabled') + '"'
         elif 'isa' == isa_param:
