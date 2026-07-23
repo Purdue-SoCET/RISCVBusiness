@@ -12,3 +12,5 @@
     - [RV32A](./extensions/rv32a.md)
     - [RV32C](./extensions/rv32c.md)
     - [RV32E](./rv32e/rv32e.md)
+- [Known Issues](./known_issues.md)
+    - [PMP Address Check](./known_issues/pmp_address_wiring.md)

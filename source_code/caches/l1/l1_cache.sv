@@ -358,9 +358,6 @@ module l1_cache #(
         bus_ctrl_if.dREN        = 1'b0;
         bus_ctrl_if.dWEN        = 1'b0;
         // Poison canary: daddr is only meaningful when dREN/dWEN is asserted.
-        // Any consumer that reads it while the cache is idle is reading a value
-        // this module never promised, and 0xBAD1BAD1 is here to make that show
-        // up loudly rather than silently aliasing a plausible address.
         bus_ctrl_if.daddr       = 32'hBAD1BAD1;
         bus_ctrl_if.dstore      = 32'hBAD1BAD1;
         bus_ctrl_if.ccwrite     = 1'b0;
