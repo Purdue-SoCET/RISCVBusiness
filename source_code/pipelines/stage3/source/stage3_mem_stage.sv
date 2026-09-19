@@ -156,6 +156,9 @@ module stage3_mem_stage(
     assign cc_if.dcache_flush = ifence_pulse;
     assign cc_if.dcache_reserve = ex_mem_if.ex_mem_reg.reserve;
     assign cc_if.dcache_exclusive = ex_mem_if.ex_mem_reg.exclusive;
+    // TODO: properly handle for cache control
+    assign cc_if.icache_clear = 1'b0;
+    assign cc_if.dcache_clear = 1'b0;
     // holds iflushed/dflushed high when done, resets to 0 on a pulse
     always_comb begin
         iflushed_next = iflushed;
