@@ -25,6 +25,8 @@
 `include "generic_bus_if.vh"
 `include "cache_control_if.vh"
 `include "component_selection_defines.vh"
+`include "bus_ctrl_if.vh"
+`include "prv_pipeline_if.vh"
 
 module caches_wrapper (
     input logic CLK,
@@ -33,8 +35,14 @@ module caches_wrapper (
     generic_bus_if.cpu dcache_mem_gen_bus_if,
     generic_bus_if.generic_bus icache_proc_gen_bus_if,
     generic_bus_if.generic_bus dcache_proc_gen_bus_if,
-    cache_control_if cc_if,
-    output logic abort_bus
+    cache_control_if.caches control_if,
+    prv_pipeline_if prv_pipe_if,
+    front_side_bus_if.cache dcache_bus_ctrl_if,
+    front_side_bus_if.cache icache_bus_ctrl_if,
+    output logic icache_miss,
+    output logic dcache_miss,
+    output logic icache_hit,
+    output logic dcache_hit
 );
     generate
         case (CACHE_CONFIG)

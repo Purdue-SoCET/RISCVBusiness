@@ -71,6 +71,10 @@ module multicore_wrapper #(
     );
 
     logic [NUM_HARTS-1:0] pipeline_halts;
+
+    assign halt = &pipeline_halts;
+
+`ifndef SYNTHESIS
     logic [NUM_HARTS-1:0] wb_stall;
     logic [NUM_HARTS-1:0] [31:0] instr;
     logic [NUM_HARTS-1:0] [31:0] pc;
@@ -91,8 +95,8 @@ module multicore_wrapper #(
     logic [31:0] x28;
     logic [NUM_HARTS-1:0] x28s;
 
-    assign halt = &pipeline_halts;
     assign x28 = &x28s;
+`endif
 
     genvar HART_ID;
     generate

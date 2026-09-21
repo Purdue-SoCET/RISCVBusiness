@@ -105,7 +105,7 @@ interface prv_pipeline_if();
 
   modport fetch (
     input prot_fault_i, itlb_miss, fetch_fault_insn_page,
-    output iren, iaddr, i_acc_width, pc_redirect, itlb_hit
+    output iren, iaddr, i_acc_width, pc_redirect
   );
 
   modport caches (

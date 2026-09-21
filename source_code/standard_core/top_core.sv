@@ -36,12 +36,12 @@ module top_core #(
 );
 
 
+`ifndef SYNTHESIS
     function [31:0] get_x28;
         // verilator public
         get_x28 = CORE.x28;
     endfunction
 
-`ifndef SYNTHESIS
     bind multicore_wrapper cpu_tracker #(.NUM_HARTS(NUM_HARTS)) cpu_track1 (
         .CLK(CLK),
         .wb_stall(wb_stall),

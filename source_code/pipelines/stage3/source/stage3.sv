@@ -55,8 +55,4 @@ module stage3 #(
     stage3_hazard_unit hazard_unit_i(.*);
     stage3_forwarding_unit forward_unit_i(.*);
 
-    // TODO: properly handle for cache control
-
-    assign cc_if.icache_clear = 0;
-    assign cc_if.dcache_clear = 0;
 endmodule
